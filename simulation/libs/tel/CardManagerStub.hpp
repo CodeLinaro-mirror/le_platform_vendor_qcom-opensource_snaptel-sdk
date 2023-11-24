@@ -45,6 +45,7 @@
 
 #include "CardStub.hpp"
 #include "../common/Logger.hpp"
+#include "../common/ListenerManager.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include "../common/AsyncTaskQueue.hpp"
 #include "../common/event-manager/EventManager.hpp"
@@ -61,7 +62,7 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using tel::CardService;
+using telStub::CardService;
 
 #define INVALID_SLOT_COUNT -1
 namespace telux {
@@ -95,9 +96,9 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     telux::common::InitResponseCb initCb_;
     std::mutex mutex_;
-    std::vector<std::weak_ptr<ICardListener>> listeners_;
+    std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_;
     std::shared_ptr<telux::common::ResponseHandler> cannedResponseManager_;
-    std::unique_ptr<::tel::CardService::Stub> stub_;
+    std::unique_ptr<::telStub::CardService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
     std::mutex cardManagerMutex_;
     std::vector<int> simSlotIds_;

@@ -50,6 +50,7 @@
 #include "../common/event-manager/EventParserUtil.hpp"
 #include "SmsMessageHelper.hpp"
 #include <telux/tel/SmsManager.hpp>
+#include "../common/ListenerManager.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <jsoncpp/json/json.h>
 #include <list>
@@ -65,7 +66,7 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using tel::SmsService;
+using telStub::SmsService;
 
 #define INVALID -1
 
@@ -151,8 +152,8 @@ private:
     int phoneId_ = INVALID;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::mutex smsManagerMutex_;
-    std::vector<std::weak_ptr<ISmsListener>> listeners_;
-    std::unique_ptr<::tel::SmsService::Stub> stub_;
+    std::shared_ptr<telux::common::ListenerManager<ISmsListener>> listenerMgr_;
+    std::unique_ptr<::telStub::SmsService::Stub> stub_;
     void invokeCallback(int cbDelay, ErrorCode error, std::vector<int> msgRefs,
          SmsResponseCb sentCallback = nullptr);
     void invokeDeliveryReportListener(std::string receiverAddress, int noofdeliveryreport,
@@ -162,7 +163,6 @@ private:
     void invokesendSmsCallback(int cbDelay,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback,
         telux::common::ErrorCode error);
-    telux::common::ErrorCode deletedSmsatIndex(std::vector <int> index);
     void invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
         telux::common::InitResponseCb callback);
     void invokeRequestSmsInfoListCb(std::vector<SmsMetaInfo> infos,

@@ -86,6 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AP} @tdmulrowend @td Oct 2023 @tdend @tdlast Updated documentation for SDK release V1.63.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AN} @tdmulrowend @td Sep 2023 @tdend @tdlast Updated documentation for SDK release V1.62.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AM} @tdmulrowend @td Aug 2023 @tdend @tdlast Updated documentation for SDK release V1.61.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AL} @tdmulrowend @td Jul 2023 @tdend @tdlast Updated documentation for SDK release V1.60.0 changes @tdlastend @trend
@@ -150,7 +151,6 @@ when       who     what, where, why
 @tr @tdmulrowempty @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trendcline
 @tr @tdmulrowempty @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
-@tr @tdmulrowempty @td Nov 2022 @tdend @tdlast Addition of WLAN management support and call flow @tdlastend @trend
 
 @tableend
 @latexonly \rm @endlatexonly

@@ -138,7 +138,10 @@ private:
     string rsuPrimaryDns_; // used to store the RSU primray DNS parsed from received wsa
     std::atomic<bool> obuRouteSet_ {false}; // indicate whether the default route is set in OBU
     bool exit_ = false;
-
+    void PostProcessingThread();
+    void (SaeApplication::*AsyncthrFn)()=&SaeApplication::AsyncPostProcessing;
+    void AsyncPostProcessing();
+    void postprocessing_cleanup();
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access

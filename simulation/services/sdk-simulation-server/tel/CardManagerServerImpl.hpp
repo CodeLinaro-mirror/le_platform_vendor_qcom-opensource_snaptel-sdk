@@ -56,7 +56,6 @@
 #include "../../../libs/common/JsonParser.hpp"
 #include "../../../libs/common/ResponseHandler.hpp"
 #include "../../../libs/tel/CardFileHandlerStub.hpp"
-#include "Helper.hpp"
 #include "../../../protos/proto-src/tel.grpc.pb.h"
 #include "../../../libs/common/CommonUtils.hpp"
 #include "../../libs/common/event-manager/EventManager.hpp"
@@ -67,74 +66,85 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-using tel::CardService;
-using tel::ServiceState;
-using tel::GetServiceStatusReply;
+using telStub::CardService;
+using commonStub::ServiceStatus;
+using commonStub::GetServiceStatusReply;
 
 
-class CardManagerServerImpl final : public tel::CardService::Service,
+class CardManagerServerImpl final : public telStub::CardService::Service,
                                     public IEventListener,
                                     public std::enable_shared_from_this<CardManagerServerImpl> {
  public:
     CardManagerServerImpl();
     grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
-        tel::GetServiceStatusReply* response) override ;
+        commonStub::GetServiceStatusReply* response) override ;
     grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
-        tel::GetServiceStatusReply* response) override;
+        commonStub::GetServiceStatusReply* response) override;
     grpc::Status IsSubsystemReady(ServerContext* context, const google::protobuf::Empty* request,
-        tel::IsSubsystemReadyReply* response) override;
-    grpc::Status GetCardState(ServerContext *context, const tel::GetCardStateRequest *request,
-        tel::GetCardStateReply *reply) override;
+        commonStub::IsSubsystemReadyReply* response) override;
+    grpc::Status GetCardState(ServerContext *context, const telStub::GetCardStateRequest *request,
+        telStub::GetCardStateReply *reply) override;
     grpc::Status ReadEFLinearFixed(ServerContext* context,
-        const tel::ReadEFLinearFixedRequest* request,
-        tel::ReadEFLinearFixedReply* response) override;
+        const telStub::ReadEFLinearFixedRequest* request,
+        telStub::ReadEFLinearFixedReply* response) override;
     grpc::Status ReadEFLinearFixedAll(ServerContext* context,
-        const tel::ReadEFLinearFixedAllRequest*
-        request, tel::ReadEFLinearFixedAllReply* response) override;
-    grpc::Status ReadEFTransparent(ServerContext* context, const tel::ReadEFTransparentRequest*
-        request, tel::ReadEFTransparentReply* response) override;
-    grpc::Status WriteEFLinearFixed(ServerContext* context, const tel::WriteEFLinearFixedRequest*
-        request, tel::WriteEFLinearFixedReply* response) override;
-    grpc::Status WriteEFTransparent(ServerContext* context, const tel::WriteEFTransparentRequest*
-        request, tel::WriteEFTransparentReply* response) override;
-    grpc::Status RequestEFAttributes(ServerContext* context, const tel::EFAttributesRequest*
-        request, tel::RequestEFAttributesReply* response) override;
-    grpc::Status OpenLogicalChannel(ServerContext* context, const tel::OpenLogicalChannelRequest*
-        request, tel::OpenLogicalChannelReply* response) override;
-    grpc::Status CloseLogicalChannel(ServerContext* context, const tel::CloseLogicalChannelRequest*
-        request, tel::CloseLogicalChannelReply* response) override;
-    grpc::Status TransmitAPDU(ServerContext* context, const tel::TransmitAPDURequest* request,
-        tel::TransmitAPDUReply* response) override;
+        const telStub::ReadEFLinearFixedAllRequest*
+        request, telStub::ReadEFLinearFixedAllReply* response) override;
+    grpc::Status ReadEFTransparent(ServerContext* context,
+        const telStub::ReadEFTransparentRequest*
+        request, telStub::ReadEFTransparentReply* response) override;
+    grpc::Status WriteEFLinearFixed(ServerContext* context,
+        const telStub::WriteEFLinearFixedRequest*
+        request, telStub::WriteEFLinearFixedReply* response) override;
+    grpc::Status WriteEFTransparent(ServerContext* context,
+        const telStub::WriteEFTransparentRequest*
+        request, telStub::WriteEFTransparentReply* response) override;
+    grpc::Status RequestEFAttributes(ServerContext* context,
+        const telStub::EFAttributesRequest*
+        request, telStub::RequestEFAttributesReply* response) override;
+    grpc::Status OpenLogicalChannel(ServerContext* context,
+        const telStub::OpenLogicalChannelRequest*
+        request, telStub::OpenLogicalChannelReply* response) override;
+    grpc::Status CloseLogicalChannel(ServerContext* context,
+        const telStub::CloseLogicalChannelRequest*
+        request, telStub::CloseLogicalChannelReply* response) override;
+    grpc::Status TransmitAPDU(ServerContext* context,
+        const telStub::TransmitAPDURequest* request,
+        telStub::TransmitAPDUReply* response) override;
     grpc::Status TransmitBasicAPDU(ServerContext* context,
-        const tel::TransmitBasicAPDURequest* request,
-        tel::TransmitBasicAPDUReply* response) override;
-    grpc::Status exchangeSimIO(ServerContext* context, const ::tel::exchangeSimIORequest* request,
-        tel::exchangeSimIOReply* response) override;
-    grpc::Status requestEid(ServerContext* context, const ::tel::requestEidRequest* request,
-        tel::requestEidReply* response) override;
+        const telStub::TransmitBasicAPDURequest* request,
+        telStub::TransmitBasicAPDUReply* response) override;
+    grpc::Status exchangeSimIO(ServerContext* context,
+        const ::telStub::exchangeSimIORequest* request,
+        telStub::exchangeSimIOReply* response) override;
+    grpc::Status requestEid(ServerContext* context,
+        const ::telStub::requestEidRequest* request,
+        telStub::requestEidReply* response) override;
     grpc::Status updateSimStatus(ServerContext* context,
-        const ::tel::updateSimStatusRequest* request,
-        tel::updateSimStatusReply* response) override;
-    grpc::Status SetCardLock(ServerContext* context, const tel::SetCardLockRequest* request,
-        tel::SetCardLockReply* response) override;
-    grpc::Status QueryPin1Lock(ServerContext* context, const tel::QueryPin1LockRequest* request,
-        tel::QueryPin1LockReply* response) override;
-    grpc::Status ChangePinLock(ServerContext* context, const tel::ChangePinLockRequest* request,
-        tel::ChangePinLockReply* response) override;
-    grpc::Status UnlockByPin(ServerContext* context, const tel::UnlockByPinRequest* request,
-        tel::UnlockByPinReply* response) override;
-    grpc::Status UnlockByPuk(ServerContext* context, const tel::UnlockByPukRequest* request,
-        tel::UnlockByPukReply* response) override;
-    grpc::Status QueryFdnLock(ServerContext* context, const tel::QueryFdnLockRequest* request,
-        tel::QueryFdnLockReply* response) override;
-    grpc::Status CardPower(ServerContext* context, const ::tel::CardPowerRequest* request,
-        tel::CardPowerResponse* response) override;
+        const ::telStub::updateSimStatusRequest* request,
+        telStub::updateSimStatusReply* response) override;
+    grpc::Status SetCardLock(ServerContext* context, const telStub::SetCardLockRequest* request,
+        telStub::SetCardLockReply* response) override;
+    grpc::Status QueryPin1Lock(ServerContext* context,
+        const telStub::QueryPin1LockRequest* request,
+        telStub::QueryPin1LockReply* response) override;
+    grpc::Status ChangePinLock(ServerContext* context,
+        const telStub::ChangePinLockRequest* request,
+        telStub::ChangePinLockReply* response) override;
+    grpc::Status UnlockByPin(ServerContext* context, const telStub::UnlockByPinRequest* request,
+        telStub::UnlockByPinReply* response) override;
+    grpc::Status UnlockByPuk(ServerContext* context, const telStub::UnlockByPukRequest* request,
+        telStub::UnlockByPukReply* response) override;
+    grpc::Status QueryFdnLock(ServerContext* context, const telStub::QueryFdnLockRequest* request,
+        telStub::QueryFdnLockReply* response) override;
+    grpc::Status CardPower(ServerContext* context, const ::telStub::CardPowerRequest* request,
+        telStub::CardPowerResponse* response) override;
     void onEventUpdate(std::string event);
 
     template <typename T>
-    tel::ErrorCode findmatchingrecordADF (Json::Value rootObj, T response,
+    commonStub::ErrorCode findmatchingrecordADF (Json::Value rootObj, T response,
     int& size, int& index, int& recordNum, uint16_t& fileId, int& i) {
-        tel::ErrorCode error = tel::ErrorCode::ERROR_CODE_SUCCESS;
+        commonStub::ErrorCode error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
         while (i < size ) {
         uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"]\
             [i]["fileId"].asInt();
@@ -143,10 +153,10 @@ class CardManagerServerImpl final : public tel::CardService::Service,
                 ["numberOfRecords"].asInt();
             LOG(DEBUG, __FUNCTION__,"NumberOfRecords ", num);
             if(recordNum <= num ) {
-                error = tel::ErrorCode::ERROR_CODE_SUCCESS;
+                error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
                 break;
             } else {
-                error = tel::ErrorCode::GENERIC_FAILURE;
+                error = commonStub::ErrorCode::GENERIC_FAILURE;
                 LOG(DEBUG, __FUNCTION__, "Invalid Record");
                 break;
             }
@@ -160,7 +170,7 @@ class CardManagerServerImpl final : public tel::CardService::Service,
     }
     if(i == size) {
         LOG(DEBUG, __FUNCTION__,"Valid record not found ", i );
-        error = tel::ErrorCode::GENERIC_FAILURE;
+        error = commonStub::ErrorCode::GENERIC_FAILURE;
     }
     return error;
     }
@@ -173,14 +183,16 @@ class CardManagerServerImpl final : public tel::CardService::Service,
     std::map <int, std::string> jsonObjSystemStateFileName_;
     std::map <int, Json::Value> jsonObjApiResponseSlot_;
     std::map <int, std::string> jsonObjApiResponseFileName_;
-    void readJson();
+    grpc::Status readJson();
     bool isCallbackNeeded(Json::Value rootObj, std::string apiname);
     bool findAppId(Json::Value rootObj, const char* appid, int& index);
-    tel::ErrorCode findmatchingrecordDF (Json::Value rootObj, int& size, int& recordNum,
+    commonStub::ErrorCode findmatchingrecordDF (Json::Value rootObj, int& size, int& recordNum,
         uint16_t& fileId, int& i);
-    tel::ErrorCode getTransparentFileAttributes(Json::Value rootObj, int& i, uint16_t fileId,
+    commonStub::ErrorCode getTransparentFileAttributes(Json::Value rootObj,
+        int& i, uint16_t fileId,
         telux::tel::FileAttributes& attributes, int& index);
-     tel::ErrorCode getLinearfixedFileAttributes(Json::Value rootObj, int& i, uint16_t fileId,
+    commonStub::ErrorCode getLinearfixedFileAttributes(Json::Value rootObj,
+        int& i, uint16_t fileId,
         telux::tel::FileAttributes& attributes, int& index );
     void getJsonForSystemData (int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,

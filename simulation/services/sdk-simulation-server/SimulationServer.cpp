@@ -86,6 +86,12 @@ SimulationServer::~SimulationServer(){
     taskQ_ = nullptr;
 }
 
+SimulationServer &SimulationServer::getInstance() {
+    LOG(DEBUG, __FUNCTION__);
+    static SimulationServer instance;
+    return instance;
+}
+
 telux::common::Status SimulationServer::start() {
     LOG(DEBUG, __FUNCTION__);
     struct sockaddr_in address = {0};
@@ -93,7 +99,6 @@ telux::common::Status SimulationServer::start() {
     int addrlen = sizeof(address);
     int opt = 1;
     int serverSocket;
-    std::vector<int> clientSockets;
 
     std::thread grpc_sim_server([this] {
             startGrpcServer();
@@ -153,24 +158,23 @@ telux::common::Status SimulationServer::start() {
         }
 
         LOG(INFO, "client connected::", socketFd);
-        clientSockets.push_back(socketFd);
+        clientSockets_.push_back(socketFd);
 
-        auto f = std::async(std::launch::async, [this, socketFd, &clientSockets]() {
-            this->readMessage(socketFd, clientSockets);
+        auto f = std::async(std::launch::async, [this, socketFd]() {
+            this->readMessage(socketFd);
         }).share();
         taskQ_->add(f);
     }
 
     grpc_sim_server.join();
     close(serverSocket);
-    for(auto &socket_: clientSockets) {
-        close(socket_);
+    for(auto &socket: clientSockets_) {
+        close(socket);
     }
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status SimulationServer::readMessage(int socketFd,
-    std::vector<int> &clientSockets) {
+telux::common::Status SimulationServer::readMessage(int socketFd) {
     LOG(DEBUG, __FUNCTION__);
     char buffer[BUFFER_SIZE];
 
@@ -179,13 +183,13 @@ telux::common::Status SimulationServer::readMessage(int socketFd,
         if (length <= 0)
         {
             close(socketFd);
-            clientSockets.erase(find(clientSockets.begin(),clientSockets.end(), socketFd));
+            clientSockets_.erase(find(clientSockets_.begin(),clientSockets_.end(), socketFd));
             LOG(INFO, __FUNCTION__, "socket disconnected::", socketFd);
             return telux::common::Status::SUCCESS;
         }
         else {
             LOG(DEBUG, __FUNCTION__, "received data::", buffer);
-            writeMessage(buffer, length, clientSockets);
+            writeMessage(buffer, length);
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
         }
 
@@ -199,8 +203,7 @@ telux::common::Status SimulationServer::readMessage(int socketFd,
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status SimulationServer::writeMessage(char* buffer, int length,
-    const std::vector<int> &clientSockets) {
+telux::common::Status SimulationServer::writeMessage(char* buffer, int length) {
     LOG(DEBUG, __FUNCTION__);
 
     auto& eventMgr = EventManager::getInstance();
@@ -208,7 +211,7 @@ telux::common::Status SimulationServer::writeMessage(char* buffer, int length,
 
     eventMgr.handleEventNotifications(message);
 
-    for(auto socket: clientSockets)
+    for(auto socket: clientSockets_)
     {
         write(socket,buffer,length);
     }
@@ -248,7 +251,7 @@ void SimulationServer::startGrpcServer() {
  * Main routine
  */
 int main(int argc, char ** argv) {
-    SimulationServer simulationServer;
+    auto &simulationServer = SimulationServer::getInstance();
 
     if (simulationServer.start() != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " failed to start ", APP_NAME);

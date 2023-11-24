@@ -636,7 +636,19 @@ enum LocCapabilityType {
   /** Support QDR2_C license bundle is enabled. */
   QWES_QDR2 = (1<<11),
   /** Support QDR3_C license bundle is enabled. */
-  QWES_QDR3 = (1<<12)
+  QWES_QDR3 = (1<<12),
+  /** support time-based batching session. */
+  TIME_BASED_BATCHING = (1<<13),
+  /** support distance-based batching session. */
+  DISTANCE_BASED_BATCHING = (1<<14),
+  /** Support geofencing. */
+  GEOFENCE = (1<<15),
+  /** Support outdoor trip batching session. */
+  OUTDOOR_TRIP_BATCHING = (1<<16),
+  /** Support SV Polynomial */
+  SV_POLYNOMIAL = (1<<17),
+  /** Indicates presence of ML Inference capability for Pseudo Range Measurements. */
+  NLOS_ML20 = (1<<18)
 };
 
 /*Bit mask containing bits from LocCapabilityType */
@@ -1782,10 +1794,25 @@ enum class EngineType {
 enum class LocationEngineRunState {
     /** Unknown engine run state. */
     UNKNOWN = -1,
-    /** Request the position engine to be put into suspended state. */
+    /**
+     * Request the position engine to be put into suspended state.
+     * When put in this state the QDR engine will discard calibration data.
+     *
+    */
     SUSPENDED = 1,
     /** Request the position engine to be put into running state. */
-    RUNNING = 2
+    RUNNING = 2,
+    /**
+     * Request the position engine to be put into suspend state while
+     * retaining any calibration data.
+     * While configuring this engine state via @ref ILocationConfigurator::configureEngineState,
+     * the vehicle is expected to be stationary and should be set to RUNNING
+     * before the vehicle is expected to move(for example,on Ignition On).
+     * This state is applicable when the client expects QDR to retain necessary data for
+     * subsequent resume/reboot while being suspended.
+     *
+     */
+    SUSPEND_RETAIN = 3
 };
 
 /**

@@ -270,6 +270,7 @@ std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {
    {telux::common::ErrorCode::OP_PARTIAL_FAILURE, "OP_PARTIAL_FAILURE"},
    {telux::common::ErrorCode::POLICY_MISMATCH, "POLICY_MISMATCH"},
    {telux::common::ErrorCode::SIM_FILE_NOT_FOUND, "SIM_FILE_NOT_FOUND"},
+   {telux::common::ErrorCode::FILE_NOT_FOUND, "FILE_NOT_FOUND"},
    {telux::common::ErrorCode::EXTENDED_INTERNAL, "EXTENDED_INTERNAL"},
    {telux::common::ErrorCode::ACCESS_DENIED, "ACCESS_DENIED"},
    {telux::common::ErrorCode::HARDWARE_RESTRICTED, "HARDWARE_RESTRICTED"},

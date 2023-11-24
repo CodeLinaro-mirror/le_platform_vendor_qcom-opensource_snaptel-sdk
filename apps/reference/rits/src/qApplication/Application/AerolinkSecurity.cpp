@@ -127,12 +127,29 @@ void AerolinkSecurity::setStartTime(double start){
 }
 
 int AerolinkSecurity::setSecCurrLocation(Kinematics* hvKine){
-    int result = securityServices_setCurrentLocation(
-                 hvKine->latitude, hvKine->longitude,
-                 hvKine->elevation, secCountryCode_);
-     if(result != WS_SUCCESS){
-         std::cerr << "Location not updated successfully\n";
-     }
+    int result = -1;
+    if(hvKine){
+        if(hvKine->latitude && hvKine->longitude &&
+            hvKine->elevation){
+            result = securityServices_setCurrentLocation(
+                     hvKine->latitude, hvKine->longitude,
+                     hvKine->elevation, secCountryCode_);
+            if(result != WS_SUCCESS){
+                std::cerr << "Location not updated successfully\n";
+            }
+        }
+    }
+    return result;
+}
+
+int AerolinkSecurity::setLeapSeconds(uint32_t leapSeconds){
+    int result = -1;
+    /*
+     * Adjust the time for the expiration of signatures and certificates
+     */
+    if ((result = securityServices_setTimeAdjustment(leapSeconds)) != WS_SUCCESS) {
+        std::cerr << "securityServices_setTimeAdjustment failed: " << result << std::endl;
+    }
     return result;
 }
 
@@ -374,27 +391,17 @@ int AerolinkSecurity::init(void) {
 
     AEROLINK_RESULT result;
     if ((result = securityServices_initialize()) != WS_SUCCESS) {
-        if(secVerbosity > 0)
-            fprintf(stderr, "SecurityServices initialization failed (%s)\n",
-                ws_errid(result));
-    }
-
-    /*
-     * Adjust the time for the expiration of signatures and certificates
-     */
-    uint32_t leapSeconds = 0;
-    if ((result = securityServices_setTimeAdjustment(leapSeconds)) != WS_SUCCESS) {
-        std::cerr << "securityServices_setTimeAdjustment failed: " << result << std::endl;
+        fprintf(stderr, "SecurityServices initialization failed (%s)\n",
+            ws_errid(result));
         return -1;
     }
 
     // May add the generator location here as well
     result = sc_open(SecurityCtxName_.c_str(), &secContext_);
     if (result != WS_SUCCESS) {
-        if(secVerbosity > 0)
-            fprintf(stderr,
-                    "Failed to open security context (%s)\n",
-                    ws_errid(result));
+        fprintf(stderr,
+                "Failed to open security context (%s)\n",
+                ws_errid(result));
         return -1;
     }
 
@@ -906,10 +913,11 @@ int AerolinkSecurity::syncVerify(
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics hvKine, Kinematics rvKine,
-    sem_t    *queue_sem, MisbehaviorStats* misbehaviorStat) {
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
 
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
+    int priority = 1;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
@@ -964,10 +972,8 @@ int AerolinkSecurity::asyncVerify(
             return -1;
         }
     }
-    // not TRULY async verification
-    // smp_verifySignaturesAsync
-    result = smp_verifySignaturesAsync
-                    (*smp, thrVerifSemPtr, handle_verify_result);
+    // async verification
+    result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -975,7 +981,6 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
-    sem_wait(thrVerifSemPtr);
     //Misbehavior detection if enabled
     if(this->enableMisbehavior){
         mbdCheck(&rvKine, misbehaviorStat);
@@ -1042,18 +1047,10 @@ int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
     this->enableConsistency = opt.enableConsistency;
     this->enableRelevance = opt.enableRelevance;
     int ret = 0;
-    if(opt.enableAsync){
-        // Asynchronous Verification
-        ret = asyncVerify(
-                opt.hvKine, opt.rvKine,
-                &verifQueueSem, opt.misbehaviorStat);
-    }else{
-        //Synchronous Verification
-        ret = syncVerify(
+    ret = syncVerify(
                 opt.hvKine, opt.rvKine,
                 opt.verifStat, opt.misbehaviorStat
               );
-    }
     return ret;
 }
 

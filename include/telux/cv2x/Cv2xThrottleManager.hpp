@@ -110,8 +110,6 @@ public:
     *
     * @param [in] rate the reported filter rate adjustment value.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     *
     */
     virtual void onFilterRateAdjustment(int rate) {}
@@ -121,8 +119,6 @@ public:
     *
     * @param [in] status - @ref telux::common::ServiceStatus
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
     /**
@@ -161,8 +157,6 @@ public:
      *          SERVICE_UNAVAILABLE  -  If location manager is temporarily unavailable.
      *          SERVICE_FAILED       -  If location manager encountered an irrecoverable failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -190,8 +184,6 @@ public:
      *
      * @param[in] cb   - callack for indicating the result of set verfication load.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status setVerificationLoad(int load, setVerificationLoadCallback cb) = 0;
 

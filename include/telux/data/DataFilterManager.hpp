@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -125,26 +125,6 @@ public:
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks the status of Data Filter Service and if the other APIs are ready for use,
-     * and returns the result.
-     *
-     * @returns  True if the services are ready otherwise false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Wait for Data Filter Service to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when Data Filter Service
-     *           are ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getDataFilterManager.
-     */
-    virtual std::future<bool> onReady() = 0;
-
-    /**
      * Register a listener for powersave filtering mode notifications.
      *
      * @param [in] listener - Pointer of IDataFilterListener object that processes the notification
@@ -164,6 +144,98 @@ public:
      */
     virtual telux::common::Status
     deregisterListener(std::weak_ptr<IDataFilterListener> listener) = 0;
+
+    /**
+     * Changes the Data Powersave filter mode and auto exit feature.
+     *
+     * This API enables or disables the powersave filtering mode for all active data calls.
+     * The mode setting will be reset to @ref DataRestrictMode::DISABLE when all data calls are
+     * disconnected.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
+     * permission to invoke this API successfully.
+     *
+     * @param [in] mode - Enable or disable the powersave filtering mode.
+     * @param [in] callback - Optional callback to get the response for the change in filter mode.
+     *
+     * @returns Status of setDataRestrictMode i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status setDataRestrictMode(
+        DataRestrictMode mode,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Get the current Data Powersave filter mode
+     *
+     * @param [in]  callback - callback function to get the result of API.
+     *
+     * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status requestDataRestrictMode(DataRestrictModeCb callback) = 0;
+
+    /**
+     * This API adds a filter rule for all active data calls. In case when DataRestrict mode is
+     * enabled, modem will filter all the incoming data packet and route them to application
+     * processor only if filter rules added via addDataRestrictFilter API matches the criteria,
+     * else they are dropped at the modem itself and not forwarded to application processor.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
+     * permission to invoke this API successfully.
+     *
+     * @param [in] filter - Filter rule.
+     * @param [in] callback - Optional callback to get the response.
+     *
+     * @returns Status of addDataRestrictFilter i.e. success or suitable status
+     * code.
+     *
+     */
+    virtual telux::common::Status addDataRestrictFilter(
+        std::shared_ptr<IIpFilter> &filter,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * This API removes all the previously added powersave filter.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
+     * permission to invoke this API successfully.
+     *
+     * @param [in] callback - Optional callback to get the response.
+     *
+     * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status removeAllDataRestrictFilters(
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Get associated slot id for the Data Filter Manager.
+     *
+     * @returns SlotId
+     *
+     */
+    virtual SlotId getSlotId() = 0;
+
+    /**
+     * Checks the status of Data Filter Service and if the other APIs are ready for use,
+     * and returns the result.
+     *
+     * @returns  True if the services are ready otherwise false.
+     *
+     * @deprecated Use getServiceStatus API.
+     */
+    virtual bool isReady() = 0;
+
+    /**
+     * Wait for Data Filter Service to be ready.
+     *
+     * @returns  A future that caller can wait on to be notified when Data Filter Service
+     *           are ready.
+     *
+     * @deprecated Use InitResponseCb callback in factory API getDataFilterManager.
+     */
+    virtual std::future<bool> onReady() = 0;
 
     /**
      * Changes the Data Powersave filter mode and auto exit feature.
@@ -188,12 +260,15 @@ public:
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref setDataRestrictMode(DataRestrictMode, telux::common::ResponseCallback)
      */
     virtual telux::common::Status
     setDataRestrictMode(DataRestrictMode mode,
-                        telux::common::ResponseCallback callback = nullptr,
-                        int profileId = PROFILE_ID_MAX,
+                        telux::common::ResponseCallback callback,
+                        int profileId,
                         IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
+
     /**
      * Get the current Data Powersave filter mode
      *
@@ -204,10 +279,12 @@ public:
      *
      * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
      *
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref requestDataRestrictMode(DataRestrictModeCb)
+     *
      */
-    virtual telux::common::Status
-    requestDataRestrictMode(std::string ifaceName,
-                            DataRestrictModeCb callback) = 0;
+    virtual telux::common::Status requestDataRestrictMode(
+        std::string ifaceName, DataRestrictModeCb callback) = 0;
 
     /**
      * This API adds a filter rules for a packet data session to achieve power savings.
@@ -233,11 +310,14 @@ public:
      *
      * @returns Status of addDataRestrictFilter i.e. success or suitable status code.
      *
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref addDataRestrictFilter(std::shared_ptr<IIpFilter>&, telux::common::ResponseCallback)
      */
+
     virtual telux::common::Status
     addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
-                          telux::common::ResponseCallback callback = nullptr,
-                          int profileId = PROFILE_ID_MAX,
+                          telux::common::ResponseCallback callback,
+                          int profileId,
                           IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
 
     /**
@@ -259,18 +339,13 @@ public:
      *
      * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
      *
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref removeAllDataRestrictFilters(telux::common::ResponseCallback)
      */
     virtual telux::common::Status
-    removeAllDataRestrictFilters(telux::common::ResponseCallback callback = nullptr,
-                                 int profileId = PROFILE_ID_MAX,
+    removeAllDataRestrictFilters(telux::common::ResponseCallback callback,
+                                 int profileId,
                                  IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
-    /**
-     * Get associated slot id for the Data Filter Manager.
-     *
-     * @returns SlotId
-     *
-     */
-    virtual SlotId getSlotId() = 0;
 
     /**
      * Destructor of IDataFilterManager

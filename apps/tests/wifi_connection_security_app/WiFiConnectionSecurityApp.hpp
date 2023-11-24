@@ -46,7 +46,7 @@ class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener {
 
  public:
     void isTrustedAP(
-        std::string ssid, bool& isTrusted) override;
+        telux::sec::ApInfo apInfo, bool& isTrusted) override;
     void onReportAvailable(
         telux::sec::WiFiSecurityReport report) override;
     void onDeauthenticationAttack(
@@ -72,10 +72,14 @@ class WiFiConnectionSecurityApp : public ConsoleApp {
     void registerListener(void);
     void deregisterListener(void);
     void getTrustAPSelection(void);
+    void getTrustedApList(void);
+    void removeApFromTrustedList(void);
 
  private:
     std::shared_ptr<telux::sec::IWiFiSecurityManager> wifiConSecMgr_;
     std::shared_ptr<WiFiSecurityReportListener> reportListener_;
+
+    void getStringFromUser(const std::string promptToDisplay, std::string& userData);
 };
 
 #endif // CELLULARCONNECTIONSECURITYAPP_HPP

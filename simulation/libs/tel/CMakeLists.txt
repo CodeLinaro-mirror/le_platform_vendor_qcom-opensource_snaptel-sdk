@@ -5,6 +5,8 @@ configure_file("telux-tel.pc.in" "telux-tel.pc" @ONLY)
 
 set(TARGET_TEL_LIBRARY telux_tel)
 
+add_definitions(-DTELUX_TECH_AREA=6)
+
 set(PROTO_SRC_DIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}/proto-src)
 
 set(TEL_STUB_SOURCES

@@ -97,8 +97,8 @@ telux::common::Status CardFileHandlerStub::readEFLinearFixed(std::string filePat
         LOG(ERROR, __FUNCTION__, " app ready: ", appReady);
         return telux::common::Status::INVALIDSTATE;
     }
-    ::tel::ReadEFLinearFixedRequest request;
-    ::tel::ReadEFLinearFixedReply response;
+    ::telStub::ReadEFLinearFixedRequest request;
+    ::telStub::ReadEFLinearFixedReply response;
     ClientContext context;
 
     telux::tel::IccResult iccresult;
@@ -160,8 +160,8 @@ telux::common::Status CardFileHandlerStub::readEFLinearFixedAll(std::string file
         LOG(ERROR,  __FUNCTION__, " app ready: ", appReady);
         return telux::common::Status::INVALIDSTATE;
     }
-    ::tel::ReadEFLinearFixedAllRequest request;
-    ::tel::ReadEFLinearFixedAllReply response;
+    ::telStub::ReadEFLinearFixedAllRequest request;
+    ::telStub::ReadEFLinearFixedAllReply response;
     ClientContext context;
     std::vector<IccResult> records;
 
@@ -227,8 +227,8 @@ telux::common::Status CardFileHandlerStub::readEFTransparent(std::string filePat
         LOG(ERROR, __FUNCTION__, " app ready: ", appReady);
         return telux::common::Status::INVALIDSTATE;
     }
-    ::tel::ReadEFTransparentRequest request;
-    ::tel::ReadEFTransparentReply response;
+    ::telStub::ReadEFTransparentRequest request;
+    ::telStub::ReadEFTransparentReply response;
     ClientContext context;
 
     request.set_slot_id(slotId_);
@@ -289,8 +289,8 @@ telux::common::Status CardFileHandlerStub::writeEFLinearFixed(std::string filePa
         LOG(ERROR,  __FUNCTION__, " app ready: ", appReady);
         return telux::common::Status::INVALIDSTATE;
     }
-    ::tel::WriteEFLinearFixedRequest request;
-    ::tel::WriteEFLinearFixedReply response;
+    ::telStub::WriteEFLinearFixedRequest request;
+    ::telStub::WriteEFLinearFixedReply response;
     ClientContext context;
 
     request.set_slot_id(slotId_);
@@ -354,8 +354,8 @@ telux::common::Status CardFileHandlerStub::writeEFTransparent(std::string filePa
         LOG(ERROR,  __FUNCTION__, " app ready: ", appReady);
         return telux::common::Status::INVALIDSTATE;
     }
-    ::tel::WriteEFTransparentRequest request;
-    ::tel::WriteEFTransparentReply response;
+    ::telStub::WriteEFTransparentRequest request;
+    ::telStub::WriteEFTransparentReply response;
     ClientContext context;
 
     request.set_slot_id(slotId_);
@@ -421,9 +421,9 @@ telux::common::Status CardFileHandlerStub::requestEFAttributes(EfType efType,
         LOG(ERROR, __FUNCTION__, " Invalid EF type");
         return telux::common::Status::INVALIDPARAM;
     }
-    ::tel::EFAttributesRequest request;
-    ::tel::RequestEFAttributesReply response;
-    ::tel::EfType type = static_cast<::tel::EfType>(efType);
+    ::telStub::EFAttributesRequest request;
+    ::telStub::RequestEFAttributesReply response;
+    ::telStub::EfType type = static_cast<::telStub::EfType>(efType);
     ClientContext context;
 
     telux::tel::FileAttributes attributes;

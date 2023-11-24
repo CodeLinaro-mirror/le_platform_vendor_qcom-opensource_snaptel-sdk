@@ -3,7 +3,21 @@ Listening for incoming SMS {#listen_sms}
 
 This sample application demonstrates how to listen for an incoming SMS.
 
-### 1. Implement ISmsListener interface to receive incoming SMS
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
+
+   ~~~~~~{.cpp}
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << SmsManager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << SmsManager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
+   }
+   ~~~~~~
+
+### 2. Implement ISmsListener interface to receive incoming SMS
 
    ~~~~~~{.cpp}
    class MySmsListener : public ISmsListener {
@@ -17,43 +31,28 @@ This sample application demonstrates how to listen for an incoming SMS.
    }
    ~~~~~~
 
-### 2. Get the PhoneFactory and PhoneManager instances
+### 3. Get the PhoneFactory and default SmsManager instance
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 3. Check if telephony subsystem is ready
-
-   ~~~~~~{.cpp}
-   bool subSystemStatus = phoneManager->isSubsystemReady();
-   ~~~~~~
-
-### 4. Exit the application, if telephony subsystems can not be initialized
-
-   ~~~~~~{.cpp}
-   if(subSystemStatus) {
-      std::cout << " *** Subsystem Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      return 1;
+   std::shared_ptr<ISmsManager> smsMgr = phoneFactory.getSmsManager(initResponseCb);
+   if(smsMgr == NULL) {
+      std::cout << " Failed to get Sms Manager  instance" << std::endl;
+      return -1;
    }
    ~~~~~~
 
-### 5. Instantiate global ISmsListener
+### 4. Wait for SmsManager subsystem to be ready
 
    ~~~~~~{.cpp}
-   auto myPhoneListener = std::make_shared<MyPhoneListener>();
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Sms Manager subsystem << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 6. Get default SMS Manager instance
-
-   ~~~~~~{.cpp}
-   std::shared_ptr<ISmsManager> smsMgr = phoneFactory.getSmsManager();
-   ~~~~~~
-
-### 7. Register for incoming SMS
+### 5. Instantiate global ISmsListener and register for incoming SMS
 
    ~~~~~~{.cpp}
    auto mySmsListener = std::make_shared<MySmsListener>();
@@ -62,10 +61,10 @@ This sample application demonstrates how to listen for an incoming SMS.
    }
    ~~~~~~
 
-### 8. Wait for incoming SMS
+### 6. Wait for incoming SMS
 
    ~~~~~~{.cpp}
-   std::cout << " *** wait for MyPhoneListener::onIncomingSms() to be triggered*** " << std::endl;
+   std::cout << " *** wait for MySmsListener::onIncomingSms() to be triggered*** " << std::endl;
    std::cout << " *** Press enter to exit the application *** " << std::endl;
    std::string input;
    std::getline(std::cin, input);

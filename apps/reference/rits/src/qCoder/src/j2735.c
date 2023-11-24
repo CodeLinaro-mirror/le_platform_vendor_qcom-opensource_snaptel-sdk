@@ -1941,7 +1941,9 @@ static int decode_as_bsm(msg_contents *mc)
             */
 
         }
-
+    }else{ 
+        // zero out the data if no events, just in case so previous existing data is cleared
+        BSM_p->events.data = 0;
     }
 
     if (BSM_p->has_regional_extensions && ((last_byte_p - (uint8_t *)p8) > 0)) {

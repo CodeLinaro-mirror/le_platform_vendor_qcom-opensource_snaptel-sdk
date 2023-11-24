@@ -403,19 +403,25 @@ void NAOIpTrigger::stopServer() {
 
 bool NAOIpTrigger::loadConfig() {
     LOG(DEBUG, __FUNCTION__);
-    std::string triggerTxtSuspend, triggerTxtResume, triggerTxtShutdown;
-    triggerTxtSuspend = config_->getValue("NAOIP_TRIGGER", TRIGGER_SUSPEND);
-    triggerTxtResume = config_->getValue("NAOIP_TRIGGER", TRIGGER_RESUME);
-    triggerTxtShutdown = config_->getValue("NAOIP_TRIGGER", TRIGGER_SHUTDOWN);
-
-    if (triggerTxtSuspend == triggerTxtResume || triggerTxtSuspend == triggerTxtShutdown ||
-        triggerTxtResume == triggerTxtShutdown) {
-        LOG(ERROR, __FUNCTION__, " Error : same trigger text for multiple state");
+    std::map<std::string, TcuActivityState> expectedTrigger{
+        {TRIGGER_SUSPEND, TcuActivityState::SUSPEND},
+        {TRIGGER_RESUME, TcuActivityState::RESUME},
+        {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
+    try {
+        std::string configTriggerText = "";
+        for (auto itr = expectedTrigger.begin(); itr != expectedTrigger.end(); ++itr) {
+            configTriggerText = config_->getValue("NAOIP_TRIGGER", itr->first);
+            if (!configTriggerText.empty()) {
+                if (triggerText_.find(configTriggerText) != triggerText_.end()) {
+                    LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+                    return false;
+                }
+                triggerText_.insert({configTriggerText, itr->second});
+            }
+        }
+    } catch (const std::invalid_argument& ia) {
+        LOG(ERROR, __FUNCTION__, " Error : invalid argument");
         return false;
     }
-    triggerText_.insert({triggerTxtSuspend, TcuActivityState::SUSPEND});
-    triggerText_.insert({triggerTxtResume, TcuActivityState::RESUME});
-    triggerText_.insert({triggerTxtShutdown, TcuActivityState::SHUTDOWN});
-
     return true;
 }

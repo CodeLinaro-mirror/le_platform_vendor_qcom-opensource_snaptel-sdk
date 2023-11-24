@@ -150,6 +150,11 @@ public:
    static void resetWwanResponse(telux::common::ErrorCode error);
 };
 
+class MyConfigureSignalStrengthCallback {
+public:
+   static void configureSignalStrengthResponse(telux::common::ErrorCode error);
+};
+
 class MyPhoneHelper {
 public:
    static std::string operatingModeToString(telux::tel::OperatingMode operatingMode);

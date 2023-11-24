@@ -378,8 +378,6 @@ class IDataConnectionManager {
      * @returns Status of enableRoamingMode i.e. success or suitable status code.
      *           NO_NETWORK_FOUND error is returned if roaming is not enabled on profile id.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setRoamingMode(bool enable, uint8_t profileId,
         OperationType operationType, telux::common::ResponseCallback callback = nullptr) = 0;
@@ -393,8 +391,6 @@ class IDataConnectionManager {
      *
      * @returns Status of requestRoamingMode i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestRoamingMode(uint8_t profileId, OperationType operationType,
         requestRoamingModeResponseCb callback) = 0;

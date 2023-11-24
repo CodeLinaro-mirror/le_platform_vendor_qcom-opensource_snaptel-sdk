@@ -42,6 +42,7 @@ namespace loc {
 
 LocationConfiguratorStub::LocationConfiguratorStub() {
     LOG(DEBUG, __FUNCTION__);
+    managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
 std::future<bool> LocationConfiguratorStub::onSubsystemReady() {
@@ -66,7 +67,8 @@ bool LocationConfiguratorStub::isSubsystemReady() {
 
 telux::common::ServiceStatus LocationConfiguratorStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    return telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    std::lock_guard<std::mutex> lock(mutex_);
+    return managerStatus_;
 }
 
 telux::common::Status LocationConfiguratorStub::init(telux::common::InitResponseCb callback) {
@@ -81,23 +83,24 @@ telux::common::Status LocationConfiguratorStub::init(telux::common::InitResponse
 
 void LocationConfiguratorStub::initSync(telux::common::InitResponseCb callback) {
     int cbDelay = 100;
-    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
 
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         ErrorCode errorCode = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationConfigurator.json");
         if(errorCode == ErrorCode::SUCCESS) {
             cbDelay = rootNode["ILocationConfigurator"]["SubSystemReadinessDelay"].asInt();
-            serviceStatus = rootNode["ILocationConfigurator"]["SubSystemInit"].asBool() == true ? ServiceStatus::SERVICE_AVAILABLE : ServiceStatus::SERVICE_FAILED;
+            managerStatus_ = rootNode["ILocationConfigurator"]["SubSystemInit"].asBool() == true
+                ? ServiceStatus::SERVICE_AVAILABLE : ServiceStatus::SERVICE_FAILED;
         } else {
             LOG(ERROR, "Unable to read LocationConfigurator JSON");
         }
     }
 
-    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(serviceStatus));
+    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(managerStatus_));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    callback(serviceStatus);
+    callback(managerStatus_);
     cv_.notify_all();
 }
 

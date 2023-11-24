@@ -299,7 +299,7 @@ class ILocationConfigListener {
     /**
      * The API is invoked when there is any update in the Gnss Signal types supported by the modem.
      *
-     * When @ref ILocationConfigurator::configureConstellations is invoked,
+     * When @ref ILocationConfigurator::configureSecondaryBand is invoked,
      * the supported signals would be updated and notified via this listener API.
      *
      * Clients need to register for this indication

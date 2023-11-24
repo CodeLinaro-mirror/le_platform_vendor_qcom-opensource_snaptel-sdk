@@ -162,8 +162,6 @@ using ImsRegistrationInfoCb
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ref telux::common::ErrorCode.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using ImsServiceInfoCb
    = std::function<void(ImsServiceInfo service, telux::common::ErrorCode error)>;
@@ -206,8 +204,6 @@ public:
     *
     * @returns Status of requestServiceInfo i.e., success or suitable status code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
     virtual telux::common::Status
         requestServiceInfo(ImsServiceInfoCb callback) = 0;
@@ -273,8 +269,6 @@ public:
     * @param [in] service        Indicates which IMS service information has changed.
     *                            @ref telux::tel::ImsServiceInfo.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
     virtual void onImsServiceInfoChange(ImsServiceInfo service) {
     }

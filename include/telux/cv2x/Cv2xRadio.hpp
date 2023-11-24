@@ -334,8 +334,6 @@ public:
      *          SERVICE_UNAVAILABLE  -  If cv2x radio is temporarily unavailable.
      *          SERVICE_FAILED       -  If cv2x radio encountered an irrecoverable failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 

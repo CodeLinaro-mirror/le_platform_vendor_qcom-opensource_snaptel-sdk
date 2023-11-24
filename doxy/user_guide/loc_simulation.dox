@@ -1,0 +1,175 @@
+/**
+@page loc_simulation Location Simulation
+
+This section has details about the simulation for APIs under the telux::loc namespace.
+
+<br>
+- - -
+@section loc_overview Overview of Location Simulation
+- - -
+
+The location simulation framework provides the ability to record location data from an actual Telematics device.
+Applications using ILocationManager APIs will get reports from this recorded data.
+
+@anchor fig_loc_sim_overview
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{simulation_location_overview.PNG}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Location Simulation Framework}
+  \label{fig_loc_sim_overview}
+\end{figure}
+@endlatexonly
+
+@html_image{simulation_location_overview.png,"",50,50,Location Simulation Framework}
+
+<br>
+- - -
+@section loc_resp Configuring Location API responses
+- - -
+
+The framework allows responses to each API to be configured via a JSON file.<br>
+Each location manager has its own JSON configuration file. Clients can configure these files for:
+<br>
+<b>Location Manager:</b> configured via simulation/json/api/loc/ILocationManager.json
+<br>
+Example:
+
+### API command response for startBasicReports
+
+<pre>
+"startBasicReports": {
+    "callbackDelay": 400,
+    "error": "SUCCESS",
+    "status": "SUCCESS"
+},
+</pre>
+
+<b>Location Configurator:</b> configured via simulation/json/api/loc/ILocationConfigurator.json
+<br>
+Example:
+
+### API command response for configureRobustLocation
+
+<pre>
+"configureRobustLocation": {
+    "callbackDelay": 400,
+    "error": "SUCCESS",
+    "status": "SUCCESS"
+},
+</pre>
+
+<b>Dgnss Manager:</b> configured via simulation/json/api/loc/IDgnssManager.json
+<br>
+Example:
+
+### API command response for createSource
+
+<pre>
+"createSource": {
+    "callbackDelay": 400,
+    "status": "SUCCESS"
+},
+</pre>
+
+<br>
+- - -
+@section loc_events Support for location reports and notifications
+- - -
+
+Currently, only the following APIs can be invoked using data from the prerecorded files:<br>
+1. Basic Location Reports <br>
+2. Detailed Location Reports<br>
+
+The remaining APIs only provide canned data in their invocation.
+Future releases will add support for providing data from the prerecorded file for the following APIs-
+1. NMEA Reports <br>
+2. SV Reports <br>
+3. Measurements Reports <br>
+4. Jammer Reports <br>
+
+
+Location SystemInfo Reports -- Canned response generated from within the LocationManagerStub whenever the client registers for the event for the first time.<br>
+Future releases will support periodic triggers dynamically.
+
+<br>
+Xtra Updates -- Canned response generated from within the LocationConfiguratorStub whenever the Xtra feature is enabled or disabled.
+Future releases will support periodic triggers dynamically.
+
+<br>
+- - -
+@section loc_csv Format of location reports
+- - -
+
+The location simulation has the ability to provide PVT data to clients that is
+prerecorded/captured from the target device in the form of a CSV.
+
+<b>Reports captured via CSV currently:</b>
+<br>
+Basic location and Detailed PVT Location report.
+Other reports such as NMEA, SV, Measurements, and Jammer provide canned responses.
+
+<b>Data representation:</b>
+1. Each row of the CSV represents a complete iteration of the report at time interval T.
+2. The order in which the fields for every row are represented are as per:
+simulation/libs/loc/PRE-RECORDED_LOCATION_DATA.csv
+
+<b>Data reporting:</b>
+1. Let us assume the CSV provided to the simulation has 25,000 rows.
+2. Once the client begins a PVT session, each row from the CSV is sent to the client
+as an iteration after every 100 ms.
+3. SDK provides the automatic replay feature .i.e, if the PVT session is still ongoing and
+all the rows in the CSV are iterated, the library provides data again from the first row.
+
+<b>Client usage:</b>
+1. By default, CSV based reports are enabled under the tel.conf file.
+The CSV file is present by default under - ${ROOTFS}/data/telux/csv/PRE-RECORDED_LOCATION_DATA.csv.
+2. Clients can configure the retrieval of reports via tel.conf by modifying the following fields:
+<br>
+<b>REPORT_SIMULATION_TYPE</b>
+<br>
+<b>LOCATION_REPORT_FILE_NAME</b>
+<br>
+Clients are requested to refer to the documentation of these fields under tel.conf for further usage.
+
+<br>
+- - -
+@section loc_rec Recording utility for Location Reports
+- - -
+
+The goal of the recording utility is to capture the location reports running on the target device
+so that the collected data can be used for the off-target SDK simulation.
+
+<b>Reports supported by the recording utility currently: </b>
+<br>
+Basic location and Detailed PVT Location report.
+
+<b>Data representation:</b>
+1. Each iteration of the PVT report is represented by a string containing the PVT fields
+separated by a comma(,).
+2. The order in which the fields for every row are represented are as per:
+simulation/libs/loc/PRE-RECORDED_LOCATION_DATA.csv
+
+
+<b>The tool to capture data is provided under:</b>
+<br>
+simulation/recording_simulation.sh
+<br>
+simulation/recording_simulation.bat
+
+<b>Client usage:</b>
+1. Connect the target to the PC.
+2. Ensure that adb is available and restart adb as root by running "adb root".
+3. Run the recording_simulation script and capture the data in a CSV file.
+
+<br>
+- - -
+@section loc_linm Limitations
+- - -
+
+1. CSV report handling and recording is only supported for Basic and Detailed PVT Location at a fixed interval of 100 ms.<br>
+2. Events like Xtra data updation/Location system info updation are not being triggered asynchronously.<br>
+3. Dgnss report injection is not supported.<br>
+
+*/

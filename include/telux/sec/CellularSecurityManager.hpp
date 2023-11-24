@@ -193,13 +193,13 @@ enum class ActionType {
     NONE,
 
     /**
-     *  Priotity of this cell for selection is reduced so that other cells get more priority
+     *  Priority of this cell for selection is reduced so that other cells get more priority
      *  for cell selection/reselection during device attempting to camp to a cell.
      */
     DEPRIORITIZED,
 
     /**
-     *  Priotity of this cell (previously deprioritized) for selection is resumed to regular
+     *  Priority of this cell (previously deprioritized) for selection is resumed to regular
      *  status.
      */
     REMOVED_DEPRIORITIZATION,
@@ -309,7 +309,7 @@ struct SessionStats {
     uint32_t reportsCount;
 
     /**
-     *  Number of times hostile score threshold was crosssed. This count depends on
+     *  Number of times hostile score threshold was crossed. This count depends on
      *  the value of the threshold configured in the platform. This count increments
      *  each time the threat score increases beyond this threshold.
      */

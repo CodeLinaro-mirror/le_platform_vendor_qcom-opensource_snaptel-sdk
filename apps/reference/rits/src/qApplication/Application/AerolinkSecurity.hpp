@@ -145,11 +145,14 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
         int VerifyMsg(const SecurityOpt opt);
+        int asyncVerify(
+            Kinematics hvKine, Kinematics rvKine,
+            MisbehaviorStats* misbehaviorStat, void* asyncCbData ,ValidateCallback callBackFunction) override;
         static int setSecCurrLocation(Kinematics* hvKine);
+        static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;
-
         ~AerolinkSecurity() {
             deinit();
         }
@@ -166,10 +169,6 @@ class AerolinkSecurity : public SecurityService {
        int syncVerify(
             Kinematics hvKine, Kinematics rvKine,
             VerifStats *verifStat, MisbehaviorStats* misbehaviorStat);
-
-        int asyncVerify(
-            Kinematics hvKine, Kinematics rvKine,
-            sem_t   *queue_sem, MisbehaviorStats* misbehaviorStat);
 
         SecuredMessageGeneratorC smg_;
         SecuredMessageParserC smp_;

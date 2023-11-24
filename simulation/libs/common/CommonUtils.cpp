@@ -1,8 +1,9 @@
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
  *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
+#include <algorithm>
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
@@ -309,6 +310,44 @@ telux::common::ServiceStatus CommonUtils::mapServiceStatus(std::string status) {
     } else {
         return telux::common::ServiceStatus::SERVICE_FAILED;
     }
+}
+
+std::vector<std::string> CommonUtils::splitString(const std::string &s, char delim) {
+    std::vector<std::string> elements;
+    std::istringstream ss(s);
+    std::string token;
+
+    while(std::getline(ss, token, delim)) {
+        // remove the trailing spaces
+        token.erase(std::remove(token.begin(),token.end(),' '),token.end());
+        if(!token.empty()) {
+            elements.push_back(token);
+        }
+    }
+    return elements;
+}
+
+std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
+    std::stringstream ss;
+    for (std::size_t i = 0; i < bytes.size(); i++)
+    {
+        if(toHex) {
+            ss << std::hex << static_cast<int>(bytes[i]);
+        } else {
+            ss << static_cast<int>(bytes[i]) << " ";
+        }
+    }
+    return ss.str();
+}
+
+std::vector<int> CommonUtils::convertStringToVector(std::string input) {
+    std::stringstream iss( input );
+    int parsednum;
+    std::vector<int> myNumbers;
+    while ( iss >> parsednum ) {
+        myNumbers.push_back( parsednum );
+    }
+    return myNumbers;
 }
 }  // namespace common
 }  // namespace telux

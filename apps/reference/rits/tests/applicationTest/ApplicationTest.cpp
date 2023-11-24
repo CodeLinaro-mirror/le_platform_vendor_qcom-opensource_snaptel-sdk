@@ -1250,6 +1250,10 @@ int setup(const bool tx, const bool rx,
         } else {
             threads.push_back(thread(transmit, msgType));
             threads.push_back(thread(transmitEventMsg));
+            // wait some time for congestion control to activate (if enabled)
+            if(application->configuration.enableCongCtrl){
+                usleep(500000);
+            }
         }
     }
 

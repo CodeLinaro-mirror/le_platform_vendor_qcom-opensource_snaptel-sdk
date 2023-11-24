@@ -102,6 +102,12 @@ public:
         return -1;
     }
 
+    int asyncVerify(Kinematics hvKine, Kinematics rvKine,MisbehaviorStats* misbehaviorStat,void* asyncCbData, ValidateCallback callBackFunction)
+    {
+        std::cout << "NULL security asyncVerify() " << std::endl;
+        return -1;
+    }
+
     int idChange() {return 0;};
     int lockIdChange() {return 0;};
     int unlockIdChange() {return 0;};

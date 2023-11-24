@@ -28,5 +28,6 @@ $ make_call_app /data/make_call_app.conf
 - @subpage cellular_connection_security
 - @subpage wifi_connection_security
 - @subpage wlan
+- @subpage diag
 
 */

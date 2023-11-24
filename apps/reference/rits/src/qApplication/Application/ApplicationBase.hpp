@@ -114,6 +114,8 @@
 #define DEFAULT_BSM_PSID    32
 #define MAX_PADDING_LEN     1000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
+#define PP_BUFFER_MAX_SIZE 4096
+#define SHARED_BUFFER_MAX_SIZE 1024
 
 using telux::cv2x::Priority;
 using namespace std;
@@ -140,6 +142,21 @@ enum class MessageType {
 enum class TxRxType {
     TX,
     RX
+};
+
+typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
+
+struct asyncCbData_t{
+    int indexToData;
+    bool verifSuccess;
+    AsyncCbState AsyncState=FREE;
+    signed int   Latitude;      // Degrees * 10^7
+    signed int   Longitude;     // Degrees * 10^7
+    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
+    unsigned int Speed;                     // value (in kmph) * 250/18
+    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+    unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
+    unsigned int tmpId;
 };
 
 struct Config{
@@ -193,6 +210,7 @@ struct Config{
     uint32_t distance3D = 0;
     bool qMonEnabled = false;
     uint32_t packetError = 0;
+    uint8_t leapSeconds = 18;
     /** Simulation config */
     bool enableUdp = false;
     string ipv4_src;
@@ -241,6 +259,7 @@ struct Config{
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
     bool enableLocationFixes = true;
+    bool enableDistanceLogs = false;
     bool enableVehicleDataCallbacks = true;
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;
@@ -252,7 +271,7 @@ struct Config{
     string wsaInfoFile;
     uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
     /** Pseudonym/ID Change */
-    string lcmName = "";
+    string lcmName;
     unsigned int idChangeInterval = 0;
     /** Misbehavior Stats Parameters */
     bool enableMbd = false;
@@ -280,6 +299,12 @@ struct Config{
 
     string congestionControlConfigFileName = "CongestionControlConfig.conf";
     bool enableCongCtrl = false; // flag to override actual mvm capacity for testing purposes
+    bool positionOverride = false;
+    double overrideLat = 0.0;
+    double overrideLong = 0.0;
+    double overrideHead = 0.0;
+    double overrideElev = 0.0;
+    double overrideSpeed = 0.0;
 };
 
 /* Congestion Control CongestionControl Data */
@@ -391,6 +416,8 @@ public:
     struct timeval endRxIntervalTime;
     QMonitor* qMon = nullptr;
     QMonitor::Configuration* qMonConfig = nullptr;
+
+    asyncCbData_t asyncCbData[SHARED_BUFFER_MAX_SIZE];
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
@@ -625,13 +652,23 @@ public:
     shared_ptr<Cv2xTmListener> cv2xTmListener;
 
     // congestion variables that we'd want the driver program to access
-    static CongestionControlUserData congCtrlCbData;
+    static shared_ptr<CongestionControlUserData> congCtrlCbDataPtr;
+    static CongestionControlCalculations congCtrlCbData;
     static shared_ptr<ICongestionControlManager> congestionControlManager;
     static bool cbSuccess;
     static bool congCtrlEnabled;
     static bool securityEnabled;
+    static bool positionOverride;
+    static double overrideLat;
+    static double overrideLong;
+    static double overrideHead;
+    static double overrideElev;
+    static double overrideSpeed;
+    static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
+    static bool securityInitialized;
 
 protected:
+    static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
     bool isRx = false;
     bool isTxSim = false;

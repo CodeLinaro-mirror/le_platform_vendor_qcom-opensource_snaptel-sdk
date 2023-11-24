@@ -76,7 +76,10 @@ class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener {
             deauthenticationInfo.threatScore << std::endl;
     }
 
-    void isTrustedAP(std::string ssid, bool& isTrusted) {
+    void isTrustedAP(telux::sec::ApInfo apInfo, bool& isTrusted) {
+        std::cout << "ssid  : " << apInfo.ssid  << std::endl;
+        std::cout << "bssid : " << apInfo.bssid << std::endl;
+
         /* In this example we always trust the AP */
         isTrusted = true;
     }
@@ -118,7 +121,7 @@ int main(int argc, char **argv) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     /* Step - 6 */
-    ec = wifiConSecMgr->deRegisterListener(reportListener);
+    ec = wifiConSecMgr->deregisterListener(reportListener);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't deregister listener, err " << static_cast<int>(ec) << std::endl;
         return -EIO;

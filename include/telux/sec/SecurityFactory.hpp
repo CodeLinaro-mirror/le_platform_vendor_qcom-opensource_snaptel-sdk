@@ -80,9 +80,6 @@ class SecurityFactory {
      * cryptographic operations requiring elliptic-curve cryptography (ECC)
      * verifications and calculations.
      *
-     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoAcceleratorManager is
-     *                created successfully, otherwise, an appropriate error code
-     *
      * Providing ICryptoAcceleratorListener instance is mandatory when using
      * Mode::MODE_ASYNC_LISTENER. It is not required with modes, Mode::MODE_SYNC and
      * Mode::MODE_ASYNC_POLL for cryptographic operations.
@@ -97,6 +94,12 @@ class SecurityFactory {
      * Passing listener determines whether an application is also interested in SSR
      * updates in addition to cryptographic results or not.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_SEC_ACCELERATOR_MGR
+     * permission to invoke this API successfully.
+     *
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoAcceleratorManager is
+     *                created successfully, otherwise, an appropriate error code
+     *
      * @param[in] mode Defines how users obtain verification and calculation results
      *
      * @param[in] cryptoAccelListener Optional, listener for ECC signature verification
@@ -104,8 +107,6 @@ class SecurityFactory {
      *
      * @returns ICryptoAcceleratorManager instance
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ICryptoAcceleratorManager> getCryptoAcceleratorManager(
       telux::common::ErrorCode &ec, Mode mode,

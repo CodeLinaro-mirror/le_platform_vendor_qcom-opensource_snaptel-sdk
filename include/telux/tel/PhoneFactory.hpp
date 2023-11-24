@@ -352,8 +352,6 @@ class PhoneFactory {
     *
     * @returns Pointer of ISuppServicesManager object.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
       SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;

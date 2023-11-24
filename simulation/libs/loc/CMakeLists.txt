@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
 set(TARGET_LOCATION_LIBRARY telux_loc)
 
+add_definitions(-DTELUX_TECH_AREA=4)
+
 set(LOCATION_TEST_LIB_SOURCES
     LocationFactoryStub.cpp
     LocationManagerStub.cpp

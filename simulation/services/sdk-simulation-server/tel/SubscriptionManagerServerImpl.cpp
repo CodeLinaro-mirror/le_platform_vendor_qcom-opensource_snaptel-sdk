@@ -42,63 +42,71 @@ SubscriptionManagerServerImpl::SubscriptionManagerServerImpl() {
     readJson();
 }
 
-void SubscriptionManagerServerImpl::readJson() {
+grpc::Status SubscriptionManagerServerImpl::readJson() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error =
         JsonParser::readFromJsonFile(rootObj, PATH);
     if (error != ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
+    return grpc::Status::OK;
 }
 grpc::Status SubscriptionManagerServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request, tel::GetServiceStatusReply* response) {
+    const google::protobuf::Empty* request, commonStub::GetServiceStatusReply* response) {
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        int cbDelay = rootObj["ISubscriptionManager"]["IsSubsystemReadyDelay"].asInt();
+        std::string cbStatus =
+            rootObj["ISubscriptionManager"]["IsSubsystemReady"].asString();
+        telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
 
-    int cbDelay = rootObj["ISubscriptionManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["ISubscriptionManager"]["IsSubsystemReady"].asString();
-    telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
-
-    response->set_service_status(static_cast<tel::ServiceState>(status));
-    if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.registerListener(shared_from_this(), "tel_sub");
+        response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
+        if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            auto &eventManager = telux::common::EventManager::getInstance();
+            eventManager.registerListener(shared_from_this(), "tel_sub");
+        }
+        response->set_delay(cbDelay);
     }
-    response->set_delay(cbDelay);
-    return grpc::Status::OK;
+    return readStatus;
 }
 
 grpc::Status SubscriptionManagerServerImpl::GetServiceStatus(ServerContext* context,
-    const google::protobuf::Empty* request, tel::GetServiceStatusReply* response) {
+    const google::protobuf::Empty* request, commonStub::GetServiceStatusReply* response) {
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        int cbDelay = rootObj["ISubscriptionManager"]["IsSubsystemReadyDelay"].asInt();
+        std::string cbStatus =
+            rootObj["ISubscriptionManager"]["IsSubsystemReady"].asString();
+        telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
 
-    int cbDelay = rootObj["ISubscriptionManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["ISubscriptionManager"]["IsSubsystemReady"].asString();
-    telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
-
-    response->set_service_status(static_cast<tel::ServiceState>(status));
-    response->set_delay(cbDelay);
-    return grpc::Status::OK;
+        response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
+        response->set_delay(cbDelay);
+    }
+    return readStatus;
 }
 
 grpc::Status SubscriptionManagerServerImpl::IsSubsystemReady(ServerContext* context,
-    const google::protobuf::Empty* request, tel::IsSubsystemReadyReply* response) {
-
-    bool status = false;
-    std::string IsSubsystemReady = rootObj["ISubscriptionManager"]\
-        ["IsSubsystemReady"].asString();
-    telux::common::ServiceStatus servstatus = CommonUtils::mapServiceStatus(IsSubsystemReady);
-    if(servstatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        status = true;
+    const google::protobuf::Empty* request, commonStub::IsSubsystemReadyReply* response) {
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        bool status = false;
+        std::string IsSubsystemReady = rootObj["ISubscriptionManager"]\
+            ["IsSubsystemReady"].asString();
+        telux::common::ServiceStatus servstatus = CommonUtils::mapServiceStatus(IsSubsystemReady);
+        if(servstatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            status = true;
+        }
+        response->set_is_ready(status);
     }
-    response->set_is_ready(status);
-    return grpc::Status::OK;
+    return readStatus;
 }
 grpc::Status SubscriptionManagerServerImpl::GetSubscription(ServerContext* context,
-    const ::tel::GetSubscriptionRequest* request, tel::Subscription* response) {
+    const ::telStub::GetSubscriptionRequest* request, telStub::Subscription* response) {
     LOG(DEBUG, __FUNCTION__);
 
     int slotId = request->phone_id();

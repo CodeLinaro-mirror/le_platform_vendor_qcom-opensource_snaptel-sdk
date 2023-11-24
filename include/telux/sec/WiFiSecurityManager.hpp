@@ -52,7 +52,7 @@ namespace sec {
  * @{ */
 
 /**
- *  Result of the security analysis for a given AP.
+ *  Security analysis result for a given access point (AP).
  */
 enum class AnalysisResult {
 
@@ -63,7 +63,7 @@ enum class AnalysisResult {
     NO_RESULT,
 
     /**
-     *  This is the first time this AP is used for connection. No previous
+     *  This is the first time this AP is used for a connection and no previous
      *  references exist.
      */
     NEW_ASSOCIATION,
@@ -80,14 +80,13 @@ enum class AnalysisResult {
 };
 
 /**
- *  Result of the threat analysis done by the machine learning algorithm
- *  per access point.
+ *  Machine learning algorithm threat analysis result per AP.
  */
 struct MLAlgorithmAnalysis {
 
     /**
-     *  The higher the score higher the possibility this is a malicious AP.
-     *  Range is 0 to 100.
+     *  Higher threat scores indicate a higher possibility that
+     *  the AP is malicious; range is 0 to 100.
      */
     uint32_t threatScore;
 
@@ -98,7 +97,7 @@ struct MLAlgorithmAnalysis {
 };
 
 /**
- *  Threat analysis result from summoning attack's perspective.
+ *  Summoning attack threat analysis result.
  */
 struct SummoningAnalysis {
 
@@ -109,7 +108,7 @@ struct SummoningAnalysis {
 };
 
 /**
- *  Represents security report for a WiFi access point.
+ *  Represents the security report for a Wi-Fi AP.
  */
 struct WiFiSecurityReport {
 
@@ -129,17 +128,17 @@ struct WiFiSecurityReport {
     bool isConnectedToAP;
 
     /**
-     *  True if any device can connect to this AP without authentication.
+     *  True if devices can connect to this AP without authentication.
      */
     bool isOpenAP;
 
     /**
-     *  Result of the threat analysis done by the machine learning algorithm.
+     *  Machine learning algorithm threat analysis result.
      */
     MLAlgorithmAnalysis mlAlgorithmAnalysis;
 
     /**
-     *  Threat analysis result from summoning attack's perspective.
+     *  Summoning attack threat analysis result.
      */
     SummoningAnalysis summoningAnalysis;
 };
@@ -150,8 +149,8 @@ struct WiFiSecurityReport {
 struct DeauthenticationInfo {
 
     /**
-     *  Reason code why disassociation or deauthentication occurred as specified
-     *  by the IEEE 802.11 standard.
+     *  Reason code why disassociation or deauthentication occurred
+     *  as specified by the IEEE 802.11 standard.
      */
     int deauthenticationReason;
 
@@ -161,27 +160,42 @@ struct DeauthenticationInfo {
     bool didAPInitiateDisconnect;
 
     /**
-     *  The higher the score higher the possibility this is a deauthentication
-     *  attack. Range is 0 to 100.
+     *  Higher threat scores indicate a higher possibility that this
+     *  is a deauthentication attack; range is 0 to 100.
      */
     uint32_t threatScore;
 };
 
 /**
- *  Receives security analysis reports for the WiFi access points detected during
- *  scanning for APs in the vicinity. It also provides listener for deauthentication
- *  attack.
+ *  Represents a WiFi access point.
+ */
+struct ApInfo {
+    /**
+     *  Network interface name of the AP.
+     */
+    std::string ssid;
+
+    /**
+     *  MAC address of the AP.
+     */
+    std::string bssid;
+};
+
+/**
+ *  Receives security analysis reports for the Wi-Fi APs detected while
+ *  scanning for APs in the vicinity and provides a listener for deauthentication
+ *  attacks.
  */
 class IWiFiReportListener {
 
  public:
     /**
-     * This is invoked when the implementation completes a threat analysis. This analysis
-     * is performed at various triggers, for e.g. when a scan for APs is triggered the
-     * implementation will perform an analysis and provide a report for every AP it sees
+     * Notifies that the implementation completed a threat analysis and that the report is available
+     * This analysis is performed at various triggers, for example, when a scan for APs is triggered
+     * the implementation will perform an analysis and provide a report for every AP it sees
      * in the vicinity.
      *
-     * @param[in] report @Ref WiFiSecurityReport result of the WiFi security analysis
+     * @param[in] report @Ref WiFiSecurityReport result of the Wi-Fi security analysis.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -189,9 +203,9 @@ class IWiFiReportListener {
     virtual void onReportAvailable(WiFiSecurityReport report) { }
 
     /**
-     * Invoked to inform a deauthentication attack is mounted.
+     * Notifies that a deauthentication attack is identified.
      *
-     * @param[in] deauthenticationInfo @Ref DeauthenticationInfo security analysis information
+     * @param[in] deauthenticationInfo @Ref DeauthenticationInfo security analysis information.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -199,50 +213,53 @@ class IWiFiReportListener {
     virtual void onDeauthenticationAttack(DeauthenticationInfo deauthenticationInfo) { }
 
     /**
-     * Invoked to confirm from user that the given AP is trusted. This is called only once
+     * Gets user confirmation that the given AP is trusted. This is called only once
      * when the device connects to this AP for the very first time. If the application
-     * trusts given access point, it should set 'isTrusted' to true otherwise false.
+     * trusts the given AP, it should set 'isTrusted' to True. Otherwise it should be set to false.
      *
-     * Once the users confirms that an AP is trusted, this information will be used by
-     * the implementation on future connections and scans to detect threats like evil
-     * twin attack.
+     * Once the users confirms that an AP is trusted, this information is saved internally
+     * and used later to detect threats like evil twin attacks.
      *
-     * On platforms with access control enabled, caller needs to have TELUX_SEC_WCS_CONFIG
-     * permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_CONFIG
+     * permission to successfully invoke this API.
      *
-     * @param[in] isTrusted true if trusted false otherwise
+     * @param[in] accessPoint @ref ApInfo provides information about an AP.
+     *
+     * @param[in] isTrusted True if trusted; false otherwise.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual void isTrustedAP(std::string ssid, bool& isTrusted) { }
+    virtual void isTrustedAP(ApInfo accessPoint, bool& isTrusted) { }
 
     /**
-     * Destructor for IWiFiReportListener.
+     * IWiFiReportListener destructor.
      */
     virtual ~IWiFiReportListener() { }
 };
 
 /**
- * Provides support for detecting, monitoring and generating security report for
- * WiFi access points.
+ * Provides support for detecting, monitoring, and generating security reports for
+ * Wi-Fi APs.
  */
 class IWiFiSecurityManager {
 
  public:
 
    /**
-    * Registers given listener to receive WiFi connection security report.
+    * Registers the given listener to receive Wi-Fi connection security reports. These
+    * reports will be received by @ref IWiFiReportListener::onReportAvailable().
     *
-    * On platforms with access control enabled, caller needs to have TELUX_SEC_WCS_REPORT
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_REPORT
+    * permission to successfully invoke this API.
     *
-    * @ref IWiFiReportListener::onWiFiReportAvailable()
-    *
-    * @param [in] reportListener Receives security reports
+    * @param [in] reportListener Receives security reports.
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is registered,
-    *          otherwise, an appropriate error code
+    *          otherwise, an appropriate error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
     */
    virtual telux::common::ErrorCode registerListener(
         std::weak_ptr<IWiFiReportListener> reportListener) = 0;
@@ -250,19 +267,55 @@ class IWiFiSecurityManager {
    /**
     * Unregisters the given listener registered previously with @ref registerListener().
     *
-    * On platforms with access control enabled, caller needs to have TELUX_SEC_WCS_REPORT
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_REPORT
+    * permission to successfully invoke this API.
     *
-    * @param [in] reportListener Listener to unregister
+    * @param [in] reportListener Listener to unregister.
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is deregistered,
-    *          otherwise, an appropriate error code
+    *          otherwise, an appropriate error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
     */
-   virtual telux::common::ErrorCode deRegisterListener(
+   virtual telux::common::ErrorCode deregisterListener(
         std::weak_ptr<IWiFiReportListener> reportListener) = 0;
 
    /**
-    * Destructor of IWiFiSecurityManager. Cleans up as applicable.
+    * Lists all the trusted APs.
+    *
+    * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_INFO
+    * permission to successfully invoke this API.
+    *
+    * @param [in] trustedAPList List of trusted APs ( @ref ApInfo ).
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS, if the list is retrived otherwise,
+    *          an appropriate error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode getTrustedApList(std::vector<ApInfo>& trustedAPList) = 0;
+
+   /**
+    * Removes the given AP from the saved list of trusted APs. If the device connects to the same
+    * AP again, @IWiFiReportListener::isTrustedAP() will be invoked again.
+    *
+    * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_CONFIG
+    * permission to successfully invoke this API.
+    *
+    * @param [in] apInfo AP to distrust ( @ref ApInfo ).
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS, if the AP is distrusted otherwise,
+    *          an appropriate error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode removeApFromTrustedList(ApInfo apInfo) = 0;
+
+   /**
+    * IWiFiSecurityManager destructor; cleans up as applicable.
     */
    virtual ~IWiFiSecurityManager() {};
 };

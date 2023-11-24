@@ -32,21 +32,8 @@ PartOf=cv2x.target
 
 [Service]
 Type=simple
-Environment=AEROLINK_CONFIG_DIR=/data/aerolink/%i/config
-Environment=AEROLINK_STATE_DIR=/data/aerolink/%i/state
-ExecStartPre=+/bin/sh -c 'if [ %i == ieee ]; then \
-	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-aca.cert; \
-	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-ica.cert; \
-	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-root.cert; \
-	elif [ %i == etsi ]; then \
-	certadm add /data/aerolink/etsi/state/certificates/etsi-demo-aa.cert; \
-	certadm add /data/aerolink/etsi/state/certificates/etsi-demo-root.cert; \
-	elif [ %i == ccsa ]; then \
-	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-ica.cert; \
-	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-pca.cert; \
-	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-root.cert; \
-	fi'
-ExecStart=/usr/bin/qits -r /etc/ObeConfig.conf
+EnvironmentFile = /etc/qits_env_file
+ExecStart=/usr/bin/qits $PARAMETER1 $PARAMETER2 /etc/ObeConfig.conf
 TimeoutStartSec=30
 RestartSec=1
 StartLimitBurst=1000

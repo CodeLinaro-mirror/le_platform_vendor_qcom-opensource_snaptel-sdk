@@ -207,8 +207,6 @@ class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener 
      *
      * @param[in] resultData Contains the r' (computed r-component of the signature)
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onVerificationResult(uint32_t uniqueId, telux::common::ErrorCode errorCode,
         std::vector<uint8_t> resultData) { }
@@ -229,8 +227,6 @@ class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener 
      *                       to 47 contains x-coordinate, and byte from 48 to 95 contains
      *                       y-coordinate.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onCalculationResult(uint32_t uniqueId, telux::common::ErrorCode errorCode,
         std::vector<uint8_t> resultData) { }
@@ -286,8 +282,6 @@ class ICryptoAcceleratorManager {
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the data is sent to the
      *          accelerator, otherwise an appropriate error code
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode eccPostDigestForVerification(
                 const DataDigest& digest,
@@ -329,8 +323,6 @@ class ICryptoAcceleratorManager {
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the data is sent to the
      *          accelerator, otherwise an appropriate error code
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode ecqvPostDataForMultiplyAndAdd(
                 const ECCPoint& multiplicandPoint,
@@ -365,8 +357,6 @@ class ICryptoAcceleratorManager {
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the result(s) are obtained
      *          successfully, otherwise an appropriate error code
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getAsyncResults(std::vector<OperationResult>& results,
                 uint32_t numResultsToRead, int32_t timeout, uint32_t& numResultsRead) = 0;
@@ -399,8 +389,6 @@ class ICryptoAcceleratorManager {
      *          verification completed and signature was invalid, an appropriate error
      *          code in all other cases
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode eccVerifyDigest(
                 const DataDigest& digest,
@@ -448,8 +436,6 @@ class ICryptoAcceleratorManager {
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the calculation succeeded, otherwise
      *          an appropriate error code
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode ecqvPointMultiplyAndAdd(
                 const ECCPoint& multiplicandPoint,
@@ -479,8 +465,6 @@ class ResultParser {
      * @returns Unique identifier associated with the result. This is the same as what was
      *          passed in request
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     static uint32_t getId(const OperationResult& result);
 
@@ -493,8 +477,6 @@ class ResultParser {
      * @returns Operation type - OperationType::OP_TYPE_VERIFY for signature verification,
      *                           OperationType::OP_TYPE_CALCULATE for point calculation.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     static OperationType getOperationType(const OperationResult& result);
 
@@ -510,8 +492,6 @@ class ResultParser {
      *          @ref telux::common::ErrorCode::SUCCESS, if the calculation succeeded, an
      *          appropriate error code in all other cases
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     static telux::common::ErrorCode getErrorCode(const OperationResult& result);
 
@@ -524,8 +504,6 @@ class ResultParser {
      *
      * @returns Error code - telux::common::ErrorCode::* as obtained from the accelerator
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     static telux::common::ErrorCode getCAErrorCode(const OperationResult& result);
 
@@ -538,8 +516,6 @@ class ResultParser {
      * @returns Pointer to the data, For ECC verification contains r-prime, For ECQV
      *          calculatio contains coordinates
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     static uint8_t *getData(OperationResult& result);
 };

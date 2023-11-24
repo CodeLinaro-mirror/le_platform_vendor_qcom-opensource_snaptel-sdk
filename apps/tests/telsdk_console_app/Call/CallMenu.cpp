@@ -215,12 +215,12 @@ void CallMenu::dial(std::vector<std::string> userInput) {
          return;
       }
    }
-    AudioClient &audioClient = AudioClient::getInstance();
-    if (audioClient.isReady()) {
+    static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+    if (audioClient->isReady()) {
         bool audioState = queryAudioState();
         std::cout << "Audio enablement status is : " << audioState << std::endl;
         if (audioState) {
-            audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+            audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
         }
     }
     telux::common::Status makeCallStatus
@@ -299,12 +299,12 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
       }
    }
     if(spCall) {
-        AudioClient &audioClient = AudioClient::getInstance();
-        if (audioClient.isReady()) {
+        static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+        if (audioClient->isReady()) {
             int phoneId = spCall->getPhoneId();
             bool audioState = queryAudioState();
             if (audioState) {
-                audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+                audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
             }
         }
         spCall->answer(myAnswerCb_);
@@ -575,11 +575,11 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
       }
    }
    if(spCall) {
-        AudioClient &audioClient = AudioClient::getInstance();
-        if (audioClient.isReady()) {
+        static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+        if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
             if (queryMuteState(MUTE)) {
-                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
+                audioClient->setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
             }
         }
       spCall->hold(myHoldCb_);
@@ -777,11 +777,11 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
       }
    }
    if(spCall) {
-        AudioClient &audioClient = AudioClient::getInstance();
-        if (audioClient.isReady()) {
+        static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+        if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
             if (queryMuteState(UNMUTE)) {
-                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
+                audioClient->setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
             }
         }
       spCall->resume(myResumeCb_);
@@ -942,10 +942,10 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
 }
 
 void CallMenu::enableAudio(std::vector<std::string> userInput) {
-    AudioClient &audioClient = AudioClient::getInstance();
-    if (!audioClient.isReady()) {
+    static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+    if (!audioClient->isReady()) {
         std::cout << "Initializing Audio Subsystem...." << std::endl;
-        auto status = audioClient.init();
+        auto status = audioClient->init();
         if (status == telux::common::Status::SUCCESS) {
             std::cout << "Audio Subsystem Initialized." << std::endl;
         } else {

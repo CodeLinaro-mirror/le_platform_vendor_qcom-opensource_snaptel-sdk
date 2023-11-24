@@ -149,8 +149,6 @@ using EcbmStatusCallback
  * @param [out] error         @ref ErrorCode
  * @param [out] timeDuration  Represents the time duration for the HLAP timer.
  *
- * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
- *           break backwards compatibility.
  */
 using ECallHlapTimerCallback
    = std::function<void(telux::common::ErrorCode error, uint32_t timeDuration)>;
@@ -169,8 +167,6 @@ public:
     *          SERVICE_UNAVAILABLE  -  If CallManager is temporarily unavailable.
     *          SERVICE_FAILED       -  If CallManager encountered an irrecoverable failure.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -312,8 +308,6 @@ public:
     *
     * @returns Status of makeECall i.e. success or suitable status code.
     *
-    * @note  Eval: This is a new API and is being evaluated. It is subject to
-    *        change and could break backwards compatibility.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
       const std::vector<uint8_t> &msdPdu,
@@ -635,8 +629,6 @@ public:
     *
     * @returns Status of hangupWaitingOrBackground i.e. success or suitable error code.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status hangupWaitingOrBackground(int phoneId,
       common::ResponseCallback callback = nullptr)
@@ -685,8 +677,6 @@ public:
     *
     * @returns Status of requestNetworkDeregistration request, i.e., success or suitable error code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
     virtual telux::common::Status requestNetworkDeregistration(int phoneId,
         common::ResponseCallback callback = nullptr) = 0;
@@ -709,8 +699,6 @@ public:
     *
     * @returns Status of updateEcallHlapTimer i.e., success or suitable error code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status updateEcallHlapTimer(int phoneId, HlapTimerType type,
        uint32_t timeDuration, common::ResponseCallback callback = nullptr) = 0;
@@ -730,8 +718,6 @@ public:
     *
     * @returns Status of requestEcallHlapTimer i.e., success or suitable error code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status requestEcallHlapTimer(int phoneId, HlapTimerType type,
        ECallHlapTimerCallback callback) = 0;
@@ -751,8 +737,6 @@ public:
     *
     * @returns Status of setECallConfig i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status setECallConfig(EcallConfig config) = 0;
 
@@ -767,8 +751,6 @@ public:
     *
     * @returns Status of getECallConfig i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status getECallConfig(EcallConfig &config) = 0;
 

@@ -64,10 +64,6 @@
         {
             "smscAddress" : "8989888222"
         },
-        "requestStorageDetails" :
-        {
-            "requestStorageDetailsCb_maxCount" : 10
-        },
         "setPreferredStorage" :
         {
             "storageType" : "SIM"

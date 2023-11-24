@@ -65,8 +65,8 @@ std::string CardAppStub::getAppId()  {
 telux::common::Status CardAppStub::changeCardPassword(CardLockType lockType, std::string oldPwd,
     std::string newPwd, PinOperationResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::ChangePinLockRequest request;
-    ::tel::ChangePinLockReply response;
+    ::telStub::ChangePinLockRequest request;
+    ::telStub::ChangePinLockReply response;
     bool IsCardInfoChanged = false;
     telux::common::Status status = telux::common::Status::FAILED;
     ClientContext context;
@@ -77,7 +77,7 @@ telux::common::Status CardAppStub::changeCardPassword(CardLockType lockType, std
         LOG(DEBUG, "Send request to change pin");
 
         request.set_phone_id(slotId_);
-        ::tel::CardLockType type = static_cast<::tel::CardLockType>(lockType);
+        ::telStub::CardLockType type = static_cast<::telStub::CardLockType>(lockType);
         request.set_lock_type(type);
         request.set_old_pin(oldPwd);
         request.set_new_pin(newPwd);
@@ -152,12 +152,12 @@ telux::common::Status CardAppStub::unlockCardByPuk(CardLockType lockType, std::s
 
     if(lockType == CardLockType::PUK1 || lockType == CardLockType::PUK2) {
         LOG(DEBUG, "Send request to unlock pin");
-        ::tel::UnlockByPukRequest request;
-        ::tel::UnlockByPukReply response;
+        ::telStub::UnlockByPukRequest request;
+        ::telStub::UnlockByPukReply response;
         ClientContext context;
 
         request.set_phone_id(slotId_);
-        ::tel::CardLockType type = static_cast<::tel::CardLockType>(lockType);
+        ::telStub::CardLockType type = static_cast<::telStub::CardLockType>(lockType);
         request.set_lock_type(type);
         request.set_puk(puk);
         request.set_new_pin(newPin);
@@ -207,12 +207,12 @@ telux::common::Status CardAppStub::unlockCardByPin(CardLockType lockType, std::s
 
     if(lockType == CardLockType::PIN1 || lockType == CardLockType::PIN2) {
         LOG(DEBUG, "Send request to unlock pin");
-        ::tel::UnlockByPinRequest request;
-        ::tel::UnlockByPinReply response;
+        ::telStub::UnlockByPinRequest request;
+        ::telStub::UnlockByPinReply response;
         ClientContext context;
 
         request.set_phone_id(slotId_);
-        ::tel::CardLockType type = static_cast<::tel::CardLockType>(lockType);
+        ::telStub::CardLockType type = static_cast<::telStub::CardLockType>(lockType);
         request.set_lock_type(type);
         request.set_pin(pin);
         std::string appId = getAppId();
@@ -261,8 +261,8 @@ void CardAppStub::invokeCallback(QueryPin1LockResponseCb callback,
 }
 
 telux::common::Status CardAppStub::queryPin1LockState(QueryPin1LockResponseCb callback) {
-    ::tel::QueryPin1LockRequest request;
-    ::tel::QueryPin1LockReply response;
+    ::telStub::QueryPin1LockRequest request;
+    ::telStub::QueryPin1LockReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -300,8 +300,8 @@ void CardAppStub::invokeCallback( bool isavailable, bool isenabled,
 }
 
 telux::common::Status CardAppStub::queryFdnLockState(QueryFdnLockResponseCb callback) {
-    ::tel::QueryFdnLockRequest request;
-    ::tel::QueryFdnLockReply response;
+    ::telStub::QueryFdnLockRequest request;
+    ::telStub::QueryFdnLockReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -351,11 +351,11 @@ telux::common::Status CardAppStub::setCardLock(CardLockType lockType, std::strin
         return telux::common::Status::FAILED;
     }
 
-    ::tel::SetCardLockRequest request;
-    ::tel::SetCardLockReply response;
+    ::telStub::SetCardLockRequest request;
+    ::telStub::SetCardLockReply response;
     ClientContext context;
     request.set_phone_id(slotId_);
-    ::tel::CardLockType type = static_cast<::tel::CardLockType>(lockType);
+    ::telStub::CardLockType type = static_cast<::telStub::CardLockType>(lockType);
     request.set_lock_type(type);
     request.set_pwd(password);
     request.set_enable(isEnabled);

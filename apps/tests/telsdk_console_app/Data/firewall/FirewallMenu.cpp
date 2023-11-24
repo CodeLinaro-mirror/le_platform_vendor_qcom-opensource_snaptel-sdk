@@ -259,12 +259,15 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
     } else {
         firewallConfig.enable = false;
     }
-    int allowPacketsFlag;
-    std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
-    std::cin >> allowPacketsFlag;
-    Utils::validateInput(allowPacketsFlag,  {0, 1});
-    if (allowPacketsFlag) {
-        firewallConfig.allowPackets = true;
+
+    if (firewallConfig.enable) {
+        int allowPacketsFlag;
+        std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
+        std::cin >> allowPacketsFlag;
+        Utils::validateInput(allowPacketsFlag,  {0, 1});
+        if (allowPacketsFlag) {
+            firewallConfig.allowPackets = true;
+        }
     } else {
         firewallConfig.allowPackets = false;
     }
@@ -835,12 +838,16 @@ void FirewallMenu::displayFirewallEntry() {
                 std::cout << "SRC Addr : Any" << std::endl;
             } else {
                 std::cout << "SRC Addr : " << ipv6Info.srcAddr << std::endl;
+                std::cout << "SRC Addr prefix length : "
+                          << (uint32_t)ipv6Info.srcPrefixLen << std::endl;
             }
 
             if (ipv6Info.destAddr.empty()) {
                 std::cout << "DST Addr : Any" << std::endl;
             } else {
                 std::cout << "DST Addr : " << ipv6Info.destAddr << std::endl;
+                std::cout << "DST Addr prefix length : "
+                          << (uint32_t)ipv6Info.dstPrefixLen << std::endl;
             }
 
             if (!ipv6Info.val) {

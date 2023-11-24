@@ -66,4 +66,7 @@ add_subdirectory(tests/)
 if(WITH_SYSTEMD)
     install(FILES scripts/qits@.service
             DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
+
+    install(FILES scripts/qits_env_file
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../etc/)
 endif()

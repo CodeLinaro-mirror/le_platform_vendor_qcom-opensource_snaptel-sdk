@@ -69,6 +69,13 @@
  * @brief      This class performs error code to string conversion.
  */
 
+extern "C" {
+#include <sys/capability.h>
+#include <sys/prctl.h>
+#include <pwd.h>
+}
+
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <grp.h>
@@ -426,6 +433,53 @@ int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
     std::copy(existingGidList.begin(), existingGidList.end(), newGidList);
     ret = setgroups(gidListSize, newGidList);
     return ret;
+}
+
+telux::common::ErrorCode Utils::changeUser(std::string userName,
+    std::unordered_set<int8_t>& caps) {
+    if (userName.empty()) {
+        return telux::common::ErrorCode::MISSING_ARG;
+    }
+    /*Get user id by supplied user name*/
+    struct passwd *p;
+    if ((p = getpwnam(userName.c_str())) == NULL) {
+        return telux::common::ErrorCode::MISSING_RESOURCE;
+    }
+
+    /*Allow retain capabilities in its permitted set when switches to non root user*/
+    prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+
+    /*Switch to specified user*/
+    if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) == -1) {
+        return telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if (caps.empty()) {
+        return telux::common::ErrorCode::SUCCESS;
+    }
+    /*Retain necessary capabilities for the new user*/
+    struct __user_cap_header_struct header = {0};
+    /* V3 supported since Linux 2.6.26 */
+    header.version = _LINUX_CAPABILITY_VERSION_3;
+
+    struct __user_cap_data_struct capSet[CAP_TO_INDEX(CAP_LAST_CAP) + 1] = {0};
+    bool hasValidCaps = false;
+    for (auto& cap : caps) {
+        if (cap_valid(cap)) {
+            hasValidCaps = true;
+            capSet[CAP_TO_INDEX(cap)].effective |= CAP_TO_MASK(cap);
+            capSet[CAP_TO_INDEX(cap)].permitted |= CAP_TO_MASK(cap);
+        }
+    }
+
+    if (hasValidCaps) {
+        if (capset(&header, &capSet[0]) == -1) {
+            return telux::common::ErrorCode::NO_PERMISSION;
+        }
+    } else {
+        return telux::common::ErrorCode::NO_SUCH_ELEMENT;
+    }
+    return telux::common::ErrorCode::SUCCESS;
 }
 
 void Utils::printStatus(telux::common::Status status) {

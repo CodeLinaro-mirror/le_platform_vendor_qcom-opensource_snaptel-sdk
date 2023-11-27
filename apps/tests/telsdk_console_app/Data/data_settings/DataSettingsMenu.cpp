@@ -93,6 +93,8 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::requestMacSecState, this, std::placeholders::_1)),
             std::make_pair("Switch_Backhaul",
             std::bind(&DataSettingsMenu::switchBackHaul, this, std::placeholders::_1)),
+            std::make_pair("Restore_Factory_Settings",
+            std::bind(&DataSettingsMenu::restoreFactorySettings, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -625,6 +627,42 @@ void DataSettingsMenu::requestMacSecState(std::vector<std::string> inputCommand)
     };
 
     retStat = dataSettingsManagerMap_[opType]->requestMacSecState(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::restoreFactorySettings(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    int operationType;
+    std::cout << "Restore Network Settings To Factory\n";
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    int rebootNeeded;
+    std::cout << "Trigger reboot after factory reset? (0-NO, 1-YES): ";
+    std::cin >> rebootNeeded;
+    DataUtils::validateInput(rebootNeeded, {0, 1});
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "\nData Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    std::cout << std::endl;
+    auto respCb = [](telux::common::ErrorCode error)
+    {
+        std::cout << std::endl;
+        std::cout << "CALLBACK: "
+                  << "restoreFactorySettings Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->restoreFactorySettings(
+        opType, respCb, static_cast<bool>(rebootNeeded));
     Utils::printStatus(retStat);
 }
 

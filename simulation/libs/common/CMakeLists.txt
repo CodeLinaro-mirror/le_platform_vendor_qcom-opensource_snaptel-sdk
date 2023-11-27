@@ -25,7 +25,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_library (${TARGET_COMMON_LIBRARY} SHARED version.cpp AsyncTaskQueue.hpp DeviceConfig.cpp
     Logger.cpp event-manager/EventParserUtil.cpp event-manager/EventManager.cpp JsonParser.cpp
-    SimulationConfigParser.cpp CsvHandler.cpp ResponseHandler.cpp CommonUtils.cpp)
+    SimulationConfigParser.cpp CsvHandler.cpp ResponseHandler.cpp CommonUtils.cpp Utils.cpp)
 
 target_link_libraries(${TARGET_COMMON_LIBRARY}
     jsoncpp

@@ -109,9 +109,10 @@ public:
         Cv2xDaemon & cv2xDaemon = Cv2xDaemon::getInstance();
         LOGD("System state change notification\n");
 
-        std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
         cv2xDaemon.setSystemState(tcuState);
-        cv2xDaemon.cv_.notify_all();
+        if (cv2xDaemon.notify(Cv2xEvent::POWER_CHANGE) <= 0) {
+            LOGE("cv2xDaemon.notify error\n");
+        }
     }
 };
 
@@ -338,17 +339,8 @@ Status Cv2xDaemon::deInit() {
 }
 
 void terminationHandler(int signum) {
-
-    LOGE("Got signal %d, tearing down all services\n",signum );
-
-    Cv2xDaemon::getInstance().deInit();
-    if( SIG_DFL != NULL ){
-        signal(signum, SIG_DFL);
-    }
-    raise(signum);
     exiting_ = true;
-    Cv2xDaemon::getInstance().cv_.notify_all();
-
+    Cv2xDaemon::getInstance().notify(Cv2xEvent::TERMINATE);
 }
 
 void Cv2xDaemon::setupSignalHandler() {
@@ -464,14 +456,40 @@ Status Cv2xDaemon::parseArguments(int argc, char **argv) {
 Cv2xDaemon::Cv2xDaemon()
 : daemonMode_(0), startV2x_(0), stopV2x_(0) {
     cv2xTelux_ = std::make_shared<Cv2xTelux>();
+    msgPipe_[0] = -1;
+    msgPipe_[1] = -1;
+    if (pipe(msgPipe_) == -1) {
+        LOGE("pipe error\n");
+    }
 }
 
 Cv2xDaemon::~Cv2xDaemon() {
+    if (msgPipe_[0] >= 0) {
+        close(msgPipe_[0]);
+    }
+    if (msgPipe_[1] >= 0) {
+        close(msgPipe_[1]);
+    }
 }
 
 Cv2xDaemon & Cv2xDaemon::getInstance() {
     static Cv2xDaemon instance;
     return instance;
+}
+
+int Cv2xDaemon::notify(Cv2xEvent event) {
+    if (not exiting_) {
+        return write(msgPipe_[1], &event, sizeof(Cv2xEvent));
+    }
+    return 0;
+}
+
+Cv2xEvent Cv2xDaemon::wait() {
+    Cv2xEvent event = Cv2xEvent::UNKNOWN;
+    if (read(msgPipe_[0], &event, sizeof(Cv2xEvent)) <= 0) {
+        return Cv2xEvent::UNKNOWN;
+    }
+    return event;
 }
 
 std::vector<gid_t> getGidByName(std::vector<std::string> names) {
@@ -537,18 +555,18 @@ int main(int argc, char **argv) {
 #ifdef WITH_SYSTEMD
         sd_notify(0, "READY=1");
 #endif
-        while (1) {
-            std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
-            cv2xDaemon.cv_.wait(lock);
-
-            if (true == exiting_) {
+        while (!exiting_) {
+            Cv2xEvent event = cv2xDaemon.wait();
+            if (Cv2xEvent::TERMINATE == event) {
                 break;
             }
-
-            cv2xDaemon.handleSystemStateChange();
+            else if (Cv2xEvent::POWER_CHANGE == event) {
+                cv2xDaemon.handleSystemStateChange();
+            }
         }
-    } else {
-        cv2xDaemon.deInit();
     }
+
+    LOGE("terminating\n");
+    cv2xDaemon.deInit();
     return 0;
 }

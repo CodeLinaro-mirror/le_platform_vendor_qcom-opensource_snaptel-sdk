@@ -52,13 +52,16 @@ using namespace telux::power;
  *
  */
 
+enum class Cv2xEvent {
+    POWER_CHANGE = 0,
+    TERMINATE = 1,
+    UNKNOWN
+};
+
 class Cv2xDaemon{
 
     public:
         ~Cv2xDaemon();
-
-        std::mutex mutex_;
-        std::condition_variable cv_;
 
         /**
          * static function to get Cv2xDaemon Instance
@@ -132,6 +135,16 @@ class Cv2xDaemon{
          */
         TcuActivityState getSystemState();
 
+        /**
+         * Notify single one who is waiting that a Cv2xEvent occur
+         */
+        int notify(Cv2xEvent event);
+
+        /**
+         * Blocking wait Cv2xEvent occur
+         */
+        Cv2xEvent wait();
+
     private:
         Cv2xDaemon();
 
@@ -148,5 +161,6 @@ class Cv2xDaemon{
         std::shared_ptr<Cv2xTelux> cv2xTelux_;
         std::shared_ptr<telux::power::ITcuActivityManager> sysStateMgr_;
         std::shared_ptr<telux::power::ITcuActivityListener> sysStateListener_;
+        int msgPipe_[2];
 };
 #endif

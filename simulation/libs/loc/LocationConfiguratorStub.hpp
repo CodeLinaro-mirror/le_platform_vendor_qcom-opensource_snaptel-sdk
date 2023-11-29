@@ -44,8 +44,18 @@
 
 #include "telux/loc/LocationConfigurator.hpp"
 #include "../common/AsyncTaskQueue.hpp"
+#include "../common/event-manager/EventManager.hpp"
+#include "../common/event-manager/EventParserUtil.hpp"
 #include <set>
 #include <map>
+
+#include <grpcpp/grpcpp.h>
+#include "../../protos/proto-src/loc.grpc.pb.h"
+
+using grpc::Channel;
+using grpc::ClientContext;
+
+using locStub::LocationConfiguratorService;
 
 namespace telux {
 
@@ -57,7 +67,9 @@ namespace loc {
  * configureRobustLocation, configureMinGpsWeek, requestMinGpsWeek, deleteAidingData.
  * ILocationConfigurator APIs strictly adheres to the principle of single client per process.
  */
-class LocationConfiguratorStub : public ILocationConfigurator {
+class LocationConfiguratorStub :public ILocationConfigurator,
+                                public IEventListener,
+                                public std::enable_shared_from_this<LocationConfiguratorStub>{
 public:
 
 /**
@@ -716,6 +728,8 @@ public:
  */
     void cleanup();
 
+    void onEventUpdate(std::string event) override;
+
 /**
  * Destructor of ILocationConfigurator
  */
@@ -724,11 +738,15 @@ private:
   void getAvailableListeners(uint32_t indication,
     std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
   void invokeXtraStatusUpdate();
+  void invokeGnssConstellationUpdate();
   bool xtraEnabled_;
   uint32_t registrationMask_ = 0;
-
   bool waitForInitialization();
   void initSync(telux::common::InitResponseCb callback);
+  void handleEvent(std::string token , std::string event);
+  void handleXtraUpdateEvent(std::string event);
+  void handleGnssConstellationUpdateEvent(std::string event);
+  void updateRegistrationMask(uint32_t indication);
 
     /** std::weak_ptr doesn't support relational operators. Need to use a binary predicate. */
     struct SetPredicate {
@@ -756,6 +774,8 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     telux::common::ServiceStatus managerStatus_;
+    std::weak_ptr<telux::loc::LocationConfiguratorStub> myself_;
+    std::unique_ptr<::locStub::LocationConfiguratorService::Stub> stub_;
 };
 
 } // end of namespace loc

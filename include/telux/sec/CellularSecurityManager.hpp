@@ -395,6 +395,9 @@ class ICellularSecurityManager {
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is registered,
     *          otherwise, an appropriate error code
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject
+    *             to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode registerListener(
         std::weak_ptr<ICellularScanReportListener> reportListener) = 0;
@@ -409,6 +412,9 @@ class ICellularSecurityManager {
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is deregistered,
     *          otherwise, an appropriate error code
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject
+    *             to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode deRegisterListener(
         std::weak_ptr<ICellularScanReportListener> reportListener) = 0;
@@ -429,6 +435,9 @@ class ICellularSecurityManager {
     *
     * @returns Status @ref telux::common::ErrorCode::SUCCESS, if the stats are fetched
     *                 successfully, otherwise, an appropriate error code
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject
+    *             to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode getCurrentSessionStats(SessionStats& sessionStats) = 0;
 

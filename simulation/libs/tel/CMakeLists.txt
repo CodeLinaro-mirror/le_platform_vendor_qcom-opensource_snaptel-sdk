@@ -26,6 +26,7 @@ set(TEL_STUB_SOURCES
     SimProfile.cpp
     PhoneManagerStub.cpp
     PhoneStub.cpp
+    CellBroadcastManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

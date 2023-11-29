@@ -73,8 +73,6 @@
 #include <cstdint>
 #include <string>
 #include <semaphore.h>
-#include "viicsec.h"
-#include "MisbehaviorData.h"
 
 const uint8_t NO_KEY_GEN=0;
 const uint8_t ASYMMETRIC_KEY_GEN=1;
@@ -194,7 +192,6 @@ public:
     */
     virtual int VerifyMsg(const SecurityOpt opt) = 0;
 
-    virtual int asyncVerify(Kinematics hvKine, Kinematics rvKine,MisbehaviorStats* misbehaviorStat,void* asyncCbData, ValidateCallback callBackFunction) = 0;
     /**
     * Method to alert Aerolink to initiate and complete a cert/id change.
     * The application should update the rest of the related parameters such

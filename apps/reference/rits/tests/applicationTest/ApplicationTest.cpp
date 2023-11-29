@@ -1151,13 +1151,14 @@ int setup(const bool tx, const bool rx,
         printUse();
         return 0;
     }
-
+#ifndef SIM_BUILD
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
                           << std::to_string(sdkVersion.minor) << "."
                           << std::to_string(sdkVersion.patch) << std::endl <<
                           "Release name: " << sdkReleaseName << std::endl;
+#endif
     sem_init(&cnt_sem, 0, 1);
     MessageType msgType = MessageType::BSM;
 
@@ -1423,20 +1424,22 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
+#ifndef SIM_BUILD
     std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
     }
-
+#endif
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGHUP);
     sigaddset(&sigset, SIGINT);
     sigaddset(&sigset, SIGTERM);
+#ifndef SIM_BUILD
     SignalHandlerCb cb = (SignalHandlerCb)signalHandler;
     SignalHandler::registerSignalHandler(sigset, cb);
-
+#endif
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;

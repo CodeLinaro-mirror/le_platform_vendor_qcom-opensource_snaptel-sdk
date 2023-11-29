@@ -1,9 +1,8 @@
 {
     "ILocationManager": {
-        "DefaultCallbackDelay": 400,
-        "SubSystemInit": true,
-        "SubSystemStatus" : "AVAILABLE",
-        "SubSystemReadinessDelay": 500,
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400,
         "requestEnergyConsumedInfo": {
             "error" : "SUCCESS",
             "status": "SUCCESS"
@@ -15,13 +14,10 @@
         "getCapabilities": {
             "capabilities": 32
         },
-        "stopReports": {
-            "error" : "SUCCESS",
-            "status": "SUCCESS"
-        },
         "getTerrestrialPosition": {
             "callbackDelay": 40000,
-            "status": "SUCCESS"
+            "status": "SUCCESS",
+            "error" : "SUCCESS"
         },
         "cancelTerrestrialPositionRequest": {
             "error" : "SUCCESS",

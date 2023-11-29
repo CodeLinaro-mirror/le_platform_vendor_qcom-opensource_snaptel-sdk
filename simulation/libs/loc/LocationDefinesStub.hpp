@@ -42,6 +42,17 @@
 namespace telux {
 namespace loc {
 
+#define DEFAULT_DELIMITER " "
+const std::string LOC_CONFIG = "loc_config";
+const std::string XTRA_DATA_STATUS = "xtra_status";
+const std::string CONSTELLATION_UPDATE = "constellation_update";
+
+enum class LocEventType {
+    UNKNOWN = -1,
+    XTRA_DATA_UPDATE = 0,
+    CONSTELLATION_UPDATE = 1
+};
+
 class LocationInfoBase : public ILocationInfoBase {
     uint32_t locationInfoValidity_ = 0;
     uint32_t locationTechnology_ = 0;

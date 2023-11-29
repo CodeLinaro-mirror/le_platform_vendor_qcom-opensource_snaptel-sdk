@@ -836,7 +836,6 @@ int AerolinkSecurity::syncVerify(
     {
         if(secVerbosity > 4)
             fprintf(stderr,"Unable to set generation location (%s)\n", ws_errid(result));
-        return -1;
     }
 
     if(secVerbosity > 7) {

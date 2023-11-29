@@ -89,8 +89,10 @@ private:
     void makeConnection();
     void updateApiResponse(std::string message);
 
+    bool serverConnected_ = false;
     bool exiting_ = false;
     int clientSocket_;
+    std::mutex connectionMutex_;
     std::mutex listenerMutex_;
     std::mutex exitingMutex_;
     std::unordered_map<std::string, std::vector<std::weak_ptr<IEventListener>>> listeners_;

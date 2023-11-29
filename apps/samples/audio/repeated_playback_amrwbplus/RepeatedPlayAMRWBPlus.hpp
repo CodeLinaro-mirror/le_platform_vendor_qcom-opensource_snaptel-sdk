@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,41 +32,31 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values.
- */
+#include <condition_variable>
+#include <telux/audio/AudioPlayer.hpp>
 
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+class RepeatedPlayAMRWBPlus : public telux::audio::IPlayListListener {
 
-#include <map>
-#include <string>
+ public:
+    bool playStarted_ = false;
+    bool playStopped_ = false;
+    bool playFinished_ = false;
+    bool errorOccurred_ = false;
 
-#define DEFAULT_CONFIG_FILE_NAME "SampleAppConfig.conf"
-#define DEFAULT_CONFIG_FILE_PATH "/etc"
+    std::mutex playMutex_;
+    std::condition_variable playCV_;
 
-/*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value of a configured settings
- */
-class ConfigParser {
-public:
-  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
-                    std::string configFilePath = DEFAULT_CONFIG_FILE_PATH);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::string key);
+    int init();
+    int start(std::shared_ptr<RepeatedPlayAMRWBPlus> statusListener);
+    int wait();
+    int stop();
 
-private:
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
+    void onPlaybackStarted() override;
+    void onPlaybackStopped() override;
+    void onPlaybackFinished() override;
+    void onFilePlayed(std::string file) override;
+    void onError(telux::common::ErrorCode error, std::string file) override;
 
-  // Get the path where config file is located
-  std::string getConfigFilePath();
-
-  // Hashmap to store all settings as key-value pairs
-  std::map<std::string, std::string> configMap_;
+ private:
+    std::shared_ptr<telux::audio::IAudioPlayer> audioPlayer_;
 };
-
-#endif // CONFIGPARSER_HPP

@@ -43,6 +43,7 @@
 #include <telux/sec/CryptoManager.hpp>
 #include <telux/sec/CryptoAcceleratorManager.hpp>
 #include <telux/sec/CAControlManager.hpp>
+#include <telux/sec/RandomNumberManager.hpp>
 
 namespace telux {
 namespace sec {
@@ -131,6 +132,26 @@ class SecurityFactory {
      */
     virtual std::shared_ptr<ICAControlManager> getCAControlManager(
        telux::common::ErrorCode &ec) = 0;
+
+    /**
+     * Provides an IRandomNumberManager instance that can be used to generate random
+     * number/data.
+     *
+     * @param[in] generatorSource Random number generator source to use
+     *
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if the IRandomNumberManager is
+     *                created successfully, telux::common::ErrorCode::INCOMPATIBLE_STATE
+     *                if the platform has been configured to use a RNG that does not
+     *                correspond to the RNGSource passed to the API, otherwise, an
+     *                appropriate error code.
+     *
+     * @returns IRandomNumberManager instance
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual std::shared_ptr<IRandomNumberManager> getRandomNumberManager(
+       RNGSource generatorSource, telux::common::ErrorCode &ec) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

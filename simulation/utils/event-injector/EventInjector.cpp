@@ -211,7 +211,7 @@ Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
 
 Status EventInjector::sendMessage(std::string filter, std::string event) {
     Status ret = Status::SUCCESS;
-    std::string reformattedString = FILTER_FLAG + " " + filter + " " + EVENT_FLAG  + " " + event;
+    std::string reformattedString = FILTER_FLAG + " " + filter + " " + EVENT_FLAG  + " " + event + "\n";
 
     LOG(DEBUG, __FUNCTION__, " String being sent to SDK is: ", reformattedString);
     write(clientSocket_, reformattedString.c_str(), reformattedString.length());

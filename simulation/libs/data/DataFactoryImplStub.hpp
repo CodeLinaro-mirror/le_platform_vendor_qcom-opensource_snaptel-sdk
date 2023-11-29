@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -39,18 +39,21 @@
  *
  */
 
-#ifndef DataFactoryImplStubSTUB_HPP
-#define DataFactoryImplStubSTUB_HPP
+#ifndef DATA_FACTORY_IMPL_STUB_HPP
+#define DATA_FACTORY_IMPL_STUB_HPP
 
 #include <memory>
+#include <map>
 
 #include <telux/data/DataFactory.hpp>
-#include "../common/Logger.hpp"
+#include "../common/AsyncTaskQueue.hpp"
+#include "../common/FactoryHelper.hpp"
 
 namespace telux {
 namespace data {
 
-class DataFactoryImplStub : public DataFactory {
+class DataFactoryImplStub : public DataFactory,
+                            public telux::common::FactoryHelper {
  public:
     static DataFactory &getInstance();
 
@@ -105,9 +108,19 @@ class DataFactoryImplStub : public DataFactory {
     DataFactoryImplStub();
     ~DataFactoryImplStub();
 
+    void initCompleteNotifierWithSlotId(
+        std::map<SlotId, std::vector<telux::common::InitResponseCb>> &initCbs,
+        telux::common::ServiceStatus status, SlotId slotId);
+
+    std::map<SlotId, std::weak_ptr<IDataProfileManager>> dataProfileManagerMap_;
+    std::map<SlotId, std::weak_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
+    std::map<SlotId, std::weak_ptr<IServingSystemManager>> dataServingSystemManagerMap_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;
 };
 
 }  // namespace data
 }  // namespace telux
 
-#endif  // DataFactoryImplStub_HPP
+#endif  // DATA_FACTORY_IMPL_STUB_HPP

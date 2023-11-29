@@ -404,9 +404,6 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
         if (decode_msg(mc.get()) >= 0) {
             mc->decoded = true;
         }
-
-        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, 
-            mc->decoded, timestamp, 0);
     }
     return ret;
 }

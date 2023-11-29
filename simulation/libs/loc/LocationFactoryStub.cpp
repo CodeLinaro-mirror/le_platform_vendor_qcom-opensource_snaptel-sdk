@@ -126,8 +126,8 @@ std::shared_ptr<ILocationManager> LocationFactoryStub::getLocationManager(
     telux::common::InitResponseCb callback) {
     std::shared_ptr<LocationManagerStub> locationManager = std::make_shared<LocationManagerStub>();
     if (locationManager) {
-        Status status = locationManager->init(callback);
-        if (status != Status::SUCCESS) {
+        telux::common::Status status = locationManager->init(callback);
+        if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, "Failed to initialize the manager");
             return nullptr;
         }
@@ -149,8 +149,8 @@ std::shared_ptr<ILocationConfigurator> LocationFactoryStub::getLocationConfigura
         }
         auto initCb = std::bind(&LocationFactoryStub::onGetConfiguratorResponse, this,
             std::placeholders::_1);
-        Status status = locationConfigurator->init(initCb);
-        if (status != Status::SUCCESS) {
+        telux::common::Status status = locationConfigurator->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, "Failed to initialize the manager");
             locConfigurator_ = nullptr;
             return nullptr;
@@ -189,8 +189,8 @@ std::shared_ptr<IDgnssManager> LocationFactoryStub::getDgnssManager(DgnssDataFor
         }
         auto initCb = std::bind(&LocationFactoryStub::onGetDgnssManagerResponse, this,
             std::placeholders::_1);
-        Status status = dgnssManager->init(initCb);
-        if (status != Status::SUCCESS) {
+        telux::common::Status status = dgnssManager->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, "Failed to initialize the manager");
             return nullptr;
         }

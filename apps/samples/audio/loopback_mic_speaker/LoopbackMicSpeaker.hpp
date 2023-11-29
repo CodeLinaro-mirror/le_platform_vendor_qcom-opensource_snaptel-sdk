@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,36 +32,18 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DATASUBSYSTEMSTUB_HPP
-#define DATASUBSYSTEMSTUB_HPP
+#include <telux/audio/AudioManager.hpp>
 
-#include <memory>
-#include <thread>
+class LoopbackMicSpeaker {
 
-#include <telux/common/CommonDefines.hpp>
-#include <telux/data/DataDefines.hpp>
-#include "../common/Logger.hpp"
-#include "../common/SimulationConfigParser.hpp"
+ public:
+    int init();
+    int createLoopbackStream();
+    int deleteLoopbackStream();
+    int startLoopback();
+    int stopLoopback();
 
-#define DEFAULT_DATA_STUB_CONFIG_FILE_PATH "."
-#define DEFAULT_DATA_STUB_CONFIG_FILE_NAME "DataStub.conf"
-
-
-class DataSubSystemStub {
-    public:
-    /**
-     * Get DataSubSystemStub instance
-     */
-    static const std::shared_ptr<DataSubSystemStub> getInstance();
-    DataSubSystemStub();
-    virtual ~DataSubSystemStub();
-    telux::common::ServiceStatus init();
-    telux::common::ServiceStatus getServiceStatus();
-    std::string getSettingValue(std::string key);
-    private:
-    telux::common::ServiceStatus status_;
-    int initCbDelay_;
-    bool isInitialized_;
-    std::shared_ptr<SimulationConfigParser> settings_;
+ private:
+    std::shared_ptr<telux::audio::IAudioManager> audioManager_;
+    std::shared_ptr<telux::audio::IAudioLoopbackStream> audioLoopbackStream_;
 };
-#endif

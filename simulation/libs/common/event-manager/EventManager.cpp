@@ -177,15 +177,20 @@ void EventManager::makeConnection() {
             std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMER));
         }
 
+        serverConnected_ = true;
+        int length = 0;
         LOG(DEBUG, "connected to SimulationServer");
-        while (read(clientSocket_, buffer, BUFFER_SIZE) > 0) {
-            std::string readStr(buffer);
-            LOG(DEBUG, "received event::", readStr);
-
-            auto f = std::async(std::launch::async, [this, readStr]() {
-                this->handleEventNotifications(readStr);
-            }).share();
-            taskQ_->add(f);
+        while ((length = read(clientSocket_, buffer, BUFFER_SIZE)) > 0) {
+            std::string event;
+            std::string readStr(buffer, length);
+            std::stringstream sstr(readStr);
+            while (std::getline(sstr, event, '\n')) {
+                LOG(DEBUG, __FUNCTION__, " received event::", event);
+                auto f = std::async(std::launch::async, [this, event]() {
+                    this->handleEventNotifications(event);
+                }).share();
+                taskQ_->add(f);
+            }
 
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
             {
@@ -202,11 +207,14 @@ void EventManager::makeConnection() {
 
 void EventManager::connectToSimulationServer() {
     LOG(DEBUG, __FUNCTION__);
-    config_ = std::make_shared<SimulationConfigParser>();
-    auto f = std::async(std::launch::async, [this]() {
-        this->makeConnection();
-    }).share();
-    taskQ_->add(f);
+    std::lock_guard<std::mutex> lck(connectionMutex_);
+    if(!serverConnected_) {
+        config_ = std::make_shared<SimulationConfigParser>();
+        auto f = std::async(std::launch::async, [this]() {
+            this->makeConnection();
+        }).share();
+        taskQ_->add(f);
+    }
 }
 
 telux::common::Status EventManager::registerListener(

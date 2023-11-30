@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -147,10 +147,23 @@ using ECallGetOperatingModeCallback
  * @param [out] operatorShortName  Current registered operator short name
  * @param [out] error              Return code for whether the operation succeeded or failed
  *
+ * @deprecated Use OperatorInfoCallback API instead.
  */
 using OperatorNameCallback
    = std::function<void(std::string operatorLongName, std::string operatorShortName,
        telux::common::ErrorCode error)>;
+/**
+ * This function is called with the response to requestOperatorInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] plmnInfo           @ref PlmnInfo
+ * @param [out] error              Return code for whether the operation succeeded or failed
+ *
+ */
+using OperatorInfoCallback
+   = std::function<void(PlmnInfo plmnInfo, telux::common::ErrorCode error)>;
 
 /**
  * @brief This class allows getting system information and registering for system events.
@@ -318,8 +331,27 @@ public:
     *
     * @returns Status of requestOperatorName i.e. success or suitable error
     *
+    * @deprecated Use IPhone::requestOperatorInfo(OperatorInfoCallback callback) API instead.
+    *
     */
    virtual telux::common::Status requestOperatorName(OperatorNameCallback callback) = 0;
+
+   /**
+    * Get current registered operator information.
+    * This API returns PLMN information about the network the device is currently camped on. If
+    * this information is not available then it returns the SPN in the SIM card.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [in] callback - Callback function to get the response of operator information request
+    *
+    * @returns Status of requestOperatorInfo i.e. success or suitable error
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status requestOperatorInfo(OperatorInfoCallback callback) = 0;
 
    /**
     * Configures SignalStrength notification.

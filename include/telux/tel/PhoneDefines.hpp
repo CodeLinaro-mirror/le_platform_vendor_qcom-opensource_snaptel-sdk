@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -45,6 +45,8 @@
 #include <string>
 #include <bitset>
 #include <vector>
+
+#include <telux/common/CommonDefines.hpp>
 
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
@@ -335,6 +337,18 @@ struct SignalStrengthConfig {
       uint16_t delta;                       /**< Signal strength delta. */
       SignalStrengthThreshold threshold;    /**< Signal strength threshold. */
    };
+};
+
+/**
+ *  Represents Operator information
+ */
+struct PlmnInfo {
+   std::string longName;               /**< Represents long Name for Network */
+   std::string shortName;              /**< Represents short Name for Network */
+   std::string plmn;                   /**< Represents PLMN code for Network, consists of a MCC
+                                            and MNC.  */
+   telux::common::BoolValue isHome;    /**< Represents whether the network is the home network,
+                                            default state is STATE_UNKNOWN*/
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

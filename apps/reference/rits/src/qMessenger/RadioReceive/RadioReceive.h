@@ -96,13 +96,13 @@ private:
     TrafficCategory category;
     void rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error);
     bool isSim = false;
-    int simListenSock, simRxSock;
+    int simRxSock = -1;
     struct sockaddr_in srcAddress;
     struct sockaddr_in serverAddress;
     uint16_t srcPort;
-    bool enableUdp = false;
     string ipv4_src;
     uint64_t lastRxMonotonicTime_ = 0;
+    std::string logTag;
 
 protected:
 
@@ -128,10 +128,8 @@ public:
     * Constructor that creates a RadioReceive Object
     * @param category a TrafficCategory.
     * @param type a TrafficType.
+    * @param idList, Rx subscription id list.
     */
-    RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
-    const uint16_t port);
-
     RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
     const uint16_t port, std::shared_ptr<std::vector<uint32_t>> idList);
 

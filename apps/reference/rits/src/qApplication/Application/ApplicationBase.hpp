@@ -207,7 +207,6 @@ struct Config{
     uint32_t packetError = 0;
     uint8_t leapSeconds = 18;
     /** Simulation config */
-    bool enableUdp = false;
     string ipv4_src;
     string ipv4_dest;
     uint16_t tx_port = 0;

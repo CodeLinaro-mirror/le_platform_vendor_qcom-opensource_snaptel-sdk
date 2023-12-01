@@ -1269,11 +1269,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.ipv4_src = configs["SourceIpv4Address"];
     }
 
-    if (configs.end() != configs.find("EnableUDP")) {
-        istringstream is3(configs["EnableUDP"]);
-        is3 >> boolalpha >> this->configuration.enableUdp;
-    }
-
     if (configs.end() != configs.find("enableTxAlways")) {
         // for tx and rx at same time
         istringstream is4(configs["enableTxAlways"]);
@@ -1881,7 +1876,6 @@ void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     RadioOpt radioOpt;
-    radioOpt.enableUdp = configuration.enableUdp;
     radioOpt.ipv4_src = configuration.ipv4_src;
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
@@ -1895,7 +1889,6 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
         this->ldm = new Ldm(this->configuration.ldmSize);
     }
     RadioOpt radioOpt;
-    radioOpt.enableUdp = configuration.enableUdp;
     radioOpt.ipv4_src = configuration.ipv4_src;
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
@@ -1970,33 +1963,24 @@ int ApplicationBase::setup(MessageType msgType) {
     for (auto port : this->configuration.receivePorts)
     {
         printf("Creating new rx subscription with port : %d\n", port);
-        if (this->configuration.wildcardRx == true) {
-            RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port);
-            // save Rx instance only if create Rx flow succeeded
-            if (rx.gRxSub) {
-                this->radioReceives.push_back(std::move(rx));
-            } else {
-                cerr << "ApplicationBase::setup error in creating wildcard Rx!"
-                        << endl;
-                return -1;
-            }
+        std::shared_ptr<std::vector<uint32_t>> ids = nullptr;
+        if (configuration.wildcardRx == false) {
+            ids = std::make_shared<std::vector<uint32_t>>(this->configuration.receiveSubIds);
+        }
+        RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port, ids);
+        // save Rx instance only if create Rx flow succeeded
+        if (nullptr != rx.gRxSub) {
+            this->radioReceives.push_back(rx);
         } else {
-            RadioReceive rx(TrafficCategory::SAFETY_TYPE,
-                            TrafficIpType::TRAFFIC_NON_IP, port,
-                            std::make_shared<std::vector<uint32_t>>
-                             (this->configuration.receiveSubIds));
-            // save Rx instance only if create Rx flow succeeded
-            if (rx.gRxSub) {
-                this->radioReceives.push_back(std::move(rx));
-            } else {
-                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!"
-                        << " with receiveSubIds: ";
+            cerr << "ApplicationBase::setup error in creating Rx subscription!";
+            if (configuration.wildcardRx == false) {
+                cerr << " with receiveSubIds: ";
                 for(int j = 0; j < configuration.receiveSubIds.size(); j++){
                     cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
                 }
-                cerr << "" << endl;
-                return -1;
             }
+            cerr << "" << endl;
+            return -1;
         }
 
         /* radio debug */

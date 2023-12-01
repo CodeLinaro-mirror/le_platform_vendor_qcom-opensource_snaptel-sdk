@@ -123,7 +123,6 @@ enum class RadioType {
  * Communication related options for sending or receiving.
  */
 typedef struct RadioOpt {
-    bool enableUdp;
     string ipv4_src;
 } RadioOpt_t;
 

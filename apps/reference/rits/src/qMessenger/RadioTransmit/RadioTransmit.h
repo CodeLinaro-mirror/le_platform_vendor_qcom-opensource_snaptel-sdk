@@ -112,7 +112,6 @@ private:
     struct sockaddr_in destAddress;
     struct sockaddr_in clientAddress;
     uint16_t destPort;
-    bool enableUdp = false;
     string ipv4_src;
     std::shared_ptr<SpsFlowInfo> spsFlowInfo = nullptr;
     uint64_t lastTxMonotonicTime_ = 0;

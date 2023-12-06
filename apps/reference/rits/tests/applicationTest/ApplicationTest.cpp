@@ -676,12 +676,12 @@ void transmit(MessageType msgType) {
             }
             break;
         case MessageType::CAM:
+            txInterval = application->configuration.transmitRate;
             break;
         case MessageType::DENM:
             cerr << "DENM transmit is not supported" << endl;
-            break;
         default:
-            break;
+            return;
     }
 
     /* Logic here changes if congestion control is enabled */

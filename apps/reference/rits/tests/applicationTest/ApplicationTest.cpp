@@ -69,15 +69,20 @@
   * @brief: Implements several functionalities of qApplication library.
   *
   */
+extern "C" {
+#include <sys/capability.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/timerfd.h>
+#include <sys/time.h>
+}
+
 #include <thread>
 #include <list>
 #include <string>
 #include <functional>
 #include <thread>
 #include <mutex>
-#include <unistd.h>
-#include <sys/timerfd.h>
-#include <sys/time.h>
 #include <regex>
 #include "SaeApplication.hpp"
 #ifdef ETSI
@@ -1429,6 +1434,17 @@ int main(int argc, char** argv) {
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
+    }
+
+    auto uid = getuid();
+    if (uid == 0) {
+        /*Change running as non-root user*/
+        std::unordered_set<int8_t> newUserCaps{CAP_NET_ADMIN};
+        auto changeUser = Utils::changeUser("its", newUserCaps);
+        if (telux::common::ErrorCode::SUCCESS != changeUser) {
+            cerr << "change user failed " << Utils::getErrorCodeAsString(changeUser) << std::endl;
+            //continue even if change to non-root user fail;
+        }
     }
 #endif
     sigset_t sigset;

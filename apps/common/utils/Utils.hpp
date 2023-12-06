@@ -74,6 +74,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <unordered_set>
 #include <memory>
 #include <string>
 #include <unistd.h>
@@ -162,6 +163,12 @@ public:
    static size_t removeDuplicateGroups(std::vector<std::string> & grps);
 
    static int setSupplementaryGroups(std::vector<std::string> grps);
+
+   /*Change to specified non-root user, keep specified capabilities for the new user,
+    *this need setuid and setcap selinux policy support
+    */
+   static telux::common::ErrorCode changeUser(std::string userName,
+       std::unordered_set<int8_t>& caps);
 
    // Print status message that corresponds to the return value of managers api(s) of type
    // telux::common::Status.

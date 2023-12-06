@@ -337,6 +337,42 @@ int AerolinkSecurity::unlockIdChange() {
 
 /* INITIALIZATION/DEINITIALIZATION FUNCTIONS */
 
+// ctor for aerolink w/o encryption
+AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCode):
+    SecurityService(ctxName, countryCode) {
+    if (init() < 0) {
+        throw std::runtime_error("AerolinkSecurity Init Failed\n");
+    }
+}
+// overloaded ctor for aerolink w/ encryption enabled
+AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                    uint8_t keyGenMethod):
+    SecurityService(ctxName, countryCode), keyGenMethod_(keyGenMethod){
+    memset(lcmName_, 0, sizeof(lcmName_));
+    if(init() < 0) {
+        throw std::runtime_error("AerolinkSecurity Init Failed\n");
+    }
+    // should  perform sanitary check on the value
+}
+// overloaded ctor for aerolink w/ idchange enabled
+AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                     char const* lcmName, IDChangeData& idChangeData):
+    SecurityService(ctxName, countryCode), idChangeData_(&idChangeData){
+    if(lcmName == nullptr){
+        throw std::runtime_error
+            ("Invalid lcm name provided\n");
+    }
+    if(strlen(lcmName) > 50){
+        throw std::runtime_error
+            ("Lcm Name Too Long (> 50 chars). AerolinkSecurity Init Failed\n");
+    }
+    memcpy(lcmName_, lcmName, sizeof(lcmName));
+    if(init() < 0) {
+        throw std::runtime_error("AerolinkSecurity Init Failed\n");
+    }
+    // should  perform sanitary check on the value
+}
+
 AerolinkSecurity *AerolinkSecurity::pInstance = nullptr;
 
 // Create new aerolinksecurity instance

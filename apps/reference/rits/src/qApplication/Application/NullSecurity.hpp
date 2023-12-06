@@ -76,9 +76,7 @@
 
 class NullSecurity : public SecurityService {
 private:
-    NullSecurity(std::string ctxName, uint16_t countryCode):
-        SecurityService(ctxName, countryCode) {
-    }
+    NullSecurity(std::string ctxName, uint16_t countryCode);
     static NullSecurity *pInstance;
 public:
     static NullSecurity *Instance(std::string ctxName, uint16_t countryCode);

@@ -99,36 +99,6 @@ static size_t chunksize = 10000;
 
 class AerolinkSecurity : public SecurityService {
     public:
-        // ctor for aerolink w/o encryption
-        AerolinkSecurity(const std::string ctxName, uint16_t countryCode):
-            SecurityService(ctxName, countryCode) {
-            if (init() < 0) {
-                throw std::runtime_error("AerolinkSecurity Init Failed\n");
-            }
-        }
-        // overloaded ctor for aerolink w/ encryption enabled
-        AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
-                            uint8_t keyGenMethod):
-            SecurityService(ctxName, countryCode), keyGenMethod_(keyGenMethod){
-            if(init() < 0) {
-                throw std::runtime_error("AerolinkSecurity Init Failed\n");
-            }
-            // should  perform sanitary check on the value
-        }
-        // overloaded ctor for aerolink w/ idchange enabled
-        AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
-                             char const* lcmName, IDChangeData& idChangeData):
-            SecurityService(ctxName, countryCode), idChangeData_(&idChangeData){
-            if(strlen(lcmName) > 50){
-                throw std::runtime_error
-                    ("Lcm Name Too Long (> 50 chars). AerolinkSecurity Init Failed\n");
-            }
-            memcpy(lcmName_, lcmName, sizeof(lcmName));
-            if(init() < 0) {
-                throw std::runtime_error("AerolinkSecurity Init Failed\n");
-            }
-            // should  perform sanitary check on the value
-        }
         static AerolinkSecurity *pInstance;
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
@@ -159,6 +129,15 @@ class AerolinkSecurity : public SecurityService {
         }
 
     private:
+       // ctor for aerolink w/o encryption
+       AerolinkSecurity(const std::string ctxName, uint16_t countryCode);
+       // overloaded ctor for aerolink w/ encryption enabled
+       AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                           uint8_t keyGenMethod);
+       // overloaded ctor for aerolink w/ idchange enabled
+       AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                           char const* lcmName, IDChangeData& idChangeData);
+
        static void signCallback(AEROLINK_RESULT returnCode, void *userCallbackData,
                             uint8_t* cbSignedSpduData, uint32_t cbSignedSpduDataLen);
        static void verifyCallback(AEROLINK_RESULT returnCode,

@@ -398,6 +398,7 @@ using RatPreference = std::bitset<16>;
  */
 enum ServingSystemNotificationType {
    SYSTEM_INFO,      /* Represents @ref onSystemInfoChanged() and @ref onDcStatusChanged() */
+   RF_BAND_INFO      /* Represents @ref onRFBandInfoChanged */
 };
 
 /**
@@ -651,7 +652,7 @@ public:
     *                          The bits that are not set in the mask are ignored and does not have
     *                          any effect on de-registration. However, providing an empty mask is
     *                          an invalid operation.
-    *                          To register again, the API @ref deregisterListener should be used.
+    *                          To register again, the API @ref registerListener should be used.
     *
     * @returns Status of removeListener i.e. success or suitable status code
     */
@@ -753,6 +754,9 @@ public:
 
    /**
     * This function is called whenever the RF band information changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::RF_BAND_INFO bit in the bitmask.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to receive this notification.

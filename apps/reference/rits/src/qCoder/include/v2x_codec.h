@@ -58,6 +58,39 @@ extern "C"
 {
 #endif
 
+/**
+ * smaller subset struct of whole bsm
+ *
+ */
+
+typedef struct {
+    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+    unsigned int MsgCount;      // Ranges from 1 - 127 in cyclic fashion.
+    unsigned int id;            // 32 bit identifier
+    unsigned int secMark_ms;    // No of milliseconds in a minute
+    signed int   Latitude;      // Degrees * 10^7
+    signed int   Longitude;     // Degrees * 10^7
+    signed int   Elevation;     // Meters * 10
+    double distFromRV;
+
+    unsigned int SemiMajorAxisAccuracy;         // val * 20
+    unsigned int SemiMinorAxisAccuracy;         // val * 20
+    unsigned int SemiMajorAxisOrientation;      // val/0.0054932479
+
+    j2735_transmission_state_e TransmissionState;   // P,R,N,D,L (park etc..)
+    unsigned int Speed;                     // value (in kmph) * 250/18
+    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
+    signed int   SteeringWheelAngle;        // value (in degree) / 1.5
+    signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
+    signed int   AccelLat_cm_per_sec_squared;       // value (in m/sec2) / 0.01
+    signed int   AccelVert_two_centi_gs;            // value in .02 G steps
+    signed int   AccelYaw_centi_degrees_per_sec;        // value in degrees per second /0.01
+    brakeStatus_ut brakes;
+    unsigned int VehicleWidth_cm;                   // units are 1 centimeter, at widest point, 0=unavailable
+    unsigned int VehicleLength_cm;                  // units are 1 centimeter, 0=unavailable
+    vehicleeventflags_ut events;
+} bsm_data;
+
 void set_codec_verbosity(int value);
 /**
  * decode_msg top-level codec API, decode message stored in mc->abuf and

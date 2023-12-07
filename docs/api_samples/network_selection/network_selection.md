@@ -7,36 +7,28 @@ This sample application demonstrates how to request current network selection mo
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto networkMgr
-      = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID);
+   std::promise<telux::common::ServiceStatus> prom;
+   auto networkMgr = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID,
+       [&](telux::common::ServiceStatus status) {
+           prom.set_value(status);
+   });
    ~~~~~~
 
 ### 2. Wait for the network selection subsystem initialization
 
    ~~~~~~{.cpp}
-   bool subSystemStatus = networkMgr->isSubsystemReady();
-   ~~~~~~
-
-### 2.1 If network selection subsystem is not ready, wait for it to be ready
-
-   ~~~~~~{.cpp}
-   if(!subSystemStatus) {
-      std::cout << "network selection subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = networkMgr->onSubsystemReady();
-      // If we want to wait unconditionally for network selection subsystem to be ready
-      subSystemStatus = f.get();
-   }
+   telux::common::ServiceStatus networkSelMgrStatus = prom.get_future().get();
    ~~~~~~
 
 ### 3. Exit the application, if network selection subsystem can not be initialzed
 
    ~~~~~~{.cpp}
-   if(subSystemsStatus) {
-      std::cout << " *** Network selection subsystem ready *** " << std::endl;
+   if (networkSelMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "Network Selection Manager is ready " << "\n";
    } else {
-      std::cout << " *** ERROR - Unable to initialize network selection subsystem" << std::endl;
-      return 1;
+       std::cout << "ERROR - Unable to initialize,"
+           << " network selection manager subsystem " << std::endl;
+       return 1;
    }
    ~~~~~~
 
@@ -46,12 +38,15 @@ This sample application demonstrates how to request current network selection mo
    class SelectionModeResponseCallback {
    public:
       void selectionModeResponse(
-         telux::tel::NetworkSelectionMode networkSelectionMode,
+         telux::tel::NetworkModeInfo info,
          telux::common::ErrorCode errorCode) {
          if(errorCode == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Network selection mode: "
-                      << static_cast<int>(networkSelectionMode)
+                      << static_cast<int>(info.mode)
                       << std::endl;
+            if (networkSelectionMode == NetworkSelectionMode::MANUAL) {
+                std::cout << "MCC is: " << info.mcc << ", MNC is: " << info.mnc << std::endl;
+            }
          } else {
             std::cout << "\n requestNetworkSelectionMode failed, ErrorCode: "
                       << static_cast<int>(errorCode)

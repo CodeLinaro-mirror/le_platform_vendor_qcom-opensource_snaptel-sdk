@@ -1,9 +1,8 @@
 {
     "ILocationConfigurator": {
-        "DefaultCallbackDelay": 400,
-        "SubSystemInit": true,
-        "SubSystemStatus" : "AVAILABLE",
-        "SubSystemReadinessDelay": 500,
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400,
         "configureCTunc":
         {
             "error" : "SUCCESS",

@@ -146,17 +146,12 @@ enum class TxRxType {
 
 typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
 
-struct asyncCbData_t{
-    int indexToData;
-    bool verifSuccess;
-    AsyncCbState AsyncState=FREE;
-    signed int   Latitude;      // Degrees * 10^7
-    signed int   Longitude;     // Degrees * 10^7
-    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
-    unsigned int Speed;                     // value (in kmph) * 250/18
-    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
-    unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
-    unsigned int tmpId;
+
+struct logData{
+    uint64_t timestamp = 0;
+    uint8_t index;
+    double distFromRV;
+    bsm_data bs = {0};
 };
 
 struct Config{
@@ -417,7 +412,7 @@ public:
     QMonitor* qMon = nullptr;
     QMonitor::Configuration* qMonConfig = nullptr;
 
-    asyncCbData_t asyncCbData[SHARED_BUFFER_MAX_SIZE];
+
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
@@ -729,9 +724,9 @@ protected:
      */
     unique_ptr<SecurityService> SecService;
 
-   virtual void writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+   virtual void writeLog(const uint8_t index,
        uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp,
-       uint32_t psid);
+       uint32_t psid, bsm_data* bs, double distFromRV);
     /**
      * Vehicle Receive object.
      */

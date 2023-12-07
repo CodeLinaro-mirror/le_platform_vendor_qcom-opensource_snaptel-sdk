@@ -1,35 +1,7 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -60,6 +32,10 @@
 #include "tel/CardManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
+#include "data/DataConnectionServerImpl.hpp"
+#include "data/DataProfileServerImpl.hpp"
+#include "loc/LocationManagerServerImpl.hpp"
+#include "loc/LocationConfiguratorServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -189,7 +165,11 @@ telux::common::Status SimulationServer::readMessage(int socketFd) {
         }
         else {
             LOG(DEBUG, __FUNCTION__, "received data::", buffer);
-            writeMessage(buffer, length);
+            std::string msg(buffer);
+            auto f = std::async(std::launch::async, [this, msg, length]() {
+                this->writeMessage(msg, length, ClientType::SERVER);
+            }).share();
+            taskQ_->add(f);
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
         }
 
@@ -203,17 +183,32 @@ telux::common::Status SimulationServer::readMessage(int socketFd) {
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status SimulationServer::writeMessage(char* buffer, int length) {
+telux::common::Status SimulationServer::writeMessage(std::string msg, int length,
+    ClientType type) {
     LOG(DEBUG, __FUNCTION__);
 
     auto& eventMgr = EventManager::getInstance();
-    std::string message(buffer);
+    std::string event;
+    std::stringstream sstr(msg);
+    int optval;
+    socklen_t optlen = sizeof(optval);
 
-    eventMgr.handleEventNotifications(message);
+    std::lock_guard<std::mutex> lck(writeMutex_);
+    while (std::getline(sstr, event, '\n')) {
+        LOG(DEBUG, __FUNCTION__ ," received event::", event);
 
-    for(auto socket: clientSockets_)
-    {
-        write(socket,buffer,length);
+        if ((type == ClientType::SERVER) || (type == ClientType::ALL)) {
+            eventMgr.handleEventNotifications(event);
+        }
+
+        if ((type == ClientType::LIB)  || (type == ClientType::ALL)) {
+            for(auto socket: clientSockets_) {
+                int status = getsockopt(socket, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+                if (status == 0) {
+                    write(socket,const_cast<char*>(event.c_str()),length);
+                }
+            }
+        }
     }
     return telux::common::Status::SUCCESS;
 }
@@ -241,6 +236,22 @@ void SimulationServer::startGrpcServer() {
 
     std::shared_ptr<SmsManagerServerImpl> smsService = std::make_shared<SmsManagerServerImpl>();
     builder.RegisterService(smsService.get());
+
+    std::shared_ptr<DataConnectionServerImpl> dcmService =
+        std::make_shared<DataConnectionServerImpl>();
+    builder.RegisterService(dcmService.get());
+
+    std::shared_ptr<DataProfileServerImpl> dataprofileService =
+        std::make_shared<DataProfileServerImpl>();
+    builder.RegisterService(dataprofileService.get());
+
+    std::shared_ptr<LocationManagerServerImpl> locManagerService =
+        std::make_shared<LocationManagerServerImpl>();
+    builder.RegisterService(locManagerService.get());
+
+    std::shared_ptr<LocationConfiguratorServerImpl> locConfigService =
+        std::make_shared<LocationConfiguratorServerImpl>();
+    builder.RegisterService(locConfigService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

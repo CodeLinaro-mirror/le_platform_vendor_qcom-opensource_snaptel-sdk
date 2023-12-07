@@ -36,8 +36,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include <telux/loc/LocationDefines.hpp>
+#include <telux/loc/LocationManager.hpp>
 #include <telux/loc/DgnssManager.hpp>
 #include "../../common/console_app_framework/ConsoleApp.hpp"
 
@@ -48,13 +50,22 @@ enum class DgnssSourceType {
     SERVER_SOURCE = 1
 };
 
+class NmeaInfoListener : public ILocationListener {
+public:
+    void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) override;
+    void getNmeaStr(std::string &nmeaGGA);
+private:
+    std::string lastNmeaGGA_;
+    std::mutex m_;
+};
+
 class DgnssMenu : public ConsoleApp, public IDgnssStatusListener,
     public std::enable_shared_from_this<DgnssMenu> {
 public:
    /**
     * Initialize commands and SDK
     */
-   int init();
+   int init(std::shared_ptr<ILocationManager>);
 
    DgnssMenu(std::string appName, std::string cursor);
 
@@ -66,12 +77,19 @@ public:
 
 private:
    telux::common::Status initDgnssManager(std::shared_ptr<IDgnssManager> &dgnssManager);
+   int waitforSock(int fd);
    int processRtcmFromServer(void);
    int processRtcmFromFile(void);
+   int startNmeaReport(uint32_t interval);
+   int sendGGAString(void);
 
    std::shared_ptr<IDgnssManager> dgnssManager_ = nullptr;
+   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+   std::shared_ptr<NmeaInfoListener> nmeaInfoListener_ = nullptr;
    int ntcSocketFd_ = -1;
    int dgnssSourceFd_ = -1;
+   bool stop_ = false;
+   bool reconnect_ = false;
    DgnssSourceType dgnssSourceType_;
 
 

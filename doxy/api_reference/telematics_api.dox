@@ -166,6 +166,8 @@ Jun 2017   SVM      Created to support V2X API
       This section contains APIs related to Audio Stream operation.
       @defgroup telematics_audio_transcoder Transcoder
       This section contains APIs related to Audio Transcoder operation.
+      @defgroup telematics_audio_player Audio player
+      This section contains audio player APIs.
     @}
 
     @defgroup telematics_therm Thermal

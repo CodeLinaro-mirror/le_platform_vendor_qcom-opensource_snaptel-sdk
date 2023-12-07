@@ -44,15 +44,40 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <sys/select.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <errno.h>
 #include <telux/loc/LocationFactory.hpp>
 #include "ConfigParser.hpp"
 #include "DgnssMenu.hpp"
 
 #define RESP_BUFFER_SIZE    1032
+#define SOCKET_READ_TO    5
+#define RETRY_COUNT    5
 #define ACK_STRING "ICY 200 OK\r\n"
 
+uint8_t truncBuffer[RESP_BUFFER_SIZE];
+bool append = false;
+int appendOffset = 0;
+int nmeaGGAInterval = 0;
+std::chrono::time_point<std::chrono::system_clock> lastNmeaSentTime;
+
 using namespace telux::common;
+
+void NmeaInfoListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {
+    std::string s("GNGGA");
+    if (nmea.find(s, 0) != std::string::npos) {
+        std::cout << " Nmea String : " << nmea << std::endl;
+        std::lock_guard<std::mutex> lk(m_);
+        lastNmeaGGA_.assign(nmea);
+    }
+}
+void NmeaInfoListener::getNmeaStr(std::string &nmea) {
+    std::lock_guard<std::mutex> lk(m_);
+    nmea.assign(lastNmeaGGA_);
+}
 
 DgnssMenu::DgnssMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -106,7 +131,7 @@ telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
    return telux::common::Status::SUCCESS;
 }
 
-int DgnssMenu::init() {
+int DgnssMenu::init(std::shared_ptr<ILocationManager> locationManager) {
    std::shared_ptr<ConsoleAppCommand> injectFromFileCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Inject_From_File", {},
@@ -128,43 +153,179 @@ int DgnssMenu::init() {
    if (status != telux::common::Status::SUCCESS) {
        rc = -1;
    }
+   locationManager_ = locationManager;
+
    return rc;
 }
 
-int DgnssMenu::processRtcmFromServer(void) {
-   int i;
-   int length, msg_type;
-   uint8_t buffer[RESP_BUFFER_SIZE];
-   int bufferSize = RESP_BUFFER_SIZE;
-   ssize_t ret;
+int DgnssMenu::waitforSock(int fd) {
+    fd_set rfds;
+    struct timeval tv;
+    int ret;
+    int retryCount = 0;
+    tv.tv_sec = SOCKET_READ_TO;
+    tv.tv_usec = 0;
 
-   memset(buffer, 0, bufferSize);
-   ret = recv(ntcSocketFd_, buffer, (size_t)bufferSize, 0);
+    while(retryCount < RETRY_COUNT) {
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        ret = select(fd + 1, &rfds, NULL, NULL, &tv);
+        if (ret < 0 ) {
+            if (errno == -EINTR) {
+                std::cout << "select interrupted, continue..." << std::endl;
+                continue;
+            } else {
+                std::cout << "select returned error, existing.." << std::endl;
+                stop_ = true;
+                break;
+            }
+        } else if (ret == 0) {
+            //time out and no data
+            retryCount++;
+        } else {
+            // data ready to read
+            break;
+        }
+    }
+
+    if (retryCount == RETRY_COUNT && ret == 0) {
+        reconnect_ = true;
+    }
+    return ret;
+}
+
+int DgnssMenu::startNmeaReport(uint32_t interval) {
+    std::promise<telux::common::Status> prom;
+    if (locationManager_ == nullptr) {
+        std::cout << "locationManager nullptr" << std::endl;
+        return -1;
+    }
+    nmeaInfoListener_ = std::make_shared<NmeaInfoListener>();
+    locationManager_->registerListenerEx(nmeaInfoListener_);
+
+    GnssReportTypeMask reportMask = NMEA;
+    auto responseCb = [&](ErrorCode code) {
+        if (code != ErrorCode::SUCCESS)
+            prom.set_value(telux::common::Status::FAILED);
+        else
+            prom.set_value(telux::common::Status::SUCCESS);
+    };
+    auto res = locationManager_->startDetailedReports(
+                  interval, responseCb, reportMask);
+    if (res != Status::SUCCESS) {
+        std::cout << "start detailed report sync failure" << std::endl;
+        return -1;
+    }
+
+    telux::common::Status status = prom.get_future().get();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to start detailed report" << std::endl;
+        return -1;
+    } else {
+        std::cout << "pos report started" << std::endl;
+    }
+    return 0;
+}
+int DgnssMenu::sendGGAString(void) {
+    int ret;
+    std::string nmeaGGA;
+    nmeaInfoListener_->getNmeaStr(nmeaGGA);
+    if (not nmeaGGA.empty()) {
+        std::cout << "Send NMEA: " << nmeaGGA << std::endl;
+        ret = send(ntcSocketFd_, nmeaGGA.c_str(), nmeaGGA.size(), 0);
+        if (ret < 0) {
+            std::cout << "failed to send GGA string to server" << std::endl;
+        } else {
+           lastNmeaSentTime = std::chrono::system_clock::now();
+        }
+    } else {
+        ret = -1;
+        std::cout << "No NMEA GGA string to send" << std::endl;
+    }
+
+    return ret;
+}
+
+int DgnssMenu::processRtcmFromServer(void) {
+   int i, length;
+   uint8_t buffer[RESP_BUFFER_SIZE];
+   static int msg_type;
+   int ret;
+
+   memset(buffer, 0, sizeof(buffer));
+   ret = waitforSock(ntcSocketFd_);
+
+   if (ret <= 0) {
+       return ret;
+   }
+   if (nmeaGGAInterval) {
+       auto TimeNow = std::chrono::system_clock::now();
+       auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(TimeNow -
+               lastNmeaSentTime);
+       if (static_cast<int>(elapsed_ms.count()) >= nmeaGGAInterval) {
+           ret = sendGGAString();
+       }
+
+   }
+
+   ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
    if (ret < 0) {
       std::cout << "ReadRtcmPacket: recv failed " << ret << std::endl;
       return ret;
    }
-   bufferSize = (int)ret;
-   for (i = 0; i < (bufferSize - 4);) {
-     if ((buffer[i] == 0xD3) && ((buffer[i+1] & 0xFC) == 0x00)) {
-       //Found RTCM preamble.
-       length = buffer[i + 2];
-       length |= (buffer[i + 1] & 0x03) << 8;
-       msg_type = buffer[i + 3] << 4;
-       msg_type |= buffer[i + 4] >> 4;
 
-       std::cout << "Injecting msg_type=" << msg_type << " length=" << length+6 << std::endl;
-       if (telux::common::Status::SUCCESS !=
-               dgnssManager_->injectCorrectionData(buffer + i, length + 6)) {
-         return -1;
-       }
-       i += length + 6;
-     } else {
-       i += 1;
-     }
+   if (ret < 0) {
+      std::cout << "ReadRtcmPacket: recv failed " << ret << std::endl;
+      return ret;
    }
-   return 0;
 
+   ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
+   if (ret < 0) {
+       std::cout << "processRtcmFromServer: recv failed " << ret << std::endl;
+       stop_ = true;
+       return ret;
+   }
+   if (append) {
+       int totalSize = appendOffset + ret;
+       memcpy(truncBuffer + appendOffset, buffer, ret);
+       std::cout << "Injecting msg_type=" << msg_type << " length=" << totalSize << std::endl;
+       if (telux::common::Status::SUCCESS !=
+                   dgnssManager_->injectCorrectionData(truncBuffer, totalSize)) {
+           return -1;
+       }
+       append = false;
+       appendOffset = 0;
+    } else {
+       for (i = 0; i < (ret - 4);) {
+           if ((buffer[i] == 0xD3) && ((buffer[i+1] & 0xFC) == 0x00)) {
+               //Found RTCM preamble.
+               length = buffer[i + 2];
+               length |= (buffer[i + 1] & 0x03) << 8;
+               msg_type = buffer[i + 3] << 4;
+               msg_type |= buffer[i + 4] >> 4;
+
+               if (ret < length + i + 6) {
+                   //didn't read the whole packet, portion will be available for next recv call
+                   //save current packet to truncBuffer and append it to next recv'd bytes.
+                   memset(truncBuffer, 0, sizeof(truncBuffer));
+                   memcpy(truncBuffer, buffer + i, ret - i);
+                   append = true;
+                   appendOffset = ret - i;
+                   i += appendOffset;
+               } else {
+                   std::cout << "Injecting msg_type=" << msg_type << " length=" << length+6 << std::endl;
+                   if (telux::common::Status::SUCCESS !=
+                           dgnssManager_->injectCorrectionData(buffer + i, length + 6)) {
+                       return -1;
+                   }
+                   i += length + 6;
+               }
+           } else {
+               i += 1;
+           }
+       }
+   }
+   return ret;
 }
 /* process input file
  * @returns: 0 succesfully read and injected one line.
@@ -295,7 +456,7 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
  */
 void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
    struct sockaddr_in server_addr;
-   int ret;
+   int flags, ret;
    std::string con_request;
    std::string configFile;
    char response[RESP_BUFFER_SIZE];
@@ -310,54 +471,101 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
 
       // parse the config file
       ConfigParser config(configFile);
-      ntcSocketFd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-      if (ntcSocketFd_ < 0) {
-          std::cout << "Socket create failed" << std::endl;
-          return;
-      } else {
-          std::cout << "Socket create success" << std::endl;
+      nmeaGGAInterval = 0;
+      try {
+          nmeaGGAInterval = std::stoi(config.getValue("nmeaGGAInterval"));
+      } catch (std::invalid_argument const& ex) {
+          //no nmeaGGAInterval specified in config file.
+      } catch (std::out_of_range const& ex) {
+          std::cout << "Specified nmeaGGAInterval is out of range" << std::endl;
       }
-      memset(&server_addr, 0, sizeof(server_addr));
-      server_addr.sin_family = AF_INET;
-      server_addr.sin_addr.s_addr = inet_addr(config.getValue("hostName").c_str());
-      server_addr.sin_port = htons(std::stoi(config.getValue("Port")));
+      if (nmeaGGAInterval) {
+          if (startNmeaReport(nmeaGGAInterval) < 0) {
+              std::cout << "Failed to start nmea report" << std::endl;
+              return;
+          }
+      }
 
-      std::cout << "Connecting to server..." << std::endl;
-      ret = connect(ntcSocketFd_, (struct sockaddr *)&server_addr, sizeof(server_addr));
-      if (ret < 0) {
-          std::cout << "connection failed" << std::endl;
-      } else {
-          std::cout << "connection success" << std::endl;
-      }
-      memset(&response, 0 , sizeof(response));
-      con_request += "GET /" + config.getValue("mountPoint") +
+      while(stop_ == false) {
+          ntcSocketFd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+          if (ntcSocketFd_ < 0) {
+              std::cout << "Socket create failed" << std::endl;
+              return;
+          } else {
+              std::cout << "Socket create success" << std::endl;
+          }
+          memset(&server_addr, 0, sizeof(server_addr));
+          server_addr.sin_family = AF_INET;
+          server_addr.sin_addr.s_addr = inet_addr(config.getValue("hostName").c_str());
+          server_addr.sin_port = htons(std::stoi(config.getValue("Port")));
+
+          std::cout << "Connecting to server..." << std::endl;
+          ret = connect(ntcSocketFd_, (struct sockaddr *)&server_addr, sizeof(server_addr));
+          if (ret < 0) {
+              std::cout << "connection failed, retry after " << RETRY_COUNT << "sec" << std::endl;
+              usleep(RETRY_COUNT * 1000000);
+              close(ntcSocketFd_);
+              continue;
+          } else {
+              std::cout << "connection success" << std::endl;
+          }
+
+          memset(&response, 0 , sizeof(response));
+          con_request = "GET /" + config.getValue("mountPoint") +
               " HTTP/1.1\r\n" + "User-Agent: NTRIP GNR/1.0.0 (Win32)\r\n" +
               "Authorization: Basic " +
               config.getValue("userNamePwdInBase64Format") +
               "\r\nConnection: close\r\n";
-
-      ret = send(ntcSocketFd_, con_request.c_str(), con_request.size(), 0);
-      std::cout << "Sending request: " << con_request << std::endl;
-      if (ret < 0) {
-          std::cout << "send failed: " << ret << std::endl;
-          return;
-      }
-      ret = recv(ntcSocketFd_, response, sizeof(response), 0);
-      if(ret < 0 ) {
-          std::cout << "recv failed" << std::endl;
-          return;
-      } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
-          // register status listener
-          dgnssManager_->registerListener(shared_from_this());
-          ret = 0;
-
-          // Please refer to injectFromFile() for alternative use case sample.
-          while (!ret) {
-            ret = processRtcmFromServer();
+          ret = send(ntcSocketFd_, con_request.c_str(), con_request.size(), 0);
+          std::cout << "Sending request: " << con_request << std::endl;
+          if (ret < 0) {
+              close(ntcSocketFd_);
+              std::cout << "send failed: " << ret << std::endl;
+              return;
           }
-       } else {
-          std::cout << "Initial response invalid: " << response << std::endl;
-          return;
-       }
+          if (nmeaGGAInterval) {
+              ret = sendGGAString();
+          }
+
+          // set for nonblocking socket
+          flags = fcntl(ntcSocketFd_,F_GETFL,0);
+          if (flags < 0) {
+              std::cout << "fcntl returned error" << std::endl;
+              return;
+          }
+          fcntl(ntcSocketFd_, F_SETFL, flags | O_NONBLOCK);
+          ret = waitforSock(ntcSocketFd_);
+          if (ret <= 0) {
+              if (reconnect_ == true) {
+                  close(ntcSocketFd_);
+                  reconnect_ = false;
+                  continue;
+              }
+          }
+
+          ret = recv(ntcSocketFd_, response, sizeof(response), 0);
+          if(ret < 0 ) {
+              std::cout << "recv failed" << std::endl;
+              close(ntcSocketFd_);
+              return;
+          } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
+              // register status listener
+              dgnssManager_->registerListener(shared_from_this());
+
+              // Please refer to injectFromFile() for alternative use case sample.
+              while (ret && reconnect_ == false) {
+                  ret = processRtcmFromServer();
+              }
+              if (reconnect_ == true) {
+                  close(ntcSocketFd_);
+                  reconnect_ = false;
+                  continue;
+              }
+          } else {
+              std::cout << "Initial response invalid: " << response << std::endl;
+              close(ntcSocketFd_);
+              return;
+          }
+      }
    }
 }

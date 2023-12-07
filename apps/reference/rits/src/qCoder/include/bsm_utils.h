@@ -73,7 +73,7 @@ void writeToCsv(msg_contents *mc, FILE *fp, bool isTx, uint64_t periodicityMs,
     bool validPkt, uint32_t RVsInRange, uint64_t monotonicTime, uint64_t realworldTime,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr);
 void print_summary_RV(msg_contents *mc);
-int writeGeneralLog(char* tmpLogStr, uint32_t maxSize, msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodicityMs,
+int writeGeneralLog(char* tmpLogStr, uint32_t maxSize, bsm_data *bs, FILE *myfp, bool isTx, uint64_t periodicityMs,
     bool validPkt, uint32_t RVsInRange, const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
     uint64_t txInterval, uint32_t l2SrcAddr);

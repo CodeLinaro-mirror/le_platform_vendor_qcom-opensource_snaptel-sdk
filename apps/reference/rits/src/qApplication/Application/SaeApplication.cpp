@@ -68,6 +68,7 @@
   *
   * @brief: class for ITS stack application - SAE
   */
+#include <sys/time.h>
 #include "SaeApplication.hpp"
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <fstream>
@@ -84,7 +85,7 @@ thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
-thread_local int decFail = 0;
+static int decFail = 0;
 thread_local int encFail = 0;
 thread_local int rxSuccess = 0;
 thread_local int txSuccess = 0;
@@ -99,12 +100,21 @@ sem_t verificationSem;
 static std::mutex AsyncMtx;
 static int shared_index = 0;
 static int start_index = 0;
-thread_local int verificationSuccessCount = 0 ;
-thread_local int prevVerifSuccess = 0;
-thread_local int verificationFailCount = 0 ;
+static int verificationSuccessCount = 0 ;
+static int prevVerifSuccess = 0;
+static int verificationFailCount = 0 ;
 int PostProcessingCbData[PP_BUFFER_MAX_SIZE] ={0};
 static int begin_flag = true;
 static int buffer_full = false;
+static struct timeval currTime;
+static double prevTimeStamp, prevBatchTimeStamp;
+static double LogstartTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
+
+static int AsyncrxSuccess = 0;
+static int AsyncverifSuccess = 0;
+static int AsyncrxFail = 0;
+static int AsyncverifFail = 0;
+logData writelog_data;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
     ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
@@ -112,6 +122,9 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bo
         return;
     }
     sem_init(&verificationSem, 0, 0);
+    gettimeofday(&currTime, NULL);
+    LogstartTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
+    prevBatchTimeStamp = LogstartTime;
     PostProcessingThread();
     MsgType = msgType;
 
@@ -199,12 +212,77 @@ SaeApplication::~SaeApplication() {
 void SaeApplication::PostProcessingThread()
 {
     std::thread([this]() {
-    while (true)
+    while (not exit_)
     {
         (this->*AsyncthrFn)();
     }
+    std::cout << "Stopping post processing thread\n";
     }).detach();
 }
+/* Function to print out running verification stats */
+void SaeApplication::printStats(std::thread::id thrId){
+    gettimeofday(&currTime, NULL);
+    double currTimeStamp =
+            (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+
+    if(verifFail % 2500 == 0 && verifFail > 0){
+        if(configuration.secVerbosity > 4)
+            fprintf(stdout, "VerifSuccess: %d; VerifFail: %d\n",
+                     verifSuccess, verifFail);
+    }
+
+    // batch stats reporting (per 2500 successful verifications)
+    if(verificationSuccessCount % 2500 == 0 && verificationSuccessCount > 0){
+       if(verificationSuccessCount > prevVerifSuccess){
+            double dur = currTimeStamp-prevBatchTimeStamp;
+            double delta = verificationSuccessCount-prevVerifSuccess;
+            double rate = delta/dur;
+            // minimum time so far per 2500*N verifications
+            minBatchTime = std::min(minBatchTime, dur);
+            // running time per 2500*N verifications
+            maxBatchTime = std::max(maxBatchTime, dur);
+            // average time per 2500*N verifications
+            avgBatchTime = (avgBatchTime+dur)/2.0;
+
+            // overall average batch rate
+            // dealing with initializing variables for first verification
+            if(minBatchTime <= 0.0){
+                minBatchTime = dur;
+                avgBatchTime = dur;
+            }
+
+            std::stringstream ss;
+            ss << thrId;
+            int tid = (int)std::stoul(ss.str());
+            // logging for batch verif stats
+            fprintf(stdout, "ThreadID: 0x%08x; ", tid);
+            fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", verificationSuccessCount);
+            fprintf(stdout, "BatchVerifRate: %fk VHz; ", rate);
+            fprintf(stdout, "BatchTimeStep: %fms;\n", dur);
+            fprintf(stdout, "MinBatchTime: %fms; ", minBatchTime);
+            fprintf(stdout, "MaxBatchTime: %fms; ", maxBatchTime);
+            fprintf(stdout, "AvgBatchTime: %fms;\n", avgBatchTime);
+
+            // logging for individual verif stats - includes ITS overhead
+            if(configuration.secVerbosity > 1){
+                fprintf(stdout, "CurrTime: %fms; ", currTimeStamp);
+                fprintf(stdout, "PrevBatchTime: %fms;\n", prevBatchTimeStamp);
+            }
+            fprintf(stdout, "\n");
+        }
+        prevVerifSuccess = verificationSuccessCount;
+        // get latest time stamp because print statements cause delay
+        gettimeofday(&currTime, NULL);
+        prevBatchTimeStamp =
+                    (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+
+    }
+    // get latest time stamp because print statements cause delay
+    gettimeofday(&currTime, NULL);
+    prevTimeStamp =
+                    (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+}
+
 std::string SAEgetCurrentTimestamp()
 {
     using std::chrono::system_clock;
@@ -221,21 +299,68 @@ std::string SAEgetCurrentTimestamp()
 void SaeApplication::AsyncPostProcessing()
 {
     int i = 0 ;
+    std::thread::id thrId = std::this_thread::get_id();
     sem_wait(&verificationSem);
     for(i = start_index; PostProcessingCbData[i]!=0 ;++i)
     {
-        if((asyncCbData[PostProcessingCbData[i]].verifSuccess) && (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
+        if((asyncCbData[PostProcessingCbData[i]].verifSuccess) &&
+                (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
         {
             verificationSuccessCount++;
             asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-            if(configuration.enableCongCtrl && configuration.enableSecurity )
+            AsyncrxSuccess++;
+            if (qMon)
             {
-            congestionControlManager->addCongestionControlData(asyncCbData[PostProcessingCbData[i]].tmpId, (asyncCbData[PostProcessingCbData[i]].Latitude)/10000000,
-                (asyncCbData[PostProcessingCbData[i]].Longitude )/ 10000000, asyncCbData[PostProcessingCbData[i]].Heading_degrees, asyncCbData[PostProcessingCbData[i]].Speed, asyncCbData[PostProcessingCbData[i]].timestamp_ms,
-                asyncCbData[PostProcessingCbData[i]].MsgCount);
-
+                qMon->tData[thrId].totalRx++;
+            }
+            totalRxSuccessPerSecond++;
+            if(configuration.enableCongCtrl && configuration.enableSecurity && 
+                (congestionControlManager != NULL))
+            {
+                congestionControlManager->addCongestionControlData(
+                    asyncCbData[PostProcessingCbData[i]].tmpId,
+                    (asyncCbData[PostProcessingCbData[i]].Latitude)/10000000.0,
+                    (asyncCbData[PostProcessingCbData[i]].Longitude )/ 10000000.0,
+                    asyncCbData[PostProcessingCbData[i]].Heading_degrees,
+                    asyncCbData[PostProcessingCbData[i]].Speed,
+                    asyncCbData[PostProcessingCbData[i]].timestamp_ms,
+                    asyncCbData[PostProcessingCbData[i]].MsgCount);
+            }
+            if (MsgType == MessageType::BSM)
+            {
+                if (qMon)
+                {
+                    qMon->tData[thrId].rxBSMs++;
+                }
 
             }
+            else
+            {
+                decFail++;
+                if (qMon)
+                {
+                    qMon->tData[thrId].decodeFails++;
+                }
+            }
+            // write the log here for this tx now. using tx timestamp made before sendto
+            ApplicationBase::writeLog(asyncCbData[PostProcessingCbData[i]].msg_index,
+                asyncCbData[PostProcessingCbData[i]].l2SrcAddr, false, TransmitType::SPS,
+                true , asyncCbData[PostProcessingCbData[i]].timestamp, PSID_BSM,
+                &(asyncCbData[PostProcessingCbData[i]].bs),
+                asyncCbData[PostProcessingCbData[i]].distFromRV);
+        }
+        else if(!(asyncCbData[PostProcessingCbData[i]].verifSuccess) &&
+                  (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
+        {
+            verificationFailCount++;
+            asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
+            AsyncrxFail++;
+            ApplicationBase::writeLog(asyncCbData[PostProcessingCbData[i]].msg_index,
+            asyncCbData[PostProcessingCbData[i]].l2SrcAddr, false, TransmitType::SPS,
+            false , asyncCbData[PostProcessingCbData[i]].timestamp, PSID_BSM,
+            &(asyncCbData[PostProcessingCbData[i]].bs),
+            asyncCbData[PostProcessingCbData[i]].distFromRV);
+
         }
     }
     // Since the thread is running in while loop updating the loop index to the last successful value
@@ -244,11 +369,9 @@ void SaeApplication::AsyncPostProcessing()
     {
         postprocessing_cleanup();
     }
-
-    if(verificationSuccessCount % 2500  == 0 )
+    if(configuration.secVerbosity > 0 )
     {
-        cout<<"Timestamp at Postprocessing is: "<<SAEgetCurrentTimestamp()<<endl;
-        printf(" VerifSuccess at Postprocessing is : %d \n",verificationSuccessCount);
+        printStats(thrId);
     }
 }
 
@@ -270,19 +393,36 @@ void SaeApplication::postprocessing_cleanup()
 
 void SaeApplication::printRxStats() {
     printf("Printing rx stats\n");
-    sem_wait(&this->log_sem);
-    std::stringstream ss;
-    ss << std::this_thread::get_id();
-    int tid = (int)std::stoul(ss.str());
-    printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
-    printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
-    printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
-    if (verifFail)
+    if(configuration.enableAsync)
+    {
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        int tid = (int)std::stoul(ss.str());
+        printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) rx successes is: %d\n", tid, AsyncrxSuccess);
+        if (verifFail)
         printf("Thread (%08x) verif fails is: %d\n", tid, verifFail);
-    if (verifSuccess)
+        if (verificationSuccessCount)
+        printf("Thread (%08x) verif success is: %d\n", tid, verificationSuccessCount);
+        totalRxSuccess=AsyncrxSuccess;
+    }
+    else
+    {
+        sem_wait(&this->log_sem);
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        int tid = (int)std::stoul(ss.str());
+        printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
+        if (verifFail)
+        printf("Thread (%08x) verif fails is: %d\n", tid, verifFail);
+        if (verifSuccess)
         printf("Thread (%08x) verif success is: %d\n", tid, verifSuccess);
-    totalRxSuccess+=rxSuccess;
-    sem_post(&this->log_sem);
+        totalRxSuccess+=rxSuccess;
+        sem_post(&this->log_sem);
+    }
 }
 
 void SaeApplication::printTxStats() {
@@ -311,9 +451,13 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     /* Congestion Control Parameters */
     CongestionControlData congestionControlData_;
     bsm_value_t* rvBsm;
+    bsm_data bs = {0};
     uint32_t l2SrcAddr = 0;
     uint64_t timestamp = 0;
     std::thread::id tid = std::this_thread::get_id();
+    uint32_t psid = 0;
+    double distFromRV = 0.0;
+
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
         if (ldm == nullptr) {
@@ -390,8 +534,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
         return -1;
     }
-
-    l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
+    if(!isRxSim){
+        l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
+    }
 
     // needs to be done for data pointer to not override tail pointer
     threadMc->abuf.tail = threadMc->abuf.data+ret;
@@ -409,6 +554,14 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
     ret = decode_msg(threadMc.get());
+
+    if(threadMc.get()->wsmp)
+    {
+        // check psid for bsm
+        wsmpp = (wsmp_data_t*)(threadMc.get()->wsmp);
+        psid = wsmpp->psid;
+    }
+
 
     if (configuration.enableL2Filtering && !isRxSim) {
         if (appVerbosity >= 5) {
@@ -445,11 +598,16 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         this->updateL2RvMap(l2SrcAddr,rvsp.get());
     }
 
+
+    writelog_data.index = index;
+    writelog_data.timestamp = timestamp;
+    writelog_data.distFromRV = distFromRV;
+    writelog_data.bs = bs ;
     // Determine if we are expecting signed packet or not
     if (this->configuration.enableSecurity) {
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
-            ret = decodeAndVerify(threadMc.get(), l2SrcAddr);
+            ret = decodeAndVerify(threadMc.get(), l2SrcAddr, &(writelog_data));
         } else if (ret >= 0) {
             // here we need to check option for processing both unsigned/signed packets
             if (!configuration.acceptAll) {
@@ -509,59 +667,102 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 break;
         }
     }
-    wsmp_data_t* wsmpdata;
-    uint32_t psid = 0;
-    if (ret >= 0) {
-        rxSuccess++;
-        if (qMon)
+    if(!(this->configuration.enableAsync))
+    {
+        if (ret >= 0)
         {
-            qMon->tData[tid].totalRx++;
-        }
-        sem_wait(&this->log_sem);
-        totalRxSuccessPerSecond++;
-        sem_post(&this->log_sem);
-
-        if(threadMc.get()->wsmp){
-            // check psid for bsm
-            wsmpdata = (wsmp_data_t*)(threadMc.get()->wsmp);
-            psid = wsmpdata->psid;
-        }
-        if(this->configuration.enableCongCtrl && this->congCtrlInitialized){
-            /* If congestion control is enabled, we will pass the contents
-                of the decoded/verified BSM to the cong ctrl library */
-            if(psid == PSID_BSM){
-                rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
-
-                unsigned int rvTmpId = rvBsm->id;
-                congestionControlManager->addCongestionControlData(
-                    rvTmpId,rvBsm->Latitude/10000000.0,
-                    rvBsm->Longitude / 10000000.0, rvBsm->Heading_degrees,
-                    rvBsm->Speed, rvBsm->timestamp_ms,
-                    rvBsm->MsgCount);
-            }
-        }
-        if (MsgType == MessageType::BSM) {
+            rxSuccess++;
             if (qMon)
             {
-                qMon->tData[tid].rxBSMs++;
+                qMon->tData[tid].totalRx++;
             }
-            if (appVerbosity > 2)
-            {
-                printf("Decoded BSM Summary: \n");
-                print_summary_RV(threadMc.get());
+            sem_wait(&this->log_sem);
+            totalRxSuccessPerSecond++;
+            sem_post(&this->log_sem);
+            if (MsgType == MessageType::BSM && psid == PSID_BSM){
+                if(this->configuration.enableCongCtrl && this->congCtrlInitialized && !(this->configuration.enableAsync) )
+                {
+                    /* If congestion control is enabled, we will pass the contents
+                    of the decoded/verified BSM to the cong ctrl library */
+                    rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
+                    unsigned int rvTmpId = rvBsm->id;
+                    congestionControlManager->addCongestionControlData(
+                        rvTmpId,rvBsm->Latitude/10000000.0,
+                        rvBsm->Longitude / 10000000.0, rvBsm->Heading_degrees,
+                        rvBsm->Speed, rvBsm->timestamp_ms,
+                        rvBsm->MsgCount);
+                }
+                if (qMon)
+                {
+                    qMon->tData[tid].rxBSMs++;
+                }
+                if (appVerbosity > 2)
+                {
+                    printf("Decoded BSM Summary: \n");
+                    print_summary_RV(threadMc.get());
+                }
             }
         }
-    } else {
+        else
+        {
         decFail++;
         if (qMon)
-        {
-            qMon->tData[tid].decodeFails++;
+            {
+                qMon->tData[tid].decodeFails++;
+            }
+        }
+
+        // check if valid msg contents pointer
+        if (threadMc) {
+            if(psid == PSID_BSM && threadMc.get()->j2735_msg )
+            {
+                bsm_value_t *bsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
+                bs.id = bsm->id;
+                bs.timestamp_ms = bsm->timestamp_ms;
+                bs.secMark_ms = bsm->secMark_ms;
+                bs.Latitude = bsm->Latitude;
+                bs.Longitude = bsm->Longitude;
+                bs.Elevation = bsm->Elevation;
+                bs.SemiMajorAxisAccuracy = bsm->SemiMajorAxisAccuracy;
+                bs.SemiMinorAxisAccuracy = bsm->SemiMinorAxisAccuracy;
+                bs.SemiMajorAxisOrientation = bsm->SemiMajorAxisOrientation;
+                bs.TransmissionState = bsm->TransmissionState;
+                bs.Speed = bsm->Speed;
+                bs.Heading_degrees = bsm->Heading_degrees;
+                bs.SteeringWheelAngle = bsm->SteeringWheelAngle;
+                bs.AccelLon_cm_per_sec_squared = bsm->AccelLon_cm_per_sec_squared;
+                bs.AccelLat_cm_per_sec_squared = bsm->AccelLat_cm_per_sec_squared;
+                bs.AccelVert_two_centi_gs = bsm->AccelVert_two_centi_gs;
+                bs.AccelYaw_centi_degrees_per_sec = bsm->AccelYaw_centi_degrees_per_sec;
+                bs.brakes = bsm->brakes;
+                bs.VehicleWidth_cm = bsm->VehicleWidth_cm;
+                bs.VehicleLength_cm = bsm->VehicleLength_cm;
+                bs.events = bsm->events;
+                if(this->configuration.enableDistanceLogs){
+                    double rvLat = bsm->Latitude / 10000000.0;   // in degrees
+                    double rvLon = bsm->Longitude / 10000000.0;  // in degrees
+                    double hvLatitude = 0.0;
+                    double hvLongitude = 0.0;
+                    if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+                        if(ApplicationBase::positionOverride){
+                            hvLatitude = configuration.overrideLat;
+                            hvLongitude = configuration.overrideLong;
+                        }
+                        else{
+                            hvLatitude = hvLocationInfo->getLatitude();
+                            hvLongitude = hvLocationInfo->getLongitude();
+                        }
+                    }
+                    if(hvLatitude != 0.0 && hvLongitude != 0.0){
+                        bs.distFromRV = bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
+                    }
+                }
+                // write the log here for this tx now. using tx timestamp made before sendto
+                ApplicationBase::writeLog(index, l2SrcAddr, false, TransmitType::SPS, 
+                        (ret >= 0) ? true : false, timestamp, psid, &bs, distFromRV);
+            }
         }
     }
-
-    ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::SPS,
-        (ret >= 0) ? true : false, timestamp, psid);
-
     return ret;
 }
 
@@ -579,6 +780,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     return ret;
 }
 
+#ifdef AEROLINK
 static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
     void *userData)
 {
@@ -598,11 +800,6 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         cb_data->AsyncState = VERIF_DONE;
 
         verifSuccess++;
-        if(verifSuccess % 2500 == 0 )
-        {
-            cout<<"Timestamp at Callback is: "<<SAEgetCurrentTimestamp()<<endl;
-            printf(" VerifSuccess at Callback is: %d\n", verifSuccess);
-        }
     }
     if(shared_index < PP_BUFFER_MAX_SIZE)
     {
@@ -627,7 +824,8 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
 
     sem_post(&verificationSem);
 }
-int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
+#endif
+int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr, logData *log_data) {
     int ret = -1;
     std::thread::id tid = std::this_thread::get_id();
     wsmp_data_t *wsmpp;
@@ -687,10 +885,52 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
             }
             return -1;
         }
-    }
-    // if a bsm is decoded properly, need to extract the lat/lon from the packet (if bsm)
-    if (mc->j2735_msg != nullptr) {
-        bsm_value_t* bsm = (bsm_value_t*)mc->j2735_msg;
+
+        bsm_value_t *bsm = (bsm_value_t*)(mc->j2735_msg);
+        log_data->bs.id = bsm->id;
+        log_data->bs.timestamp_ms = bsm->timestamp_ms;
+        log_data->bs.secMark_ms = bsm->secMark_ms;
+        log_data->bs.Latitude = bsm->Latitude;
+        log_data->bs.Longitude = bsm->Longitude;
+        log_data->bs.Elevation = bsm->Elevation;
+        log_data->bs.SemiMajorAxisAccuracy = bsm->SemiMajorAxisAccuracy;
+        log_data->bs.SemiMinorAxisAccuracy = bsm->SemiMinorAxisAccuracy;
+        log_data->bs.SemiMajorAxisOrientation = bsm->SemiMajorAxisOrientation;
+        log_data->bs.TransmissionState = bsm->TransmissionState;
+        log_data->bs.Speed = bsm->Speed;
+        log_data->bs.Heading_degrees = bsm->Heading_degrees;
+        log_data->bs.SteeringWheelAngle = bsm->SteeringWheelAngle;
+        log_data->bs.AccelLon_cm_per_sec_squared = bsm->AccelLon_cm_per_sec_squared;
+        log_data->bs.AccelLat_cm_per_sec_squared = bsm->AccelLat_cm_per_sec_squared;
+        log_data->bs.AccelVert_two_centi_gs = bsm->AccelVert_two_centi_gs;
+        log_data->bs.AccelYaw_centi_degrees_per_sec = bsm->AccelYaw_centi_degrees_per_sec;
+        log_data->bs.brakes = bsm->brakes;
+        log_data->bs.VehicleWidth_cm = bsm->VehicleWidth_cm;
+        log_data->bs.VehicleLength_cm = bsm->VehicleLength_cm;
+        log_data->bs.events = bsm->events;
+        if(this->configuration.enableDistanceLogs){
+            double rvLat = bsm->Latitude / 10000000.0;   // in degrees
+            double rvLon = bsm->Longitude / 10000000.0;  // in degrees
+            double hvLatitude = 0.0;
+            double hvLongitude = 0.0;
+            if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+                if(ApplicationBase::positionOverride){
+                    hvLatitude = configuration.overrideLat;
+                    hvLongitude = configuration.overrideLong;
+                }
+                else
+                {
+                    hvLatitude = hvLocationInfo->getLatitude();
+                    hvLongitude = hvLocationInfo->getLongitude();
+                }
+            }
+            if(hvLatitude != 0.0 && hvLongitude != 0.0)
+            {
+               log_data->bs.distFromRV = 
+                    bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
+            }
+        }
+
         sopt.rvKine.latitude = bsm->Latitude;
         sopt.rvKine.longitude = bsm->Longitude;
         sopt.rvKine.elevation = bsm->Elevation;
@@ -754,11 +994,16 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
         if(async_index > 0)
         {
             asyncCbData[async_index].indexToData = async_index;
-            if (mc->j2735_msg != nullptr)
+            asyncCbData[async_index].msg_index = log_data->index;
+            asyncCbData[async_index].l2SrcAddr = l2SrcAddr;
+            asyncCbData[async_index].timestamp = log_data->timestamp;
+            asyncCbData[async_index].distFromRV = log_data->distFromRV;
+            asyncCbData[async_index].bs = log_data->bs;
+            if((configuration.enableCongCtrl) && (congestionControlManager != NULL))
             {
-                bsm_value_t* bsm_squish = (bsm_value_t*)mc->j2735_msg;
-                if(configuration.enableCongCtrl)
+                if (mc->j2735_msg != nullptr)
                 {
+                    bsm_value_t* bsm_squish = (bsm_value_t*)mc->j2735_msg;
                     asyncCbData[async_index].Latitude = bsm_squish->Latitude;
                     asyncCbData[async_index].Longitude = bsm_squish->Longitude;
                     asyncCbData[async_index].MsgCount = bsm_squish->MsgCount;
@@ -771,7 +1016,16 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
             //call to AsyncVerify
             if((asyncCbData[async_index].AsyncState != VERIF_DONE))
             {
-                ret = SecService->asyncVerify(sopt.hvKine, sopt.rvKine, sopt.misbehaviorStat,(void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
+                #ifdef AEROLINK
+                SecurityService* tmpSecService = SecService.get();
+                if(tmpSecService){
+                    AerolinkSecurity* tmpAeroSecurity =
+                        static_cast<AerolinkSecurity*>(tmpSecService);
+                    ret = tmpAeroSecurity->asyncVerify(
+                            sopt.hvKine, sopt.rvKine, sopt.misbehaviorStat,
+                            (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
+                }
+                #endif
                 async_index--;
             }
             else
@@ -839,7 +1093,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
             this->updateL2RvMap(l2SrcAddr,rvsp.get());
         }
     } else {
-        verifSuccess++;
+        if(!(configuration.enableAsync))
+        {
+            verifSuccess++;
+        }
         // process WSA and other WSMP packets after verification
         wsmpp = (wsmp_data_t *)mc->wsmp;
         if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {

@@ -8,7 +8,7 @@
 #include "LongitudeIeee.h"
 
 int
-Longitude_constraint(asn_TYPE_descriptor_t *td, const void *sptr,
+Longitude_constraintIeee(asn_TYPE_descriptor_t *td, const void *sptr,
 			asn_app_constraint_failed_f *ctfailcb, void *app_key) {
 	long value;
 	
@@ -55,28 +55,28 @@ Longitude_1_inherit_TYPE_descriptor(asn_TYPE_descriptor_t *td) {
 }
 
 void
-Longitude_free(asn_TYPE_descriptor_t *td,
+Longitude_freeIeee(asn_TYPE_descriptor_t *td,
 		void *struct_ptr, int contents_only) {
 	Longitude_1_inherit_TYPE_descriptor(td);
 	td->free_struct(td, struct_ptr, contents_only);
 }
 
 int
-Longitude_print(asn_TYPE_descriptor_t *td, const void *struct_ptr,
+Longitude_printIeee(asn_TYPE_descriptor_t *td, const void *struct_ptr,
 		int ilevel, asn_app_consume_bytes_f *cb, void *app_key) {
 	Longitude_1_inherit_TYPE_descriptor(td);
 	return td->print_struct(td, struct_ptr, ilevel, cb, app_key);
 }
 
 asn_dec_rval_t
-Longitude_decode_ber(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
+Longitude_decode_berIeee(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
 		void **structure, const void *bufptr, size_t size, int tag_mode) {
 	Longitude_1_inherit_TYPE_descriptor(td);
 	return td->ber_decoder(opt_codec_ctx, td, structure, bufptr, size, tag_mode);
 }
 
 asn_enc_rval_t
-Longitude_encode_der(asn_TYPE_descriptor_t *td,
+Longitude_encode_derIeee(asn_TYPE_descriptor_t *td,
 		void *structure, int tag_mode, ber_tlv_tag_t tag,
 		asn_app_consume_bytes_f *cb, void *app_key) {
 	Longitude_1_inherit_TYPE_descriptor(td);
@@ -84,14 +84,14 @@ Longitude_encode_der(asn_TYPE_descriptor_t *td,
 }
 
 asn_dec_rval_t
-Longitude_decode_xer(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
+Longitude_decode_xerIeee(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
 		void **structure, const char *opt_mname, const void *bufptr, size_t size) {
 	Longitude_1_inherit_TYPE_descriptor(td);
 	return td->xer_decoder(opt_codec_ctx, td, structure, opt_mname, bufptr, size);
 }
 
 asn_enc_rval_t
-Longitude_encode_xer(asn_TYPE_descriptor_t *td, void *structure,
+Longitude_encode_xerIeee(asn_TYPE_descriptor_t *td, void *structure,
 		int ilevel, enum xer_encoder_flags_e flags,
 		asn_app_consume_bytes_f *cb, void *app_key) {
 	Longitude_1_inherit_TYPE_descriptor(td);
@@ -99,14 +99,14 @@ Longitude_encode_xer(asn_TYPE_descriptor_t *td, void *structure,
 }
 
 asn_dec_rval_t
-Longitude_decode_uper(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
+Longitude_decode_uperIeee(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
 		asn_per_constraints_t *constraints, void **structure, asn_per_data_t *per_data) {
 	Longitude_1_inherit_TYPE_descriptor(td);
 	return td->uper_decoder(opt_codec_ctx, td, constraints, structure, per_data);
 }
 
 asn_enc_rval_t
-Longitude_encode_uper(asn_TYPE_descriptor_t *td,
+Longitude_encode_uperIeee(asn_TYPE_descriptor_t *td,
 		asn_per_constraints_t *constraints,
 		void *structure, asn_per_outp_t *per_out) {
 	Longitude_1_inherit_TYPE_descriptor(td);
@@ -124,15 +124,15 @@ static const ber_tlv_tag_t asn_DEF_Longitude_tags_1[] = {
 asn_TYPE_descriptor_t asn_DEF_LongitudeIeee = {
 	"Longitude",
 	"Longitude",
-	Longitude_free,
-	Longitude_print,
-	Longitude_constraint,
-	Longitude_decode_ber,
-	Longitude_encode_der,
-	Longitude_decode_xer,
-	Longitude_encode_xer,
-	Longitude_decode_uper,
-	Longitude_encode_uper,
+	Longitude_freeIeee,
+	Longitude_printIeee,
+	Longitude_constraintIeee,
+	Longitude_decode_berIeee,
+	Longitude_encode_derIeee,
+	Longitude_decode_xerIeee,
+	Longitude_encode_xerIeee,
+	Longitude_decode_uperIeee,
+	Longitude_encode_uperIeee,
 	0,	/* Use generic outmost tag fetcher */
 	asn_DEF_Longitude_tags_1,
 	sizeof(asn_DEF_Longitude_tags_1)

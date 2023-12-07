@@ -8,16 +8,21 @@ include(FindPkgConfig)
 
 set(TARGET_QIMC qimc)
 
-pkg_check_modules(JSONC_LIB REQUIRED json-c)
-if (JSONC_LIB_FOUND)
-    include_directories(${JSONC_LIB_INCLUDE_DIRS})
-endif (JSONC_LIB_FOUND)
+if (NOT DEFINED ENV{JSONC_DIR})
+    pkg_check_modules(JSONC_LIB REQUIRED json-c)
+    if (JSONC_LIB_FOUND)
+        include_directories(${JSONC_LIB_INCLUDE_DIRS})
+    endif (JSONC_LIB_FOUND)
+else()
+    message("JSONC_DIR defined in ENV")
+    include_directories(${CMAKE_CURRENT_BINARY_DIR}/json-c
+        $ENV{JSONC_DIR})
+endif()
 
 set(QIMC_SOURCES
     qimc.cpp
     qimcTest.cpp
 )
-
 
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -pthread")

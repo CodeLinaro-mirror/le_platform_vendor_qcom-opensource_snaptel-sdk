@@ -106,13 +106,13 @@ int RepeatedPlayAMRWBPlus::start(
 
     /* Step - 5 */
     /* Play this file only once */
-    pbFiles1.absoluteFilePath = "/data/prompt1.wav";
+    pbFiles1.absoluteFilePath = "/data/prompt1.amr";
     pbFiles1.repeatInfo.type = telux::audio::RepeatType::COUNT;
     pbFiles1.repeatInfo.count = 1;
     filesToPlay.push_back(pbFiles1);
 
     /* Play this file repeatedly */
-    pbFiles2.absoluteFilePath = "/data/prompt2.wav";
+    pbFiles2.absoluteFilePath = "/data/prompt2.amr";
     pbFiles2.repeatInfo.type = telux::audio::RepeatType::INDEFINITELY;
     filesToPlay.push_back(pbFiles2);
 

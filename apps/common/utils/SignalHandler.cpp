@@ -46,7 +46,6 @@
 #include <thread>
 
 #include "SignalHandler.hpp"
-#include <telux/common/Log.hpp>
 
 using __cxxabiv1::__cxa_demangle;
 
@@ -105,7 +104,6 @@ void SignalHandler::dumpTrace(int sigNum, siginfo_t* info, void* ptr) {
     strings = nullptr;
 
     std::cout << logStream_.str() << std::endl;
-    LOG(ERROR, __FUNCTION__, logStream_.str());
     // restore old action, so that coredump file will still be generated
     sigaction(sigNum, &oldacts_[sigNum], nullptr);
     raise(sigNum);

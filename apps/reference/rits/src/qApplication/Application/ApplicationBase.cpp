@@ -270,11 +270,13 @@ void updateSpsTransmitFlow(
 
         // catch future error here
         try{
-        uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
-        if(ret == static_cast<uint8_t>(Status::FAILED)){
-            std::cerr << "sps transmit flow update failed\n";
-        }}
-        catch(const std::future_error& e){
+            uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
+            if(ret == static_cast<uint8_t>(Status::FAILED)){
+                std::cerr << "sps transmit flow update failed\n";
+                std::cerr << "Max itt was: " <<
+                    congestionControlUserData->congestionControlCalculations->maxITT <<"\n";
+            }
+        }catch(const std::future_error& e){
             std::cout << "Caught future error when updating sps flow\n";
             std::cout << "Error log is: " << e.what() << "\n";
         }
@@ -422,7 +424,9 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
     // set up kinematics listener
     if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
+        if (appVerbosity > 5){
+            std::cout << "Enabling location fixes\n";
+        }
         appLocListener_ = make_shared<LocListener>();
         appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
@@ -452,8 +456,10 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
               // lcm id change timer thread
               sem_init(&idChangeData.idSem, 0, 1);
-              fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                  this->configuration.idChangeInterval/1000.0);
+              if (appVerbosity > 5){
+                  fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
+                      this->configuration.idChangeInterval/1000.0);
+              }
               changeIdTimer(this->configuration.idChangeInterval);
 
           }else{
@@ -470,9 +476,11 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
             if (locationInfo) {
                 uint8_t leapSeconds = 0;
                 telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                std::cout << "Leap seconds from location Info is: " << leapSeconds << "\n";
                 if(stat == Status::FAILED || leapSeconds == 0){
                     leapSeconds = configuration.leapSeconds;
+                }
+                if (appVerbosity > 5){
+                    printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
                 }
                 ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
             }
@@ -581,7 +589,9 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
 
     if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
+        if (appVerbosity > 5){
+            std::cout << "Enabling location fixes\n";
+        }
         appLocListener_ = make_shared<LocListener>();
         appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
@@ -1458,6 +1468,8 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         /** Pseudonym/ID Change */
         if(configs.find("lcmName") != configs.end()){
             this->configuration.lcmName = configs["lcmName"];
+        }else{
+            this->configuration.lcmName = "";
         }
 
         if(configs.find("idChangeInterval") != configs.end()) {

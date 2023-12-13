@@ -82,7 +82,7 @@ EtsiApplication::EtsiApplication(char *fileConfiguration, MessageType msgType):
     GnCfg.StationType = static_cast<gn::ITSStationType>(this->configuration.StationType);
 
     std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(
-                kinematicsReceive->shared_from_this(), GnCfg));
+                appLocListener_, GnCfg));
 
     //std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(nullptr));
     GnRouter = std::move(gnp);
@@ -119,7 +119,7 @@ EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
     GnCfg.StationType = static_cast<gn::ITSStationType>(this->configuration.StationType);
 
     std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(
-                kinematicsReceive->shared_from_this(), GnCfg));
+                appLocListener_, GnCfg));
     GnRouter = std::move(gnp);
 
     //init messages for sending.
@@ -242,13 +242,18 @@ void EtsiApplication::fillCam(CAM_t *cam) {
 }
 
 void EtsiApplication::fillCamLocation(CAM_t *cam) {
-    shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
+    shared_ptr<ILocationInfoEx> locationInfo = appLocListener_->getLocation();
+
+    if (locationInfo == nullptr) {
+        return;
+    }
+
     ReferencePosition_t *RefPos = &(cam->cam.camParameters.basicContainer.referencePosition);
 
-    // These unit convertion need to be reviewed
+    // These unit convertion according to ETSI TS 102 894-2
     RefPos->latitude = (locationInfo->getLatitude() * 10000000);
     RefPos->longitude = (locationInfo->getLongitude() * 10000000);
-    RefPos->altitude.altitudeValue = (locationInfo->getAltitude() * 10);
+    RefPos->altitude.altitudeValue = (locationInfo->getAltitude() * 100);
     RefPos->altitude.altitudeConfidence = AltitudeConfidence_alt_000_20;
     RefPos->positionConfidenceEllipse.semiMajorConfidence =
         (locationInfo->getHorizontalUncertaintySemiMajor() * 20);
@@ -264,7 +269,7 @@ void EtsiApplication::fillCamLocation(CAM_t *cam) {
         &cam->cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency;
     bvchf->heading.headingValue = 0;
     bvchf->heading.headingConfidence = HeadingConfidence_equalOrWithinZeroPointOneDegree;
-    bvchf->speed.speedValue = (50 * locationInfo->getSpeed());
+    bvchf->speed.speedValue = (100 * locationInfo->getSpeed()); // 0.01 m/s
     bvchf->speed.speedConfidence = SpeedConfidence_equalOrWithinOneMeterPerSec;
     bvchf->driveDirection = DriveDirection_forward;
     bvchf->vehicleLength.vehicleLengthValue = 6;
@@ -279,7 +284,9 @@ void EtsiApplication::fillCamLocation(CAM_t *cam) {
     bvchf->curvature.curvatureValue = CurvatureValue_straight;
     bvchf->curvature.curvatureConfidence = CurvatureConfidence_onePerMeter_0_00002;
     bvchf->curvatureCalculationMode = CurvatureCalculationMode_yawRateUsed;
-    bvchf->yawRate.yawRateValue = (locationInfo->getBodyFrameData().yawRate * 100);
+    // radian to degree conversion, need multiply (180 div PI = 57.2958)
+    // yawRate.yawRateValue unit: 0.01 degree per second
+    bvchf->yawRate.yawRateValue = (locationInfo->getBodyFrameData().yawRate * 5729);
     bvchf->yawRate.yawRateConfidence = YawRateConfidence_degSec_000_10;
 }
 

@@ -656,7 +656,7 @@ void DataConnectionManagerStub::handleStopDataCallEvent(int profileId, SlotId sl
         endReason.type = EndReasonType::CE_CALL_MANAGER_DEFINED;
         endReason.cmCode = CallManagerReasonCode::CE_CLIENT_END;
         call->setInterfaceName("");
-        call->setTechPreference(TechPreference::UNKNOWN);
+        call->setTechPreference(TechPreference::TP_3GPP);
         call->setDataBearerTechnology(DataBearerTechnology::UNKNOWN);
         call->setOperationType(OperationType::DATA_LOCAL);
         call->setDataCallEndReason(endReason);
@@ -778,7 +778,7 @@ telux::common::Status DataConnectionManagerStub::stopDataCall(int profileId,
                 endReason.type = EndReasonType::CE_CALL_MANAGER_DEFINED;
                 endReason.cmCode = CallManagerReasonCode::CE_CLIENT_END;
                 call->setInterfaceName("");
-                call->setTechPreference(TechPreference::UNKNOWN);
+                call->setTechPreference(TechPreference::TP_3GPP);
                 call->setDataBearerTechnology(DataBearerTechnology::UNKNOWN);
                 call->setOperationType(operationType);
                 if ((ipFamilyType == IpFamilyType::IPV4) || (ipFamilyType == IpFamilyType::IPV4V6)) {

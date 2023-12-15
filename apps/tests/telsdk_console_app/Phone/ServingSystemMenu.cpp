@@ -202,7 +202,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       std::cout
          << "Available RAT mode preferences: \n"
             "(0 - CDMA_1X\n 1 - CDMA_EVDO\n 2 - GSM\n 3 - WCDMA\n 4 - LTE\n 5 - TDSCDMA\n" <<
-            "6 - NR5G) \n\n";
+            "6 - NR5G_COMBINED\n 7 - NR5G_NSA\n 8 - NR5G_SA\n) \n\n";
       std::cout
          << "Enter RAT mode preferences\n(For example: enter 2,4 to prefer GSM & LTE mode): ";
       std::getline(std::cin, preference, delimiter);
@@ -216,7 +216,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       }
 
       for(auto &opt : options) {
-         if(opt >= 0 && opt <= 6) {
+         if(opt >= 0 && opt <= 8) {
             try {
                pref.set(opt);
             } catch(const std::exception &e) {

@@ -168,5 +168,15 @@
             "plmn:              string, Valid plmn name.",
             "isHome:            bool, Valid value is 1 or 0 signifies PLMN is in home network or not. "
         ]
+    },
+    "tel_serv": {
+        "callBarringUpdate":[
+            "telsdk_event_injector -f tel_serv -e callBarringUpdate <slotId> ,<rat> <domain1> <callType> ,<rat> <domain2> <callType>",
+            "slotId:       valid slotIds are 1 & 2 only.",
+            "rat:          integer, Current serving radio technology. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "domain:       integer, Current service domain registered on system. Refer SDK documentation enum ServiceDomain. For example PS_ONLY = 2",
+            "callType:     integer, Current call allowed type in cell. Refer SDK documentation enum CallsAllowedInCell. For example ALL_CALLS = 3",
+            "example: telsdk_event_injector -f tel_serv -e \"callBarringUpdate 1 ,14 2 3\""
+        ]
     }
 }

@@ -192,6 +192,30 @@ std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain do
    return domainString;
 }
 
+std::string MyServingSystemHelper::getCallBarringType(telux::tel::CallsAllowedInCell type) {
+   std::string typeString = " Unknown ";
+   switch(type) {
+      case telux::tel::CallsAllowedInCell::NORMAL_ONLY:
+         typeString = " Normal Only ";
+         break;
+      case telux::tel::CallsAllowedInCell::EMERGENCY_ONLY:
+         typeString = " Emergency Only ";
+         break;
+      case telux::tel::CallsAllowedInCell::NO_CALLS:
+         typeString = " No Calls ";
+         break;
+      case telux::tel::CallsAllowedInCell::ALL_CALLS:
+         typeString = " All Calls ";
+         break;
+      case telux::tel::CallsAllowedInCell::UNKNOWN:
+         typeString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return typeString;
+}
+
 std::string MyServingSystemHelper::getRadioTechnology(telux::tel::RadioTechnology radioTech) {
     return MyPhoneHelper::radioTechToString(radioTech);
 }
@@ -503,4 +527,18 @@ void MyServingSystemListener::onNetworkRejection(telux::tel::NetworkRejectInfo r
             << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
             << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
             << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc;
+}
+
+void MyServingSystemListener::onCallBarringInfoChanged
+   (std::vector<telux::tel::CallBarringInfo> barringInfo) {
+   PRINT_NOTIFICATION << " Call barring information changed." << std::endl;
+   for (int index = 0; index < barringInfo.size(); index++) {
+      PRINT_NOTIFICATION << " RAT: "
+         << MyServingSystemHelper::getRadioTechnology(barringInfo[index].rat)
+         << ", Service Domain: "
+         << MyServingSystemHelper::getServiceDomain(barringInfo[index].domain)
+         << ", Call type: "
+         << MyServingSystemHelper::getCallBarringType(barringInfo[index].callType)
+         << std::endl;
+   }
 }

@@ -417,6 +417,31 @@ enum ServingSystemNotificationType {
 };
 
 /**
+ * Defines allowed call types supported by the network cell
+ */
+enum class CallsAllowedInCell {
+   UNKNOWN = -1,   /**< Unknown calls allowed */
+   NORMAL_ONLY,    /**< Only normal calls allowed */
+   EMERGENCY_ONLY, /**< Only emergency calls allowed */
+   NO_CALLS,       /**< No calls allowed */
+   ALL_CALLS,      /**< All calls allowed */
+};
+
+/**
+ * Defines call barring information.
+ */
+struct CallBarringInfo {
+   RadioTechnology rat;  /**< Current serving RAT */
+   ServiceDomain domain; /**< Current service domain registered on the system for the
+                              serving RAT; valid values are CS_ONLY and PS_ONLY*/
+   CallsAllowedInCell callType; /**< Current allowed call type for the cell*/
+
+   bool operator==(const CallBarringInfo& cb) const {
+      return (cb.rat == rat) && (cb.domain == domain) && (cb.callType == callType);
+   }
+};
+
+/**
  * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
  */
 using ServingSystemNotificationMask = std::bitset<32>;
@@ -652,6 +677,21 @@ public:
    virtual telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
 
    /**
+    * Gets the call barring information for the currently registered cell of a device.
+    *
+    * On platforms with access control enabled, the caller needs to have the
+    * TELUX_TEL_SRV_SYSTEM_READ permission to successfully invoke this API.
+    *
+    * @param [out] barringInfo  List of call barring information @ref CallBarringInfo
+    *
+    * @returns Status of getCallBarringInfo, i.e., success or a suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -814,6 +854,25 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual void onNetworkRejection(NetworkRejectInfo rejectInfo) {
+   }
+
+   /**
+    * Notifies registered listeners whenever the call barring information for the currently
+    * registered cell of the device changes.
+    *
+    * To receive this notification, the client needs to register a listener using the
+    * @ref registerListener API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO
+    * bit in the bitmask.
+    *
+    * On platforms with access control enabled, the caller needs to have the
+    * TELUX_TEL_SRV_SYSTEM_READ permission to receive this notification.
+    *
+    * @param [in] barringInfo       List of call barring information @ref CallBarringInfo
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onCallBarringInfoChanged(std::vector<CallBarringInfo> barringInfo) {
    }
 
    /**

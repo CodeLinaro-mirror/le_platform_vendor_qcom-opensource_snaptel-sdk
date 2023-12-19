@@ -3399,6 +3399,65 @@ Application must perform C-V2X radio initialization before calling any methods o
 4. Application receives synchronous status which indicates if the getCalibrationInitStatus request was sent successfully.
 5. Application is notified with CalibrationInitStatus and suitable error code via the application supplied callback.
 
+@subsection audio_endless_count_callflow Playing a file specific number of times call flow
+
+@anchor fig_audio_endless_count_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_endless_count_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Playing a file specific number of times call flow}
+  \label{fig_audio_endless_count_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_endless_count_callflow.png,Playing a file specific number of times call flow,80,80,Playing a file specific number of times call flow}
+
+1. Application request an AudioFactory instance from AudioFactory.
+2. AudioFactory instance is returned to the application.
+3. From AudioFactory, application request an IAudioPlayer instance.
+4. IAudioPlayer instance is returned to the application.
+5. Application defines audio stream configuration, files to play and number of times it should be played. It then calls startPlayback() on the IAudioPlayer instance.
+6. Success/failure errorcode is returned to the application to indicate if startPlayback() could start playback or not.
+7. When the IAudioPlayer starts playback, onPlaybackStarted() callback is called on an instance of the class implementing IPlayListListener.
+8. The onFilePlayed() is invoked for the 1st file. Every time a file is played, onFilePlayed() callback is called on an instance of the class implementing IPlayListListener to indicate that the file has been played. This is called every time a file is played irrespective of the number of times it will be played.
+9. The onFilePlayed() is invoked for the 2nd file.
+10. When all files have been played completely, onPlaybackFinished() callback is invoked. This marks completion of the repeated playback use case.
+A. If an error occurs for example audio stream can not be created or audio sample can not be played, onError() callback is called.
+B. Following the onError() callback invocation, onPlaybackStopped() is called to inform application that the playback is terminated.
+
+@subsection audio_endless_infinite_callflow Playing a file indefinitely call flow
+
+@anchor fig_audio_endless_infinite_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_endless_infinite_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Playing a file indefinitely call flow}
+  \label{fig_audio_endless_infinite_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_endless_infinite_callflow.png,Playing a file indefinitely call flow,80,80,Playing a file indefinitely call flow}
+
+1. Application request an AudioFactory instance from AudioFactory.
+2. AudioFactory instance is returned to the application.
+3. From AudioFactory, application request an IAudioPlayer instance.
+4. IAudioPlayer instance is returned to the application.
+5. Application defines audio stream configuration, files to play and infinite repeat type. It then calls startPlayback() on the IAudioPlayer instance.
+6. Success/failure errorcode is returned to the application to indicate if startPlayback() could start playback or not.
+7. When the IAudioPlayer starts playback, onPlaybackStarted() callback is called on an instance of the class implementing IPlayListListener.
+8. The onFilePlayed() is invoked to indicate file has been played 1st time. Every time a file is played, onFilePlayed() callback is called on an instance of the class implementing IPlayListListener to indicate that the file has been played. This is called every time the file is played.
+9. The onFilePlayed() is invoked to indicate file has been played 2nd time.
+10. The onFilePlayed() is invoked to indicate file has been played 3rd time.
+11. When the use case is complete, application calls stopPlayback() to explicitly stop the playback.
+12. Success/failure errorcode is returned to the application to indicate if stopPlayback() could stop playback or not.
+13. When the playback is stopped, onPlaybackStopped() callback is called. This marks completion of the repeated playback use case.
+A. If an error occurs for example audio stream can not be created or audio sample can not be played, onError() callback is called.
+B. Following the onError() callback invocation, onPlaybackStopped() is called to inform application that the playback is terminated.
+
 @section thermal_manager_callflow Thermal
 
 @subsection thermal_manager_api_callflow Thermal Manager API call flow

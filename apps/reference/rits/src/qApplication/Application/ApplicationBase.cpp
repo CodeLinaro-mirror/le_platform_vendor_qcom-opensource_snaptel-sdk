@@ -840,7 +840,9 @@ void ApplicationBase::prepareForExit() {
     std::unique_lock<std::mutex> loc(stateMtx);
     exitApp = true;
     stateCv.notify_all();
-
+    if (kinematicsReceive != nullptr) {
+        kinematicsReceive->close();
+    }
     // notify all radio interface to prepare for exit
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].prepareForExit();

@@ -11,6 +11,8 @@
 #ifndef TELUX_COMMON_UTILS_HPP
 #define TELUX_COMMON_UTILS_HPP
 
+#include <string>
+
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {

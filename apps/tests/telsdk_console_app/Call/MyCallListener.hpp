@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -77,6 +77,7 @@ public:
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
+   void onRingbackTone(bool isAlerting, int phoneId) override;
 
    std::string getCallStateString(telux::tel::CallState cs);
    std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);

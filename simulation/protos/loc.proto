@@ -8,6 +8,7 @@ syntax = "proto3";
 package locStub;
 import "google/protobuf/empty.proto";
 import "common.proto";
+import "event.proto";
 // option optimize_for = CODE_SIZE;
 
 /*******************************************************************
@@ -60,6 +61,7 @@ service LocationConfiguratorService {
     rpc RequestXtraStatus (google.protobuf.Empty) returns (RequestXtraStatusReply) {}
     rpc InjectMerkleTree (google.protobuf.Empty) returns (LocManagerCommandReply) {}
     rpc ConfigureOsnma (ConfigureOsnmaRequest) returns (LocManagerCommandReply) {}
+    rpc RegisterListener (RegisterListenerRequest) returns (LocManagerCommandReply) {}
 }
 
 service DgnssService {
@@ -87,6 +89,16 @@ message LocManagerCommandReply {
     int32 delay = 3;
 }
 
+message XtraStatusEvent {
+    int32 enable = 1;
+    int32 validity = 2;
+    int32 dataStatus = 3;
+}
+
+message GnssUpdateEvent {
+    int32 enabledMask = 1;
+}
+
 message RequestEnergyConsumedInfoReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
@@ -104,6 +116,11 @@ message GetYearOfHwReply {
 
 message GetCapabilitiesReply {
     uint32 loc_capability = 1;
+}
+
+message RegisterListenerRequest {
+    bool xtra_indication = 1;
+    bool gnss_indication = 2;
 }
 
 // Left Shift

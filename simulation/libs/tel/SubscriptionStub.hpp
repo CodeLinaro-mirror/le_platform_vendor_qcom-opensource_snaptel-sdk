@@ -43,7 +43,7 @@
 #ifndef SUBSCRIPTION_STUB_HPP
 #define SUBSCRIPTION_STUB_HPP
 
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Subscription.hpp>
 

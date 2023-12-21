@@ -1,7 +1,7 @@
 # pkg-config support
 configure_file("telux-common.pc.in" "telux-common.pc" @ONLY)
 
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_COMMON_LIBRARY telux_common)
 
@@ -23,12 +23,25 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_library (${TARGET_COMMON_LIBRARY} SHARED version.cpp AsyncTaskQueue.hpp DeviceConfig.cpp
-    Logger.cpp event-manager/EventParserUtil.cpp event-manager/EventManager.cpp JsonParser.cpp
-    SimulationConfigParser.cpp CsvHandler.cpp ResponseHandler.cpp CommonUtils.cpp Utils.cpp)
+set (COMMON_STUB_SOURCES
+    Version.cpp
+    AsyncTaskQueue.hpp
+    DeviceConfig.cpp
+    Logger.cpp
+    event-manager/EventParserUtil.cpp
+    event-manager/ClientEventManager.cpp
+    JsonParser.cpp
+    SimulationConfigParser.cpp
+    CsvHandler.cpp
+    CommonUtils.cpp
+    Utils.cpp
+)
+
+add_library (${TARGET_COMMON_LIBRARY} SHARED  ${COMMON_STUB_SOURCES})
 
 target_link_libraries(${TARGET_COMMON_LIBRARY}
     jsoncpp
+    telux_protos
     )
 
 install ( TARGETS ${TARGET_COMMON_LIBRARY}

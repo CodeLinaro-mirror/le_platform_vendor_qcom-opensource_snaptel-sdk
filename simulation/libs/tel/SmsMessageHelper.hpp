@@ -43,8 +43,8 @@
 #ifndef SMS_MESSAGEHELPER_HPP
 #define SMS_MESSAGEHELPER_HPP
 
-#include "../common/Logger.hpp"
-#include "../common/CsvHandler.hpp"
+#include "common/Logger.hpp"
+#include "common/CsvHandler.hpp"
 #include <telux/tel/SmsManager.hpp>
 
  enum TelEventType {

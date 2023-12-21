@@ -43,9 +43,9 @@
 #ifndef CELLBROADCAST_MANAGER_STUB_HPP
 #define CELLBROADCAST_MANAGER_STUB_HPP
 
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/event-manager/EventParserUtil.hpp"
-#include "../common/ListenerManager.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
+#include "common/ListenerManager.hpp"
 #include <telux/tel/CellBroadcastDefines.hpp>
 #include <telux/tel/CellBroadcastManager.hpp>
 #include <telux/common/CommonDefines.hpp>

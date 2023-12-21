@@ -43,10 +43,9 @@
 #ifndef PHONE_MANAGER_STUB_HPP
 #define PHONE_MANAGER_STUB_HPP
 
-#include "../common/Logger.hpp"
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/Logger.hpp"
+#include "common/AsyncTaskQueue.hpp"
 #include <telux/tel/PhoneManager.hpp>
-#include "../common/event-manager/EventManager.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include "PhoneStub.hpp"
 #include <map>

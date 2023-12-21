@@ -45,15 +45,15 @@
 
 #include "SubscriptionStub.hpp"
 #include <telux/tel/CardManager.hpp>
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/AsyncTaskQueue.hpp"
 #include <telux/tel/SubscriptionManager.hpp>
-#include "../common/ListenerManager.hpp"
+#include "common/ListenerManager.hpp"
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel.grpc.pb.h"
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/event-manager/EventParserUtil.hpp"
+#include "protos/proto-src/tel.grpc.pb.h"
+#include "common/event-manager/ClientEventManager.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
 #include "CardAppStub.hpp"
 
 using telStub::PhoneService;
@@ -78,7 +78,7 @@ public:
         telux::common::Status *status = nullptr) override;
     std::vector<std::shared_ptr<ISubscription>>
         getAllSubscriptions(telux::common::Status *status = nullptr) override;
-    void onEventUpdate(std::string event) override;
+    void onEventUpdate(google::protobuf::Any event);
     void cleanup();
 private:
     SlotId slotId_;
@@ -97,14 +97,15 @@ private:
     telux::common::Status createSubscriptionAndNotify(int slotId);
     telux::common::Status addNewOrUpdateSubscription(int slotId);
     void handleEvent(std::string token, std::string event);
-    void handlesubscriptionInfoChanged(std::string eventParams);
-    void handlecardInfoChanged(std::string eventParams);
+    void handleSubscriptionInfoChanged(::telStub::SubscriptionEvent event);
+    void handleCardInfoChanged(::telStub::cardInfoChange event);
     void onCardInfoChanged(int slotId);
     telux::common::Status getState(CardState &cardState, int phoneId);
     telux::common::Status getAppInfo(std::vector<CardAppStatus> &apps, int phoneId);
     telux::common::Status fetchSubscription(int slotId, std::string *carrierName,
         std::string *iccId, int* mcc, int* mnc, std::string *number, std::string *imsi,
         std::string *gid1, std::string *gid2 );
+    void onEventUpdate(std::string event);
 };
 
 } // end of namespace tel

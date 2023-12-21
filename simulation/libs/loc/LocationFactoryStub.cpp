@@ -36,7 +36,7 @@
 #include <thread>
 
 #include "LocationFactoryStub.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 using namespace telux::common;
 

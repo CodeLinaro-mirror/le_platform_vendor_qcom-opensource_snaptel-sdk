@@ -10,8 +10,8 @@
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/data/DataProfileListener.hpp>
 
-#include "../common/AsyncTaskQueue.hpp"
-#include "../../protos/proto-src/data.grpc.pb.h"
+#include "common/AsyncTaskQueue.hpp"
+#include "protos/proto-src/data.grpc.pb.h"
 
 using dataStub::DataProfileManager;
 

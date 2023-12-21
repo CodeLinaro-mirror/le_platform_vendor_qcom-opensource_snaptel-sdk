@@ -7,7 +7,7 @@
  #define SERVING_SYSTEM_MANAGER_STUB_HPP
 
 #include <telux/data/ServingSystemManager.hpp>
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/AsyncTaskQueue.hpp"
 
 namespace telux {
 namespace data {

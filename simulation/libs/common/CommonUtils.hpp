@@ -8,8 +8,12 @@
 #define COMMONUTILS_HPP
 
 #include <telux/common/CommonDefines.hpp>
+#include <grpcpp/grpcpp.h>
+
 #include "JsonParser.hpp"
 #include "Logger.hpp"
+
+using grpc::Channel;
 
 #define handleApiResponseForMethod(subSystem, manager)                                       \
     telux::common::Status status = telux::common::Status::FAILED;                            \
@@ -61,6 +65,13 @@ class CommonUtils {
         std::string subsystem, std::string value, std::vector<std::string> path);
     static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex);
     static std::vector<int> convertStringToVector(std::string input);
+    static std::string getGrpcPort();
+
+    template<typename T>
+    static std::unique_ptr<typename T::Stub> getGrpcStub() {
+        return T::NewStub(grpc::CreateChannel(CommonUtils::getGrpcPort(),
+            grpc::InsecureChannelCredentials()));
+    }
 
     template<typename T>
     static void updateJsonValue(const std::string& filePath, const std::string& subsystem,
@@ -68,8 +79,12 @@ class CommonUtils {
         Json::Value rootObj;
         ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
         if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+            LOG(ERROR, __FUNCTION__, " filePath::", filePath);
+            LOG(ERROR, __FUNCTION__, " subsystem::", subsystem,
+                " method::", method, " attribute::", attribute, " val::", val);
         }
+
         rootObj[subsystem][method][attribute] = val;
         JsonParser::writeToJsonFile(rootObj, filePath);
     }

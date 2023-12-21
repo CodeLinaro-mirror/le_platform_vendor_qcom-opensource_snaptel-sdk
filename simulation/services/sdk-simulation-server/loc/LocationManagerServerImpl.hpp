@@ -21,7 +21,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <telux/common/CommonDefines.hpp>
 
-#include "../../../protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -147,8 +147,8 @@ enum class ECallOptionalDataType {
 struct ECallMsdOptionals {
 
    ECallOptionalDataType optionalDataType; /**< Type of optional data */
-   bool optionalDataPresent = false;               /**< Availability of Optional data:
-                                                        true - Present or false - Absent */
+   bool optionalDataPresent;               /**< Availability of Optional data:
+                                                true - Present or false - Absent */
    bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
                                                 true - Present or false - Absent. In MSD version-3
                                                 (as per EN 15722:2020), as recentVehicleLocationN1
@@ -159,6 +159,12 @@ struct ECallMsdOptionals {
                                                 is mandatory, this should be set to true by client*/
    bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data:
                                                   true - Present or false - Absent*/
+   ECallMsdOptionals() : optionalDataType(ECallOptionalDataType::ECALL_DEFAULT),
+        optionalDataPresent(false),
+        recentVehicleLocationN1Present(false),
+        recentVehicleLocationN2Present(false),
+        numberOfPassengersPresent(false) {
+   }
 };
 
 /**
@@ -169,6 +175,11 @@ struct ECallMsdControlBits {
    bool testCall;             /**< test / emergency call */
    bool positionCanBeTrusted; /**< false if coincidence < 95% of reported pos within +/- 150m */
    ECallVehicleType vehicleType : 5; /**< Represents a vehicle class as per EN 15722 */
+   ECallMsdControlBits() : automaticActivation(false),
+        testCall(false),
+        positionCanBeTrusted(false),
+        vehicleType(ECallVehicleType::PASSENGER_VEHICLE_CLASS_M1) {
+   }
 };
 
 /**
@@ -180,6 +191,11 @@ struct ECallVehicleIdentificationNumber {
    std::string isovds;          /**< Vehicle Type Descriptor (VDS) */
    std::string isovisModelyear; /**< Model year from Vehicle Identifier Section (VIS) */
    std::string isovisSeqPlant;  /**< Plant code + sequential number from VIS */
+   ECallVehicleIdentificationNumber() : isowmi(""),
+        isovds(""),
+        isovisModelyear(""),
+        isovisSeqPlant("") {
+   }
 };
 
 /**
@@ -194,6 +210,14 @@ struct ECallVehiclePropulsionStorageType {
    bool electricEnergyStorage; /**< Represents the presence of Electronic Storage in the vehicle */
    bool hydrogenStorage;       /**< Represents the presence of Hydrogen Storage in the vehicle   */
    bool otherStorage; /**< Represents the presence of Other types of storage in the vehicle   */
+   ECallVehiclePropulsionStorageType() : gasolineTankPresent(false),
+        dieselTankPresent(false),
+        compressedNaturalGas(false),
+        liquidPropaneGas(false),
+        electricEnergyStorage(false),
+        hydrogenStorage(false),
+        otherStorage(false) {
+   }
 };
 
 /**
@@ -202,6 +226,9 @@ struct ECallVehiclePropulsionStorageType {
 struct ECallVehicleLocation {
    int32_t positionLatitude;  /**< latitude in milliarcsec, range is (-2147483648 to 2147483647) */
    int32_t positionLongitude; /**< longitude in milliarcsec, range is (-2147483648 to 2147483647) */
+   ECallVehicleLocation() : positionLatitude(0),
+        positionLongitude(0) {
+   }
 };
 
 /**
@@ -211,6 +238,9 @@ struct ECallVehicleLocation {
 struct ECallVehicleLocationDelta {
    int16_t latitudeDelta;  /**<  ( 1 Unit = 100 milliarcseconds, range: -512 to 511) */
    int16_t longitudeDelta; /**<  ( 1 Unit = 100 milliarcseconds, range: -512 to 511) */
+   ECallVehicleLocationDelta() : latitudeDelta(0),
+        longitudeDelta(0) {
+   }
 };
 
 ///@cond DEV
@@ -250,7 +280,7 @@ struct ECallOptionalPdu {
  */
 struct ECallMsdData {
    ECallMsdOptionals optionals; /**< Indicates presence of optionals in ECall MSD */
-   uint8_t messageIdentifier;   /**< Starts with 1 for each new eCall and to be incremented with
+   uint8_t messageIdentifier = 1;   /**< Starts with 1 for each new eCall and to be incremented with
                                      every retransmission */
    ECallMsdControlBits control; /**< ECallMsdControlBits structure as per European standard i.e. EN
                                    15722 */
@@ -259,10 +289,10 @@ struct ECallMsdData {
    ECallVehiclePropulsionStorageType vehiclePropulsionStorage;   /**< VehiclePropulsionStorageType
                                                                     structure as per European standard
                                                                     i.e. EN 15722 */
-   uint32_t timestamp;                   /**< Seconds elapsed since midnight 01.01.1970 UTC */
+   uint32_t timestamp = 0;                   /**< Seconds elapsed since midnight 01.01.1970 UTC */
    ECallVehicleLocation vehicleLocation; /**< VehicleLocation structure as per European standard.
                                             i.e. EN 15722 */
-   uint8_t vehicleDirection; /**< Direction of travel in 2 degrees steps from magnetic north */
+   uint8_t vehicleDirection = 0; /**< Direction of travel in 2 degrees steps from magnetic north */
 
    ECallVehicleLocationDelta recentVehicleLocationN1; /**< Change in latitude and longitude compared
                                                          to the last MSD transmission. Optional
@@ -270,7 +300,7 @@ struct ECallMsdData {
    ECallVehicleLocationDelta recentVehicleLocationN2; /**< Change in latitude and longitude compared
                                                          to the last but one MSD transmission.
                                                          Optional field for MSD version-2 */
-   uint8_t numberOfPassengers;   /**< Number of occupants in the vehicle. Optional field for MSD
+   uint8_t numberOfPassengers = 0;   /**< Number of occupants in the vehicle. Optional field for MSD
                                       version-2 and version-3 */
    /** Optional information for the emergency rescue service
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located

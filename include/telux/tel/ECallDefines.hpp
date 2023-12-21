@@ -146,8 +146,8 @@ enum class ECallOptionalDataType {
 struct ECallMsdOptionals {
 
    ECallOptionalDataType optionalDataType; /**< Type of optional data */
-   bool optionalDataPresent;               /**< Availability of Optional data:
-                                                  true - Present or false - Absent */
+   bool optionalDataPresent = false;               /**< Availability of Optional data:
+                                                        true - Present or false - Absent */
    bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
                                                 true - Present or false - Absent. In MSD version-3
                                                 (as per EN 15722:2020), as recentVehicleLocationN1

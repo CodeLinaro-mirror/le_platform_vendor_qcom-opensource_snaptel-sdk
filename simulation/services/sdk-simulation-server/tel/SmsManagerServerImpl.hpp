@@ -51,13 +51,14 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <telux/common/CommonDefines.hpp>
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../protos/proto-src/tel.grpc.pb.h"
-#include "../../../libs/common/CommonUtils.hpp"
-#include "../../libs/common/event-manager/EventManager.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "protos/proto-src/tel.grpc.pb.h"
+#include "libs/common/CommonUtils.hpp"
+#include "libs/common/AsyncTaskQueue.hpp"
+#include "event/ServerEventManager.hpp"
 #include <telux/tel/SmsManager.hpp>
+#include "event/EventService.hpp"
 
 
 using grpc::Server;
@@ -91,7 +92,7 @@ struct SmsDeliveryInfo {
 };
 
 class SmsManagerServerImpl final : public telStub::SmsService::Service,
-                                   public IEventListener,
+                                   public IServerEventListener,
                                    public std::enable_shared_from_this<SmsManagerServerImpl> {
 public:
     SmsManagerServerImpl();
@@ -140,7 +141,7 @@ public:
         const telStub::SendSmsRequest *request, telStub::SendSmsReply *response) override;
     grpc::Status SendRawSms(ServerContext *context,
     const telStub::SendRawSmsRequest *request, telStub::SendRawSmsReply *response) override;
-    void onEventUpdate(std::string event);
+    void onEventUpdate(::eventService::UnsolicitedEvent message);
 private:
     Json::Value rootObjSystemStateSlot1_;
     Json::Value rootObjSystemStateSlot2_;
@@ -159,12 +160,13 @@ private:
     int getSMSStorage(int phoneId);
     void parseMessageAtIndex(int phoneId, int index,SmsMsg& msg );
     telux::common::ErrorCode deletedSmsatIndex(int phoneId, std::vector<int> index);
-    void handleEvent(std::string token, std::string event);
     void handleIncomingSms(std::string eventParams);
+    void handleMemoryFullEvent(std::string eventParams);
     void triggerIncomingSmsEvent(int phoneId, int numberOfSegments,
         int refNumber, int segmentNumber, int msgIndex, std::string tagType, std::string encoding,
         bool isMetaInfoValid, std::string pdu, std::string receiver, std::string sender,
         std::string text);
     void reorderDatabase(int phoneId);
+    void onEventUpdate(std::string event);
 };
 #endif // SMS_MANAGER_SERVER_HPP

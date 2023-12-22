@@ -34,6 +34,7 @@
 
 #include "CardFileHandlerStub.hpp"
 #include <telux/tel/CardDefines.hpp>
+#include "common/CommonUtils.hpp"
 
 using namespace telux::common;
 
@@ -42,11 +43,10 @@ namespace telux {
 namespace tel {
 
 
-CardFileHandlerStub::CardFileHandlerStub(SlotId slotId)
-    :stub_(CardService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+CardFileHandlerStub::CardFileHandlerStub(SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    stub_ = CommonUtils::getGrpcStub<CardService>();
     slotId_ = slotId;
 }
 

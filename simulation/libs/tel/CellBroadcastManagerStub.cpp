@@ -33,6 +33,7 @@
  */
 
 #include "CellBroadcastManagerStub.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 
 #define DELAY 100
 using namespace telux::common;
@@ -112,9 +113,9 @@ telux::common::Status
         if(status != telux::common::Status::SUCCESS ) {
             return status;
         }
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.connectToSimulationServer();
-        eventManager.registerListener(shared_from_this(), TEL_CELL_BROADCAST_FILTER);
+        std::vector<std::string> filters = {TEL_CELL_BROADCAST_FILTER};
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(shared_from_this(), filters);
     }
     return status;
 }
@@ -135,8 +136,9 @@ telux::common::Status CellBroadcastManagerStub::deregisterListener(
         }
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.deregisterListener(shared_from_this());
+            std::vector<std::string> filters = {TEL_CELL_BROADCAST_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
     return status;

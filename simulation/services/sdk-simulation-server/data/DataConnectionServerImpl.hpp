@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <memory>
+#include <set>
 #include <string>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -16,13 +17,12 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../libs/common/CommonUtils.hpp"
-#include "../../../libs/common/AsyncTaskQueue.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
+#include "libs/common/AsyncTaskQueue.hpp"
 
-#include "../../../protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -93,11 +93,21 @@ private:
         std::string &ipAddress, std::string &gatewayAddress);
 
     void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType);
-    void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType);
+    void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
+        std::string ifaceName);
+
+    void getInactiveInterfaces();
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot1_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot2_;
+    /* Everytime datacall is triggered, we are reading list of interfaces from conf file. In activeNwIfaces_
+     * we are maintaining interfaces that are associated with a datacall & in inactiveNwIfaces_ we are maintaining
+     * interfaces that are not yet associated with datacall.
+     */
+    std::set<std::string> activeNwIfaces_;
+    std::set<std::string> inactiveNwIfaces_;
+    std::mutex mtx_;
 };
 
 #endif //DATA_CONNECTION_SERVER_HPP

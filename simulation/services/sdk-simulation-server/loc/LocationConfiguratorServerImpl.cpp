@@ -10,14 +10,15 @@
  */
 
 #include "LocationConfiguratorServerImpl.hpp"
-#include "../../../libs/common/SimulationConfigParser.hpp"
+#include "libs/common/SimulationConfigParser.hpp"
 
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../libs/common/CommonUtils.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
+#include "event/EventService.hpp"
 
 #define LOC_CONFIG_API_JSON "api/loc/ILocationConfigurator.json"
+#define DEFAULT_DELIMITER " "
 
 LocationConfiguratorServerImpl::LocationConfiguratorServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -43,7 +44,152 @@ grpc::Status LocationConfiguratorServerImpl::InitService(ServerContext* context,
         LOG(ERROR, "Unable to read LocationConfigurator JSON");
     }
     response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
+    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::vector<std::string> filters = {"loc_config"};
+        auto &serverEventManager = ServerEventManager::getInstance();
+        serverEventManager.registerListener(shared_from_this(), filters);
+        taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
+    }
     response->set_delay(cbDelay);
+    return grpc::Status::OK;
+}
+
+void LocationConfiguratorServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event){
+    LOG(DEBUG, __FUNCTION__);
+    if (event.filter() == "loc_config") {
+        onEventUpdate(event.event());
+    }
+}
+
+void LocationConfiguratorServerImpl::onEventUpdate(std::string event){
+    LOG(DEBUG, __FUNCTION__,event);
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if (token == "") {
+        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+        return;
+    }
+    handleEvent(token,event);
+
+}
+
+void LocationConfiguratorServerImpl::handleEvent(std::string token, std::string event){
+    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
+    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
+    if (token == "xtra_status") {
+        handleXtraUpdateEvent(event);
+    } else if (token == "constellation_update"){
+        handleGnssConstellationUpdateEvent(event);
+    }
+}
+
+void LocationConfiguratorServerImpl::handleXtraUpdateEvent(std::string event){
+    LOG(DEBUG, __FUNCTION__);
+    int validity=0;
+    int dataStatus=0;
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The validity is not passed");
+    } else {
+        try {
+            validity = std::stoi(token);
+        } catch (std::exception& ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The dataStatus is not passed");
+    } else {
+        try {
+            dataStatus = std::stoi(token);
+        } catch (std::exception& ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(validity),
+                {"ILocationConfigurator", "XtraParams", "xtraValidForHours"});
+    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",std::to_string(dataStatus),
+                {"ILocationConfigurator","XtraParams", "xtraDataStatus"});
+    auto f = std::async(std::launch::async, [this](){
+        this->triggerXtraStatusEvent();
+    }).share();
+    taskQ_->add(f);
+}
+
+void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::string event) {
+    std::string enabledMask = " ";
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The Mask is not passed");
+        enabledMask = "0X1FFFFF";
+    } else {
+        try {
+            enabledMask = token;
+        } catch (std::exception& ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", enabledMask,
+        {"ILocationConfigurator", "GnssSignalType"});
+    auto f = std::async(std::launch::async, [this](){
+        this->triggerGnssConstellationUpdateEvent();
+    }).share();
+    taskQ_->add(f);
+}
+
+void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t enable = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "enable"}));
+    uint32_t dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+    uint32_t validHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
+    LOG(DEBUG, __FUNCTION__,enable,dataStatus,validHours);
+    std::lock_guard<std::mutex> lck(mtx_);
+    ::locStub::XtraStatusEvent xtraEvent;
+    ::eventService::EventResponse anyResponse;
+    xtraEvent.set_enable(enable);
+    xtraEvent.set_validity(validHours);
+    xtraEvent.set_datastatus(dataStatus);
+    anyResponse.set_filter("loc_config");
+    anyResponse.mutable_any()->PackFrom(xtraEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+}
+
+void LocationConfiguratorServerImpl::triggerGnssConstellationUpdateEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    std::string enabledMask = CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
+        "0x1FFFFF", {"ILocationConfigurator","GnssSignalType"});
+    std::lock_guard<std::mutex> lck(mtx_);
+    ::locStub::GnssUpdateEvent GnssEvent;
+    ::eventService::EventResponse anyResponse;
+    GnssEvent.set_enabledmask(std::stoul(enabledMask,nullptr,16));
+    anyResponse.set_filter("loc_config");
+    anyResponse.mutable_any()->PackFrom(GnssEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+
+}
+
+grpc::Status LocationConfiguratorServerImpl::RegisterListener (ServerContext* context,
+    const locStub::RegisterListenerRequest* request, locStub::LocManagerCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    if(request->xtra_indication() == true){
+        auto f = std::async(std::launch::async, [this](){
+            this->triggerXtraStatusEvent();
+        }).share();
+     taskQ_->add(f);
+    }
+    if(request->gnss_indication() == true){
+        auto f = std::async(std::launch::async, [this](){
+            this->triggerGnssConstellationUpdateEvent();
+        }).share();
+    taskQ_->add(f);
+    }
     return grpc::Status::OK;
 }
 
@@ -491,6 +637,13 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams (ServerContext*
         CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->diag_logging_enabled())),
                 {"ILocationConfigurator", "XtraParams", "diagLoggingEnabled"});
+    }
+    if(xtraEnabled_!= request->enable()){
+    auto f = std::async(std::launch::async, [this](){
+        this->triggerXtraStatusEvent();
+    }).share();
+    taskQ_->add(f);
+    xtraEnabled_ = request->enable();
     }
     return grpc::Status::OK;
 }

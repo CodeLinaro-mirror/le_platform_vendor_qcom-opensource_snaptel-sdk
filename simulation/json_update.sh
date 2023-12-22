@@ -4,16 +4,6 @@
 #  SPDX-License-Identifier: BSD-3-Clause-Clear
 
 BIN_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-source /$BIN_DIR/setup_simualtion.sh
+source /$BIN_DIR/setup_simulation.sh
 
-arguments=""
-
-for var in "$@"
-do
-    if [[ "$arguments" != "" ]] ; then
-	    arguments+=" "
-	fi
-	arguments+="$var"
-done
-
-telsdk_event_injector -f json_update -e modify $arguments
+telsdk_event_injector -f json_update -e modify $@

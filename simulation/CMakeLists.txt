@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 project (telsdk-simulation)
 
@@ -6,6 +6,15 @@ project (telsdk-simulation)
 include(GNUInstallDirs)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+
+include_directories(BEFORE
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/libs
+    ${CMAKE_SOURCE_DIR}/libs/common/
+    ${CMAKE_SOURCE_DIR}/protos
+    ${CMAKE_SOURCE_DIR}/services
+    ${CMAKE_SOURCE_DIR}/utils
+)
 
 add_definitions(-DDEFAULT_SIM_CONFIG_FILE_NAME="tel.conf")
 add_definitions(-DDEFAULT_SIM_FILE_PREFIX="${CMAKE_INSTALL_PREFIX}")

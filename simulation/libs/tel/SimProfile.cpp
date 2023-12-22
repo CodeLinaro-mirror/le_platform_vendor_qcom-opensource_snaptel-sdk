@@ -38,7 +38,7 @@
 
 #include <sstream>
 #include <telux/tel/SimProfile.hpp>
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 namespace telux {
 namespace tel {

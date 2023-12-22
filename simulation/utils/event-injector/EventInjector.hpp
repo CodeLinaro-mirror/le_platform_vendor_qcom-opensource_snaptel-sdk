@@ -47,6 +47,8 @@
 #include <string>
 #include <memory>
 
+#include "protos/proto-src/event.grpc.pb.h"
+
 #define APP_NAME "EventInjector"
 
 class SimulationConfigParser;
@@ -58,15 +60,13 @@ public:
 
     Status init();
     Status parseAndHandleArguments(int argc, char **argv);
-    Status makeConnectionAndSendMessage(std::string filter, std::string event);
 
     bool sendMessage_ = false;
 private:
     void printHelp(std::string subsystem = "", std::string event = "");
     Status sendMessage(std::string filter, std::string event);
-    std::shared_ptr<SimulationConfigParser> config_;
-    int clientSocket_;
     Json::Value eventObj_;
+    std::unique_ptr<::eventService::EventDispatcherService::Stub> stub_;
 };
 
 #endif // EVENT_INJECTOR_HPP

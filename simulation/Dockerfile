@@ -21,6 +21,7 @@ RUN apt-get -y install net-tools
 RUN apt-get -y install python3
 RUN apt-get -y install python
 RUN apt-get -y install gdb
+RUN apt-get -y install iproute2
 
 copy $ROOTFS/include /usr/include
 copy $ROOTFS/bin /usr/bin

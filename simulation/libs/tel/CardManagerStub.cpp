@@ -34,6 +34,8 @@
 
 #include "CardManagerStub.hpp"
 #include <telux/common/DeviceConfig.hpp>
+#include "common/event-manager/ClientEventManager.hpp"
+
 #define DELAY 100
 
 using namespace telux::common;
@@ -42,10 +44,9 @@ namespace telux {
 
 namespace tel {
 
-CardManagerStub::CardManagerStub(telux::common::InitResponseCb callback)
-    :stub_(CardService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+CardManagerStub::CardManagerStub(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    stub_ = CommonUtils::getGrpcStub<CardService>();
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
     auto f = std::async(std::launch::async,
         [this, callback]() {
@@ -331,9 +332,9 @@ telux::common::Status CardManagerStub::registerListener(std::shared_ptr<ICardLis
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         status = listenerMgr_->registerListener(listener);
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.connectToSimulationServer();
-        eventManager.registerListener(shared_from_this(), TEL_CARD_FILTER);
+        std::vector<std::string> filters = {TEL_CARD_FILTER};
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(shared_from_this(), filters);
     }
     return status;
 }
@@ -350,8 +351,9 @@ telux::common::Status  CardManagerStub::removeListener(std::shared_ptr<ICardList
         status = listenerMgr_->deRegisterListener(listener);
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.deregisterListener(shared_from_this());
+            std::vector<std::string> filters = {TEL_CARD_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
     return status;
@@ -373,42 +375,18 @@ bool CardManagerStub::isSubsystemReady() {
     }
 }
 
-void CardManagerStub::onEventUpdate(std::string event) {
-    std::string token;
-    if (EVENT_FLAG == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
-    } else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+void CardManagerStub::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::telStub::cardInfoChange>()) {
+        ::telStub::cardInfoChange cardEvent;
+        event.UnpackTo(&cardEvent);
+        handleCardInfoChanged(cardEvent);
     }
 }
 
-void CardManagerStub::handleEvent(std::string token , std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
-    }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token, "The leftover string is: ", event);
-    if (token == "cardInfoChanged") {
-        handleCardInfoChanged(event);
-    }
-}
-
-void CardManagerStub::handleCardInfoChanged(std::string eventParams) {
-    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
-    int slotId;
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
-        slotId = 1;
-    } else {
-        try {
-            slotId = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
+void CardManagerStub::handleCardInfoChanged(::telStub::cardInfoChange event) {
+    int slotId = event.phone_id();
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId);
     invokelisteners(slotId);
 }
 

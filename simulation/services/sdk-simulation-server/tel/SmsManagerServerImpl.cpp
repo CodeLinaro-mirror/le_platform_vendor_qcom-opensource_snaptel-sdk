@@ -33,9 +33,10 @@
 */
 
 #include "SmsManagerServerImpl.hpp"
-#include "SimulationServer.hpp"
-#include "../../../libs/tel/SmsMessageHelper.hpp"
-#include "../../../libs/tel/TelDefinesStub.hpp"
+#include "libs/tel/SmsMessageHelper.hpp"
+#include "libs/tel/TelDefinesStub.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
+#include "event/EventService.hpp"
 
 #define JSON_PATH1 "system-state/tel/ISmsManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ISmsManagerStateSlot2.json"
@@ -46,7 +47,8 @@
 #define JSON_PATH5 "system-state/tel/ISubscriptionManagerState.json"
 
 #define TEL_SMS_MANAGER "ISmsManager"
-
+#define INCOMING_SMS_EVENT "incomingsms"
+#define MEMORY_FULL_EVENT "memoryfull"
 #define SLOT_1 1
 #define SLOT_2 2
 
@@ -117,8 +119,9 @@ grpc::Status SmsManagerServerImpl::InitService(ServerContext* context,
 
         LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
         if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.registerListener(shared_from_this(), "tel_sms");
+            std::vector<std::string> filters = {"tel_sms"};
+            auto &serverEventManager = ServerEventManager::getInstance();
+            serverEventManager.registerListener(shared_from_this(), filters);
         }
         response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
         response->set_delay(cbDelay);
@@ -937,31 +940,55 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
 
 void SmsManagerServerImpl::onEventUpdate(std::string event) {
     std::string token;
-    if (EVENT_FLAG == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
-    } else {
+    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    if ( INCOMING_SMS_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+        handleIncomingSms(event);
+    } else if( MEMORY_FULL_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+        handleMemoryFullEvent(event);
+    }else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
-    return;
 }
 
-void SmsManagerServerImpl::handleEvent(std::string token , std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
+void SmsManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
+    if (message.filter() == "tel_sms") {
+        onEventUpdate(message.event());
     }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
-    if (token == "incomingsms") {
-        handleIncomingSms(event);
+}
+
+void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
+    int slotId;
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+        slotId = 1;
     }
+    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
+    // Fetch storage type
+    std::string input;
+    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "Storage type not passed, assuming UNKNOWN");
+        input = "UNKNOWN";
+    }
+
+    ::telStub::memoryFullEvent memoryFullEvent;
+    ::eventService::EventResponse anyResponse;
+
+    telux::tel::StorageType type = Helper::getstorageType(input);
+    memoryFullEvent.set_phone_id(slotId);
+    memoryFullEvent.set_storage_type(static_cast<telStub::StorageType::Type>(type));
+    anyResponse.set_filter("tel_sms");
+    anyResponse.mutable_any()->PackFrom(memoryFullEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+
 }
 
 void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__);
-
     int phoneId;
     int numberOfSegments;
     int refNumber;
@@ -1170,22 +1197,29 @@ void SmsManagerServerImpl::triggerIncomingSmsEvent(int phoneId, int numberOfSegm
     bool isMetaInfoValid, std::string pdu, std::string receiver, std::string sender,
     std::string text) {
     LOG(DEBUG, __FUNCTION__);
+    ::telStub::SmsMessage SmsMessageEvent;
+    ::eventService::EventResponse anyResponse;
 
-    auto &simulationServer = SimulationServer::getInstance();
-    std::string smsInfoEvent = "-f tel_sms -e incoming " + std::to_string(phoneId)
-    + " " + std::to_string(numberOfSegments)
-    + " " + std::to_string(refNumber)
-    + " " + std::to_string(segmentNumber)
-    + " " + std::to_string(msgIndex)
-    + " " + tagType
-    + " " + encoding
-    + " " + std::to_string(isMetaInfoValid)
-    + " " + pdu
-    + " " + receiver
-    + " " + sender
-    + " " + text;
-    simulationServer.writeMessage(smsInfoEvent,
-        smsInfoEvent.length(), ClientType::LIB);
+    telux::tel::SmsEncoding data = Helper::getencodingMethod(encoding);
+    telux::tel::SmsTagType tag = Helper::getTagType(tagType);
+
+    SmsMessageEvent.set_phone_id(phoneId);
+    SmsMessageEvent.set_text(text);
+    SmsMessageEvent.set_sender(sender);
+    SmsMessageEvent.set_receiver(receiver);
+    SmsMessageEvent.set_encoding(static_cast<telStub::MessageAttributes::SmsEncoding>(data));
+    SmsMessageEvent.set_pdu(pdu);
+    SmsMessageEvent.set_messageinforef_no(refNumber);
+    SmsMessageEvent.set_messageinfono_of_segments(numberOfSegments);
+    SmsMessageEvent.set_messageinfosegment_no(segmentNumber);
+    SmsMessageEvent.set_ismetainfo_valid(isMetaInfoValid);
+    SmsMessageEvent.set_msg_index(msgIndex);
+    SmsMessageEvent.set_tag_type(static_cast<telStub::SmsTagType::TagType>(tag));
+    anyResponse.set_filter("tel_sms");
+    anyResponse.mutable_any()->PackFrom(SmsMessageEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }
 
 grpc::Status SmsManagerServerImpl::IsMemoryFull(ServerContext *context,

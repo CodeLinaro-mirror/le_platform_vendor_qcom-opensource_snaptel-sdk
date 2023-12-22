@@ -36,7 +36,7 @@
  * CellInfo  implementation
  */
 #include "telux/tel/CellInfo.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 #define INVALID_VALUE -1
 namespace telux {

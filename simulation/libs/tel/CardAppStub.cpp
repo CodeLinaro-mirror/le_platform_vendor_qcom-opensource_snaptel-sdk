@@ -42,14 +42,14 @@ namespace telux {
 
 namespace tel {
 
-CardAppStub::CardAppStub(int slotId, CardAppStatus cardAppStatus)
-    :stub_(CardService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+CardAppStub::CardAppStub(int slotId, CardAppStatus cardAppStatus) {
     LOG(DEBUG, __FUNCTION__);
+    stub_ = CommonUtils::getGrpcStub<CardService>();
     slotId_ = slotId;
     cardAppStatus_ = cardAppStatus;
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
 }
+
 AppType CardAppStub::getAppType() {
     return cardAppStatus_.appType;
 }

@@ -37,7 +37,7 @@
  */
 
 #include "telux/tel/NetworkSelectionManager.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 namespace telux {
 namespace tel {

@@ -33,10 +33,11 @@
 */
 
 #include"SubscriptionManagerServerImpl.hpp"
-#include "../../../libs/tel/TelDefinesStub.hpp"
+#include "libs/tel/TelDefinesStub.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
 
 #define PATH "system-state/tel/ISubscriptionManagerState.json"
-
+#define SUBSCRIPTION_EVENT "subscriptionInfoChanged"
 SubscriptionManagerServerImpl::SubscriptionManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     readJson();
@@ -65,8 +66,9 @@ grpc::Status SubscriptionManagerServerImpl::InitService(ServerContext* context,
 
         response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
         if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.registerListener(shared_from_this(), "tel_sub");
+            std::vector<std::string> filters = {"tel_sub"};
+            auto &serverEventManager = ServerEventManager::getInstance();
+            serverEventManager.registerListener(shared_from_this(), filters);
         }
         response->set_delay(cbDelay);
     }
@@ -149,28 +151,18 @@ grpc::Status SubscriptionManagerServerImpl::GetSubscription(ServerContext* conte
 
 void SubscriptionManagerServerImpl::onEventUpdate(std::string event) {
     std::string token;
-    if (EVENT_FLAG == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
-    } else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-    }
-    return;
-}
-
-void SubscriptionManagerServerImpl::handleEvent(std::string token , std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
-    }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token,"The leftover string is: ", event);
-    if (token == "subscriptionInfoChanged") {
+    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    if ( SUBSCRIPTION_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
         handlesubscriptionInfoChanged(event);
     } else {
-        LOG(DEBUG, __FUNCTION__, "No handling required for other events");
+        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
-    return;
+}
+
+void SubscriptionManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
+    if (message.filter() == "tel_sub") {
+        onEventUpdate(message.event());
+    }
 }
 
 void SubscriptionManagerServerImpl::handlesubscriptionInfoChanged(std::string eventParams) {
@@ -336,4 +328,13 @@ void SubscriptionManagerServerImpl::handlesubscriptionInfoChanged(std::string ev
     , "gid1 is", gid1
     , "gid2 is", gid2);
     JsonParser::writeToJsonFile(rootObj, PATH);
+    ::telStub::SubscriptionEvent SubscriptionInfoChangeEvent;
+    ::eventService::EventResponse anyResponse;
+
+    SubscriptionInfoChangeEvent.set_phone_id(slotId);
+    anyResponse.set_filter("tel_sub");
+    anyResponse.mutable_any()->PackFrom(SubscriptionInfoChangeEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }

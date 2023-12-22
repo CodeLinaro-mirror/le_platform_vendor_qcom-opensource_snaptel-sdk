@@ -44,52 +44,25 @@
 
 #include <string>
 #include <memory>
-#include <vector>
-#include "../../libs/common/AsyncTaskQueue.hpp"
+#include "libs/common/AsyncTaskQueue.hpp"
 
 #define APP_NAME "SimulationServer"
-#define BUFFER_SIZE 600
-
-/*
-* For the events injected from telsdk_event_injector, we want the event flow to be
-*
-* telsdk_event_injector -> simulation_server -> vertical_server_impl -> lib
-*
-* to achieve this event flow we have introduced enum ClientType.
-* ClientType = SERVER : when simulation_server is sending the events to vertical_server_impl
-* ClientType = LIB    : when vertical_server_impl forwards the events to libs.
-* ClientType = ALL    : when the event shall be forwarded to both vertical_server_impl & lib.
-*                       Also the order of processing the event at server side or lib side does't
-*                       matter.
-*/
-enum ClientType {
-    ALL,
-    SERVER,
-    LIB,
-};
 
 class SimulationServer {
 public:
     static SimulationServer &getInstance();
     telux::common::Status start();
-    telux::common::Status writeMessage(std::string msg, int length,
-        ClientType type = ClientType::ALL);
 
 private:
     SimulationServer();
     ~SimulationServer();
 
-    telux::common::Status readMessage(int socketFd);
     std::string createServerAddress(std::string ipAddress,
         std::string portNo);
     void startGrpcServer();
     void updateJsonValue(std::string message);
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    bool exiting_ = false;
-    std::mutex exitingMutex_;
-    std::mutex writeMutex_;
-    std::vector<int> clientSockets_;
 };
 
 #endif // SIMULATION_SERVER_HPP

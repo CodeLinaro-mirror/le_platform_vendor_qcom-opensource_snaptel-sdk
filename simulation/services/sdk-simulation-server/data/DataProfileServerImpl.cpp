@@ -7,7 +7,7 @@
 #include <functional>
 
 #include "DataProfileServerImpl.hpp"
-#include "../../../libs/data/DataUtilsStub.hpp"
+#include "libs/data/DataUtilsStub.hpp"
 
 #define DATA_PROFILE_API_SLOT1_JSON "api/data/IDataProfileManagerSlot1.json"
 #define DATA_PROFILE_API_SLOT2_JSON "api/data/IDataProfileManagerSlot2.json"

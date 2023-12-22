@@ -8,10 +8,11 @@
 #include "DataConnectionManagerStub.hpp"
 #include "DataProfileManagerStub.hpp"
 #include "DataEventListener.hpp"
+#include "DataUtilsStub.hpp"
 
-#include "../common/Logger.hpp"
-#include "../common/SimulationConfigParser.hpp"
-#include "../common/event-manager/EventManager.hpp"
+#include "common/Logger.hpp"
+#include "common/SimulationConfigParser.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -59,8 +60,7 @@ telux::common::Status DataConnectionManagerStub::init(
 void DataConnectionManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lck(initMtx_);
-    stub_ = DataConnectionManager::NewStub(grpc::CreateChannel("localhost:8089",
-        grpc::InsecureChannelCredentials()));
+    stub_ = CommonUtils::getGrpcStub<::dataStub::DataConnectionManager>();
 
     ::dataStub::SlotInfo request;
     ::dataStub::GetServiceStatusReply response;
@@ -85,9 +85,9 @@ void DataConnectionManagerStub::initSync(telux::common::InitResponseCb callback)
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
         eventListener_ = std::make_shared<DataEventListener>(shared_from_this());
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.connectToSimulationServer();
-        eventManager.registerListener(eventListener_, DATA_CONNECTION_FILTER);
+        std::vector<std::string> filters = {DATA_CONNECTION_FILTER};
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(eventListener_, filters);
 
     } while (0);
 
@@ -410,12 +410,21 @@ void DataConnectionManagerStub::invokeDataConnectionListener(
     }
 }
 
-void DataConnectionManagerStub::handleStartDataCallEvent(int profileId, SlotId slotId,
-    std::string ifaceName, IpFamilyType ipFamilyType,  std::string ipv4Address,
-    std::string gwv4Address, std::string dnsPrimaryAddress, std::string dnsSecondaryAddress,
-    std::string ipv6Address, std::string gwv6Address) {
-
+void DataConnectionManagerStub::handleStartDataCallEvent(
+    ::dataStub::StartDataCallEvent startEvent) {
     std::lock_guard<std::mutex> lck(mtx_);
+    int profileId = startEvent.profile_id();
+    SlotId slotId = static_cast<SlotId>(startEvent.slot_id());
+    std::string ifaceName = startEvent.iface_name();
+    IpFamilyType ipFamilyType =  static_cast<IpFamilyType>(
+        DataUtilsStub::convertIpFamilyStringToEnum(startEvent.ip_family_type()));
+    std::string ipv4Address = startEvent.ipv4_address();
+    std::string gwv4Address = startEvent.gwv4_address();
+    std::string dnsPrimaryAddress = startEvent.dns_primary_address();
+    std::string dnsSecondaryAddress = startEvent.dns_secondary_address();
+    std::string ipv6Address = startEvent.ipv6_address();
+    std::string gwv6Address = startEvent.gwv6_address();
+
     if (slotId != slotId_)
         return;
 
@@ -433,7 +442,6 @@ void DataConnectionManagerStub::handleStartDataCallEvent(int profileId, SlotId s
         call =
             std::make_shared<telux::data::DataCallStub>(ifaceName);
         call->setProfileId(profileId);
-        call->setInterfaceName(ifaceName);
         call->setSlotId(slotId_);
         call->setIpFamilyType(ipFamilyType);
         // setting to defaults.
@@ -449,6 +457,7 @@ void DataConnectionManagerStub::handleStartDataCallEvent(int profileId, SlotId s
         if (ipFamilyType != currentFamily) {
             call->setIpFamilyType(ipFamilyType);
         }
+        call->setInterfaceName(ifaceName);
     }
 
     std::shared_ptr<IDataCall> baseCallPtr =
@@ -595,16 +604,12 @@ telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
             }
 
             LOG(DEBUG, __FUNCTION__, " creating new datacall for profile:", profileId);
-            std::shared_ptr<SimulationConfigParser> config =
-            std::make_shared<SimulationConfigParser>();
-            std::string ifaceName = config->getValue("DATA_INTERFACE_NAME");
             call =
-                std::make_shared<telux::data::DataCallStub>(ifaceName);
+                std::make_shared<telux::data::DataCallStub>("");
             baseCallPtr =
                 std::static_pointer_cast<IDataCall>(call);
 
             call->setProfileId(profileId);
-            call->setInterfaceName(ifaceName);
             call->setSlotId(slotId_);
             call->setIpFamilyType(ipFamilyType);
             // setting to defaults.
@@ -634,10 +639,15 @@ telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
     return status;
 }
 
-void DataConnectionManagerStub::handleStopDataCallEvent(int profileId, SlotId slotId,
-    IpFamilyType ipFamilyType) {
+void DataConnectionManagerStub::handleStopDataCallEvent(
+    ::dataStub::StopDataCallEvent stopEvent) {
     LOG(DEBUG, __FUNCTION__);
 
+    int profileId = stopEvent.profile_id();
+    SlotId slotId = static_cast<SlotId>(stopEvent.slot_id());
+    IpFamilyType ipFamilyType =
+        static_cast<IpFamilyType>(
+        DataUtilsStub::convertIpFamilyStringToEnum(stopEvent.ip_family_type()));
     std::lock_guard<std::mutex> lck(mtx_);
     if (slotId != slotId_)
         return;

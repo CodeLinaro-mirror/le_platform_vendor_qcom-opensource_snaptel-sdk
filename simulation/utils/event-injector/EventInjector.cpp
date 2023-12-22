@@ -41,15 +41,12 @@
  */
 
 #include <iostream>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <thread>
-#include "../../libs/common/SimulationConfigParser.hpp"
-#include "../../libs/common/JsonParser.hpp"
-#include "../../libs/common/Logger.hpp"
+#include <grpcpp/grpcpp.h>
+
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/CommonUtils.hpp"
 
 extern "C" {
 #include <getopt.h>
@@ -57,10 +54,11 @@ extern "C" {
 
 #include "EventInjector.hpp"
 
-#define LOCAL_HOST "127.0.0.1"
-#define DEFAULT_PORT 8080
-#define RETRY_TIMER 500
 #define EVENT_JSON "Events.json"
+
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
 
 constexpr bool isOptionalArgumentPresent(char * optarg, int optind, int argc, char** argv) {
     return (optarg == NULL && optind < argc && argv[optind] != NULL && argv[optind][0] != '-');
@@ -102,52 +100,20 @@ EventInjector::EventInjector() {
 }
 
 EventInjector::~EventInjector(){
-    if (config_ ) {
-        config_ = nullptr;
-    }
-    close(clientSocket_);
 }
 
-Status EventInjector::makeConnectionAndSendMessage(std::string filter, std::string event) {
-    struct sockaddr_in address = {0};
-
-    if ((clientSocket_ = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-        LOG(ERROR, "failed to create socket");
-        return Status::FAILED;
-    }
-    LOG(INFO, "socket created::", clientSocket_);
-    std::string portString = config_->getValue("PORT");
-    int port = DEFAULT_PORT;
-    if (portString != "") {
-        port = std::stoi(portString);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(LOCAL_HOST);
-    address.sin_port = htons(port);
-
-    while(connect(clientSocket_, (struct sockaddr *)
-            &address, sizeof(address)) != 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMER));
-    }
-    LOG(DEBUG, "connected to SimulationServer");
-    sendMessage(filter, event);
-    return Status::SUCCESS;
-}
-
-Status EventInjector::init() {
-    config_ = std::make_shared<SimulationConfigParser>();
-
+telux::common::Status EventInjector::init() {
     telux::common::ErrorCode readError =
         JsonParser::readFromJsonFile(eventObj_, EVENT_JSON);
     if (readError != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed!");
     }
 
-    return Status::SUCCESS;
+    stub_ = CommonUtils::getGrpcStub<::eventService::EventDispatcherService>();
+    return telux::common::Status::SUCCESS;
 }
 
-Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
+telux::common::Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
     int arg;
     std::string filter;
     std::string event;
@@ -200,21 +166,31 @@ Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
                 break;
             default:
                 LOG(ERROR, __FUNCTION__, " Entered options is not valid!");
-                return Status::FAILED;
+                return telux::common::Status::FAILED;
         }
         if ((!filter.empty()) && (!event.empty())) {
-            makeConnectionAndSendMessage(filter, event);
+            sendMessage(filter, event);
         }
     }
-    return Status::SUCCESS;
+    return telux::common::Status::SUCCESS;
 }
 
-Status EventInjector::sendMessage(std::string filter, std::string event) {
-    Status ret = Status::SUCCESS;
+telux::common::Status EventInjector::sendMessage(std::string filter, std::string event) {
+    telux::common::Status ret = telux::common::Status::SUCCESS;
     std::string reformattedString = FILTER_FLAG + " " + filter + " " + EVENT_FLAG  + " " + event + "\n";
 
-    LOG(DEBUG, __FUNCTION__, " String being sent to SDK is: ", reformattedString);
-    write(clientSocket_, reformattedString.c_str(), reformattedString.length());
+    LOG(DEBUG, __FUNCTION__, " filter::", filter, " event::", event);
+
+    ::eventService::UnsolicitedEvent request;
+    ::google::protobuf::Empty response;
+    ClientContext context;
+
+    request.set_filter(filter);
+    request.set_event(event);
+    grpc::Status reqStatus = stub_->InjectEvent(&context, request, &response);
+    if (!reqStatus.ok()) {
+        return telux::common::Status::FAILED;
+    }
 
     LOG(DEBUG, __FUNCTION__, " event injected!");
     return ret;
@@ -224,15 +200,15 @@ Status EventInjector::sendMessage(std::string filter, std::string event) {
  * Main routine
  */
 int main(int argc, char ** argv) {
-    Status ret = Status::SUCCESS;
+    telux::common::Status ret = telux::common::Status::SUCCESS;
     EventInjector eventInjectorObj;
-    if (eventInjectorObj.init() != Status::SUCCESS) {
+    if (eventInjectorObj.init() != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " failed to initialize ", APP_NAME);
         return -1;
     }
 
     ret = eventInjectorObj.parseAndHandleArguments(argc, argv);
-    if (ret != Status::SUCCESS) {
+    if (ret != telux::common::Status::SUCCESS) {
         return -1;
     }
 

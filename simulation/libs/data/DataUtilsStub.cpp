@@ -4,7 +4,7 @@
  */
 
 #include "DataUtilsStub.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 ::dataStub::TechPreference::TechPref DataUtilsStub::convertTechPrefStringToEnum(std::string techPref) {
     ::dataStub::TechPreference::TechPref enumTechPref;

@@ -43,24 +43,23 @@
 #ifndef SMS_MANAGER_STUB_HPP
 #define SMS_MANAGER_STUB_HPP
 
-#include "../common/Logger.hpp"
-#include "../common/AsyncTaskQueue.hpp"
-#include "../common/ResponseHandler.hpp"
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/event-manager/EventParserUtil.hpp"
+#include "common/Logger.hpp"
+#include "common/AsyncTaskQueue.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
 #include "SmsMessageHelper.hpp"
 #include <telux/tel/SmsManager.hpp>
-#include "../common/ListenerManager.hpp"
+#include "common/ListenerManager.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <jsoncpp/json/json.h>
 #include <list>
 #include "TelDefinesStub.hpp"
 #include "SmsMessageHelper.hpp"
-#include "../common/JsonParser.hpp"
-#include "../common/Logger.hpp"
+#include "common/JsonParser.hpp"
+#include "common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -146,7 +145,7 @@ public:
 
     ~SmsManagerStub();
     void cleanup();
-    void onEventUpdate(std::string event);
+    void onEventUpdate(google::protobuf::Any);
 
 private:
     int phoneId_ = INVALID;
@@ -178,8 +177,8 @@ private:
     void invokeRequestStorageDetailsCb(int maxCount, int availableCount,
         int cbDelay, telux::common::ErrorCode error, RequestStorageDetailsCb callback);
     void handleEvent(std::string token, std::string event);
-    void handleMemoryFullEvent(std::string eventParams);
-    void handleIncomingSms(std::string eventParams);
+    void handleMemoryFullEvent(::telStub::memoryFullEvent event);
+    void handleIncomingSms(::telStub::SmsMessage event );
     void invokeIncomingSmslisteners (int phoneId, std::shared_ptr<SmsMessage> message);
     void invokeMemoryFulllisteners(int phoneId, telux::tel::StorageType type);
     void invokeIncomingSmslisteners(int phoneId,
@@ -187,6 +186,7 @@ private:
     void isMemoryFull(int phoneId);
     void parseAndConcatenateSmsMessage (int phoneId, SmsMessage &msg);
     std::map<MessageMetaData, std::vector<SmsMessage>> smsMessageMap_;
+    void onEventUpdate(std::string event);
 };
 
 } // end of namespace tel

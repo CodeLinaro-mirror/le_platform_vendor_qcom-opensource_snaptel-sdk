@@ -52,14 +52,14 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/CardDefines.hpp>
 #include <telux/tel/CardFileHandler.hpp>
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../libs/tel/CardFileHandlerStub.hpp"
-#include "../../../protos/proto-src/tel.grpc.pb.h"
-#include "../../../libs/common/CommonUtils.hpp"
-#include "../../libs/common/event-manager/EventManager.hpp"
-
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
+#include "libs/tel/CardFileHandlerStub.hpp"
+#include "protos/proto-src/tel.grpc.pb.h"
+#include "libs/common/CommonUtils.hpp"
+#include "event/ServerEventManager.hpp"
+#include "event/EventService.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -72,7 +72,7 @@ using commonStub::GetServiceStatusReply;
 
 
 class CardManagerServerImpl final : public telStub::CardService::Service,
-                                    public IEventListener,
+                                    public IServerEventListener,
                                     public std::enable_shared_from_this<CardManagerServerImpl> {
  public:
     CardManagerServerImpl();
@@ -139,7 +139,7 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
         telStub::QueryFdnLockReply* response) override;
     grpc::Status CardPower(ServerContext* context, const ::telStub::CardPowerRequest* request,
         telStub::CardPowerResponse* response) override;
-    void onEventUpdate(std::string event);
+    void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
     template <typename T>
     commonStub::ErrorCode findmatchingrecordADF (Json::Value rootObj, T response,
@@ -199,6 +199,7 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
         Json::Value& rootObj );
     void handleEvent(std::string token , std::string event);
     void handleCardInfoChanged(std::string eventParams);
+    void onEventUpdate(std::string event);
 };
 
 #endif // CARD_MANAGER_SERVER_HPP

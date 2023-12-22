@@ -43,6 +43,7 @@
 
 #include <string>
 #include <bitset>
+#include <vector>
 
 namespace telux {
 
@@ -235,7 +236,12 @@ struct ECallDefaultOptions {
  * Optional information for the emergency rescue service.
  */
 struct ECallOptionalPdu {
-   ECallDefaultOptions eCallDefaultOptions; /**< Optional information */
+   ECallDefaultOptions eCallDefaultOptions; /**< Optional information. This field is
+                                                 unused and deprecated. Use the other
+                                                 fields below, instead. */
+   std::string oid;                     /**< Relative object identifier(OID) as per
+                                             European standard i.e. EN 15722 */
+   std::vector<uint8_t> data;           /**< Optional additional data content. */
 };
 
 /**

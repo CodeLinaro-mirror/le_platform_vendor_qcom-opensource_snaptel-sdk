@@ -26,3 +26,14 @@ add_subdirectory( protos )
 add_subdirectory( utils/event-injector )
 add_subdirectory( services/sdk-simulation-server )
 add_subdirectory( libs )
+add_subdirectory( conf )
+add_subdirectory( json )
+
+file (GLOB SCRIPT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.sh")
+
+foreach (SCRIPT ${SCRIPT_FILES})
+install(FILES "${SCRIPT}"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/")
+endforeach()
+
+

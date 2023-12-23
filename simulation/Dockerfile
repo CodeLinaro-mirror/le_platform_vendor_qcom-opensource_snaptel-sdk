@@ -22,6 +22,9 @@ RUN apt-get -y install python3
 RUN apt-get -y install python
 RUN apt-get -y install gdb
 RUN apt-get -y install iproute2
+RUN apt-get -y install python-pip
+RUN pip install supervisor
+RUN pip install supervisor-stdout
 
 copy $ROOTFS/include /usr/include
 copy $ROOTFS/bin /usr/bin
@@ -30,7 +33,8 @@ copy $ROOTFS/etc /etc
 copy $ROOTFS/data /data
 copy $ROOTFS/share /usr/share
 
-RUN chmod +x /etc/init.d/telsdk_simulation_server
-RUN chmod o+r /etc/init.d/telsdk_simulation_server
-CMD /etc/init.d/telsdk_simulation_server start && /bin/bash
+RUN chmod u+rw /etc/supervisord.conf
+RUN chmod u+rw /etc/supervisor/conf.d/telsdk_simulation_server.conf
+RUN chmod u+x /usr/bin/telsdk_start_system.sh
 
+CMD ["/usr/bin/telsdk_start_system.sh"]

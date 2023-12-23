@@ -31,7 +31,6 @@ sim: headers
 
 apps: sim
 	cd build && mkdir -p build_apps && cd build_apps && cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../apps && make install
-	mkdir -p ${ROOTFS}/etc/telux/ && mkdir -p ${ROOTFS}/data/telux/json/ && cp -r simulation/json/ ${ROOTFS}/data/telux/ && cp simulation/conf/tel.conf ${ROOTFS}/etc/telux/ && cp simulation/setup_simulation.sh ${ROOTFS}/bin/ && cp simulation/json_update.sh ${ROOTFS}/bin/ && mkdir -p ${ROOTFS}/etc/init.d && cp simulation/conf/telsdk_simulation_server ${ROOTFS}/etc/init.d/ && mkdir -p ${ROOTFS}/data/telux/csv/ && cp simulation/libs/loc/PRE-RECORDED_LOCATION_DATA.csv ${ROOTFS}/data/telux/csv/
 
 docker-image: apps
 	cd ${ROOTFS}/.. && docker build --build-arg="ROOTFS=${ROOTFS_BN}" -t telsdk-sim-image -f ${SIM_REPO}/simulation/Dockerfile . && echo "Docker image "telsdk-sim-image" is created. Use below command to drop to the shell" && echo "docker run -ti --rm -h telsdk_simulation -v telsdk_volume:/data --name telsdk_simulation telsdk-sim-image"

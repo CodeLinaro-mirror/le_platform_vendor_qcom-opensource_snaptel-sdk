@@ -20,7 +20,6 @@ ClientEventManager::~ClientEventManager() {
 ClientEventManager &ClientEventManager::getInstance() {
     LOG(DEBUG, __FUNCTION__);
     static ClientEventManager instance;
-    instance.connectToSimulationServer();
     return instance;
 }
 

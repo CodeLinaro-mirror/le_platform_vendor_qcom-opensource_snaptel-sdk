@@ -981,8 +981,17 @@ void SmsManagerStub::handleIncomingSms(::telStub::SmsMessage event) {
     isMemoryFull(phoneId);
 
     // Consolidated message for all incomingSms segments and send the notification to clients
-    if ((msg.getMessagePartInfo())->numberOfSegments > 1 ){
+    if ((msg.getMessagePartInfo())->numberOfSegments > 1 ) {
         parseAndConcatenateSmsMessage (phoneId, msg);
+    } else if((((msg.getMessagePartInfo())->numberOfSegments == 1) //Single part messages
+        && ((msg.getMessagePartInfo())->segmentNumber == 1))) {
+        auto ptr = std::make_shared<std::vector<SmsMessage>> (std::vector<SmsMessage>{msg});
+        invokeIncomingSmslisteners(phoneId, ptr);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Invalid input for current segment "
+            , (msg.getMessagePartInfo())->segmentNumber ,
+            " and total number of segments " , (msg.getMessagePartInfo())->numberOfSegments);
+        return;
     }
 }
 

@@ -498,7 +498,6 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
             if(delAtIndex) {
                 error = deletedSmsatIndex(phoneId, indexstodelete);
             }
-            reorderDatabase(phoneId);
         }
         //Create respone
 
@@ -509,30 +508,6 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
         response->set_error(static_cast<commonStub::ErrorCode>(error));
     }
     return readStatus;
-}
-void SmsManagerServerImpl::reorderDatabase(int phoneId) {
-    std::string jsonfilename = "";
-    Json::Value rootObj;
-    ErrorCode error;
-    getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
-    if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed!");
-    }
-    int numMsgs = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
-    LOG(DEBUG, __FUNCTION__, numMsgs);
-    for (int index = 0; index < numMsgs; index++) {
-        int id = 0;
-        id = std::stoi(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["smsMetaInfo_msgIndex"].asString());
-        if(id != index + 1 ) {
-            for (int i = index + 1; i <= numMsgs; i++) {
-                rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]["smsMetaInfo_msgIndex"] = i;
-                JsonParser::writeToJsonFile(rootObj, jsonfilename);
-                jsonObjSystemStateSlot_[phoneId] = rootObj;
-            }
-        }
-    }
 }
 
 telux::common::ErrorCode SmsManagerServerImpl::deletedSmsatIndex(int phoneId,
@@ -709,9 +684,7 @@ grpc::Status SmsManagerServerImpl::RequestStorageDetails(ServerContext *context,
     const telStub::RequestStorageDetailsRequest *request,
     telStub::RequestStorageDetailsReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    std::string jsonfilename = "";
     std::string apiname = "requestStorageDetails";
-    Json::Value rootObj;
     telux::common::ErrorCode error;
     telux::common::Status status;
     int delay;
@@ -730,7 +703,7 @@ grpc::Status SmsManagerServerImpl::RequestStorageDetails(ServerContext *context,
         if(status == telux::common::Status::SUCCESS) {
             size = getSMSStorage(phoneId);
             maxCount =
-            rootObj[TEL_SMS_MANAGER]["requestStorageDetails"]\
+            jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
                 ["requestStorageDetailsCbMaxCount"].asInt();
             availableCount = maxCount - size;
         }
@@ -987,6 +960,40 @@ void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
 
 }
 
+int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    int currentIndex;
+    int nextIndex;
+    bool flag = false;
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    /* If sms message of index 1 is not present return index 1
+     * as it's the first missing element of database.
+     */
+    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 1) {
+        int size = getSMSStorage(phoneId);
+        for (int i = 0; i < size - 1; i++) {
+            currentIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
+                ["smsMetaInfo_msgIndex"].asInt();
+            nextIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i+1]\
+                ["smsMetaInfo_msgIndex"].asInt();
+            if(nextIndex != currentIndex + 1) {
+                flag = true;
+                break;
+            }
+        }
+        if(flag != true) {
+            LOG(DEBUG, __FUNCTION__, "Return Current index is ", size + 1);
+            return size + 1;
+        } else {
+            LOG(DEBUG, __FUNCTION__, "Current index is ", currentIndex + 1 );
+            return currentIndex + 1;
+        }
+    } else {
+        return 1;
+    }
+}
+
 void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId;
@@ -1064,7 +1071,7 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
 
     /* Update msgIndex */
 
-    msgIndex = getSMSStorage(phoneId) + 1;
+    msgIndex = getNewSmsIndex(phoneId);
     LOG(DEBUG, __FUNCTION__, "The fetched msgIndex is: ", msgIndex);
 
     /* Update tagType */
@@ -1149,6 +1156,9 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
 
     std::string jsonfilename = "";
     Json::Value rootObj;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
 
     std::string storage = rootObj[TEL_SMS_MANAGER]["setPreferredStorage"]\
@@ -1157,8 +1167,8 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
     if(type == telux::tel::StorageType::SIM) {
         int size = getSMSStorage(phoneId);
         uint32_t maxCount =
-        rootObj[TEL_SMS_MANAGER]["requestStorageDetails"]\
-            ["requestStorageDetailsCb_maxCount"].asInt();
+        jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
+            ["requestStorageDetailsCbMaxCount"].asInt();
         uint32_t availableCount = maxCount - size;
         if(availableCount > 0) {
             Json::Value newSms;
@@ -1179,6 +1189,7 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
             rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][currentSMSCount] = newSms;
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
+            sortDatabase(phoneId, newSms, msgIndex);
         } else {
             LOG(DEBUG, __FUNCTION__, "Memory Full ");
         }
@@ -1190,6 +1201,28 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
             msgIndex, tagType, encoding, isMetaInfoValid, pdu, receiver, sender, text);
         }).share();
         taskQ_->add(f);
+}
+
+void SmsManagerServerImpl::sortDatabase(int phoneId, Json::Value newSms, int index) {
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    LOG(DEBUG, __FUNCTION__,"Index is : ", index);
+
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    int currentSMSCount = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
+    LOG(DEBUG, __FUNCTION__,"Current SMS  Count is : ", currentSMSCount);
+    if(index > currentSMSCount - 1) {
+        return;
+    } else {
+        for (int i = currentSMSCount - 1; i > index - 1 ; --i ) {
+           rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i] =
+            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i - 1];
+        }
+        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index - 1] = newSms;
+    }
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+    jsonObjSystemStateSlot_[phoneId] = rootObj;
+
 }
 
 void SmsManagerServerImpl::triggerIncomingSmsEvent(int phoneId, int numberOfSegments,
@@ -1228,13 +1261,13 @@ grpc::Status SmsManagerServerImpl::IsMemoryFull(ServerContext *context,
     std::string jsonfilename = "";
     Json::Value rootObj;
     int phoneId = request->phone_id();
-    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
 
     bool isMemoryFull = false;
     int size = getSMSStorage(phoneId);
     uint32_t maxCount =
     rootObj[TEL_SMS_MANAGER]["requestStorageDetails"]
-        ["requestStorageDetailsCb_maxCount"].asInt();
+        ["requestStorageDetailsCbMaxCount"].asInt();
     uint32_t availableCount = maxCount - size;
     if(availableCount == 0) {
         isMemoryFull = true;

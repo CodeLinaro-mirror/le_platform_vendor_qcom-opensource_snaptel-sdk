@@ -166,7 +166,15 @@ private:
         int refNumber, int segmentNumber, int msgIndex, std::string tagType, std::string encoding,
         bool isMetaInfoValid, std::string pdu, std::string receiver, std::string sender,
         std::string text);
-    void reorderDatabase(int phoneId);
+    /* Sorts the database of SMS messages.
+     * Example: Current JSON datbase message Index elements are 1 , 3 , 4 , 2
+     * New JSON datbase message Index elements are 1 , 2 , 3 , 4
+     * It shifts all the elements of current database to right for indexes greater than new index
+     * and pushes the data of new message on corresponding index in database.
+     */
+    void sortDatabase(int phoneId, Json::Value newSms, int index);
     void onEventUpdate(std::string event);
+    /* Returns the message index of new MT SMS database, where the new MT SMS can be stored */
+    int getNewSmsIndex(int phoneId);
 };
 #endif // SMS_MANAGER_SERVER_HPP

@@ -77,7 +77,7 @@ struct RepeatInfo {
     /** Please refer @ref RepeatType for details */
     RepeatType type;
 
-    /** When using @ref RepeatType::REPEAT_TYPE_COUNT,
+    /** When using @ref RepeatType::COUNT,
      *  defines number of times a file should be played */
     uint32_t count;
 };

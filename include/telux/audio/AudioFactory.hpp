@@ -103,7 +103,7 @@ class AudioFactory {
    /**
     * Gets the IAudioPlayer instance.
     *
-    * @param [out] audioPlayer, IAudioPlayer instance
+    * @param [out] audioPlayer IAudioPlayer instance
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the IAudioPlayer instance
     *          is created successfully, telux::common::ErrorCode::OPERATION_TIMEOUT

@@ -66,6 +66,7 @@ using grpc::ClientReader;
 using grpc::Status;
 
 #define UNSOLICITED_COMMON_EVENT "all"
+#define DEFAULT_DELAY 100
 
 namespace telux {
 namespace common {
@@ -98,14 +99,20 @@ protected:
         LOG(DEBUG, " Initializing the EventManager");
         taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
         stub_ = CommonUtils::getGrpcStub<T>();
+        connectToSimulationServer();
     }
 
     virtual ~EventManager() {
         LOG(DEBUG, __FUNCTION__);
+        {
+            std::lock_guard<std::mutex> lock(exitingMutex_);
+            exiting_ = true;
+        }
         cleanup();
-        context_.TryCancel();
+        getClientContext()->TryCancel();
         taskQ_ = nullptr;
         listeners_.clear();
+        clearClientContext();
     }
 
     void connectToSimulationServer() {
@@ -113,7 +120,7 @@ protected:
 
         if (!connectedToSimulationServer_) {
             auto f = std::async(std::launch::async, [this]() {
-                this->getEvents();
+                isEventServiceAvailable();
             }).share();
             taskQ_->add(f);
         }
@@ -247,6 +254,27 @@ public:
 
 private:
     /**
+     * @brief This API make sure that, we request the stream initialization only if
+     *  server is available.
+     */
+    void isEventServiceAvailable() {
+        LOG(DEBUG, __FUNCTION__);
+        while (!exiting_) {
+            const google::protobuf::Empty request;
+            google::protobuf::Empty response;
+            ClientContext context;
+            grpc::Status reqStatus =
+                stub_->isServiceAvailable(&context, request, &response);
+            if (!reqStatus.ok()) {
+                LOG(DEBUG, __FUNCTION__, " Server not available yet");
+                std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
+                continue;
+            }
+            this->getEvents();
+        }
+    }
+
+    /**
      * @brief This API is to request events from server. It initializes a stream that
      * handles the events of type ::eventService::EventResponse.
      */
@@ -264,7 +292,7 @@ private:
         }
 
         std::unique_ptr<grpc::ClientReader<::eventService::EventResponse> > reader(
-            stub_->registerForEvents(&context_, request));
+            stub_->registerForEvents(getClientContext(), request));
 
         if (!reader) {
             LOG(DEBUG, __FUNCTION__, " Failed to create reader");
@@ -286,6 +314,8 @@ private:
         }
         grpc::Status status = reader->Finish();
         connectedToSimulationServer_ = false;
+        clearClientContext();
+
         if (status.ok()) {
             LOG(DEBUG, __FUNCTION__, " RequestEvent succeeded.");
         } else {
@@ -301,7 +331,7 @@ private:
     void updateFilters() {
         LOG(DEBUG, __FUNCTION__);
 
-        std::lock_guard<std::mutex> lck(updateFilterMtx_);
+        std::lock_guard<std::mutex> lck(mtx_);
 
         if (listeners_.size() == 0) {
             return;
@@ -347,13 +377,41 @@ private:
         }
     }
 
+    // we are storing client context so that, we can cancel the blocked stream call,
+    // while the application is exiting.
+    grpc::ClientContext* getClientContext() {
+        LOG(DEBUG, __FUNCTION__);
+        std::lock_guard<std::mutex> lck(mtx_);
+
+        if(!contextPtr_) {
+            contextPtr_ = new grpc::ClientContext();
+        }
+
+        return contextPtr_;
+    }
+
+    // we need to clear the client context to handle server restart scenarios.
+    void clearClientContext() {
+        LOG(DEBUG, __FUNCTION__);
+        {
+            std::lock_guard<std::mutex> lck(mtx_);
+            if (contextPtr_) {
+                delete contextPtr_;
+                contextPtr_ = nullptr;
+            }
+        }
+    }
+
     bool connectedToSimulationServer_ = false;
+    bool exiting_ = false;
+
     std::launch policy_;
 
     std::mutex listenerMutex_;
-    std::mutex updateFilterMtx_;
+    std::mutex mtx_;
+    std::mutex exitingMutex_;
 
-    ClientContext context_;
+    grpc::ClientContext* contextPtr_;
     /*
     * owner_less performs an owner-based comparison b/w
     * shared_ptr or weak_ptr. Required for cases when container contains

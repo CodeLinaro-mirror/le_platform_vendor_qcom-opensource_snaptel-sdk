@@ -174,6 +174,14 @@ public:
         return grpc::Status::OK;
     }
 
+    grpc::Status isServiceAvailable(ServerContext* context,
+        const google::protobuf::Empty* request,
+        google::protobuf::Empty* response) override {
+        LOG(DEBUG, __FUNCTION__);
+
+        return grpc::Status::OK;
+    }
+
     void updateEventQueue(const typename eventService::EventResponse& event) {
         LOG(DEBUG, __FUNCTION__);
         {

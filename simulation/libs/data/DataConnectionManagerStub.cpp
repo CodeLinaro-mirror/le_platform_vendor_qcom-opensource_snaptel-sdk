@@ -109,6 +109,10 @@ telux::common::Status DataConnectionManagerStub::cleanup() {
     setSubSystemStatus(telux::common::ServiceStatus::SERVICE_FAILED);
     setSubsystemReady(false);
 
+    std::vector<std::string> filters = {DATA_CONNECTION_FILTER};
+    auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+    clientEventManager.deregisterListener(eventListener_, filters);
+
     ClientContext context;
     const ::google::protobuf::Empty request;
     ::google::protobuf::Empty response;

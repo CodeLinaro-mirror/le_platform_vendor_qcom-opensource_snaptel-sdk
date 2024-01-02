@@ -14,6 +14,7 @@ import "google/protobuf/any.proto";
 *******************************************************************/
 
 service EventDispatcherService {
+    rpc isServiceAvailable(google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc registerForEvents(EventRequest) returns (stream EventResponse) {}
     rpc InjectEvent(UnsolicitedEvent) returns (google.protobuf.Empty) {}
     rpc updateFilter(EventRequest) returns (google.protobuf.Empty) {}

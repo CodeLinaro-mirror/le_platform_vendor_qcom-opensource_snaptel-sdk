@@ -42,6 +42,7 @@
 #ifndef TELUX_PLATFORM_HARDWARE_ANTENNAMANAGER_HPP
 #define TELUX_PLATFORM_HARDWARE_ANTENNAMANAGER_HPP
 
+#include <memory>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/hardware/AntennaListener.hpp>
 

@@ -6,6 +6,8 @@
 #ifndef TELUX_CV2X_PROP_CONGESTIONCONTROLUTIL_HPP
 #define TELUX_CV2X_PROP_CONGESTIONCONTROLUTIL_HPP
 
+#include <stdint.h>
+
 namespace telux {
     namespace cv2x {
         namespace prop {

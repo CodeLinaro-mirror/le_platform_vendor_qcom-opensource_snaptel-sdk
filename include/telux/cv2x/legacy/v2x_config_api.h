@@ -73,6 +73,8 @@
 #ifndef TELUX_CV2X_LEGACY_V2X_CONFIG_API_H
 #define TELUX_CV2X_LEGACY_V2X_CONFIG_API_H
 
+#include "v2x_common.pb.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

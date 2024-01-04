@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -171,14 +171,19 @@ void ServingSystemMenu::init() {
              "8", "Request_RF_Band_Info", {},
              std::bind(&ServingSystemMenu::requestRFBandInfo, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getRejectInfoCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "9", "Get_Network_Reject_Information", {},
+             std::bind(&ServingSystemMenu::getNetworkRejectInfo, this, std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "9", "Select_sim_slot", {},
+             "10", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
              getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
-             getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand};
+             getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
+             getRejectInfoCommand};
 
        if (servingSystemMgrs_.size() > 1) {
            commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -369,6 +374,26 @@ void ServingSystemMenu::requestRFBandInfo(std::vector<std::string> userInput) {
          std::cout << "\nGet RF band info sent successfully\n";
       } else {
          std::cout << "\nGet RF band info failed \n";
+      }
+   }
+}
+
+void ServingSystemMenu::getNetworkRejectInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::NetworkRejectInfo rejectInfo;
+      auto status = servingSystemMgr->requestNetworkRejectInfo(rejectInfo);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getNetworkRejectInfo is successful"
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(rejectInfo.rejectSrvInfo.rat)
+            << "\n Service Domain: "
+            << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
+            << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
+            << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc
+            << std::endl;
+      } else {
+         std::cout << "\n getNetworkRejectInfo failed, status: " << static_cast<int>(status);
       }
    }
 }

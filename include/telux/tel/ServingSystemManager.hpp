@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -386,6 +386,18 @@ struct NetworkTimeInfo {
 };
 
 /**
+ * Defines network registration reject information
+ */
+struct NetworkRejectInfo {
+    ServingSystemInfo rejectSrvInfo; /**< Serving system information where the registration is
+                                          rejected.*/
+    uint8_t rejectCause;             /**< Reject cause values as specified in 3GPP TS 24.008,
+                                          3GPP TS 24.301 and 3GPP TS 24.501. */
+    std::string mcc;                 /**< Mobile Country Code for rejection*/
+    std::string mnc;                 /**< Mobile Network Code for rejection*/
+};
+
+/**
  * 16 bit mask that denotes which of the radio access technology mode preference
  * defined in RatPrefType enum are used to set or get RAT preference.
  */
@@ -398,6 +410,7 @@ using RatPreference = std::bitset<16>;
  */
 enum ServingSystemNotificationType {
    SYSTEM_INFO,      /* Represents @ref onSystemInfoChanged() and @ref onDcStatusChanged() */
+   NETWORK_REJ_INFO  /* Represents @ref onNetworkRejection */
 };
 
 /**
@@ -629,6 +642,23 @@ public:
    virtual telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) = 0;
 
    /**
+    * Get network registration reject information.
+    * When a device is detached from the network due to registration rejection, the network
+    * will return relevant information such as the reason for the rejection.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] rejectInfo  Network reject information @ref NetworkRejectInfo
+    *
+    * @returns Status of requestNetworkRejectInfo i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -777,6 +807,23 @@ public:
     *             could break backwards compatibility.
     */
    virtual void onRFBandInfoChanged(RFBandInfo bandInfo) {
+   }
+
+   /**
+    * This function is called when network registration rejection occurs.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::NETWORK_REJ_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] rejectInfo       @ref NetworkRejectInfo
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onNetworkRejection(NetworkRejectInfo rejectInfo) {
    }
 
    /**

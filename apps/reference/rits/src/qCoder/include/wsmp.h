@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -114,6 +114,8 @@ typedef enum {
     PSID_EFC,
     /* 0x20 -0x22, 0x80 - 0x85 are defined for SAE J2735 */
     PSID_BSM = 0x20,
+    PSID_SPAT = 0x82,
+    PSID_MAP = 0x204097,
     PSID_WSA = 0x87,
 } PSID_e;
 

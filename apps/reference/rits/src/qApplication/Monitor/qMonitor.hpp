@@ -1,5 +1,5 @@
 /*
-// Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted (subject to the limitations in the
@@ -111,6 +111,7 @@ struct QMClientValOptions
     bool mbdAlerts; // Misbehavior detections alerts
     bool totalRVs;  // Total Remote Vehicles
     bool totalRSUs; // Total Road Side Units
+    bool rxFails;
     //** Per Protocol
     // BSMs
     bool txBSMs;
@@ -159,6 +160,7 @@ struct QMonitorData
     //** Monitor Variables
     long long totalRx;
     long long totalTx;
+    long long rxFails;
     long long decodeFails;
     long long secFails;
     long long mbdAlerts;

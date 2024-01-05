@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -128,14 +128,12 @@ bool simMode = false;
 void stopThreads() {
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     if (not stopThread) {
-        cout << "stop threads" << endl;
         stopThread = true;
 
         if (application) {
             application->prepareForExit();
              if(application->configuration.enableCongCtrl &&
                     application->congestionControlManager){
-                std::cout << "Deinitializing congestion control library\n";
                 application->congestionControlManager->stopCongestionControl();
             }
             if (application->qMon) {
@@ -318,15 +316,9 @@ void receive(MessageType msgType, int index) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
     }
-    if(application->configuration.enableVerifStatLog){
-        application->initVerifLogging();
-    }
-    if(application->configuration.enableMbdStatLog)
-        application->initMisbehaviorLogging();
 
     // will need to make this compatible for multiple rx ports
     int ret;
-
     gettimeofday(&application->startRxIntervalTime, NULL);
     while (!stopThread) {
         if(!simMode) {
@@ -384,9 +376,6 @@ void receive(MessageType msgType, int index) {
         printf("Thread (%08x) closing\n", tid);
     }
 
-    // notify other threads to stop
-    stopThreads();
-
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -420,7 +409,7 @@ void ldmRx(void) {
     time_t startTime = currTime.tv_sec;
 
     if (nullptr == application) {
-        cerr << "application nullptr" << endl;
+        cerr << "application is nullptr" << endl;
         return;
     }
     if(application->configuration.enableVerifStatLog){
@@ -602,7 +591,6 @@ void transmitEventMsg() {
                 lastEventTxTime = timestamp_now();
                 nextSchedTxTime = lastEventTxTime + 100;
             }
-            // std::cout << "Sending event message!\n";
             int ret = application->send(0, TransmitType::EVENT);
             if (ret <= 0) {
                 cerr << "Failed to send critical event message." << endl;
@@ -685,8 +673,9 @@ void transmit(MessageType msgType) {
             break;
         case MessageType::DENM:
             cerr << "DENM transmit is not supported" << endl;
+            break;
         default:
-            return;
+            break;
     }
 
     /* Logic here changes if congestion control is enabled */
@@ -777,10 +766,6 @@ void transmit(MessageType msgType) {
             }
         }
     }
-    printf("Sending thread stopped\n");
-
-    // notify other threads to stop
-    stopThreads();
 
     // notify rx thread in case it's waiting for status notification
     statusCv.notify_all();
@@ -1272,6 +1257,17 @@ int setup(const bool tx, const bool rx,
         // application->openBsmMinLogFile(csvFileName);
     }
 
+    // for sae message configuration. initialize security-related features for qits
+    if((rx || rxSim) && (bsm || wsa)){
+        if(application->configuration.enableSecurity){
+            if(application->configuration.enableVerifStatLog){
+                application->initVerifLogging();
+            }
+            if(application->configuration.enableMbdStatLog)
+                application->initMisbehaviorLogging();
+        }
+    }
+
     if (rx && !rxSim)
     {
         if (application->radioReceives.empty()) {
@@ -1532,10 +1528,5 @@ int main(int argc, char** argv) {
     }
 
     joinThreads();
-    printf("Deleting application\n");
-    if(!rxSim && !txSim && application) {
-        application->closeAllRadio();
-    }
-
     return 0;
 }

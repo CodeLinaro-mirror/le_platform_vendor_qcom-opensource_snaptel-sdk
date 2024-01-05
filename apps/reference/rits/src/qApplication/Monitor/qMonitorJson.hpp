@@ -1,5 +1,5 @@
 /*
-// Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted (subject to the limitations in the
@@ -54,6 +54,7 @@ namespace QMonitorJson
         TOTAL_RX,
         TOTAL_RSUS,
         TOTAL_RVS,
+        RX_FAILS,
         DECODE_FAILS,
         SEC_FAILS,
         MBD_ALERTS,
@@ -77,6 +78,7 @@ namespace QMonitorJson
         "totalRx",
         "totalRSUs",
         "totalRVs",
+        "rxFails",
         "decodeFails",
         "securityFails",
         "mbdAlerts",

@@ -1,5 +1,5 @@
 /*
-// Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted (subject to the limitations in the
@@ -316,6 +316,11 @@ int QMonitor::createResponse(int client, json_object *res)
         json_object_object_add(res, kStr[TOTAL_RVS],
                                json_object_new_int64(tempData.totalRVs));
     }
+    if (valOpts->rxFails)
+    {
+        json_object_object_add(res, kStr[RX_FAILS],
+                               json_object_new_int64(tempData.rxFails));
+    }
     if (valOpts->decodeFails)
     {
         json_object_object_add(res, kStr[DECODE_FAILS],
@@ -418,6 +423,7 @@ void QMonitor::addThreadData(QMonitorData *data)
         data->totalRx += t.second.totalRx;
         data->totalTx += t.second.totalTx;
         data->decodeFails += t.second.decodeFails;
+        data->rxFails += t.second.rxFails;
         data->secFails += t.second.secFails;
         data->mbdAlerts += t.second.mbdAlerts;
         data->totalRVs += t.second.totalRVs;
@@ -515,6 +521,9 @@ int QMonitor::changeOption(int client, const char *key, json_object *obj)
         case TOTAL_TX:
             // std::cout << "got total tx req" << std::endl;
             valOpts->totalTx = json_object_get_boolean(obj);
+            break;
+        case RX_FAILS:
+            valOpts->rxFails = json_object_get_boolean(obj);
             break;
         case DECODE_FAILS:
             valOpts->decodeFails = json_object_get_boolean(obj);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -342,13 +342,12 @@ int BTHFVoiceCall::deleteCodecCaptureStream() {
 
 int BTHFVoiceCall::allocateBuffers() {
 
-    uint32_t buffersPerStream = 2;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
     btReadSize_ = 0;
     codecReadSize_ = 0;
 
-    for (uint32_t x = 0; x < buffersPerStream; x++) {
+    for (int x = 0; x < BUF_COUNT; x++) {
         streamBuffer = btCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get bt capture stream buffer" << std::endl;
@@ -364,7 +363,7 @@ int BTHFVoiceCall::allocateBuffers() {
         btReadBuffers_.push(streamBuffer);
     }
 
-    for (uint32_t x = 0; x < buffersPerStream; x++) {
+    for (int x = 0; x < BUF_COUNT; x++) {
         streamBuffer = codecCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get codec capture stream buffer" << std::endl;
@@ -380,7 +379,7 @@ int BTHFVoiceCall::allocateBuffers() {
         codecReadBuffers_.push(streamBuffer);
     }
 
-    for (uint32_t x = 0; x < buffersPerStream; x++) {
+    for (int x = 0; x < BUF_COUNT; x++) {
         streamBuffer = btPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get bt play stream buffer" << std::endl;
@@ -391,7 +390,7 @@ int BTHFVoiceCall::allocateBuffers() {
         btWriteBuffers_.push(streamBuffer);
     }
 
-    for (uint32_t x = 0; x < buffersPerStream; x++) {
+    for (int x = 0; x < BUF_COUNT; x++) {
         streamBuffer = codecPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get codec play stream buffer" << std::endl;
@@ -411,13 +410,23 @@ void BTHFVoiceCall::writeCompleteCodec(
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "write codec err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> codecReadLock(codecReadMutex_);
+            keepRunning_ = false;
+            codecReadWaiterCv_.notify_all();
+        }
     }
 
-    codecWriteBuffers_.push(buffer);
-
     {
-      std::lock_guard<std::mutex> lock(btReadMutex_);
-      btReadWaiterCv_.notify_all();
+        std::lock_guard<std::mutex> btReadLock(btReadMutex_);
+
+        codecWriteBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++codecWritePossible_;
+        }
+
+        btReadWaiterCv_.notify_all();
     }
 }
 
@@ -427,15 +436,27 @@ void BTHFVoiceCall::readCompleteBluetooth(
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read bt err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> codecReadLock(codecReadMutex_);
+            keepRunning_ = false;
+            codecReadWaiterCv_.notify_all();
+        }
     }
 
-    readyForCodecWriteBuffers_.push(buffer);
-    btReadBuffers_.push(buffer);
-    codecWritePossible_++;
-
     {
-      std::lock_guard<std::mutex> lock(btReadMutex_);
-      btReadWaiterCv_.notify_all();
+        std::lock_guard<std::mutex> btReadLock(btReadMutex_);
+
+        readyForCodecWriteBuffers_.push(buffer);
+        btReadBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++btReadPossible_;
+            if (btReadDone_ < BUF_COUNT) {
+                ++btReadDone_;
+            }
+        }
+
+        btReadWaiterCv_.notify_all();
     }
 }
 
@@ -451,19 +472,24 @@ void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
     auto codecWriteCompleteCb = std::bind(&BTHFVoiceCall::writeCompleteCodec,
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-    std::unique_lock<std::mutex> lock(btReadMutex_);
+    std::unique_lock<std::mutex> btReadLock(btReadMutex_);
 
-    codecWritePossible_ = 0;
+    btReadDone_ = 0;
+    btReadPossible_ = BUF_COUNT;
+    codecWritePossible_ = BUF_COUNT;
 
-    std::cout << "read bt and write codec started!" << std::endl;
+    std::cout << "read from bt and write on codec started!" << std::endl;
 
     while(keepRunning_) {
-        if (codecWritePossible_) {
+        if (btReadDone_ && codecWritePossible_) {
+
             tmpBufferPtr = readyForCodecWriteBuffers_.front();
             readyForCodecWriteBuffers_.pop();
 
             streamBuffer = codecWriteBuffers_.front();
             codecWriteBuffers_.pop();
+
+            btReadDone_--;
 
             std::memcpy(streamBuffer->getRawBuffer(),
                 tmpBufferPtr->getRawBuffer(), btReadSize_);
@@ -471,27 +497,41 @@ void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
             status = codecPlayStream_->write(streamBuffer, codecWriteCompleteCb);
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "codec write err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                codecReadWaiterCv_.notify_all();
                 break;
             }
+
+            codecWritePossible_--;
         }
 
-        if (!btReadBuffers_.empty()) {
+        if (btReadPossible_) {
             streamBuffer = btReadBuffers_.front();
             btReadBuffers_.pop();
 
             status = btCaptureStream_->read(streamBuffer, btReadSize_, btReadCompleteCb);
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "bt read err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                codecReadWaiterCv_.notify_all();
                 break;
             }
+
+            btReadPossible_--;
         }
 
-        if (!codecWritePossible_ && btReadBuffers_.empty()) {
-            btReadWaiterCv_.wait(lock);
-        }
+        btReadWaiterCv_.wait(btReadLock, [this] {
+            return ((btReadPossible_ ||
+                (btReadDone_ && codecWritePossible_)) ? true : false);
+        });
     }
 
-    std::cout << "read bt and write codec completed!" << std::endl;
+    while ((btReadBuffers_.size() != static_cast<uint32_t>(BUF_COUNT)) &&
+            (codecWriteBuffers_.size() != static_cast<uint32_t>(BUF_COUNT))) {
+        btReadWaiterCv_.wait(btReadLock);
+    }
+
+    std::cout << "read from bt and write on codec completed!" << std::endl;
 }
 
 void BTHFVoiceCall::writeCompleteBluetooth(
@@ -500,13 +540,23 @@ void BTHFVoiceCall::writeCompleteBluetooth(
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "write bt err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> btReadLock(btReadMutex_);
+            keepRunning_ = false;
+            btReadWaiterCv_.notify_all();
+        }
     }
 
-    btWriteBuffers_.push(buffer);
-
     {
-      std::lock_guard<std::mutex> lock(codecReadMutex_);
-      codecReadWaiterCv_.notify_all();
+        std::lock_guard<std::mutex> codecReadLock(codecReadMutex_);
+
+        btWriteBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++btWritePossible_;
+        }
+
+        codecReadWaiterCv_.notify_all();
     }
 }
 
@@ -516,15 +566,27 @@ void BTHFVoiceCall::readCompleteCodec(
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read codec err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> btReadLock(btReadMutex_);
+            keepRunning_ = false;
+            btReadWaiterCv_.notify_all();
+        }
     }
 
-    readyForBluetoothWriteBuffers_.push(buffer);
-    codecReadBuffers_.push(buffer);
-    bluetoothWritePossible_++;
-
     {
-      std::lock_guard<std::mutex> lock(codecReadMutex_);
-      codecReadWaiterCv_.notify_all();
+        std::lock_guard<std::mutex> codecReadLock(codecReadMutex_);
+
+        readyForBluetoothWriteBuffers_.push(buffer);
+        codecReadBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++codecReadPossible_;
+            if (codecReadDone_ < BUF_COUNT) {
+                ++codecReadDone_;
+            }
+        }
+
+        codecReadWaiterCv_.notify_all();
     }
 }
 
@@ -540,19 +602,24 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
     auto btWriteCompleteCb = std::bind(&BTHFVoiceCall::writeCompleteBluetooth,
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-    std::unique_lock<std::mutex> lock(codecReadMutex_);
+    std::unique_lock<std::mutex> codecReadLock(codecReadMutex_);
 
-    bluetoothWritePossible_ = 0;
+    codecReadDone_ = 0;
+    codecReadPossible_ = BUF_COUNT;
+    btWritePossible_ = BUF_COUNT;
 
-    std::cout << "read codec and write bt started!" << std::endl;
+    std::cout << "read from codec and write on bt started!" << std::endl;
 
     while(keepRunning_) {
-        if (bluetoothWritePossible_) {
+        if (codecReadDone_ && btWritePossible_) {
+
             tmpBufferPtr = readyForBluetoothWriteBuffers_.front();
             readyForBluetoothWriteBuffers_.pop();
 
             streamBuffer = btWriteBuffers_.front();
             btWriteBuffers_.pop();
+
+            codecReadDone_--;
 
             std::memcpy(streamBuffer->getRawBuffer(),
                 tmpBufferPtr->getRawBuffer(), codecReadSize_);
@@ -560,11 +627,15 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
             status = btPlayStream_->write(streamBuffer, btWriteCompleteCb);
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "bt write err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                btReadWaiterCv_.notify_all();
                 break;
             }
+
+            btWritePossible_--;
         }
 
-        if (!codecReadBuffers_.empty()) {
+        if (codecReadPossible_) {
             streamBuffer = codecReadBuffers_.front();
             codecReadBuffers_.pop();
 
@@ -572,16 +643,26 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
                 streamBuffer, codecReadSize_, codecReadCompleteCb);
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "codec read err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                btReadWaiterCv_.notify_all();
                 break;
             }
+
+            codecReadPossible_--;
         }
 
-        if (!bluetoothWritePossible_ && codecReadBuffers_.empty()) {
-            codecReadWaiterCv_.wait(lock);
-        }
+        codecReadWaiterCv_.wait(codecReadLock, [this] {
+            return ((codecReadPossible_ ||
+                (codecReadDone_ && btWritePossible_)) ? true : false);
+        });
     }
 
-    std::cout << "read codec and write bt completed!" << std::endl;
+    while ((codecReadBuffers_.size() != static_cast<uint32_t>(BUF_COUNT)) &&
+            (btWriteBuffers_.size() != static_cast<uint32_t>(BUF_COUNT))) {
+        codecReadWaiterCv_.wait(codecReadLock);
+    }
+
+    std::cout << "read from codec and write on bt completed!" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -641,8 +722,17 @@ int main(int argc, char **argv) {
     std::thread captureCodec(
         &BTHFVoiceCall::readFromCodecWriteOnBluetooth, &(*app));
 
-    std::this_thread::sleep_for(std::chrono::minutes(5));
+    /* Run the use case for 5 minutes */
+    std::this_thread::sleep_for(std::chrono::minutes(1)); //TODO
     app->keepRunning_ = false;
+    {
+        std::lock_guard<std::mutex> btReadLock(app->btReadMutex_);
+        app->btReadWaiterCv_.notify_all();
+    }
+    {
+        std::lock_guard<std::mutex> codecReadLock(app->codecReadMutex_);
+        app->codecReadWaiterCv_.notify_all();
+    }
 
     captureBluetooth.join();
     captureCodec.join();

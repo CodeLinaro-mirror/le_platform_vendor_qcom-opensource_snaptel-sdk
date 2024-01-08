@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -944,6 +944,10 @@ void SmsManagerStub::handleIncomingSms(::telStub::SmsMessage event) {
     LOG(DEBUG, __FUNCTION__);
 
     int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
     int numberOfSegments = event.messageinfono_of_segments();
     int refNumber = event.messageinforef_no();
     int segmentNumber = event.messageinfosegment_no();
@@ -1117,6 +1121,10 @@ void SmsManagerStub::parseAndConcatenateSmsMessage (int phoneId, SmsMessage& mes
 void SmsManagerStub::handleMemoryFullEvent(::telStub::memoryFullEvent event) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
     telux::tel::StorageType type = static_cast<telux::tel::StorageType>(event.storage_type());
     LOG(DEBUG, __FUNCTION__, "The Storage type is : ", static_cast<int>(type));
     LOG(DEBUG, __FUNCTION__, "Phone Id is  : ", phoneId);

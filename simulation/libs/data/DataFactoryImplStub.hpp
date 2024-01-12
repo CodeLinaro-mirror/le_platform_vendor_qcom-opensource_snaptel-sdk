@@ -46,8 +46,8 @@
 #include <map>
 
 #include <telux/data/DataFactory.hpp>
-#include "../common/AsyncTaskQueue.hpp"
-#include "../common/FactoryHelper.hpp"
+#include "common/AsyncTaskQueue.hpp"
+#include "common/FactoryHelper.hpp"
 
 namespace telux {
 namespace data {

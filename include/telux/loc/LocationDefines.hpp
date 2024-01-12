@@ -46,8 +46,8 @@
 
 #include "telux/common/CommonDefines.hpp"
 
-#ifndef LOCATION_DEFINES_HPP
-#define LOCATION_DEFINES_HPP
+#ifndef TELUX_LOC_LOCATIONDEFINES_HPP
+#define TELUX_LOC_LOCATIONDEFINES_HPP
 
 namespace telux {
 
@@ -2709,4 +2709,4 @@ public:
 } // end of namespace loc
 } // end of namespace telux
 
-#endif // LOCATION_DEFINES_HPP
+#endif // TELUX_LOC_LOCATIONDEFINES_HPP

@@ -43,18 +43,16 @@
 #ifndef CARDAPP_STUB_HPP
 #define CARDAPP_STUB_HPP
 
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
-#include "../common/AsyncTaskQueue.hpp"
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/ResponseHandler.hpp"
+#include "common/AsyncTaskQueue.hpp"
 #include <telux/tel/CardDefines.hpp>
 #include <telux/tel/CardApp.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/tel/CardManager.hpp>
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel.grpc.pb.h"
 
 
 using grpc::Channel;

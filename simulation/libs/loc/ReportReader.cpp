@@ -35,7 +35,7 @@
 #include "ReportReader.hpp"
 #include <time.h>
 #include <cerrno>
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include <cstring>
 #include <iostream>
 #include <thread>

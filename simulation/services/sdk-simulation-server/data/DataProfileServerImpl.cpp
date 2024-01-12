@@ -7,7 +7,7 @@
 #include <functional>
 
 #include "DataProfileServerImpl.hpp"
-#include "../../../libs/data/DataUtilsStub.hpp"
+#include "libs/data/DataUtilsStub.hpp"
 
 #define DATA_PROFILE_API_SLOT1_JSON "api/data/IDataProfileManagerSlot1.json"
 #define DATA_PROFILE_API_SLOT2_JSON "api/data/IDataProfileManagerSlot2.json"
@@ -107,7 +107,7 @@ grpc::Status DataProfileServerImpl::CreateProfile(ServerContext* context,
         newProfile["techPref"] =
             DataUtilsStub::convertTechPrefEnumToString(
             request->tech_preference().tech_preference());
-        newProfile["authType"] =
+        newProfile["authProtocolType"] =
             DataUtilsStub::convertAuthProtocolEnumToString(
             request->auth_type().auth_type());
         data.stateRootObj[subsystem]["requestProfileList"]
@@ -237,7 +237,7 @@ grpc::Status DataProfileServerImpl::ModifyProfile(ServerContext* context,
             updatedProfile["techPref"] =
                 DataUtilsStub::convertTechPrefEnumToString(
                 request->tech_preference().tech_preference());
-            updatedProfile["authType"] =
+            updatedProfile["authProtocolType"] =
                 DataUtilsStub::convertAuthProtocolEnumToString(
                 request->auth_type().auth_type());
 
@@ -448,8 +448,9 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
             data.stateRootObj[subsystem]["requestProfileList"]
             ["profiles"].size();
         int index = 0;
+        Json::Value requestedProfile;
         for (; index < currentProfileCount; index++) {
-            Json::Value requestedProfile =
+            requestedProfile =
                 data.stateRootObj[subsystem]["requestProfileList"]
                 ["profiles"][index];
 

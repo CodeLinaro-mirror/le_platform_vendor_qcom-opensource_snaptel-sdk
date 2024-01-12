@@ -114,4 +114,4 @@ class IFsListener : public common::IServiceStatusListener {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_FSLISTENER_HPP
+#endif // TELUX_PLATFORM_FSLISTENER_HPP

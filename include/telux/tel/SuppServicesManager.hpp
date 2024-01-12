@@ -46,8 +46,8 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/SuppServicesListener.hpp>
 
-#ifndef TELUX_TEL_SUPP_SERVICES_MANAGER_HPP
-#define TELUX_TEL_SUPP_SERVICES_MANAGER_HPP
+#ifndef TELUX_TEL_SUPPSERVICESMANAGER_HPP
+#define TELUX_TEL_SUPPSERVICESMANAGER_HPP
 
 namespace telux {
 namespace tel {
@@ -713,4 +713,4 @@ public:
 } // namespace tel
 } // namespace telux
 
-#endif // TELUX_TEL_SUPP_SERVICE_MANAGER_HPP
+#endif // TELUX_TEL_SUPPSERVICESMANAGER_HPP

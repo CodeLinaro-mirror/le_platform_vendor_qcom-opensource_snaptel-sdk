@@ -124,4 +124,4 @@ class ITimeManager {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_TIMEMANAGER_HPP
+#endif // TELUX_PLATFORM_TIMEMANAGER_HPP

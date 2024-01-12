@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -300,12 +300,14 @@ int main(int argc, char ** argv)
 {
     signal(SIGINT, signalHandler);
 
-    std::shared_ptr<AudioLoopbackApp> app = std::make_shared<AudioLoopbackApp>();
-
-    if(!app){
-        std::cout <<  " Failed to instantiate audio loopback app " << std::endl;
-        return -1;
+    std::shared_ptr<AudioLoopbackApp> app;
+    try {
+        app = std::make_shared<AudioLoopbackApp>();
+    } catch (std::bad_alloc & e) {
+        std::cout << " Failed to instantiate audio loopback app " << std::endl;
+        return 0;
     }
+
     app->parseArgs(argc, argv);
 
     app->init();

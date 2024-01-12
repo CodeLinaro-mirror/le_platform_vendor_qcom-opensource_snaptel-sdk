@@ -74,8 +74,8 @@
  *             a SIM card to the modem.
  */
 
-#ifndef REMOTESIMMANAGER_HPP
-#define REMOTESIMMANAGER_HPP
+#ifndef TELUX_TEL_REMOTESIMMANAGER_HPP
+#define TELUX_TEL_REMOTESIMMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -282,4 +282,4 @@ public:
 
 } // End of namespace telux
 
-#endif // REMOTESIMMANAGER_HPP
+#endif // TELUX_TEL_REMOTESIMMANAGER_HPP

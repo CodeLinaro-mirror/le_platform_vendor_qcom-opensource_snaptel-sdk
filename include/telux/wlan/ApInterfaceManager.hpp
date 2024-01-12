@@ -40,8 +40,8 @@
  *
  */
 
-#ifndef TELUX_WLAN_APINTERFACE_HPP
-#define TELUX_WLAN_APINTERFACE_HPP
+#ifndef TELUX_WLAN_APINTERFACEMANAGER_HPP
+#define TELUX_WLAN_APINTERFACEMANAGER_HPP
 
 #include <memory>
 
@@ -424,4 +424,4 @@ public:
 /** @} */ /* end_addtogroup telematics_wlan_ap */
 }
 }
-#endif
+#endif // TELUX_WLAN_APINTERFACEMANAGER_HPP

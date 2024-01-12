@@ -70,8 +70,8 @@
  *             classes and services.
  */
 
-#ifndef PHONEFACTORY_HPP
-#define PHONEFACTORY_HPP
+#ifndef TELUX_TEL_PHONEFACTORY_HPP
+#define TELUX_TEL_PHONEFACTORY_HPP
 
 #include <memory>
 
@@ -373,4 +373,4 @@ class PhoneFactory {
 
 }  // End of namespace telux
 
-#endif  // PHONEFACTORY_HPP
+#endif // TELUX_TEL_PHONEFACTORY_HPP

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -67,8 +67,8 @@
  * @brief      ThermalFactory allows creation of thermal manager.
  */
 
-#ifndef THERMALFACTORY_HPP
-#define THERMALFACTORY_HPP
+#ifndef TELUX_THERM_THERMALFACTORY_HPP
+#define TELUX_THERM_THERMALFACTORY_HPP
 
 #include <memory>
 
@@ -149,4 +149,4 @@ class ThermalFactory {
 
 }  // End of namespace telux
 
-#endif  // THERMALFACTORY_HPP
+#endif // TELUX_THERM_THERMALFACTORY_HPP

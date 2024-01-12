@@ -37,8 +37,8 @@
 
 #include "LocationDefinesStub.hpp"
 #include "commonDef.hpp"
-#include "../common/SimulationConfigParser.hpp"
-#include "../common/CsvHandler.hpp"
+#include "common/SimulationConfigParser.hpp"
+#include "common/CsvHandler.hpp"
 
 using namespace telux::common;
 

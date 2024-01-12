@@ -40,8 +40,8 @@
 * @brief      Cv2xRadioListener is the listener interface for Cv2xRadio
 */
 
-#ifndef CV2XRADIOLISTENER_HPP
-#define CV2XRADIOLISTENER_HPP
+#ifndef TELUX_CV2X_CV2XRADIOLISTENER_HPP
+#define TELUX_CV2X_CV2XRADIOLISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
@@ -137,4 +137,4 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XRADIOLISTENER_HPP
+#endif // TELUX_CV2X_CV2XRADIOLISTENER_HPP

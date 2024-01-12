@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
  *             download and install progress of profile.
  */
 
-#ifndef SIMPROFILELISTENER_HPP
-#define SIMPROFILELISTENER_HPP
+#ifndef TELUX_TEL_SIMPROFILELISTENER_HPP
+#define TELUX_TEL_SIMPROFILELISTENER_HPP
 
 #include <telux/tel/SimProfileDefines.hpp>
 
@@ -153,4 +153,4 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
 
 }  // end of namespace telux
 
-#endif  // SIMPROFILELISTENER_HPP
+#endif // TELUX_TEL_SIMPROFILELISTENER_HPP

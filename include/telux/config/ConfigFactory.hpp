@@ -69,8 +69,8 @@
  * @brief      ConfigFactory allows creation of config related classes.
  */
 
-#ifndef CONFIGFACTORY_HPP
-#define CONFIGFACTORY_HPP
+#ifndef TELUX_CONFIG_CONFIGFACTORY_HPP
+#define TELUX_CONFIG_CONFIGFACTORY_HPP
 
 #include <memory>
 #include <mutex>
@@ -138,5 +138,5 @@ private:
 
 } // end of namespace telux
 
-#endif // CONFIGFACTORY_HPP
+#endif // TELUX_CONFIG_CONFIGFACTORY_HPP
 

@@ -61,8 +61,6 @@ This is the main daemon that interacts with all the clients using the Simulation
 Event injector allows the users to inject unsolicited events. It is a Linux based command-line utility that injects events into the simulation framework.<br> For example: <i>telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower></i> could be triggered to change the card power state.
 
 
-This tool can also be used to dynamically update JSON files for API behaviors.
-
 Syntax for injecting events: <i>telsdk_event_injector -f <filter/subsystem/manager> -e <event> <arguments></i>
 
 - -f: specifies the filter.
@@ -109,8 +107,18 @@ $ ./build_sim.sh all <DESTINATION_FOLDER_ROOT_PATH>
 <BR>
 \endhtmlonly
 
+4. Export path
+\code{.sh}
+$ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
+\endcode
+The above script would setup different environment variables like <i>PATH, LD_LIBRARY_PATH, PKG_CONFIG_PATH, CC, CXX</i>, etc.
+\htmlonly
+<BR>
+<BR>
+\endhtmlonly
 
-4. To perform a build for user applications
+
+5. To perform a build for user applications using cmake
 \code{.sh}
 $ cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=<DESTINATION_FOLDER_ROOT_PATH>/include -DCMAKE_INSTALL_PREFIX=<DESTINATION_FOLDER_ROOT_PATH> <APPS_CMAKE_PATH> && make install
 \endcode
@@ -177,7 +185,7 @@ $ <APP_NAME>
 - - -
 To run applications without the docker container:
 
-1. Export library path
+1. Export path, if not already done
 \code{.sh}
 $ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
 \endcode
@@ -253,8 +261,7 @@ The table shows the JSON attributes to modify the behavior of the API in simulat
 @tableend
 
 <br>
-The JSON for API behavior could be updated dynamically by injecting the json_update event. Use the telsdk_event_injector help option to get more details.<br>
-<b>Syntax to update the json file:</b> telsdk_event_injector -f json_update -e modify <path> <subsystem> <api> <attribute> <val><br>
+The JSON for API behavior could be updated dynamically by making use of the json_update script.<br>
 <br>
 For example: Considering the below API entry in JSON
 <pre>
@@ -264,9 +271,17 @@ For example: Considering the below API entry in JSON
 	"status": "SUCCESS"
 },
 </pre>
-The command <i>telsdk_event_injector -f json_update -e modify /api/data/IDataConnectionManager.json IDataConnectionManager getDefaultProfile callbackDelay 300.</i> would update callbackDelay to 300<br>
 
-There will be cases where additional fields in response management would be needed. For example: SMS management.
+\code{.sh}
+$ json_update /api/data/IDataConnectionManager.json IDataConnectionManager getDefaultProfile callbackDelay 300
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+Above would update callbackDelay to 300.<br>
+
+<b>Note:</b> There will be cases where additional fields in response management would be needed. For example: SMS management.
 
 <br>
 @subsection external Sending external events
@@ -301,6 +316,12 @@ TelSDK simulation framework supports logging. User configurable logger settings 
 @section multisim Multi-SIM configuration in simulation
 - - -
 MULTISIM_CONFIG in <i>etc/telux/tel.conf</i> specifies type of multi-SIM configuration supported. By default, multi-SIM configuration is not enabled.
+
+<br>
+- - -
+@section rpcPort RPC port configuration in simulation
+- - -
+Default configuration uses 8089 for communication between simulation server & its clients. If needed, <i>RPC_PORT</i> can be updated in tel.conf.
 
 <br>
 - - -

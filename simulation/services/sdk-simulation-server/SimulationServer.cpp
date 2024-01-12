@@ -13,20 +13,13 @@
  */
 
 #include <iostream>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <algorithm>
 #include <thread>
 #include <telux/common/CommonDefines.hpp>
 
 #include <grpcpp/grpcpp.h>
 
-#include "../../libs/common/SimulationConfigParser.hpp"
-#include "../../libs/common/Logger.hpp"
-#include "../../libs/common/event-manager/EventManager.hpp"
+#include "libs/common/SimulationConfigParser.hpp"
+#include "libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
@@ -36,6 +29,8 @@
 #include "data/DataProfileServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
+#include "event/EventService.hpp"
+#include "sensor/SensorFeatureManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -43,8 +38,6 @@ using grpc::ServerContext;
 using grpc::Status;
 
 #define LOCAL_HOST "127.0.0.1"
-#define DEFAULT_PORT 8080
-#define DEFUALT_GRPC_PORT "8089"
 
 /* Defining the SimulationServer app instance */
 SimulationServer::SimulationServer() {
@@ -54,11 +47,6 @@ SimulationServer::SimulationServer() {
 
 SimulationServer::~SimulationServer(){
     LOG(DEBUG, __FUNCTION__);
-    {
-        std::lock_guard<std::mutex> lock(exitingMutex_);
-        exiting_ = true;
-    }
-
     taskQ_ = nullptr;
 }
 
@@ -70,146 +58,13 @@ SimulationServer &SimulationServer::getInstance() {
 
 telux::common::Status SimulationServer::start() {
     LOG(DEBUG, __FUNCTION__);
-    struct sockaddr_in address = {0};
-    int socketFd;
-    int addrlen = sizeof(address);
-    int opt = 1;
-    int serverSocket;
 
     std::thread grpc_sim_server([this] {
             startGrpcServer();
         }
     );
 
-    std::shared_ptr<SimulationConfigParser> config =
-        std::make_shared<SimulationConfigParser>();
-
-    if ((serverSocket = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-        LOG(ERROR, "failed to create socket");
-        return telux::common::Status::FAILED;
-    }
-
-    LOG(INFO, "socket created::", serverSocket);
-    std::string portString = config->getValue("PORT");
-    int port = DEFAULT_PORT;
-    if (portString != "") {
-        port = std::stoi(portString);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(LOCAL_HOST);
-    address.sin_port = htons(port);
-
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt,
-        sizeof(opt)) < 0) {
-        LOG(ERROR, "setsockopt failed");
-        return telux::common::Status::FAILED;
-    }
-
-    if (bind(serverSocket, (struct sockaddr *)&address,
-        sizeof(address)) < 0) {
-        LOG(ERROR, "binding socket failed");
-        return telux::common::Status::FAILED;
-    }
-
-    if (listen(serverSocket,5) < 0) {
-        LOG(ERROR, "listen failed");
-        return telux::common::Status::FAILED;
-    }
-
-    while(true) {
-        {
-            std::lock_guard<std::mutex> lock(exitingMutex_);
-            if (exiting_) {
-                break;
-            }
-        }
-
-        LOG(INFO, "waiting to accept connection");
-        socketFd = accept(serverSocket, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-        if (socketFd < 0)
-        {
-            LOG(ERROR, "accept failed");
-            return telux::common::Status::FAILED;
-        }
-
-        LOG(INFO, "client connected::", socketFd);
-        clientSockets_.push_back(socketFd);
-
-        auto f = std::async(std::launch::async, [this, socketFd]() {
-            this->readMessage(socketFd);
-        }).share();
-        taskQ_->add(f);
-    }
-
     grpc_sim_server.join();
-    close(serverSocket);
-    for(auto &socket: clientSockets_) {
-        close(socket);
-    }
-    return telux::common::Status::SUCCESS;
-}
-
-telux::common::Status SimulationServer::readMessage(int socketFd) {
-    LOG(DEBUG, __FUNCTION__);
-    char buffer[BUFFER_SIZE];
-
-    while(true) {
-        int length = read(socketFd,buffer, BUFFER_SIZE);
-        if (length <= 0)
-        {
-            close(socketFd);
-            clientSockets_.erase(find(clientSockets_.begin(),clientSockets_.end(), socketFd));
-            LOG(INFO, __FUNCTION__, "socket disconnected::", socketFd);
-            return telux::common::Status::SUCCESS;
-        }
-        else {
-            LOG(DEBUG, __FUNCTION__, "received data::", buffer);
-            std::string msg(buffer);
-            auto f = std::async(std::launch::async, [this, msg, length]() {
-                this->writeMessage(msg, length, ClientType::SERVER);
-            }).share();
-            taskQ_->add(f);
-            memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(exitingMutex_);
-            if (exiting_) {
-                break;
-            }
-        }
-    }
-    return telux::common::Status::SUCCESS;
-}
-
-telux::common::Status SimulationServer::writeMessage(std::string msg, int length,
-    ClientType type) {
-    LOG(DEBUG, __FUNCTION__);
-
-    auto& eventMgr = EventManager::getInstance();
-    std::string event;
-    std::stringstream sstr(msg);
-    int optval;
-    socklen_t optlen = sizeof(optval);
-
-    std::lock_guard<std::mutex> lck(writeMutex_);
-    while (std::getline(sstr, event, '\n')) {
-        LOG(DEBUG, __FUNCTION__ ," received event::", event);
-
-        if ((type == ClientType::SERVER) || (type == ClientType::ALL)) {
-            eventMgr.handleEventNotifications(event);
-        }
-
-        if ((type == ClientType::LIB)  || (type == ClientType::ALL)) {
-            for(auto socket: clientSockets_) {
-                int status = getsockopt(socket, SOL_SOCKET, SO_ERROR, &optval, &optlen);
-                if (status == 0) {
-                    write(socket,const_cast<char*>(event.c_str()),length);
-                }
-            }
-        }
-    }
     return telux::common::Status::SUCCESS;
 }
 
@@ -220,7 +75,8 @@ std::string SimulationServer::createServerAddress(std::string ipAddress, std::st
 void SimulationServer::startGrpcServer() {
     LOG(DEBUG, __FUNCTION__);
     std::string serverIpAddress = LOCAL_HOST;
-    std::string serverAddress = createServerAddress(serverIpAddress, DEFUALT_GRPC_PORT);
+    auto config = std::make_shared<SimulationConfigParser>();
+    std::string serverAddress = createServerAddress(serverIpAddress, config->getValue("RPC_PORT"));
     std::string server_address(serverAddress);
 
     grpc::EnableDefaultHealthCheckService(true);
@@ -252,6 +108,13 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<LocationConfiguratorServerImpl> locConfigService =
         std::make_shared<LocationConfiguratorServerImpl>();
     builder.RegisterService(locConfigService.get());
+
+    auto& eventService = EventService::getInstance();
+    builder.RegisterService(&eventService);
+
+    std::shared_ptr<SensorFeatureManagerServerImpl> sensorService =
+        std::make_shared<SensorFeatureManagerServerImpl>();
+    builder.RegisterService(sensorService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

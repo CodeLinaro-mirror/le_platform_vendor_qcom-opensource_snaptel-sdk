@@ -22,68 +22,20 @@ DataEventListener::~DataEventListener() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-void DataEventListener::onEventUpdate(std::string event) {
+void DataEventListener::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
-    std::string token;
-    if (EVENT_FLAG ==  EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
-    }
-    else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-    }
-}
-
-void DataEventListener::handleEvent(std::string token, std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
-    }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token, " The leftover string is: ", event);
-    if (token == START_DATA_CALL) {
-        handleStartDataCallEvent(event);
-    } else if (token == STOP_DATA_CALL) {
-        handleStopDataCallEvent(event);
-    }
-}
-
-void DataEventListener::handleStartDataCallEvent(std::string eventParams) {
-    LOG(DEBUG, __FUNCTION__, "The received event Params are: \"",eventParams,"\"");
-    int profileId = std::stoi(EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER));
-    SlotId slotId =
-        static_cast<SlotId>(std::stoi(EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER)));
-    std::string ifaceName = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    IpFamilyType ipFamilyType = static_cast<IpFamilyType>(DataUtilsStub::convertIpFamilyStringToEnum(
-        EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER)));
-    std::string ipv4Address = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    std::string gwv4Address = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    std::string dnsPrimaryAddress = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    std::string dnsSecondaryAddress = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    std::string ipv6Address = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    std::string gwv6Address = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-
     auto mngr = dataConnectionMngr_.lock();
-    if (mngr) {
-        LOG(DEBUG, __FUNCTION__, " invoking handleStartDataCallEvent");
-        mngr->handleStartDataCallEvent(profileId, slotId, ifaceName,
-            ipFamilyType,  ipv4Address, gwv4Address, dnsPrimaryAddress,
-            dnsSecondaryAddress, ipv6Address, gwv6Address);
-    }
-}
 
-void DataEventListener::handleStopDataCallEvent(std::string eventParams) {
-    LOG(DEBUG, __FUNCTION__, "The received event Params are: \"",eventParams,"\"");
-    int profileId = std::stoi(EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER));
-    SlotId slotId =
-        static_cast<SlotId>(std::stoi(EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER)));
-    IpFamilyType ipFamilyType = static_cast<IpFamilyType>(DataUtilsStub::convertIpFamilyStringToEnum(
-        EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER)));
-
-    auto mngr = dataConnectionMngr_.lock();
-    if (mngr) {
-        LOG(DEBUG, __FUNCTION__, " invoking handleStopDataCallEvent");
-        mngr->handleStopDataCallEvent(profileId, slotId, ipFamilyType);
+    if(mngr) {
+        if (event.Is<::dataStub::StartDataCallEvent>()) {
+            ::dataStub::StartDataCallEvent startEvent;
+            event.UnpackTo(&startEvent);
+            mngr->handleStartDataCallEvent(startEvent);
+        } else if (event.Is<::dataStub::StopDataCallEvent>()) {
+            ::dataStub::StopDataCallEvent stopEvent;
+            event.UnpackTo(&stopEvent);
+            mngr->handleStopDataCallEvent(stopEvent);
+        }
     }
 }
 

@@ -204,4 +204,4 @@ class IFsManager {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_FSMANAGER_HPP
+#endif // TELUX_PLATFORM_FSMANAGER_HPP

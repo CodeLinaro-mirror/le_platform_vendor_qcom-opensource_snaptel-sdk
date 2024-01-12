@@ -75,7 +75,7 @@ class BTHFVoiceCall {
     void readFromBluetoothWriteOnCodec();
     void readFromCodecWriteOnBluetooth();
 
-    bool keepRunning_ = false;
+    bool keepRunning_ = true;
 
  private:
     uint32_t btReadSize_;

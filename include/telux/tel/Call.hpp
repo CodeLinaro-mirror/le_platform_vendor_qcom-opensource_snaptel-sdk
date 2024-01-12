@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -68,8 +68,8 @@
  * @brief      Phone Call class is the primary interface to process Call requests.
  */
 
-#ifndef CALL_HPP
-#define CALL_HPP
+#ifndef TELUX_TEL_CALL_HPP
+#define TELUX_TEL_CALL_HPP
 
 #include <memory>
 #include <string>
@@ -392,4 +392,4 @@ public:
 
 }  // End of namespace telux
 
-#endif  // PHONE_CALL_HPP
+#endif // TELUX_TEL_CALL_HPP

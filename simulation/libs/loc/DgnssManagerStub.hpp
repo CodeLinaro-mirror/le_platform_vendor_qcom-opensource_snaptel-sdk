@@ -43,7 +43,7 @@
 #define DGNSSMANAGERSTUB_HPP
 
 #include "telux/loc/DgnssManager.hpp"
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/AsyncTaskQueue.hpp"
 
 namespace telux {
 

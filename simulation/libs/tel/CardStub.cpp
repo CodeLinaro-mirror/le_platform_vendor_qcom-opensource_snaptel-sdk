@@ -33,15 +33,15 @@
  */
 
 #include "CardStub.hpp"
+#include "common/CommonUtils.hpp"
 
 namespace telux {
 
 namespace tel {
 
-CardStub::CardStub(int slotId)
-    :stub_(CardService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+CardStub::CardStub(int slotId) {
     LOG(DEBUG, __FUNCTION__);
+    stub_ = CommonUtils::getGrpcStub<CardService>();
     slotId_ = slotId;
     cardFileHandler_ = std::make_shared<CardFileHandlerStub>(static_cast<SlotId>(slotId_));
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();

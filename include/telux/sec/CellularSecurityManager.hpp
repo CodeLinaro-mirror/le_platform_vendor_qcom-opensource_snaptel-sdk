@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -351,9 +351,9 @@ class ICellularScanReportListener : public telux::common::IServiceStatusListener
     /**
      * Invoked to provide a security scan report for cellular connection environment.
      *
-     * @param[in] report @Ref CellularSecurityReport result of the cellular security scanning
+     * @param[in] report @ref CellularSecurityReport result of the cellular security scanning
      *
-     * @param[in] environmentInfo @Ref EnvironmentInfo overall environment information
+     * @param[in] environmentInfo @ref EnvironmentInfo overall environment information
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -389,9 +389,8 @@ class ICellularSecurityManager {
     * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
     * permission to invoke this API successfully.
     *
-    * @ref ICellularScanReportListener::onCellularScanReportAvailable()
-    *
-    * @param [in] reportListener Receives security scan reports
+    * @param [in] reportListener Receives security scan reports via
+    *             @ref ICellularScanReportListener::onScanReportAvailable()
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is registered,
     *          otherwise, an appropriate error code
@@ -452,4 +451,4 @@ class ICellularSecurityManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CELLULARSECURITYMANAGER_HPP
+#endif // TELUX_SEC_CELLULARSECURITYMANAGER_HPP

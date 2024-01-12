@@ -12,7 +12,7 @@
 #include <mutex>
 #include <memory>
 
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/AsyncTaskQueue.hpp"
 
 using namespace telux::common;
 

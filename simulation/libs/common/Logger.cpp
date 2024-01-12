@@ -504,3 +504,14 @@ bool Logger::backupLogFile() {
 
 }
 }
+
+bool Log::isLoggingEnabled(LogLevel logLevel, const int& component) {
+   Logger &logger = Logger::getInstance();
+   return logger.startLogger() && logger.isLoggingEnabled(logLevel, component);
+}
+
+void Log::logStream(std::ostringstream&  outputStream, LogLevel logLevel,
+   const std::string &fileName, const std::string &lineNo, const int &component) {
+   Logger &logger = Logger::getInstance();
+   logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
+}

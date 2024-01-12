@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -75,4 +75,4 @@
 #include <telux/sensor/SensorClient.hpp>
 
 
-#endif  // TELUX_SENSOR_SENSOR_HPP
+#endif // TELUX_SENSOR_SENSOR_HPP

@@ -53,7 +53,7 @@ shared_ptr<ILocationInfoEx> LocListener::getLocation() {
     std::unique_lock<std::mutex> lck(locInfoMtx_);
     /*if no locationInfo, wait at most 1 sec unless locationInfo update or exit occur*/
     if (locationInfo_ == nullptr && (!exit_) &&
-        locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
+        !locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
             return (locationInfo_!= nullptr || exit_ == true);
         })) {
         cout<<"request for location too fast. " << +exit_ << std::endl;
@@ -188,14 +188,13 @@ void KinematicsReceive::close(){
             locationManager_->deRegisterListenerEx(locListener_);
         }
     }
-    if(locListeners_.size()) {
-        for (auto &listener : locListeners_) {
-            // Registering a listener to get location fixes
-            LocListener* locListener = dynamic_cast<LocListener*>(listener.get());
-            locListener->close();
-            locationManager_->deRegisterListenerEx(listener);
-        }
-        cout << "Finished closing the location listeners\n";
+
+    for (auto listener : locListeners_) {
+        // Registering a listener to get location fixes
+        LocListener* locListener = dynamic_cast<LocListener*>(listener.get());
+        locListener->close();
+        locationManager_->deRegisterListenerEx(listener);
     }
+
     cout << "Location Listeners closed.\n";
 }

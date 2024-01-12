@@ -69,8 +69,8 @@
  *             Cell Identify and Signal Strength.
  */
 
-#ifndef CELLINFO_HPP
-#define CELLINFO_HPP
+#ifndef TELUX_TEL_CELLINFO_HPP
+#define TELUX_TEL_CELLINFO_HPP
 
 #include <memory>
 #include <string>
@@ -752,4 +752,4 @@ private:
 
 }  // End of namespace telux
 
-#endif
+#endif // TELUX_TEL_CELLINFO_HPP

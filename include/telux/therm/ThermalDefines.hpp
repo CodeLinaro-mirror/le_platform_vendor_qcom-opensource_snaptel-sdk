@@ -61,6 +61,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 
 /**
@@ -69,8 +74,8 @@
  * @brief      This file contains types related to Thermal management activities.
  */
 
-#ifndef THERMALDEFINES_HPP
-#define THERMALDEFINES_HPP
+#ifndef TELUX_THERM_THERMALDEFINES_HPP
+#define TELUX_THERM_THERMALDEFINES_HPP
 
 #include <cstdint>
 
@@ -100,4 +105,4 @@ enum class AutoShutdownMode {
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif  // THERMALDEFINES_HPP
+#endif // TELUX_THERM_THERMALDEFINES_HPP

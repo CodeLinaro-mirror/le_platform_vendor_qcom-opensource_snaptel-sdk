@@ -525,4 +525,4 @@ class ResultParser {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CRYPTOACCELERATORMANAGER_HPP
+#endif // TELUX_SEC_CRYPTOACCELERATORMANAGER_HPP

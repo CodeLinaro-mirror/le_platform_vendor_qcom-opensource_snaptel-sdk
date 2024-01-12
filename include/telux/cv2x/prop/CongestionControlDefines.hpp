@@ -435,4 +435,4 @@ void printPowerConfig(PowerConfig& powerConfig);
 } // namespace cv2x
 } // namespace telux
 
-#endif //TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP
+#endif // TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP

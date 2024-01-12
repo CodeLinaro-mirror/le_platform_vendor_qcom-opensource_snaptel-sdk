@@ -33,10 +33,11 @@
  */
 
 #include "LocationConfiguratorStub.hpp"
-#include "../common/Logger.hpp"
-#include "../common/JsonParser.hpp"
-#include "../common/CommonUtils.hpp"
+#include "common/Logger.hpp"
+#include "common/JsonParser.hpp"
+#include "common/CommonUtils.hpp"
 #include "LocationDefinesStub.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 
 //Default cb delay.
 #define DEFAULT_CALLBACK_DELAY 100
@@ -50,8 +51,7 @@ namespace loc {
 LocationConfiguratorStub::LocationConfiguratorStub() {
     LOG(DEBUG, __FUNCTION__);
     managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
-    stub_ = LocationConfiguratorService::NewStub(grpc::CreateChannel("localhost:8089",
-        grpc::InsecureChannelCredentials()));
+    stub_ = CommonUtils::getGrpcStub<LocationConfiguratorService>();
 }
 
 std::future<bool> LocationConfiguratorStub::onSubsystemReady() {
@@ -110,9 +110,9 @@ void LocationConfiguratorStub::initSync(telux::common::InitResponseCb callback) 
     if(managerStatus_ == ServiceStatus::SERVICE_AVAILABLE ){
         auto myself = shared_from_this();
         myself_ = myself;
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.connectToSimulationServer();
-        eventManager.registerListener(myself_,LOC_CONFIG);
+        std::vector<std::string> filters = {LOC_CONFIG};
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(myself_, filters);
     }
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
@@ -121,79 +121,31 @@ void LocationConfiguratorStub::initSync(telux::common::InitResponseCb callback) 
     cv_.notify_all();
 }
 
-void LocationConfiguratorStub::onEventUpdate(std::string event){
+void LocationConfiguratorStub::onEventUpdate(google::protobuf::Any event){
     LOG(DEBUG, __FUNCTION__);
-    std::string token;
-    if (EVENT_FLAG ==  EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        if (token == "") {
-            LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-            return;
-        }
-        handleEvent(token, event);
-    }
-    else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-    }
+    if (event.Is<::locStub::XtraStatusEvent>()) {
+        ::locStub::XtraStatusEvent xtraEvent;
+        event.UnpackTo(&xtraEvent);
+        handleXtraUpdateEvent(xtraEvent);
+     } else if (event.Is<::locStub::GnssUpdateEvent>()) {
+        ::locStub::GnssUpdateEvent GnssEvent;
+        event.UnpackTo(&GnssEvent);
+        handleGnssConstellationUpdateEvent(GnssEvent);
+     }
 }
 
-void LocationConfiguratorStub::handleEvent(std::string token, std::string event){
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
-    if (token == XTRA_DATA_STATUS) {
-        handleXtraUpdateEvent(event);
-    }
-    else if(token == CONSTELLATION_UPDATE){
-        handleGnssConstellationUpdateEvent(event);
-    }
+void LocationConfiguratorStub::handleXtraUpdateEvent(::locStub::XtraStatusEvent xtraEvent){
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t enable= xtraEvent.enable();
+    uint32_t validity= xtraEvent.validity();
+    uint32_t dataStatus=xtraEvent.datastatus();
+    invokeXtraStatusUpdate(enable,dataStatus,validity);
 }
 
-void LocationConfiguratorStub::handleXtraUpdateEvent(std::string event){
-    int validity=0;
-    int dataStatus=0;
-    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The validity is not passed");
-    } else {
-        try {
-            validity = std::stoi(token);
-        } catch (std::exception& ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The dataStatus is not passed");
-    } else {
-        try {
-            dataStatus = std::stoi(token);
-        } catch (std::exception& ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(validity),
-                {"ILocationConfigurator", "XtraParams", "xtraValidForHours"});
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",std::to_string(dataStatus),
-                {"ILocationConfigurator","XtraParams", "xtraDataStatus"});
-    invokeXtraStatusUpdate();
-}
-
-void LocationConfiguratorStub::handleGnssConstellationUpdateEvent(std::string event){
-    uint32_t enabledMask=0;
-    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Mask is not passed");
-        enabledMask=0X1FFFFF;
-    } else {
-        try {
-            enabledMask = std::stoul(token,nullptr,16);
-        } catch (std::exception& ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enabledMask),
-                {"ILocationConfigurator", "GnssSignalType"});
-    invokeGnssConstellationUpdate();
+void LocationConfiguratorStub::handleGnssConstellationUpdateEvent(::locStub::GnssUpdateEvent
+    GnssEvent) {
+    uint32_t enabledMask = GnssEvent.enabledmask();
+    invokeGnssConstellationUpdate(enabledMask);
 }
 
 telux::common::Status LocationConfiguratorStub::configureCTunc(bool enable,
@@ -907,15 +859,6 @@ telux::common::Status LocationConfiguratorStub::configureXtraParams(bool enable,
         if (callback && (cbDelay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
             callback(errorCode);
-            if(xtraEnabled_ != enable) {
-                uint32_t indication =
-                    static_cast<uint32_t>(
-                        telux::loc::LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
-                if( (registrationMask_ & (1 << indication)) ) {
-                    invokeXtraStatusUpdate();
-                }
-                xtraEnabled_ = enable;
-            }
         }
     }).share();
     taskQ_.add(f);
@@ -966,6 +909,7 @@ telux::common::Status LocationConfiguratorStub::requestXtraStatus(GetXtraStatusC
 
 telux::common::Status LocationConfiguratorStub::registerListener(
     LocConfigIndications indicationList, std::weak_ptr<ILocationConfigListener> listener) {
+    LOG(DEBUG, __FUNCTION__);
     auto sp = listener.lock();
     if(sp == nullptr) {
         return telux::common::Status::INVALIDPARAM;
@@ -975,27 +919,39 @@ telux::common::Status LocationConfiguratorStub::registerListener(
             registrationMap_[itr].insert(sp);
         }
     }
+    ::locStub::RegisterListenerRequest request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
     if(indicationList.test(
         static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS))) {
         uint32_t indication =
             static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
         if( !(registrationMask_ & (1 << indication)) ) {
-            invokeXtraStatusUpdate();
+            request.set_xtra_indication(true);
             //Updating the mask after the first registration.
             registrationMask_ |= (1 << indication);
         }
     }
+
     if(indicationList.test(
         static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_SIGNAL_UPDATE))) {
         uint32_t indication =
             static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_SIGNAL_UPDATE);
         if( !(registrationMask_ & (1 << indication)) ) {
-            invokeGnssConstellationUpdate();
-            //Updating the mask after the first registration.
+            request.set_gnss_indication(true);
             registrationMask_ |= (1 << indication);
-        }
+            }
     }
-    return telux::common::Status::SUCCESS;
+    ::grpc::Status reqstatus = stub_->RegisterListener(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = telux::common::Status::SUCCESS;
+    }
+    auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::deRegisterListener(
@@ -1049,14 +1005,12 @@ void LocationConfiguratorStub::getAvailableListeners(uint32_t indication,
     }
 }
 
-void LocationConfiguratorStub::invokeXtraStatusUpdate() {
+void LocationConfiguratorStub::invokeXtraStatusUpdate(uint32_t enable,
+    uint32_t dataStatus, uint32_t validHours) {
     uint32_t indication =
             static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
     XtraStatus xtraStatus;
-    xtraStatus.featureEnabled = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "enable"}));
-    int dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+    xtraStatus.featureEnabled = enable;
     switch(dataStatus) {
         case 0: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
                 break;
@@ -1067,8 +1021,7 @@ void LocationConfiguratorStub::invokeXtraStatusUpdate() {
         case 3: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_VALID;
                 break;
     }
-    xtraStatus.xtraValidForHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
+    xtraStatus.xtraValidForHours = validHours;
     std::vector<std::weak_ptr<ILocationConfigListener>> retList {};
     getAvailableListeners(indication, retList);
     if(!retList.empty()) {
@@ -1082,10 +1035,8 @@ void LocationConfiguratorStub::invokeXtraStatusUpdate() {
     }
 }
 
-void LocationConfiguratorStub::invokeGnssConstellationUpdate() {
-    uint32_t enabledMask =
-       std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0X1FFFFF",
-           {"ILocationConfigurator","GnssSignalType"}));
+void LocationConfiguratorStub::invokeGnssConstellationUpdate(uint32_t enabledMask) {
+    LOG(DEBUG, __FUNCTION__);
     uint32_t indication =
         static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_SIGNAL_UPDATE);
     std::vector<std::weak_ptr<ILocationConfigListener>> retList {};

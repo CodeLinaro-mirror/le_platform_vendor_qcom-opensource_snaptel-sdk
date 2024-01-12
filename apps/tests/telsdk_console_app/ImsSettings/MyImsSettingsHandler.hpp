@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef MYIMSSETTINGSHANDLER_HPP
 #define MYIMSSETTINGSHANDLER_HPP
@@ -39,6 +45,8 @@ public:
     static void onRequestImsServiceConfig(SlotId slotId,
         telux::tel::ImsServiceConfig configType, telux::common::ErrorCode error);
     static void onResponseCallback(telux::common::ErrorCode error);
+    static void onRequestImsSipUserAgentConfig(SlotId slotId,
+        std::string sipUserAgent, telux::common::ErrorCode errorCode);
 };
 
 #endif  // MYIMSSETTINGSHANDLER_HPP

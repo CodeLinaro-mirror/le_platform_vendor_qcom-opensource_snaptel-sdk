@@ -26,14 +26,19 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       SimProfileDefines.hpp
  * @brief      SimProfileDefines provides the enumerations required for eUICC operations.
  */
 
-#ifndef SIMPROFILETYPES_HPP
-#define SIMPROFILETYPES_HPP
+#ifndef TELUX_TEL_SIMPROFILEDEFINES_HPP
+#define TELUX_TEL_SIMPROFILEDEFINES_HPP
 
 #include <bitset>
 #include <vector>
@@ -141,4 +146,4 @@ using ResetOptionMask = std::bitset<64>;
 }
 }
 
-#endif  // SIMPROFILEDEFINES_HPP
+#endif // TELUX_TEL_SIMPROFILEDEFINES_HPP

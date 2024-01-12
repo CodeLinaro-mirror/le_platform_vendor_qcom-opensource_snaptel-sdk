@@ -4,7 +4,7 @@
  */
 
 #include <telux/data/DataDefines.hpp>
-#include "../../protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data.grpc.pb.h"
 
 class DataUtilsStub {
 public:

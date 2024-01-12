@@ -76,6 +76,7 @@ class DataSettingsMenu : public ConsoleApp ,
     void setMacSecState(std::vector<std::string> inputCommand);
     void requestMacSecState(std::vector<std::string> inputCommand);
     void switchBackHaul(std::vector<std::string> inputCommand);
+    void restoreFactorySettings(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 

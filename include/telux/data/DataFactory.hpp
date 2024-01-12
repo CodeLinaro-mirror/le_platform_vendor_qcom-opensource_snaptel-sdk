@@ -70,8 +70,8 @@
  *
  */
 
-#ifndef DATAFACTORY_HPP
-#define DATAFACTORY_HPP
+#ifndef TELUX_DATA_DATAFACTORY_HPP
+#define TELUX_DATA_DATAFACTORY_HPP
 
 #include <memory>
 
@@ -304,4 +304,4 @@ class DataFactory {
 }  // namespace data
 }  // namespace telux
 
-#endif
+#endif // TELUX_DATA_DATAFACTORY_HPP

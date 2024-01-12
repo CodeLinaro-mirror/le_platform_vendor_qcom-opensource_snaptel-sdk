@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
@@ -40,3 +40,4 @@ add_subdirectory( common )
 add_subdirectory( data )
 add_subdirectory( loc )
 add_subdirectory( tel )
+add_subdirectory( sensor )

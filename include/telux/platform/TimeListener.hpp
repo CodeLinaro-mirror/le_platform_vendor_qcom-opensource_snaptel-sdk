@@ -45,6 +45,7 @@
 #ifndef TELUX_PLATFORM_TIMELISTENER_HPP
 #define TELUX_PLATFORM_TIMELISTENER_HPP
 
+#include <stdint.h>
 
 namespace telux {
 
@@ -104,4 +105,4 @@ class ITimeListener {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_TIMELISTENER_HPP
+#endif // TELUX_PLATFORM_TIMELISTENER_HPP

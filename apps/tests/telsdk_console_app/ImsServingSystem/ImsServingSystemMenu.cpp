@@ -123,9 +123,14 @@ bool ImsServingSystemMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Get_Service_Status",
         {}, std::bind(&ImsServingSystemMenu::requestServiceStatusOverIms, this,
         std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> queryPdpStatusOverImsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Get_Pdp_Status",
+        {}, std::bind(&ImsServingSystemMenu::requestPdpStatusOverIms, this,
+        std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListImsServSysMenu
-        = { queryImsRegStateCommand, queryServiceStatusOverImsCommand };
+        = { queryImsRegStateCommand, queryServiceStatusOverImsCommand,
+            queryPdpStatusOverImsCommand };
 
     addCommands(commandsListImsServSysMenu);
     ConsoleApp::displayMenu();
@@ -169,6 +174,30 @@ void ImsServingSystemMenu::requestServiceStatusOverIms(std::vector<std::string> 
         Status status = imsServingSystemMgrs_[slotId]->requestServiceInfo(response);
         if (status == Status::SUCCESS) {
             std::cout << "IMS service status request sent successfully " << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to send service status request,"
+                    << "Status:" << static_cast<int>(status) << std::endl;
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - ImsServingSystemManger on slot " << slotId
+            << " is null" << std::endl;
+    }
+}
+
+void ImsServingSystemMenu::requestPdpStatusOverIms(std::vector<std::string> userInput) {
+    SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+    if (slotCount_ > DEFAULT_NUM_SLOTS) {
+        slotId = static_cast<SlotId>(Utils::getValidSlotId());
+    }
+
+    if (imsServingSystemMgrs_[slotId]) {
+        auto response = [this, slotId](telux::tel::ImsPdpStatusInfo status, ErrorCode error) {
+            MyImsServSysCallback::imsPdpStatusResponse(slotId, status, error);
+        };
+        Status status = imsServingSystemMgrs_[slotId]->requestPdpStatus(response);
+        if (status == Status::SUCCESS) {
+            std::cout << "IMS pdp status request sent successfully " << std::endl;
         } else {
             std::cout << "ERROR - Failed to send service status request,"
                     << "Status:" << static_cast<int>(status) << std::endl;

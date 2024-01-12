@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -38,8 +38,8 @@
  *
  */
 
-#ifndef WLANDEFINES_HPP
-#define WLANDEFINES_HPP
+#ifndef TELUX_WLAN_WLANDEFINES_HPP
+#define TELUX_WLAN_WLANDEFINES_HPP
 
 #include <string>
 #include <vector>
@@ -173,4 +173,4 @@ enum class ServiceOperation {
 }
 }
 
-#endif  // WLANDEFINES_HPP
+#endif // TELUX_WLAN_WLANDEFINES_HPP

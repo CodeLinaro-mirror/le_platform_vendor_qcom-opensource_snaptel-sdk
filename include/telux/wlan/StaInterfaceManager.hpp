@@ -40,8 +40,8 @@
  *
  */
 
-#ifndef TELUX_WLAN_STAINTERFACE_HPP
-#define TELUX_WLAN_STAINTERFACE_HPP
+#ifndef TELUX_WLAN_STAINTERFACEMANAGER_HPP
+#define TELUX_WLAN_STAINTERFACEMANAGER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
@@ -254,4 +254,4 @@ public:
 /** @} */ /* end_addtogroup telematics_wlan_station */
 }
 }
-#endif
+#endif // TELUX_WLAN_STAINTERFACEMANAGER_HPP

@@ -23,8 +23,11 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <telux/common/CommonDefines.hpp>
+#include "libs/common/AsyncTaskQueue.hpp"
+#include "event/ServerEventManager.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
 
-#include "../../../protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -34,6 +37,7 @@ using grpc::Status;
 using locStub::LocationConfiguratorService;
 
 class LocationConfiguratorServerImpl final : public locStub::LocationConfiguratorService::Service,
+    public IServerEventListener,
     public std::enable_shared_from_this<LocationConfiguratorServerImpl> {
  public:
     LocationConfiguratorServerImpl();
@@ -100,8 +104,21 @@ class LocationConfiguratorServerImpl final : public locStub::LocationConfigurato
             locStub::LocManagerCommandReply* response);
     grpc::Status ConfigureOsnma (ServerContext* context,
         const locStub::ConfigureOsnmaRequest* request, locStub::LocManagerCommandReply* response);
+    grpc::Status RegisterListener (ServerContext* context,
+        const locStub::RegisterListenerRequest* request, locStub::LocManagerCommandReply* response);
+    void onEventUpdate(::eventService::UnsolicitedEvent event) override;
+
  private:
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    bool xtraEnabled_;
+    std::mutex mtx_;
     void apiJsonReader(std::string apiName, locStub::LocManagerCommandReply* response);
+    void handleEvent(std::string token , std::string event);
+    void onEventUpdate(std::string event);
+    void handleXtraUpdateEvent(std::string event);
+    void handleGnssConstellationUpdateEvent(std::string event);
+    void triggerXtraStatusEvent();
+    void triggerGnssConstellationUpdateEvent();
 };
 
 #endif // LOC_CONFIG_SERVER_HPP

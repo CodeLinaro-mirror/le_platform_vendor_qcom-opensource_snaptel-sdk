@@ -44,19 +44,19 @@
 #define CARD_MANAGER_STUB_HPP
 
 #include "CardStub.hpp"
-#include "../common/Logger.hpp"
-#include "../common/ListenerManager.hpp"
+#include "common/Logger.hpp"
+#include "common/ListenerManager.hpp"
 #include <telux/common/CommonDefines.hpp>
-#include "../common/AsyncTaskQueue.hpp"
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/ResponseHandler.hpp"
+#include "common/AsyncTaskQueue.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 #include "TelDefinesStub.hpp"
 #include <telux/tel/CardManager.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include "CardAppStub.hpp"
-#include "../common/event-manager/EventParserUtil.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel.grpc.pb.h"
+#include "common/event-manager/ClientEventManager.hpp"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -86,7 +86,7 @@ public:
         telux::common::ResponseCallback callback = nullptr) override;
     telux::common::Status registerListener(std::shared_ptr<ICardListener> listener) override;
     telux::common::Status removeListener(std::shared_ptr<ICardListener> listener) override;
-    void onEventUpdate(std::string event);
+    void onEventUpdate(google::protobuf::Any event) override;
     CardManagerStub(telux::common::InitResponseCb clientCallback);
     void cleanup();
     ~CardManagerStub();
@@ -97,7 +97,6 @@ private:
     telux::common::InitResponseCb initCb_;
     std::mutex mutex_;
     std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_;
-    std::shared_ptr<telux::common::ResponseHandler> cannedResponseManager_;
     std::unique_ptr<::telStub::CardService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
     std::mutex cardManagerMutex_;
@@ -109,7 +108,7 @@ private:
         telux::common::ErrorCode error, int cbDelay );
     void handleEvent(std::string token, std::string event);
     void invokelisteners (int slotId);
-    void handleCardInfoChanged(std::string eventParams);
+    void handleCardInfoChanged(::telStub::cardInfoChange event);
 };
 
 } // end of namespace tel

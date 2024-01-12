@@ -414,4 +414,4 @@ public:
 }  // End of namespace prop
 }  // End of namespace cv2x
 }  // End of namespace telux
-#endif  // TELUX_CV2X_PROP_CONGESTIONCONTROLMANAGER_HPP
+#endif // TELUX_CV2X_PROP_CONGESTIONCONTROLMANAGER_HPP

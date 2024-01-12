@@ -71,8 +71,8 @@
  *
  */
 
-#ifndef SMSMANAGER_HPP
-#define SMSMANAGER_HPP
+#ifndef TELUX_TEL_SMSMANAGER_HPP
+#define TELUX_TEL_SMSMANAGER_HPP
 
 #include <memory>
 #include <string>
@@ -748,4 +748,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_SMSMANAGER_HPP

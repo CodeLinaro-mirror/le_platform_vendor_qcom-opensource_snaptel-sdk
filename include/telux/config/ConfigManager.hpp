@@ -11,8 +11,8 @@
  *             any updates in the configurations.
  */
 
-#ifndef CONFIGMANAGER_HPP
-#define CONFIGMANAGER_HPP
+#ifndef TELUX_CONFIG_CONFIGMANAGER_HPP
+#define TELUX_CONFIG_CONFIGMANAGER_HPP
 
 #include <map>
 #include <memory>
@@ -142,4 +142,4 @@ class IConfigManager {
 
 }  // end of namespace telux
 
-#endif  // CONFIGMANAGER_HPP
+#endif // TELUX_CONFIG_CONFIGMANAGER_HPP

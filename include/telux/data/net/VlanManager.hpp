@@ -72,8 +72,8 @@
  *
  */
 
-#ifndef VLANCONFIG_HPP
-#define VLANCONFIG_HPP
+#ifndef TELUX_DATA_NET_VLANMANAGER_HPP
+#define TELUX_DATA_NET_VLANMANAGER_HPP
 
 #include <future>
 #include <vector>
@@ -449,4 +449,4 @@ class IVlanListener {
 }
 }
 }
-#endif
+#endif // TELUX_DATA_NET_VLANMANAGER_HPP

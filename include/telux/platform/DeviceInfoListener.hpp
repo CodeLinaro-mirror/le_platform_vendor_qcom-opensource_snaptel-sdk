@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -77,4 +77,4 @@ class IDeviceInfoListener : public common::IServiceStatusListener {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_DEVICEINFOLISTENER_HPP
+#endif // TELUX_PLATFORM_DEVICEINFOLISTENER_HPP

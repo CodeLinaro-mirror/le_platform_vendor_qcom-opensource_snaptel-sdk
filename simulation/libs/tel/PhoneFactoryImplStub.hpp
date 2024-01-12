@@ -45,9 +45,9 @@
 #include <memory>
 #include <map>
 #include <telux/tel/PhoneFactory.hpp>
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include "CardManagerStub.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 #include "SubscriptionManagerStub.hpp"
 #include "PhoneManagerStub.hpp"
 #include "SmsManagerStub.hpp"

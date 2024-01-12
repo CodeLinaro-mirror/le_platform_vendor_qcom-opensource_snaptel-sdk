@@ -135,4 +135,4 @@ class IDeviceInfoManager {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_DEVICEINFOMANAGER_HPP
+#endif // TELUX_PLATFORM_DEVICEINFOMANAGER_HPP

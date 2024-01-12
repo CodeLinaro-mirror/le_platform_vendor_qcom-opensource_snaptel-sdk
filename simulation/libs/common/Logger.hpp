@@ -236,37 +236,6 @@ bool Logger::startLogger() {
 
     return true;
 }
-
-template <typename... MessageArgs>
-void Log::logMessage(LogLevel logLevel, const std::string &fileName, const std::string &lineNo,
-                     const int &component, MessageArgs... params) {
-    Logger &logger = Logger::getInstance();
-
-    // Validate if Logger instance is still valid before dumping log.
-    if (logger.startLogger() && logger.isLoggingEnabled(logLevel, component)) {
-        /*
-        * Variable to buffer the input log message from input arguments
-        */
-        std::ostringstream outputStream;
-        constructMessage(outputStream, params...);
-        logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
-    }
-}
-
-/*
- * Recursive helper methods to construct the complete log message
- * from input arguments
- */
-template <typename K, typename T>
-void Log::constructMessage(K &os, T param) {
-   os << param;
-}
-
-template <typename K, typename T, typename... MessageArgs>
-void Log::constructMessage(K &os, T param, MessageArgs... params) {
-   os << param;
-   return constructMessage(os, params...);
-}
 }
 }
 

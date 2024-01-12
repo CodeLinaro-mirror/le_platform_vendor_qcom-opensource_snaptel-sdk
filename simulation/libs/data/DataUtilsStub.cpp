@@ -4,7 +4,7 @@
  */
 
 #include "DataUtilsStub.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 ::dataStub::TechPreference::TechPref DataUtilsStub::convertTechPrefStringToEnum(std::string techPref) {
     ::dataStub::TechPreference::TechPref enumTechPref;
@@ -94,7 +94,7 @@ std::string DataUtilsStub::convertAuthProtocolEnumToString(
     } else if (authProtocolType == ::dataStub::AuthProtocolType::AUTH_PAP_CHAP) {
         authProtocol = "AUTH_PAP_CHAP";
     } else {
-        authProtocol = "Unknown";
+        authProtocol = "AUTH_NONE";
     }
     LOG(DEBUG, __FUNCTION__, " authProtocol is :",  authProtocol);
     return authProtocol;

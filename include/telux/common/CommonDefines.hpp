@@ -70,8 +70,8 @@
  *
  */
 
-#ifndef COMMONDEFINES_HPP
-#define COMMONDEFINES_HPP
+#ifndef TELUX_COMMON_COMMONDEFINES_HPP
+#define TELUX_COMMON_COMMONDEFINES_HPP
 
 #include <functional>
 
@@ -560,4 +560,4 @@ public:
 }  // End of namespace common
 }  // End of namespace telux
 
-#endif
+#endif // TELUX_COMMON_COMMONDEFINES_HPP

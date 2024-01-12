@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
   Provide utilities and structures for CV2X packet analysis.
  */
 
-#ifndef __V2X_PACKET_API_H__
-#define __V2X_PACKET_API_H__
+#ifndef TELUX_CV2X_LEGACY_V2X_PACKET_API_H
+#define TELUX_CV2X_LEGACY_V2X_PACKET_API_H
 
 #include "telux/cv2x/legacy/v2x_common.pb.h"
 
@@ -144,4 +144,4 @@ extern v2x_status_enum_type v2x_parse_rx_meta_data(const uint8_t *payload, uint3
 }
 #endif
 
-#endif // __V2X_PACKET_API_H__
+#endif // TELUX_CV2X_LEGACY_V2X_PACKET_API_H

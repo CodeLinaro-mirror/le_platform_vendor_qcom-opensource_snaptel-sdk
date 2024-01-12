@@ -77,8 +77,8 @@
  *
  */
 
-#ifndef DATAFILTERMANAGER_HPP
-#define DATAFILTERMANAGER_HPP
+#ifndef TELUX_DATA_DATAFILTERMANAGER_HPP
+#define TELUX_DATA_DATAFILTERMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -357,4 +357,4 @@ public:
 } // namespace data
 } // end of namespace telux
 
-#endif // DATAFILTERMANAGER_HPP
+#endif // TELUX_DATA_DATAFILTERMANAGER_HPP

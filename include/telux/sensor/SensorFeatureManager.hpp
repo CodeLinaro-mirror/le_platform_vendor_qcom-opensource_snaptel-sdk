@@ -240,4 +240,4 @@ class ISensorFeatureManager {
 }  // namespace sensor
 }  // namespace telux
 
-#endif  // TELUX_SENSOR_SENSORFEATUREMANAGER_HPP
+#endif // TELUX_SENSOR_SENSORFEATUREMANAGER_HPP

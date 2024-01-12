@@ -26,14 +26,19 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       CardDefines.hpp
  * @brief      CardDefines provides the enumerations required for Card Services
  */
 
-#ifndef CARDDEFINES_HPP
-#define CARDDEFINES_HPP
+#ifndef TELUX_TEL_CARDDEFINES_HPP
+#define TELUX_TEL_CARDDEFINES_HPP
 
 #include <string>
 #include <sstream>
@@ -136,4 +141,4 @@ struct IccResult {
 
 }  // End of namespace telux
 
-#endif  // CARDDEFINES_HPP
+#endif // TELUX_TEL_CARDDEFINES_HPP

@@ -19,7 +19,6 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include "Logger.hpp"
-#include "../common/event-manager/EventManager.hpp"
 
 namespace telux {
 

@@ -99,11 +99,11 @@ typedef std::deque<std::shared_ptr<Qelement>> QueueT;
 
 class GeoNetRouterImpl {
 private:
-    GeoNetRouterImpl(std::shared_ptr<KinematicsReceive> kinematics_rx, GnConfig_t config);
+    GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener, GnConfig_t config);
     static GeoNetRouterImpl *pInstance;
 
 public:
-    static GeoNetRouterImpl* Instance(std::shared_ptr<KinematicsReceive> kinematics_rx,
+    static GeoNetRouterImpl* Instance(std::shared_ptr<ILocationListener> locListener,
             GnConfig_t config);
     static void InitDefaultConfig(GnConfig_t &config);
     void InitDefaultGnData(GnData_t &data);
@@ -204,7 +204,7 @@ private:
     std::condition_variable CBFcv_;
     std::priority_queue<std::shared_ptr<Qelement>, std::vector<std::shared_ptr<Qelement>>, CompareTo> CBFqueue_;
     std::atomic<bool> CBFstop_;
-    std::promise<int>CBFresult_;
+    std::promise<int> CBFresult_;
     std::thread CBFTimerThread_;
 
     std::mutex qMutex_;
@@ -219,7 +219,7 @@ private:
 
     gn_addr_t itsGnLocalGnAddr_;
 
-    std::shared_ptr<KinematicsReceive> kinematicsRx_;
+    std::shared_ptr<ILocationListener> locListener_;
     txcb_t df_txcb; // default radio transmit function.
     int LogLevel_;
 

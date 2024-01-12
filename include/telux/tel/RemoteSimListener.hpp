@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       RemoteSimListener.hpp
@@ -35,8 +40,8 @@
  *             implementation should be thread safe.
  */
 
-#ifndef REMOTESIMLISTENER_HPP
-#define REMOTESIMLISTENER_HPP
+#ifndef TELUX_TEL_REMOTESIMLISTENER_HPP
+#define TELUX_TEL_REMOTESIMLISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/RemoteSimDefines.hpp>
@@ -109,4 +114,4 @@ public:
 
 } // End of namespace telux
 
-#endif // REMOTESIMLISTENER_HPP
+#endif // TELUX_TEL_REMOTESIMLISTENER_HPP

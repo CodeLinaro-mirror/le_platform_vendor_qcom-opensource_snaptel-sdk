@@ -76,8 +76,8 @@
  *
  */
 
-#ifndef LOCATIONLISTENER_HPP
-#define LOCATIONLISTENER_HPP
+#ifndef TELUX_LOC_LOCATIONLISTENER_HPP
+#define TELUX_LOC_LOCATIONLISTENER_HPP
 
 #include "telux/loc/LocationDefines.hpp"
 #include <memory>
@@ -319,4 +319,4 @@ class ILocationConfigListener {
 
 } // end of namespace telux
 
-#endif // LOCATIONLISTENER_HPP
+#endif // TELUX_LOC_LOCATIONLISTENER_HPP

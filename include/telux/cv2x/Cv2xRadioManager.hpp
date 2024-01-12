@@ -70,8 +70,8 @@
 *
 */
 
-#ifndef CV2XRADIOMANAGER_HPP
-#define CV2XRADIOMANAGER_HPP
+#ifndef TELUX_CV2X_CV2XRADIOMANAGER_HPP
+#define TELUX_CV2X_CV2XRADIOMANAGER_HPP
 
 #include <memory>
 #include <future>
@@ -412,4 +412,4 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XRADIOMANAGER_HPP
+#endif // TELUX_CV2X_CV2XRADIOMANAGER_HPP

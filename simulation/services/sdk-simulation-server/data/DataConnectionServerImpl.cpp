@@ -11,14 +11,16 @@
 #include "DataConnectionServerImpl.hpp"
 #include "SimulationServer.hpp"
 
-#include "../../../libs/common/SimulationConfigParser.hpp"
-#include "../../../libs/data/DataUtilsStub.hpp"
+#include "libs/common/SimulationConfigParser.hpp"
+#include "libs/data/DataUtilsStub.hpp"
+#include "event/EventService.hpp"
 
 
 #define DATA_CONNECTION_API_SLOT1_JSON "api/data/IDataConnectionManagerSlot1.json"
 #define DATA_CONNECTION_API_SLOT2_JSON "api/data/IDataConnectionManagerSlot2.json"
 #define DATA_CONNECTION_STATE_JSON "system-state/data/IDataConnectionManagerState.json"
 #define SLOT_2 2
+#define DELIMITER ','
 
 DataConnectionServerImpl::DataConnectionServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -202,6 +204,22 @@ grpc::Status DataConnectionServerImpl::RequestRoamingMode(ServerContext* context
     return grpc::Status::OK;
 }
 
+void DataConnectionServerImpl::getInactiveInterfaces() {
+    LOG(DEBUG, __FUNCTION__);
+    std::shared_ptr<SimulationConfigParser> config =
+        std::make_shared<SimulationConfigParser>();
+
+    std::stringstream iss(config->getValue("DATA_INTERFACE_NAME"));
+    std::string parsedVal;
+    std::vector<std::string> ifaces;
+    inactiveNwIfaces_.clear();
+    while (getline(iss, parsedVal, DELIMITER)) {
+        if (activeNwIfaces_.find(parsedVal) == activeNwIfaces_.end()) {
+            inactiveNwIfaces_.insert( parsedVal );
+        }
+    }
+}
+
 bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
     std::string &ipAddress, std::string &gatewayAddress,
     std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress) {
@@ -306,8 +324,11 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
 void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slotId,
     std::string ipFamilyType) {
     LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lck(mtx_);
     bool dataCallExist = true;
 
+    //Reading ifaces from .conf file
+    getInactiveInterfaces();
     std::shared_ptr<DataCallParams> call;
     if (slotId == SLOT_ID_1) {
         call = dataCallsSlot1_[profileId];
@@ -316,16 +337,20 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     }
 
     if (!call) {
+        //creating cached datacall object if it doesn't already exist
         call = std::make_shared<DataCallParams>();
-        std::shared_ptr<SimulationConfigParser> config =
-            std::make_shared<SimulationConfigParser>();
-
-        call->ifaceName = config->getValue("DATA_INTERFACE_NAME");
+        {
+            if (inactiveNwIfaces_.size() != 0) {
+                auto itr = inactiveNwIfaces_.begin();
+                call->ifaceName = *itr;
+            }
+        }
         call->slotId = slotId;
         call->ipFamilyType = ipFamilyType;
         dataCallExist = false;
     }
 
+    //getting IpFamily V4 details
     if (ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4) ||
         ipFamilyType ==
@@ -334,6 +359,7 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
                 call->dnsPrimaryAddress, call->dnsSecondaryAddress);
     }
 
+    //getting IpFamily V6 details
     if (ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV6) ||
         ipFamilyType ==
@@ -344,19 +370,31 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     bool ipv4Supported = (call->v4IpAddress.length() == 0)? false : true;
     bool ipv6Supported = (call->v6IpAddress.length() == 0)? false : true;
 
-    auto &simulationServer = SimulationServer::getInstance();
-    std::string datacallEvent = "-f data_connection -e startDataCall "
-        + std::to_string(profileId) + " " + std::to_string(slotId)
-        + " " + call->ifaceName + " " + call->ipFamilyType + " " +
-        call->v4IpAddress + " " + call->v4GwAddress + " " +
-        call->dnsPrimaryAddress + " " + call->dnsSecondaryAddress + " " +
-        call->v6IpAddress + " " + call->v6GwAddress;
+    ::dataStub::StartDataCallEvent startDataCallEvent;
+    ::eventService::EventResponse anyResponse;
 
-    simulationServer.writeMessage(const_cast<char*>(datacallEvent.c_str()),
-        datacallEvent.length());
+    startDataCallEvent.set_profile_id(profileId);
+    startDataCallEvent.set_slot_id(slotId);
+    startDataCallEvent.set_ip_family_type(call->ipFamilyType);
+    startDataCallEvent.set_iface_name(call->ifaceName);
+    startDataCallEvent.set_ipv4_address(call->v4IpAddress);
+    startDataCallEvent.set_gwv4_address(call->v4GwAddress);
+    startDataCallEvent.set_dns_primary_address(call->dnsPrimaryAddress);
+    startDataCallEvent.set_dns_secondary_address(call->dnsSecondaryAddress);
+    startDataCallEvent.set_ipv6_address(call->v6IpAddress);
+    startDataCallEvent.set_gwv6_address(call->v6GwAddress);
+
+    anyResponse.set_filter("data_connection");
+    anyResponse.mutable_any()->PackFrom(startDataCallEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 
     //keeping local copy of data call params in server
     if ((!dataCallExist) && (ipv4Supported || ipv6Supported)) {
+        inactiveNwIfaces_.erase(call->ifaceName);
+        activeNwIfaces_.insert(call->ifaceName);
+
         if (slotId == SLOT_ID_1) {
             dataCallsSlot1_[profileId] = call;
         } else {
@@ -426,16 +464,25 @@ grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
 }
 
 void DataConnectionServerImpl::triggerStopDataCallEvent(int profileId, int slotId,
-    std::string ipFamilyType) {
+    std::string ipFamilyType, std::string ifaceName) {
     LOG(DEBUG, __FUNCTION__);
 
-    auto &simulationServer = SimulationServer::getInstance();
-    std::string datacallEvent = "-f data_connection -e stopDataCall "
-        + std::to_string(profileId) + " " + std::to_string(slotId)
-        + " " + ipFamilyType;
+    std::lock_guard<std::mutex> lck(mtx_);
+    ::dataStub::StopDataCallEvent stopDataCallEvent;
+    ::eventService::EventResponse anyResponse;
 
-    simulationServer.writeMessage(const_cast<char*>(datacallEvent.c_str()),
-        datacallEvent.length());
+    stopDataCallEvent.set_profile_id(profileId);
+    stopDataCallEvent.set_slot_id(slotId);
+    stopDataCallEvent.set_ip_family_type(ipFamilyType);
+
+    anyResponse.set_filter("data_connection");
+    anyResponse.mutable_any()->PackFrom(stopDataCallEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+
+    inactiveNwIfaces_.insert(ifaceName);
+    activeNwIfaces_.erase(ifaceName);
 }
 
 grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
@@ -472,6 +519,7 @@ grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
     }
 
     if (dataCall) {
+        //removing cached datacall object
         auto currentFamily = dataCall->ipFamilyType;
         if (ipFamilyType == currentFamily) {
             if (slotId == SLOT_ID_1) {
@@ -481,10 +529,11 @@ grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
             }
         }
 
+        std::string ifaceName = dataCall->ifaceName;
         auto f = std::async(std::launch::async, [this, profileId, slotId,
-            ipFamilyType, data]() {
+            ipFamilyType, ifaceName, data]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType);
+                this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType, ifaceName);
             }).share();
         taskQ_->add(f);
     }
@@ -519,7 +568,9 @@ grpc::Status DataConnectionServerImpl::RequestDatacallList(ServerContext* contex
 grpc::Status DataConnectionServerImpl::CleanUpService(ServerContext* context,
     const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) {
 
+    LOG(DEBUG, __FUNCTION__, " clearing cached datacalls from server");
     dataCallsSlot1_.clear();
     dataCallsSlot2_.clear();
+    activeNwIfaces_.clear();
     return grpc::Status::OK;
 }

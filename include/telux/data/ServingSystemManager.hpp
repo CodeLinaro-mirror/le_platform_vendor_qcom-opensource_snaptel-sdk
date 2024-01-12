@@ -69,8 +69,8 @@
  *             low level services.
  */
 
-#ifndef DATASERVINGSYSTEMMANAGER_HPP
-#define DATASERVINGSYSTEMMANAGER_HPP
+#ifndef TELUX_DATA_SERVINGSYSTEMMANAGER_HPP
+#define TELUX_DATA_SERVINGSYSTEMMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -382,4 +382,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_DATA_SERVINGSYSTEMMANAGER_HPP

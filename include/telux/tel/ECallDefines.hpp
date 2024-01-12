@@ -38,8 +38,8 @@
  * @brief     ECallDefines contains enumerations and variables used for
  *            telephony subsystems.
  */
-#ifndef ECALLDEFINES_HPP
-#define ECALLDEFINES_HPP
+#ifndef TELUX_TEL_ECALLDEFINES_HPP
+#define TELUX_TEL_ECALLDEFINES_HPP
 
 #include <string>
 #include <bitset>
@@ -147,8 +147,8 @@ enum class ECallOptionalDataType {
 struct ECallMsdOptionals {
 
    ECallOptionalDataType optionalDataType; /**< Type of optional data */
-   bool optionalDataPresent;               /**< Availability of Optional data:
-                                                  true - Present or false - Absent */
+   bool optionalDataPresent = false;               /**< Availability of Optional data:
+                                                        true - Present or false - Absent */
    bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
                                                 true - Present or false - Absent. In MSD version-3
                                                 (as per EN 15722:2020), as recentVehicleLocationN1
@@ -462,4 +462,4 @@ struct EcallConfig {
 
 }  // End of namespace telux
 
-#endif  // ECALLDEFINES_HPP
+#endif // TELUX_TEL_ECALLDEFINES_HPP

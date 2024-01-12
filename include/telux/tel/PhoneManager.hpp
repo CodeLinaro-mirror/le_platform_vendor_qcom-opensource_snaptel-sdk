@@ -74,8 +74,8 @@
  *
  */
 
-#ifndef PHONEMANAGER_HPP
-#define PHONEMANAGER_HPP
+#ifndef TELUX_TEL_PHONEMANAGER_HPP
+#define TELUX_TEL_PHONEMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -333,4 +333,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_PHONEMANAGER_HPP

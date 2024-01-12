@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
   @file v2x_kinematics_api.h
@@ -36,8 +41,8 @@
   available, and it supports multiple callbacks to a short list of clients.
  */
 
-#ifndef __V2X_KINEMATICS_APIS_H__
-#define __V2X_KINEMATICS_APIS_H__ 1
+#ifndef TELUX_CV2X_LEGACY_V2X_KINEMATICS_API_H
+#define TELUX_CV2X_LEGACY_V2X_KINEMATICS_API_H
 
 #include "v2x_common.pb.h"
 #include "v2x_kinematics_data_types.pb.h"
@@ -361,4 +366,4 @@ void v2x_kinematics_disable_fixes(v2x_kinematics_handle_t handle);
 }
 #endif
 
-#endif // __V2X_KINEMATICS_APIS_H__
+#endif // TELUX_CV2X_LEGACY_V2X_KINEMATICS_API_H

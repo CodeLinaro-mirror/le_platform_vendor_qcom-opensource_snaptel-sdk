@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -118,8 +118,6 @@ class IStaInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setIpConfig(Id staId, StaIpConfig ipConfig,
         StaStaticIpConfig staticIpConfig) = 0;
@@ -140,8 +138,6 @@ class IStaInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setBridgeMode(Id staId, StaBridgeMode bridgeMode) = 0;
 
@@ -167,8 +163,6 @@ class IStaInterfaceManager {
       *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getConfig(std::vector<StaConfig>& config) = 0;
 
@@ -180,8 +174,6 @@ class IStaInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getStatus(std::vector<StaStatus>& status) = 0;
 
@@ -203,8 +195,6 @@ class IStaInterfaceManager {
      *                           @ref telux::wlan::ServiceOperation
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode manageStaService(Id staId, ServiceOperation opr) = 0;
 

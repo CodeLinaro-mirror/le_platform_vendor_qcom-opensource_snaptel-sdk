@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -72,8 +72,6 @@ class ConnectionSecurityFactory {
      *
      * @returns ICellularSecurityManager instance or nullptr, if an error occurred
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ICellularSecurityManager> getCellularSecurityManager(
         telux::common::ErrorCode &ec) = 0;

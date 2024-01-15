@@ -2137,12 +2137,22 @@ telux::common::Status LocationMenu::launchAsRecordingUtility() {
     }
 
     posListener->setDetailedLocationReportFlag(true);
-    posListener->setDetailedLocationRecordingFlag(true);
+    posListener->setSvInfoFlag(true);
+    posListener->setNmeaInfoFlag(true);
+    posListener->setMeasurementsInfoFlag(true);
+    posListener->setDataInfoFlag(true);
+
+    posListener->setRecordingFlag(true);
     //Registering listener for fixes
     locationManager->registerListenerEx(posListener);
 
     GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
-    reportMask |= 1UL << 0;
+    reportMask |= LOCATION;
+    reportMask |= SATELLITE_VEHICLE;
+    reportMask |= NMEA;
+    reportMask |= DATA;
+    reportMask |= MEASUREMENT;
+
     std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb =
         std::make_shared<MyLocationCommandCallback>("Detailed report request");
     locationManager->startDetailedReports(

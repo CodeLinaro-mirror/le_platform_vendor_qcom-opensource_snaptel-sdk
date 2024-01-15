@@ -76,7 +76,8 @@ public:
    void setDisasterCrisisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
    void setEngineNmeaInfoFlag(bool enable);
-   void setDetailedLocationRecordingFlag(bool enable);
+
+   void setRecordingFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -89,7 +90,9 @@ private:
    bool isDisasterCrisisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    bool isEngineNmeaInfoFlagEnabled_ = false;
-   bool isDetailedReportsRecordingEnabled_ = false;
+
+   bool isRecordingEnabled_ = false;
+
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

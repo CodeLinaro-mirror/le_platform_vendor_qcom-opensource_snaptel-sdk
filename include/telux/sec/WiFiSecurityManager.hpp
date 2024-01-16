@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -226,7 +226,7 @@ class IWiFiReportListener {
      *
      * @param[in] accessPoint @ref ApInfo provides information about an AP.
      *
-     * @param[in] isTrusted True if trusted; false otherwise.
+     * @param[out] isTrusted True if trusted; false otherwise.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -288,7 +288,7 @@ class IWiFiSecurityManager {
     * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_INFO
     * permission to successfully invoke this API.
     *
-    * @param [in] trustedAPList List of trusted APs ( @ref ApInfo ).
+    * @param [out] trustedAPList List of trusted APs ( @ref ApInfo ).
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS, if the list is retrived otherwise,
     *          an appropriate error code.

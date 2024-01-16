@@ -14,7 +14,7 @@ Users can run the Simulation framework within a docker as well if desired.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{telsdk_overview.PNG}
+  \includegraphics[scale=0.60]{telsdk_overview.PNG}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{TelSDK On-Target Architecture}
   \label{fig_telsdk_overview}
@@ -25,7 +25,7 @@ Users can run the Simulation framework within a docker as well if desired.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{telsdk_simulation_overview.PNG}
+  \includegraphics[scale=0.60]{telsdk_simulation_overview.PNG}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{TelSDK Simulation Architecture}
   \label{fig_telsdk_sim_overview}

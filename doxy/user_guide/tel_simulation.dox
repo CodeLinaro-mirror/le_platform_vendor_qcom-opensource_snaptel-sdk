@@ -11,7 +11,7 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{simulation_telephony_overview.PNG}
+  \includegraphics[scale=0.50]{simulation_telephony_overview.PNG}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Telephony Simulation Framework}
   \label{fig_tel_sim_overview}

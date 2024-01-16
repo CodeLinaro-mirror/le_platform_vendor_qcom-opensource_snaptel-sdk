@@ -15,7 +15,7 @@ Applications using ILocationManager APIs will get reports from this recorded dat
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{simulation_location_overview.PNG}
+  \includegraphics[scale=0.60]{simulation_location_overview.PNG}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Location Simulation Framework}
   \label{fig_loc_sim_overview}

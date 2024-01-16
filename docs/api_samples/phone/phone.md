@@ -5,7 +5,7 @@ Telephony {#phone}
 * @subpage make_eCall
 * @subpage make_eCall_Over_Ims
 * @subpage request_voice_service_state
-* @subpage set_radio_power
+* @subpage request_set_operating_mode
 * @subpage serving_system
 * @subpage get_subscription
 * @subpage card_services_app

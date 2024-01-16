@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -154,8 +154,6 @@ public:
      *      data which manager will fill.
      *      Lets the user know they should immediately send a new message.
      *      If SPS enhancements are enabled, they may perform SPS periodicity change.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
 
@@ -165,8 +163,6 @@ public:
     /**
      * Called to deregister a ICongestionControlListener implementation
      * @param [in] congCtrlListener - user-implemented class to be deregistered
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode deregisterListener(

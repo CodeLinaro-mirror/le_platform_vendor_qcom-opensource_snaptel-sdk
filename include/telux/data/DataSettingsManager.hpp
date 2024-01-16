@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -202,8 +202,6 @@ using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId
  * @param [in] currentState  Provides the current DDS status @ref telux::data::DdsInfo.
  * @param [in] error         Return code for whether the operation succeeded or failed.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using RequestCurrentDdsResponseCb = std::function<void(DdsInfo currentState,
     telux::common::ErrorCode error)>;
@@ -346,8 +344,6 @@ public:
      *
      * @returns Status of requestDdsSwitch, i.e., success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestDdsSwitch(DdsInfo request,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -359,8 +355,6 @@ public:
      *
      * @returns Status of requestCurrentDds, i.e., success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestCurrentDds(RequestCurrentDdsResponseCb callback) = 0;
 
@@ -418,8 +412,6 @@ public:
      *
      * @returns Status of setMacSecState, i.e., success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setMacSecState(bool enable,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -431,8 +423,6 @@ public:
      *
      * @returns Status of requestMacSecState, i.e., success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      *
      */
     virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;

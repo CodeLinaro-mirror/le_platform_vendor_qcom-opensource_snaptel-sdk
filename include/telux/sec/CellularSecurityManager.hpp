@@ -355,8 +355,6 @@ class ICellularScanReportListener : public telux::common::IServiceStatusListener
      *
      * @param[in] environmentInfo @ref EnvironmentInfo overall environment information
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onScanReportAvailable(CellularSecurityReport report,
         EnvironmentInfo environmentInfo) { }

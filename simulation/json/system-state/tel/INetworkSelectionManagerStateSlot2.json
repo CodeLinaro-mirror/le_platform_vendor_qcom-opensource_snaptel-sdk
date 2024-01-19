@@ -1,0 +1,76 @@
+{
+    "INetworkSelectionManager" :
+    {
+        "NetworkSelectionMode" :
+        {
+            "networkSelectionMode" : 0, /* Refer telux::tel::NetworkModeInfo for more details */
+            "mcc" : "810", /* Refer telux::tel::NetworkModeInfo for more details */
+            "mnc" : "99" /* Refer telux::tel::NetworkModeInfo for more details */
+        },
+        "PreferredNetworksInfo" :
+        [
+            {
+                "mcc" : 810 , /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7 10" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            }
+        ],
+        "PreferredNetworksStaticInfo" :
+        [
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7 10" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            },
+            {
+                "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+            }
+        ],
+        "OperatorStatus" :
+        {
+            "inUse" : 1, /* Refer telux::tel::OperatorStatus for more details */
+            "roaming" : 1, /* Refer telux::tel::OperatorStatus for more details */
+            "forbidden" : 1, /* Refer telux::tel::OperatorStatus for more details */
+            "preferred" : 1, /* Refer telux::tel::OperatorStatus for more details */
+            "rat" : 14, /* Refer telux::tel::OperatorInfo for more details */
+            "networkName" : "IMS" /* Refer telux::tel::OperatorInfo for more details */
+        }
+    }
+}

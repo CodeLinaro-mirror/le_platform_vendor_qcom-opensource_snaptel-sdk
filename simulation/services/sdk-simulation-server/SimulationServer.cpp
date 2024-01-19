@@ -24,6 +24,9 @@
 #include "tel/CardManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
+#include "tel/ImsServingManagerServerImpl.hpp"
+#include "tel/ServingManagerServerImpl.hpp"
+#include "tel/NetworkSelectionManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
 #include "data/DataSettingsServerImpl.hpp"
@@ -129,6 +132,18 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SensorFeatureManagerServerImpl> sensorService =
         std::make_shared<SensorFeatureManagerServerImpl>();
     builder.RegisterService(sensorService.get());
+
+    std::shared_ptr<ImsServingManagerServerImpl> imsService =
+        std::make_shared<ImsServingManagerServerImpl>();
+    builder.RegisterService(imsService.get());
+
+    std::shared_ptr<ServingManagerServerImpl> ServingSystemService =
+        std::make_shared<ServingManagerServerImpl>();
+    builder.RegisterService(ServingSystemService.get());
+
+    std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
+        std::make_shared<NetworkSelectionManagerServerImpl>();
+    builder.RegisterService(NetworkSelectionSystemService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

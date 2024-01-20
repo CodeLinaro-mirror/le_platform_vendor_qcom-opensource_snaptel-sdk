@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -149,6 +149,13 @@ class ITranscodeListener {
 /**
  * Listener for the audio service availability. Refer to @ref telux::common::IServiceStatusListener
  * for details.
+ *
+ * When audio service becomes unavailable, if the client was waiting on any outstanding
+ * response callbacks for APIs that were called just before the SSR, those response
+ * callbacks will not be called anymore.
+ *
+ * For example, if stream->setVolume(callback) is called and SSR occurs then the 'callback'
+ * will be never invoked.
  */
 class IAudioListener : public telux::common::IServiceStatusListener {
  public:

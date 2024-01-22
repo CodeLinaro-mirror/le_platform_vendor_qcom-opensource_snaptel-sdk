@@ -981,6 +981,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.preRecordedFile = configs["PreRecordedFile"];
     }
 
+    if (configs.end() != configs.find("preRecordedMinLog")) {
+        istringstream is(configs["preRecordedMinLog"]);
+        is >> boolalpha >> this->configuration.preRecordedMinLog;
+    }
+
     if (configs.end() != configs.find("TransmitRateInterval")) {
         this->configuration.transmitRate = stoi(configs["TransmitRateInterval"], nullptr, 10);
     }
@@ -2179,7 +2184,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     }
     int ret = 0;
     if((criticalState && txType == TransmitType::EVENT) ||
-            (!criticalState && txType == TransmitType::SPS)){
+       (!criticalState && txType == TransmitType::SPS)) {
         ret = this->transmit(index, mc, encLength, txType);
         if (encLength > 0 && ret > 0) {
             validMessage = true;
@@ -2599,14 +2604,7 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
  */
 void ApplicationBase::writeLogHeader(FILE *fp) {
     // Writes log header to the csv file pointed by fp.
-    fprintf(fp, "TimeStamp,TimeStamp_ms,Time_monotonic,");
-    fprintf(fp, "LogRecType,L2 ID,CBR Percent,CPU_Util,");
-    fprintf(fp, "TXInterval,msgCnt,TempId,GPGSAMode,");
-    fprintf(fp, "secMark,lat,long,semi_major_dev,speed,");
-    fprintf(fp, "heading,longAccel,latAccel,Tracking_Error,");
-    fprintf(fp, "vehicleDensityInRange,ChannelQualityIndication,");
-    fprintf(fp, "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,");
-    fprintf(fp, "TotalRVs,DistanceFromRV");
+    fprintf(fp, MIN_LOG_HEADER);
     // TODO add security headers here too
     fprintf(fp, "\n");
 }

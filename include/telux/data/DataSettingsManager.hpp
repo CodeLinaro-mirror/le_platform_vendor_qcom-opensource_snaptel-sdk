@@ -229,16 +229,20 @@ public:
     /**
      * Resets current network settings to initial setting configured in factory.
      * Factory settings are the initial network settings generated during manufacturing process.
-     * After successful reset, device will reboot with factory network settings.
+     * For the factory settings to take effect a reboot is required. Clients can choose if this API
+     * invocation should reboot the system or the client would take responsibility of rebooting it.
      *
      * @param [in] operationType    @ref telux::data::OperationType
      * @param [in] callback         callback to get the response to restoreFactorySettings
+     * @param [in] isRebootNeeded   true: System is automatically rebooted after reverting
+     *                                    to factory settings
+     *                              false: System is not rebooted after successful reset
      *
      * @returns Immediate status of restoreFactorySettings i.e. success or suitable status.
      *
      */
     virtual telux::common::Status restoreFactorySettings(OperationType operationType,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr, bool isRebootNeeded = true) = 0;
 
     /**
      * Set backhaul preference for bridge0 (default bridge) traffic. Bridge0 Traffic routing to

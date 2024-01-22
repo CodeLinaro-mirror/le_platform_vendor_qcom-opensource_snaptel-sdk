@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -8,7 +8,6 @@ syntax = "proto3";
 package dataStub;
 import "google/protobuf/empty.proto";
 import "common.proto";
-import "event.proto";
 
 /*******************************************************************
 * Services Definition                                             *
@@ -164,15 +163,22 @@ service DataFilterManager {
   */
 
   service DataSettingsManager {
-    rpc InitService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc setBackhaulPreference(setBackhaulPreferenceRequest) returns (DefaultReply) {}
+    rpc requestBackhaulPreference(RequestBackhaulPreference) returns (BackhaulPreferenceReply) {}
     rpc RequestWwanConnectivityConfig(WwanConnectivityConfigRequest) returns
-        (RequestWwanConnectivityConfigReply) {}
+        (WwanConnectivityConfigReply) {}
     rpc SetWwanConnectivityConfig(SetWwanConnectivityConfigRequest) returns
-        (google.protobuf.Empty) {}
+        (DefaultReply) {}
     rpc RequestCurrentDdsSwitch(CurrentDdsSwitchRequest) returns
-        (RequestCurrentDdsSwitchResponse) {}
-    rpc SetDdsSwitch(SetDdsSwitchRequest) returns (google.protobuf.Empty) {}
+        (CurrentDdsSwitchResponse) {}
+    rpc SetDdsSwitch(SetDdsSwitchRequest) returns (DefaultReply) {}
+    rpc SetMacSecState(SetMacSecStateRequest) returns (DefaultReply) {}
+    rpc RequestMacSecState(MacSecStateRequest) returns (MacSecStateReply) {}
+    rpc setBandInterferenceConfig(BandInterferenceConfig) returns (DefaultReply) {}
+    rpc requestBandInterferenceConfig(BandInterferenceRequest) returns (BandInterferenceReply) {}
+    rpc switchBackHaul(switchBackHaulRequest) returns (DefaultReply) {}
     rpc RegisterOnWwanConnectivityConfigChange(google.protobuf.Empty) returns
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
@@ -379,6 +385,10 @@ message QueryDataCallRequest {
 
 message QueryDataCallReply {
     bool is_call_connected = 1;
+}
+
+message InitRequest {
+    OperationType operation_type = 1;
 }
 
 message SetRoamingModeRequest {
@@ -898,8 +908,9 @@ message WwanConnectivityConfigRequest {
     OperationType operation_type = 2;
 }
 
-message RequestWwanConnectivityConfigReply {
+message WwanConnectivityConfigReply {
     bool is_wwan_connectivity_allowed = 1;
+    DefaultReply reply = 2;
 }
 
 message SetWwanConnectivityConfigRequest {
@@ -912,19 +923,81 @@ message CurrentDdsSwitchRequest {
     OperationType operation_type = 1;
 }
 
-message RequestCurrentDdsSwitchResponse {
+message CurrentDdsSwitchResponse {
     int32 slot_id = 1;
     int32 current_switch = 2;
+    DefaultReply reply = 3;
 }
 
 message SetDdsSwitchRequest {
     int32 slot_id = 1;
-    int32 operation_type = 2;
+    OperationType operation_type = 2;
     int32 switch_type = 3;
+}
+
+message SetMacSecStateRequest {
+    bool enabled = 1;
+    OperationType operation_type = 2;
+}
+
+message MacSecStateRequest {
+    OperationType operation_type = 1;
+}
+
+message MacSecStateReply {
+    bool enabled = 1;
+    DefaultReply reply = 2;
 }
 
 message RegisterOnWwanConnectivityConfigChangeReply {
     int32 client_id = 1;
     int32 slot_id = 2;
     bool is_wwan_connectivity_allowed = 3;
+}
+
+enum BackhaulPreference {
+    PREF_ETH = 0;
+    PREF_USB = 1;
+    PREF_WLAN = 2;
+    PREF_WWAN = 3;
+    PREF_BLE = 4;
+    INVALID = 5;
+}
+
+message setBackhaulPreferenceRequest {
+    OperationType operation_type = 1;
+    repeated BackhaulPreference backhaul_pref = 2;
+}
+
+message RequestBackhaulPreference {
+    OperationType operation_type = 1;
+}
+
+message BackhaulPreferenceReply {
+    repeated BackhaulPreference backhaul_pref = 1;
+    DefaultReply reply = 2;
+}
+
+message BandInterferenceConfig {
+    bool enable = 1;
+    int32 priority = 2;
+    int32 wlan_wait_time_in_sec = 3;
+    int32 n79_wait_time_in_sec = 4;
+    OperationType operation_type = 5;
+}
+
+message BandInterferenceRequest {
+    OperationType operation_type = 1;
+}
+
+message BandInterferenceReply {
+    BandInterferenceConfig config = 1;
+    DefaultReply reply = 2;
+}
+
+message switchBackHaulRequest {
+    BackhaulPreference backhaul_type = 1;
+    int32 slot_id = 2;
+    int32 profile_id = 3;
+    OperationType operation_type = 5;
 }

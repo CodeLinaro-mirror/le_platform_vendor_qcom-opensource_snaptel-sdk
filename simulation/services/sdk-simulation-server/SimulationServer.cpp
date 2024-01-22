@@ -1,6 +1,5 @@
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -27,6 +26,7 @@
 #include "tel/SmsManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
+#include "data/DataSettingsServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "event/EventService.hpp"
@@ -100,6 +100,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataProfileServerImpl> dataprofileService =
         std::make_shared<DataProfileServerImpl>();
     builder.RegisterService(dataprofileService.get());
+
+    std::shared_ptr<DataSettingsServerImpl> dataSettingsService =
+        std::make_shared<DataSettingsServerImpl>(dcmService);
+    builder.RegisterService(dataSettingsService.get());
 
     std::shared_ptr<LocationManagerServerImpl> locManagerService =
         std::make_shared<LocationManagerServerImpl>();

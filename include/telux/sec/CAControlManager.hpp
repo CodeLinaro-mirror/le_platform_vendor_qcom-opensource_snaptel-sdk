@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -123,8 +123,6 @@ class ICAControlManagerListener {
      *
      * @param[in] newCapacity New capacity as per current allowed conditions.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onCapacityUpdate(struct CACapacity newCapacity) { }
 
@@ -134,8 +132,6 @@ class ICAControlManagerListener {
      *
      * @param[in] currentLoad Load as observed in the set time window.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onLoadUpdate(struct CALoad currentLoad) { }
 

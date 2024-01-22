@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -64,8 +64,6 @@ namespace hardware {
  * @param [in] error       Return code indicating whether the operation succeeded or not
  *                         @ref telux::common::ErrorCode.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using GetActiveAntCb
     = std::function<void(int antIndex, telux::common::ErrorCode error)>;
@@ -125,8 +123,6 @@ class IAntennaManager {
      *
      * @returns Status of the setActiveAntenna request; either success or the suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      */
     virtual telux::common::Status
         setActiveAntenna(int antIndex, telux::common::ResponseCallback callback = nullptr) = 0;
@@ -142,8 +138,6 @@ class IAntennaManager {
      *
      * @returns Status of the getActiveAntenna request; either success or the suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      */
     virtual telux::common::Status getActiveAntenna(GetActiveAntCb callback) = 0;
 

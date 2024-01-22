@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -226,8 +226,6 @@ class IApInterfaceManager {
      * @returns  operation error code (if any). @ref telux::common::ErrorCode
      *           telux::common::Status::NOTALLOWED is returned if AP to be configured was not
      *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;
 
@@ -308,8 +306,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode getConfig(std::vector<ApConfig>& config) = 0;
 
@@ -320,8 +316,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode getStatus(std::vector<ApStatus>& status) = 0;
 
@@ -337,8 +331,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode getConnectedDevices(std::vector<DeviceInfo>& clientsInfo) = 0;
 
@@ -364,8 +356,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode manageApService(Id apId, ServiceOperation opr) = 0;
 

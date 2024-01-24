@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -85,6 +85,8 @@ public:
         const ::google::protobuf::Empty* request,
         ::google::protobuf::Empty* response) override;
 
+    void stopActiveDataCalls(SlotId slotId);
+
 private:
     bool getIpv4Address(const std::string &ifaceName,
         std::string &ipAddress, std::string &gatewayAddress,
@@ -97,6 +99,8 @@ private:
         std::string ifaceName);
 
     void getInactiveInterfaces();
+    void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap);
+    bool isWwanConnectivityAllowed(int slotId);
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot1_;

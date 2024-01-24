@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -589,7 +589,8 @@ telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
     std::shared_ptr<IDataCall> baseCallPtr = nullptr;
 
     do {
-        if (status == telux::common::Status::SUCCESS) {
+        if (status == telux::common::Status::SUCCESS &&
+            error == telux::common::ErrorCode::SUCCESS) {
             if (!reqStatus.ok()) {
                 LOG(ERROR, __FUNCTION__, " StartDatacall request failed");
                 error = telux::common::ErrorCode::INTERNAL_ERROR;

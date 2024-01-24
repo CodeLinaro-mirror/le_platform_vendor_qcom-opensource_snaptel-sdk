@@ -13,6 +13,7 @@ set(DATA_STUB_SOURCES
     DataEventListener.cpp
     DataConnectionManagerStub.cpp
     ServingSystemManagerStub.cpp
+    DataSettingsManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

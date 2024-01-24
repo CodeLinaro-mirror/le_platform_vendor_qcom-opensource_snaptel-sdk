@@ -18,6 +18,7 @@ set(GRPCPP_EXECUTABLE gRPC::grpc++)
 
 set(TARGET_SIMULATION_SERVER_APP_SRC
     SimulationServer.cpp
+    FileBuffer.cpp
 )
 
 include_directories(BEFORE

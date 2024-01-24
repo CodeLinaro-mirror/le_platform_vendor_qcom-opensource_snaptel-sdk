@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -16,14 +16,81 @@
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/CommonUtils.hpp"
 
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <utility>
+
 #define LOC_MGR_API_JSON "api/loc/ILocationManager.json"
+#define CSV_BATCH_COUNT 1000
 
 LocationManagerServerImpl::LocationManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
+    init();
+}
+
+inline bool fileExists(const std::string &csvFile) {
+    std::ifstream f(csvFile.c_str());
+    return f.good();
+}
+
+void LocationManagerServerImpl::init() {
+    LOG(DEBUG, __FUNCTION__);
+    SimulationConfigParser configParser;
+    std::string fileName = configParser.getValue("sim.loc.location_report_file_name");
+    std::string filePath = std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
+    if (!fileExists(filePath)) {
+        filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
+            + std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
+        if (!fileExists(filePath)) {
+            LOG(DEBUG, __FUNCTION__ , " Failed to open CSV");
+            return;
+        }
+    }
+    fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
+    fileBuffer_->startBuffering();
+    bufferingInitialized_ = true;
+    streamRequestCount_.store(0);
+}
+
+void LocationManagerServerImpl::startStreaming() {
+    LOG(DEBUG, __FUNCTION__);
+    while(true) {
+        if(fileBuffer_->getNextBuffer(requestBuffer_)) {
+            while(!requestBuffer_.empty()) {
+                //Send requestBuffer_[0] to clients via streams
+
+                // Sleep to match the frequency by extracting the current timestamp
+                // and subtracting from the previous.
+                std::size_t pos = requestBuffer_[0].find(',');
+                uint64_t currentTimestamp = std::stoull(requestBuffer_[0].substr(0, pos));
+                if(previousTimestamp_ != 0) {
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(currentTimestamp - previousTimestamp_));
+                }
+                previousTimestamp_ = currentTimestamp;
+                requestBuffer_.erase(requestBuffer_.begin());
+            }
+        } else {
+            //EOF is reached and request buffer is empty.
+            previousTimestamp_ = 0;
+            LOG(DEBUG, " Last batch streamed. Streaming stopped.");
+            break;
+        }
+
+        // Stop Stream on Request as per config. Will be checked for last client on stop reports.
+        if(stopStreamingData_) {
+            LOG(DEBUG, " Last client de-registered. Streaming stopped.");
+            break;
+        }
+    }
 }
 
 LocationManagerServerImpl::~LocationManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__ , " Destructing");
+    if(fileBuffer_) {
+        fileBuffer_->cleanup();
+    }
 }
 
 grpc::Status LocationManagerServerImpl::InitService(ServerContext* context,
@@ -46,10 +113,29 @@ grpc::Status LocationManagerServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
+void LocationManagerServerImpl::updateStreamRequest() {
+    if(bufferingInitialized_) {
+        if(streamRequestCount_ == 0) {
+            //Initializing/Resetting the flag.
+            stopStreamingData_ = false;
+            //Starting the stream.
+            auto f = std::async(std::launch::async,
+                [=]() {
+                    this->startStreaming();
+                }).share();
+            taskQ_.add(f);
+        }
+        streamRequestCount_++;
+    }
+}
+
 grpc::Status LocationManagerServerImpl::StartBasicReports(ServerContext* context,
     const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("startBasicReports", response);
+    if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
+        updateStreamRequest();
+    }
     return grpc::Status::OK;
 }
 
@@ -57,6 +143,9 @@ grpc::Status LocationManagerServerImpl::StartDetailedReports(ServerContext* cont
     const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("startDetailedReports", response);
+    if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
+        updateStreamRequest();
+    }
     return grpc::Status::OK;
 }
 
@@ -64,6 +153,25 @@ grpc::Status LocationManagerServerImpl::StartDetailedEngineReports(ServerContext
     const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("startDetailedEngineReports", response);
+    if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
+        updateStreamRequest();
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status LocationManagerServerImpl::StopReports(ServerContext* context,
+    const google::protobuf::Empty* request, google::protobuf::Empty* response) {
+    LOG(DEBUG, __FUNCTION__);
+    if(bufferingInitialized_) {
+        streamRequestCount_--;
+        if(streamRequestCount_ == 0) {
+            SimulationConfigParser configParser;
+            std::string stopStreamStr = configParser.getValue("sim.loc.location_report_consumption");
+            if(stopStreamStr == "TRUE") {
+                stopStreamingData_ = true;
+            }
+        }
+    }
     return grpc::Status::OK;
 }
 

@@ -21,6 +21,7 @@ service LocationManagerService {
     rpc StartDetailedReports (google.protobuf.Empty) returns (LocManagerCommandReply) {}
     rpc StartDetailedEngineReports (google.protobuf.Empty)
         returns (LocManagerCommandReply) {}
+    rpc StopReports (google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc RegisterLocationSystemInfo (google.protobuf.Empty)
         returns (LocManagerCommandReply) {}
     rpc DeregisterLocationSystemInfo (google.protobuf.Empty)

@@ -228,7 +228,7 @@ telux::common::Status LocationManagerStub::startDetailedReports(uint32_t interva
         }).share();
         taskQ_.add(f);
         if (filter_ != nullptr) {
-            telux::common::Status rc = filter_->startReportFilter(interval, ReportType::DETAILED);
+            telux::common::Status rc = filter_->startReportFilter(interval, ReportType::FUSED);
             if (rc != telux::common::Status::SUCCESS) {
                 LOG(WARNING, __FUNCTION__, " Starting detailed report filter Failed");
             }
@@ -247,6 +247,7 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
         adjustTimeInterval(interval);
     }
     interval_ = interval;
+    engineType_ = engineType;
     //Register for Reports.
     std::vector<std::string> filters = {"LOC_REPORTS"};
     auto &locationReportListener = telux::common::LocationReportListener::getInstance();
@@ -274,10 +275,30 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
         }).share();
         taskQ_.add(f);
         if (filter_ != nullptr) {
-            telux::common::Status rc =
-                filter_->startReportFilter(interval, ReportType::DETAILED_ENG);
-            if (rc != telux::common::Status::SUCCESS) {
-                LOG(WARNING, __FUNCTION__, " Starting detailed engine report filter Failed");
+            telux::common::Status rc = telux::common::Status::SUCCESS;
+            if (engineType_ & LocReqEngineType::LOC_REQ_ENGINE_FUSED_BIT) {
+                rc = filter_->startReportFilter(interval, ReportType::FUSED);
+                if (rc != telux::common::Status::SUCCESS) {
+                    LOG(WARNING, __FUNCTION__, " Starting FUSED engine report filter Failed");
+                }
+            }
+            if (engineType_ & LocReqEngineType::LOC_REQ_ENGINE_SPE_BIT) {
+                rc = filter_->startReportFilter(interval, ReportType::SPE);
+                if (rc != telux::common::Status::SUCCESS) {
+                    LOG(WARNING, __FUNCTION__, " Starting SPE engine report filter Failed");
+                }
+            }
+            if (engineType_ & LocReqEngineType::LOC_REQ_ENGINE_PPE_BIT) {
+                rc = filter_->startReportFilter(interval, ReportType::PPE);
+                if (rc != telux::common::Status::SUCCESS) {
+                    LOG(WARNING, __FUNCTION__, " Starting PPE engine report filter Failed");
+                }
+            }
+            if (engineType_ & LocReqEngineType::LOC_REQ_ENGINE_VPE_BIT) {
+                rc = filter_->startReportFilter(interval, ReportType::VPE);
+                if (rc != telux::common::Status::SUCCESS) {
+                    LOG(WARNING, __FUNCTION__, " Starting VPE engine report filter Failed");
+                }
             }
         }
         sessionMask_ = telux::loc::DETAILED_ENGINE;
@@ -320,7 +341,7 @@ telux::common::Status LocationManagerStub::startBasicReports(
         }).share();
         taskQ_.add(f);
         if (filter_ != nullptr) {
-            telux::common::Status rc = filter_->startReportFilter(interval, ReportType::BASIC);
+            telux::common::Status rc = filter_->startReportFilter(interval, ReportType::FUSED);
             if (rc != telux::common::Status::SUCCESS) {
                 LOG(WARNING, __FUNCTION__, " Starting basic report filter Failed");
             }
@@ -526,6 +547,8 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
     LOG(DEBUG, __FUNCTION__);
     size_t itr = 2;
     loc->setUtcFixTime(std::stoull(message[itr++]));
+    loc->setLocOutputEngType(
+        static_cast<telux::loc::LocationAggregationType>(std::stoul(message[itr++])));
     loc->setLocationTechnology(std::stoul(message[itr++]));
     loc->setLatitude(std::stod(message[itr++]));
     loc->setLongitude(std::stod(message[itr++]));
@@ -637,7 +660,9 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
     size_t usedSVsize = std::stoi(message[itr++]);
     std::vector<uint16_t> usedSvs;
     for(size_t i = 0; i < usedSVsize; i++) {
-        usedSvs.push_back(std::stoul(message[itr++]));
+        auto msg = message[itr];
+        usedSvs.push_back(msg.length() == 0 ? 0 : std::stoul(msg));
+        ++itr;
     }
     loc->setUsedSVsIds(usedSvs);
     telux::loc::GnssSystem system =
@@ -882,18 +907,26 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
     uint32_t opt = std::stoul(message[1]);
     switch(opt) {
         case telux::loc::GnssReportType::LOCATION :
-        if(sessionMask_ & telux::loc::BASIC)
+        if (sessionMask_ & telux::loc::BASIC)
         {
+            telux::loc::LocationAggregationType msgEngineType =
+                static_cast<telux::loc::LocationAggregationType>(
+                    std::stoul(message[3]));
+
+            if (msgEngineType != telux::loc::LocationAggregationType::LOC_OUTPUT_ENGINE_FUSED) {
+                return;
+            }
+
             //1. Check TBF w.r.t UTC field and reject if outside the window.
             {
                 std::unique_lock<std::mutex> lck(filterMutex_);
                 if (filter_ != nullptr) {
                     uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
-                    telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
+                    telux::loc::LocationInfoValidity validity = std::stoul(message[14]);
                     if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
                         timestamp = std::stoull(message[2]);
                     }
-                    if (filter_->isReportIgnored(timestamp, ReportType::BASIC)) {
+                    if (filter_->isReportIgnored(timestamp, ReportType::FUSED)) {
                         LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
                         return;
                     }
@@ -934,22 +967,34 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
         } else if ((reportMask_ & telux::loc::GnssReportType::LOCATION) &&
             ((sessionMask_ & telux::loc::DETAILED) || (sessionMask_ & telux::loc::DETAILED_ENGINE)))
         {
+
+            telux::loc::LocationAggregationType msgEngineType =
+                static_cast<telux::loc::LocationAggregationType>(
+                    std::stoul(message[3]));
+
+            if (sessionMask_ & telux::loc::DETAILED) {
+                if (msgEngineType != telux::loc::LocationAggregationType::LOC_OUTPUT_ENGINE_FUSED) {
+                    return;
+                }
+            }
             //1. Check TBF w.r.t UTC field and reject if outside the window.
             {
                 std::unique_lock<std::mutex> lck(filterMutex_);
                 if (filter_ != nullptr) {
                     uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
-                    telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
+                    telux::loc::LocationInfoValidity validity = std::stoul(message[14]);
                     if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
                         timestamp = std::stoull(message[2]);
                     }
                     if(sessionMask_ & telux::loc::DETAILED) {
-                        if (filter_->isReportIgnored(timestamp, ReportType::DETAILED)) {
+                        if (filter_->isReportIgnored(timestamp, ReportType::FUSED)) {
                             LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
                             return;
                         }
-                    } else {
-                        if (filter_->isReportIgnored(timestamp, ReportType::DETAILED_ENG)) {
+                    } else { // DETAILED_ENGINE
+                        if (filter_->isReportIgnored(
+                            timestamp,
+                            static_cast<ReportType>(std::stoul(message[3])))) {
                             LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
                             return;
                         }
@@ -983,9 +1028,11 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
                     if (sessionMask_ & telux::loc::DETAILED) {
                         spt->onDetailedLocationUpdate(loc);
                     } else {
-                        std::vector<std::shared_ptr<ILocationInfoEx>> infoEngineReports;
-                        infoEngineReports.push_back(loc);
-                        spt->onDetailedEngineLocationUpdate(infoEngineReports);
+                        if (0 != (engineType_ & (0x1 << msgEngineType))) {
+                            std::vector<std::shared_ptr<ILocationInfoEx>> infoEngineReports;
+                            infoEngineReports.push_back(loc);
+                            spt->onDetailedEngineLocationUpdate(infoEngineReports);
+                        }
                     }
                     ++iter;
                 } else {

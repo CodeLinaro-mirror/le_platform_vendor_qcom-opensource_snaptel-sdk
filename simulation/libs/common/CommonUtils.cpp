@@ -4,6 +4,9 @@
  */
 
 #include <algorithm>
+#include <ctime>
+#include <chrono>
+#include <iomanip>
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
@@ -350,6 +353,34 @@ std::vector<std::string> CommonUtils::splitString(const std::string &s, char del
         }
     }
     return elements;
+}
+
+std::string CommonUtils::getCurrentTimeHHMMSS() {
+    using namespace std::chrono;
+    auto ms =
+        std::chrono::duration_cast<milliseconds>(
+            high_resolution_clock::now().time_since_epoch());
+    ms %= 1000;
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+
+    std::stringstream nowSs;
+    nowSs << std::put_time(&tm, "%H%M%S") << '.' << ms.count()/10;
+
+    return nowSs.str();
+}
+
+int CommonUtils::bitwiseXOR(const std::string& str) {
+    if (str.size() <= 0) {
+        return 0;
+    }
+    int res = static_cast<int>(str[0]);
+
+    for (size_t i = 1; i < str.size(); ++i) {
+        res ^= static_cast<int>(str[i]);
+    }
+
+    return res;
 }
 
 std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {

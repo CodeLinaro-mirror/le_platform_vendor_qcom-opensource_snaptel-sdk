@@ -28,17 +28,17 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
 /**
- * file       LocationManagerStub.hpp
- * brief      Location manager provides APIs to get position reports
- *            and satellite vehicle information updates. The reports
- *            specific to particular location engine can also be obtained
- *            by choosing the required engine report.
+ * file   LocationManagerStub.hpp
+ * brief  Location manager provides APIs to get position reports
+ *        and satellite vehicle information updates. The reports
+ *        specific to particular location engine can also be obtained
+ *        by choosing the required engine report.
  *
  */
 
@@ -48,6 +48,7 @@
 #include "telux/loc/LocationManager.hpp"
 #include "ReportHandler.hpp"
 #include "ReportReader.hpp"
+#include "LocationReportFilterStub.hpp"
 #include "common/AsyncTaskQueue.hpp"
 
 #include <grpcpp/grpcpp.h>
@@ -61,6 +62,14 @@ using locStub::LocationManagerService;
 namespace telux {
 
 namespace loc {
+
+enum LocSessionType {
+    BASIC = (1 << 0),
+    DETAILED = (1 << 1),
+    DETAILED_ENGINE = (1 << 2)
+};
+
+using LocSession = uint32_t;
 
 /**
  * brief LocationManagerStub provides interface to register and remove listeners.
@@ -433,44 +442,16 @@ private:
     std::mutex energyMutex_;
     std::vector<std::weak_ptr<ILocationListener>> listeners_;
     std::vector<std::weak_ptr<ILocationSystemInfoListener>> systemInfoListener_;
-    std::atomic<int> exitThread_;
-    std::atomic<int> exited_;
-    // Type is store the type of reports currently requested
-    // 0 - No Report
-    // 1 - Basic Report
-    // 2 - Detailed Report
-    // 3 - Detailed Engine Report
-    std::atomic<int> type_;
-    // Basic Report Interval in msecs
-    std::atomic<uint32_t> brInterval_;
-    // Basic Report Interval in 100 msecs steps (500 msecs gives brSeqDelta as 5)
-    std::atomic<uint32_t> brSeqDelta_;
-    // Last used Basic Sequence No. (100 msecs step)
-    std::atomic<uint32_t> brSeqNo_;
-    // Detailed Report Interval in msecs
-    std::atomic<uint32_t> drInterval_;
-    // Detailed Report Interval in 100 msecs steps (500 msecs gives drSeqDelta as 5)
-    std::atomic<uint32_t> drSeqDelta_;
-    // Last used Detailed Sequence No. (100 msecs step)
-    std::atomic<uint32_t> drSeqNo_;
-    // Detailed Engine Report Interval in msecs
-    std::atomic<uint32_t> derInterval_;
-    // Detailed Engine Report Interval in 100 msecs steps (500 msecs gives drSeqDelta as 5)
-    std::atomic<uint32_t> derSeqDelta_;
-    // Last used Detailed Engine Sequence No. (100 msecs step)
-    std::atomic<uint32_t> derSeqNo_;
+    uint32_t interval_ = 0;
+    LocSession sessionMask_ = 0;
+    telux::loc::GnssReportTypeMask reportMask_ = 0;
     GetYearOfHwCallback cbYearOfHw_ = nullptr;
     GetEnergyConsumedCallback cbStore_ = nullptr;
     GetTerrestrialInfoCallback cbTerrestrialPosition_ = nullptr;
-    GnssReportTypeMask reportTypeMask_ = 0;
     LocCapability capabilityMask_ = 127;
     bool cbLock_ = false;
     // used to sync between cancelling and getting the terrestrial position
     bool isGetTerrestrialRequestActive_ = false;
-    // used in System Info report
-    time_t sysInfoHourTime_ = 0;
-    // used in System Info report
-    time_t usedSysInfoHourTime_ = 0;
     std::mutex terrestrialPositionMutex_;
     std::condition_variable cvTerrestrialPosition_;
     std::unique_ptr<::locStub::LocationManagerService::Stub> stub_;
@@ -480,35 +461,13 @@ private:
     std::condition_variable cv_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     telux::common::ServiceStatus managerStatus_;
+    std::shared_ptr<LocationReportFilter> filter_;
+    std::atomic<int> sysInfoRequestCount_;
 
     std::shared_ptr<LocationInfoBase> getLastLocation(bool defaultLocInfo = false);
-
-    // managerThread waits on Report Handler Condition variable cv
-    // Based upon the Type invokes appropriate type of Reports
-    // If listners are available for System Info invokes System Info report
-    void managerThread();
-
-    // system info report checks if the hour in system time has changed and invokes system
-    // info report on every hour change
-    // when object is created, 00 is stored for the variable, so that a system info report
-    // is sent immediately
-    void invokeSystemInfoReport(ReportHandler & rClass_);
-
-    // Basic Report is invoked every DURATION time set for the object. checks if SeqNo
-    // from the report handler has exceeded
-    // DURATION(in Seq Nos: brSeqDelta_) + last sequence No used (brSeqNo_)
-    void invokeBasicReport(ReportHandler & rClass_);
-
-    // Detailed Report is invoked every DURATION time set for the object. checks if SeqNo
-    // from the report handler has exceeded
-    // DURATION(in Seq Nos: drSeqDelta_) + last sequence No used (drSeqNo_)
-    void invokeDetailedReport(ReportHandler & rClass_);
-
-    // Detailed Report is invoked every DURATION time set for the object. checks if SeqNo
-    // from the report handler has exceeded
-    // DURATION(in Seq Nos: derSeqDelta_) + last sequence No used (derSeqNo_)
-    void invokeDetailedEngineReport(ReportHandler & rClass_);
-
+    void invokeSystemInfoReport(struct LocationSystemInfo &info);
+    void parseRequest(std::string msg);
+    void adjustTimeInterval(uint32_t &interval);
 };
 
 } // end of namespace loc

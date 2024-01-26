@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -126,11 +126,20 @@ static map<Cv2xStatusType, string> gCv2xStatusToString = {
 };
 
 static map<Cv2xCauseType, string> gCv2xCauseToString = {
-    { Cv2xCauseType::TIMING, "TIMING" },
-    { Cv2xCauseType::CONFIG, "CONFIG" },
-    { Cv2xCauseType::UE_MODE, "UE_MODE" },
-    { Cv2xCauseType::GEOPOLYGON, "GEOPOLYGON" },
-    { Cv2xCauseType::UNKNOWN, "UNKNOWN" },
+    {Cv2xCauseType::TIMING, "TIMING"},
+    {Cv2xCauseType::CONFIG, "CONFIG"},
+    {Cv2xCauseType::UE_MODE, "UE_MODE"},
+    {Cv2xCauseType::GEOPOLYGON, "GEOPOLYGON"},
+    {Cv2xCauseType::THERMAL, "THERMAL"},
+    {Cv2xCauseType::THERMAL_ECALL, "THERMAL_ECALL"},
+    {Cv2xCauseType::GEOPOLYGON_SWITCH, "GEOPOLYGON_SWITCH"},
+    {Cv2xCauseType::SENSING, "SENSING"},
+    {Cv2xCauseType::LPM, "LPM"},
+    {Cv2xCauseType::DISABLED, "DISABLED"},
+    {Cv2xCauseType::NO_GNSS, "NO_GNSS"},
+    {Cv2xCauseType::INVALID_LICENSE, "INVALID_LICENSE"},
+    {Cv2xCauseType::NO_DATA_CALL, "NO_DATA_CALL"},
+    {Cv2xCauseType::UNKNOWN, "UNKNOWN"}
 };
 
 static string statusToString(const Cv2xStatus &status, bool printUnknown = true) {

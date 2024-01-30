@@ -121,11 +121,13 @@ service DataFilterManager {
   */
 
   service DataServingSystemManager {
-    rpc InitService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc InitService(SlotInfo) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc GetDrbStatus(GetDrbStatusRequest) returns (GetDrbStatusReply) {}
     rpc RequestServiceStatus(ServingStatusRequest) returns (ServiceStatusReply) {}
     rpc RequestRoamingStatus(RoamingStatusRequest) returns (RomingStatusReply) {}
+    rpc RequestNrIconType(NrIconTypeRequest) returns (NrIconTypeReply) {}
+    rpc MakeDormant (MakeDormantStatusRequest) returns (DefaultReply) {}
 }
 
 /*
@@ -688,9 +690,9 @@ message GetDrbStatusRequest {
 
 message DrbStatus {
     enum Status {
-        UNKNOWN = 0;
-        ACTIVE = 1;
-        DORMANT = 2;
+        ACTIVE = 0;
+        DORMANT = 1;
+        UNKNOWN = 2;
     }
     Status drb_status = 1;
 }
@@ -707,6 +709,10 @@ message RoamingStatusRequest {
     StatusRequest roaming_status = 1;
 }
 
+message MakeDormantStatusRequest {
+    StatusRequest make_dormant_status = 1;
+}
+
 message DataServiceState {
     enum ServiceState {
         UNKNOWN = 0;
@@ -716,8 +722,8 @@ message DataServiceState {
     ServiceState data_service_state = 1;
 }
 
-message NetworkRate {
-    enum Rate {
+message NetworkRat {
+    enum Rat {
         UNKNOWN = 0;
         CDMA_1X = 1;
         CDMA_EVDO = 2;
@@ -727,7 +733,7 @@ message NetworkRate {
         TDSCDMA = 6;
         NR5G = 7;
     }
-    Rate network_rate = 1;
+    Rat network_rat = 1;
 }
 
 message RoamingType {
@@ -739,14 +745,34 @@ message RoamingType {
     Type roaming_type = 1;
 }
 
+message NrIconType {
+    enum Type {
+        NONE = 0;
+        BASIC = 1;
+        UWB = 2;
+    }
+    Type nr_icon_type  = 1;
+}
+
 message ServiceStatusReply {
     DataServiceState data_service_state = 1;
-    NetworkRate network_rate = 2;
+    NetworkRat network_rat = 2;
+    DefaultReply reply = 3;
 }
 
 message RomingStatusReply {
     bool is_roaming = 1;
     RoamingType roaming_type = 2;
+    DefaultReply reply = 3;
+}
+
+message NrIconTypeRequest {
+    StatusRequest nr_icon_status = 1;
+}
+
+message NrIconTypeReply {
+    NrIconType nr_icon_type = 1;
+    DefaultReply reply = 2;
 }
 
 message NatConfig {

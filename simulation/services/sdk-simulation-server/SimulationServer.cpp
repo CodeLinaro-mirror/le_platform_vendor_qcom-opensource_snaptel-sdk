@@ -27,6 +27,7 @@
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
 #include "data/DataSettingsServerImpl.hpp"
+#include "data/ServingSystemServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "event/EventService.hpp"
@@ -104,6 +105,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataSettingsServerImpl> dataSettingsService =
         std::make_shared<DataSettingsServerImpl>(dcmService);
     builder.RegisterService(dataSettingsService.get());
+
+    std::shared_ptr<ServingSystemServerImpl> servingSystemService =
+        std::make_shared<ServingSystemServerImpl>();
+    builder.RegisterService(servingSystemService.get());
 
     std::shared_ptr<LocationManagerServerImpl> locManagerService =
         std::make_shared<LocationManagerServerImpl>();

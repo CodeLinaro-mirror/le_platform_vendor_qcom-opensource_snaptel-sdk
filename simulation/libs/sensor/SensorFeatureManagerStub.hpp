@@ -21,7 +21,7 @@
 #include "common/AsyncTaskQueue.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/sensor.grpc.pb.h"
+#include "protos/proto-src/sensor_simulation.grpc.pb.h"
 
 using sensorStub::SensorFeatureManagerService;
 

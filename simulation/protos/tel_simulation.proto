@@ -36,8 +36,8 @@
 
  package telStub;
  import "google/protobuf/empty.proto";
- import "common.proto";
- import "event.proto";
+ import "common_simulation.proto";
+ import "event_simulation.proto";
 
  /*******************************************************************
   * Services Definition                                             *

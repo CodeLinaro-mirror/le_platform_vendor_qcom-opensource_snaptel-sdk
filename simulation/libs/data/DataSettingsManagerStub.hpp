@@ -15,7 +15,7 @@
 #include <telux/common/CommonDefines.hpp>
 
 #include "common/AsyncTaskQueue.hpp"
-#include "protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data_simulation.grpc.pb.h"
 
 namespace telux {
 namespace data {

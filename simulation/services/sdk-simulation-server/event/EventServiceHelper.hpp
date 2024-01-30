@@ -18,7 +18,7 @@
 #include "libs/common/Logger.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "ServerEventManager.hpp"
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 
 using grpc::ServerContext;
 using grpc::ServerWriter;

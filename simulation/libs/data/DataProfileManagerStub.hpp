@@ -11,7 +11,7 @@
 #include <telux/data/DataProfileListener.hpp>
 
 #include "common/AsyncTaskQueue.hpp"
-#include "protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data_simulation.grpc.pb.h"
 
 using dataStub::DataProfileManager;
 

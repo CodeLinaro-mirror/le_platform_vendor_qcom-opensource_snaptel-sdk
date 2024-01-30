@@ -23,7 +23,7 @@
 #include <telux/loc/LocationDefines.hpp>
 
 #include "libs/common/AsyncTaskQueue.hpp"
-#include "protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc_simulation.grpc.pb.h"
 
 #include "FileBuffer.hpp"
 

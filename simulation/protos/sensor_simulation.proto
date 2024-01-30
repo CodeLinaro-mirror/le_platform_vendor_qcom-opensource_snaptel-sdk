@@ -7,7 +7,7 @@ syntax = "proto3";
 
 package sensorStub;
 import "google/protobuf/empty.proto";
-import "common.proto";
+import "common_simulation.proto";
 
 /*******************************************************************
  * Services Definition                                             *

@@ -27,7 +27,7 @@
 #include "event/ServerEventManager.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 
-#include "protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc_simulation.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

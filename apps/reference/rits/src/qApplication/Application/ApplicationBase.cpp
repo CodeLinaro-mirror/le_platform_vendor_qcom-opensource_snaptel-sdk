@@ -1322,6 +1322,17 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("psidValue") != configs.end()) {
         configuration.psid = stoi(configs["psidValue"],0,16);
     }
+    if (configs.find("fakeRVTempIds") != configs.end()) {
+        if (configs["fakeRVTempIds"].find("true") != std::string::npos){
+            this->configuration.fakeRVTempIds = true;
+            if (configs.find("totalFakeRVTempIds") != configs.end()) {
+                this->configuration.totalFakeRVTempIds = stoi(configs["totalFakeRVTempIds"]);
+            }
+        }else{
+            this->configuration.fakeRVTempIds = false;
+        }
+    }
+
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
         if (configs["EnableSecurity"].find("true") != std::string::npos)

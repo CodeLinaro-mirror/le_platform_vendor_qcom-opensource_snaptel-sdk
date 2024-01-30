@@ -264,6 +264,8 @@ struct Config{
     bool acceptAll = false;
     bool overrideVerifResult = false;
     int overrideVerifValue = -1;
+    bool fakeRVTempIds = false;
+    uint32_t totalFakeRVTempIds = 500;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;

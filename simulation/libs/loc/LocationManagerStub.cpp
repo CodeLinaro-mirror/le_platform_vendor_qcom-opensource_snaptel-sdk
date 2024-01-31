@@ -898,7 +898,8 @@ void LocationManagerStub::parseRequest(std::string msg) {
                 time.time.gps.systemWeek = std::stoul(message[itr++]);
                 loc->setGnssSystemTime(time);
             }
-
+            std::bitset<NAV_COUNT> navSol = std::stoull(message[itr++]);
+            loc->setNavigationSolution(navSol);
 
             //Send data to clients.
             for (auto iter = listeners_.begin(); iter != listeners_.end();) {

@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -85,6 +85,42 @@ void MyLocationListener::printSbasCorrectionEx(
    if(correction[(telux::loc::SbasCorrectionType)
        telux::loc::SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_]) {
       std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
+}
+
+void MyLocationListener::printNavigationSolutionEx(
+   std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+   telux::loc::NavigationSolution solution = locationInfo->getNavigationSolution();
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_IONO]) {
+      std::cout << "SBAS ionospheric correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_FAST]) {
+      std::cout << "SBAS fast correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_LONG]) {
+      std::cout << "SBAS long correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_INTEGRITY]) {
+      std::cout << "SBAS integrity information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_DGNSS_SOLUTION]) {
+      std::cout << "DGNSS information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_RTK_SOLUTION]) {
+      std::cout << "RTK information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_PPP_SOLUTION]) {
+      std::cout << "PPP information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_RTK_FIXED_SOLUTION]) {
+      std::cout << "RTK fixed information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)
+      telux::loc::NAV_ONLY_SBAS_CORRECTED_SV_USED]) {
+      std::cout << "Only SBAS corrected SV information is used" << std::endl;
    }
 }
 
@@ -1196,6 +1232,7 @@ void MyLocationListener::onDetailedLocationUpdate(
       }
    }
    printSbasCorrectionEx(locationInfo);
+   printNavigationSolutionEx(locationInfo);
    printLocationPositionTech(locationInfo);
    printLocationPositionDynamics(locationInfo);
    printGnssMeasurementInfo(locationInfo);
@@ -1390,6 +1427,7 @@ void MyLocationListener::onDetailedLocationUpdate(
                          << info.gloFourYear << ",";
         } // GNSS_LOC_SV_SYSTEM_SBAS, no timeInfo
 
+        recordStream << locationInfo->getNavigationSolution() << ",";
         DETAILED_RECORDING << recordStream.str() << std::endl;
    }
 }
@@ -1461,6 +1499,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
       }
      }
      printSbasCorrectionEx(locationInfo);
+     printNavigationSolutionEx(locationInfo);
      printLocationPositionTech(locationInfo);
      printLocationPositionDynamics(locationInfo);
      printGnssMeasurementInfo(locationInfo);

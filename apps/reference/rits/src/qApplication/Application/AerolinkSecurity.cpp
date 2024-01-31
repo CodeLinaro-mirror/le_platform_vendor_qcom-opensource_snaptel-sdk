@@ -64,6 +64,7 @@
 
 #include <iostream>
 #include <sys/time.h>
+#include "qUtils.hpp"
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */
@@ -255,6 +256,19 @@ void printVerifStats(std::thread::id thrId){
 
 static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
     // on call back, this function provides the new cert index for the complete id change cb fn
+    static uint8_t rng_data = 0;
+    int rng_ret = -1;
+    auto app = static_cast<QUtils*>(userData);
+    rng_ret = app->hwTRNGChar(&rng_data);
+    if(rng_ret){
+        printf("Failure in Randon Number Generation for Cert ID \n");
+    }
+    rng_data = (rng_data % numCerts) + 1;
+    if(secVerbosity > 1)
+    {
+        printf(" Random CertIndex within 1 to %d is :%d \n ", numCerts , rng_data);
+    }
+    memcpy(certIndxCb,&rng_data,sizeof(rng_data));
 }
 
 /* The following type defines a callback function prototype for completion of the ID-change

@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <telux/common/CommonDefines.hpp>
 
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 
 class IServerEventListener {
 public:

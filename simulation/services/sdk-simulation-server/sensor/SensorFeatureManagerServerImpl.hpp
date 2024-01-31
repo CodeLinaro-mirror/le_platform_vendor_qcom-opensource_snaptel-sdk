@@ -19,7 +19,7 @@
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "event/ServerEventManager.hpp"
 
-#include "protos/proto-src/sensor.grpc.pb.h"
+#include "protos/proto-src/sensor_simulation.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

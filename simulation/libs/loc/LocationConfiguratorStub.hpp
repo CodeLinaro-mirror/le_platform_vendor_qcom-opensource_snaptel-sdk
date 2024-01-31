@@ -50,7 +50,7 @@
 #include <map>
 
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc_simulation.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;

@@ -38,7 +38,6 @@ add_subdirectory(sensor)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common
-    telux_data
     telux_protos
     ${PROTOBUF_LIB_LIBRARIES}
     ${GRPC_LIB_LIBRARIES}

@@ -49,7 +49,7 @@
 #include "CardAppStub.hpp"
 #include <telux/tel/CardManager.hpp>
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;

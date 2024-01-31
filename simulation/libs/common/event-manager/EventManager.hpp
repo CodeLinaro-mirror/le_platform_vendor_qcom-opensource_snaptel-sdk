@@ -56,7 +56,7 @@
 
 #include "EventParserUtil.hpp"
 #include "AsyncTaskQueue.hpp"
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 #include "Logger.hpp"
 #include "CommonUtils.hpp"
 

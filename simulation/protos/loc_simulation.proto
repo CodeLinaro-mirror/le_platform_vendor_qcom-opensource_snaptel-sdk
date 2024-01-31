@@ -7,8 +7,8 @@ syntax = "proto3";
 
 package locStub;
 import "google/protobuf/empty.proto";
-import "common.proto";
-import "event.proto";
+import "common_simulation.proto";
+import "event_simulation.proto";
 // option optimize_for = CODE_SIZE;
 
 /*******************************************************************

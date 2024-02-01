@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -168,6 +168,8 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
                 auto status = activeSession_->createStream(config);
                 if (status == Status::SUCCESS) {
                     std::cout << "Stream created on slotId : " << slotId_ << std::endl;
+                } else if(status == Status::ALREADY) {
+                    std::cout << "Stream exist please delete first" << std::endl;
                 } else {
                     std::cout << "Stream creation failed on slotId : " << slotId_ << std::endl;
                 }
@@ -389,6 +391,8 @@ void VoiceMenu::startAudio(std::vector<std::string> userInput) {
                 Status status = activeSession_->startAudio();
                 if (status == Status::SUCCESS) {
                     std::cout << "Audio started on slotId : " << slotId_ << std::endl;
+                } else if(status == Status::ALREADY) {
+                    std::cout << "Audio already started on slotId : " << slotId_ << std::endl;
                 } else {
                     std::cout << "Failed to start audio on slotId : " << slotId_ << std::endl;
                 }

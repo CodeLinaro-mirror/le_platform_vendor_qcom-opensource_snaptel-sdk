@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -515,6 +515,7 @@ Status AudioClient::deleteStream(StreamType streamType, SlotId slotId) {
         std::cout << "request to delete stream sent" << std::endl;
     } else {
         std::cout << "Request to delete stream failed"  << std::endl;
+        return Status::FAILED;
     }
     if (p.get_future().get()) {
         if(streamType == StreamType::VOICE_CALL) {
@@ -565,6 +566,7 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
             std::cout << "Request to get device sent" << std::endl;
         } else {
             std::cout << "Request to get device failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
@@ -602,6 +604,7 @@ void AudioClient::setStreamDevice(StreamType streamType, SlotId slotId) {
             std::cout << "Request to set device sent" << std::endl;
         } else {
             std::cout << "Request to set device failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
              std::cout << "set stream device succeeded." << std::endl;
@@ -634,6 +637,7 @@ void AudioClient::setVolume(StreamType streamType, SlotId slotId) {
             std::cout << "Request to set volume sent" << std::endl;
         } else {
             std::cout << "Request to set volume failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::cout << "setStreamVolume() succeeded." << std::endl;
@@ -668,6 +672,7 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
             std::cout << "Request to get volume sent" << std::endl;
         } else {
             std::cout << "Request to get volume failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
@@ -731,6 +736,7 @@ void AudioClient::setMute(StreamType streamType, SlotId slotId) {
             std::cout << "Request to set mute sent " << std::endl;
         } else {
             std::cout << "Request to set mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             if (mute.enable) {
@@ -771,6 +777,7 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
             std::cout << "Request to get mute sent" << std::endl;
         } else {
             std::cout << "Request to get mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::string muteStatus;

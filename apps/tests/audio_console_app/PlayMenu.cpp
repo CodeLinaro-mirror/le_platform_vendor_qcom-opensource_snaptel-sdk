@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -185,6 +185,7 @@ void PlayMenu::deleteStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioPlayStream_) {
         playStatus_ = false;
+        writeFail_ = false;
         for(std::thread &th : runningThreads_) {
             if(th.joinable()){
                 th.join();
@@ -267,6 +268,7 @@ void PlayMenu::startPlay(std::vector<std::string> userInput) {
 
 void PlayMenu::stopPlay(std::vector<std::string> userInput) {
     playStatus_ = false;
+    writeFail_ = false;
     if (audioPlayStream_) {
         if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
             (playFormat_ == AudioFormat::AMRWB) ||
@@ -358,6 +360,7 @@ void PlayMenu::play() {
     }
     playStatus_ = true;
     pipeLineEmpty_ = true;
+    writeFail_ = false;
     std::cout << "Audio play started" << std::endl;
     while (!feof(file_) && playStatus_)
     {

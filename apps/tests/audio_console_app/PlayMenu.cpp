@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -283,11 +283,11 @@ void PlayMenu::stopPlay(std::vector<std::string> userInput) {
                 });
             if(status == telux::common::Status::SUCCESS){
                 std::cout << "Request to force stop Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Force Stop successful" << std::endl;
+                }
             } else {
                 std::cout << "Request to force stop failed" << std::endl;
-            }
-            if (p.get_future().get()) {
-                    std::cout << "Force Stop successful" << std::endl;
             }
         }
     } else {
@@ -427,8 +427,8 @@ void PlayMenu::play() {
                 std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
                 if (p.get_future().get()) {
                     std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
                 }
-                playStopcv_.wait(lck);
             } else {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }

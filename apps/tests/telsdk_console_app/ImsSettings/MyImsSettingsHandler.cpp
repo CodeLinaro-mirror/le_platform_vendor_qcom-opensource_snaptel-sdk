@@ -71,6 +71,14 @@ void MyImsSettingsCallback::onRequestImsServiceConfig(SlotId slotId,
                PRINT_CB << "SMS over IMS is disabled \n";
            }
         }
+        //For RTT over IMS configuration
+        if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT]) {
+           if (config.rttEnabled) {
+               PRINT_CB << "RTT over IMS is enabled \n";
+           } else {
+               PRINT_CB << "RTT over IMS is disabled \n";
+           }
+        }
     }
 }
 
@@ -81,6 +89,19 @@ void MyImsSettingsCallback::onResponseCallback(telux::common::ErrorCode error) {
                  << " Description : " << Utils::getErrorCodeAsString(error) << "\n";
     } else {
         PRINT_CB << "Request processed successfully \n";
+    }
+}
+
+void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(SlotId slotId,
+   std::string sipUserAgent, telux::common::ErrorCode errorCode) {
+    std::cout << " Request IMS SIP user agent config response received on slotId "
+              << static_cast<int>(slotId) << "\n";
+    if (errorCode != telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Request failed with errorCode: " << static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
+    } else {
+        //SipUserAgent configuration
+        PRINT_CB << "sipUserAgent is " << sipUserAgent << "\n";
     }
 }
 

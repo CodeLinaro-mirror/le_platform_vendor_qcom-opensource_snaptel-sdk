@@ -57,6 +57,9 @@ public:
 
     void requestImsServiceConfig(std::vector<std::string> userInput);
     void setImsServiceConfig(std::vector<std::string> userInput);
+    void setImsUserAgentConfig(std::vector<std::string> userInput);
+    void requestImsUserAgentConfig(std::vector<std::string> userInput);
+
 
 private:
     // Member variable to keep the Listener object alive till application ends.

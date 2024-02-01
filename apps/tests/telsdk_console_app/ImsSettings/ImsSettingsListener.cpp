@@ -69,6 +69,14 @@ void ImsSettingsListener::onImsServiceConfigsChange(SlotId slotId,
            PRINT_NOTIFICATION << "SMS over IMS is disabled \n";
        }
     }
+    //For RTT configuration
+    if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT]) {
+       if (config.rttEnabled) {
+           PRINT_NOTIFICATION << "RTT is enabled \n";
+       } else {
+           PRINT_NOTIFICATION << "RTT is disabled \n";
+       }
+    }
 }
 
 void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
@@ -86,6 +94,11 @@ void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus sta
          break;
    }
 
-   PRINT_NOTIFICATION << " Ims Settings onServiceStatusChange" << stat << "\n";
+   PRINT_NOTIFICATION << " IMS Settings onServiceStatusChange" << stat << "\n";
 }
 
+void ImsSettingsListener::onImsSipUserAgentChange(SlotId slotId, std::string sipUserAgent) {
+
+   PRINT_NOTIFICATION << " IMS SIP user agent is " << sipUserAgent << " on slot "
+      << static_cast<int>(slotId) << "\n";
+}

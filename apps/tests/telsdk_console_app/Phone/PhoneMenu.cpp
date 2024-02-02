@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -500,7 +500,7 @@ void PhoneMenu::selectSimSlot(std::vector<std::string> userInput) {
 void PhoneMenu::requestOperatorName(std::vector<std::string> userInput) {
    auto phone = phones_[slot_ - 1];
    if(phone) {
-        auto status = phone->requestOperatorName(MyOperatorNameCallback::requestOperatorNameCb);
+        auto status = phone->requestOperatorInfo(MyOperatorInfoCallback::requestOperatorInfoCb);
         if (status == Status::SUCCESS) {
             std::cout << "Request Operator name sent successfully\n";
         } else {

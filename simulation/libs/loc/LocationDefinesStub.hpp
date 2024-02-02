@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -254,6 +254,7 @@ class LocationInfoEx : public ILocationInfoEx {
     SvUsedInPosition svUsedInPosition_;
     std::vector<uint16_t> usedSVsIds_;
     SbasCorrection sbasCorrection_;
+    NavigationSolution navigationSolution_;
     uint32_t positionTechnology_ = 0;
     GnssKinematicsData bodyFrameData_;
     std::vector<GnssMeasurementInfo> measUsageInfo_;
@@ -581,6 +582,14 @@ public:
     SbasCorrection getSbasCorrection() override { return sbasCorrection_;}
 
 /**
+ * Retrieves navigation solution mask used to indicate solutions used in the fix.
+ *
+ * @return - Navigation solution mask used.
+ *
+ */
+  virtual NavigationSolution getNavigationSolution() override {return navigationSolution_;}
+
+/**
  * Retrieves position technology mask used to indicate which technology is used.
  *
  * return - Position technology used in computing this fix.
@@ -820,6 +829,7 @@ public:
         }
     }
     void setSbasCorrection(SbasCorrection &val) { sbasCorrection_ = val;}
+    void setNavigationSolution(NavigationSolution &val) { navigationSolution_ = val;}
     void setPositionTechnology(uint32_t val) { positionTechnology_ = val;}
     void setBodyFrameData(GnssKinematicsData &val) { bodyFrameData_ = val;}
     void setMeasUsageInfo(std::vector<GnssMeasurementInfo> &val) {

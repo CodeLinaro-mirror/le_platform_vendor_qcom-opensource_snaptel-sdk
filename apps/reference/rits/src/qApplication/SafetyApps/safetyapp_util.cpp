@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -415,7 +415,7 @@ lane_types classify_lane(msg_contents *host, msg_contents *remote)
  * Differs from basic verison. Also checks if the host would approximately travel in the
  * same dir of RV
  */
-double time_to_crash_adv(msg_contents *host, msg_contents *remote)
+double time_to_crash_adv(msg_contents *host, msg_contents *remote, double distFromRV)
 {
     bsm_value_t *host_bsm = (bsm_value_t *)host->j2735_msg;
     bsm_value_t *remote_bsm = (bsm_value_t *)remote->j2735_msg;
@@ -444,35 +444,31 @@ double time_to_crash_adv(msg_contents *host, msg_contents *remote)
     if (!match || host_bsm->Speed < remote_bsm->Speed) {
         return 10002;
     }
-    double distance = calc_distance(host_bsm->Latitude, host_bsm->Longitude,
-        remote_bsm->Latitude, remote_bsm->Longitude);
 
+    // use provided distance (distance from RV should not be zero)
     double speed_diff = (host_bsm->Speed - remote_bsm->Speed) * 0.02;
     if (speed_diff == 0)
         return 10000;
-    return distance / (speed_diff);
+    return distFromRV / (speed_diff);
 }
 
 
 // host in the back and remote in the front
-double time_to_crash(msg_contents *host, msg_contents *remote)
+double time_to_crash(msg_contents *host, msg_contents *remote, double distFromRV)
 {
     bsm_value_t *host_bsm = (bsm_value_t *)host->j2735_msg;
     bsm_value_t *remote_bsm = (bsm_value_t *)remote->j2735_msg;
     if (host_bsm->Heading_degrees != 28800)
-        return time_to_crash_adv(host, remote);
+        return time_to_crash_adv(host, remote, distFromRV);
     else {
 
         if (host_bsm->Speed < remote_bsm->Speed) {
             return 10000;
         }
-        double distance = calc_distance(host_bsm->Latitude, host_bsm->Longitude,
-            remote_bsm->Latitude, remote_bsm->Longitude);
-
         double speed_diff = (host_bsm->Speed - remote_bsm->Speed) * 0.02;
         if (speed_diff == 0)
             return 0;
-        return distance / (speed_diff);
+        return distFromRV / (speed_diff);
     }
 }
 
@@ -481,6 +477,7 @@ void print_rvspecs(rv_specs *rv)
 {
     printf("Is it out of Zone : %d\n", rv->out_of_zone);
     printf("TTC : %f\n", rv->ttc);
+    printf("Distance from RV : %f\n", rv->distFromRV);
     printf("Lane types : %d\n", rv->lt);
     printf("Rapid Decl : %d\n", rv->rapid_decl);
     printf("Stopped : %d\n", rv->stopped);
@@ -567,7 +564,12 @@ void fill_RV_specs(msg_contents *host, msg_contents *remote, rv_specs *rvsp)
     bsm_value_t *remote_bsm = (bsm_value_t *)remote->j2735_msg;
 
     rvsp->rapid_decl = rapid_decl(remote);
-    rvsp->ttc = time_to_crash(host, remote);
+    // use provided distance unless not provided (distance from RV should not be zero)
+    if(rvsp->distFromRV == 0.0){
+        rvsp->distFromRV = calc_distance(host_bsm->Latitude, host_bsm->Longitude,
+        remote_bsm->Latitude, remote_bsm->Longitude);
+    }
+    rvsp->ttc = time_to_crash(host, remote, rvsp->distFromRV);
     rvsp->out_of_zone = out_of_zone(host, remote);
     rvsp->lt = classify_lane(host, remote);
     if (remote_bsm->Speed < MOVING_VEH_SPEED_THR)

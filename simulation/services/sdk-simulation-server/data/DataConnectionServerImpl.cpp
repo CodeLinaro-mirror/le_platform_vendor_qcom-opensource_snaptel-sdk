@@ -521,6 +521,31 @@ void DataConnectionServerImpl::triggerStopDataCallEvent(int profileId, int slotI
 
     inactiveNwIfaces_.insert(ifaceName);
     activeNwIfaces_.erase(ifaceName);
+
+    //To handle the use cases which are impacted if no datacall exists, we are letting
+    //other managers know that all the active calls have been teared down.
+    //For ex: DataFilterManager DataRestrictMode shall be diabled if no active datacall.
+    bool triggerNotification = false;
+    if (slotId == SLOT_ID_1) {
+        if (dataCallsSlot1_.size() == 0) {
+            triggerNotification = true;
+        }
+    } else {
+        if (dataCallsSlot2_.size() == 0) {
+            triggerNotification = true;
+        }
+    }
+
+    if (triggerNotification) {
+        ::dataStub::NoActiveDataCall dataCallNotification;
+        ::eventService::ServerEvent anyResponse;
+
+        dataCallNotification.set_slot_id(slotId);
+        anyResponse.set_filter("data_connection_server");
+        anyResponse.mutable_any()->PackFrom(dataCallNotification);
+        auto& serverEventManager = ServerEventManager::getInstance();
+        serverEventManager.sendServerEvent(anyResponse);
+    }
 }
 
 grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
@@ -637,4 +662,15 @@ grpc::Status DataConnectionServerImpl::CleanUpService(ServerContext* context,
     dataCallsSlot2_.clear();
     activeNwIfaces_.clear();
     return grpc::Status::OK;
+}
+
+bool DataConnectionServerImpl::isAnyDataCallActive(SlotId slotId) {
+    bool callActive = false;
+    if (slotId == SLOT_ID_1) {
+        callActive = (dataCallsSlot1_.size() == 0)? false : true;
+    } else if (slotId == SLOT_ID_2) {
+        callActive = (dataCallsSlot2_.size() == 0)? false : true;
+    }
+
+    return callActive;
 }

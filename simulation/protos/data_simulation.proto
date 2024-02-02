@@ -66,13 +66,13 @@ service DataProfileManager {
   */
 
 service DataFilterManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(SlotInfo) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc GetDataRestrictMode(GetDataRestrictModeRequest) returns (DataRestrictMode) {}
-    rpc SetDataRestrictMode(SetDataRestrictModeRequest) returns (google.protobuf.Empty) {}
-    rpc AddDataRestrictFilter(AddDataRestrictFilterRequest) returns (google.protobuf.Empty) {}
+    rpc GetDataRestrictMode(GetDataRestrictModeRequest) returns (GetDataRestrictModeReply) {}
+    rpc SetDataRestrictMode(SetDataRestrictModeRequest) returns (DefaultReply) {}
+    rpc AddDataRestrictFilter(AddDataRestrictFilterRequest) returns (DefaultReply) {}
     rpc RemoveAllDataRestrictFilter(RemoveDataRestrictFilterRequest) returns
-        (google.protobuf.Empty) {}
+        (DefaultReply) {}
 }
 
 /*
@@ -208,6 +208,10 @@ message StartDataCallEvent {
     string dns_secondary_address = 8;
     string ipv6_address = 9;
     string gwv6_address = 10;
+}
+
+message NoActiveDataCall {
+    int32 slot_id = 1;
 }
 
 // Defines type of SubsystemReadiness APIs to be called old or new.
@@ -524,26 +528,22 @@ message GetDataRestrictModeRequest {
     int32 slot_id = 1;
 }
 
-message SetDataRestrictModeRequest {
-    int32 slot_id = 1;
-    int32 profile_id = 2;
-    IpFamilyType ip_family_type = 3;
-    DataRestrictMode filter_mode = 4;
+message GetDataRestrictModeReply {
+    DefaultReply reply = 1;
+    DataRestrictMode filter_mode = 2;
 }
 
-message DataRestrictFilter {
-    int32 profile_id = 1;
-    IpFamilyType ip_family_type = 2;
+message SetDataRestrictModeRequest {
+    int32 slot_id = 1;
+    DataRestrictMode filter_mode = 2;
 }
 
 message AddDataRestrictFilterRequest {
     int32 slot_id = 1;
-    DataRestrictFilter add_data_restrict_filter = 2;
 }
 
 message RemoveDataRestrictFilterRequest {
     int32 slot_id = 1;
-    DataRestrictFilter remove_data_restrict_filter = 2;
 }
 
 message CreateVlanRequest {

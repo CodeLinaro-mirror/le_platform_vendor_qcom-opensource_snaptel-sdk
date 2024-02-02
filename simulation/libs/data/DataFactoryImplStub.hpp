@@ -92,10 +92,13 @@ class DataFactoryImplStub : public DataFactory,
     std::map<SlotId, std::weak_ptr<IServingSystemManager>> dataServingSystemManagerMap_;
     std::map<telux::data::OperationType, std::weak_ptr<IDataSettingsManager>>
         dataSettingsManagerMap_;
+    std::map<SlotId, std::weak_ptr<IDataFilterManager>> dataFilterManagerMap_;
+
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;
     std::map<OperationType, std::vector<telux::common::InitResponseCb>> dataSettingsCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataFilterCallbacks_;
 };
 
 }  // namespace data

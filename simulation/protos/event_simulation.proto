@@ -39,3 +39,8 @@ message UnsolicitedEvent {
 message CleanupRequest {
     int32 client_id = 1;
 }
+
+message ServerEvent {
+    string filter = 1;
+    google.protobuf.Any any = 2;
+}

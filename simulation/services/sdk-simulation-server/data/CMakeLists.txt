@@ -5,6 +5,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/DataProfileServerImpl.cpp
     data/DataSettingsServerImpl.cpp
     data/ServingSystemServerImpl.cpp
+    data/DataFilterServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

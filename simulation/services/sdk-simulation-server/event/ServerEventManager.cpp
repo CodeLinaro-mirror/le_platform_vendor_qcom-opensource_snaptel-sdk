@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -64,6 +64,34 @@ void ServerEventManager::handleEventNotifications(
             }
             ++it;
         }
+    }
+}
+
+/**
+* This overloaded method forwards the incoming events from server manager implementations.
+* It is mainly to handle the use cases where an action performed on one manager, impacts
+* the other manager. For ex: RAT preference changed by Telephony may impact data as well.
+* Based on the filtering results, message is either forwarded to the listener or ignored.
+*/
+void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string filter = message.filter();
+    std::lock_guard<std::mutex> lk(listenerMutex_);
+
+    LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
+    //passing the unsolicited event to the listener who subscribed for it
+    auto &eventListeners = listeners_[filter];
+    for (auto it = eventListeners.begin(); it != eventListeners.end();) {
+        auto sp = (*it).lock();
+        if (sp) {
+            sp->onServerEvent(message.any());
+        } else {
+            LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
+            it = eventListeners.erase(it);
+            continue;
+        }
+        ++it;
     }
 }
 
@@ -172,4 +200,3 @@ void ServerEventManager::updateApiResponse(std::string message) {
         CommonUtils::updateJsonValue(path, subsystem, api, attribute, value);
     }
 }
-

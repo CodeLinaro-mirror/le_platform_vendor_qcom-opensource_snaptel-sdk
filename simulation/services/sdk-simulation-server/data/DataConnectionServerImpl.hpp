@@ -86,6 +86,7 @@ public:
         ::google::protobuf::Empty* response) override;
 
     void stopActiveDataCalls(SlotId slotId);
+    bool isAnyDataCallActive(SlotId slotId);
 
 private:
     bool getIpv4Address(const std::string &ifaceName,

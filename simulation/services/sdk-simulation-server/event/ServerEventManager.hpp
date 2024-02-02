@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -18,7 +18,7 @@
 class IServerEventListener {
 public:
     /**
-     * @brief This API is to receive the events, broadcasted by EventManager
+     * @brief This API is to receive the events, broadcasted by ServerEventManager
      * locally to all the managers on server side.
      * The events triggered from event_injector are in string format &
      * has to converted to google::protobuf::Any type by vertical specific server Impl.
@@ -26,6 +26,17 @@ public:
      * @param event - A string depicting the event.
      */
     virtual void onEventUpdate(::eventService::UnsolicitedEvent event) {}
+
+    /**
+     * @brief This API is to receive the events, broadcasted by ManagerServerImpl
+     * locally to all the managers on server side.
+     * It is mainly to handle the use cases where an action performed on one manager, impacts
+     * the other manager. For ex: RAT preference changed by Telephony may impact data as well.
+     *
+     * @param event - google::protobuf::Any message depicting the event
+     */
+    virtual void onServerEvent(google::protobuf::Any event) {}
+
     virtual ~IServerEventListener() {}
 };
 
@@ -53,6 +64,7 @@ public:
         std::weak_ptr<IServerEventListener> listener, std::string filter);
 
     void handleEventNotifications(::eventService::UnsolicitedEvent message);
+    void sendServerEvent(::eventService::ServerEvent message);
 
 private:
     ServerEventManager();
@@ -63,6 +75,7 @@ private:
     std::unordered_map<std::string,
         std::set<std::weak_ptr<IServerEventListener>,
         std::owner_less<std::weak_ptr<IServerEventListener>>>> listeners_;
+
     std::mutex listenerMutex_;
 };
 

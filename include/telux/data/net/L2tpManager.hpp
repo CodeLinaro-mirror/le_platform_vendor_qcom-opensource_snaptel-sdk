@@ -280,6 +280,8 @@ class IL2tpManager {
      * and sessions are not changed by this API. This API only adds a new session to the tunnel.
      * This setting is persistent across reboots.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] tunnelId          Tunnel ID to add the session to.
      * @param [in] sessionConfig     Configuration of added session.
@@ -299,6 +301,8 @@ class IL2tpManager {
      * and sessions will not change by this API. This API only removes a session from the tunnel.
      * This setting is persistent across reboots.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] tunnelId          Tunnel ID to remove the session from
      * @param [in] sessionId         Session ID to be removed.
@@ -318,6 +322,9 @@ class IL2tpManager {
      * bridges associated with VLANs.
      * This setting is persistent across reboots.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] sessionBindConfig   Backhaul information to bind session ID to.
      *                                 @ref telux::data::net::L2tpSessionBindConfig
      * @param [in] callback            Callback to get the bindSessionToBackhaul response; optional
@@ -335,6 +342,9 @@ class IL2tpManager {
      * Unbind L2TP session from the specified backhaul. This API will stop L2TP session traffic flow
      * to/from specified backhaul type.
      * This setting is persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] sessionBindConfig     Backhaul information to unbind VLAN ID from.
      *                                   @ref telux::data::net::L2tpSessionBindConfig

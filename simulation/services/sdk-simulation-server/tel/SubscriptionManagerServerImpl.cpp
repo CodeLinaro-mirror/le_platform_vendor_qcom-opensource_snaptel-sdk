@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -35,6 +35,7 @@
 #include"SubscriptionManagerServerImpl.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 #define PATH "system-state/tel/ISubscriptionManagerState.json"
 #define SUBSCRIPTION_EVENT "subscriptionInfoChanged"
@@ -185,6 +186,12 @@ void SubscriptionManagerServerImpl::handlesubscriptionInfoChanged(std::string ev
             slotId = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    if(slotId == SLOT_ID_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
         }
     }
     LOG(DEBUG, __FUNCTION__, "The fetched slot id is: ", slotId

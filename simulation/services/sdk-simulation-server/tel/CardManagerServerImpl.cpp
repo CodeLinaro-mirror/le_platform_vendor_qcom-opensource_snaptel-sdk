@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -34,6 +34,7 @@
 
 #include "CardManagerServerImpl.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 #define JSON_PATH1 "system-state/tel/ICardManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ICardManagerStateSlot2.json"
@@ -2072,6 +2073,12 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
             slotId = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    if(slotId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
         }
     }
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);

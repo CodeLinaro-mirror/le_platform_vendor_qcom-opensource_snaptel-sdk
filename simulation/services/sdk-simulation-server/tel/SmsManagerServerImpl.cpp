@@ -37,6 +37,7 @@
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include "event/EventService.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 #define JSON_PATH1 "system-state/tel/ISmsManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ISmsManagerStateSlot2.json"
@@ -912,13 +913,14 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
 }
 
 void SmsManagerServerImpl::onEventUpdate(std::string event) {
-    std::string token;
     LOG(DEBUG, __FUNCTION__,"String is ", event );
-    if ( INCOMING_SMS_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__,"Token is ", token );
+    if ( INCOMING_SMS_EVENT == token) {
         handleIncomingSms(event);
-    } else if( MEMORY_FULL_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+    } else if( MEMORY_FULL_EVENT == token) {
         handleMemoryFullEvent(event);
-    }else {
+    } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
 }
@@ -930,17 +932,30 @@ void SmsManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent messag
 }
 
 void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
-    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
     int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if(token == "") {
         LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
         slotId = 1;
+    } else {
+        try {
+            slotId = std::stoi(token);
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
     }
+    if(slotId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId);
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
     // Fetch storage type
     std::string input;
     token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    input =  token;
     if(token == "") {
         LOG(INFO, __FUNCTION__, "Storage type not passed, assuming UNKNOWN");
         input = "UNKNOWN";
@@ -1022,6 +1037,12 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
             phoneId = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
         }
     }
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);

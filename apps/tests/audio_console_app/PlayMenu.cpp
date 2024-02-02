@@ -427,29 +427,36 @@ void PlayMenu::play() {
         }
     }
 
-    if (ready_ && isAMR()) {
-        std::unique_lock<std::mutex> lck(playStopMutex_);
+    if (ready_) {
+        if(isAMR()) {
+            std::unique_lock<std::mutex> lck(playStopMutex_);
 
-        auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
-            [&p](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                    p.set_value(true);
-                } else {
-                    p.set_value(false);
-                    std::cout << "Failed to stop after playing buffers" << std::endl;
+            auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
+                [&p](telux::common::ErrorCode error) {
+                    if (error == telux::common::ErrorCode::SUCCESS) {
+                        p.set_value(true);
+                    } else {
+                        p.set_value(false);
+                        std::cout << "Failed to stop after playing buffers" << std::endl;
+                    }
+            });
+
+            if(status == telux::common::Status::SUCCESS) {
+                std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
                 }
-        });
-
-        if(status == telux::common::Status::SUCCESS) {
-            std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
-            if (p.get_future().get()) {
-                std::cout << "Pending buffers played successfully" << std::endl;
-                playStopcv_.wait(lck);
+            } else {
+                std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
         } else {
-            std::cout << "Request to stop playback after pending buffers failed" << std::endl;
+            while(freeBuffers_.size() != TOTAL_BUFFERS) {
+                cv_.wait(lock);
+            }
         }
     }
+
 
     if(writeFail_) {
         std::cout << "Play Failed" << std::endl;

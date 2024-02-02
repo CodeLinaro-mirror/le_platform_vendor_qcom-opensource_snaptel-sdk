@@ -84,6 +84,7 @@ CaptureMenu::CaptureMenu(std::string appName, std::string cursor,
 CaptureMenu::~CaptureMenu() {
     audioClient_ = nullptr;
     captureStatus_ = false;
+    readFail_ = false;
 
     for(std::thread &th : runningThreads_) {
         if(th.joinable()){
@@ -189,6 +190,7 @@ void CaptureMenu::deleteStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioCaptureStream_) {
         captureStatus_ = false;
+        readFail_ = false;
         for(std::thread &th : runningThreads_) {
             if(th.joinable()){
                 th.join();
@@ -271,6 +273,7 @@ void CaptureMenu::startCapture(std::vector<std::string> userInput) {
 
 void CaptureMenu::stopCapture(std::vector<std::string> userInput) {
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 
@@ -312,15 +315,16 @@ void CaptureMenu::record() {
         std::cout << "Unable to Create File " <<std::endl;
         return;
     }
+
     captureStatus_ = true;
     std::cout << "Audio Capture Started" << std::endl;
+    auto readCb =  std::bind(&CaptureMenu::readCallback, this,
+                  std::placeholders::_1, std::placeholders::_2);
     while (captureStatus_)
     {
         if(!freeBuffers_.empty()) {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
-            auto readCb =  std::bind(&CaptureMenu::readCallback, this,
-                  std::placeholders::_1, std::placeholders::_2);
             telux::common::Status status = audioCaptureStream_->read(streamBuffer,
                     bytesToRead, readCb);
             if(status != telux::common::Status::SUCCESS) {
@@ -344,21 +348,24 @@ void CaptureMenu::record() {
             cv_.wait(lock);
         }
         std::cout << "File Recording Failed" <<std::endl;
-    } else {
+    }  else {
     /* WaitTime is time required to receive buffer for the last read request.
        We calculate the total time by converting max buffer size in bytes to bits, then we divide
        this by frame size which is numChannel(mono/setero)*16(2 byte per analog sample) and
        samplerate to get time.*/
         int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
-    waitTime = waitTime+100;
-    while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
-        cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        waitTime = waitTime+100;
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
+            cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        }
+        std::cout << "File Recorded SuccessFully" <<std::endl;
     }
+
     fflush(file_);
     fclose(file_);
-    std::cout << "File Recorded SuccessFully" <<std::endl;
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer,

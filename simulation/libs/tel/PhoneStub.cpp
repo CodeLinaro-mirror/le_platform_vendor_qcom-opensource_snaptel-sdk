@@ -114,6 +114,10 @@ telux::common::Status PhoneStub::requestOperatorName(OperatorNameCallback callba
     return telux::common::Status::NOTSUPPORTED;
 }
 
+telux::common::Status PhoneStub::requestOperatorInfo(OperatorInfoCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
 telux::common::Status PhoneStub::configureSignalStrength(
     std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
     callback) {

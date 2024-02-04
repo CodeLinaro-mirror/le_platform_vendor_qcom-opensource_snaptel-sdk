@@ -79,6 +79,7 @@ public:
    telux::common::Status configureSignalStrength(
       std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
       callback);
+   telux::common::Status requestOperatorInfo(OperatorInfoCallback callback);
 
 };
 

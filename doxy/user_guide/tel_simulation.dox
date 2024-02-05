@@ -29,11 +29,14 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 -Card: ICardApp, ICardFileHandler, ICardManager, ICardListener, ICard<br>
 -Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription<br>
 -Phone: IPhoneManager, IPhone <br>
+-Call: ICallManager, ICallListener, ICall <br>
 
 <br>
 - - -
 @section tel_resp Telephony APIs Response handling
 - - -
+
+@subsection tel_Sms SMS
 
 The framework allows responses to each API to be configured using a JSON file.<br>
 Each manager has its own JSON configuration file present under <i>simulation/json/api/tel/</i> <br>
@@ -64,7 +67,7 @@ Example for API command response for telux::tel::ISmsManager::SendSms<br>
 </pre>
 Here, clients are expected to provide the inputs for JSON attributes of API according to an encoded message.
 <br>
-The table explains the configuration for API response parameters of <i>simulation/json/api/tel/ISmsManagerSlot*.json</i>.
+The table explains the configuration for API response parameters of <i>simulation/json/api/tel/ISmsManagerSlot1.json and simulation/json/api/tel/ISmsManagerSlot2.json</i>.
 @table{2,{\raggedright}p{2.00in},{\raggedright}p{4.80in}}
 @trfirsthdg
 @thmultcol{1,|c|} Json Attribute @thmultcolend @thmultcollast{1,c|} Description @thmultcollastend
@@ -87,11 +90,38 @@ The table explains the configuration for API response parameters of <i>simulatio
 @tableend
 
 <br>
+
+@subsection tel_Call Call
+
+Currently the simulation framework supports outgoing, incoming voice calls and regulatory ECalls.It provides the flexibility to configure ECall HLAP timer failures maintained by NAD device.
+Support for Non Regulatory eCalls, conference calls and network deregistration in eCall only configuration will be added in upcoming releases.
+
+Details of parameters that can be configured in the Simulation framework. <br>
+
+- "configureFailureForRegulatoryECall" : To configure ECall HLAP timer expiry. <br>
+Supported Values: SUCCESS, T5FAILED, T6FAILED , T7FAILED. <br>
+<br>
+ -SUCCESS: Successful behavior during an eCall.<br>
+   <br>
+ -T5FAILED: This configuration would lead to expiry of T5 timer. The simulation framework depicts that SEND-MSD signal is not decoded successfully by PSAP so it shall terminate eCall specific behaviour (i.e. it shall not proceed with the sending of MSD data).<br>
+   When it is configured, T5 timer's timeout is set to 5 sec as per EN 16062:2015. <br>
+   <br>
+ -T6FAILED: This configuration would lead to expiry of T6 timer. The simulation framework depicts that AL-ACK message is not recieved by IVS-NAD so it shall mark the transfer of the MSD as unsuccessful and terminate eCall specific behaviour. <br>
+   When it is configured, T6 timer's timeout is set to 5 sec as per EN 16062:2015. <br>
+   <br>
+ -T7FAILED: This configuration would lead to expiry of T7 timer. The simulation framework depicts that LL-ACK message is not recieved by IVS-NAD so it shall mark the transfer of the MSD as unsuccessful and terminate eCall specific behaviour. <br>
+   Timer can be configured using telux::tel::ICallManager::getECallConfig(EcallConfig::t7Timer). <br>
+
+- "eCallType" : To configure service domain for regulatory ECall.  <br>
+Supported Values: NGeCall , CSeCall. <br>
+
+These parameters can be configured via <i> simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json</i> . <br>
+
 - - -
 @section tel_states Telephony data handling
 - - -
 
-@subsection tel_dataCard Card
+@subsection tel_Card Card
 
 Details of parameters currently configured in the Simulation framework to perform pin operations. <br>
 
@@ -100,9 +130,9 @@ Details of parameters currently configured in the Simulation framework to perfor
 - "Puk1password" : 11111111 - Password for puk1 for public API unlockCardByPuk.<br>
 - "Puk2password" : 22222222 - Password for puk2 for public API unlockCardByPuk.<br>
 
-file: <i>simulation/json/system-state/tel/ICardManagerStateSlot*.json</i> <br>
+file: <i>simulation/json/system-state/tel/ICardManagerStateSlot1.json and simulation/json/system-state/tel/ICardManagerStateSlot2.json</i> <br>
 
-@subsubsection tel_cardfiles Details of supported apps, EF files, and records
+@subsubsection tel_Cardfiles Details of supported apps, EF files, and records
 
 
 All the EF files are considered to be present at same file structure directory of simulated SIM files.<br>
@@ -167,7 +197,7 @@ telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 GSM7 1 07918185690700F02
 - Incoming SMS will be stored on the simulation server only when the preferred storage type is set to SIM.
 - It can be changed using <i>telux::tel::ISmsManager::setPreferredStorage</i>
 - Memory full indication ( <i>telux::tel::ISmsListener::onMemoryFull</i> ) will be sent to all the clients when the messages count on
-  the simulation server exceeds the defined count specified in <i>simulation/json/api/tel/ISmsManagerSlot*.json</i>
+  the simulation server exceeds the defined count specified in <i>simulation/json/api/tel/ISmsManagerSlot1.json and simulation/json/api/tel/ISmsManagerSlot2.json</i>
 <pre>
 "requestStorageDetails" :
 {
@@ -270,14 +300,45 @@ telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 2
 \htmlonly
 <BR>
 \endhtmlonly
-
 <br>
+
+@subsection event_5 Trigger an incoming call
+To simulate ICallManager event - telux::tel::ICallListener::onIncomingCall<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_call -e incomingCall 1 999999999
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_6 Hangup a voice call or an eCall
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_call -e hangupCall 1 1
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_7 Request to update Minimum Set of Data (MSD) for an eCall
+To simulate ICallManager event - telux::tel::ICallListener::OnMsdUpdateRequest<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_call -e msdUpdateRequest 1
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+<br>
+
 - - -
 @section tel_linm Additional Notes
 - - -
 
 Currently, the simulation behavior for Telephony is as follows:-
-1. Encoding of text messages provided by the client is not supported for <i>telux::tel::ISmsManager::sendSms</i>.
-2. Subsystem restart notifications provided using <i>telux::common::IServiceStatusListener::onServiceStatusChange</i> are not supported.
+1. Support for encoding of text messages provided by the client for <i>telux::tel::ISmsManager::sendSms</i> will be added in future releases.
+2. Support for subsystem restart notifications provided using <i>telux::common::IServiceStatusListener::onServiceStatusChange</i> will be added in future releases.
+3. Support for Standard eCall usecases for T2 and T9 timer management will be added in future releases.</i>
 <br>
 */

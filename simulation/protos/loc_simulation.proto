@@ -31,6 +31,7 @@ service LocationManagerService {
     rpc GetCapabilities(google.protobuf.Empty) returns (GetCapabilitiesReply) {}
     rpc GetTerrestrialPosition (google.protobuf.Empty) returns (LocManagerCommandReply) {}
     rpc CancelTerrestrialPosition(google.protobuf.Empty) returns (LocManagerCommandReply) {}
+    rpc GetLastLocation (google.protobuf.Empty) returns (LastLocationInfo) {}
 }
 
 service LocationConfiguratorService {
@@ -75,6 +76,14 @@ service DgnssService {
     rpc InjectCorrectionData (InjectCorrectionDataRequest) returns (InjectCorrectionDataReply) {}
 }
 
+service EventDispatcherService {
+    rpc isServiceAvailable(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc registerForEvents(eventService.EventRequest) returns (stream eventService.EventResponse) {}
+    rpc InjectEvent(eventService.UnsolicitedEvent) returns (google.protobuf.Empty) {}
+    rpc updateFilter(eventService.EventRequest) returns (google.protobuf.Empty) {}
+    rpc cleanup(eventService.CleanupRequest) returns (google.protobuf.Empty) {}
+}
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
@@ -88,6 +97,33 @@ message LocManagerCommandReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
+}
+
+message StartReportsEvent {
+    string loc_report = 1;
+}
+
+message CapabilitiesUpdateEvent {
+    int32 capability_mask = 1;
+}
+
+message SysInfoUpdateEvent {
+    int32 sysinfo_validity = 1;
+    int32 leapsecond_validity = 2;
+    int32 current = 3;
+    int32 leap_seconds_before_change = 4;
+    int32 leap_seconds_after_change = 5;
+    int32 gnss_validity = 6;
+    int32 system_week = 7;
+    int32 system_msec = 8;
+    float system_clk_time_bias = 9;
+    float system_clk_time_unc_ms = 10;
+    int32 ref_f_count = 11;
+    int32 clock_resets = 12;
+}
+
+message LastLocationInfo {
+    string loc_report = 1;
 }
 
 message XtraStatusEvent {

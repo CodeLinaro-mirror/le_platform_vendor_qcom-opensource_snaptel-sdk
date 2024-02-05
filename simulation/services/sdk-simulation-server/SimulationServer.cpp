@@ -34,6 +34,7 @@
 #include "tel/CallManagerServerImpl.hpp"
 #include "event/EventService.hpp"
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
+#include "loc/LocationReportService.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -115,6 +116,9 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataFilterServerImpl> dataFilterService =
         std::make_shared<DataFilterServerImpl>(dcmService);
     builder.RegisterService(dataFilterService.get());
+
+    auto& locEventService = LocationReportService::getInstance();
+    builder.RegisterService(&locEventService);
 
     std::shared_ptr<LocationManagerServerImpl> locManagerService =
         std::make_shared<LocationManagerServerImpl>();

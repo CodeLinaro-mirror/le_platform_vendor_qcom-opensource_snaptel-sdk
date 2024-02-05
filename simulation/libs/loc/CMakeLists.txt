@@ -17,8 +17,7 @@ set(LOCATION_TEST_LIB_SOURCES
     LocationReportFilterStub.cpp
     LocationConfiguratorStub.cpp
     DgnssManagerStub.cpp
-    ReportHandler.cpp
-    ReportReader.cpp
+    LocationReportListener.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

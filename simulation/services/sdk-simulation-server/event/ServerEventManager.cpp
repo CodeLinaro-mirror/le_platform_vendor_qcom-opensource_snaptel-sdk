@@ -52,17 +52,20 @@ void ServerEventManager::handleEventNotifications(
     } else {
         LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
         //passing the unsolicited event to the listener who subscribed for it
-        auto &eventListeners = listeners_[filter];
-        for (auto it = eventListeners.begin(); it != eventListeners.end();) {
-            auto sp = (*it).lock();
-            if (sp) {
-                sp->onEventUpdate(message);
-            } else {
-                LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
-                it = eventListeners.erase(it);
-                continue;
+        if(listeners_.find(filter) != listeners_.end()) {
+            for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
+                auto sp = (*it).lock();
+                if (sp) {
+                    sp->onEventUpdate(message);
+                } else {
+                    LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
+                    it = listeners_[filter].erase(it);
+                    continue;
+                }
+                ++it;
             }
-            ++it;
+        } else {
+            LOG(INFO, __FUNCTION__, " No filters registered.");
         }
     }
 }
@@ -81,17 +84,18 @@ void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
 
     LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
     //passing the unsolicited event to the listener who subscribed for it
-    auto &eventListeners = listeners_[filter];
-    for (auto it = eventListeners.begin(); it != eventListeners.end();) {
-        auto sp = (*it).lock();
-        if (sp) {
-            sp->onServerEvent(message.any());
-        } else {
-            LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
-            it = eventListeners.erase(it);
-            continue;
+    if(listeners_.find(filter) != listeners_.end()) {
+        for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
+            auto sp = (*it).lock();
+            if (sp) {
+                sp->onServerEvent(message.any());
+            } else {
+                LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
+                it = listeners_[filter].erase(it);
+                continue;
+            }
+            ++it;
         }
-        ++it;
     }
 }
 
@@ -116,13 +120,20 @@ telux::common::Status ServerEventManager::deregisterListener(
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status retVal = telux::common::Status::FAILED;
     std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+    if (listeners_.find(filter) == listeners_.end()) {
+        LOG(INFO, __FUNCTION__, " Filter not found: ", filter);
+        return telux::common::Status::NOSUCH;
+    }
     auto spt = listener.lock();
 
     if (spt != nullptr) {
-        auto &eventListeners = listeners_[filter];
-        auto eventItr = eventListeners.find(listener);
-        if (eventItr != eventListeners.end()) {
-            eventListeners.erase(eventItr);
+        auto eventItr = listeners_[filter].find(listener);
+        if (eventItr != listeners_[filter].end()) {
+            listeners_[filter].erase(eventItr);
+            if (listeners_[filter].size() == 0) {
+                LOG(INFO, __FUNCTION__, " Filter erased: ", filter);
+                listeners_.erase(filter);
+            }
         }
 
         LOG(DEBUG, "In deRegister removed listener");

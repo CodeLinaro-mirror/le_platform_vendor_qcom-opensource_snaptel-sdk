@@ -60,6 +60,24 @@
             "mask             A mask to enable different signals. Refer to telux::loc::GnssSignalType for the signals that can be enabled. An example of a valid mask is 0x1FFFFF."
         ]
     },
+    "loc_mgr":{
+        "capabilities_update":[
+            "telsdk_event_injector -f loc_mgr -e capabilities_update <action> <mask>",
+            "action: valid values - add/remove. Event to be used to add or remove capabilities that are indicated via @refILocationListener::onCapabilitiesInfo",
+            "mask: Integer mask for different capabilities. Refer to telux::loc::LocCapabilityType for the capabilities that can be added/removed."
+        ],
+        "sysinfo_update_current":[
+            "telsdk_event_injector -f loc_mgr -e sysinfo_update_current <current seconds> ",
+            "current: Current leap seconds, in unit of seconds"
+        ],
+        "sysinfo_update_leapsecond" :[
+            "telsdk_event_injector -f loc_mgr -e sysinfo_update_leapsecond <system_week> <system_msec> <leap_seconds_before_change> <leap_seconds_after_change>",
+            "system_week:                    Extended week number at reference tick",
+            "system_msec:                    Time into the current week at reference tick",
+            "leap_seconds_before_change:     Number of leap seconds prior to the leap second change event",
+            "leap_seconds_after_change:      Number of leap seconds after the leap second change event"
+        ]
+    },
     "sensor_feature": {
         "sensor_event":[
             "telsdk_event_injector -f sensor_feature -e sensor_event <featureName> <eventId>",

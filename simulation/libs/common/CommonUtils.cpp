@@ -7,6 +7,7 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
+#include <sstream>
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
@@ -410,5 +411,17 @@ std::string CommonUtils::getGrpcPort() {
     auto config = std::make_shared<SimulationConfigParser>();
     return ("localhost:" + config->getValue("RPC_PORT"));
 }
+
+std::vector<std::string> CommonUtils::splitString(std::string msg) {
+    std::stringstream ss(msg);
+    std::vector<std::string> message;
+    while(ss.good()) {
+        std::string str;
+        getline(ss, str, ',');
+        message.push_back(str);
+    }
+    return message;
+}
+
 }  // namespace common
 }  // namespace telux

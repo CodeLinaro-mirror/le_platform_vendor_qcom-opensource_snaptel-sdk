@@ -9,6 +9,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <grpcpp/grpcpp.h>
+#include <vector>
 
 #include "JsonParser.hpp"
 #include "Logger.hpp"
@@ -94,6 +95,7 @@ class CommonUtils {
     static ErrorCode readJsonData(std::string apiJsonPath, std::string stateJsonPath,
         std::string subsystem, std::string method, JsonData& data);
 
+    static std::vector<std::string> splitString(std::string str);
  private:
     static std::string readSystemDataValue(
         Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);

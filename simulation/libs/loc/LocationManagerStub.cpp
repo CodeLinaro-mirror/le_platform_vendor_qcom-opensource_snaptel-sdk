@@ -34,10 +34,11 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include "LocationManagerStub.hpp"
-#include "LocationDefinesStub.hpp"
 #include "common/Logger.hpp"
 #include "common/JsonParser.hpp"
 #include "common/CommonUtils.hpp"
+#include "common/SimulationConfigParser.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 
 #include <chrono>
 #include <string>
@@ -53,26 +54,11 @@ namespace telux {
 
 namespace loc {
 
-void LocationManagerStub::invokeSystemInfoReport(struct LocationSystemInfo &info) {
-    LOG(DEBUG, __FUNCTION__);
-    for (auto iter = systemInfoListener_.begin(); iter != systemInfoListener_.end();) {
-        auto spt = (*iter).lock();
-        if (spt != nullptr) {
-            LOG(DEBUG, __FUNCTION__, " Sending System Info");
-            spt->onLocationSystemInfo(info);
-            ++iter;
-        } else {
-            iter = systemInfoListener_.erase(iter);
-        }
-    }
-}
-
 LocationManagerStub::LocationManagerStub() {
     LOG(DEBUG, __FUNCTION__, " Creating");
     managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
     stub_ = CommonUtils::getGrpcStub<LocationManagerService>();
     filter_ = nullptr;
-    sysInfoRequestCount_.store(0);
 }
 
 std::future<bool> LocationManagerStub::onSubsystemReady() {
@@ -109,6 +95,9 @@ telux::common::Status LocationManagerStub::init(telux::common::InitResponseCb ca
 
 void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    std::vector<std::string> filters = {"loc_mgr"};
+    auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+    clientEventManager.registerListener(shared_from_this(), filters);
     ::locStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
@@ -143,6 +132,8 @@ void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
                 LOG(ERROR, __FUNCTION__, " LocationReportFilter: ", e.what());
             }
         }
+        auto myself = shared_from_this();
+        myselfForReports_ = myself;
     }
     cv_.notify_all();
 }
@@ -210,6 +201,10 @@ telux::common::Status LocationManagerStub::startDetailedReports(uint32_t interva
         adjustTimeInterval(interval);
     }
     interval_ = interval;
+    //Register for Reports.
+    std::vector<std::string> filters = {"LOC_REPORTS"};
+    auto &locationReportListener = telux::common::LocationReportListener::getInstance();
+    locationReportListener.registerListener(myselfForReports_, filters);
     const ::google::protobuf::Empty request;
     ::locStub::LocManagerCommandReply response;
     ClientContext context;
@@ -252,6 +247,10 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
         adjustTimeInterval(interval);
     }
     interval_ = interval;
+    //Register for Reports.
+    std::vector<std::string> filters = {"LOC_REPORTS"};
+    auto &locationReportListener = telux::common::LocationReportListener::getInstance();
+    locationReportListener.registerListener(myselfForReports_, filters);
     const ::google::protobuf::Empty request;
     ::locStub::LocManagerCommandReply response;
     ClientContext context;
@@ -294,6 +293,10 @@ telux::common::Status LocationManagerStub::startBasicReports(
         adjustTimeInterval(interval);
     }
     interval_ = interval;
+    //Register for Reports.
+    std::vector<std::string> filters = {"LOC_REPORTS"};
+    auto &locationReportListener = telux::common::LocationReportListener::getInstance();
+    locationReportListener.registerListener(myselfForReports_, filters);
     const ::google::protobuf::Empty request;
     ::locStub::LocManagerCommandReply response;
     ClientContext context;
@@ -329,6 +332,9 @@ telux::common::Status LocationManagerStub::startBasicReports(
 
 telux::common::Status LocationManagerStub::stopReports(telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    std::vector<std::string> filters = {"LOC_REPORTS"};
+    auto &locationReportListener = telux::common::LocationReportListener::getInstance();
+    locationReportListener.deregisterListener(myselfForReports_, filters);
     const ::google::protobuf::Empty request;
     ::google::protobuf::Empty response;
     ClientContext context;
@@ -372,38 +378,31 @@ telux::common::Status LocationManagerStub::registerForSystemInfoUpdates(
             LOG(DEBUG, __FUNCTION__, " Registering SystemInfo Listener");
         }
     }
-    const ::google::protobuf::Empty request;
-    ::locStub::LocManagerCommandReply response;
-    ClientContext context;
-    telux::common::Status status = telux::common::Status::FAILED;
-    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::SUCCESS;
     int cbDelay =DEFAULT_CALLBACK_DELAY;
-    ::grpc::Status reqstatus = stub_->RegisterLocationSystemInfo(&context, request, &response);
-    if(reqstatus.ok()) {
-        status = static_cast<telux::common::Status>(response.status());
-        errorCode = static_cast<telux::common::ErrorCode>(response.error());
-        cbDelay = static_cast<int>(response.delay());
-    } else {
-        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
-    }
-    if (status == telux::common::Status::SUCCESS) {
-        auto f = std::async(std::launch::async, [=]() {
-            if (callback && (cbDelay != SKIP_CALLBACK)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(errorCode);
-            }
-        }).share();
-        taskQ_.add(f);
-        if(sysInfoRequestCount_ == 0) {
-            //Sending canned data on first invocation.
-            struct LocationSystemInfo info;
-            info.valid = 1;
-            info.info.valid = 0;
-            info.info.current = (uint8_t)0;
-            invokeSystemInfoReport(info);
-            sysInfoRequestCount_++;
+    if(systemInfoListener_.size() == 1) {
+        const ::google::protobuf::Empty request;
+        ::locStub::LocManagerCommandReply response;
+        ClientContext context;
+        status = telux::common::Status::FAILED;
+        errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+        ::grpc::Status reqstatus = stub_->RegisterLocationSystemInfo(&context, request, &response);
+        if(reqstatus.ok()) {
+            status = static_cast<telux::common::Status>(response.status());
+            errorCode = static_cast<telux::common::ErrorCode>(response.error());
+            cbDelay = static_cast<int>(response.delay());
+        } else {
+            LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
         }
     }
+    auto f = std::async(std::launch::async, [=]() {
+        if (callback && (cbDelay != SKIP_CALLBACK)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }
+    }).share();
+    taskQ_.add(f);
     return status;
 }
 
@@ -443,7 +442,6 @@ telux::common::Status LocationManagerStub::deRegisterForSystemInfoUpdates(
             }
         }).share();
         taskQ_.add(f);
-        sysInfoRequestCount_--;
     }
     return status;
 }
@@ -523,15 +521,59 @@ telux::loc::LocCapability LocationManagerStub::getCapabilities() {
     return capabilities;
 }
 
-std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(bool defaultLocInfo) {
+void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+    std::vector<std::string> &message) {
+    LOG(DEBUG, __FUNCTION__);
+    size_t itr = 2;
+    loc->setUtcFixTime(std::stoull(message[itr++]));
+    loc->setLocationTechnology(std::stoul(message[itr++]));
+    loc->setLatitude(std::stod(message[itr++]));
+    loc->setLongitude(std::stod(message[itr++]));
+    loc->setAltitude(std::stod(message[itr++]));
+    loc->setHeading(std::stof(message[itr++]));
+    loc->setSpeed(std::stof(message[itr++]));
+    loc->setHeadingUncertainty(std::stof(message[itr++]));
+    loc->setSpeedUncertainty(std::stof(message[itr++]));
+    loc->setHorizontalUncertainty(std::stof(message[itr++]));
+    loc->setVerticalUncertainty(std::stof(message[itr++]));
+    loc->setLocationInfoValidity(std::stoul(message[itr++]));
+    loc->setElapsedRealTime(std::stoull(message[itr++]));
+    loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
+}
+
+std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(
+    bool defaultLocInfo) {
+    LOG(DEBUG, __FUNCTION__);
     std::shared_ptr<LocationInfoBase> locInfo = std::make_shared<LocationInfoBase>();
     if (defaultLocInfo) {
         locInfo->setLatitude(0);
         locInfo->setLongitude(0);
         locInfo->setLocationInfoValidity(0);
     } else {
-        auto &myReader = ReportReader::getInstance();
-        myReader.getLocationInfoBase(locInfo);
+        const ::google::protobuf::Empty request;
+        ::locStub::LastLocationInfo response;
+        ClientContext context;
+        ::grpc::Status reqstatus = stub_->GetLastLocation(&context, request, &response);
+        if(reqstatus.ok()) {
+            std::string msg = response.loc_report();
+            if(!msg.empty()) {
+                std::vector<std::string> message = CommonUtils::splitString(msg);
+                uint64_t utcTimestamp;
+                utcTimestamp =
+                    (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                message[2] = std::to_string(utcTimestamp);
+                setLocationInfoBase(locInfo, message);
+            } else {
+                locInfo->setLatitude(0);
+                locInfo->setLongitude(0);
+                locInfo->setLocationInfoValidity(0);
+            }
+        } else {
+            LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+            locInfo->setLatitude(0);
+            locInfo->setLongitude(0);
+            locInfo->setLocationInfoValidity(0);
+        }
     }
     return locInfo;
 }
@@ -626,15 +668,29 @@ LocationManagerStub::~LocationManagerStub() {
 void LocationManagerStub::cleanup() {
 }
 
-void LocationManagerStub::parseRequest(std::string msg) {
+void LocationManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
-    std::stringstream ss(msg);
-    std::vector<std::string> message;
-    while(ss.good()) {
-        std::string str;
-        getline(ss, str, ',');
-        message.push_back(str);
+    if (event.Is<::locStub::StartReportsEvent>()) {
+        ::locStub::StartReportsEvent startEvent;
+        event.UnpackTo(&startEvent);
+        parseRequest(startEvent);
+    } else if (event.Is<::locStub::CapabilitiesUpdateEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " Capabilities update");
+        ::locStub::CapabilitiesUpdateEvent capabilitiesEvent;
+        event.UnpackTo(&capabilitiesEvent);
+        handleCapabilitiesUpdateEvent(capabilitiesEvent);
+    } else if (event.Is<::locStub::SysInfoUpdateEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " SysInfo update");
+        ::locStub::SysInfoUpdateEvent sysInfoEvent;
+        event.UnpackTo(&sysInfoEvent);
+        handleSysInfoUpdateEvent(sysInfoEvent);
     }
+}
+
+void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string msg = startEvent.loc_report();
+    std::vector<std::string> message = CommonUtils::splitString(msg);
     uint32_t opt = std::stoul(message[1]);
     switch(opt) {
         case telux::loc::GnssReportType::LOCATION :
@@ -670,22 +726,8 @@ void LocationManagerStub::parseRequest(std::string msg) {
             }
 
             //3. Parse.
-            size_t itr = 2;
             std::shared_ptr<LocationInfoBase> loc = std::make_shared<LocationInfoBase>();
-            loc->setUtcFixTime(std::stoull(message[itr++]));
-            loc->setLocationTechnology(std::stoul(message[itr++]));
-            loc->setLatitude(std::stod(message[itr++]));
-            loc->setLongitude(std::stod(message[itr++]));
-            loc->setAltitude(std::stod(message[itr++]));
-            loc->setHeading(std::stof(message[itr++]));
-            loc->setSpeed(std::stof(message[itr++]));
-            loc->setHeadingUncertainty(std::stof(message[itr++]));
-            loc->setSpeedUncertainty(std::stof(message[itr++]));
-            loc->setHorizontalUncertainty(std::stof(message[itr++]));
-            loc->setVerticalUncertainty(std::stof(message[itr++]));
-            loc->setLocationInfoValidity(std::stoul(message[itr++]));
-            loc->setElapsedRealTime(std::stoull(message[itr++]));
-            loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
+            setLocationInfoBase(loc, message);
             //Send data to clients.
             for (auto iter = listeners_.begin(); iter != listeners_.end();) {
                 auto spt = (*iter).lock();
@@ -826,7 +868,6 @@ void LocationManagerStub::parseRequest(std::string msg) {
             loc->setSolutionStatus(std::stoul(message[itr++]));
             size_t measInfoSize = std::stoi(message[itr++]);
             std::vector<GnssMeasurementInfo> measInfo;
-            itr = 77;
             for(size_t i = 0; i < measInfoSize; i++) {
                 telux::loc::GnssMeasurementInfo temp;
                 temp.gnssSignalType = std::stoul(message[itr++]);
@@ -1134,6 +1175,58 @@ void LocationManagerStub::parseRequest(std::string msg) {
         default :
             LOG(ERROR, __FUNCTION__, " No such report type supported");
             break;
+    }
+}
+
+void LocationManagerStub::handleCapabilitiesUpdateEvent(
+    ::locStub::CapabilitiesUpdateEvent capabilitiesEvent) {
+    uint32_t capabilityMask = capabilitiesEvent.capability_mask();
+    invokeCapabilitiesUpdateEvent(capabilityMask);
+}
+
+void LocationManagerStub::invokeCapabilitiesUpdateEvent(uint32_t capabilityMask) {
+    for (auto iter = listeners_.begin(); iter != listeners_.end();) {
+        auto spt = (*iter).lock();
+        if (spt != nullptr) {
+            spt->onCapabilitiesInfo(capabilityMask);
+            ++iter;
+        } else {
+            iter = listeners_.erase(iter);
+        }
+    }
+}
+
+void LocationManagerStub::handleSysInfoUpdateEvent(::locStub::SysInfoUpdateEvent sysInfoEvent) {
+    telux::loc::LocationSystemInfo locSystemInfo;
+    locSystemInfo.valid = sysInfoEvent.sysinfo_validity();
+    locSystemInfo.info.valid = sysInfoEvent.leapsecond_validity();
+    locSystemInfo.info.current = sysInfoEvent.current();
+    if(locSystemInfo.info.valid & LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT) {
+        locSystemInfo.info.info.timeInfo.validityMask =
+            static_cast<telux::loc::GnssTimeValidityType>(sysInfoEvent.gnss_validity());
+        locSystemInfo.info.info.timeInfo.systemWeek = sysInfoEvent.system_week();
+        locSystemInfo.info.info.timeInfo.systemMsec = sysInfoEvent.system_msec();
+        locSystemInfo.info.info.timeInfo.systemClkTimeBias = sysInfoEvent.system_clk_time_bias();
+        locSystemInfo.info.info.timeInfo.systemClkTimeUncMs = sysInfoEvent.system_clk_time_unc_ms();
+        locSystemInfo.info.info.timeInfo.refFCount = sysInfoEvent.ref_f_count();
+        locSystemInfo.info.info.timeInfo.numClockResets = sysInfoEvent.clock_resets();
+        locSystemInfo.info.info.leapSecondsBeforeChange = sysInfoEvent.leap_seconds_before_change();
+        locSystemInfo.info.info.leapSecondsAfterChange = sysInfoEvent.leap_seconds_after_change();
+    }
+    invokeSysInfoUpdateEvent(locSystemInfo);
+}
+
+void LocationManagerStub::invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo) {
+    LOG(DEBUG, __FUNCTION__);
+    for (auto iter = systemInfoListener_.begin(); iter != systemInfoListener_.end();) {
+        auto spt = (*iter).lock();
+        if (spt != nullptr) {
+            LOG(DEBUG, __FUNCTION__, " Sending System Info");
+            spt->onLocationSystemInfo(locSystemInfo);
+            ++iter;
+        } else {
+            iter = systemInfoListener_.erase(iter);
+        }
     }
 }
 

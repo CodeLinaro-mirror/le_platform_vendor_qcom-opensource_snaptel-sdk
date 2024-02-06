@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -91,6 +91,7 @@ private:
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> readBuffers_;
     std::atomic<bool> pipeLineEmpty_;
     std::atomic<bool> ready_;
+    std::atomic<bool> stopTranscoder_;
 };
 
 #endif // TRANSCODEMENU_HPP

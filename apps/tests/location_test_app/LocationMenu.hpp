@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -118,6 +118,7 @@ public:
    void enableNmeaInfoLogs();
    void enableMeasurementsInfoLogs();
    void enableDisasterCrisisInfoLogs();
+   void enableEphemerisInfoLogs();
    void enableEngineNmeaInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);

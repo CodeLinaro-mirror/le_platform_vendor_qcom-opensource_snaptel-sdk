@@ -25,6 +25,9 @@ RUN apt-get -y install iproute2
 RUN apt-get -y install python-pip
 RUN pip install supervisor
 RUN pip install supervisor-stdout
+RUN apt-get -y install libasound2-dev
+RUN apt-get -y install alsa alsa-utils alsa-tools
+RUN apt-get -y install pulseaudio pulseaudio-utils
 
 copy $ROOTFS/include /usr/include
 copy $ROOTFS/bin /usr/bin

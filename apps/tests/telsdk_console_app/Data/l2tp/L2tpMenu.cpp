@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -138,9 +138,29 @@ bool L2tpMenu::init() {
         std::shared_ptr<ConsoleAppCommand> removeTunnel
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Tunnel", {},
                 std::bind(&L2tpMenu::removeTunnel, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addSessionToTunnel
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Add_Session_To_Tunnel",
+                {}, std::bind(&L2tpMenu::addSessionToTunnel, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeSessionFromTunnel
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+                "6", "Remove_Session_From_Tunnel", {}, std::bind(
+                &L2tpMenu::removeSessionFromTunnel, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> bindSessionToBackhaul
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+                "7", "Bind_Session_To_Backhaul", {}, std::bind(
+                &L2tpMenu::bindSessionToBackhaul, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> unbindSessionFromBackhaul
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+                "8", "Unbind_Session_From_Backhaul", {}, std::bind(
+                &L2tpMenu::unbindSessionFromBackhaul, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> querySessionToBackhaulMapping
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+                "9", "Query_Session_To_Backhaul_Mappings", {}, std::bind(
+                &L2tpMenu::querySessionToBackhaulMapping, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setConfig,
-            addTunnel, requestConfig, removeTunnel};
+            addTunnel, requestConfig, removeTunnel, addSessionToTunnel, removeSessionFromTunnel,
+            bindSessionToBackhaul, unbindSessionFromBackhaul, querySessionToBackhaulMapping};
 
         addCommands(commandsList);
     }
@@ -207,8 +227,9 @@ void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
 void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Configuration\n";
     telux::common::Status retStat;
-    L2tpTunnelConfig l2tpTunnelConfig;
+    telux::data::net::L2tpTunnelConfig l2tpTunnelConfig;
     char delimiter = '\n';
+    std::cin.get();
     std::cout << "Enter interface name to create L2TP tunnel on: ";
     std::getline(std::cin, l2tpTunnelConfig.locIface, delimiter);
 
@@ -226,16 +247,38 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     Utils::validateInput(tempInt);
     if (4 == tempInt) {
         l2tpTunnelConfig.ipType = telux::data::IpFamilyType::IPV4;
+        std::cin.get();
         std::cout << "Enter peer ipv4 address : ";
         std::getline(std::cin, l2tpTunnelConfig.peerIpv4Addr, delimiter);
+        std::cout << "Do you want to enter peer ipv4 gateway address? (0-No, 1-Yes): ";
+        std::cin >> tempInt;
+        Utils::validateInput(tempInt);
+        if(tempInt) {
+            std::cin.get();
+            std::cout << "Enter peer ipv4 gateway address : ";
+            std::getline(std::cin, l2tpTunnelConfig.peerIpv4GwAddr, delimiter);
+        } else {
+            l2tpTunnelConfig.peerIpv4GwAddr = "";
+        }
     }
     else if (6 == tempInt) {
         l2tpTunnelConfig.ipType = telux::data::IpFamilyType::IPV6;
+        std::cin.get();
         std::cout << "Enter peer ipv6 address : ";
         std::getline(std::cin, l2tpTunnelConfig.peerIpv6Addr, delimiter);
+        std::cout << "Do you want to enter peer ipv6 gateway address? (0-No, 1-Yes): ";
+        std::cin >> tempInt;
+        Utils::validateInput(tempInt);
+        if(tempInt) {
+            std::cin.get();
+            std::cout << "Enter peer ipv6 gateway address : ";
+            std::getline(std::cin, l2tpTunnelConfig.peerIpv6GwAddr, delimiter);
+        } else {
+            l2tpTunnelConfig.peerIpv6GwAddr = "";
+        }
     }
     else  {
-        std::cout << "Inavlid IP type entered .. exiting ..." <<std::endl;
+        std::cout << "Invalid IP type entered .. exiting ..." <<std::endl;
         return;
     }
     std::cout << "Enter encapsulation protocol (0-IP, 1-UDP): ";
@@ -256,19 +299,19 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
         l2tpTunnelConfig.peerUdpPort = tempInt;
     }
     else  {
-        std::cout << "Inavlid protocol entered .. exiting ..." <<std::endl;
+        std::cout << "Invalid protocol entered .. exiting ..." <<std::endl;
         return;
     }
     std::cout << "Enter number of sessions for this tunnel (max allowed 3): ";
     std::cin >> tempInt;
     Utils::validateInput(tempInt);
     if (tempInt > 3) {
-        std::cout << "Inavlid number of sessions .. exiting ..." <<std::endl;
+        std::cout << "Invalid number of sessions .. exiting ..." <<std::endl;
         return;
     }
     int num_sessions = tempInt;
     for (int i=0; i<num_sessions; i++) {
-        L2tpSessionConfig l2tpSessionConfig;
+        telux::data::net::L2tpSessionConfig l2tpSessionConfig;
         std::cout << "Enter local session id for session " << i+1 << " :";
         std::cin >> tempInt;
         Utils::validateInput(tempInt);
@@ -391,5 +434,149 @@ void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
     Utils::validateInput(tempInt);
 
     retStat = l2tpManager_->removeTunnel(tempInt, respCb);
+    Utils::printStatus(retStat);
+}
+
+void L2tpMenu::addSessionToTunnel(std::vector<std::string> inputCommand) {
+    std::cout << "Add Session To Tunnel\n";
+    telux::common::Status retStat;
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "Add L2TP Session to Tunnel Response"
+                  << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+    uint32_t tunnelId;
+    std::cout << "Enter tunnel ID to add session to: ";
+    std::cin >> tunnelId;
+    Utils::validateInput(tunnelId);
+
+    uint32_t userInput;
+    telux::data::net::L2tpSessionConfig sessionConfig{};
+    std::cout << "Enter local ID of new session: ";
+    std::cin >> userInput;
+    Utils::validateInput(userInput);
+    sessionConfig.locId = userInput;
+    std::cout << "Enter peer ID of new session: ";
+    std::cin >> userInput;
+    Utils::validateInput(userInput);
+    sessionConfig.peerId = userInput;
+    retStat = l2tpManager_->addSession(tunnelId, sessionConfig, respCb);
+    Utils::printStatus(retStat);
+}
+
+void L2tpMenu::removeSessionFromTunnel(std::vector<std::string> inputCommand) {
+    std::cout << "Remove Session From Tunnel\n";
+    telux::common::Status retStat;
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "Remove L2TP Session From Tunnel Response"
+                  << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+    uint32_t tunnelId;
+    std::cout << "Enter tunnel ID to remove session from: ";
+    std::cin >> tunnelId;
+    Utils::validateInput(tunnelId);
+
+    uint32_t sessionId;
+    std::cout << "Enter local ID of session to be removed: ";
+    std::cin >> sessionId;
+    Utils::validateInput(sessionId);
+    retStat = l2tpManager_->removeSession(tunnelId, sessionId, respCb);
+    Utils::printStatus(retStat);
+}
+
+void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
+    std::cout << "Bind Session To Backhaul\n";
+    telux::common::Status retStat;
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "Bind L2TP Session To Backhaul Response"
+                  << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    telux::data::net::L2tpSessionBindConfig bindConfig{};
+
+    uint32_t sessionId;
+    std::cout << "Enter local ID of session: ";
+    std::cin >> sessionId;
+    Utils::validateInput(sessionId);
+    bindConfig.locId = sessionId;
+
+    int profileId;
+    bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
+    std::cout << "Enter Profile Id to bind session to: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+    bindConfig.bhInfo.profileId = profileId;
+    retStat = l2tpManager_->bindSessionToBackhaul(bindConfig, respCb);
+    Utils::printStatus(retStat);
+}
+
+void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) {
+    std::cout << "Unbind Session From Backhaul\n";
+    telux::common::Status retStat;
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "Unbind L2TP Session From Backhaul Response"
+                  << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    telux::data::net::L2tpSessionBindConfig bindConfig{};
+
+    uint32_t sessionId;
+    std::cout << "Enter local ID of session: ";
+    std::cin >> sessionId;
+    Utils::validateInput(sessionId);
+    bindConfig.locId = sessionId;
+
+    int profileId;
+    bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
+    std::cout << "Enter Profile Id to unbind session from: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+    bindConfig.bhInfo.profileId = profileId;
+    retStat = l2tpManager_->unbindSessionFromBackhaul(bindConfig, respCb);
+    Utils::printStatus(retStat);
+}
+
+void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputCommand) {
+    std::cout << "Query Session To Backhaul Mappings\n";
+    telux::common::Status retStat;
+    telux::data::BackhaulType backhaulType = BackhaulType::WWAN;
+
+    auto respCb = [](const std::vector<telux::data::net::L2tpSessionBindConfig> bindings,
+        telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "Query Session To Backhaul Mappings Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            if(bindings.size() > 0) {
+                for (auto c : bindings) {
+                    std::cout << "profId: " << (int)c.bhInfo.profileId
+                              << ", Local id: " << c.locId << "\n";
+                }
+            } else {
+                std::cout << "No bindings found" << std::endl;
+            }
+        }
+    };
+    retStat = l2tpManager_->querySessionToBackhaulBindings(backhaulType, respCb);
     Utils::printStatus(retStat);
 }

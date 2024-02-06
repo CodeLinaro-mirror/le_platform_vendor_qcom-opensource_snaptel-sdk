@@ -764,7 +764,11 @@ enum LocationValidityType {
     /** Location has valid elapsed real time.*/
     HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
     /** Location has valid elapsed real time uncertainty.*/
-    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10),
+    /** Location has valid elapsed gPTP time.*/
+    HAS_GPTP_TIME_BIT         = (1<<12),
+    /** Location has valid elapsed gPTP time uncertainity.*/
+    HAS_GPTP_TIME_UNC_BIT     = (1<<13)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -2193,6 +2197,27 @@ public:
  *
  */
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
+
+/**
+ * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
+ * Used for time sync between different systems. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time
+ *
+ */
+  virtual uint64_t getElapsedGptpTime() = 0;
+
+/**
+ * Retrieves elapsed gPTP time uncertainty. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_UNC_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time uncertainty
+ *
+ */
+  virtual uint64_t getElapsedGptpTimeUnc() = 0;
 
 };
 

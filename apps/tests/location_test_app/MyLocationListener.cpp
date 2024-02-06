@@ -282,6 +282,12 @@ void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity 
    if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_UNC_BIT)) {
       std::cout << "valid elapsed real time uncertainty" << std::endl;
    }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_BIT)) {
+      std::cout << "valid elapsed gPTP time" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_UNC_BIT)) {
+      std::cout << "valid elapsed gPTP time uncertainty" << std::endl;
+   }
 }
 
 void MyLocationListener::printLocationTech(telux::loc::LocationTechnology techMask) {
@@ -1164,7 +1170,9 @@ void MyLocationListener::onBasicLocationUpdate(
              << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
              << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
              << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
-             << std::endl;
+             << std::endl
+             << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+             << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1211,6 +1219,8 @@ void MyLocationListener::onDetailedLocationUpdate(
       << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
       << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
       << std::endl
+      << "elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+      << "elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
       << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
       << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
       << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
@@ -1314,6 +1324,8 @@ void MyLocationListener::onDetailedLocationUpdate(
         "," << locationInfo->getVerticalUncertainty() << "," <<
         locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
         << locationInfo->getElapsedRealTimeUncertainty() << "," <<
+        locationInfo->getElapsedGptpTime() << "," <<
+        locationInfo->getElapsedGptpTimeUnc() << "," <<
         locationInfo->getLocationInfoExValidity() << "," <<
         locationInfo->getAltitudeMeanSeaLevel() << "," <<
         locationInfo->getPositionDop() << "," <<
@@ -1478,6 +1490,8 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
         << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
         << std::endl
+        << ", elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+        << ", elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
         << "HorizontalUncertainty\nSemiMajor: " <<
             locationInfo->getHorizontalUncertaintySemiMajor()
         << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()

@@ -68,6 +68,8 @@ class LocationInfoBase : public ILocationInfoBase {
     float headingUncertainty_ = NAN;
     uint64_t elapsedRealTime_ = 100;
     uint64_t elapsedRealTimeUncertainty_ = 3;
+    uint64_t elapsedGptpTime_ = 100;
+    uint64_t elapsedGptpTimeUncertainity_ = 2;
 
 public:
 /**
@@ -198,7 +200,23 @@ public:
  */
     uint64_t getElapsedRealTimeUncertainty() override{return elapsedRealTimeUncertainty_;}
 
+/**
+ * Retrieves elapsed gPTP time.
+ *    - Units: Nano-second
+ *
+ * returns elapsed gPTP time.
+ *
+ */
+    uint64_t getElapsedGptpTime() override{return elapsedGptpTime_;}
 
+/**
+ * Retrieves elapsed gPTP time uncertainty.
+ *    - Units: Nano-second
+ *
+ * returns elapsed gPTP time uncertainty.
+ *
+ */
+    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainity_;}
 
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
@@ -215,6 +233,10 @@ public:
     void setElapsedRealTime(uint64_t elapsedRealTime) {elapsedRealTime_ = elapsedRealTime;}
     void setElapsedRealTimeUncertainty(uint64_t elapsedRealTimeUncertainty) {
         elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
+    }
+    void setElapsedGptpTime(uint64_t elapsedGptpTime) {elapsedGptpTime_ = elapsedGptpTime;}
+    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainity) {
+        elapsedGptpTimeUncertainity_ = elapsedGptpTimeUncertainity;
     }
 
 };
@@ -234,6 +256,8 @@ class LocationInfoEx : public ILocationInfoEx {
     float headingUncertainty_ = NAN;
     uint64_t elapsedRealTime_ = 50;
     uint64_t elapsedRealTimeUncertainty_ = 5;
+    uint64_t elapsedGptpTime_ = 100;
+    uint64_t elapsedGptpTimeUncertainity_ = 2;
 
     uint32_t locationInfoExValidity_ = 0;
     float altitudeMeanSeaLevel_ = NAN;
@@ -406,6 +430,24 @@ public:
  *
  */
     uint64_t getElapsedRealTimeUncertainty() override{return elapsedRealTimeUncertainty_;}
+
+/**
+ * Retrieves elapsed gPTP time.
+ *    - Units: Nano-second
+ *
+ * returns elapsed gPTP time.
+ *
+ */
+    uint64_t getElapsedGptpTime() override{return elapsedGptpTime_;}
+
+/**
+ * Retrieves elapsed gPTP time uncertainty.
+ *    - Units: Nano-second
+ *
+ * returns elapsed gPTP time uncertainty.
+ *
+ */
+    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainity_;}
 
 
 /**
@@ -804,6 +846,10 @@ public:
     void setElapsedRealTime(uint64_t elapsedRealTime) {elapsedRealTime_ = elapsedRealTime;}
     void setElapsedRealTimeUncertainty(uint64_t elapsedRealTimeUncertainty) {
         elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
+    }
+    void setElapsedGptpTime(uint64_t elapsedGptpTime) {elapsedGptpTime_ = elapsedGptpTime;}
+    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainity) {
+        elapsedGptpTimeUncertainity_ = elapsedGptpTimeUncertainity;
     }
 
     void setLocationInfoExValidity(uint64_t val) { locationInfoExValidity_ = val;}

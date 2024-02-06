@@ -1778,6 +1778,185 @@ void MyLocationListener::onGnssDisasterCrisisInfo(
     std::cout << "\n";
 }
 
+void MyLocationListener::printEphSrc(telux::loc::GnssEphSource ephSrc) {
+    switch(ephSrc) {
+        case telux::loc::EPH_SRC_OTA : std::cout << "OTA"; break;
+        default: std::cout << "Unknown"; break;
+    }
+}
+
+void MyLocationListener::printEphAct(telux::loc::GnssEphAction ephAct) {
+    switch(ephAct) {
+        case telux::loc::EPH_ACTION_UPDATE: std::cout << "Update"; break;
+        case telux::loc::EPH_ACTION_DELETE: std::cout << "Delete"; break;
+        default: std::cout << "Unknown"; break;
+    }
+}
+
+void MyLocationListener::printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData) {
+    std::cout   << "Common Data";
+    std::cout   << "\nSVID       : " << commonData.gnssSvId;
+    std::cout   << "\nephSource    : "; printEphSrc(commonData.ephSource);
+    std::cout   << "\naction       : "; printEphAct(commonData.action);
+    std::cout   << "\nIODE         : " << commonData.IODE
+                << "\naSqrt        : " << commonData.aSqrt
+                << "\ndeltaN       : " << commonData.deltaN
+                << "\nm0           : " << commonData.m0
+                << "\neccentricity : " << commonData.eccentricity
+                << "\nomega0       : " << commonData.omega0
+                << "\ni0           : " << commonData.i0
+                << "\nomega        : " << commonData.omega
+                << "\nomegaDot     : " << commonData.omegaDot
+                << "\niDot         : " << commonData.iDot
+                << "\ncUc          : " << commonData.cUc
+                << "\ncUs          : " << commonData.cUs
+                << "\ncRc          : " << commonData.cRc
+                << "\ncRs          : " << commonData.cRs
+                << "\ncIc          : " << commonData.cIc
+                << "\ncIs          : " << commonData.cIs
+                << "\ntoe          : " << commonData.toe
+                << "\ntoc          : " << commonData.toc
+                << "\naf0          : " << commonData.af0
+                << "\naf1          : " << commonData.af1
+                << "\naf2          : " << commonData.af2;
+}
+
+void MyLocationListener::printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData) {
+    printGnssEphemerisCommonData(ephData.commonData);
+    std::cout   << "\nSignal Health   : " << static_cast<unsigned>(ephData.signalHealth)
+                << "\nURAI            : " << static_cast<unsigned>(ephData.URAI)
+                << "\ncodeL2          : " << static_cast<unsigned>(ephData.codeL2)
+                << "\ndataFlagL2P     : " << static_cast<unsigned>(ephData.dataFlagL2P)
+                << "\ntgd             : " << ephData.tgd
+                << "\nfitInterval     : " << static_cast<unsigned>(ephData.fitInterval)
+                << "\nIODC            : " << ephData.IODC << "\n";
+}
+
+void MyLocationListener::onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) {
+    if(!isEphemerisInfoFlagEnabled_) {
+        return;
+    }
+    PRINT_NOTIFICATION << "\n************ Gnss Ephemeris Information *************" << "\n";
+    std::cout << "Is System time valid - " << ephemerisInfo.isSystemTimeValid << "\n";
+    std::cout << "Gnss system time info - \n";
+    telux::loc::TimeInfo timeInfo = ephemerisInfo.timeInfo;
+    std::cout << "Validity mask: " << timeInfo.validityMask;
+    std::cout << " System time week: " << timeInfo.systemWeek;
+    std::cout << " System time week ms: " << timeInfo.systemMsec;
+    std::cout << " System clk time: " << timeInfo.systemClkTimeBias;
+    std::cout << " System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs;
+    std::cout << " System reference valid: " << timeInfo.refFCount;
+    std::cout << " System num clock reset valid: " << timeInfo.numClockResets << "\n";
+    telux::loc::GnssSystem system = ephemerisInfo.constellationType;
+    std::cout << "Constellation type: ";
+    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
+        std::cout << "GPS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.gpsEphemerisData.size(); i++) {
+            printGpsQzssEphData(ephemerisInfo.gpsEphemerisData[i]);
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+        std::cout << "GALILEO satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.galEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.galEphemerisData[i].commonData);
+            switch(ephemerisInfo.galEphemerisData[i].dataSourceSignal) {
+                case telux::loc::GAL_SIG_SRC_E1B : std::cout << "\nGal signal source: E1B"; break;
+                case telux::loc::GAL_SIG_SRC_E5A : std::cout << "\nGal signal source: E5A"; break;
+                case telux::loc::GAL_SIG_SRC_E5B : std::cout << "\nGal signal source: E5B"; break;
+                default: std::cout << "\nGal signal source: Unknown"; break;
+            }
+            std::cout << "\nsisIndex    : "
+                      << static_cast<unsigned>(ephemerisInfo.galEphemerisData[i].sisIndex)
+                      << "\nbgdE1E5a    : " << ephemerisInfo.galEphemerisData[i].bgdE1E5a
+                      << "\nbgdE1E5b    : " << ephemerisInfo.galEphemerisData[i].bgdE1E5b
+                      << "\nsvHealth    : "
+                      << static_cast<unsigned>(ephemerisInfo.galEphemerisData[i].svHealth) << "\n";
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        std::cout << "GLONASS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.gloEphemerisData.size(); i++) {
+            std::cout   << "\ngnssSvId      : " << ephemerisInfo.gloEphemerisData[i].gnssSvId;
+            std::cout   << "\nephSource     : ";
+            printEphSrc(ephemerisInfo.gloEphemerisData[i].ephSource);
+            std::cout   << "\naction        : ";
+            printEphAct(ephemerisInfo.gloEphemerisData[i].action);
+            std::cout   << "\nbnHealth      : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].bnHealth)
+                        << "\nlnHealth      : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].lnHealth)
+                        << "\ntb            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].tb)
+                        << "\nft            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].ft)
+                        << "\ngloM          : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].gloM)
+                        << "\nenAge         : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].enAge)
+                        << "\ngloFrequency  : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].gloFrequency)
+                        << "\np1            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].p1)
+                        << "\np2            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].p2)
+                        << "\ndeltaTau      : " << ephemerisInfo.gloEphemerisData[i].deltaTau
+                        << "\ntauN          : " << ephemerisInfo.gloEphemerisData[i].tauN
+                        << "\ngamma         : " << ephemerisInfo.gloEphemerisData[i].gamma
+                        << "\ntoe           : " << ephemerisInfo.gloEphemerisData[i].toe
+                        << "\nnt            : " << ephemerisInfo.gloEphemerisData[i].nt;
+            std::cout   << "\nGlo position: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].position[k] << " ";
+            }
+            std::cout   << "\nGlo velocity: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].velocity[k] << " ";
+            }
+            std::cout   << "\nGlo acceleration: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].acceleration[k] << " ";
+            }
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
+        std::cout << "BDS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.bdsEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.bdsEphemerisData[i].commonData);
+            std::cout   << "\nsvHealth    : "
+                        << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].svHealth)
+                        << "\nAODC        : "
+                        << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].AODC)
+                        << "\ntgd1        : " << ephemerisInfo.bdsEphemerisData[i].tgd1
+                        << "\ntgd2        : " << ephemerisInfo.bdsEphemerisData[i].tgd2
+                        << "\nURAI        : " << ephemerisInfo.bdsEphemerisData[i].URAI << "\n";
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+        std::cout << "QZSS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.qzssEphemerisData.size(); i++) {
+            printGpsQzssEphData(ephemerisInfo.qzssEphemerisData[i].qzssEphData);
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+        std::cout << "NAVIC satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.navicEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.navicEphemerisData[i].commonData);
+            std::cout   << "\nweekNum               : "
+                        << ephemerisInfo.navicEphemerisData[i].weekNum
+                        << "\niodec                 : "
+                        << ephemerisInfo.navicEphemerisData[i].iodec
+                        << "\nl5Health              : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].l5Health)
+                        << "\nsHealth               : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].sHealth)
+                        << "\ninclinationAngleRad   : "
+                        << ephemerisInfo.navicEphemerisData[i].inclinationAngleRad
+                        << "\nurai                  : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].urai)
+                        << "\ntgd                   : "
+                        << ephemerisInfo.navicEphemerisData[i].tgd << "\n";
+        }
+    } else {
+        std::cout << "UNKNOWN satellite" << "\n";
+    }
+    std::cout << "\n";
+}
+
 void MyLocationListener::onLocationSystemInfo(const telux::loc::LocationSystemInfo
      &locationSystemInfo) {
    if(!isLocSysInfoFlagEnabled_) {
@@ -1852,6 +2031,10 @@ void MyLocationListener::setMeasurementsInfoFlag(bool enable) {
 
 void MyLocationListener::setDisasterCrisisInfoFlag(bool enable) {
     isDisasterCrisisInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setEphemerisInfoFlag(bool enable) {
+    isEphemerisInfoFlagEnabled_ = enable;
 }
 
 void MyLocationListener::setLocSystemInfoFlag(bool enable) {

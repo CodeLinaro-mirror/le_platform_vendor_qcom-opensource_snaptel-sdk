@@ -62,6 +62,8 @@ public:
 
    void onGnssDisasterCrisisInfo(const telux::loc::GnssDisasterCrisisReport &dcReportInfo) override;
 
+   void onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) override;
+
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
@@ -74,6 +76,7 @@ public:
    void setNmeaInfoFlag(bool enable);
    void setMeasurementsInfoFlag(bool enable);
    void setDisasterCrisisInfoFlag(bool enable);
+   void setEphemerisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
    void setEngineNmeaInfoFlag(bool enable);
 
@@ -88,6 +91,7 @@ private:
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isDisasterCrisisInfoFlagEnabled_ = false;
+   bool isEphemerisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    bool isEngineNmeaInfoFlagEnabled_ = false;
 
@@ -123,6 +127,10 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
+   void printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData);
+   void printEphSrc(telux::loc::GnssEphSource ephSrc);
+   void printEphAct(telux::loc::GnssEphAction ephAct);
+   void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

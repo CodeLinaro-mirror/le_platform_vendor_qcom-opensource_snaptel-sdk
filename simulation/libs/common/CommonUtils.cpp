@@ -187,6 +187,8 @@ ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
         return ErrorCode::INTERNAL;
     } else if (errorCode == "CLIENT_IDS_EXHAUSTED") {
         return ErrorCode::CLIENT_IDS_EXHAUSTED;
+    } else if (errorCode == "NOTSUPPORTED"){
+        return ErrorCode::NOT_SUPPORTED;
     }
 
     return ErrorCode::INTERNAL_ERR;

@@ -1,0 +1,237 @@
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#ifndef AUDIOGRPCCLIENTSTUB_HPP
+#define AUDIOGRPCCLIENTSTUB_HPP
+
+#include <grpcpp/grpcpp.h>
+#include <map>
+
+#include "protos/proto-src/audio_simulation.grpc.pb.h"
+#include "common/TaskDispatcher.hpp"
+#include "AudioDefinesLibInternal.hpp"
+#include "ICommunicator.hpp"
+#include "common/ListenerManager.hpp"
+#include "common/CommonUtils.hpp"
+
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+using grpc::ClientReader;
+
+using audioStub::AudioService;
+
+namespace telux {
+namespace audio {
+
+/*
+ * When sending request, converts telsdk specific data format to protobuf format.
+ *
+ * When receiving response/indication, converts protobuf format data to telsdk
+ * specific format.
+ *
+ * It uses APIs from StubInterface of AudioService to exchange messages with GRPC framework.
+ */
+class AudioGrpcClientStub : public ICommunicator,
+                            public std::enable_shared_from_this<AudioGrpcClientStub> {
+
+ public:
+    AudioGrpcClientStub();
+    ~AudioGrpcClientStub();
+
+    telux::common::Status setup() override;
+
+    /* Sending grpc requests */
+
+    telux::common::Status getDevices(
+        std::shared_ptr<telux::audio::IGetDevicesCb> resultListener, int cmdId) override;
+
+    telux::common::Status getStreamTypes(
+        std::shared_ptr<telux::audio::IGetStreamsCb> resultListener, int cmdId) override;
+
+    telux::common::Status getCalibrationInitStatus(
+        std::shared_ptr<telux::audio::IGetCalInitStatusCb> resultListener, int cmdId) override;
+
+    telux::common::Status createStream(telux::audio::StreamConfig streamConfig,
+        std::shared_ptr<telux::audio::ICreateStreamCb> resultListener, int cmdId) override;
+
+    telux::common::Status deleteStream(uint32_t streamId,
+        std::shared_ptr<telux::audio::IDeleteStreamCb> resultListener, int cmdId) override;
+
+    telux::common::Status startStream(uint32_t streamId,
+        std::shared_ptr<telux::audio::IStartStreamCb> resultListener, int cmdId) override;
+
+    telux::common::Status stopStream(uint32_t streamId,
+        std::shared_ptr<telux::audio::IStopStreamCb> resultListener, int cmdId) override;
+
+    telux::common::Status playDtmfTone(telux::audio::DtmfTone dtmfTone, uint16_t duration,
+        uint16_t gain, uint32_t streamId,
+        std::shared_ptr<telux::audio::IDTMFCb> resultListener, int cmdId) override;
+
+    telux::common::Status stopDtmfTone(telux::audio::StreamDirection direction,
+        uint32_t streamId, std::shared_ptr<telux::audio::IDTMFCb> resultListener,
+        int cmdId) override;
+
+    telux::common::Status setDevice(uint32_t streamId,
+        std::vector<telux::audio::DeviceType> devices,
+        std::shared_ptr<telux::audio::ISetGetDeviceCb> resultListener, int cmdId) override;
+
+    telux::common::Status getDevice(uint32_t streamId,
+        std::shared_ptr<telux::audio::ISetGetDeviceCb> resultListener, int cmdId) override;
+
+    telux::common::Status setVolume(uint32_t streamId, telux::audio::StreamVolume volume,
+        std::shared_ptr<telux::audio::ISetGetVolumeCb> resultListener, int cmdId) override;
+
+    telux::common::Status getVolume(uint32_t streamId, telux::audio::StreamDirection direction,
+        std::shared_ptr<telux::audio::ISetGetVolumeCb> resultListener, int cmdId) override;
+
+    telux::common::Status setMute(uint32_t streamId, telux::audio::StreamMute mute,
+        std::shared_ptr<telux::audio::ISetGetMuteCb> resultListener, int cmdId) override;
+
+    telux::common::Status getMute(uint32_t streamId, telux::audio::StreamDirection direction,
+        std::shared_ptr<telux::audio::ISetGetMuteCb> resultListener, int cmdId) override;
+
+    telux::common::Status write(uint32_t streamId, uint8_t *transportBuffer,
+        uint32_t isLastBuffer, std::shared_ptr<telux::audio::IWriteCb> resultListener,
+        telux::audio::AudioUserData *userData, uint32_t dataLength) override;
+
+    telux::common::Status read(uint32_t streamId, uint32_t numBytesToRead,
+        uint8_t *transportBuffer, std::shared_ptr<telux::audio::IReadCb> resultListener,
+        telux::audio::AudioUserData *audioUserData) override;
+
+    telux::common::Status playTone(uint32_t streamId, std::vector<uint16_t> frequency,
+        uint16_t duration, uint16_t gain,
+        std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
+
+    telux::common::Status stopTone(uint32_t streamId,
+        std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
+
+    telux::common::Status registerForVoiceStreamEvents(uint32_t streamId,
+        std::weak_ptr<telux::audio::IVoiceStreamEventsCb> listener);
+
+    telux::common::Status registerForServiceStatusEvents(
+        std::weak_ptr<telux::audio::IServiceStatusEventsCb> listener);
+
+    bool waitForInitialization();
+    /**
+    * Checks the status of grpc Service and returns the result.
+    *
+    * @returns True if grpc Service is ready for service otherwise false.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+    bool isReady() override;
+
+   /**
+    * Wait for grpc Service to be ready.
+    *
+    * @returns  A future that caller can wait on to be notified when
+    *           subsystem is ready.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+    std::future<bool> onReady() override;
+
+    /* Receiving GRPC responses */
+
+    void onGetDevices(google::protobuf::Any any, int cmdId, ErrorCode ec,
+        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onGetStreamTypes(google::protobuf::Any any, int cmdId, ErrorCode ec,
+        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onCreateStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onStopStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onSetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onGetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onSetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onGetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onSetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onGetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onPlayDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onStopDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onGetCalibrationInitStatus(google::protobuf::Any any, int cmdId, ErrorCode ec,
+        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onRead(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onPlayTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    /* Receiving GRPC indication */
+
+    void onDtmfToneDetected(::audioStub::DtmfTone dtmfTone);
+    void onSSRUpdate(commonStub::GetServiceStatusReply serviceStatus);
+
+    /* Set to true to indicate - destruction is started */
+    static std::atomic<bool> exitNow_;
+    /* Protect against concurrent SSR and AudioGrpcClient destruction */
+    static std::mutex destructorGuard_;
+
+ private:
+    void createServerStreaming();
+
+    std::shared_ptr<telux::common::ListenerManager<
+        telux::audio::IVoiceStreamEventsCb>> voiceListenerMgr_;
+
+    std::shared_ptr<telux::common::ListenerManager<
+         telux::audio::IServiceStatusEventsCb>> serviceStatusListenerMgr_;
+
+    std::unique_ptr<telux::common::TaskDispatcher> serverMsgProcessor_;
+    std::unique_ptr<::audioStub::AudioService::Stub> stub_;
+    std::unordered_map<int, std::weak_ptr<telux::common::ICommandCallback>> callbackMap_;
+    std::unordered_map<int, telux::audio::AudioUserData*> userDataMap_;
+    std::mutex update_;
+    // Check the readiness of the service
+    std::mutex grpcClientMutex_;
+    std::condition_variable cv_;
+    // Check the readiness of the service
+    telux::common::ServiceStatus serviceReady_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::vector<std::thread> runningThreads_;
+    std::atomic<bool> exiting_;
+
+    AudioGrpcClientStub(const AudioGrpcClientStub &) = delete;
+    AudioGrpcClientStub &operator=(const AudioGrpcClientStub &) = delete;
+};
+
+}  // end of namespace audio
+}  // end of namespace telux
+
+#endif //AUDIOGRPCCLIENTSTUB_HPP

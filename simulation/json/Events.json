@@ -100,5 +100,16 @@
             "slotId:           valid slotIds are 1 & 2 only." ,
             "callId:           valid callId"
         ]
+    },
+    "audio": {
+        "ssr":[
+            "telsdk_event_injector -f audio -e ssr <serviceStatus>",
+            "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+        ],
+        "dtmf_detection":[
+            "telsdk_event_injector -f audio -e dtmf_detection <lowFreq> <highFreq>",
+            "lowFreq: valid lowFreqs are 697, 770, 852 & 941 only.",
+            "highFreq: valid highFreqs are 1209, 1336, 1477 & 1633 only"
+        ]
     }
 }

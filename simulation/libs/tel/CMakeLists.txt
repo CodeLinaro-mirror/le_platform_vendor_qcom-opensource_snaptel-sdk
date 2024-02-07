@@ -22,7 +22,6 @@ set(TEL_STUB_SOURCES
     CellInfo.cpp
     VoiceServiceInfo.cpp
     CellIBroadcastMessage.cpp
-    OperatorInfo.cpp
     SimProfile.cpp
     PhoneManagerStub.cpp
     PhoneStub.cpp
@@ -30,6 +29,9 @@ set(TEL_STUB_SOURCES
     CallManagerStub.cpp
     CallStub.cpp
     MultiSimManagerStub.cpp
+    ImsServingSystemManagerStub.cpp
+    ServingSystemManagerStub.cpp
+    NetworkSelectionManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

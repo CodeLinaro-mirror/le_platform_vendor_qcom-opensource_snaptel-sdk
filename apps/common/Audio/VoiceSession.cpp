@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -103,7 +103,7 @@ Status VoiceSession::startAudio() {
             }
         } else {
             LOG(ERROR, "Audio already started");
-            statusFromRequest = Status::SUCCESS;
+            statusFromRequest = Status::ALREADY;
         }
     } else {
         LOG(ERROR, "No stream exists");
@@ -134,7 +134,6 @@ Status VoiceSession::stopAudio() {
             return statusFromResponse;
         }
     } else {
-        statusFromRequest = Status::SUCCESS;
         LOG(ERROR, "Audio not started yet");
     }
     return statusFromRequest;

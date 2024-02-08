@@ -285,11 +285,11 @@ void PlayMenu::stopPlay(std::vector<std::string> userInput) {
                 });
             if(status == telux::common::Status::SUCCESS){
                 std::cout << "Request to force stop Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Force Stop successful" << std::endl;
+                }
             } else {
                 std::cout << "Request to force stop failed" << std::endl;
-            }
-            if (p.get_future().get()) {
-                    std::cout << "Force Stop successful" << std::endl;
             }
         }
     } else {
@@ -430,8 +430,8 @@ void PlayMenu::play() {
                 std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
                 if (p.get_future().get()) {
                     std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
                 }
-                playStopcv_.wait(lck);
             } else {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }

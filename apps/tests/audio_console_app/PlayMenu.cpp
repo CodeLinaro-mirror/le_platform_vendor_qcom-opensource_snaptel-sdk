@@ -462,8 +462,11 @@ void PlayMenu::onReadyForWrite() {
 }
 
 void PlayMenu::onPlayStopped() {
-    playStopcv_.notify_all();
-    std::cout << "Playback Stopped after playing pending buffers" << std::endl;
+    {
+        std::lock_guard<std::mutex> lk(playStopMutex_);
+        playStopcv_.notify_all();
+        std::cout << "Playback Stopped after playing pending buffers" << std::endl;
+    }
 }
 
 void PlayMenu::registerListener() {

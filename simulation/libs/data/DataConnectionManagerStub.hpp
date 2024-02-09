@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -95,6 +95,7 @@ private:
         std::vector<std::shared_ptr<IDataConnectionListener>> &listeners);
     void invokeDataConnectionListener(std::shared_ptr<IDataCall> call);
     void handleEvent(std::string token , std::string event);
+    void requestConnectedDataCallLists();
 };
 
 } // end of namespace data

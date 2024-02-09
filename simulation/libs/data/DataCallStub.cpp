@@ -1,9 +1,10 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataCallStub.hpp"
+#include "DataHelper.hpp"
 #include "common/Logger.hpp"
 
 using namespace telux::common;
@@ -78,8 +79,13 @@ TechPreference DataCallStub::getTechPreference() {
 std::list<IpAddrInfo> DataCallStub::getIpAddressInfo() {
     std::list<IpAddrInfo> ipAddrList;
     lock_guard<mutex> lock(statusMutex_);
-    ipAddrList.push_back(ipv4_);
-    ipAddrList.push_back(ipv6_);
+    if (DataHelper::isValidIpv4Address(ipv4_.ifAddress)) {
+        ipAddrList.push_back(ipv4_);
+    }
+    if (DataHelper::isValidIpv6Address(ipv6_.ifAddress)) {
+        ipAddrList.push_back(ipv6_);
+    }
+
     return ipAddrList;
 }
 

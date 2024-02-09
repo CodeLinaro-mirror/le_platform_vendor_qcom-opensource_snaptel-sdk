@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <memory>
-#include <set>
+#include <list>
 #include <string>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -37,10 +37,13 @@ struct DataCallParams {
     std::string ipFamilyType;
     std::string v4IpAddress;
     std::string v4GwAddress;
-    std::string dnsPrimaryAddress;
-    std::string dnsSecondaryAddress;
+    std::string v4dnsPrimaryAddress;
+    std::string v4dnsSecondaryAddress;
     std::string v6IpAddress;
     std::string v6GwAddress;
+    std::string v6dnsPrimaryAddress;
+    std::string v6dnsSecondaryAddress;
+    std::set<int> ownersId;
 };
 
 class DataConnectionServerImpl final:
@@ -82,10 +85,22 @@ public:
         dataStub::RequestDataCallListReply* response) override;
 
     grpc::Status CleanUpService(ServerContext* context,
-        const ::google::protobuf::Empty* request,
+        const ::dataStub::ClientInfo* request,
         ::google::protobuf::Empty* response) override;
 
+    grpc::Status requestConnectedDataCallLists(ServerContext* context,
+        const dataStub::CachedDataCallsRequest* request,
+        dataStub::CachedDataCalls* response) override;
+
+    /* Could be used if all the datacalls need to be teared down.
+     * For ex: if WWAN connectivity is disabled via DataSettingsManager, then
+     * all the datacalls need to be teared down.
+     */
     void stopActiveDataCalls(SlotId slotId);
+
+    /* Could be used to check if any datacall exist.
+     * For ex: DataRestrictMode is enabled only if atleast one datacall exist.
+     */
     bool isAnyDataCallActive(SlotId slotId);
 
 private:
@@ -93,25 +108,30 @@ private:
         std::string &ipAddress, std::string &gatewayAddress,
         std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress);
     bool getIpv6Address(const std::string &ifaceName,
-        std::string &ipAddress, std::string &gatewayAddress);
+        std::string &ipAddress, std::string &gatewayAddress,
+        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress);
 
-    void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType);
+    void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
+        unsigned int client_id);
     void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
         std::string ifaceName);
 
     void getInactiveInterfaces();
-    void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap);
     bool isWwanConnectivityAllowed(int slotId);
+
+    void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap,
+        bool stopAllCalls = false, const unsigned int& client_id = 0);
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot1_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot2_;
-    /* Everytime datacall is triggered, we are reading list of interfaces from conf file. In activeNwIfaces_
-     * we are maintaining interfaces that are associated with a datacall & in inactiveNwIfaces_ we are maintaining
-     * interfaces that are not yet associated with datacall.
+    /* Everytime datacall is triggered, we are reading list of interfaces from conf file.
+     * In activeNwIfaces_ we are maintaining interfaces that are associated with a datacall
+     * & in inactiveNwIfaces_ we are maintaining interfaces that are not yet associated with
+     * datacall.
      */
-    std::set<std::string> activeNwIfaces_;
-    std::set<std::string> inactiveNwIfaces_;
+    std::list<std::string> activeNwIfaces_;
+    std::list<std::string> inactiveNwIfaces_;
     std::mutex mtx_;
 };
 

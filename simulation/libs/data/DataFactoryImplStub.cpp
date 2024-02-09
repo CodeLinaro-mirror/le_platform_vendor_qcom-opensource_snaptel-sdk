@@ -25,6 +25,14 @@ DataFactoryImplStub::DataFactoryImplStub() {
 
 DataFactoryImplStub::~DataFactoryImplStub() {
     LOG(DEBUG, __FUNCTION__);
+
+    // cleanup dataConnectionManagers
+    for (auto& conMgrEntry : dataConnectionManagerMap_) {
+        auto conMgr = conMgrEntry.second.lock();
+        if(conMgr) {
+            (std::static_pointer_cast<DataConnectionManagerStub>(conMgr))->cleanup();
+        }
+    }
     dataConnectionManagerMap_.clear();
     dataProfileManagerMap_.clear();
     dataServingSystemManagerMap_.clear();

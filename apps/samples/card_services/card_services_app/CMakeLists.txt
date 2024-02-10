@@ -1,18 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_CARD_APP card_services_app)
 
-set(CARD_APP_SOURCES
-    CardServicesApp.cpp
-)
+pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+set(CARD_APP_SOURCES CardServicesApp.cpp)
 
-add_executable (${TARGET_CARD_APP} ${CARD_APP_SOURCES})
-target_link_libraries(${TARGET_CARD_APP} telux_tel)
+add_executable(${TARGET_CARD_APP} ${CARD_APP_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_CARD_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_include_directories(${TARGET_CARD_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(${TARGET_CARD_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_CARD_APP} PRIVATE ${TELUXTEL_LIBRARIES})
+
+install(TARGETS ${TARGET_CARD_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

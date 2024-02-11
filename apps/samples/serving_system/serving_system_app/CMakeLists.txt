@@ -1,17 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_SERVING_SYSTEM_APP serving_system_app)
+set(TARGET_SS_APP serving_system_app)
 
-set(SOURCES
-    ServingSystemApp.cpp
-)
+pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+set(SS_APP_SOURCES ServingSystemApp.cpp)
 
-add_executable (${TARGET_SERVING_SYSTEM_APP} ${SOURCES})
-target_link_libraries(${TARGET_SERVING_SYSTEM_APP} telux_tel)
+add_executable(${TARGET_SS_APP} ${SS_APP_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_SERVING_SYSTEM_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_include_directories(${TARGET_SS_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(${TARGET_SS_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_SS_APP} PRIVATE ${TELUXTEL_LIBRARIES})
+
+install(TARGETS ${TARGET_SS_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

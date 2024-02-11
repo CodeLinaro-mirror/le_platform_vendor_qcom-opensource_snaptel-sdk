@@ -1,25 +1,23 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_RSP_APP rsp_app)
 
-set(TARGET_RSP_APP_SOURCES
+pkg_check_modules(TELUXTEL REQUIRED telux-tel)
+
+set(RSP_APP_SOURCES
    RspApp.cpp
    RspListener.cpp
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
 )
 
-include_directories(BEFORE
+add_executable(${TARGET_RSP_APP} ${RSP_APP_SOURCES})
+
+target_include_directories(${TARGET_RSP_APP} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common/utils
-)
+    ${telematics-apps_SOURCE_DIR}/common/utils)
 
-# Set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+target_compile_options(${TARGET_RSP_APP} PRIVATE -std=c++11 -Wall -Werror)
 
-# Remote Sim provisioning http daemon
-add_executable (${TARGET_RSP_APP} ${TARGET_RSP_APP_SOURCES})
-target_link_libraries(${TARGET_RSP_APP} telux_tel telux_common)
+target_link_libraries(${TARGET_RSP_APP} PRIVATE ${TELUXTEL_LIBRARIES} telux_common)
 
-# install to target
-install ( TARGETS ${TARGET_RSP_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+install(TARGETS ${TARGET_RSP_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

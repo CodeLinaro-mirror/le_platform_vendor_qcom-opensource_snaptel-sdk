@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -65,6 +65,10 @@ enum Status {
     NOSUCH = 12;
     NOTSUPPORTED = 13;
     NOMEMORY = 14;
+}
+
+message StatusMsg {
+    Status status = 1;
 }
 
 enum ErrorCode {

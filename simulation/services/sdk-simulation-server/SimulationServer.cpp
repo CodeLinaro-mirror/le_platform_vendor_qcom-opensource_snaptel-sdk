@@ -38,6 +38,7 @@
 #include "event/EventService.hpp"
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
 #include "loc/LocationReportService.hpp"
+#include "audio/AudioGrpcServiceImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -137,6 +138,10 @@ void SimulationServer::startGrpcServer() {
 
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);
+
+    std::shared_ptr<telux::audio::AudioGrpcServiceImpl> audioService =
+        std::make_shared<telux::audio::AudioGrpcServiceImpl>();
+    builder.RegisterService(audioService.get());
 
     std::shared_ptr<SensorFeatureManagerServerImpl> sensorService =
         std::make_shared<SensorFeatureManagerServerImpl>();

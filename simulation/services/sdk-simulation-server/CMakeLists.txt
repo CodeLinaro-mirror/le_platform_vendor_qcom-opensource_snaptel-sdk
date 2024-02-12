@@ -35,6 +35,7 @@ add_subdirectory(event)
 add_subdirectory(tel)
 add_subdirectory(loc)
 add_subdirectory(sensor)
+add_subdirectory(audio)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common
@@ -42,6 +43,7 @@ target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     ${PROTOBUF_LIB_LIBRARIES}
     ${GRPC_LIB_LIBRARIES}
     ${GRPCPP_LIB_LIBRARIES}
+    asound
     )
 
 # install to target

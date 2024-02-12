@@ -49,6 +49,36 @@ struct JsonData {
     int cbDelay;
 };
 
+/**
+ * This is a utility class to enable shared_from_this() in case when both
+ * base class as well as child class wants to use shared_from_this separately
+ *
+ * For enabling shared_from_this use enable_inheritable_shared_from_this<BaseClass>
+ * base class function    - shared_from_this().
+ * Use the below function in derived class instead of shared_from_this()
+ * derived class function - downcasted_shared_from_this<DerivedClass>().
+ *
+ */
+class SharedFromThis : public std::enable_shared_from_this
+        <SharedFromThis> {
+public:
+    virtual ~SharedFromThis() {
+    }
+};
+
+template <class T>
+class enable_inheritable_shared_from_this : virtual public SharedFromThis {
+public:
+    std::shared_ptr<T> shared_from_this () {
+        return std::dynamic_pointer_cast<T>(SharedFromThis::shared_from_this());
+    }
+
+    template <class Down>
+    std::shared_ptr<Down> downcasted_shared_from_this() {
+        return std::dynamic_pointer_cast<Down>(SharedFromThis::shared_from_this());
+    }
+};
+
 class CommonUtils {
  public:
     static telux::common::Status mapStatus(std::string status);

@@ -21,7 +21,7 @@ service DataConnectionManager {
     rpc InitService(SlotInfo) returns (GetServiceStatusReply) {}
     rpc GetServiceStatus(SlotInfo) returns (GetServiceStatusReply) {}
     rpc IsSubsystemReady(google.protobuf.Empty) returns (IsSubsystemReadyReply) {}
-    rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc CleanUpService(ClientInfo) returns (google.protobuf.Empty) {}
     rpc StartDatacall(DataCallInputParams) returns (DefaultReply) {}
     rpc StopDatacall(DataCallInputParams) returns (DefaultReply) {}
     rpc RequestDatacallStatistics(DataCallStatisticsRequest) returns
@@ -42,6 +42,7 @@ service DataConnectionManager {
         (stream RegisterOnServiceStatusChangeReply) {}
     rpc DeRegisterOnServiceStatusChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
+    rpc requestConnectedDataCallLists(CachedDataCallsRequest) returns (CachedDataCalls) {}
 }
 
  /*
@@ -191,6 +192,10 @@ service DataFilterManager {
  * Messages Definition                                             *
  *******************************************************************/
 
+message ClientInfo {
+    int32 client_id = 1;
+}
+
 message StopDataCallEvent {
     int32 profile_id = 2;
     int32 slot_id = 3;
@@ -204,10 +209,20 @@ message StartDataCallEvent {
     string ip_family_type = 4;
     string ipv4_address = 5;
     string gwv4_address = 6;
-    string dns_primary_address = 7;
-    string dns_secondary_address = 8;
+    string v4dns_primary_address = 7;
+    string v4dns_secondary_address = 8;
     string ipv6_address = 9;
     string gwv6_address = 10;
+    string v6dns_primary_address = 11;
+    string v6dns_secondary_address = 12;
+}
+
+message CachedDataCalls {
+    repeated StartDataCallEvent datacalls = 1;
+}
+
+message CachedDataCallsRequest {
+    int32 slot_id = 1;
 }
 
 message NoActiveDataCall {
@@ -300,6 +315,7 @@ message DataCallInputParams {
     int32 profile_id = 2;
     IpFamilyType ip_family_type = 3;
     OperationType operation_type = 4;
+    int32 client_id = 5;
 }
 
 message GetServiceStatusReply {

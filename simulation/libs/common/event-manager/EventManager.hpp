@@ -325,7 +325,6 @@ private:
         }
         grpc::Status status = reader->Finish();
         connectedToSimulationServer_ = false;
-        clearClientContext();
 
         if (status.ok()) {
             LOG(DEBUG, __FUNCTION__, " RequestEvent succeeded.");

@@ -7,6 +7,10 @@
 #include "common/Logger.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
+extern "C" {
+#include <arpa/inet.h>
+}
+
 class DataUtilsStub {
 public:
     static ::dataStub::TechPreference::TechPref convertTechPrefStringToEnum(
@@ -112,5 +116,17 @@ public:
         }
         LOG(DEBUG, __FUNCTION__, " authProtocol is :",  authProtocol);
         return authProtocol;
+    }
+
+    static bool isValidIpv4Address(const std::string &addr) {
+        struct sockaddr_in sa;
+        int res = inet_pton(AF_INET, addr.c_str(), &(sa.sin_addr));
+        return res != 0;
+    }
+
+    static bool isValidIpv6Address(const std::string &addr) {
+        struct sockaddr_in6 sa;
+        int res = inet_pton(AF_INET6, addr.c_str(), &(sa.sin6_addr));
+        return res != 0;
     }
 };

@@ -43,6 +43,7 @@
 #ifndef TELUX_WLAN_STAINTERFACEMANAGER_HPP
 #define TELUX_WLAN_STAINTERFACEMANAGER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 #include "WlanDeviceManager.hpp"
@@ -222,7 +223,7 @@ class IStaInterfaceManager {
     virtual ~IStaInterfaceManager(){};
 };
 
-class IStaListener {
+class IStaListener : public telux::common::ISDKListener {
 public:
     /**
      * This function is called when Station Status Changes

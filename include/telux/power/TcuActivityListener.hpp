@@ -78,6 +78,7 @@
 #include <memory>
 #include <vector>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/power/TcuActivityDefines.hpp>
 
 namespace telux {
@@ -93,7 +94,7 @@ namespace power {
  *        The methods in this class can be invoked from multiple different threads. Client
  *        needs to make sure that the implementation is thread-safe.
  */
-class ITcuActivityListener {
+class ITcuActivityListener : public telux::common::ISDKListener {
 public:
     /**
      * This function is called when the TCU activity state of the machine(that the client is

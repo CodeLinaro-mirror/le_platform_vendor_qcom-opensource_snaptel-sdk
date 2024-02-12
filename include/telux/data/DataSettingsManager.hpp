@@ -79,6 +79,7 @@
 
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/data/DataDefines.hpp>
 
 namespace telux {
@@ -500,7 +501,7 @@ public:
  * should be thread safe.
  *
  */
-class IDataSettingsListener {
+class IDataSettingsListener : public telux::common::ISDKListener {
  public:
     /**
      * This function is called when service status changes.

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -79,6 +79,7 @@
 #ifndef TELUX_LOC_LOCATIONLISTENER_HPP
 #define TELUX_LOC_LOCATIONLISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include "telux/loc/LocationDefines.hpp"
 #include <memory>
 
@@ -101,7 +102,7 @@ class IGnssSVInfo;
  * threads. Client needs to make sure that implementation is thread-safe.
  *
  */
-class ILocationListener {
+class ILocationListener : public telux::common::ISDKListener {
 public:
 
 /**
@@ -252,7 +253,7 @@ public:
   virtual ~ILocationListener() {}
 };
 
-class ILocationSystemInfoListener {
+class ILocationSystemInfoListener : public telux::common::ISDKListener {
 public:
 /**
  * This function is called when device receives location related system information
@@ -283,7 +284,7 @@ public:
  * The listener method can be invoked from multiple different threads.
  * Client needs to make sure that implementation is thread-safe.
  */
-class ILocationConfigListener {
+class ILocationConfigListener : public telux::common::ISDKListener {
   public:
     /**
      * The API is invoked when there is any update in the Xtra assistance data.

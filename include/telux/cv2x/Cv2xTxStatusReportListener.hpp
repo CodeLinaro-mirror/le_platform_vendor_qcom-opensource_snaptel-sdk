@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -72,6 +72,7 @@
 #ifndef TELUX_CV2X_CV2XTXSTATUSREPORTLISTENER_HPP
 #define TELUX_CV2X_CV2XTXSTATUSREPORTLISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
@@ -85,7 +86,7 @@ namespace cv2x {
 /**
  *@brief Listeners for CV2X Tx status report must implement this interface.
  */
-class ICv2xTxStatusReportListener {
+class ICv2xTxStatusReportListener : public telux::common::ISDKListener {
 public:
 
     /**

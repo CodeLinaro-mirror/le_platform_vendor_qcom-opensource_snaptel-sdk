@@ -45,6 +45,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -115,7 +116,7 @@ struct CALoad {
 /**
  * Receives load and capacity updates.
  */
-class ICAControlManagerListener {
+class ICAControlManagerListener : public telux::common::ISDKListener {
 
  public:
     /**

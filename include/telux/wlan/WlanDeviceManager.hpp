@@ -44,6 +44,7 @@
 #define TELUX_WLAN_WLANDEVICEMANAGER_HPP
 
 #include <memory>
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 
@@ -289,7 +290,7 @@ class IWlanDeviceManager {
 };  // end of IWlanDeviceManager
 
 
-class IWlanListener {
+class IWlanListener : public telux::common::ISDKListener {
 public:
     /**
      * This function is called when service status changes.

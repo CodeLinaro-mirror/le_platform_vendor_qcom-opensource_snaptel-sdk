@@ -539,6 +539,8 @@ void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> 
     loc->setLocationInfoValidity(std::stoul(message[itr++]));
     loc->setElapsedRealTime(std::stoull(message[itr++]));
     loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
+    loc->setElapsedGptpTime(std::stoull(message[itr++]));
+    loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
 }
 
 std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(
@@ -794,6 +796,8 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             loc->setLocationInfoValidity(std::stoul(message[itr++]));
             loc->setElapsedRealTime(std::stoull(message[itr++]));
             loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
+            loc->setElapsedGptpTime(std::stoull(message[itr++]));
+            loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
             loc->setLocationInfoExValidity(std::stoull(message[itr++]));
             loc->setAltitudeMeanSeaLevel(std::stof(message[itr++]));
             loc->setPositionDop(std::stof(message[itr++]));

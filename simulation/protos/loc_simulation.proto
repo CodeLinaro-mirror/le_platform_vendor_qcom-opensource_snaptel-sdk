@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -183,6 +183,10 @@ enum LocationValidityType {
     HAS_ELAPSED_REAL_TIME_BIT = 9;
     /** Location has valid elapsed real time uncertainty.*/
     HAS_ELAPSED_REAL_TIME_UNC_BIT = 10;
+    /** Location has valid elapsed gPTP time.*/
+    HAS_GPTP_TIME_BIT = 12;
+    /** Location has valid elapsed gPTP time uncertainity.*/
+    HAS_GPTP_TIME_UNC_BIT = 13;
 }
 
 // Left Shift
@@ -227,6 +231,8 @@ message LocationInfoBase {
     float heading_uncertainty = 12;
     uint64 elapsed_real_time = 13;
     uint64 elapsed_real_time_uncertainty = 14;
+    uint64 elapsedGptpTime_ = 15;
+    uint64 elapsedGptpTimeUncertainity_ = 16;
 }
 
 message RegisterOnBasicLocationUpdateReply {

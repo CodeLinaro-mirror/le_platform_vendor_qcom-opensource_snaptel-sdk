@@ -9,6 +9,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/ImsServingManagerServerImpl.cpp
     tel/ServingManagerServerImpl.cpp
     tel/NetworkSelectionManagerServerImpl.cpp
+    tel/PhoneManagerServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

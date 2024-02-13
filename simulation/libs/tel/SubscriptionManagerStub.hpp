@@ -56,7 +56,7 @@
 #include "common/event-manager/EventParserUtil.hpp"
 #include "CardAppStub.hpp"
 
-using telStub::PhoneService;
+using telStub::SubscriptionService;
 
 namespace telux {
 namespace tel {
@@ -84,7 +84,7 @@ private:
     SlotId slotId_;
     void initSync(telux::common::InitResponseCb callback);
     std::mutex subscriptionManagerMutex_;
-    std::unique_ptr<::telStub::PhoneService::Stub> stub_;
+    std::unique_ptr<::telStub::SubscriptionService::Stub> stub_;
     std::unique_ptr<::telStub::CardService::Stub> cardstub_;
     std::map<int, std::shared_ptr<SubscriptionStub>> subscriptionMap_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;

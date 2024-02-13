@@ -64,10 +64,10 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-using telStub::PhoneService;
+using telStub::SubscriptionService;
 using commonStub::ServiceStatus;
 
-class SubscriptionManagerServerImpl final : public telStub::PhoneService::Service,
+class SubscriptionManagerServerImpl final : public telStub::SubscriptionService::Service,
                                             public IServerEventListener,
                                             public
                                     std::enable_shared_from_this<SubscriptionManagerServerImpl> {

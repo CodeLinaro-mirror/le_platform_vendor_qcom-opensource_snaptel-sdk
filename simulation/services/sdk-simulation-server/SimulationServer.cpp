@@ -22,6 +22,7 @@
 
 #include "SimulationServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
+#include "tel/PhoneManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
 #include "tel/ImsServingManagerServerImpl.hpp"
@@ -135,6 +136,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<CallManagerServerImpl> callService =
         std::make_shared<CallManagerServerImpl>();
     builder.RegisterService(callService.get());
+
+    std::shared_ptr<PhoneManagerServerImpl> phoneService =
+        std::make_shared<PhoneManagerServerImpl>();
+    builder.RegisterService(phoneService.get());
 
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);

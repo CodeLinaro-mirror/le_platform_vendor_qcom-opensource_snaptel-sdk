@@ -11,7 +11,7 @@
     },
     "tel_sub": {
         "subscriptionInfo":[
-            "telsdk_event_injector -f tel_sub -e subscriptionInfoChanged <slotId> <carrierName> <phoneNumber> <iccId> <mcc> <mnc> <imsi> <gid1> <gid2>\n",
+            "telsdk_event_injector -f tel_sub -e subscriptionInfoChanged <slotId> <carrierName> <phoneNumber> <iccId> <mcc> <mnc> <imsi> <gid1> <gid2>",
             "slotId:      valid slot_ids are 1 & 2 only.",
             "carrierName:  valid carrierName.",
             "phoneNumber:  valid phoneNumber.",
@@ -25,7 +25,7 @@
     },
     "tel_card": {
         "cardInfo":[
-            "telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower>\n",
+            "telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower>",
             "slotId:       valid slotIds are 1 & 2 only.",
             "cardPower:    valid 1-Power ON, 0-Power OFF."
         ]
@@ -85,6 +85,17 @@
             "eventId           Integer, valid event Id are available from csv data file"
         ]
     },
+    "audio": {
+        "ssr":[
+            "telsdk_event_injector -f audio -e ssr <serviceStatus>",
+            "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+        ],
+        "dtmf_detection":[
+            "telsdk_event_injector -f audio -e dtmf_detection <lowFreq> <highFreq>",
+            "lowFreq: valid lowFreqs are 697, 770, 852 & 941 only.",
+            "highFreq: valid highFreqs are 1209, 1336, 1477 & 1633 only"
+        ]
+    },
     "tel_call": {
         "msdUpdateRequest":[
             "telsdk_event_injector -f tel_call -e msdUpdateRequest <slotId>",
@@ -101,15 +112,57 @@
             "callId:           valid callId"
         ]
     },
-    "audio": {
-        "ssr":[
-            "telsdk_event_injector -f audio -e ssr <serviceStatus>",
-            "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+    "tel_phone": {
+        "signalStrengthUpdate": [
+            "telsdk_event_injector -f tel_phone -e signalStrengthUpdate <slotId> ,<Rat1> <p1> <p2> <p3> <...> ,<Rat2> <p1> <p2> <p3> <...>",
+            "slotId:           integer, valid slotIds are 1 & 2 only.",
+            "Note: Signal Strength is separated by comma and each RAT signal info is represented as below",
+            "rat:     string, RAT type. RAT for retrieving Signal Strength information. valid values are GSM, LTE, WCDMA, NR5G.",
+            "In case of RAT is GSM,   integer, p1->gsmSignalStrength, p2->gsmBitErrorRate.",
+            "In case of RAT is LTE,   integer, p1->lteSignalStrength, p2->lteRsrp, p3->lteRsrq, p4->lteRssnr, p5->lteCqi, p6->timingAdvance.",
+            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate.",
+            "In case of RAT is NR5G,  integer, p1->rsrp, p2->rsrq, p3->rssnr.",
+            "CDMA and TDSCDMA are deprecated.",
+            "example: telsdk_event_injector -f tel_phone -e \"signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300\""
         ],
-        "dtmf_detection":[
-            "telsdk_event_injector -f audio -e dtmf_detection <lowFreq> <highFreq>",
-            "lowFreq: valid lowFreqs are 697, 770, 852 & 941 only.",
-            "highFreq: valid highFreqs are 1209, 1336, 1477 & 1633 only"
+        "cellInfoListUpdate": [
+            "telsdk_event_injector -f tel_phone -e cellInfoListUpdate <slotId> ,<cellType1> <isRegistered> <p1> <p2> <p3> <....> ,<cellType2> <isRegistered> <p1> <p2> <p3> <....>",
+            "slotId:       integer, valid slotIds are 1 & 2 only.",
+            "Note: Cell info list is separated by comma and each RAT cell info is represented as below",
+            "cellType:     integer, Cell type. Valid cellTypes are GSM-1, LTE-3, WCDMA-4, NR5G-6 (CDMA and TDSCDMA not supported)",
+            "isRegistered: integer, Registered cell or not, Valid values are 1 or 0",
+            "GSM cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->arfcn> <p6->bsic> <p7->gsmSignalStrength> <p8->gsmBitErrorRate>",
+            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate>",
+            "LTE cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->earfcn> <p7->lteSignalStrength> <p8->lteRsrp> <p9->lteRsrq> <p10->lteRssnr> <p11->lteCqi> <p12->timingAdvance>",
+            "NR5G cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->arfcn> <p7->rsrp> <p8->rsrq> <p9->rssnr>",
+            "example: telsdk_event_injector -f tel_phone -e \"cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300\""
+        ],
+        "voiceServiceStateUpdate": [
+            "telsdk_event_injector -f tel_phone -e voiceServiceStateUpdate <slotId> <voiceServiceState> <voiceServiceDenialCause> <radioTech>",
+            "slotId:                   integer, valid slotIds are 1 & 2 only.",
+            "voiceServiceState:        integer, Voice service state. Refer SDK documentation enum VoiceServiceState. For example REG_HOME = 1 and REG_DENIED = 3 ",
+            "voiceServiceDenialCause:  integer, Voice service denial failure cause. Refer SDK documentation enum VoiceServiceDenialCause. For example NETWORK_FAILURE = 17",
+            "radioTech:                integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "example: telsdk_event_injector -f tel_phone -e \"voiceServiceStateUpdate 1 1 17 14\""
+
+        ],
+        "operatingModeUpdate":[
+            "telsdk_event_injector -f tel_phone -e operatingModeUpdate <operatingMode>",
+            "operatingMode:   integer, valid 0-ONLINE, 1-AIRPLANE MODE, 2-FACTORY TEST, 3-OFFLINE, 4-RESETTING, 5-SHUTTING DOWN, 6-PERSISTENT LOW POWER."
+        ],
+        "eCallOperatingModeUpdate": [
+            "telsdk_event_injector -f tel_phone -e eCallOperatingModeUpdate <slotId> <ecallMode> <ecallModeReason>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "ecallMode:         integer, valid 0-NORMAL, 1-ECALL_ONLY, 2-NONE. ",
+            "ecallModeReason:   integer, valid 0-NORMAL, 1- ERA_GLONASS."
+        ],
+        "operatorInfoUpdate": [
+            "telsdk_event_injector -f tel_phone -e operatorInfoUpdate <slotId> <longName> <shortName> <plmn> <isHome>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "longName:          string, Valid operator long name",
+            "shortName:         string, Valid operator short name.",
+            "plmn:              string, Valid plmn name.",
+            "isHome:            bool, Valid value is 1 or 0 signifies PLMN is in home network or not. "
         ]
     }
 }

@@ -8,7 +8,6 @@
  package telStub;
  import "google/protobuf/empty.proto";
  import "common_simulation.proto";
- import "event_simulation.proto";
 
  /*******************************************************************
   * Services Definition                                             *
@@ -41,12 +40,36 @@
      rpc exchangeSimIO(exchangeSimIORequest) returns (exchangeSimIOReply) {}
      rpc requestEid(requestEidRequest) returns (requestEidReply) {}
  }
- service PhoneService {
+
+ service SubscriptionService {
      rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc IsSubsystemReady(google.protobuf.Empty) returns (commonStub.IsSubsystemReadyReply) {}
      rpc GetSubscription(GetSubscriptionRequest) returns (Subscription) {}
      rpc GetAllSubscription(google.protobuf.Empty) returns (GetAllSubscriptionsReply) {}
+ }
+
+ service PhoneService {
+     rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+     rpc IsSubsystemReady(google.protobuf.Empty) returns (commonStub.IsSubsystemReadyReply) {}
+     rpc GetPhoneIds(google.protobuf.Empty) returns (GetPhoneIdsReply) {}
+     rpc GetPhoneId(google.protobuf.Empty) returns (GetPhoneIdReply) {}
+     rpc GetCellularCapabilities(google.protobuf.Empty) returns (CellularCapabilityInfoReply){}
+     rpc SetOperatingMode(SetOperatingModeRequest) returns (SetOperatingModeReply) {}
+     rpc GetOperatingMode(google.protobuf.Empty) returns (GetOperatingModeReply) {}
+     rpc ResetWwan(google.protobuf.Empty) returns (ResetWwanReply) {}
+     rpc RequestVoiceServiceState(RequestVoiceServiceStateRequest) returns
+         (RequestVoiceServiceStateReply) {}
+     rpc SetRadioPower(SetRadioPowerRequest) returns (SetRadioPowerReply) {}
+     rpc RequestCellInfoList(RequestCellInfoListRequest) returns (RequestCellInfoListResponse) {}
+     rpc SetCellInfoListRate(SetCellInfoListRateRequest) returns (SetCellInfoListRateReply) {}
+     rpc GetSignalStrength(GetSignalStrengthRequest) returns (GetSignalStrengthResponse) {}
+     rpc SetECallOperatingMode(SetECallOperatingModeRequest) returns (SetECallOperatingModeReply) {}
+     rpc GetECallOperatingMode(GetECallOperatingModeRequest) returns (GetECallOperatingModeReply) {}
+     rpc RequestOperatorInfo(RequestOperatorInfoRequest) returns (RequestOperatorInfoReply) {}
+     rpc ConfigureSignalStrength(ConfigureSignalStrengthRequest) returns
+         (ConfigureSignalStrengthReply) {}
  }
  service SmsService {
      rpc InitService (commonStub.GetServiceStatusRequest) returns (commonStub.GetServiceStatusReply) {}
@@ -1279,32 +1302,6 @@ message UpdateECallMsdResponse {
     bool iscallback = 4;
  }
 
-// --- PhoneService ---
-
-enum RadioTechnology {
-     RADIO_TECH_UNKNOWN = 0;
-     RADIO_TECH_GPRS = 1;
-     RADIO_TECH_EDGE = 2;
-     RADIO_TECH_UMTS = 3;
-     RADIO_TECH_IS95A = 4;
-     RADIO_TECH_IS95B = 5;
-     RADIO_TECH_1xRTT = 6;
-     RADIO_TECH_EVDO_0 = 7;
-     RADIO_TECH_EVDO_A = 8;
-     RADIO_TECH_HSDPA = 9;
-     RADIO_TECH_HSUPA = 10;
-     RADIO_TECH_HSPA = 11;
-     RADIO_TECH_EVDO_B = 12;
-     RADIO_TECH_EHRPD = 13;
-     RADIO_TECH_LTE = 14;
-     RADIO_TECH_HSPAP = 15;
-     RADIO_TECH_GSM = 16;
-     RADIO_TECH_TD_SCDMA = 17;
-     RADIO_TECH_IWLAN = 18;
-     RADIO_TECH_LTE_CA = 19;
-     RADIO_TECH_NR5G = 20;
- }
-
 // --- ImsServingSystem ---
 
  enum RegistrationStatus {
@@ -1882,3 +1879,511 @@ enum RadioTechnology {
      RadioTechnology rat = 4;
      OperatorStatus operator_status = 5;
  }
+
+ // --- PhoneService ---
+enum VoiceServiceState {
+    NOT_REG_AND_NOT_SEARCHING = 0;
+    REG_HOME = 1;
+    NOT_REG_AND_SEARCHING = 2;
+    REG_DENIED = 3;
+    VOICE_SERVICE_STATE_UNKNOWN = 4;
+    REG_ROAMING = 5;
+    NOT_REG_AND_EMERGENCY_AVAILABLE_AND_NOT_SEARCHING = 10;
+    NOT_REG_AND_EMERGENCY_AVAILABLE_AND_SEARCHING = 12;
+    REG_DENIED_AND_EMERGENCY_AVAILABLE = 13;
+    UNKNOWN_AND_EMERGENCY_AVAILABLE = 14;
+}
+
+enum VoiceServiceDenialCause {
+    GENERAL = 0;      /**< General */
+    AUTH_FAILURE = 1; /**< Authentication Failure */
+
+    // Cause codes related to MS identification
+    IMSI_UNKNOWN = 2;      /**< IMSI unknown in HLR */
+    ILLEGAL_MS = 3;        /**< Illegal Mobile Station (MS), network
+                                refuses service to the MS either because an
+                                identity of the MS is not acceptable to the network
+                                or because the MS does not pass the authentication
+                                check */
+    IMSI_UNKNOWN_VLR = 4;  /**< IMSI unknown in Visitors Location Register (VLR) */
+    IMEI_NOT_ACCEPTED = 5; /**< Network does not accept emergency call
+                               establishment using an IMEI or not accept attach
+                               procedure for emergency services using an IMEI */
+    ILLEGAL_ME = 6;        /**< ME used is not acceptable to the network */
+
+    // Cause codes related non-GPRS and GPRS services (GMM)
+    GPRS_SERVICES_NOT_ALLOWED = 7;      /**< Not allowed to operate GPRS services. */
+    GPRS_NON_GPRS_NOT_ALLOWED = 8;      /**< Not allowed to operate either GPRS or
+                                             non-GPRS services */
+    MS_IDENTITY_FAILED = 9;             /**< the network cannot derive the MS's identity
+                                             from the P-TMSI/GUTI. */
+    IMPLICITLY_DETACHED = 10;           /**< network has implicitly detached the MS */
+    GPRS_NOT_ALLOWED_IN_PLMN = 14;      /**< GPRS services not allowed in this PLMN */
+    MSC_TEMPORARILY_NOT_REACHABLE = 16; /**< MSC temporarily not reachable */
+    SMS_PROVIDED_VIA_GPRS = 28;         /**< SMS provided via GPRS in this routing area */
+    NO_PDP_CONTEXT_ACTIVATED = 40;      /**< No PDP context activated */
+
+    // Cause codes related to subscription options
+    PLMN_NOT_ALLOWED = 11;          /**<  if the network initiates a detach request or UE
+                                         requests a services, in a PLMN where
+                                         the MS, by subscription or due to operator
+                                         determined barring is not allowed to operate. */
+    LOCATION_AREA_NOT_ALLOWED = 12; /**<  network initiates a detach request, in a
+                                         location area where the HPLMN determines that
+                                         the MS, by subscription, is not allowed to
+                                         operate  or roaming subscriber the subscriber is
+                                         denied service even if other PLMNs are available
+                                         on which registration was possible*/
+    ROAMING_NOT_ALLOWED = 13;       /**< Roaming not allowed in this Location Area */
+    NO_SUITABLE_CELLS = 15;         /**< No Suitable Cells in this Location Area */
+    NOT_AUTHORIZED = 25;            /**< Not Authorized for this CSG */
+
+    // Causes related to PLMN specific network failures and
+    // congestion/Authentication Failures
+    NETWORK_FAILURE = 17;                 /**< Network Failure */
+    MAC_FAILURE = 20;                     /**< MAC failure */
+    SYNC_FAILURE = 21;                    /**< USIM detects that the SQN in the
+                                               AUTHENTICATION REQUEST or
+                                               AUTHENTICATION_AND_CIPHERING REQUEST
+                                               message is out of range */
+    CONGESTION = 22;                      /**< network cannot serve a request from the MS
+                                             because of congestion */
+    GSM_AUTHENTICATION_UNACCEPTABLE = 23; /**< GSM Authentication unacceptable */
+
+    // Causes related to nature of request
+    SERVICE_OPTION_NOT_SUPPORTED = 32; /**< Service option not supported */
+    SERVICE_OPTION_NOT_SUBCRIBED = 33; /**< Requested service option not subscribed */
+    SERVICE_OPTION_OUT_OF_ORDER = 34;  /**< Service option temporarily out of order */
+    CALL_NOT_IDENTIFIED = 38;          /**< Call cannot be identified */
+    RETRY_FOR_NEW_CELL = 48;           /**< Retry upon entry into a new cell */
+
+    // Causes related to invalid messages
+    INCORRECT_MESSAGE = 95;           /**< Semantically incorrect message */
+    INVALID_INFO = 96;                /**< Invalid mandatory information */
+    MSG_TYPE_NOT_IMPLEMENTED = 97;    /**< Message type non-existent or not implemented */
+    MSG_NOT_COMPATIBLE = 98;          /**< Message not compatible with protocol state */
+    INFO_NOT_IMPLEMENTED = 99;        /**< Information element non-existent or not implemented */
+    CONDITIONAL_IE_ERROR = 100;       /**< Conditional IE error */
+    PROTOCOL_ERROR_UNSPECIFIED = 111; /**< Protocol error, unspecified */
+    UNDEFINED = -1;   /**< Undefined */
+}
+
+enum RadioTechnology {
+    RADIO_TECH_UNKNOWN = 0;
+    RADIO_TECH_GPRS = 1;
+    RADIO_TECH_EDGE = 2;
+    RADIO_TECH_UMTS = 3;
+    RADIO_TECH_IS95A = 4;
+    RADIO_TECH_IS95B = 5;
+    RADIO_TECH_1xRTT = 6;
+    RADIO_TECH_EVDO_0 = 7;
+    RADIO_TECH_EVDO_A = 8;
+    RADIO_TECH_HSDPA = 9;
+    RADIO_TECH_HSUPA = 10;
+    RADIO_TECH_HSPA = 11;
+    RADIO_TECH_EVDO_B = 12;
+    RADIO_TECH_EHRPD = 13;
+    RADIO_TECH_LTE = 14;
+    RADIO_TECH_HSPAP = 15;
+    RADIO_TECH_GSM = 16;
+    RADIO_TECH_TD_SCDMA = 17;
+    RADIO_TECH_IWLAN = 18;
+    RADIO_TECH_LTE_CA = 19;
+    RADIO_TECH_NR5G = 20;
+}
+
+enum VoiceServiceTechnology {
+    VOICE_TECH_GW_CSFB = 0;
+    VOICE_TECH_1x_CSFB = 1;
+    VOICE_TECH_VOLTE = 2;
+    VOICE_TECH_INVALID = -1;
+}
+
+enum RATCapability {
+    AMPS = 0;
+    CDMA = 1;
+    HDR = 2;
+    GSM = 3;
+    WCDMA = 4;
+    LTE = 5;
+    TDS = 6;
+    NR5G = 7;
+    NR5GSA = 8;
+    RAT_CAP_INVALID = -1;
+}
+
+enum OperatingMode {
+    ONLINE = 0;
+    AIRPLANE = 1;
+    FACTORY_TEST = 2;
+    OFFLINE = 3;
+    RESETTING = 4;
+    SHUTTING_DOWN = 5;
+    PERSISTENT_LOW_POWER = 6;
+}
+
+enum ECallMode {
+    NORMAL = 0;
+    ECALL_ONLY = 1;
+    NONE = 2;
+}
+
+message SimRatCapability {
+    int32 slot_id = 1;
+    // Mapped to RATCapabilitiesMask, since we can't use bitset we add the available RATCapability
+    // to a list and create bitset on server side.
+    repeated RATCapability capabilities = 2;
+ }
+
+message GetPhoneIdsReply {
+    commonStub.Status status = 1;
+}
+
+message GetPhoneIdReply {
+    commonStub.Status status = 1;
+}
+
+message CellularCapabilityInfoReply {
+    // Mapped to VoiceServiceTechnologiesMask
+    repeated VoiceServiceTechnology voice_service_techs = 1;
+    int32 sim_count = 2;
+    int32 max_active_sims = 3;
+    repeated SimRatCapability sim_rat_capabilities = 4;
+    // Mapped to DeviceRatCapability, since DeviceRatCapability = SimRatCapability we directly use
+    // SimRatCapability.
+    repeated SimRatCapability device_rat_capability = 5;
+    commonStub.ErrorCode error = 6;
+    commonStub.Status status = 7;
+    int32 delay = 8;
+    bool iscallback = 9;
+}
+
+message SetOperatingModeRequest {
+    OperatingMode operating_mode = 1;
+}
+
+message SetOperatingModeReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message GetOperatingModeReply {
+    OperatingMode operating_mode = 1;
+    commonStub.ErrorCode error = 2;
+    commonStub.Status status = 3;
+    int32 delay = 4;
+    bool iscallback = 5;
+}
+
+message OperatingModeEvent {
+    OperatingMode operating_mode = 1;
+}
+
+message ResetWwanReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message RequestVoiceServiceStateRequest {
+    int32 phone_id = 1;
+}
+
+message RequestVoiceServiceStateReply {
+    VoiceServiceState voice_service_state = 1;
+    VoiceServiceDenialCause voice_service_denial_cause = 2;
+    RadioTechnology radio_technology = 3;
+    commonStub.ErrorCode error = 4;
+    commonStub.Status status = 5;
+    int32 delay = 6;
+    bool iscallback = 7;
+}
+
+message VoiceServiceStateEvent {
+    VoiceServiceState voice_service_state = 1;
+    VoiceServiceDenialCause voice_service_denial_cause = 2;
+    RadioTechnology radio_technology = 3;
+    int32 phone_id = 4;
+}
+
+message SetRadioPowerRequest {
+    bool enable = 1;
+    int32 phone_id = 2;
+}
+
+message SetRadioPowerReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message RequestCellInfoListRequest {
+    int32 phone_id = 1;
+}
+
+message CellInfo {
+    enum CellType {
+        DUMMY = 0;
+        GSM = 1;
+        CDMA = 2;
+        LTE = 3;
+        WCDMA = 4;
+        TDSCDMA = 5;
+        NR5G = 6;
+   }
+   CellType cell_type = 1;
+   bool registered = 2;
+}
+
+message GsmCellInfo {
+    GsmCellIdentity gsm_cell_identity = 2;
+    GsmSignalStrengthInfo gsm_signal_strength_info = 3;
+}
+
+message GsmCellIdentity {
+    string mcc = 1;
+    string mnc = 2;
+    int32 lac = 3;
+    int32 cid = 4;
+    int32 arfcn = 5;
+    int32 bsic = 6;
+}
+
+message GsmSignalStrengthInfo {
+    int32 gsm_signal_strength = 1;
+    int32 gsm_bit_error_rate = 2;
+    int32 timing_advance = 3;
+}
+
+message WcdmaCellInfo {
+    WcdmaCellIdentity wcdma_cell_identity = 2;
+    WcdmaSignalStrengthInfo wcdma_signal_strength_info = 3;
+}
+
+message WcdmaCellIdentity {
+    string mcc = 1;
+    string mnc = 2;
+    int32 lac = 3;
+    int32 cid = 4;
+    int32 psc = 5;
+    int32 uarfcn = 6;
+}
+
+message WcdmaSignalStrengthInfo {
+    int32 signal_strength = 1;
+    int32 bit_error_rate = 2;
+}
+
+message LteCellInfo {
+    LteCellIdentity lte_cell_identity = 2;
+    LteSignalStrengthInfo lte_signal_strength_info = 3;
+}
+
+message LteCellIdentity {
+    string mcc = 1;
+    string mnc = 2;
+    int32 ci = 3;
+    int32 pci = 4;
+    int32 tac = 5;
+    int32 earfcn = 6;
+}
+
+message LteSignalStrengthInfo {
+    int32 lte_signal_strength = 1;
+    int32 lte_rsrp = 2;
+    int32 lte_rsrq = 3;
+    int32 lte_rssnr = 4;
+    int32 lte_cqi = 5;
+    int32 timing_advance = 6;
+}
+
+message Nr5gCellInfo {
+    Nr5gCellIdentity nr5g_cell_identity = 2;
+    Nr5gSignalStrengthInfo nr5g_signal_strength_info = 3;
+}
+
+message Nr5gCellIdentity {
+    string mcc = 1;
+    string mnc = 2;
+    int32 ci = 3;
+    int32 pci = 4;
+    int32 tac = 5;
+    int32 arfcn = 6;
+}
+
+message Nr5gSignalStrengthInfo {
+    int32 rsrp = 1;
+    int32 rsrq = 2;
+    int32 rssnr = 3;
+}
+
+message CellInfoList {
+    CellInfo cell_type = 1;
+    GsmCellInfo gsm_cell_info = 2;
+    WcdmaCellInfo wcdma_cell_info = 3;
+    LteCellInfo lte_cell_info = 4;
+    Nr5gCellInfo nr5g_cell_info = 5;
+    int32 phone_id = 6;
+    string mcc = 7;
+}
+
+message RequestCellInfoListResponse {
+    repeated CellInfoList cell_info_list = 1;
+    commonStub.ErrorCode error = 2;
+    commonStub.Status status = 3;
+    int32 delay = 4;
+    bool iscallback = 5;
+}
+
+message CellInfoListEvent {
+    repeated CellInfoList cell_info_list = 1;
+    int32 phone_id = 2;
+}
+
+message SetCellInfoListRateRequest {
+    int32 phone_id = 1;
+    int32 cell_info_rate = 2;
+}
+
+message SetCellInfoListRateReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message GetSignalStrengthRequest {
+    int32 phone_id = 1;
+    string current_rat = 2;
+}
+
+message GetSignalStrengthResponse {
+    GsmSignalStrengthInfo gsm_signal_strength_info = 1;
+    WcdmaSignalStrengthInfo wcdma_signal_strength_info = 2;
+    LteSignalStrengthInfo lte_signal_strength_info = 3;
+    Nr5gSignalStrengthInfo nr5g_signal_strength_info = 4;
+    commonStub.ErrorCode error = 5;
+    commonStub.Status status = 6;
+    int32 delay = 7;
+    bool iscallback = 8;
+}
+
+message SignalStrengthChangeEvent {
+    GsmSignalStrengthInfo gsm_signal_strength_info = 1;
+    WcdmaSignalStrengthInfo wcdma_signal_strength_info = 2;
+    LteSignalStrengthInfo lte_signal_strength_info = 3;
+    Nr5gSignalStrengthInfo nr5g_signal_strength_info = 4;
+    int32 phone_id = 5;
+}
+
+message SetECallOperatingModeRequest {
+    int32 phone_id = 1;
+    ECallMode ecall_mode = 2;
+}
+
+message SetECallOperatingModeReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message GetECallOperatingModeRequest {
+    int32 phone_id = 1;
+}
+
+message GetECallOperatingModeReply {
+    ECallMode ecall_mode = 1;
+    commonStub.ErrorCode error = 2;
+    commonStub.Status status = 3;
+    int32 delay = 4;
+    bool iscallback = 5;
+}
+
+// In ecall operating mode change notification, ecall mode reason is informed
+message ECallModeInfoChangeEvent {
+    ECallMode ecall_mode = 1;
+    ECallModeReason.Reason ecall_mode_reason = 2;
+    int32 phone_id = 3;
+}
+
+message RequestOperatorInfoRequest {
+    int32 phone_id = 1;
+}
+
+message PlmnInfo {
+    string long_name = 1;
+    string short_name = 2;
+    string plmn = 3;
+    bool ishome = 4;
+}
+
+message RequestOperatorInfoReply {
+    PlmnInfo plmn_info = 1;
+    commonStub.ErrorCode error = 2;
+    commonStub.Status status = 3;
+    int32 delay = 4;
+    bool iscallback = 5;
+}
+
+message OperatorInfoEvent {
+    PlmnInfo plmn_info = 1;
+    int32 phone_id = 2;
+}
+
+enum SignalStrengthConfigType {
+    CONFIG_NONE = 0;
+    DELTA = 1;       /**< Signal strength delta provided. */
+    THRESHOLD = 2;   /**< Signal strength threshold provided. */
+}
+
+enum RadioSignalStrengthType {
+    GSM_RSSI = 0;     /**< GSM received signal strength indicator.*/
+    WCDMA_RSSI = 1;   /**< WCDMA received signal strength indicator.*/
+    LTE_SNR = 2;      /**< LTE signal-to-noise ratio.*/
+    LTE_RSRQ = 3;     /**< LTE reference signal received quality.*/
+    LTE_RSRP = 4;     /**< LTE reference signal received power.*/
+    NR5G_SNR = 5;     /**< NR5G signal-to-noise ratio.*/
+    NR5G_RSRP = 6;    /**< NR5G reference signal received power.*/
+    NR5G_RSRQ = 7;    /**< NR5G reference signal received quality.*/
+}
+
+message SignalStrengthThreshold {
+    int32 lower_range_threshold = 1;     /**< Lower threshold for the selected
+                                          radio technology. */
+    int32 upper_range_threshold = 2;     /**< Upper threshold for the selected
+                                          radio technology. */
+}
+
+message ConfigureSignalStrength {
+    SignalStrengthConfigType config_type = 1;
+    RadioSignalStrengthType rat_sig_type = 2;
+    oneof Request {
+        uint32 delta = 3;
+        SignalStrengthThreshold threshold = 4;
+    }
+}
+
+message ConfigureSignalStrengthRequest {
+   int32 slot_id = 1;
+   repeated ConfigureSignalStrength config = 2;
+}
+
+message ConfigureSignalStrengthReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+}
+
+message ECallModeReason {
+    enum Reason {
+        NORMAL = 0;
+        ERA_GLONASS = 1;
+    }
+    Reason reason = 1;
+}

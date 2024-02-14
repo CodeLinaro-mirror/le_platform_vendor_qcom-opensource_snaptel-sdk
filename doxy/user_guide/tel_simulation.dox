@@ -25,10 +25,12 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 @section tel_files APIs supported by the Simulation framework
 - - -
 
-SMS: ISmsManager,ISmsListener, ISmscAddressCallback, SmsMessage<br>
-Card: ICardApp, ICardFileHandler, ICardManager, ICardListener, ICard<br>
-Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription<br>
+-SMS: ISmsManager,ISmsListener, ISmscAddressCallback, SmsMessage<br>
+-Card: ICardApp, ICardFileHandler, ICardManager, ICardListener, ICard<br>
+-Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription<br>
+-Phone: IPhoneManager, IPhone <br>
 
+<br>
 - - -
 @section tel_resp Telephony APIs Response handling
 - - -
@@ -83,6 +85,8 @@ The table explains the configuration for API response parameters of <i>simulatio
 @tr @td receiverAddress @tdend @tdlast Input receiver address according to encoded pdu. @tdlastend @trend
 
 @tableend
+
+<br>
 - - -
 @section tel_states Telephony data handling
 - - -
@@ -131,36 +135,38 @@ User input for filepaths provided using APIs present under telux::tel::ICardFile
 
 Note: Data stored in every record of Linear fixed EF file should be of same length.<br>
 
+@subsection tel_phone Phone
+
+Currently, the simulation framework supports the APIs for <i>telux::tel::IPhoneManager</i> and <i>telux::tel::IPhone</i> using the canned response configured in the JSON file: <i>simulation/json/api/tel/IPhoneManagerSlot*.json</i>, and events are injected through the event-injector utility using the JSON file: <i>simulation/json/Events.json</i>. When using events related to the phone, refer to <i>Events.json</i> and look for events under <i>tel_phone</i>.
+
+Performing operations such as setting the operating mode (<i>telux::tel::IPhoneManager::setOperatingMode</i> API) on the target can have system-level impact, which could alter the response of other APIs within the same class or different classes, such as getting signal strength (<i>telux::tel::IPhone::requestSignalStrength</i> API), etc. Currently, this behavior is not implemented in entirety, but it will be in future releases.
+
+Note: Some APIs, such as <i>telux::tel::PhoneManager::requestCellularCapabilityInfo</i> and <i>telux::tel::PhoneManager::requestOperatingMode</i>, provide device-specific information and are not specific to a particular subscription/slot. For these APIs, the JSON configuration is defined only in <i>simulation/json/api/tel/IPhoneManagerStateSlot1.json</i> pertaining to the first slot.
+
+<br>
 - - -
 @section tel_events Telephony event handling
 - - -
 
 @subsection event_1 Incoming SMS
 To simulate an incoming SMS, event injector is used by providing the inputs of encoded and decoded attributes of a message.<br>
-The client is expected to construct all the members of telux::tel::SmsMessage and send the message segment using event injector.<br>
+The client is expected to construct all the members of <i>telux::tel::SmsMessage</i> and send the message segment using event injector.<br>
 Simulation framework maintains the database to store the message attributes of an incoming SMS.<br>
 
-Sample input:<br>
+<b>Sample input:</b><br>
 Segment-1 of multipart message:<br>
 \code{.sh}
 telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 1 GSM7 1 07918185690700F0240B918189486537F300003280126063128A0F54741934AFBB41F2F4BC3C07A501 +18988456733 The sun rises i
 \endcode
-\htmlonly
-<BR>
-\endhtmlonly
 <br>
 Segment-2 of multipart message:<br>
 \code{.sh}
 telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 GSM7 1 07918185690700F0240B918189486537F300003280126014208A0A6E101D5D0695C3733A +18988456733 n the east
 \endcode
-\htmlonly
-<BR>
-\endhtmlonly
-<br>
 
 - Incoming SMS will be stored on the simulation server only when the preferred storage type is set to SIM.
-- It can be changed using telux::tel::ISmsManager::setPreferredStorage
-- Memory full indication ( telux::tel::ISmsListener::onMemoryFull ) will be sent to all the clients when the messages count on
+- It can be changed using <i>telux::tel::ISmsManager::setPreferredStorage</i>
+- Memory full indication ( <i>telux::tel::ISmsListener::onMemoryFull</i> ) will be sent to all the clients when the messages count on
   the simulation server exceeds the defined count specified in <i>simulation/json/api/tel/ISmsManagerSlot*.json</i>
 <pre>
 "requestStorageDetails" :
@@ -168,20 +174,110 @@ telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 GSM7 1 07918185690700F02
     "requestStorageDetailsCb_maxCount" : 10
 }
 </pre>
+\htmlonly
+<BR>
+\endhtmlonly
+<br>
 
 @subsection event_2 Update subscription information
-Sample input:<br>
+The event injector allows you to inject event for subscription information change.
+
+<b>Sample input:</b><br>
 \code{.sh}
 telsdk_event_injector -f tel_sub -e subscriptionInfoChanged 1 Carrier-1 8984653739 89010020000011293999 310 11 310018984653739 ffffffffffffffff ffffffffffffffff
 \endcode
 \htmlonly
 <BR>
 \endhtmlonly
+<br>
 
+@subsection event_3 Update cell information list
+The event injector allows you to inject event for cell information change related to current cell and neighboring cells.
+
+Sample: <i>telsdk_event_injector -f tel_phone -e cellInfoListUpdate <slotId> ,<cellType1> <isRegistered> <p1> <p2> <p3> <....> ,<cellType2> <isRegistered> <p1> <p2> <p3> <....></i><br>
+
+<i>Note:</i> Cell information is separated by commas.
+
+- **slotId:** An integer representing valid slotIds, which are 1 and 2 only.
+- **cellType:** An integer representing valid cellTypes. The supported types are:-
+ - GSM - 1
+ - LTE - 3
+ - WCDMA - 4
+ - NR5G - 6
+ - (CDMA and TDSCDMA are not supported)
+- **isRegistered:** An integer indicating whether the cell is registered or not. Valid values are 1 (registered) or 0 (not registered).<br>
+
+Refer below for configuring different cells with their respective attributes in the same pre-determined order:-
+
+- **GSM cell info:**
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-ARFCN> <p6-BSIC> <p7-Signal Strength> <p8-Bit Error Rate>
+- **WCDMA cell info:**
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-PSC> <p6-UARFCN> <p7-Signal Strength> <p8-Bit Error Rate>
+- **LTE cell info:**
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-CI> <p4-PCI> <p5-TAC> <p6-EARFCN> <p7-Signal Strength> <p8-RSRP> <p9-RSRQ> <p10-RSSNR> <p11-CQI> <p12-Timing Advance>
+- **NR5G cell info:**
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-CI> <p4-PCI> <p5-TAC> <p6-ARFCN> <p7-RSRP> <p8-RSRQ> <p9-RSSNR>
+
+Please note that CDMA and TDSCDMA are deprecated.<br>
+
+<b>Sample input:</b>
+\code{.sh}
+telsdk_event_injector -f tel_phone -e "cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300"
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+<br>
+
+@subsection event_4 Update signal strength information
+The event injector allows you to inject event for signal strength change with different RATs.
+
+Sample: <i>telsdk_event_injector -f tel_phone -e signalStrengthUpdate <slotId> ,<Rat1> <p1> <p2> <p3> <...> ,<Rat2> <p1> <p2> <p3> <...></i><br>
+
+<i>Note:</i> Similarly to cell info updates, the signal strength event with different RATs is separated by commas.
+
+- **RAT:** A string representing the RAT type. RAT is used for retrieving Signal Strength information. Valid values are GSM, LTE, WCDMA, and NR5G.
+
+Refer below for configuring different RAT signal strength with their respective attributes in the same pre-determined order:-
+
+- **GSM:** Use the following parameters:
+ - p1 - Signal Strength
+ - p2 - Bit Error Rate
+
+- **LTE:** Use the following parameters:
+ - p1 - Signal Strength
+ - p2 - RSRP
+ - p3 - RSRQ
+ - p4 - RSSNR
+ - p5 - CQI
+ - p6 - Timing Advance
+
+- **WCDMA:** Use the following parameters:
+ - p1 - Signal Strength
+ - p2 - Bit Error Rate
+
+- **NR5G:** Use the following parameters:
+ - p1 - RSRP
+ - p2 - RSRQ
+ - p3 - RSSNR
+
+Please note that CDMA and TDSCDMA are deprecated.<br>
+
+<b>Sample input:</b>
+\code{.sh}
+telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300"
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+<br>
 - - -
-@section tel_linm Limitations
+@section tel_linm Additional Notes
 - - -
 
-1. Encoding of text messages provided by the client is not supported for telux::tel::ISmsManager::sendSms.<br>
-2. Subsystem restart notifications provided using telux::common::IServiceStatusListener::onServiceStatusChange is not supported.<br>
+Currently, the simulation behavior for Telephony is as follows:-
+1. Encoding of text messages provided by the client is not supported for <i>telux::tel::ISmsManager::sendSms</i>.
+2. Subsystem restart notifications provided using <i>telux::common::IServiceStatusListener::onServiceStatusChange</i> are not supported.
+<br>
 */

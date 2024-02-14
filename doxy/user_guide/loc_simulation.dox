@@ -165,11 +165,12 @@ simulation/recording_simulation.bat
 
 <br>
 - - -
-@section loc_linm Limitations
+@section loc_linm Additional Notes
 - - -
 
-1. CSV report handling and recording is only supported for Basic and Detailed PVT Location at a fixed interval of 100 ms.<br>
-2. Events like Xtra data updation/Location system info updation are not being triggered asynchronously.<br>
-3. Dgnss report injection is not supported.<br>
+Currently, the simulation behavior for Location is as follows:-
+1. CSV report handling and recording is only supported for Basic and Detailed PVT Location at a fixed interval of 100 ms.
+2. Events like Xtra data updation/Location system info updation are not being triggered asynchronously.
+3. Dgnss report injection is not supported.
 
 */

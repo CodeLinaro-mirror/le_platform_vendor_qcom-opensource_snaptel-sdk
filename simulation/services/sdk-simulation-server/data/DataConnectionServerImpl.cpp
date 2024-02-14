@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -19,6 +19,9 @@
 #define DATA_CONNECTION_API_SLOT1_JSON "api/data/IDataConnectionManagerSlot1.json"
 #define DATA_CONNECTION_API_SLOT2_JSON "api/data/IDataConnectionManagerSlot2.json"
 #define DATA_CONNECTION_STATE_JSON "system-state/data/IDataConnectionManagerState.json"
+#define DATA_SETTINGS_API_LOCAL_JSON "api/data/IDataSettingsManagerLocal.json"
+#define DATA_SETTINGS_STATE_JSON "system-state/data/IDataSettingsManagerState.json"
+
 #define SLOT_2 2
 #define DELIMITER ','
 
@@ -403,6 +406,33 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     }
 }
 
+bool DataConnectionServerImpl::isWwanConnectivityAllowed(int slotId) {
+    LOG(DEBUG, __FUNCTION__);
+    bool isAllowed = true;
+
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "requestWwanConnectivityConfig";
+    std::string stateMethod = "requestWwanConnectivityConfig";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return false;
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        int slotIdx = (slotId == SLOT_2) ? 1 : 0;
+        isAllowed = data.stateRootObj[subsystem][stateMethod]["isAllowed"][slotIdx].asBool();
+    }
+
+    return isAllowed;
+}
+
 grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
     const dataStub::DataCallInputParams* request, dataStub::DefaultReply* response) {
 
@@ -420,45 +450,53 @@ grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    response->set_status(static_cast<commonStub::Status>(data.status));
-    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
-    response->set_delay(data.cbDelay);
-
-    int profileId = request->profile_id();
     int slotId = request->slot_id();
-    bool ipFamilyMismatch = false;
-    std::string ipFamilyType = DataUtilsStub::convertIpFamilyEnumToString(
-                request->ip_family_type().ip_family_type());
-    std::shared_ptr<DataCallParams> dataCall;
-
-    if (slotId == SLOT_ID_1) {
-        dataCall = dataCallsSlot1_[profileId];
-    } else {
-        dataCall = dataCallsSlot2_[profileId];
+    if (!isWwanConnectivityAllowed(slotId)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
-    //updating the datacall status, of locally stored datacall in server.
-    if (dataCall) {
-        auto currentFamily = dataCall->ipFamilyType;
-        if (ipFamilyType != currentFamily) {
-            dataCall->ipFamilyType =
-                DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6);
-            //to cover IpFamilyType mismatch usecases For ex: user starts v4 datacall first
-            // & later starts v6 datacall for same profile.
-            ipFamilyMismatch = true;
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+
+        int profileId = request->profile_id();
+        bool ipFamilyMismatch = false;
+        std::string ipFamilyType = DataUtilsStub::convertIpFamilyEnumToString(
+                    request->ip_family_type().ip_family_type());
+        std::shared_ptr<DataCallParams> dataCall;
+
+        if (slotId == SLOT_ID_1) {
+            dataCall = dataCallsSlot1_[profileId];
+        } else {
+            dataCall = dataCallsSlot2_[profileId];
+        }
+
+        //updating the datacall status, of locally stored datacall in server.
+        if (dataCall) {
+            auto currentFamily = dataCall->ipFamilyType;
+            if (ipFamilyType != currentFamily) {
+                dataCall->ipFamilyType =
+                    DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6);
+                //to cover IpFamilyType mismatch usecases For ex: user starts v4 datacall first
+                // & later starts v6 datacall for same profile.
+                ipFamilyMismatch = true;
+            }
+        }
+
+        //If datacall doesn't exist or there is an IPFamily mismatch
+        //trigger the start datacall event with new IPFamilyType.
+        if ((!dataCall) || (ipFamilyMismatch)) {
+            auto f = std::async(std::launch::deferred,
+                    [this, profileId, slotId, ipFamilyType, data]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
+                    this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType);
+                }).share();
+            taskQ_->add(f);
         }
     }
 
-    //If datacall doesn't exist or there is an IPFamily mismatch
-    //trigger the start datacall event with new IPFamilyType.
-    if ((!dataCall) || (ipFamilyMismatch)) {
-        auto f = std::async(std::launch::deferred,
-                [this, profileId, slotId, ipFamilyType, data]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType);
-            }).share();
-        taskQ_->add(f);
-    }
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
 
     return grpc::Status::OK;
 }
@@ -504,39 +542,43 @@ grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+
+        int profileId = request->profile_id();
+        int slotId = request->slot_id();
+        std::shared_ptr<DataCallParams> dataCall;
+
+        if (slotId == SLOT_ID_1) {
+            dataCall = dataCallsSlot1_[profileId];
+        } else {
+            dataCall = dataCallsSlot2_[profileId];
+        }
+
+        if (dataCall) {
+            //removing cached datacall object
+            auto currentFamily = dataCall->ipFamilyType;
+            if (ipFamilyType == currentFamily) {
+                if (slotId == SLOT_ID_1) {
+                    dataCallsSlot1_.erase(profileId);
+                } else {
+                    dataCallsSlot2_.erase(profileId);
+                }
+            }
+
+            std::string ifaceName = dataCall->ifaceName;
+            auto f = std::async(std::launch::async, [this, profileId, slotId,
+                ipFamilyType, ifaceName, data]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
+                    this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType, ifaceName);
+                }).share();
+            taskQ_->add(f);
+        }
+    }
+
     response->set_status(static_cast<commonStub::Status>(data.status));
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
-
-    int profileId = request->profile_id();
-    int slotId = request->slot_id();
-    std::shared_ptr<DataCallParams> dataCall;
-
-    if (slotId == SLOT_ID_1) {
-        dataCall = dataCallsSlot1_[profileId];
-    } else {
-        dataCall = dataCallsSlot2_[profileId];
-    }
-
-    if (dataCall) {
-        //removing cached datacall object
-        auto currentFamily = dataCall->ipFamilyType;
-        if (ipFamilyType == currentFamily) {
-            if (slotId == SLOT_ID_1) {
-                dataCallsSlot1_.erase(profileId);
-            } else {
-                dataCallsSlot2_.erase(profileId);
-            }
-        }
-
-        std::string ifaceName = dataCall->ifaceName;
-        auto f = std::async(std::launch::async, [this, profileId, slotId,
-            ipFamilyType, ifaceName, data]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType, ifaceName);
-            }).share();
-        taskQ_->add(f);
-    }
 
     return grpc::Status::OK;
 }
@@ -563,6 +605,28 @@ grpc::Status DataConnectionServerImpl::RequestDatacallList(ServerContext* contex
     response->mutable_reply()->set_delay(data.cbDelay);
 
     return grpc::Status::OK;
+}
+
+void DataConnectionServerImpl::stopActiveDataCalls(SlotId slotId) {
+    if (slotId == SLOT_ID_1) {
+        clearCachedDataCall(dataCallsSlot1_);
+    } else if (slotId == SLOT_ID_2) {
+        clearCachedDataCall(dataCallsSlot2_);
+    }
+}
+
+void DataConnectionServerImpl::clearCachedDataCall(
+    std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap) {
+    LOG(DEBUG, __FUNCTION__);
+
+    for (auto itr = dataCallsMap.begin(); itr != dataCallsMap.end();itr++) {
+        uint32_t profileId = itr->first;
+        auto &callObj = itr->second;
+        this->triggerStopDataCallEvent(profileId, callObj->slotId,
+            callObj->ipFamilyType, callObj->ifaceName);
+        activeNwIfaces_.erase(callObj->ifaceName);
+    }
+    dataCallsMap.clear();
 }
 
 grpc::Status DataConnectionServerImpl::CleanUpService(ServerContext* context,

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -7,7 +7,11 @@
  #define SERVING_SYSTEM_MANAGER_STUB_HPP
 
 #include <telux/data/ServingSystemManager.hpp>
+#include <telux/common/CommonDefines.hpp>
+
 #include "common/AsyncTaskQueue.hpp"
+#include "common/ListenerManager.hpp"
+#include "protos/proto-src/data.grpc.pb.h"
 
 namespace telux {
 namespace data {
@@ -37,14 +41,29 @@ public:
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener) override;
 
-    telux::common::Status cleanup();
+    void onRoamingStatusChanged(RoamingStatus status);
+    void onNrIconTypeChanged(NrIconType type);
+    void onServiceStateChangeInd(ServiceStatus status);
+    void onDrbStatusChanged(DrbStatus status);
 
 private:
-    SlotId slotId_ = DEFAULT_SLOT_ID;
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    telux::common::InitResponseCb initCb_;
+    std::mutex mtx_;
+    std::mutex initMtx_;
+    std::mutex mutex_;
 
-    void initSync();
+    SlotId slotId_ = DEFAULT_SLOT_ID;
+    telux::common::ServiceStatus subSystemStatus_;
+    std::unique_ptr<::dataStub::DataServingSystemManager::Stub> stub_;
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    std::vector<std::weak_ptr<IServingSystemListener>> listeners_;
+    telux::common::InitResponseCb initCb_;
+    std::shared_ptr<telux::common::ListenerManager<IServingSystemListener>> listenerMgr_;
+
+    void initSync(telux::common::InitResponseCb callback);
+    void setSubSystemStatus(telux::common::ServiceStatus status);
+    void invokeInitCallback(telux::common::ServiceStatus status);
+    void invokeCallback(telux::common::ResponseCallback callback,
+        telux::common::ErrorCode error, int cbDelay );
 };
 
 } // end of namespace data

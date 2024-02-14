@@ -54,6 +54,8 @@ class CommonUtils {
     static telux::common::ErrorCode mapErrorCode(std::string errorCode);
     static telux::common::ErrorCode toErrorCode(telux::common::Status status);
     static std::vector<std::string> splitString(const std::string &str, char delimiter);
+    static std::string getCurrentTimeHHMMSS();
+    static int bitwiseXOR(const std::string& str);
 
     static void getValues(Json::Value &values, std::string subsystem,
         std::string method, telux::common::Status &status,

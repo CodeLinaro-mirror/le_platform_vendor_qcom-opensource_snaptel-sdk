@@ -1,40 +1,12 @@
-/*
- * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ /*
+  *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+  *  SPDX-License-Identifier: BSD-3-Clause-Clear
+  */
 
 #include "DataFactoryImplStub.hpp"
 #include "DataConnectionManagerStub.hpp"
 #include "DataProfileManagerStub.hpp"
+#include "DataSettingsManagerStub.hpp"
 #include "ServingSystemManagerStub.hpp"
 
 #include "common/Logger.hpp"
@@ -261,7 +233,66 @@ std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpMana
 
 std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataSettingsManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    std::shared_ptr<IDataSettingsManager> settingsMgr = nullptr;
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    auto ItrMgr = dataSettingsManagerMap_.find(oprType);
+    if (ItrMgr != dataSettingsManagerMap_.end()) {
+        settingsMgr = ItrMgr->second.lock();
+    }
+    if(settingsMgr) {
+        LOG(DEBUG, "Found IDataSettingsManager for oprType: ", static_cast<int>(oprType));
+        //Find the current state of manager
+        telux::common::ServiceStatus status = settingsMgr->getServiceStatus();
+        if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+            //Manager has failed initialization but callback is not called yet hence we still
+            //have valid shared pointer. Return nullptr and callback will be executed to inform
+            //client and clear instance pointer as soon as we release mutex
+            LOG(DEBUG, __FUNCTION__, " Data Settings Manager initialization failed.");
+            return nullptr;
+        }
+        else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            LOG(DEBUG, __FUNCTION__, " Data Settings Manager initialization was successful");
+            if (clientCallback) {
+                dataSettingsCallbacks_[oprType].push_back(clientCallback);
+            }
+            std::thread appCallback([this, status, oprType]() {
+                this->initCompleteNotifierWithOprType(dataSettingsCallbacks_, status, oprType);});
+            appCallback.detach();
+        }
+        else {
+            LOG(DEBUG, __FUNCTION__, " Nat Manager initialization in progress.");
+            if (clientCallback) {
+                dataSettingsCallbacks_[oprType].push_back(clientCallback);
+            }
+        }
+        return settingsMgr;
+    } else {
+        std::shared_ptr<DataSettingsManagerStub> settingsMgrImpl = nullptr;
+        LOG(DEBUG, "Creating IDataSettingsManager with operation type ", static_cast<int>(oprType));
+        auto initCb = [this, oprType](telux::common::ServiceStatus status) {
+            if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+                std::lock_guard<std::mutex> lock(dataMutex_);
+                dataSettingsCallbacks_.erase(oprType);
+            }
+            this->initCompleteNotifierWithOprType( dataSettingsCallbacks_, status, oprType);
+        };
+        try {
+            settingsMgrImpl =
+                    std::make_shared<DataSettingsManagerStub>(oprType);
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
+        if (telux::common::Status::SUCCESS != settingsMgrImpl->init(initCb)) {
+            LOG(DEBUG, __FUNCTION__, " FAILED to create Settings Manager instance");
+            return nullptr;
+        }
+        dataSettingsManagerMap_[oprType] = settingsMgrImpl;
+        if (clientCallback) {
+            dataSettingsCallbacks_[oprType].push_back(clientCallback);
+        }
+        return settingsMgrImpl;
+    }
 }
 
 void DataFactoryImplStub::initCompleteNotifierWithSlotId(
@@ -274,6 +305,22 @@ void DataFactoryImplStub::initCompleteNotifierWithSlotId(
         std::lock_guard<std::mutex> lock(dataMutex_);
         Callbacks = initCbs[slotId];
         initCbs.erase(slotId);
+    }
+    for (auto &callback : Callbacks) {
+        callback(status);
+    }
+}
+
+void DataFactoryImplStub::initCompleteNotifierWithOprType(
+    std::map<OperationType, std::vector<telux::common::InitResponseCb>>& initCbs,
+    telux::common::ServiceStatus status, OperationType oprType) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<telux::common::InitResponseCb> Callbacks;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        Callbacks = initCbs[oprType];
+        initCbs.erase(oprType);
     }
     for (auto &callback : Callbacks) {
         callback(status);

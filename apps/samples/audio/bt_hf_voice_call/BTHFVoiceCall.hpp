@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,22 +76,30 @@ class BTHFVoiceCall {
     void readFromCodecWriteOnBluetooth();
 
     bool keepRunning_ = true;
-
- private:
-    uint32_t btReadSize_;
-    uint32_t codecReadSize_;
-    std::atomic_int32_t codecWritePossible_;
-    std::atomic_int32_t bluetoothWritePossible_;
     std::mutex btReadMutex_;
     std::mutex codecReadMutex_;
     std::condition_variable btReadWaiterCv_;
     std::condition_variable codecReadWaiterCv_;
+
+ private:
+    const int32_t BUF_COUNT = 2;
+    uint32_t btReadSize_;
+    uint32_t codecReadSize_;
+
+    int32_t btReadDone_;
+    int32_t codecReadDone_;
+    int32_t codecWritePossible_;
+    int32_t codecReadPossible_;
+    int32_t btReadPossible_;
+    int32_t btWritePossible_;
+
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> readyForCodecWriteBuffers_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> readyForBluetoothWriteBuffers_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> btReadBuffers_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> btWriteBuffers_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> codecReadBuffers_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> codecWriteBuffers_;
+
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioPlayStream> btPlayStream_;
     std::shared_ptr<telux::audio::IAudioCaptureStream> btCaptureStream_;

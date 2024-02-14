@@ -492,8 +492,10 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           = $(TELUX_GIT_ROOT)/include
-INCLUDE_FILE_PATTERNS  = *.hpp
+INCLUDE_PATH           = $(TELUX_GIT_ROOT)/include \
+                         $(TELUX_GIT_ROOT)/doxy/images
+INCLUDE_FILE_PATTERNS  = *.hpp \
+                         *.png
 PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = NO

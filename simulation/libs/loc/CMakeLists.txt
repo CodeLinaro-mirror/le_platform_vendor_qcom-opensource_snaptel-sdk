@@ -14,6 +14,7 @@ set(PROTO_SRC_DIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}/proto-src)
 set(LOCATION_TEST_LIB_SOURCES
     LocationFactoryStub.cpp
     LocationManagerStub.cpp
+    LocationReportFilterStub.cpp
     LocationConfiguratorStub.cpp
     DgnssManagerStub.cpp
     ReportHandler.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -343,7 +343,7 @@ class ICryptoAcceleratorManager {
      *
      * Caller should allocate sufficient memory pointed by 'results'.
      *
-     * @param[in,out] results       Buffer that will contain the results
+     * @param[out] results          Buffer that will contain the results
      *
      * @param[in] numResultsToRead  Number of the results to read
      *

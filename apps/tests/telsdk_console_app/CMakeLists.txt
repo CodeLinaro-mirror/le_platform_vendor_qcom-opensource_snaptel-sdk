@@ -10,6 +10,7 @@ include_directories(BEFORE
 if (TELSDK_FEATURE_TEL)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+
    Phone/PhoneMenu.cpp
    Phone/MyPhoneListener.cpp
    Phone/MySubscriptionListener.cpp
@@ -94,6 +95,8 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/dual_data/DualDataManagementMenu.cpp
    Data/data_control/DataControlMenu.cpp
    Data/qos/QoSManagementMenu.cpp
+   Data/data_link/DataLinkMenu.cpp
+   Data/data_link/DataLinkListener.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

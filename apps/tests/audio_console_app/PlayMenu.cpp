@@ -332,11 +332,9 @@ void PlayMenu::play() {
     uint32_t numBytes =0;
     std::promise<bool> p;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
-
     while(!freeBuffers_.empty()) {
         freeBuffers_.pop();
     }
-
     file_ = fopen(filePath_.c_str(),"r");
     if(file_) {
         fseek(file_, 0, SEEK_SET);
@@ -344,9 +342,7 @@ void PlayMenu::play() {
         std::cout <<"Unable to read file" << std::endl;
         return;
     }
-
     std::unique_lock<std::mutex> lock(mutex_);
-
     for(int i = 0; i < TOTAL_BUFFERS; i++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if(streamBuffer != nullptr) {
@@ -363,16 +359,12 @@ void PlayMenu::play() {
             return;
         }
     }
-
     playStatus_ = true;
     pipeLineEmpty_ = true;
     writeFail_ = false;
-
     auto writeCb = std::bind(&PlayMenu::writeCallback, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3);
-
     std::cout << "Audio play started" << std::endl;
-
     while (playStatus_)
     {
         if (!firstPlay) {
@@ -384,7 +376,6 @@ void PlayMenu::play() {
             }
         }
         firstPlay = false;
-
         if(!freeBuffers_.empty() && (pipeLineEmpty_)) {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
@@ -426,31 +417,33 @@ void PlayMenu::play() {
             }
         }
     }
-
-    if (ready_ && isAMR()) {
-        std::unique_lock<std::mutex> lck(playStopMutex_);
-
-        auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
-            [&p](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                    p.set_value(true);
-                } else {
-                    p.set_value(false);
-                    std::cout << "Failed to stop after playing buffers" << std::endl;
+    if (ready_) {
+        if(isAMR()) {
+            std::unique_lock<std::mutex> lck(playStopMutex_);
+            auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
+                [&p](telux::common::ErrorCode error) {
+                    if (error == telux::common::ErrorCode::SUCCESS) {
+                        p.set_value(true);
+                    } else {
+                        p.set_value(false);
+                        std::cout << "Failed to stop after playing buffers" << std::endl;
+                    }
+            });
+            if(status == telux::common::Status::SUCCESS) {
+                std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
                 }
-        });
-
-        if(status == telux::common::Status::SUCCESS) {
-            std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
-            if (p.get_future().get()) {
-                std::cout << "Pending buffers played successfully" << std::endl;
-                playStopcv_.wait(lck);
+            } else {
+                std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
         } else {
-            std::cout << "Request to stop playback after pending buffers failed" << std::endl;
+            while(freeBuffers_.size() != TOTAL_BUFFERS) {
+                cv_.wait(lock);
+            }
         }
     }
-
     if(writeFail_) {
         std::cout << "Play Failed" << std::endl;
     } else {
@@ -460,7 +453,6 @@ void PlayMenu::play() {
             std::cout << "Play Stopped" << std::endl;
         }
     }
-
     playStatus_ = false;
     playInProgress_ = false;
     closeFile();

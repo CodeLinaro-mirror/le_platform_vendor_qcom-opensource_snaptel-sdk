@@ -103,6 +103,7 @@ private:
     void registerListener();
     void deRegisterListener();
     void closeFile();
+    bool isAMR();
 
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<AudioClient> audioClient_;

@@ -190,8 +190,8 @@ grpc::Status DataSettingsServerImpl::setBandInterferenceConfig(ServerContext* co
                 = request->wlan_wait_time_in_sec();
             data.stateRootObj[subsystem][method]["n79WaitTimeInSec"]
                 = request->n79_wait_time_in_sec();
-            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
     }
 
     response->set_status(static_cast<commonStub::Status>(data.status));

@@ -214,9 +214,10 @@ public:
  * periodicities.
  * Calling this Api will result in @ref ILocationListener::onDetailedLocationUpdate,
  * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
- * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onGnssMeasurementsInfo
- * and @ref ILocationListener::onGnssDisasterCrisisInfo APIs
- * on the listener being invoked, assuming they have not been disabled using the
+ * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onGnssMeasurementsInfo,
+ * @ref ILocationListener::onGnssDisasterCrisisInfo and
+ * @ref ILocationListener::onGnssEphemerisInfo APIs on the listener being invoked,
+ * assuming they have not been disabled using the
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *
@@ -265,8 +266,9 @@ public:
  * Calling this Api will result in @ref ILocationListener::onDetailedEngineLocationUpdate,
  * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
  * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onEngineNmeaInfo,
- * @ref ILocationListener::onGnssMeasurementsInfo and
- * @ref ILocationListener::onGnssDisasterCrisisInfo APIs on the listener being invoked,
+ * @ref ILocationListener::onGnssMeasurementsInfo,
+ * @ref ILocationListener::onGnssDisasterCrisisInfo and
+ * @ref ILocationListener::onGnssEphemerisInfo APIs on the listener being invoked,
  * assuming they have not been disabled using the
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.

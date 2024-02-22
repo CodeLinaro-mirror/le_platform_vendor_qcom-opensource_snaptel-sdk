@@ -202,6 +202,12 @@ public:
         std::weak_ptr<IEventListener> listener, std::string filter) {
 
         LOG(DEBUG, __FUNCTION__);
+        // Registerlistener shall wait until the client connection
+        // to the simulation server is complete.
+        {
+            std::unique_lock<std::mutex> lck(connectToServerMtx_);
+            connectToServerCv_.wait(lck, [this]{ return connectedToSimulationServer_; });
+        }
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
         auto spt = listener.lock();
         bool updateFilter = false;
@@ -310,7 +316,11 @@ private:
             return;
         }
 
-        connectedToSimulationServer_ = true;
+        {
+            std::lock_guard<std::mutex> lck(connectToServerMtx_);
+            connectedToSimulationServer_ = true;
+            connectToServerCv_.notify_all();
+        }
         updateFilters();
 
         std::string readStr;
@@ -416,6 +426,9 @@ private:
     std::mutex listenerMutex_;
     std::mutex mtx_;
     std::mutex exitingMutex_;
+
+    std::mutex connectToServerMtx_;
+    std::condition_variable connectToServerCv_;
 
     grpc::ClientContext* contextPtr_;
     /*

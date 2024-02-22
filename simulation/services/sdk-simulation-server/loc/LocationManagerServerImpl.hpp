@@ -27,7 +27,7 @@
 #include "event/ServerEventManager.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 
-#include "FileBuffer.hpp"
+#include "common/FileBuffer.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;

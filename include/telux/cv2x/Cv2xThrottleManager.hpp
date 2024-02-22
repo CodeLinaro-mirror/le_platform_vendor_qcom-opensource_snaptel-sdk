@@ -79,6 +79,7 @@
 #include <future>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -100,7 +101,7 @@ using setVerificationLoadCallback = std::function<void (telux::common::ErrorCode
  * @brief Listener class for getting filter rate update notification.
  *
  */
-class ICv2xThrottleManagerListener {
+class ICv2xThrottleManagerListener : public telux::common::ISDKListener {
 public:
    /**
     * This API is invoked to advise the client to adjust the incoming message filtering rate

@@ -103,7 +103,7 @@ class ICall;
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  */
-class ICallListener : public common::IServiceStatusListener{
+class ICallListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when device receives an incoming/waiting call.

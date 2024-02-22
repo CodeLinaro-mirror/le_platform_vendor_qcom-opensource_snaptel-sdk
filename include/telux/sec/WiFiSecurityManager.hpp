@@ -44,6 +44,8 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -187,7 +189,7 @@ struct ApInfo {
  *  scanning for APs in the vicinity and provides a listener for deauthentication
  *  attacks.
  */
-class IWiFiReportListener {
+class IWiFiReportListener : public telux::common::ISDKListener {
 
  public:
     /**

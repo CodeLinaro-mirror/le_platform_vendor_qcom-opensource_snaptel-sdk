@@ -264,7 +264,7 @@ public:
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class IMultiSimListener : public common::IServiceStatusListener{
+class IMultiSimListener : public common::IServiceStatusListener {
 public:
 
    /**

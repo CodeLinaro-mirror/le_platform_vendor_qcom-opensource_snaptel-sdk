@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,7 +59,7 @@ namespace tel {
  * The methods in listener can be invoked from multiple different threads. The
  * implementation should be thread safe.
  */
-class IRemoteSimListener : public common::IServiceStatusListener{
+class IRemoteSimListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when the modem wants to transmit a command APDU.

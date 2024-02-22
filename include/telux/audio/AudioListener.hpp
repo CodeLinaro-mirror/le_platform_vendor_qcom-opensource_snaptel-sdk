@@ -70,6 +70,7 @@
 #ifndef TELUX_AUDIO_AUDIOLISTENER_HPP
 #define TELUX_AUDIO_AUDIOLISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/audio/AudioDefines.hpp>
 
 namespace telux {
@@ -81,7 +82,7 @@ namespace audio {
 /**
  *  Listener for a DTMF tone detected event on a @ref StreamType::VOICE_CALL stream.
  */
-class IVoiceListener {
+class IVoiceListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when a DTMF tone is detected on a @ref StreamType::VOICE_CALL stream.
@@ -100,7 +101,7 @@ class IVoiceListener {
 /**
  *  Listener for events on a playback stream.
  */
-class IPlayListener {
+class IPlayListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when the audio pipeline is ready to accept the next buffer to play
@@ -127,7 +128,7 @@ class IPlayListener {
 /**
  *  Listener for events during transcoding.
  */
-class ITranscodeListener {
+class ITranscodeListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when the audio pipeline is ready to accept the next buffer containing

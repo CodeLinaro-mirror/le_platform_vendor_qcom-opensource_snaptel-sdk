@@ -74,6 +74,7 @@
 #define TELUX_COMMON_COMMONDEFINES_HPP
 
 #include <functional>
+#include "SDKListener.hpp"
 
 /**
  * Specifies the slot id where the Uicc card is inserted
@@ -554,7 +555,7 @@ using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>
 using InitResponseCb = std::function<void(telux::common::ServiceStatus status)>;
 
 
-class IServiceStatusListener {
+class IServiceStatusListener : virtual public telux::common::ISDKListener {
 public:
     /**
      * This function is called when service status changes.

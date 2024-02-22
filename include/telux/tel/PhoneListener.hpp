@@ -100,7 +100,7 @@ namespace tel {
  * The methods in listener can be invoked from multiple different threads. The
  * implementation should be thread safe.
  */
-class IPhoneListener : public common::IServiceStatusListener{
+class IPhoneListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when device service state changes.

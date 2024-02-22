@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -45,6 +45,7 @@
 #include <vector>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/sensor/SensorDefines.hpp>
 
@@ -75,7 +76,7 @@ using SelfTestResultCallback = std::function<void(telux::common::ErrorCode resul
  * The listener method can be invoked from multiple different threads.
  * Client needs to make sure that implementation is thread-safe.
  */
-class ISensorEventListener {
+class ISensorEventListener : public telux::common::ISDKListener {
  public:
     /**
      * This function is called to notify about available sensor events. Note the following

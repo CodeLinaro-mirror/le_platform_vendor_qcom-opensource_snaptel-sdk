@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,6 +43,7 @@
 #ifndef TELUX_CV2X_CV2XRADIOLISTENER_HPP
 #define TELUX_CV2X_CV2XRADIOLISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
@@ -56,7 +57,7 @@ namespace cv2x {
 /**
  *@brief Listeners for Cv2xRadio must implement this interface.
  */
-class ICv2xRadioListener {
+class ICv2xRadioListener : virtual public telux::common::ISDKListener {
 public:
 
     /**

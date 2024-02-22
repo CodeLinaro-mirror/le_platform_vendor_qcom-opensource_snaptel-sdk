@@ -17,21 +17,29 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "libs/common/SimulationConfigParser.hpp"
-#include "libs/common/Logger.hpp"
+#include "../../libs/common/SimulationConfigParser.hpp"
+#include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
+#include "tel/PhoneManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
+#include "tel/ImsServingManagerServerImpl.hpp"
+#include "tel/ServingManagerServerImpl.hpp"
+#include "tel/NetworkSelectionManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
 #include "data/DataSettingsServerImpl.hpp"
 #include "data/ServingSystemServerImpl.hpp"
+#include "data/DataFilterServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
+#include "tel/CallManagerServerImpl.hpp"
 #include "event/EventService.hpp"
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
+#include "loc/LocationReportService.hpp"
+#include "audio/AudioGrpcServiceImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -110,6 +118,13 @@ void SimulationServer::startGrpcServer() {
         std::make_shared<ServingSystemServerImpl>();
     builder.RegisterService(servingSystemService.get());
 
+    std::shared_ptr<DataFilterServerImpl> dataFilterService =
+        std::make_shared<DataFilterServerImpl>(dcmService);
+    builder.RegisterService(dataFilterService.get());
+
+    auto& locEventService = LocationReportService::getInstance();
+    builder.RegisterService(&locEventService);
+
     std::shared_ptr<LocationManagerServerImpl> locManagerService =
         std::make_shared<LocationManagerServerImpl>();
     builder.RegisterService(locManagerService.get());
@@ -118,12 +133,36 @@ void SimulationServer::startGrpcServer() {
         std::make_shared<LocationConfiguratorServerImpl>();
     builder.RegisterService(locConfigService.get());
 
+    std::shared_ptr<CallManagerServerImpl> callService =
+        std::make_shared<CallManagerServerImpl>();
+    builder.RegisterService(callService.get());
+
+    std::shared_ptr<PhoneManagerServerImpl> phoneService =
+        std::make_shared<PhoneManagerServerImpl>();
+    builder.RegisterService(phoneService.get());
+
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);
+
+    std::shared_ptr<telux::audio::AudioGrpcServiceImpl> audioService =
+        std::make_shared<telux::audio::AudioGrpcServiceImpl>();
+    builder.RegisterService(audioService.get());
 
     std::shared_ptr<SensorFeatureManagerServerImpl> sensorService =
         std::make_shared<SensorFeatureManagerServerImpl>();
     builder.RegisterService(sensorService.get());
+
+    std::shared_ptr<ImsServingManagerServerImpl> imsService =
+        std::make_shared<ImsServingManagerServerImpl>();
+    builder.RegisterService(imsService.get());
+
+    std::shared_ptr<ServingManagerServerImpl> ServingSystemService =
+        std::make_shared<ServingManagerServerImpl>();
+    builder.RegisterService(ServingSystemService.get());
+
+    std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
+        std::make_shared<NetworkSelectionManagerServerImpl>();
+    builder.RegisterService(NetworkSelectionSystemService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

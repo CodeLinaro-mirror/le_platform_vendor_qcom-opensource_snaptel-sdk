@@ -1,0 +1,36 @@
+{
+    "IServingSystemManager" :
+    {
+        "RATPreference" : "1 2 3", /* Refer telux::tel::RatPrefType  for more details */
+        "ServiceDomainPreference" : 2, /* Refer telux::tel::ServiceDomainPreference for more details*/
+        "DcStatus" :
+        {
+            "endcAvailability" : 0, /* Refer telux::tel::EndcAvailability for more details */
+            "dcnrRestriction" : 1 /* Refer telux::tel::DcnrRestriction  for more details */
+        },
+        "NetworkTimeInfo" : /*Refer telux::tel::NetworkTimeInfo for more details */
+        {
+            "year" : 2024,
+            "month" : 1,
+            "day" : 12,
+            "hour" : 18,
+            "minute" : 30,
+            "second" : 10,
+            "dayOfWeek" : 4,
+            "timeZone" :10,
+            "dstAdj" : 0,
+            "nitzTime" : "2024/01/12,01::10+01"
+        },
+        "RFBandInfo" :
+        {
+            "rFBand" : 1, /*Refer telux::tel::RFBand for more details */
+            "channel" : 1,
+            "bandwidth" : 1 /*Refer telux::tel::RFBandWidth for more details */
+        },
+        "ServingSystemInfo" :
+        {
+            "rat" : 14, /*Refer telux::tel::RadioTechnology for more details */
+            "domain" : 4 /*Refer telux::tel::ServiceDomain for more details */
+        }
+    }
+}

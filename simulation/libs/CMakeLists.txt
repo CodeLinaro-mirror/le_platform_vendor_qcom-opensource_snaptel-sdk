@@ -20,6 +20,9 @@ if (GIT_FOUND)
     message("Telsdk tag - ${SDKTAG} ")
 endif (GIT_FOUND)
 
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+
 # set release name
 set(RELEASE_NAME ${SDKTAG} CACHE INTERNAL "" FORCE)
 
@@ -41,3 +44,4 @@ add_subdirectory( data )
 add_subdirectory( loc )
 add_subdirectory( tel )
 add_subdirectory( sensor )
+add_subdirectory( audio )

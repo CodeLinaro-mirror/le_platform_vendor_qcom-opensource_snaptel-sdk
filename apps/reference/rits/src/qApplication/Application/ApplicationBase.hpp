@@ -116,6 +116,8 @@
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
 #define PP_BUFFER_MAX_SIZE 4096
 #define SHARED_BUFFER_MAX_SIZE 1024
+#define ASYNC_BATCH_SIZE 500
+#define VERIF_STAT_BATCH_SIZE 2500
 
 #define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
                        "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
@@ -151,15 +153,28 @@ enum class TxRxType {
     RX
 };
 
+typedef struct {
+    uint64_t timestamp = 0;
+    uint8_t index = 0;
+    double distFromRV = 0.0;
+    bsm_data bs = {0};
+} logData;
+
 typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
 
-
-struct logData{
-    uint64_t timestamp = 0;
-    uint8_t index;
+typedef struct {
+    int indexToData;
+    bool verifSuccess;
+    AsyncCbState AsyncState=FREE;
+    bsm_data asyncBs;
+    uint32_t psid;
+    uint8_t msg_index;
+    uint64_t timestamp;
+    uint32_t l2SrcAddr;
     double distFromRV;
-    bsm_data bs = {0};
-};
+    uint32_t RVsInRange;
+    uint64_t txInterval;
+} asyncCbData_t;
 
 struct Config{
     bool isValid = false;
@@ -236,9 +251,11 @@ struct Config{
     vector<string> sspValueVect;
     vector<string> sspMaskVect;
     bool enableAsync = false;
+    bool enableEncrypt = false;
+    bool setGenLocation = true;
     bool enableConsistency = true;
     bool enableRelevance = true;
-    bool enableEncrypt = false;
+    bool overridePsidCheck = false;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
     bool acceptAll = false;
@@ -387,8 +404,6 @@ struct CongCtrlConfig {
     uint8_t spsEnhDelayPerc = 20; //#cv2xMaxITTChangeFreq = 5;
 };
 
-
-
 class CaControlManagerListener : public ICAControlManagerListener {
 public:
     struct CALoad currLoad = {0};
@@ -418,8 +433,6 @@ public:
     struct timeval endRxIntervalTime;
     QMonitor* qMon = nullptr;
     QMonitor::Configuration* qMonConfig = nullptr;
-
-
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
@@ -668,7 +681,15 @@ public:
     static double overrideSpeed;
     static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
     static bool securityInitialized;
-
+    static bool exitApp;
+    static bool writeLogFinish;
+    static void writeLog(const uint8_t index,
+    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
+    uint64_t timestamp, uint32_t psid, uint64_t monotonicTime,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t locTimeMs, uint8_t cbr,
+    bsm_data* bs, double distFromRV, uint32_t RVsInRange,
+    uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
+    std::condition_variable* writeMutexCv);
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
@@ -688,11 +709,12 @@ protected:
     CongestionControlCalculations qitsCongControlCalculations;
     static sem_t congCtrlCbSem;
     bool congCtrlInitialized = false;
-    bool finishProgram;
+    bool finishProgram = false;
     sem_t programSem;
     current_dynamic_vehicle_state_t* currVehState;
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
+    std::condition_variable writeMutexCv;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -729,18 +751,21 @@ protected:
     /**
      * Security service object.
      */
+    //#ifdef AEROLINK
+   // unique_ptr<AerolinkSecurity> SecService;
+   // #else
     unique_ptr<SecurityService> SecService;
+  //  #endif
 
-   virtual void writeLog(const uint8_t index,
-       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp,
-       uint32_t psid, bsm_data* bs, double distFromRV);
     /**
      * Vehicle Receive object.
      */
     VehicleReceive VehRec;
     std::atomic<bool> criticalState{false};
+
+    static FILE *csvfp;
+    static std::mutex csvMutex;
 private:
-    bool exitApp = false;
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;
     std::condition_variable stateCv;
@@ -749,8 +774,6 @@ private:
     std::mutex v2xIpAddrMtx_;
     string v2xIpAddr_;
 
-    static FILE *csvfp;
-    static std::mutex csvMutex;
 
     /* method to retrieve V2X IP rmnet address from the system */
     int getSysV2xIpIfaceAddr(string& ipAddr);
@@ -768,7 +791,7 @@ private:
     void startCongCtrl();
     static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
     // function to write congestion control data to file
-    void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
+    static void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
     CongestionControlCalculations* congestionControlCalculations, bool validPkt,
         uint16_t eventsData);
     // function to write security related data to file

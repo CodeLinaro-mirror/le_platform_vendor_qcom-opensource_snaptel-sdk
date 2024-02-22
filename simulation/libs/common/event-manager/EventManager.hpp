@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -56,7 +56,7 @@
 
 #include "EventParserUtil.hpp"
 #include "AsyncTaskQueue.hpp"
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 #include "Logger.hpp"
 #include "CommonUtils.hpp"
 
@@ -151,17 +151,20 @@ public:
         } else {
             LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
             //passing the unsolicited event to the listener who subscribed for it
-            auto &eventListeners = listeners_[filter];
-            for (auto it = eventListeners.begin(); it != eventListeners.end();) {
-                auto sp = (*it).lock();
-                if (sp) {
-                    sp->onEventUpdate(message.any());
-                } else {
-                    LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
-                    it = eventListeners.erase(it);
-                    continue;
+            if(listeners_.find(filter) != listeners_.end()) {
+                for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
+                    auto sp = (*it).lock();
+                    if (sp) {
+                        sp->onEventUpdate(message.any());
+                    } else {
+                        LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
+                        it = listeners_[filter].erase(it);
+                        continue;
+                    }
+                    ++it;
                 }
-                ++it;
+            } else {
+                LOG(INFO, __FUNCTION__, " No filters registered.");
             }
         }
     }
@@ -205,6 +208,8 @@ public:
         if (spt != nullptr) {
             if (listeners_.find(filter) == listeners_.end()) {
                 updateFilter = true;
+            } else {
+                LOG(INFO, __FUNCTION__, " Filter existing, not updating filter- ", filter);
             }
 
             const auto listenersItr =
@@ -212,12 +217,13 @@ public:
                         [spt](const std::weak_ptr<IEventListener>& wp){
                         return (spt == wp.lock());});
             if (listenersItr != listeners_[filter].end()) {
+                LOG(INFO, __FUNCTION__, " Listener existing already");
                 return telux::common::Status::ALREADY;
             }
 
             listeners_[filter].insert(listener);
             if (updateFilter) {
-                LOG(DEBUG, "Registering Listener for filter: ", filter);
+                LOG(INFO, "Registering Listener for filter: ", filter);
                 this->updateFilters();
             }
         }
@@ -234,14 +240,19 @@ public:
         LOG(DEBUG, __FUNCTION__);
         telux::common::Status retVal = telux::common::Status::FAILED;
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+        if (listeners_.find(filter) == listeners_.end()) {
+            LOG(INFO, __FUNCTION__, " Filter not found: ", filter);
+            return telux::common::Status::NOSUCH;
+        }
         auto spt = listener.lock();
 
         if (spt != nullptr) {
-            auto &eventListeners = listeners_[filter];
-            auto eventItr = eventListeners.find(listener);
-            if (eventItr != eventListeners.end()) {
-                eventListeners.erase(eventItr);
-                if (eventListeners.size() == 0) {
+            auto eventItr = listeners_[filter].find(listener);
+            if (eventItr != listeners_[filter].end()) {
+                listeners_[filter].erase(eventItr);
+                if (listeners_[filter].size() == 0) {
+                    listeners_.erase(filter);
+                    LOG(INFO, __FUNCTION__, " Filter erased: ", filter);
                     this->updateFilters();
                 }
             }
@@ -314,7 +325,6 @@ private:
         }
         grpc::Status status = reader->Finish();
         connectedToSimulationServer_ = false;
-        clearClientContext();
 
         if (status.ok()) {
             LOG(DEBUG, __FUNCTION__, " RequestEvent succeeded.");
@@ -332,10 +342,6 @@ private:
         LOG(DEBUG, __FUNCTION__);
 
         std::lock_guard<std::mutex> lck(mtx_);
-
-        if (listeners_.size() == 0) {
-            return;
-        }
 
         ::eventService::EventRequest request;
         google::protobuf::Empty response;

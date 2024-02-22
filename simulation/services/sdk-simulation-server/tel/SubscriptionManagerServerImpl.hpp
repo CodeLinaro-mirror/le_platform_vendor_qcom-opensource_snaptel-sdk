@@ -54,7 +54,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 #include "event/ServerEventManager.hpp"
 #include "libs/common/CommonUtils.hpp"
 #include "event/EventService.hpp"
@@ -64,10 +64,10 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-using telStub::PhoneService;
+using telStub::SubscriptionService;
 using commonStub::ServiceStatus;
 
-class SubscriptionManagerServerImpl final : public telStub::PhoneService::Service,
+class SubscriptionManagerServerImpl final : public telStub::SubscriptionService::Service,
                                             public IServerEventListener,
                                             public
                                     std::enable_shared_from_this<SubscriptionManagerServerImpl> {

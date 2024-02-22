@@ -7,13 +7,15 @@ configure_file("telux-data.pc.in" "telux-data.pc" @ONLY)
 set(DATA_STUB_SOURCES
     DataFactoryImplStub.cpp
     DataProfileStub.cpp
-    DataUtilsStub.cpp
     DataProfileManagerStub.cpp
     DataCallStub.cpp
     DataEventListener.cpp
     DataConnectionManagerStub.cpp
     ServingSystemManagerStub.cpp
     DataSettingsManagerStub.cpp
+    DataFilterManagerStub.cpp
+    DataHelper.cpp
+    IpFilterImpl.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

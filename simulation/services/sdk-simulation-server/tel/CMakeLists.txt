@@ -4,6 +4,12 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/CardManagerServerImpl.cpp
     tel/SubscriptionManagerServerImpl.cpp
     tel/SmsManagerServerImpl.cpp
+    tel/CallManagerServerImpl.cpp
+    tel/EcallStateMachine.cpp
+    tel/ImsServingManagerServerImpl.cpp
+    tel/ServingManagerServerImpl.cpp
+    tel/NetworkSelectionManagerServerImpl.cpp
+    tel/PhoneManagerServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

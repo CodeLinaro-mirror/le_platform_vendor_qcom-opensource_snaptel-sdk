@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -492,6 +492,15 @@ enum class ProcType {
     LOCAL_PROC = 0, /**< Perform the operation on the processor where the API is invoked.*/
     REMOTE_PROC,    /**< Perform the operation on the application processor other than where the API
                     is invoked. */
+};
+
+/**
+ * Defines boolean type
+ */
+enum class BoolValue {
+   STATE_FALSE,    /**< Status: FALSE */
+   STATE_TRUE,     /**< Status: TRUE */
+   STATE_UNKNOWN,  /**< Status: UNKNOWN */
 };
 
 /**

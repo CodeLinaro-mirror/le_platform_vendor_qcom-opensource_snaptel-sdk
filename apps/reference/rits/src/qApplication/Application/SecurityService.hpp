@@ -30,7 +30,7 @@
 /*
  *Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -98,13 +98,13 @@ struct MisbehaviorStats{
 
 struct Kinematics
 {
-    int32_t latitude;
-    int32_t longitude;
+    signed int latitude;
+    signed int longitude;
     uint16_t elevation;
     uint32_t id;
     uint32_t dataType;
     uint8_t msgCount;
-    int16_t speed;
+    unsigned int speed;
     uint16_t heading;
     int16_t longitudeAcceleration;
     int16_t latitudeAcceleration;
@@ -133,6 +133,7 @@ typedef struct SecurityOpt {
     bool enableMbd = false;
     bool enableConsistency = true;
     bool enableRelevance = true;
+    bool setGenLocation = true;
     uint8_t secVerbosity;
     VerifStats* verifStat;
     SignStats* signStat;
@@ -163,7 +164,16 @@ public:
         ST_DIGEST,
         ST_CERTIFICATE
     };
-
+    /**
+    * Method to extract the payload and security headers from signed packet.
+    * @param opt - Struct that contains security-related information
+    * @param msg - Buffer pointer of raw packet
+    * @param msgLen - Length of the message that will be signed
+    * @param payload - Pointer to the start of packet payload
+    * @param payloadLen - Size of the packet payload
+    * @param dot2HdrLen - Size of security header
+    * @return int - A non-negative integer value upon success or -1 on failure
+    */
     virtual int ExtractMsg(const SecurityOpt opt,
                             const uint8_t * msg,
                             uint32_t msgLen,
@@ -192,6 +202,9 @@ public:
     */
     virtual int VerifyMsg(const SecurityOpt opt) = 0;
 
+/*     virtual int asyncVerify(
+        const SecurityOpt opt, void *asyncCbData, void* callBackFunction) = 0; */
+
     /**
     * Method to alert Aerolink to initiate and complete a cert/id change.
     * The application should update the rest of the related parameters such
@@ -201,22 +214,40 @@ public:
     */
     virtual int idChange() = 0;
 
+    /**
+    * Method lock cert/id change.
+    * @param
+    * @return int - Reports -1 on failure, else success.
+    */
     virtual int lockIdChange() = 0;
+
+    /**
+    * Method to unlock cert/id change.
+    * @param
+    * @return int - Reports -1 on failure, else success.
+    */
     virtual int unlockIdChange() = 0;
 
+    /**
+    * Set the verbosity when performing aerolink related ops in rits
+    * @param verbosity - uint8_t type for verbosity level
+    * @return void
+    */
+    virtual void setSecVerbosity(uint8_t verbosity) = 0;
+    /**
+    * Virtual method to deinitialize security instance.
+    * Needs to be implemented.
+    */
+    virtual void deinit() = 0;
 protected:
     /**
     * Virtual method to setup and initialize security instance.
     * Needs to be implemented.
     * @return int - Integer value representing success or not.
     */
-    virtual int init(void) = 0;
+    virtual int init() = 0;
 
-    /**
-    * Virtual method to deinitialize security instance.
-    * Needs to be implemented.
-    */
-    virtual void deinit(void) = 0;
+
     std::string SecurityCtxName_;
     uint16_t countryCode_;
 };

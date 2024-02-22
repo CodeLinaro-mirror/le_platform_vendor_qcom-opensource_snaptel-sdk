@@ -102,6 +102,8 @@ double ApplicationBase::overrideLong;
 double ApplicationBase::overrideHead;
 double ApplicationBase::overrideElev;
 double ApplicationBase::overrideSpeed;
+bool ApplicationBase::writeLogFinish;
+bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
 bool ApplicationBase::securityInitialized;
 std::string getCurrentTimestamp()
@@ -120,7 +122,6 @@ std::string getCurrentTimestamp()
 
 void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
 {
-    //ApplicationBase::hvLocationInfo = locationInfo;
     ApplicationBase::setHvLocation(locationInfo);
     // callback will pass data to corresponding other components
     #ifdef AEROLINK
@@ -171,9 +172,7 @@ void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoI
 }
 
 void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
-    // can pass mbd, signing, and verif stats here and other settings
-    //std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
-    //std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
+    // can pass mbd, signing, and verif stats here and other settings in future
 }
 
 /* Log Format:
@@ -231,14 +230,15 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
 
     //sps enhancement data
+    //this->congCtrlConfig.spsEnhHysterPerc
     if (congestionControlCalculations->spsEnhanceData) {
         // random time - todo
         tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,%d",
-            (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
+            (long unsigned int)0, 5);
     }
     else {
        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr,  "%lu,%d",
-            (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
+            (long unsigned int)0, 5);
     }
 }
 
@@ -414,11 +414,12 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
 ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     bool enableCsvLog){
     enableCsvLog_ = enableCsvLog;
+    exitApp = false;
     // set parameters according to config file
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
-
+    exitApp = false;
     if(configuration.enableL2Filtering) {
         cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
     }
@@ -470,6 +471,8 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
                       configuration.securityCountryCode));
           }
           ApplicationBase::securityInitialized = true;
+          // set the verbosity of aerolink
+          SecService->setSecVerbosity(this->configuration.secVerbosity);
           // set the leap seconds
           int ret = -1;
           if (kinematicsReceive && appLocListener_) {
@@ -496,7 +499,7 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
         }
     #else
         // If no Aerolink security library is specified
-        SecService = unique_ptr<SecurityService>(NullSecurity::Instance(
+        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
                     configuration.securityContextName,
                     configuration.securityCountryCode));
     #endif
@@ -539,6 +542,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
             char* fileConfiguration, bool enableCsvLog) {
     enableCsvLog_ = enableCsvLog;
+    exitApp = false;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
@@ -583,7 +587,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                     configuration.securityContextName,
                     configuration.securityCountryCode));
 #else
-        SecService = unique_ptr<SecurityService>(NullSecurity::Instance(
+        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
                     configuration.securityContextName,
                     configuration.securityCountryCode));
 #endif
@@ -622,6 +626,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 ApplicationBase::~ApplicationBase() {
+    std::cout << "ApplicationBase destructing" << std::endl;
     if (qMon) {
         delete qMon;
         std::cout << "Closed qMon\n";
@@ -630,8 +635,7 @@ ApplicationBase::~ApplicationBase() {
         delete qMonConfig;
         std::cout << "Closed qMonConfig\n";
     }
-
-     {
+    {
          std::unique_lock<std::mutex> loc(stateMtx);
          exitApp = true;
          stateCv.notify_all();
@@ -641,10 +645,11 @@ ApplicationBase::~ApplicationBase() {
      }
      sem_destroy(&rx_sem);
      sem_destroy(&log_sem);
-     std::cout << "ApplicationBase destructing" << std::endl;
+
      {
-        lock_guard<std::mutex> lock(csvMutex);
         if (nullptr != csvfp) {
+            std::unique_lock<std::mutex> lock(csvMutex);
+            writeMutexCv.wait(lock, []{ return writeLogFinish; });
             fclose(csvfp);
             csvfp = nullptr;
         }
@@ -1313,6 +1318,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("CAMDestinationPort") != configs.end()) {
         this->configuration.CAMDestinationPort = (uint16_t)stoi(configs["CAMDestinationPort"]);
     }
+    // security-only psid value. this can differ from the sps service id value for testing.
     if (configs.find("psidValue") != configs.end()) {
         configuration.psid = stoi(configs["psidValue"],0,16);
     }
@@ -1400,6 +1406,10 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             }
         }
 
+        if(configs.find("setGenLocation") != configs.end()) {
+            istringstream is4(configs["setGenLocation"]);
+            is4 >> boolalpha >> configuration.setGenLocation;
+        }
 
         if(configs.find("enableAsync") != configs.end()) {
             istringstream is4(configs["enableAsync"]);
@@ -1414,6 +1424,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("enableRelevance") != configs.end()) {
             istringstream is4(configs["enableRelevance"]);
             is4 >> boolalpha >> configuration.enableRelevance;
+        }
+
+        if(configs.find("overridePsidCheck") != configs.end()) {
+            istringstream is4(configs["overridePsidCheck"]);
+            is4 >> boolalpha >> configuration.overridePsidCheck;
         }
 
         /* Signing-related statistics */
@@ -2200,6 +2215,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                         bs.id = bsm->id;
                         bs.timestamp_ms = bsm->timestamp_ms;
                         bs.secMark_ms = bsm->secMark_ms;
+                        bs.MsgCount = bsm->MsgCount;
                         bs.Latitude = bsm->Latitude;
                         bs.Longitude = bsm->Longitude;
                         bs.Elevation = bsm->Elevation;
@@ -2218,8 +2234,20 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                         bs.VehicleWidth_cm = bsm->VehicleWidth_cm;
                         bs.VehicleLength_cm = bsm->VehicleLength_cm;
                         bs.events = bsm->events;
+                        uint8_t cbr;
+                        uint64_t monotonicTime;
+                        if (txType == TransmitType::SPS) {
+                            cbr = spsTransmits[index].getCBRValue();
+                            monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
+                        } else {
+                            cbr = eventTransmits[index].getCBRValue();
+                            monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
+                        }
                         // write the log here for this tx now. using tx timestamp made before sendto
-                        writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM, &bs, 0.0);
+                        writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM,
+                            monotonicTime, 0.0, 0, 0, cbr,
+                            &bs, 0.0, 0, txInterval,
+                            configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
                     }
                 }
             }
@@ -2311,7 +2339,7 @@ void ApplicationBase::clearRadioInstance() {
 
 void ApplicationBase::closeAllRadio() {
     std::cout << "Attempting to close all flows\n";
-
+    exitApp = true;
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
@@ -2630,16 +2658,17 @@ bool ApplicationBase::openLogFile(const std::string& fullPathName) {
 }
 
 
-void ApplicationBase::writeLog( const uint8_t index,
+void ApplicationBase::writeLog(const uint8_t index,
     uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
-    uint64_t timestamp, uint32_t psid, bsm_data* bs, double distFromRV) {
+    uint64_t timestamp, uint32_t psid, uint64_t monotonicTime,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t locTimeMs, uint8_t cbr,
+    bsm_data* bs, double distFromRV, uint32_t RVsInRange,
+    uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
+    std::condition_variable* writeMutexCv) {
     uint64_t periodicityMs = 0;
     int res = -1;
-    uint64_t monotonicTime;
     struct timespec ts;
     uint64_t timestamp_now_ms = 0;
-    uint8_t cbr = 0;
-    uint32_t RVsInRange;
 
     if (not csvfp) {
         return;
@@ -2649,20 +2678,8 @@ void ApplicationBase::writeLog( const uint8_t index,
     char* curChar = tmpLogBuf;
     char* const endChar = tmpLogBuf + sizeof tmpLogBuf - 1;
     char tmpLogStr[200] = "";
-    RVsInRange = vehiclesInRange();
     timestamp_now_ms = timestamp_now();
-    if (isTx) {
-        if (txType == TransmitType::SPS) {
-            cbr = spsTransmits[index].getCBRValue();
-            monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
-        } else {
-            cbr = eventTransmits[index].getCBRValue();
-            monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
-        }
-    } else {
-        monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
-        cbr = radioReceives[index].getCBRValue();
-    }
+
     /* Log Format:
      * TimeStamp    TimeStamp_ms    Time_monotonic
      * LogRecType   L2 ID    CBR Percent    CPU_Util
@@ -2672,13 +2689,15 @@ void ApplicationBase::writeLog( const uint8_t index,
      * vehicleDensityInRange    ChannelQualityIndication
      * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
      */
-
+    if(exitApp){
+        return;
+    }
     // write general data to log
     // build the string in this function instead of immediately writing
     int ret = 0;
     ret  = writeGeneralLog(tmpLogStr, 200, bs, csvfp, isTx, periodicityMs, validPkt,
                 RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
-                locPositionDop_, locNumSvUsed_, locTimeMs_, cbr, txInterval, l2SrcAddr);
+                locPositionDop, locNumSvUsed, locTimeMs, cbr, txInterval, l2SrcAddr);
     // check if error in writing general data
     if(ret == -1){
         return;
@@ -2700,42 +2719,35 @@ void ApplicationBase::writeLog( const uint8_t index,
     eventsData |= (unsigned short) (1 & bs->events.bits.eventStopLineViolation) <<1;
     eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardLights) << 12;
 
-
-    if (this->configuration.enableCongCtrl && congCtrlInitialized && isTx) {
+    if (enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation
             writeCongCtrlLog(tmpLogStr, 200, csvfp,
             &congCtrlCbData,
             validPkt, eventsData);
     }else{
         // make sure to write commas for the empty fields
+        //this->congCtrlConfig.spsEnhHysterPerc
         snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
             validPkt ? 1 : 0,
-            (this->configuration.enableCongCtrl && congCtrlInitialized) ?
+            (enableCongCtrl && congCtrlInitialized) ?
               congCtrlCbData.maxITT : 0,
-            eventsData, this->congCtrlConfig.spsEnhHysterPerc);
+            eventsData, 5);
     }
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     memset(tmpLogStr, 0, sizeof(tmpLogStr));
-    if(this->configuration.enableCongCtrl && congCtrlInitialized && !isTx){
+    if(enableCongCtrl && congCtrlInitialized && !isTx){
         char* tmpPtr = tmpLogStr;
         char* const endBuf = tmpPtr + 50;
         snprintf(tmpLogStr, endBuf-tmpPtr, ",%d,%f", congCtrlCbData.totalRvsInRange,
             bs->distFromRV);
         curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     }
-    //reset
-    memset(tmpLogStr, 0, sizeof(tmpLogStr));
-    /* Security related fields */
-    // if security enabled, write security stats to log
-    if (this->configuration.enableSecurity) {
-        writeSecurityLog(tmpLogStr, 200, csvfp);
-    }else {
-        // todo: make sure to write commas for the empty fields
-    }
-
-    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // lock here to prevent race conditions when writing to file
-    lock_guard<std::mutex> lock(csvMutex);
     fprintf(csvfp, "%s\n", tmpLogBuf);
 
+    lock_guard<std::mutex> lock(csvMutex);
+    if(writeMutexCv){
+        writeLogFinish = true;
+        writeMutexCv->notify_all();
+    }
 }

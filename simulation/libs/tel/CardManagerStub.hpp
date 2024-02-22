@@ -55,7 +55,7 @@
 #include "CardAppStub.hpp"
 #include "common/event-manager/EventParserUtil.hpp"
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 #include "common/event-manager/ClientEventManager.hpp"
 
 using grpc::Channel;

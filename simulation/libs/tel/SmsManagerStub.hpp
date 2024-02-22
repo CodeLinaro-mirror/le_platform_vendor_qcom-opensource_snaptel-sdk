@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -47,19 +47,16 @@
 #include "common/AsyncTaskQueue.hpp"
 #include "common/event-manager/ClientEventManager.hpp"
 #include "common/event-manager/EventParserUtil.hpp"
-#include "SmsMessageHelper.hpp"
 #include <telux/tel/SmsManager.hpp>
 #include "common/ListenerManager.hpp"
-#include <telux/common/CommonDefines.hpp>
 #include <jsoncpp/json/json.h>
 #include <list>
 #include "TelDefinesStub.hpp"
-#include "SmsMessageHelper.hpp"
+#include "Helper.hpp"
 #include "common/JsonParser.hpp"
-#include "common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;

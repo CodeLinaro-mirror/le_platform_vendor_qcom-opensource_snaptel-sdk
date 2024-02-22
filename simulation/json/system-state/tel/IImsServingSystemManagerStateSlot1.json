@@ -1,0 +1,24 @@
+{
+    "IImsServingSystemManager" :
+    {
+        "ImsRegistrationInfo" :
+        {
+            "RegStatus" : 2, /* Refer telux::tel::ImsRegistrationInfo for more details */
+            "rat" : 14, /* Refer telux::tel::RadioTechnology for more details */
+            "errorCode" : 200, /* Refer telux::tel::ImsRegistrationInfo::errorCode for more details */
+            "errorString" : "" /* Refer telux::tel::ImsRegistrationInfo::errorString for more details */
+        },
+        "ImsServiceInfo" :
+        {
+            "sms" : 2, /* Refer telux::tel::ImsServiceInfo::sms for more details */
+            "voice" : 2 /* Refer telux::tel::ImsServiceInfo::voice for more details */
+        },
+        "ImsPdpStatusInfo" :
+        {
+            "isPdpConnected" : true, /* Refer telux::tel::ImsPdpStatusInfo::isPdpConnected for more details */
+            "failureCode" : 0, /* Refer telux::tel::PdpFailureCode for more details */
+            "failureReason" : 2, /* Refer telux::common::DataCallEndReason for more details */
+            "apnName" : "IMS" /* Refer telux::tel::ImsPdpStatusInfo::apnName for more details */
+        }
+    }
+}

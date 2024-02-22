@@ -46,13 +46,13 @@
 #define MY_LOCATION_MANAGER_HPP
 
 #include "telux/loc/LocationManager.hpp"
-#include "ReportHandler.hpp"
-#include "ReportReader.hpp"
 #include "LocationReportFilterStub.hpp"
 #include "common/AsyncTaskQueue.hpp"
+#include "LocationReportListener.hpp"
+#include "LocationDefinesStub.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc_simulation.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -81,7 +81,9 @@ using LocSession = uint32_t;
  * old APIs should be used.
  *
  */
-class LocationManagerStub : public ILocationManager {
+class LocationManagerStub : public ILocationManager,
+                            public IEventListener,
+                            public std::enable_shared_from_this<LocationManagerStub> {
 public:
 
 /**
@@ -431,6 +433,8 @@ public:
  */
     void cleanup();
 
+    void onEventUpdate(google::protobuf::Any event) override;
+
 /**
  * Destructor of ILocationManager
  */
@@ -462,12 +466,17 @@ private:
     telux::common::AsyncTaskQueue<void> taskQ_;
     telux::common::ServiceStatus managerStatus_;
     std::shared_ptr<LocationReportFilter> filter_;
-    std::atomic<int> sysInfoRequestCount_;
+    std::weak_ptr<telux::loc::LocationManagerStub> myselfForReports_;
 
     std::shared_ptr<LocationInfoBase> getLastLocation(bool defaultLocInfo = false);
-    void invokeSystemInfoReport(struct LocationSystemInfo &info);
-    void parseRequest(std::string msg);
+    void handleCapabilitiesUpdateEvent(::locStub::CapabilitiesUpdateEvent capabilitiesEvent);
+    void invokeCapabilitiesUpdateEvent(uint32_t capabilityMask);
+    void handleSysInfoUpdateEvent(::locStub::SysInfoUpdateEvent sysInfoEvent);
+    void invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo);
+    void parseRequest(::locStub::StartReportsEvent startEvent);
     void adjustTimeInterval(uint32_t &interval);
+    void setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+        std::vector<std::string> &message);
 };
 
 } // end of namespace loc

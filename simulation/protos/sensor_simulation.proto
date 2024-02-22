@@ -1,0 +1,56 @@
+/*
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+syntax = "proto3";
+
+package sensorStub;
+import "google/protobuf/empty.proto";
+import "common_simulation.proto";
+
+/*******************************************************************
+ * Services Definition                                             *
+ *******************************************************************/
+
+service SensorFeatureManagerService{
+   rpc InitService (google.protobuf.Empty) returns (GetServiceStatusReply) {}
+   rpc GetFeatureList (google.protobuf.Empty) returns (GetFeatureListReply) {}
+   rpc EnableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
+   rpc DisableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
+}
+
+
+/*******************************************************************
+ * Messages Definition                                             *
+ *******************************************************************/
+
+message GetServiceStatusReply {
+    commonStub.ServiceStatus service_status = 1;
+    int32 delay = 2;
+}
+
+message SensorFeatureManagerCommandReply {
+    commonStub.Status status = 1;
+    int32 delay = 2;
+}
+
+message SensorEnableFeature{
+    string feature = 1;
+}
+
+message FeatureEvent{
+    int32 id = 1;
+    string featureName = 2;
+    string events = 3;
+}
+
+message GetFeatureListReply {
+    commonStub.Status status = 1;
+    int32 delay = 2;
+    string list = 3;
+}
+
+
+
+

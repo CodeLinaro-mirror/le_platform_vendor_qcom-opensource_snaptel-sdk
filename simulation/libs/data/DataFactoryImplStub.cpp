@@ -7,6 +7,9 @@
 #include "DataConnectionManagerStub.hpp"
 #include "DataProfileManagerStub.hpp"
 #include "DataSettingsManagerStub.hpp"
+#include "DataFilterManagerStub.hpp"
+#include "IpFilterImpl.hpp"
+#include "DataHelper.hpp"
 #include "ServingSystemManagerStub.hpp"
 
 #include "common/Logger.hpp"
@@ -22,6 +25,14 @@ DataFactoryImplStub::DataFactoryImplStub() {
 
 DataFactoryImplStub::~DataFactoryImplStub() {
     LOG(DEBUG, __FUNCTION__);
+
+    // cleanup dataConnectionManagers
+    for (auto& conMgrEntry : dataConnectionManagerMap_) {
+        auto conMgr = conMgrEntry.second.lock();
+        if(conMgr) {
+            (std::static_pointer_cast<DataConnectionManagerStub>(conMgr))->cleanup();
+        }
+    }
     dataConnectionManagerMap_.clear();
     dataProfileManagerMap_.clear();
     dataServingSystemManagerMap_.clear();
@@ -189,11 +200,83 @@ std::shared_ptr<IServingSystemManager> DataFactoryImplStub::getServingSystemMana
 
 std::shared_ptr<IDataFilterManager> DataFactoryImplStub::getDataFilterManager(
     SlotId slotId, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    std::shared_ptr<IDataFilterManager> dataFilterManager = nullptr;
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    auto ItrMgr = dataFilterManagerMap_.find(slotId);
+    if (ItrMgr != dataFilterManagerMap_.end()) {
+        dataFilterManager = ItrMgr->second.lock();
+    }
+    if(dataFilterManager) {
+        LOG(DEBUG, "Found Data Filter Manager with slot id: ", static_cast<int>(slotId));
+        //Find the current status of the manager
+        telux::common::ServiceStatus status = dataFilterManager->getServiceStatus();
+        if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+            //Manager has failed initialization but callback is not called yet hence we still
+            //have valid shared pointer.
+            LOG(DEBUG, __FUNCTION__, " Data Filter Manager initialization failed.");
+            dataFilterManagerMap_.erase(slotId);
+            return nullptr;
+        } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            LOG(DEBUG, __FUNCTION__, " Data Filter Manager initialization was successful");
+            if (clientCallback) {
+                dataFilterCallbacks_[slotId].push_back(clientCallback);
+            }
+            std::thread appCallback([this, status, slotId]() {
+                this->initCompleteNotifierWithSlotId(dataFilterCallbacks_, status, slotId);});
+            appCallback.detach();
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Data Filter Manager initialization in progress.");
+            if (clientCallback) {
+                dataFilterCallbacks_[slotId].push_back(clientCallback);
+            }
+        }
+        return dataFilterManager;
+    } else {
+        std::shared_ptr<DataFilterManagerStub> dataFilterManagerImpl = nullptr;
+        LOG(DEBUG, "Creating Data Filter Manager with slot id: ", slotId);
+        auto initCb = [this, slotId](telux::common::ServiceStatus status) {
+            if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+                std::lock_guard<std::mutex> lock(dataMutex_);
+                dataFilterManagerMap_.erase(slotId);
+            }
+            this->initCompleteNotifierWithSlotId(dataFilterCallbacks_, status, slotId);
+        };
+        try {
+            dataFilterManagerImpl = std::make_shared<DataFilterManagerStub>(slotId);
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
+        if ((!dataFilterManagerImpl) ||
+            (telux::common::Status::SUCCESS != dataFilterManagerImpl->init(initCb))) {
+            LOG(DEBUG, "DataFactory unable to initialize DataFilterManager");
+            return nullptr;
+        }
+        dataFilterManagerMap_[slotId] = dataFilterManagerImpl;
+        if (clientCallback) {
+            dataFilterCallbacks_[slotId].push_back(clientCallback);
+        }
+        return dataFilterManagerImpl;
+    }
 }
 
 std::shared_ptr<IIpFilter> DataFactoryImplStub::getNewIpFilter(IpProtocol proto) {
-    return nullptr;
+    switch (proto) {
+        case PROTO_TCP: {
+            return std::make_shared<TcpFilterImpl>(proto);
+        } break;
+        case PROTO_UDP: {
+            return std::make_shared<UdpFilterImpl>(proto);
+        }
+        case PROTO_ICMP:
+        case PROTO_ICMP6: {
+            return std::make_shared<IcmpFilterImpl>(proto);
+        }
+        case PROTO_ESP: {
+            return std::make_shared<EspFilterImpl>(proto);
+        }
+        default: { return nullptr; }
+    }
 }
 
 std::shared_ptr<telux::data::net::INatManager> DataFactoryImplStub::getNatManager(

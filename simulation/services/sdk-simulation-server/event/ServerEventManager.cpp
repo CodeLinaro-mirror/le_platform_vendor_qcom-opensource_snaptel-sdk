@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -52,14 +52,46 @@ void ServerEventManager::handleEventNotifications(
     } else {
         LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
         //passing the unsolicited event to the listener who subscribed for it
-        auto &eventListeners = listeners_[filter];
-        for (auto it = eventListeners.begin(); it != eventListeners.end();) {
+        if(listeners_.find(filter) != listeners_.end()) {
+            for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
+                auto sp = (*it).lock();
+                if (sp) {
+                    sp->onEventUpdate(message);
+                } else {
+                    LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
+                    it = listeners_[filter].erase(it);
+                    continue;
+                }
+                ++it;
+            }
+        } else {
+            LOG(INFO, __FUNCTION__, " No filters registered.");
+        }
+    }
+}
+
+/**
+* This overloaded method forwards the incoming events from server manager implementations.
+* It is mainly to handle the use cases where an action performed on one manager, impacts
+* the other manager. For ex: RAT preference changed by Telephony may impact data as well.
+* Based on the filtering results, message is either forwarded to the listener or ignored.
+*/
+void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string filter = message.filter();
+    std::lock_guard<std::mutex> lk(listenerMutex_);
+
+    LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
+    //passing the unsolicited event to the listener who subscribed for it
+    if(listeners_.find(filter) != listeners_.end()) {
+        for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
             auto sp = (*it).lock();
             if (sp) {
-                sp->onEventUpdate(message);
+                sp->onServerEvent(message.any());
             } else {
                 LOG(DEBUG, "erased obsolete weak pointer from EventManager listeners");
-                it = eventListeners.erase(it);
+                it = listeners_[filter].erase(it);
                 continue;
             }
             ++it;
@@ -88,13 +120,20 @@ telux::common::Status ServerEventManager::deregisterListener(
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status retVal = telux::common::Status::FAILED;
     std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+    if (listeners_.find(filter) == listeners_.end()) {
+        LOG(INFO, __FUNCTION__, " Filter not found: ", filter);
+        return telux::common::Status::NOSUCH;
+    }
     auto spt = listener.lock();
 
     if (spt != nullptr) {
-        auto &eventListeners = listeners_[filter];
-        auto eventItr = eventListeners.find(listener);
-        if (eventItr != eventListeners.end()) {
-            eventListeners.erase(eventItr);
+        auto eventItr = listeners_[filter].find(listener);
+        if (eventItr != listeners_[filter].end()) {
+            listeners_[filter].erase(eventItr);
+            if (listeners_[filter].size() == 0) {
+                LOG(INFO, __FUNCTION__, " Filter erased: ", filter);
+                listeners_.erase(filter);
+            }
         }
 
         LOG(DEBUG, "In deRegister removed listener");
@@ -172,4 +211,3 @@ void ServerEventManager::updateApiResponse(std::string message) {
         CommonUtils::updateJsonValue(path, subsystem, api, attribute, value);
     }
 }
-

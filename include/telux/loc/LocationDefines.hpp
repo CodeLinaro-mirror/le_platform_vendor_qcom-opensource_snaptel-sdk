@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -131,37 +131,38 @@ enum class LocationReliability {
 };
 
 /**
- * Specify set of navigation solutions that contribute to Gnss Location.
- * Defines Satellite Based Augmentation System(SBAS) corrections.
- * SBAS contributes to improve the performance of GNSS system.
+ * Specify the set of navigation solutions that contribute to the Gnss Location.
  */
-enum SbasCorrectionType {
-  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
-                             SBAS ionospheric correction is used */
-  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
-                             SBAS fast correction is used */
-  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
-                             SBAS long correction is used */
-  SBAS_INTEGRITY, /**< Bit mask to specify whether
-                      SBAS integrity information is used */
-  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
-                              SBAS DGNSS correction is used */
-  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
-                            SBAS RTK correction is used */
-  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
-                            SBAS PPP correction is used */
-  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
-                            SBAS RTK fixed correction is used */
-  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
-                            only SBAS corrected SV is used */
-  SBAS_COUNT  /**< Bitset */
+enum NavigationSolutionType {
+    NAV_SBAS_SOLUTION_IONO,       /**< Bit mask to specify whether
+                                        SBAS ionospheric solution is used */
+    NAV_SBAS_SOLUTION_FAST,       /**< Bit mask to specify whether
+                                        SBAS fast solution is used */
+    NAV_SBAS_SOLUTION_LONG,       /**< Bit mask to specify whether
+                                        SBAS long solution is used */
+    NAV_SBAS_INTEGRITY,             /**< Bit mask to specify whether
+                                        SBAS integrity information is used */
+    NAV_DGNSS_SOLUTION,           /**< Bit mask to specify whether
+                                        DGNSS solution is used */
+    NAV_RTK_SOLUTION,             /**< Bit mask to specify whether
+                                        RTK solution is used */
+    NAV_PPP_SOLUTION,             /**< Bit mask to specify whether
+                                        PPP solution is used */
+    NAV_RTK_FIXED_SOLUTION,       /**< Bit mask to specify whether RTK fixed solution is used.
+                                        If only solution RTK is set,
+                                        fixes shall be treated as RTK_FLOAT solution.
+                                        If both solutions RTK & RTK_FIXED are set,
+                                        fixes shall be treated as RTK_FIXED solution. */
+    NAV_ONLY_SBAS_CORRECTED_SV_USED,   /**< Bit mask to specify
+                                           only SBAS corrected SV is used */
+    NAV_COUNT  /**< Bitset */
 };
 
 /**
- * 8 bit mask that denotes which of the SBAS corrections in SbasCorrection used
+ * Bit mask to denote the corrections in NavigationSolutionType that are used
  * to improve the performance of GNSS output.
  */
-using SbasCorrection = std::bitset<SBAS_COUNT>;
+using NavigationSolution = std::bitset<NAV_COUNT>;
 
 /**
  * Indicates whether altitude is assumed or calculated.
@@ -763,7 +764,11 @@ enum LocationValidityType {
     /** Location has valid elapsed real time.*/
     HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
     /** Location has valid elapsed real time uncertainty.*/
-    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10),
+    /** Location has valid elapsed gPTP time.*/
+    HAS_GPTP_TIME_BIT         = (1<<12),
+    /** Location has valid elapsed gPTP time uncertainity.*/
+    HAS_GPTP_TIME_UNC_BIT     = (1<<13)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -2011,6 +2016,48 @@ enum LocConfigIndicationsType {
 using LocConfigIndications = std::bitset<32>;
 
 /**
+ * @deprecated This Enum is no longer supported.
+ * Use @ref ILocationInfoEx::NavigationSolutionType to get the required information about
+ * solutions (corrections) used in the fix.
+ */
+/**
+ * Specify set of navigation solutions that contribute to Gnss Location.
+ * Defines Satellite Based Augmentation System(SBAS) corrections.
+ * SBAS contributes to improve the performance of GNSS system.
+ */
+enum SbasCorrectionType {
+  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
+                             SBAS ionospheric correction is used */
+  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
+                             SBAS fast correction is used */
+  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
+                             SBAS long correction is used */
+  SBAS_INTEGRITY, /**< Bit mask to specify whether
+                      SBAS integrity information is used */
+  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
+                              SBAS DGNSS correction is used */
+  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
+                            SBAS RTK correction is used */
+  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
+                            SBAS PPP correction is used */
+  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
+                            SBAS RTK fixed correction is used */
+  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                            only SBAS corrected SV is used */
+  SBAS_COUNT  /**< Bitset */
+};
+/**
+ * @deprecated This bitmask is no longer supported.
+ * Use @ref ILocationInfoEx::NavigationSolution to get the required information about
+ * solutions (corrections) used in the fix.
+ */
+/**
+ * Bit mask that denotes which of the SBAS corrections in SbasCorrection used
+ * to improve the performance of GNSS output.
+ */
+using SbasCorrection = std::bitset<SBAS_COUNT>;
+
+/**
  * @brief ILocationInfoBase provides interface to get basic position related
  * information like latitude, longitude, altitude, timestamp.
  *
@@ -2150,6 +2197,27 @@ public:
  *
  */
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
+
+/**
+ * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
+ * Used for time sync between different systems. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time
+ *
+ */
+  virtual uint64_t getElapsedGptpTime() = 0;
+
+/**
+ * Retrieves elapsed gPTP time uncertainty. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_UNC_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time uncertainty
+ *
+ */
+  virtual uint64_t getElapsedGptpTimeUnc() = 0;
 
 };
 
@@ -2328,12 +2396,12 @@ public:
   virtual void getSVIds(std::vector<uint16_t> &idsOfUsedSVs) = 0;
 
 /**
- * Retrieves navigation solution mask used to indicate SBAS corrections.
+ * Retrieves navigation solution mask used to indicate solutions used in the fix.
  *
- * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
+ * @return - Navigation solution mask used.
  *
  */
-  virtual SbasCorrection getSbasCorrection() = 0;
+  virtual NavigationSolution getNavigationSolution() = 0;
 
 /**
  * Retrieves position technology mask used to indicate which technology is used.
@@ -2520,6 +2588,18 @@ public:
  *
  */
   virtual float getProtectionLevelVertical() = 0;
+
+/**
+ * Retrieves navigation solution mask used to indicate SBAS corrections.
+ *
+ * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
+ *
+ * @deprecated This API is no longer supported.
+ * Use @ref ILocationInfoEx::getNavigationSolution to get the required information about
+ * solutions (corrections) used in the fix.
+ *
+ */
+  virtual SbasCorrection getSbasCorrection() = 0;
 
 };
 

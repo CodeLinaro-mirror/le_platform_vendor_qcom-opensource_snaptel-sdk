@@ -9,7 +9,7 @@
 #include <telux/data/ServingSystemManager.hpp>
 
 #include "libs/common/AsyncTaskQueue.hpp"
-#include "protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data_simulation.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

@@ -5,6 +5,8 @@ set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 if (TELSDK_FEATURE_TEL)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+   ../../common/utils/Utils.hpp
+
    Phone/PhoneMenu.cpp
    Phone/MyPhoneListener.cpp
    Phone/MySubscriptionListener.cpp
@@ -82,6 +84,8 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/vlan/VlanMenu.cpp
    Data/socks/SocksMenu.cpp
    Data/data_settings/DataSettingsMenu.cpp
+   Data/data_link/DataLinkMenu.cpp
+   Data/data_link/DataLinkListener.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

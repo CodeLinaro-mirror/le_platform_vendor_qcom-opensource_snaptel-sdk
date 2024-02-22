@@ -99,6 +99,7 @@
 #include "socks/SocksMenu.hpp"
 #include "data_filter/DataFilterMenu.hpp"
 #include "data_settings/DataSettingsMenu.hpp"
+#include "data_link/DataLinkMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -133,6 +134,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
     void dataSettingsMenu(std::vector<std::string> inputCommand);
+    void dataLinkMenu(std::vector<std::string> inputCommand);
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
 
@@ -147,5 +149,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<SocksMenu> socksMenu_;
     std::shared_ptr<DataFilterMenu> dataFilterMenu_;
     std::shared_ptr<DataSettingsMenu> settingsMenu_;
+    std::shared_ptr<DataLinkMenu> dataLinkMenu_;
 };
 #endif

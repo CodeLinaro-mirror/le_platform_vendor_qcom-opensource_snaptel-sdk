@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -84,6 +84,7 @@
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
+#include <telux/data/DataLinkManager.hpp>
 
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
@@ -288,6 +289,19 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr)
         = 0;
+
+    /**
+     * Get Data Link Manager
+     * For hypervisor-based platforms, IDataLinkManager is supported only in the primary/host VM.
+     *
+     *  @param [in] clientCallback    Optional callback to get the initialization status of
+     *                               IDataLinkManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IDataLinkManager
+     *
+     */
+    virtual std::shared_ptr<IDataLinkManager> getDataLinkManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

@@ -127,5 +127,10 @@ std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataS
     return nullptr;
 }
 
+std::shared_ptr<IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
+    telux::common::InitResponseCb clientCallback) {
+    return nullptr;
+}
+
 }  // namespace data
 }

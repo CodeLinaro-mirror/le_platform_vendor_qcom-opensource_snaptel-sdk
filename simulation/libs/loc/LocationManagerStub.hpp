@@ -475,8 +475,10 @@ private:
     void invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo);
     void parseRequest(::locStub::StartReportsEvent startEvent);
     void adjustTimeInterval(uint32_t &interval);
-    void setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+    void parseDetailedPvtReports(std::shared_ptr<LocationInfoEx> &loc,
         std::vector<std::string> &message);
+    void setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+        std::shared_ptr<LocationInfoEx> &locImpl);
 };
 
 } // end of namespace loc

@@ -1324,8 +1324,6 @@ void MyLocationListener::onDetailedLocationUpdate(
         "," << locationInfo->getVerticalUncertainty() << "," <<
         locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
         << locationInfo->getElapsedRealTimeUncertainty() << "," <<
-        locationInfo->getElapsedGptpTime() << "," <<
-        locationInfo->getElapsedGptpTimeUnc() << "," <<
         locationInfo->getLocationInfoExValidity() << "," <<
         locationInfo->getAltitudeMeanSeaLevel() << "," <<
         locationInfo->getPositionDop() << "," <<
@@ -1439,7 +1437,9 @@ void MyLocationListener::onDetailedLocationUpdate(
                          << info.gloFourYear << ",";
         } // GNSS_LOC_SV_SYSTEM_SBAS, no timeInfo
 
-        recordStream << locationInfo->getNavigationSolution() << ",";
+        recordStream << locationInfo->getNavigationSolution() << "," <<
+        locationInfo->getElapsedGptpTime() << "," <<
+        locationInfo->getElapsedGptpTimeUnc() << ",";
         DETAILED_RECORDING << recordStream.str() << std::endl;
    }
 }

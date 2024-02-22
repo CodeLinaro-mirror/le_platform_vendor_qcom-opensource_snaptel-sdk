@@ -18,7 +18,6 @@ set(GRPCPP_EXECUTABLE gRPC::grpc++)
 
 set(TARGET_SIMULATION_SERVER_APP_SRC
     SimulationServer.cpp
-    FileBuffer.cpp
 )
 
 include_directories(BEFORE
@@ -30,6 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
 add_executable (${TARGET_SIMULATION_SERVER_APP} ${TARGET_SIMULATION_SERVER_APP_SRC})
 
+add_subdirectory(common)
 add_subdirectory(data)
 add_subdirectory(event)
 add_subdirectory(tel)

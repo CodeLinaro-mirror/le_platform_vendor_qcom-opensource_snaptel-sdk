@@ -521,7 +521,7 @@ telux::loc::LocCapability LocationManagerStub::getCapabilities() {
     return capabilities;
 }
 
-void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx> &loc,
     std::vector<std::string> &message) {
     LOG(DEBUG, __FUNCTION__);
     size_t itr = 2;
@@ -539,8 +539,176 @@ void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> 
     loc->setLocationInfoValidity(std::stoul(message[itr++]));
     loc->setElapsedRealTime(std::stoull(message[itr++]));
     loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
+    loc->setLocationInfoExValidity(std::stoull(message[itr++]));
+    loc->setAltitudeMeanSeaLevel(std::stof(message[itr++]));
+    loc->setPositionDop(std::stof(message[itr++]));
+    loc->setHorizontalDop(std::stof(message[itr++]));
+    loc->setVerticalDop(std::stof(message[itr++]));
+    loc->setGeometricDop(std::stof(message[itr++]));
+    loc->setTimeDop(std::stof(message[itr++]));
+    loc->setMagneticDeviation(std::stof(message[itr++]));
+    loc->setHorizontalReliability(
+        static_cast<telux::loc::LocationReliability>(std::stoi(message[itr++])));
+    loc->setVerticalReliability(
+        static_cast<telux::loc::LocationReliability>(std::stoi(message[itr++])));
+    loc->setHorizontalUncertaintySemiMajor(std::stof(message[itr++]));
+    loc->setHorizontalUncertaintySemiMinor(std::stof(message[itr++]));
+    loc->setHorizontalUncertaintyAzimuth(std::stof(message[itr++]));
+    loc->setEastStandardDeviation(std::stof(message[itr++]));
+    loc->setNorthStandardDeviation(std::stof(message[itr++]));
+    loc->setNumSvUsed(std::stoul(message[itr++]));
+    telux::loc::SvUsedInPosition svUsedInPosition;
+    svUsedInPosition.gps = std::stoull(message[itr++]);
+    svUsedInPosition.glo = std::stoull(message[itr++]);
+    svUsedInPosition.gal = std::stoull(message[itr++]);
+    svUsedInPosition.bds = std::stoull(message[itr++]);
+    svUsedInPosition.qzss = std::stoull(message[itr++]);
+    svUsedInPosition.navic = std::stoull(message[itr++]);
+    loc->setSvUsedInPosition(svUsedInPosition);
+    std::bitset<SBAS_COUNT> sbas = std::stoull(message[itr++]);
+    loc->setSbasCorrection(sbas);
+    loc->setPositionTechnology(std::stoul(message[itr++]));
+    telux::loc::GnssKinematicsData bodyFrameData;
+    bodyFrameData.latAccel = std::stof(message[itr++]);
+    bodyFrameData.longAccel = std::stof(message[itr++]);
+    bodyFrameData.vertAccel = std::stof(message[itr++]);
+    bodyFrameData.yawRate = std::stof(message[itr++]);
+    bodyFrameData.pitch = std::stof(message[itr++]);
+    bodyFrameData.latAccelUnc = std::stof(message[itr++]);
+    bodyFrameData.longAccelUnc = std::stof(message[itr++]);
+    bodyFrameData.vertAccelUnc = std::stof(message[itr++]);
+    bodyFrameData.yawRateUnc = std::stof(message[itr++]);
+    bodyFrameData.pitchUnc = std::stof(message[itr++]);
+    bodyFrameData.pitchRate = std::stof(message[itr++]);
+    bodyFrameData.pitchRateUnc = std::stof(message[itr++]);
+    bodyFrameData.roll = std::stof(message[itr++]);
+    bodyFrameData.rollUnc = std::stof(message[itr++]);
+    bodyFrameData.rollRate = std::stof(message[itr++]);
+    bodyFrameData.rollRateUnc = std::stof(message[itr++]);
+    bodyFrameData.yaw = std::stof(message[itr++]);
+    bodyFrameData.yawUnc = std::stof(message[itr++]);
+    bodyFrameData.bodyFrameDataMask = std::stoul(message[itr++]);
+    loc->setBodyFrameData(bodyFrameData);
+    loc->setTimeUncMs(std::stof(message[itr++]));
+    loc->setLeapSeconds(std::stoul(message[itr++]));
+    loc->setCalibrationConfidencePercent(std::stoul(message[itr++]));
+    loc->setCalibrationStatus(std::stoul(message[itr++]));
+    loc->setConformityIndex(std::stof(message[itr++]));
+    telux::loc::LLAInfo llaVRPInfo = {0};
+    llaVRPInfo.latitude = std::stod(message[itr++]);
+    llaVRPInfo.longitude = std::stod(message[itr++]);
+    llaVRPInfo.altitude = std::stod(message[itr++]);
+    loc->setVRPBasedLLA(llaVRPInfo);
+    std::vector<float> enuVelocity(3);
+    enuVelocity[0] = std::stof(message[itr++]);
+    enuVelocity[1] = std::stof(message[itr++]);
+    enuVelocity[2] = std::stof(message[itr++]);
+    loc->setVRPBasedENUVelocity(enuVelocity);
+    loc->setAltitudeType(static_cast<telux::loc::AltitudeType>(std::stoi(message[itr++])));
+    loc->setReportStatus(static_cast<telux::loc::ReportStatus>(std::stoi(message[itr++])));
+    loc->setIntegrityRiskUsed(std::stoul(message[itr++]));
+    loc->setProtectionLevelAlongTrack(std::stof(message[itr++]));
+    loc->setProtectionLevelCrossTrack(std::stof(message[itr++]));
+    loc->setProtectionLevelVertical(std::stof(message[itr++]));
+    loc->setSolutionStatus(std::stoul(message[itr++]));
+    size_t measInfoSize = std::stoi(message[itr++]);
+    std::vector<GnssMeasurementInfo> measInfo;
+    for(size_t i = 0; i < measInfoSize; i++) {
+        telux::loc::GnssMeasurementInfo temp;
+        temp.gnssSignalType = std::stoul(message[itr++]);
+        temp.gnssConstellation =
+            static_cast<telux::loc::GnssSystem>(std::stoi(message[itr++]));
+        temp.gnssSvId = std::stoul(message[itr++]);
+        measInfo.push_back(temp);
+    }
+    loc->setMeasUsageInfo(measInfo);
+    size_t enuVelocitySize = std::stoi(message[itr++]);
+    std::vector<float> velocityEastNorthUp;
+    for(size_t i = 0; i < enuVelocitySize; i++) {
+        velocityEastNorthUp.push_back(std::stof(message[itr++]));
+    }
+    loc->setVelocityEastNorthUp(velocityEastNorthUp);
+    size_t enuVelocityUncertainitySize = std::stoi(message[itr++]);
+    std::vector<float> setVelocityEastNorthUpUnc;
+    for(size_t i = 0; i < enuVelocityUncertainitySize; i++) {
+        setVelocityEastNorthUpUnc.push_back(std::stof(message[itr++]));
+    }
+    loc->setVelocityUncertaintyEastNorthUp(setVelocityEastNorthUpUnc);
+    size_t usedSVsize = std::stoi(message[itr++]);
+    std::vector<uint16_t> usedSvs;
+    for(size_t i = 0; i < usedSVsize; i++) {
+        usedSvs.push_back(std::stoul(message[itr++]));
+    }
+    loc->setUsedSVsIds(usedSvs);
+    telux::loc::GnssSystem system =
+        static_cast<telux::loc::GnssSystem>(std::stoi(message[itr++]));
+    if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        telux::loc::SystemTime time;
+        time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS;
+        time.time.glo.validityMask = std::stoul(message[itr++]);
+        time.time.glo.gloDays = std::stoul(message[itr++]);
+        time.time.glo.gloMsec = std::stoul(message[itr++]);
+        time.time.glo.gloClkTimeBias = std::stof(message[itr++]);
+        time.time.glo.gloClkTimeUncMs = std::stof(message[itr++]);
+        time.time.glo.refFCount = std::stoul(message[itr++]);
+        time.time.glo.numClockResets = std::stoul(message[itr++]);
+        time.time.glo.gloFourYear = std::stoul(message[itr++]);
+        loc->setGnssSystemTime(time);
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
+        telux::loc::SystemTime time;
+        time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS;
+        loc->setGnssSystemTime(time);
+    } else {
+        telux::loc::SystemTime time;
+        if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
+            time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS;
+        }
+        if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+            time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO;
+        }
+        if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
+            time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS;
+        }
+        if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+            time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS;
+        }
+        if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+            time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC;
+        }
+        time.time.gps.validityMask = std::stoul(message[itr++]);
+        time.time.gps.numClockResets = std::stoul(message[itr++]);
+        time.time.gps.refFCount = std::stoul(message[itr++]);
+        time.time.gps.systemClkTimeUncMs = std::stof(message[itr++]);
+        time.time.gps.systemClkTimeBias = std::stof(message[itr++]);
+        time.time.gps.systemMsec = std::stoul(message[itr++]);
+        time.time.gps.systemWeek = std::stoul(message[itr++]);
+        loc->setGnssSystemTime(time);
+    }
+    std::bitset<NAV_COUNT> navSol = std::stoull(message[itr++]);
+    loc->setNavigationSolution(navSol);
     loc->setElapsedGptpTime(std::stoull(message[itr++]));
     loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
+}
+
+void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
+    std::shared_ptr<LocationInfoEx> &locImpl) {
+    LOG(DEBUG, __FUNCTION__);
+    loc->setUtcFixTime(locImpl->getTimeStamp());
+    loc->setLocationTechnology(locImpl->getTechMask());
+    loc->setLatitude(locImpl->getLatitude());
+    loc->setLongitude(locImpl->getLongitude());
+    loc->setAltitude(locImpl->getAltitude());
+    loc->setHeading(locImpl->getHeading());
+    loc->setSpeed(locImpl->getSpeed());
+    loc->setHeadingUncertainty(locImpl->getHeadingUncertainty());
+    loc->setSpeedUncertainty(locImpl->getSpeedUncertainty());
+    loc->setHorizontalUncertainty(locImpl->getHorizontalUncertainty());
+    loc->setVerticalUncertainty(locImpl->getVerticalUncertainty());
+    loc->setLocationInfoValidity(locImpl->getLocationInfoValidity());
+    loc->setElapsedRealTime(locImpl->getElapsedRealTime());
+    loc->setElapsedRealTimeUncertainty(locImpl->getElapsedRealTimeUncertainty());
+    loc->setElapsedGptpTime(locImpl->getElapsedGptpTime());
+    loc->setElapsedGptpTimeUnc(locImpl->getElapsedGptpTimeUnc());
 }
 
 std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(
@@ -564,7 +732,10 @@ std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(
                 utcTimestamp =
                     (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
                 message[2] = std::to_string(utcTimestamp);
-                setLocationInfoBase(locInfo, message);
+                std::shared_ptr<LocationInfoEx> locImpl = std::make_shared<LocationInfoEx>();
+                parseDetailedPvtReports(locImpl, message);
+                std::shared_ptr<LocationInfoBase> loc = std::make_shared<LocationInfoBase>();
+                setLocationInfoBase(loc, locImpl);
             } else {
                 locInfo->setLatitude(0);
                 locInfo->setLongitude(0);
@@ -728,8 +899,11 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             }
 
             //3. Parse.
+            std::shared_ptr<LocationInfoEx> locImpl = std::make_shared<LocationInfoEx>();
+            parseDetailedPvtReports(locImpl, message);
             std::shared_ptr<LocationInfoBase> loc = std::make_shared<LocationInfoBase>();
-            setLocationInfoBase(loc, message);
+            setLocationInfoBase(loc, locImpl);
+
             //Send data to clients.
             for (auto iter = listeners_.begin(); iter != listeners_.end();) {
                 auto spt = (*iter).lock();
@@ -780,171 +954,8 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             }
 
             //Parse.
-            size_t itr = 2;
             std::shared_ptr<LocationInfoEx> loc = std::make_shared<LocationInfoEx>();
-            loc->setUtcFixTime(std::stoull(message[itr++]));
-            loc->setLocationTechnology(std::stoul(message[itr++]));
-            loc->setLatitude(std::stod(message[itr++]));
-            loc->setLongitude(std::stod(message[itr++]));
-            loc->setAltitude(std::stod(message[itr++]));
-            loc->setHeading(std::stof(message[itr++]));
-            loc->setSpeed(std::stof(message[itr++]));
-            loc->setHeadingUncertainty(std::stof(message[itr++]));
-            loc->setSpeedUncertainty(std::stof(message[itr++]));
-            loc->setHorizontalUncertainty(std::stof(message[itr++]));
-            loc->setVerticalUncertainty(std::stof(message[itr++]));
-            loc->setLocationInfoValidity(std::stoul(message[itr++]));
-            loc->setElapsedRealTime(std::stoull(message[itr++]));
-            loc->setElapsedRealTimeUncertainty(std::stoull(message[itr++]));
-            loc->setElapsedGptpTime(std::stoull(message[itr++]));
-            loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
-            loc->setLocationInfoExValidity(std::stoull(message[itr++]));
-            loc->setAltitudeMeanSeaLevel(std::stof(message[itr++]));
-            loc->setPositionDop(std::stof(message[itr++]));
-            loc->setHorizontalDop(std::stof(message[itr++]));
-            loc->setVerticalDop(std::stof(message[itr++]));
-            loc->setGeometricDop(std::stof(message[itr++]));
-            loc->setTimeDop(std::stof(message[itr++]));
-            loc->setMagneticDeviation(std::stof(message[itr++]));
-            loc->setHorizontalReliability(
-                static_cast<telux::loc::LocationReliability>(std::stoi(message[itr++])));
-            loc->setVerticalReliability(
-                static_cast<telux::loc::LocationReliability>(std::stoi(message[itr++])));
-            loc->setHorizontalUncertaintySemiMajor(std::stof(message[itr++]));
-            loc->setHorizontalUncertaintySemiMinor(std::stof(message[itr++]));
-            loc->setHorizontalUncertaintyAzimuth(std::stof(message[itr++]));
-            loc->setEastStandardDeviation(std::stof(message[itr++]));
-            loc->setNorthStandardDeviation(std::stof(message[itr++]));
-            loc->setNumSvUsed(std::stoul(message[itr++]));
-            telux::loc::SvUsedInPosition svUsedInPosition;
-            svUsedInPosition.gps = std::stoull(message[itr++]);
-            svUsedInPosition.glo = std::stoull(message[itr++]);
-            svUsedInPosition.gal = std::stoull(message[itr++]);
-            svUsedInPosition.bds = std::stoull(message[itr++]);
-            svUsedInPosition.qzss = std::stoull(message[itr++]);
-            svUsedInPosition.navic = std::stoull(message[itr++]);
-            loc->setSvUsedInPosition(svUsedInPosition);
-            std::bitset<SBAS_COUNT> sbas = std::stoull(message[itr++]);
-            loc->setSbasCorrection(sbas);
-            loc->setPositionTechnology(std::stoul(message[itr++]));
-            telux::loc::GnssKinematicsData bodyFrameData;
-            bodyFrameData.latAccel = std::stof(message[itr++]);
-            bodyFrameData.longAccel = std::stof(message[itr++]);
-            bodyFrameData.vertAccel = std::stof(message[itr++]);
-            bodyFrameData.yawRate = std::stof(message[itr++]);
-            bodyFrameData.pitch = std::stof(message[itr++]);
-            bodyFrameData.latAccelUnc = std::stof(message[itr++]);
-            bodyFrameData.longAccelUnc = std::stof(message[itr++]);
-            bodyFrameData.vertAccelUnc = std::stof(message[itr++]);
-            bodyFrameData.yawRateUnc = std::stof(message[itr++]);
-            bodyFrameData.pitchUnc = std::stof(message[itr++]);
-            bodyFrameData.pitchRate = std::stof(message[itr++]);
-            bodyFrameData.pitchRateUnc = std::stof(message[itr++]);
-            bodyFrameData.roll = std::stof(message[itr++]);
-            bodyFrameData.rollUnc = std::stof(message[itr++]);
-            bodyFrameData.rollRate = std::stof(message[itr++]);
-            bodyFrameData.rollRateUnc = std::stof(message[itr++]);
-            bodyFrameData.yaw = std::stof(message[itr++]);
-            bodyFrameData.yawUnc = std::stof(message[itr++]);
-            bodyFrameData.bodyFrameDataMask = std::stoul(message[itr++]);
-            loc->setBodyFrameData(bodyFrameData);
-            loc->setTimeUncMs(std::stof(message[itr++]));
-            loc->setLeapSeconds(std::stoul(message[itr++]));
-            loc->setCalibrationConfidencePercent(std::stoul(message[itr++]));
-            loc->setCalibrationStatus(std::stoul(message[itr++]));
-            loc->setConformityIndex(std::stof(message[itr++]));
-            telux::loc::LLAInfo llaVRPInfo = {0};
-            llaVRPInfo.latitude = std::stod(message[itr++]);
-            llaVRPInfo.longitude = std::stod(message[itr++]);
-            llaVRPInfo.altitude = std::stod(message[itr++]);
-            loc->setVRPBasedLLA(llaVRPInfo);
-            std::vector<float> enuVelocity(3);
-            enuVelocity[0] = std::stof(message[itr++]);
-            enuVelocity[1] = std::stof(message[itr++]);
-            enuVelocity[2] = std::stof(message[itr++]);
-            loc->setVRPBasedENUVelocity(enuVelocity);
-            loc->setAltitudeType(static_cast<telux::loc::AltitudeType>(std::stoi(message[itr++])));
-            loc->setReportStatus(static_cast<telux::loc::ReportStatus>(std::stoi(message[itr++])));
-            loc->setIntegrityRiskUsed(std::stoul(message[itr++]));
-            loc->setProtectionLevelAlongTrack(std::stof(message[itr++]));
-            loc->setProtectionLevelCrossTrack(std::stof(message[itr++]));
-            loc->setProtectionLevelVertical(std::stof(message[itr++]));
-            loc->setSolutionStatus(std::stoul(message[itr++]));
-            size_t measInfoSize = std::stoi(message[itr++]);
-            std::vector<GnssMeasurementInfo> measInfo;
-            for(size_t i = 0; i < measInfoSize; i++) {
-                telux::loc::GnssMeasurementInfo temp;
-                temp.gnssSignalType = std::stoul(message[itr++]);
-                temp.gnssConstellation =
-                    static_cast<telux::loc::GnssSystem>(std::stoi(message[itr++]));
-                temp.gnssSvId = std::stoul(message[itr++]);
-                measInfo.push_back(temp);
-            }
-            loc->setMeasUsageInfo(measInfo);
-            size_t enuVelocitySize = std::stoi(message[itr++]);
-            std::vector<float> velocityEastNorthUp;
-            for(size_t i = 0; i < enuVelocitySize; i++) {
-                velocityEastNorthUp.push_back(std::stof(message[itr++]));
-            }
-            loc->setVelocityEastNorthUp(velocityEastNorthUp);
-            size_t enuVelocityUncertainitySize = std::stoi(message[itr++]);
-            std::vector<float> setVelocityEastNorthUpUnc;
-            for(size_t i = 0; i < enuVelocityUncertainitySize; i++) {
-                setVelocityEastNorthUpUnc.push_back(std::stof(message[itr++]));
-            }
-            loc->setVelocityUncertaintyEastNorthUp(setVelocityEastNorthUpUnc);
-            size_t usedSVsize = std::stoi(message[itr++]);
-            std::vector<uint16_t> usedSvs;
-            for(size_t i = 0; i < usedSVsize; i++) {
-                usedSvs.push_back(std::stoul(message[itr++]));
-            }
-            loc->setUsedSVsIds(usedSvs);
-            telux::loc::GnssSystem system =
-                static_cast<telux::loc::GnssSystem>(std::stoi(message[itr++]));
-            if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
-                telux::loc::SystemTime time;
-                time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS;
-                time.time.glo.validityMask = std::stoul(message[itr++]);
-                time.time.glo.gloDays = std::stoul(message[itr++]);
-                time.time.glo.gloMsec = std::stoul(message[itr++]);
-                time.time.glo.gloClkTimeBias = std::stof(message[itr++]);
-                time.time.glo.gloClkTimeUncMs = std::stof(message[itr++]);
-                time.time.glo.refFCount = std::stoul(message[itr++]);
-                time.time.glo.numClockResets = std::stoul(message[itr++]);
-                time.time.glo.gloFourYear = std::stoul(message[itr++]);
-                loc->setGnssSystemTime(time);
-            } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
-                telux::loc::SystemTime time;
-                time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS;
-                loc->setGnssSystemTime(time);
-            } else {
-                telux::loc::SystemTime time;
-                if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
-                    time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS;
-                }
-                if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
-                    time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO;
-                }
-                if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
-                    time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS;
-                }
-                if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
-                    time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS;
-                }
-                if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
-                    time.gnssSystemTimeSrc = telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC;
-                }
-                time.time.gps.validityMask = std::stoul(message[itr++]);
-                time.time.gps.numClockResets = std::stoul(message[itr++]);
-                time.time.gps.refFCount = std::stoul(message[itr++]);
-                time.time.gps.systemClkTimeUncMs = std::stof(message[itr++]);
-                time.time.gps.systemClkTimeBias = std::stof(message[itr++]);
-                time.time.gps.systemMsec = std::stoul(message[itr++]);
-                time.time.gps.systemWeek = std::stoul(message[itr++]);
-                loc->setGnssSystemTime(time);
-            }
-            std::bitset<NAV_COUNT> navSol = std::stoull(message[itr++]);
-            loc->setNavigationSolution(navSol);
+            parseDetailedPvtReports(loc, message);
 
             //Send data to clients.
             for (auto iter = listeners_.begin(); iter != listeners_.end();) {

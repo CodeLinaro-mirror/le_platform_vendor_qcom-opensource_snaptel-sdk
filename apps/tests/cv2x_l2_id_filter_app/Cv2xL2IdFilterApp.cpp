@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file: Cv2xL2IdFilter.cpp
  *
@@ -149,7 +154,7 @@ static int parseOpts(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    ErrorCode ret;
+    ErrorCode ret = telux::common::ErrorCode::GENERIC_FAILURE;
 
     if (parseOpts(argc, argv) < 0) {
         return EXIT_FAILURE;
@@ -178,10 +183,10 @@ int main(int argc, char *argv[]) {
     if (filterList.size() > 0) {
         promise<ErrorCode> p;
 
-        cv2xRadioMgr->setL2Filters(filterList, [&p](ErrorCode error) {
-            p.set_value(error);
-        });
-        ret = p.get_future().get();
+        if (telux::common::Status::SUCCESS == cv2xRadioMgr->setL2Filters(filterList,
+            [&p](ErrorCode error) {p.set_value(error);})) {
+            ret = p.get_future().get();
+        }
         if (ErrorCode::SUCCESS != ret) {
             cout << "set filter error " << static_cast<int>(ret) << endl;
         }
@@ -189,11 +194,11 @@ int main(int argc, char *argv[]) {
 
     if (removeL2IdList.size() > 0) {
         promise<ErrorCode> p;
-
-        cv2xRadioMgr->removeL2Filters(removeL2IdList, [&p](ErrorCode error) {
-            p.set_value(error);
-        });
-        ret = p.get_future().get();
+        ret = telux::common::ErrorCode::GENERIC_FAILURE;
+        if (telux::common::Status::SUCCESS == cv2xRadioMgr->removeL2Filters(removeL2IdList,
+            [&p](ErrorCode error) {p.set_value(error);})) {
+            ret = p.get_future().get();
+        }
         if (ErrorCode::SUCCESS != ret) {
             cout << "remove filter error " << static_cast<int>(ret) << endl;
         }

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -163,10 +163,15 @@ void DataMenu::init() {
             "11", "Data_Settings_Menu",
             {}, std::bind(&DataMenu::dataSettingsMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> clientManagerMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "12", "Client_Menu",
+            {}, std::bind(&DataMenu::clientMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
-        dataSettingsMenuCommand};
+        dataSettingsMenuCommand, clientManagerMenuCommand};
 
     addCommands(commandsList);
 
@@ -289,5 +294,14 @@ void DataMenu::servingSystemMenu(std::vector<std::string> userInput) {
         dataServingSystemMenu_->mainLoop();
     }
     dataServingSystemMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::clientMenu(std::vector<std::string> userInput) {
+    clientMenu_ = std::make_shared<ClientMenu>("Client Menu", "client> ");
+    if(clientMenu_->init()) {
+        clientMenu_->mainLoop();
+    }
+    clientMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

@@ -75,6 +75,9 @@ class DataFactoryImplStub : public DataFactory,
         telux::data::OperationType,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
+    virtual std::shared_ptr<telux::data::IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
  private:
     DataFactoryImplStub();
     ~DataFactoryImplStub();

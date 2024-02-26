@@ -314,6 +314,11 @@ std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpMana
     return nullptr;
 }
 
+std::shared_ptr<telux::data::IClientManager> DataFactoryImplStub::getClientManager(
+    telux::common::InitResponseCb clientCallback) {
+    return nullptr;
+}
+
 std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataSettingsManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
     std::shared_ptr<IDataSettingsManager> settingsMgr = nullptr;

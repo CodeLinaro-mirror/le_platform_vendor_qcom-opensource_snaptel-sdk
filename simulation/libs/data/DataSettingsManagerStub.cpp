@@ -550,6 +550,11 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     return status;
 }
 
+bool DataSettingsManagerStub::isDeviceDataUsageMonitoringEnabled() {
+    LOG(ERROR, __FUNCTION__, " TBD");
+    return false;
+}
+
 telux::common::Status DataSettingsManagerStub::registerListener(
     std::weak_ptr<IDataSettingsListener> listener) {
     LOG(DEBUG, __FUNCTION__);

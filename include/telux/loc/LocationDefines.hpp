@@ -175,9 +175,15 @@ enum SbasCorrectionType {
   SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
                               SBAS DGNSS correction is used */
   SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
-                            SBAS RTK correction is used */
+                            RTK correction is used */
   SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
-                            SBAS PPP correction is used */
+                            PPP correction is used */
+  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether SBAS RTK fixed correction is used.
+                  If only Correction RTK is set, fixes shall be treated as RTK_FLOAT solution.
+                  If both Corrections RTK & RTK_FIXED are set,
+                  fixes shall be treated as RTK_FIXED solution. */
+  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                            only SBAS corrected SV is used */
   SBAS_COUNT  /**< Bitset */
 };
 

@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -1116,6 +1117,9 @@ void MyLocationListener::printMeasurementAdrState(
   }
   if(mask & telux::loc::CYCLE_SLIP_BIT) {
     std::cout << " State is cycle slip" << std::endl;
+  }
+  if(mask & telux::loc::HALF_CYCLE_RESOLVED_BIT) {
+    std::cout << " State is half cycle resolved" << std::endl;
   }
 }
 

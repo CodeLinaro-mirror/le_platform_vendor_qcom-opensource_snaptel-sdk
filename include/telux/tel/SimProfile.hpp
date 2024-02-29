@@ -37,8 +37,8 @@
  *
  */
 
-#ifndef SIMPROFILE_HPP
-#define SIMPROFILE_HPP
+#ifndef TELUX_TEL_SIMPROFILE_HPP
+#define TELUX_TEL_SIMPROFILE_HPP
 
 #include <vector>
 #include <string>
@@ -175,4 +175,4 @@ class SimProfile {
 }
 }
 
-#endif  // SIMPROFILE_HPP
+#endif // TELUX_TEL_SIMPROFILE_HPP

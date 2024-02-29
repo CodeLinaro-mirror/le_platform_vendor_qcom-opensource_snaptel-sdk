@@ -68,8 +68,8 @@
  *        audio APIs.
  */
 
-#ifndef AUDIODEFINES_HPP
-#define AUDIODEFINES_HPP
+#ifndef TELUX_AUDIO_AUDIODEFINES_HPP
+#define TELUX_AUDIO_AUDIODEFINES_HPP
 
 #include <cstdint>
 #include <cstring>
@@ -380,7 +380,7 @@ struct StreamConfig {
     /** @deprecated, use the @ref StreamConfig::slotId field instead of this */
     int modemSubId = 1;
 
-    /** @ref SlotId - specifies the slot ID where the UICC card is inserted */
+    /** SlotId - specifies the slot ID where the UICC card is inserted */
     SlotId slotId = INVALID_SLOT_ID;
 
     /** Sample rate in Hz. Typical values are 8k, 16k, 32k and 48k.
@@ -495,4 +495,4 @@ struct DtmfTone {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // AUDIODEFINES_HPP
+#endif // TELUX_AUDIO_AUDIODEFINES_HPP

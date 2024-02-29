@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -69,8 +69,8 @@
 * @brief      Cv2xFactory is the factory that creates the Cv2x Radio.
 */
 
-#ifndef CV2XFACTORY_HPP
-#define CV2XFACTORY_HPP
+#ifndef TELUX_CV2X_CV2XFACTORY_HPP
+#define TELUX_CV2X_CV2XFACTORY_HPP
 
 #include <memory>
 #include <mutex>
@@ -146,4 +146,4 @@ protected:
 
 } // namespace telux
 
-#endif // #ifndef CV2XFACTORY_HPP
+#endif // TELUX_CV2X_CV2XFACTORY_HPP

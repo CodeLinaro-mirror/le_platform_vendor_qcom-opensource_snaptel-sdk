@@ -38,17 +38,17 @@
 #include <algorithm>
 #include <bits/stdc++.h>
 #include "SmsManagerStub.hpp"
-#include "../common/SimulationConfigParser.hpp"
-#include "../common/CommonUtils.hpp"
+#include "common/SimulationConfigParser.hpp"
+#include "common/CommonUtils.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 
 using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
 
-SmsManagerStub::SmsManagerStub(int phoneId, telux::common::InitResponseCb callback)
-    :stub_(SmsService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+SmsManagerStub::SmsManagerStub(int phoneId, telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    stub_ = CommonUtils::getGrpcStub<SmsService>();
     phoneId_ = phoneId;
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
     auto f = std::async(std::launch::async,
@@ -123,9 +123,9 @@ telux::common::Status SmsManagerStub::registerListener(std::weak_ptr<ISmsListene
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         status = listenerMgr_->registerListener(listener);
-        auto &eventManager = telux::common::EventManager::getInstance();
-        eventManager.connectToSimulationServer();
-        eventManager.registerListener(shared_from_this(), TEL_SMS_FILTER);
+        std::vector<std::string> filters = {TEL_SMS_FILTER};
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(shared_from_this(), filters);
     }
     return status;
 }
@@ -143,8 +143,9 @@ telux::common::Status SmsManagerStub::removeListener(
         status = listenerMgr_->deRegisterListener(listener);
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.deregisterListener(shared_from_this());
+            std::vector<std::string> filters = {TEL_SMS_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
     return status;
@@ -926,175 +927,35 @@ const std::string SmsMessage::toString() const {
    return ss.str();
 }
 
-void SmsManagerStub::onEventUpdate(std::string event) {
-    std::string token;
-    if (EVENT_FLAG == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
-    } else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-    }
-    return;
+void SmsManagerStub::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::telStub::SmsMessage>()) {
+        ::telStub::SmsMessage smsEvent;
+        event.UnpackTo(&smsEvent);
+        handleIncomingSms(smsEvent);
+    } else if(event.Is<::telStub::memoryFullEvent>()) {
+        ::telStub::memoryFullEvent memoryFullEvent;
+        event.UnpackTo(&memoryFullEvent);
+        handleMemoryFullEvent(memoryFullEvent);
+    } else {}
 }
 
-void SmsManagerStub::handleEvent(std::string token , std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
-    }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
-    if (token == "memoryfull") {
-        handleMemoryFullEvent(event);
-    } else if (token == "incoming") {
-        handleIncomingSms(event);
-    }
-}
-void SmsManagerStub::handleIncomingSms(std::string eventParams) {
+void SmsManagerStub::handleIncomingSms(::telStub::SmsMessage event) {
     LOG(DEBUG, __FUNCTION__);
 
-    int phoneId;
-    int numberOfSegments;
-    int refNumber;
-    int segmentNumber;
-    int msgIndex;
-    telux::tel::SmsTagType tagType = telux::tel::SmsTagType::UNKNOWN;
-    telux::tel::SmsEncoding encoding;
-    bool isMetaInfoValid;
-    std::string pdu;
-    std::string rawPdu;
-    std::string receiver;
-    std::string sender;
-    std::string text;
-
-    /* Fetch the slotId */
-
-    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
-        phoneId = 1;
-    } else {
-        try {
-            phoneId = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
-
-    /* Fetch the numberOfSegments */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The numberOfSegments is not passed!");
-    } else {
-        try {
-            numberOfSegments = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched numberofsegments is: ", numberOfSegments
-        , "The leftover string is: ", eventParams);
-    /* Fetch refNumber */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The refNumber not passed!");
-    } else {
-        try {
-            refNumber = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched refNumber is: ", refNumber
-        , "The leftover string is: ", eventParams);
-    /* Fetch segmentNumber */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The segmentNumber is not passed!");
-    } else {
-        try {
-            segmentNumber = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched segmentNumber is: ", segmentNumber
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch msgIndex */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The msgIndex is: ", token);
-    if (token == "") {
-        LOG(INFO, "The msgIndex is not passed!");
-    } else {
-        try {
-            msgIndex = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched msgIndex is: ", msgIndex
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch tagType */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The tagType is not passed!");
-    } else {
-        tagType = Helper::getTagType(token);
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched tagType is: ", static_cast<int>(tagType)
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch encoding */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The encoding is not passed!");
-    } else {
-        encoding = Helper::getencodingMethod(token);
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched encoding is: ", static_cast<int>(encoding)
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch isMetaInfoValid */
-
-   token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The isMetaInfoValid is not passed!");
-    } else {
-        try {
-            int input = std::stoi(token);
-            if (input == 1) {
-                isMetaInfoValid = true ;
-            } else {
-                isMetaInfoValid = false ;
-            }
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched isMetaInfoValid is: ", isMetaInfoValid
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch pdu */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The pdu is not passed!");
-    } else {
-        pdu = token;
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched pdu is: ", pdu
-        , "The leftover string is: ", token);
+    int phoneId = event.phone_id();
+    int numberOfSegments = event.messageinfono_of_segments();
+    int refNumber = event.messageinforef_no();
+    int segmentNumber = event.messageinfosegment_no();
+    int msgIndex = event.msg_index();
+    telux::tel::SmsTagType tagType = static_cast<telux::tel::SmsTagType>(event.tag_type());
+    telux::tel::SmsEncoding encoding = static_cast<telux::tel::SmsEncoding>(event.encoding());
+    bool isMetaInfoValid = event.ismetainfo_valid();
+    std::string pdu = event.pdu();
+    std::string rawPdu = event.pdu();
+    std::string receiver= event.receiver();
+    std::string sender = event.sender();
+    std::string text = event.text();
 
     const uint8_t* p = reinterpret_cast<const uint8_t*>(pdu.c_str());
     std::vector <uint8_t> pduBuffer;
@@ -1103,38 +964,6 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
         pduBuffer.push_back(*p);
         p++;
     }
-
-    /* Fetch receiver */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The receiver is not passed!");
-    } else {
-        receiver = token;
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched receiver is: ", receiver
-        , "The leftover string is: ", eventParams);
-
-   /* Fetch sender */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The sender is not passed!");
-    } else {
-        sender = token;
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched sender is: ", sender
-        , "The leftover string is: ", eventParams);
-
-    /* Fetch text */
-    LOG(DEBUG, __FUNCTION__, "The text is: ", eventParams);
-    if (token == "") {
-        LOG(INFO, "The text is not passed!");
-    } else {
-        text = eventParams;
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched text is: ", text );
-
     /* Construct sendMessage based on the inputs */
     std::shared_ptr<MessagePartInfo> info = std::make_shared< MessagePartInfo >();
     SmsMetaInfo metaInfo = {};
@@ -1152,8 +981,17 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
     isMemoryFull(phoneId);
 
     // Consolidated message for all incomingSms segments and send the notification to clients
-    if ((msg.getMessagePartInfo())->numberOfSegments > 1 ){
+    if ((msg.getMessagePartInfo())->numberOfSegments > 1 ) {
         parseAndConcatenateSmsMessage (phoneId, msg);
+    } else if((((msg.getMessagePartInfo())->numberOfSegments == 1) //Single part messages
+        && ((msg.getMessagePartInfo())->segmentNumber == 1))) {
+        auto ptr = std::make_shared<std::vector<SmsMessage>> (std::vector<SmsMessage>{msg});
+        invokeIncomingSmslisteners(phoneId, ptr);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Invalid input for current segment "
+            , (msg.getMessagePartInfo())->segmentNumber ,
+            " and total number of segments " , (msg.getMessagePartInfo())->numberOfSegments);
+        return;
     }
 }
 
@@ -1173,8 +1011,6 @@ void SmsManagerStub::isMemoryFull(int phoneId) {
         invokeMemoryFulllisteners(phoneId, telux::tel::StorageType::SIM);
     }
 }
-
-
 
 void SmsManagerStub::invokeIncomingSmslisteners (int phoneId,
     std::shared_ptr<SmsMessage> message) {
@@ -1278,35 +1114,12 @@ void SmsManagerStub::parseAndConcatenateSmsMessage (int phoneId, SmsMessage& mes
         }
 }
 
-void SmsManagerStub::handleMemoryFullEvent(std::string eventParams) {
-
+void SmsManagerStub::handleMemoryFullEvent(::telStub::memoryFullEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    /* Fetch the slotId */
-    int phoneId;
-    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
-    if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
-        phoneId = 1;
-    } else {
-        try {
-            phoneId = std::stoi(token);
-        } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
-
-    /* Fetch Storage type */
-    telux::tel::StorageType type;
-    if (eventParams == "UNKNOWN") {
-        type = telux::tel::StorageType::UNKNOWN;
-    } else if (eventParams == "SIM") {
-        type = telux::tel::StorageType::SIM;
-    } else {
-        type = telux::tel::StorageType::NONE;
-    }
+    int phoneId = event.phone_id();
+    telux::tel::StorageType type = static_cast<telux::tel::StorageType>(event.storage_type());
     LOG(DEBUG, __FUNCTION__, "The Storage type is : ", static_cast<int>(type));
+    LOG(DEBUG, __FUNCTION__, "Phone Id is  : ", phoneId);
     invokeMemoryFulllisteners(phoneId, type);
 }
 

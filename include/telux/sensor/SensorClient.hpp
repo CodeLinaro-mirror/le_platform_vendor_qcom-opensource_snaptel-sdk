@@ -39,8 +39,8 @@
  *             system.
  */
 
-#ifndef TELUX_SENSOR_SENSOR_CLIENT_HPP
-#define TELUX_SENSOR_SENSOR_CLIENT_HPP
+#ifndef TELUX_SENSOR_SENSORCLIENT_HPP
+#define TELUX_SENSOR_SENSORCLIENT_HPP
 
 #include <vector>
 #include <memory>
@@ -301,4 +301,4 @@ using ISensor = ISensorClient;
 }  // namespace sensor
 }  // namespace telux
 
-#endif  // TELUX_SENSOR_SENSOR_CLIENT_HPP
+#endif // TELUX_SENSOR_SENSORCLIENT_HPP

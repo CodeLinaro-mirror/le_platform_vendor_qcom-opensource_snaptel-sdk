@@ -43,14 +43,14 @@
 #define LOCATIONCONFIGURATORSTUB_HPP
 
 #include "telux/loc/LocationConfigurator.hpp"
-#include "../common/AsyncTaskQueue.hpp"
-#include "../common/event-manager/EventManager.hpp"
-#include "../common/event-manager/EventParserUtil.hpp"
+#include "common/AsyncTaskQueue.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 #include <set>
 #include <map>
 
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -728,7 +728,7 @@ public:
  */
     void cleanup();
 
-    void onEventUpdate(std::string event) override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
 /**
  * Destructor of ILocationConfigurator
@@ -737,15 +737,14 @@ public:
 private:
   void getAvailableListeners(uint32_t indication,
     std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
-  void invokeXtraStatusUpdate();
-  void invokeGnssConstellationUpdate();
+  void invokeXtraStatusUpdate(uint32_t enable,uint32_t dataStatus,uint32_t validHours);
+  void invokeGnssConstellationUpdate(uint32_t enabledMask);
   bool xtraEnabled_;
   uint32_t registrationMask_ = 0;
   bool waitForInitialization();
   void initSync(telux::common::InitResponseCb callback);
-  void handleEvent(std::string token , std::string event);
-  void handleXtraUpdateEvent(std::string event);
-  void handleGnssConstellationUpdateEvent(std::string event);
+  void handleXtraUpdateEvent(::locStub::XtraStatusEvent xtraEvent);
+  void handleGnssConstellationUpdateEvent(::locStub::GnssUpdateEvent GnssEvent);
   void updateRegistrationMask(uint32_t indication);
 
     /** std::weak_ptr doesn't support relational operators. Need to use a binary predicate. */

@@ -97,11 +97,11 @@ static void PrintMID(const uint8_t *addr) {
 namespace gn {
     GeoNetRouterImpl *GeoNetRouterImpl::pInstance = nullptr;
 
-    GeoNetRouterImpl::GeoNetRouterImpl(std::shared_ptr<KinematicsReceive> kirx, GnConfig_t config) {
+    GeoNetRouterImpl::GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener, GnConfig_t config) {
         SequenceNumber_ = 0;
         NeighborCount_ = 0;
         CBFstop_ = false;
-        kinematicsRx_ = kirx;
+        locListener_ = locListener;
         LogLevel_ = 0;
         Config_ = config;
 
@@ -117,8 +117,9 @@ namespace gn {
         df_txcb = nullptr;
     }
 
-    GeoNetRouterImpl* GeoNetRouterImpl::Instance(std::shared_ptr<KinematicsReceive> kirx, GnConfig_t config) {
-        GeoNetRouterImpl::pInstance = new GeoNetRouterImpl(kirx, config);
+    GeoNetRouterImpl* GeoNetRouterImpl::Instance(std::shared_ptr<ILocationListener> locListener,
+                                                 GnConfig_t config) {
+        GeoNetRouterImpl::pInstance = new GeoNetRouterImpl(locListener, config);
         return GeoNetRouterImpl::pInstance;
     }
     void GeoNetRouterImpl::InitDefaultConfig(GnConfig_t &cfg) {
@@ -185,7 +186,10 @@ namespace gn {
         // Stop CBF timer task
         CBFstop_ = true;
         CBFcv_.notify_one();
-        CBFresult_.get_future().get();  // Wait for CBF timer task to finish.
+        // Wait for CBF timer task to finish.
+        if (CBFTimerThread_.joinable()) {
+            CBFTimerThread_.join();
+        }
 
         // stop and wait all location service tasks, if any.
         for (auto i : LsMap_) {
@@ -466,7 +470,6 @@ namespace gn {
 
 
         } while(true);
-        // TODO notify we are existing.
     }
 
     /**
@@ -758,14 +761,19 @@ namespace gn {
     }
 
     void GeoNetRouterImpl::ReadEPV(gn_epv_t &epv) {
-        shared_ptr<ILocationInfoEx> locationInfo = kinematicsRx_->getLocation();
-        // TODO: verify unit, the epv lat/long is expressed in 1/10 micro-degree
-        epv.latitude_epv = (locationInfo->getLatitude() * 10000000);
-        epv.longitude_epv = (locationInfo->getLongitude() * 10000000);
-        // TODO: verify unit for speed, its expressed in 0.01 meter/second
-        epv.s_epv = (50 * locationInfo->getSpeed());
-        // TODO: verify unit for heading, its expressed in 0.1 degree from north
-        epv.h_epv = (locationInfo->getHeading() / 0.0125);
+        shared_ptr<ILocationInfoEx> locationInfo =
+            std::dynamic_pointer_cast<LocListener>(locListener_)->getLocation();
+
+        if (locationInfo) {
+            // the epv lat/long is expressed in 1/10 micro-degree
+            epv.latitude_epv = (locationInfo->getLatitude() * 10000000);
+            epv.longitude_epv = (locationInfo->getLongitude() * 10000000);
+            // speed is expressed in 0.01 meter/second
+            epv.s_epv = (100 * locationInfo->getSpeed());
+            // its expressed in 0.1 degree from north
+            epv.h_epv = (locationInfo->getHeading() / 0.1);
+        }
+
         epv.tst_epv = GeoNetUtils::GetTimestampSinceEpoch();
 
         //int SemiMajorAccu = (locationInfo->getHorizontalUncertaintySemiMajor() * 20);
@@ -1242,7 +1250,7 @@ namespace gn {
      ****************************************************************************/
     int GeoNetRouterImpl::TransmitGUC(uint8_t *Buffer, size_t BufLen, const GnData_t &data,
             txcb_t txcb) {
-        int RetValue;
+        int RetValue = 0;
         gn_guc_hdr_t *h;
         std::shared_ptr<LocTableEntry> LocTe;
         uint8_t NextAddr[GN_MID_LEN];

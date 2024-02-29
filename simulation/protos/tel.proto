@@ -37,6 +37,7 @@
  package telStub;
  import "google/protobuf/empty.proto";
  import "common.proto";
+ import "event.proto";
 
  /*******************************************************************
   * Services Definition                                             *
@@ -142,6 +143,9 @@ message GetCardStateRequest {
      int32 phone_id = 1;
  }
 
+ message SubscriptionEvent {
+     int32 phone_id = 1;
+ }
 
  enum AppType {
      APPTYPE_UNKNOWN = 0;
@@ -740,4 +744,15 @@ message GetCardStateRequest {
     bool ismetainfo_valid = 10;
     uint32 msg_index = 11;
     SmsTagType.TagType tag_type = 12;
+    int32 phone_id = 13;
+ }
+
+ message cardInfoChange {
+    int32 phone_id = 1;
+    bool card_power = 2;
+ }
+
+ message memoryFullEvent {
+    int32 phone_id = 1;
+    StorageType.Type storage_type = 2;
  }

@@ -38,8 +38,8 @@
  *        connection security.
  */
 
-#ifndef TELUX_SEC_CONNECIONSECURITYFACTORY_HPP
-#define TELUX_SEC_CONNECIONSECURITYFACTORY_HPP
+#ifndef TELUX_SEC_CONNECTIONSECURITYFACTORY_HPP
+#define TELUX_SEC_CONNECTIONSECURITYFACTORY_HPP
 
 #include <telux/sec/CellularSecurityManager.hpp>
 #include <telux/sec/WiFiSecurityManager.hpp>
@@ -109,4 +109,4 @@ class ConnectionSecurityFactory {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CONNECIONSECURITYFACTORY_HPP
+#endif // TELUX_SEC_CONNECTIONSECURITYFACTORY_HPP

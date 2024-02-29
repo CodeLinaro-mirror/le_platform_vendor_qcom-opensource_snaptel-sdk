@@ -10,12 +10,11 @@
  */
 
 #include "LocationManagerServerImpl.hpp"
-#include "../../../libs/common/SimulationConfigParser.hpp"
+#include "libs/common/SimulationConfigParser.hpp"
 
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../libs/common/CommonUtils.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
 
 #define LOC_MGR_API_JSON "api/loc/ILocationManager.json"
 

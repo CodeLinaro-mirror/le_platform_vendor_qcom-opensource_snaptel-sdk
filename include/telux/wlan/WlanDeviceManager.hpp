@@ -329,4 +329,4 @@ public:
 /** @} */ /* end_addtogroup telematics_wlan */
 }
 }
-#endif
+#endif // TELUX_WLAN_WLANDEVICEMANAGER_HPP

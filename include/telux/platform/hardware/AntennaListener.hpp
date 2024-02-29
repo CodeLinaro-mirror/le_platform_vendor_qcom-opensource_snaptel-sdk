@@ -43,8 +43,8 @@
  *          implementation is thread-safe.
  */
 
-#ifndef TELUX_PLATFORM_ANTENNALISTENER_HPP
-#define TELUX_PLATFORM_ANTENNALISTENER_HPP
+#ifndef TELUX_PLATFORM_HARDWARE_ANTENNALISTENER_HPP
+#define TELUX_PLATFORM_HARDWARE_ANTENNALISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -93,4 +93,4 @@ class IAntennaListener : public common::IServiceStatusListener {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_ANTENNALISTENER_HPP
+#endif // TELUX_PLATFORM_HARDWARE_ANTENNALISTENER_HPP

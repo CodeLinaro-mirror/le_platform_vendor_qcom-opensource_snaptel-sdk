@@ -59,5 +59,12 @@
             "telsdk_event_injector -f loc_config -e constellation_update <mask>",
             "mask             A mask to enable different signals. Refer to telux::loc::GnssSignalType for the signals that can be enabled. An example of a valid mask is 0x1FFFFF."
         ]
+    },
+    "sensor_feature": {
+        "sensor_event":[
+            "telsdk_event_injector -f sensor_feature -e sensor_event <featureName> <eventId>",
+            "featureName       string, Valid features are available from JSON configuration.",
+            "eventId           Integer, valid event Id are available from csv data file"
+        ]
     }
 }

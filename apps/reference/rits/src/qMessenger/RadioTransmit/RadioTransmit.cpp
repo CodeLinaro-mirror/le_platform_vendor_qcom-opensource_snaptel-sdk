@@ -160,50 +160,28 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
     cout << "Now simulating transmission of messages..."<< endl;
     isSim = true;
     this->flowType = "simFlow";
-    this->enableUdp = radioOpt.enableUdp;
+
     this->ipv4_src = radioOpt.ipv4_src;
     this->clientAddress = {0};
     this->destAddress = {0};
 
-    if(!this->enableUdp) { // not udp
-        this->simSock = socket(AF_INET, SOCK_STREAM, 0);
-    } else { // udp
-        this->simSock = socket(AF_INET, SOCK_DGRAM, 0);
-    }
+    // udp
+    this->simSock = socket(AF_INET, SOCK_DGRAM, 0);
     if (simSock < 0) {
         cout << "Error Creating Socket";
         return;
     }
-    if(!this->enableUdp){ // tcp
-        this->destAddress.sin_family = AF_INET;
-        this->destAddress.sin_port = htons(port);
-        if (inet_pton(AF_INET, ipv4_dst.data(), &this->destAddress.sin_addr) <= 0) {
-            cout << "Invalid ip address: " << ipv4_dst << endl;
-        } else {
-            const auto creation = connect(simSock, (struct sockaddr*)(&this->destAddress),
-                                          sizeof(this->destAddress));
-            if (creation < 0)
-            {
-                cout << "Connection failed with port: " << port << " ip: " << ipv4_dst << endl;
-            }
-        }
-        this->clientAddress.sin_family = AF_INET;
-        this->clientAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-            cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
-        }
-    }else{ //udp
-        this->destAddress.sin_family = AF_INET;
-        this->destAddress.sin_port = htons(port);
-        if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
-            cout << "Invalid ip address: " << ipv4_dst << endl;
-        }
 
-        this->clientAddress.sin_family = AF_INET;
-        this->clientAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-            cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
-        }
+    this->destAddress.sin_family = AF_INET;
+    this->destAddress.sin_port = htons(port);
+    if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
+        cout << "Invalid ip address: " << ipv4_dst << endl;
+    }
+
+    this->clientAddress.sin_family = AF_INET;
+    this->clientAddress.sin_port = htons(port);
+    if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+        cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
     }
 }
 
@@ -221,15 +199,10 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     struct timespec ts;
     if (isSim)
     {
-        int  bytes_sent;
-        if(enableUdp){ //udp
-            bytes_sent = sendto(this->simSock, buf, bufLen,  0,
+        //udp
+        return sendto(this->simSock, buf, bufLen,  0,
                         (const struct sockaddr *) &(this->destAddress),
                          sizeof(this->destAddress));
-        } else{ //tcp - default
-            bytes_sent = send(simSock, buf, bufLen, 0);
-        }
-        return bytes_sent;
     }
     // Radio-based Communication
     auto resp = -1;

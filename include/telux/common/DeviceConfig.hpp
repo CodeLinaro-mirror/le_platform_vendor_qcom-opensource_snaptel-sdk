@@ -26,13 +26,18 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @brief DeviceConfig provides utility functions to get device configuration details
  * such as multi SIM support.
  */
 
-#ifndef DEVICECONFIG_HPP
-#define DEVICECONFIG_HPP
+#ifndef TELUX_COMMON_DEVICECONFIG_HPP
+#define TELUX_COMMON_DEVICECONFIG_HPP
 
 namespace telux {
 namespace common {
@@ -58,4 +63,4 @@ public:
 }  // End of namespace common
 }  // End of namespace telux
 
-#endif  // DEVICECONFIG_HPP
+#endif // TELUX_COMMON_DEVICECONFIG_HPP

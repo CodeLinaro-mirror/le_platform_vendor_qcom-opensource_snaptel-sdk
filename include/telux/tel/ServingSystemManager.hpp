@@ -71,8 +71,8 @@
  *             searching and registering (CS/PS domain, RAT and operation mode).
  */
 
-#ifndef SERVINGSYSTEMMANAGER_HPP
-#define SERVINGSYSTEMMANAGER_HPP
+#ifndef TELUX_TEL_SERVINGSYSTEMMANAGER_HPP
+#define TELUX_TEL_SERVINGSYSTEMMANAGER_HPP
 
 #include <bitset>
 #include <future>
@@ -337,7 +337,9 @@ enum RatPrefType {
    PREF_WCDMA,     /**< WCDMA */
    PREF_LTE,       /**< LTE */
    PREF_TDSCDMA,   /**< TDSCDMA */
-   PREF_NR5G       /**< NR5G */
+   PREF_NR5G,      /**< NR5G in SA or NSA mode */
+   PREF_NR5G_NSA,  /**< NSA mode of NR5G only. SA is not allowed */
+   PREF_NR5G_SA    /**< SA mode of NR5G only. NSA is not allowed */
 };
 
 /**
@@ -778,4 +780,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_SERVINGSYSTEMMANAGER_HPP

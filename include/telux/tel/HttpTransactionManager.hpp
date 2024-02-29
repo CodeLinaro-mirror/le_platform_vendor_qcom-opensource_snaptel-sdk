@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -71,8 +71,8 @@
  *
  */
 
-#ifndef HTTPTRANSACTIONMANAGER_HPP
-#define HTTPTRANSACTIONMANAGER_HPP
+#ifndef TELUX_TEL_HTTPTRANSACTIONMANAGER_HPP
+#define TELUX_TEL_HTTPTRANSACTIONMANAGER_HPP
 
 #include <memory>
 #include <vector>
@@ -168,4 +168,4 @@ class IHttpTransactionManager {
 }
 }
 
-#endif  // HTTPTRANSACTIONMANAGER_HPP
+#endif // TELUX_TEL_HTTPTRANSACTIONMANAGER_HPP

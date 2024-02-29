@@ -71,8 +71,8 @@
  *
  */
 
-#ifndef FIREWALLMANAGER_HPP
-#define FIREWALLMANAGER_HPP
+#ifndef TELUX_DATA_NET_FIREWALLMANAGER_HPP
+#define TELUX_DATA_NET_FIREWALLMANAGER_HPP
 
 #include <future>
 #include <vector>
@@ -716,4 +716,4 @@ class IFirewallListener {
 }
 }
 }
-#endif
+#endif // TELUX_DATA_NET_FIREWALLMANAGER_HPP

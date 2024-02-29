@@ -456,4 +456,4 @@ struct DataCallEndReason {
 }  // End of namespace common
 }  // End of namespace telux
 
-#endif
+#endif // TELUX_COMMON_CONNECTIVITYDEFINES_HPP

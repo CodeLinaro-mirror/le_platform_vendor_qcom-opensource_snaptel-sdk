@@ -33,13 +33,14 @@
 */
 
 #include "CardManagerServerImpl.hpp"
-#include "../../../libs/tel/TelDefinesStub.hpp"
+#include "libs/tel/TelDefinesStub.hpp"
 
 #define JSON_PATH1 "system-state/tel/ICardManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ICardManagerStateSlot2.json"
 #define JSON_PATH3 "api/tel/ICardManagerSlot1.json"
 #define JSON_PATH4 "api/tel/ICardManagerSlot2.json"
 
+#define CARD_EVENT "cardInfoChanged"
 #define SLOT_1 1
 #define SLOT_2 2
 
@@ -139,8 +140,9 @@ grpc::Status CardManagerServerImpl::InitService(ServerContext* context,
         LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
         if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.registerListener(shared_from_this(), "tel_card");
+            std::vector<std::string> filters = {"tel_card"};
+            auto &serverEventManager = ServerEventManager::getInstance();
+            serverEventManager.registerListener(shared_from_this(), filters);
         }
         response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
         response->set_delay(cbDelay);
@@ -1434,9 +1436,9 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         ::telStub::CardLockType locktype = request->lock_type();
-        string oldPwd = request->old_pin();
-        string newPwd = request->new_pin();
-        string appId = request->aid();
+        std::string oldPwd = request->old_pin();
+        std::string newPwd = request->new_pin();
+        std::string appId = request->aid();
         std::string password;
         int retrycount;
         bool IsCardInfoChanged = false;
@@ -1553,8 +1555,8 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         ::telStub::CardLockType locktype = request->lock_type();
-        string pwd = request->pin();
-        string appId = request->aid();
+        std::string pwd = request->pin();
+        std::string appId = request->aid();
         std::string password;
         int retrycount;
         bool IsCardInfoChanged = false;
@@ -1663,9 +1665,9 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         ::telStub::CardLockType locktype = request->lock_type();
-        string pwd = request->new_pin();
-        string appId = request->aid();
-        string puk = request->puk();
+        std::string pwd = request->new_pin();
+        std::string appId = request->aid();
+        std::string puk = request->puk();
         std::string password;
         int retrycount;
         bool IsCardInfoChanged = false;
@@ -1784,9 +1786,9 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         ::telStub::CardLockType locktype = request->lock_type();
-        string pwd = request->pwd();
+        std::string pwd = request->pwd();
         bool enable = request->enable();
-        string appId = request->aid();
+        std::string appId = request->aid();
         std::string password;
         int retrycount;
         bool IsCardInfoChanged = false;
@@ -2041,23 +2043,17 @@ commonStub::ErrorCode CardManagerServerImpl::findmatchingrecordDF (Json::Value r
 }
 void CardManagerServerImpl::onEventUpdate(std::string event) {
     std::string token;
-    if (EVENT_FLAG == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-        handleEvent(token, event);
+    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    if ( CARD_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+        handleCardInfoChanged(event);
     } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
 }
 
-void CardManagerServerImpl::handleEvent(std::string token , std::string event) {
-    LOG(DEBUG, __FUNCTION__, "The received event is: \"",token,"\"");
-    if (token == "") {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
-        return;
-    }
-    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token, "The leftover string is: ", event);
-    if (token == "cardInfoChanged") {
-        handleCardInfoChanged(event);
+void CardManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
+    if (message.filter() == "tel_card") {
+        onEventUpdate(message.event());
     }
 }
 
@@ -2114,4 +2110,15 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
     } else {
          LOG(DEBUG, __FUNCTION__, "No change in card state ");
     }
+
+    ::telStub::cardInfoChange cardInfoChangeEvent;
+    ::eventService::EventResponse anyResponse;
+
+    cardInfoChangeEvent.set_phone_id(slotId);
+    cardInfoChangeEvent.set_card_power(cardpower);
+    anyResponse.set_filter("tel_card");
+    anyResponse.mutable_any()->PackFrom(cardInfoChangeEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }

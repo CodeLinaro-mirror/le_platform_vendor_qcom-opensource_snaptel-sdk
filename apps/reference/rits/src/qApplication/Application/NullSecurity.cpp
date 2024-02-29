@@ -35,6 +35,9 @@
   */
 #include "NullSecurity.hpp"
 
+NullSecurity::NullSecurity(std::string ctxName, uint16_t countryCode):
+    SecurityService(ctxName, countryCode) {}
+
 NullSecurity *NullSecurity::pInstance = nullptr;
 
 NullSecurity *NullSecurity::Instance(std::string ctxName, uint16_t countryCode) {

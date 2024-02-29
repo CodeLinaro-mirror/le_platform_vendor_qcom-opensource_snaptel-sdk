@@ -7,6 +7,7 @@
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
+#include "SimulationConfigParser.hpp"
 
 namespace telux {
 
@@ -372,6 +373,11 @@ std::vector<int> CommonUtils::convertStringToVector(std::string input) {
         myNumbers.push_back( parsednum );
     }
     return myNumbers;
+}
+
+std::string CommonUtils::getGrpcPort() {
+    auto config = std::make_shared<SimulationConfigParser>();
+    return ("localhost:" + config->getValue("RPC_PORT"));
 }
 }  // namespace common
 }  // namespace telux

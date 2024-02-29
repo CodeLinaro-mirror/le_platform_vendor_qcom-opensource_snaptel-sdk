@@ -71,8 +71,8 @@
   interface, including 3GPP CV2X QoS bandwidth contracts.
  */
 
-#ifndef __V2X_RADIO_APIS_H__
-#define __V2X_RADIO_APIS_H__
+#ifndef TELUX_CV2X_LEGACY_V2X_RADIO_API_H
+#define TELUX_CV2X_LEGACY_V2X_RADIO_API_H
 
 #include <net/ethernet.h> /* the L2 protocols */
 #include <netinet/in.h>
@@ -2925,4 +2925,4 @@ void v2x_disable_socket_connect();
 }
 #endif
 
-#endif // __V2X_RADIO_APIS_H__
+#endif // TELUX_CV2X_LEGACY_V2X_RADIO_API_H

@@ -249,4 +249,4 @@ class ICryptoManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CRYPTOMANAGER_HPP
+#endif // TELUX_SEC_CRYPTOMANAGER_HPP

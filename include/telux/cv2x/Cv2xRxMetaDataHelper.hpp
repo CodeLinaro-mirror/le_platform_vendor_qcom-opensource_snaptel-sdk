@@ -41,8 +41,8 @@
  * the real payload.
  */
 
-#ifndef CV2X_RX_META_DATA_HELPER
-#define CV2X_RX_META_DATA_HELPER
+#ifndef TELUX_CV2X_CV2XRXMETADATAHELPER_HPP
+#define TELUX_CV2X_CV2XRXMETADATAHELPER_HPP
 
 #include <bitset>
 #include <vector>
@@ -146,4 +146,4 @@ public:
 }  // end namespace cv2x
 }  // end namespace telux
 
-#endif // !Cv2x_RX_META_DATA_HELPER
+#endif // TELUX_CV2X_CV2XRXMETADATAHELPER_HPP

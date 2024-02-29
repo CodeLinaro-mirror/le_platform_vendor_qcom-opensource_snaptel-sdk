@@ -69,8 +69,8 @@
  *          instance should be used.
  */
 
-#ifndef AUDIOTRANSCODER_HPP
-#define AUDIOTRANSCODER_HPP
+#ifndef TELUX_AUDIO_AUDIOTRANSCODER_HPP
+#define TELUX_AUDIO_AUDIOTRANSCODER_HPP
 
 #include <future>
 #include <memory>
@@ -86,7 +86,7 @@ namespace audio {
 class IAudioBuffer;
 
 /**
- * Called to pass the transcoded audio data. Used with @ref ITranscoder:read().
+ * Called to pass the transcoded audio data. Used with @ref ITranscoder::read().
  *
  * @param [in] buffer       Contains the transcoded data with @ref IAudioBuffer::getDataSize()
  *                          giving the actual number of data bytes in this buffer. Should be
@@ -103,7 +103,7 @@ using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer
 
 /**
  * Called when the compressed data has been sent for transcoding. Used with
- * @ref ITranscoder:write().
+ * @ref ITranscoder::write().
  *
  * @param [in] buffer       Buffer that is passed to @ref ITranscoder::write(). To reuse it for
  *                          sending the next compressed data for transcoding, clear it using
@@ -218,4 +218,4 @@ class ITranscoder {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // end of AUDIOTRANSCODER_HPP
+#endif // TELUX_AUDIO_AUDIOTRANSCODER_HPP

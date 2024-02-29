@@ -33,9 +33,9 @@
  */
 
 #include "DgnssManagerStub.hpp"
-#include "../common/Logger.hpp"
-#include "../common/JsonParser.hpp"
-#include "../common/CommonUtils.hpp"
+#include "common/Logger.hpp"
+#include "common/JsonParser.hpp"
+#include "common/CommonUtils.hpp"
 #include <future>
 
 namespace telux {

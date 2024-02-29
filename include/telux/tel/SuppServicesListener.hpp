@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -42,8 +42,8 @@
  *             thread-safe.
  */
 
-#ifndef TELUX_TEL_SUPP_SERVICES_LISTENER_HPP
-#define TELUX_TEL_SUPP_SERVICES_LISTENER_HPP
+#ifndef TELUX_TEL_SUPPSERVICESLISTENER_HPP
+#define TELUX_TEL_SUPPSERVICESLISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -74,4 +74,4 @@ public:
 } // end of namespace tel
 } // end of namespace telux
 
-#endif // TELUX_TEL_SUPP_SERVICES_LISTENER_HPP
+#endif // TELUX_TEL_SUPPSERVICESLISTENER_HPP

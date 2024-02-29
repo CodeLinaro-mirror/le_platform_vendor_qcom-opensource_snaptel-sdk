@@ -34,9 +34,9 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include "LocationManagerStub.hpp"
-#include "../common/Logger.hpp"
-#include "../common/JsonParser.hpp"
-#include "../common/CommonUtils.hpp"
+#include "common/Logger.hpp"
+#include "common/JsonParser.hpp"
+#include "common/CommonUtils.hpp"
 #include <chrono>
 
 //Default cb delay.
@@ -234,8 +234,7 @@ LocationManagerStub::LocationManagerStub() {
     derSeqDelta_.store(0);
     derSeqNo_.store(0);
     managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
-    stub_ = LocationManagerService::NewStub(grpc::CreateChannel("localhost:8089",
-        grpc::InsecureChannelCredentials()));
+    stub_ = CommonUtils::getGrpcStub<LocationManagerService>();
     std::thread t(&telux::loc::LocationManagerStub::managerThread, this);
     t.detach();
 }

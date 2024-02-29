@@ -26,14 +26,19 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file      CellBroadcastDefines.hpp
  * @brief     CellBroadcastDefines contains enumerations and variables used for
  *            cellbroadcast functionality.
  */
-#ifndef CELLBROADCASTDEFINES_HPP
-#define CELLBROADCASTDEFINES_HPP
+#ifndef TELUX_TEL_CELLBROADCASTDEFINES_HPP
+#define TELUX_TEL_CELLBROADCASTDEFINES_HPP
 
 namespace telux {
 
@@ -163,4 +168,4 @@ enum class GeometryType {
 
 }  // End of namespace telux
 
-#endif  // CELLBROADCASTDEFINES_HPP
+#endif // TELUX_TEL_CELLBROADCASTDEFINES_HPP

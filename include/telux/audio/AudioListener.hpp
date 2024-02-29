@@ -67,8 +67,8 @@
  * @brief Defines the listener classes and methods to receive asynchronous events.
  */
 
-#ifndef AUDIOLISTENER_HPP
-#define AUDIOLISTENER_HPP
+#ifndef TELUX_AUDIO_AUDIOLISTENER_HPP
+#define TELUX_AUDIO_AUDIOLISTENER_HPP
 
 #include <telux/audio/AudioDefines.hpp>
 
@@ -163,4 +163,4 @@ class IAudioListener : public telux::common::IServiceStatusListener {
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif  // AUDIOLISTENER_HPP
+#endif // TELUX_AUDIO_AUDIOLISTENER_HPP

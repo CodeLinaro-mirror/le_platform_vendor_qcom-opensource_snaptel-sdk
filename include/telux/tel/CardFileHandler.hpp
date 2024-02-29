@@ -270,4 +270,4 @@ class ICardFileHandler {
 }  // End of namespace tel
 }  // End of namespace telux
 
-#endif  // TELUX_TEL_CARDFILEHANDLER_HPP
+#endif // TELUX_TEL_CARDFILEHANDLER_HPP

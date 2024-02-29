@@ -46,28 +46,28 @@ namespace telux {
 namespace tel {
 
 /* Tel Filters */
-const string  TEL_CALL_FILTER = "tel_call";
-const string  TEL_CARD_FILTER = "tel_card";
-const string  TEL_CELL_BROADCAST_FILTER = "tel_cell";
-const string  TEL_HTTP_FILTER = "tel_http";
-const string  TEL_IMS_SERVING_FILTER = "tel_ims_serv";
-const string  TEL_IMS_SETTINGS_FILTER = "tel_ims_setting";
-const string  TEL_MULTISIM_FILTER = "tel_multisim";
-const string  TEL_NETWORK_SELECTION_FILTER = "tel_network_select";
-const string  TEL_PHONE_FILTER = "tel_phone";
-const string  TEL_REMOTE_SIM_FILTER = "tel_remote";
-const string  TEL_SAP_CARD_FILTER = "tel_sap";
-const string  TEL_SERVING_SYSTEM_FILTER = "tel_serv";
-const string  TEL_SIM_PROFILE_FILTER = "tel_sim";
-const string  TEL_SMS_FILTER = "tel_sms";
-const string  TEL_SUBSCRIPTION_FILTER = "tel_sub";
-const string  TEL_SUPP_SERVICES_FILTER = "tel_supp";
+const std::string  TEL_CALL_FILTER = "tel_call";
+const std::string  TEL_CARD_FILTER = "tel_card";
+const std::string  TEL_CELL_BROADCAST_FILTER = "tel_cell";
+const std::string  TEL_HTTP_FILTER = "tel_http";
+const std::string  TEL_IMS_SERVING_FILTER = "tel_ims_serv";
+const std::string  TEL_IMS_SETTINGS_FILTER = "tel_ims_setting";
+const std::string  TEL_MULTISIM_FILTER = "tel_multisim";
+const std::string  TEL_NETWORK_SELECTION_FILTER = "tel_network_select";
+const std::string  TEL_PHONE_FILTER = "tel_phone";
+const std::string  TEL_REMOTE_SIM_FILTER = "tel_remote";
+const std::string  TEL_SAP_CARD_FILTER = "tel_sap";
+const std::string  TEL_SERVING_SYSTEM_FILTER = "tel_serv";
+const std::string  TEL_SIM_PROFILE_FILTER = "tel_sim";
+const std::string  TEL_SMS_FILTER = "tel_sms";
+const std::string  TEL_SUBSCRIPTION_FILTER = "tel_sub";
+const std::string  TEL_SUPP_SERVICES_FILTER = "tel_supp";
 
 /* string received for SSR events. */
-const string SSR_UP_EVENT = "ssr_up";
-const string SSR_DOWN_EVENT = "ssr_down";
-const string SSR_MODEM = "modem";
-const string SSR_APPS = "apps";
+const std::string SSR_UP_EVENT = "ssr_up";
+const std::string SSR_DOWN_EVENT = "ssr_down";
+const std::string SSR_MODEM = "modem";
+const std::string SSR_APPS = "apps";
 
 #define DEFAULT_DELIMITER " "
 

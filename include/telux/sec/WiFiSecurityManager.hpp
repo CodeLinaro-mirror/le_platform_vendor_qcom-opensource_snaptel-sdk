@@ -42,7 +42,8 @@
 #define TELUX_SEC_WIFISECURITYMANAGER_HPP
 
 #include <cstdint>
-
+#include <memory>
+#include <vector>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -195,7 +196,7 @@ class IWiFiReportListener {
      * the implementation will perform an analysis and provide a report for every AP it sees
      * in the vicinity.
      *
-     * @param[in] report @Ref WiFiSecurityReport result of the Wi-Fi security analysis.
+     * @param[in] report @ref WiFiSecurityReport result of the Wi-Fi security analysis.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -205,7 +206,7 @@ class IWiFiReportListener {
     /**
      * Notifies that a deauthentication attack is identified.
      *
-     * @param[in] deauthenticationInfo @Ref DeauthenticationInfo security analysis information.
+     * @param[in] deauthenticationInfo @ref DeauthenticationInfo security analysis information.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
@@ -299,7 +300,7 @@ class IWiFiSecurityManager {
 
    /**
     * Removes the given AP from the saved list of trusted APs. If the device connects to the same
-    * AP again, @IWiFiReportListener::isTrustedAP() will be invoked again.
+    * AP again, @ref IWiFiReportListener::isTrustedAP() will be invoked again.
     *
     * On platforms with access control enabled, the caller needs to have the TELUX_SEC_WCS_CONFIG
     * permission to successfully invoke this API.
@@ -325,4 +326,4 @@ class IWiFiSecurityManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_WIFISECURITYMANAGER_HPP
+#endif // TELUX_SEC_WIFISECURITYMANAGER_HPP

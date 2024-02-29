@@ -1,6 +1,6 @@
 Name: libtelux_tel
 Version: @SDK_VERSION@
-Description: This library contains APIs for fetching telephony information
+Description: This simulation library contains APIs for fetching telephony information in a simulated SDK environment.
 
 prefix=@CMAKE_INSTALL_PREFIX@
 includedir=@CMAKE_INSTALL_INCLUDEDIR@

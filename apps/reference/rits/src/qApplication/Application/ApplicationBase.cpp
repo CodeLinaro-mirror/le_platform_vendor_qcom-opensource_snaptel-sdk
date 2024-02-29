@@ -271,11 +271,13 @@ void updateSpsTransmitFlow(
 
         // catch future error here
         try{
-        uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
-        if(ret == static_cast<uint8_t>(Status::FAILED)){
-            std::cerr << "sps transmit flow update failed\n";
-        }}
-        catch(const std::future_error& e){
+            uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
+            if(ret == static_cast<uint8_t>(Status::FAILED)){
+                std::cerr << "sps transmit flow update failed\n";
+                std::cerr << "Max itt was: " <<
+                    congestionControlUserData->congestionControlCalculations->maxITT <<"\n";
+            }
+        }catch(const std::future_error& e){
             std::cout << "Caught future error when updating sps flow\n";
             std::cout << "Error log is: " << e.what() << "\n";
         }
@@ -423,7 +425,9 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
     // set up kinematics listener
     if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
+        if (appVerbosity > 5){
+            std::cout << "Enabling location fixes\n";
+        }
         appLocListener_ = make_shared<LocListener>();
         appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
@@ -453,8 +457,10 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
               // lcm id change timer thread
               sem_init(&idChangeData.idSem, 0, 1);
-              fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                  this->configuration.idChangeInterval/1000.0);
+              if (appVerbosity > 5){
+                  fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
+                      this->configuration.idChangeInterval/1000.0);
+              }
               changeIdTimer(this->configuration.idChangeInterval);
 
           }else{
@@ -471,9 +477,11 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
             if (locationInfo) {
                 uint8_t leapSeconds = 0;
                 telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                std::cout << "Leap seconds from location Info is: " << leapSeconds << "\n";
                 if(stat == Status::FAILED || leapSeconds == 0){
                     leapSeconds = configuration.leapSeconds;
+                }
+                if (appVerbosity > 5){
+                    printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
                 }
                 ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
             }
@@ -582,7 +590,9 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
 
     if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
+        if (appVerbosity > 5){
+            std::cout << "Enabling location fixes\n";
+        }
         appLocListener_ = make_shared<LocListener>();
         appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
@@ -830,7 +840,9 @@ void ApplicationBase::prepareForExit() {
     std::unique_lock<std::mutex> loc(stateMtx);
     exitApp = true;
     stateCv.notify_all();
-
+    if (kinematicsReceive != nullptr) {
+        kinematicsReceive->close();
+    }
     // notify all radio interface to prepare for exit
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].prepareForExit();
@@ -1258,11 +1270,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.ipv4_src = configs["SourceIpv4Address"];
     }
 
-    if (configs.end() != configs.find("EnableUDP")) {
-        istringstream is3(configs["EnableUDP"]);
-        is3 >> boolalpha >> this->configuration.enableUdp;
-    }
-
     if (configs.end() != configs.find("enableTxAlways")) {
         // for tx and rx at same time
         istringstream is4(configs["enableTxAlways"]);
@@ -1457,6 +1464,8 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         /** Pseudonym/ID Change */
         if(configs.find("lcmName") != configs.end()){
             this->configuration.lcmName = configs["lcmName"];
+        }else{
+            this->configuration.lcmName = "";
         }
 
         if(configs.find("idChangeInterval") != configs.end()) {
@@ -1868,7 +1877,6 @@ void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     RadioOpt radioOpt;
-    radioOpt.enableUdp = configuration.enableUdp;
     radioOpt.ipv4_src = configuration.ipv4_src;
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
@@ -1882,7 +1890,6 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
         this->ldm = new Ldm(this->configuration.ldmSize);
     }
     RadioOpt radioOpt;
-    radioOpt.enableUdp = configuration.enableUdp;
     radioOpt.ipv4_src = configuration.ipv4_src;
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
@@ -1957,33 +1964,24 @@ int ApplicationBase::setup(MessageType msgType) {
     for (auto port : this->configuration.receivePorts)
     {
         printf("Creating new rx subscription with port : %d\n", port);
-        if (this->configuration.wildcardRx == true) {
-            RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port);
-            // save Rx instance only if create Rx flow succeeded
-            if (rx.gRxSub) {
-                this->radioReceives.push_back(std::move(rx));
-            } else {
-                cerr << "ApplicationBase::setup error in creating wildcard Rx!"
-                        << endl;
-                return -1;
-            }
+        std::shared_ptr<std::vector<uint32_t>> ids = nullptr;
+        if (configuration.wildcardRx == false) {
+            ids = std::make_shared<std::vector<uint32_t>>(this->configuration.receiveSubIds);
+        }
+        RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port, ids);
+        // save Rx instance only if create Rx flow succeeded
+        if (nullptr != rx.gRxSub) {
+            this->radioReceives.push_back(rx);
         } else {
-            RadioReceive rx(TrafficCategory::SAFETY_TYPE,
-                            TrafficIpType::TRAFFIC_NON_IP, port,
-                            std::make_shared<std::vector<uint32_t>>
-                             (this->configuration.receiveSubIds));
-            // save Rx instance only if create Rx flow succeeded
-            if (rx.gRxSub) {
-                this->radioReceives.push_back(std::move(rx));
-            } else {
-                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!"
-                        << " with receiveSubIds: ";
+            cerr << "ApplicationBase::setup error in creating Rx subscription!";
+            if (configuration.wildcardRx == false) {
+                cerr << " with receiveSubIds: ";
                 for(int j = 0; j < configuration.receiveSubIds.size(); j++){
                     cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
                 }
-                cerr << "" << endl;
-                return -1;
             }
+            cerr << "" << endl;
+            return -1;
         }
 
         /* radio debug */

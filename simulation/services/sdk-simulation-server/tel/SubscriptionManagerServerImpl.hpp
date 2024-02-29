@@ -52,11 +52,12 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <telux/common/CommonDefines.hpp>
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../protos/proto-src/tel.grpc.pb.h"
-#include "../../libs/common/event-manager/EventManager.hpp"
-#include "../../../libs/common/CommonUtils.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "protos/proto-src/tel.grpc.pb.h"
+#include "event/ServerEventManager.hpp"
+#include "libs/common/CommonUtils.hpp"
+#include "event/EventService.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -67,7 +68,7 @@ using telStub::PhoneService;
 using commonStub::ServiceStatus;
 
 class SubscriptionManagerServerImpl final : public telStub::PhoneService::Service,
-                                            public IEventListener,
+                                            public IServerEventListener,
                                             public
                                     std::enable_shared_from_this<SubscriptionManagerServerImpl> {
 
@@ -82,13 +83,13 @@ public:
     grpc::Status GetSubscription(ServerContext* context,
         const ::telStub::GetSubscriptionRequest* request,
         telStub::Subscription* response) override;
-    void onEventUpdate(std::string event);
+    void onEventUpdate(::eventService::UnsolicitedEvent message);
 private:
     Json::Value rootObj;
     grpc::Status readJson();
     void handleEvent(std::string token , std::string event);
     void handlesubscriptionInfoChanged(std::string eventParams);
-
+    void onEventUpdate(std::string event);
 };
 
 #endif // SUBSCRIPTION_MANAGER_SERVER_HPP

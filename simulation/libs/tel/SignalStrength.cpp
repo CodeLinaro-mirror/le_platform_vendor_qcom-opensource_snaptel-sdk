@@ -34,7 +34,7 @@
 
 #include <map>
 #include "telux/tel/SignalStrength.hpp"
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 // Constants used for Signal Strength
 #define SIGNAL_STRENGTH_UNKNOWN 99

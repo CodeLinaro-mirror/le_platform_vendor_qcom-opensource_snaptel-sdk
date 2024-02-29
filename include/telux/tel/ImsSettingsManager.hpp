@@ -40,8 +40,8 @@
  *
  */
 
-#ifndef IMSSETTINGSMANAGER_HPP
-#define IMSSETTINGSMANAGER_HPP
+#ifndef TELUX_TEL_IMSSETTINGSMANAGER_HPP
+#define TELUX_TEL_IMSSETTINGSMANAGER_HPP
 
 #include <memory>
 #include <bitset>
@@ -284,4 +284,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_IMSSETTINGSMANAGER_HPP

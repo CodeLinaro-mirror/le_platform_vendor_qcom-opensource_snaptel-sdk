@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -73,8 +73,8 @@
  *             threads. The implementation should be thread-safe.
  */
 
-#ifndef PHONELISTENER_HPP
-#define PHONELISTENER_HPP
+#ifndef TELUX_TEL_PHONELISTENER_HPP
+#define TELUX_TEL_PHONELISTENER_HPP
 
 #include <memory>
 #include <vector>
@@ -208,4 +208,4 @@ public:
 }  // End of namespace tel
 }  // End namespace telux
 
-#endif  // PHONELISTENER_HPP
+#endif // TELUX_TEL_PHONELISTENER_HPP

@@ -71,8 +71,8 @@
  *        listeners.
  */
 
-#ifndef IMSSERVINGSYSTEMMANAGER_HPP
-#define IMSSERVINGSYSTEMMANAGER_HPP
+#ifndef TELUX_TEL_IMSSERVINGSYSTEMMANAGER_HPP
+#define TELUX_TEL_IMSSERVINGSYSTEMMANAGER_HPP
 
 #include <memory>
 #include <string>
@@ -346,4 +346,4 @@ public:
 
 }  // End of namespace telux
 
-#endif  // IMSSERVINGSYSTEMMANAGER_HPP
+#endif // TELUX_TEL_IMSSERVINGSYSTEMMANAGER_HPP

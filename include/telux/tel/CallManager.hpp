@@ -73,8 +73,8 @@
  *
  */
 
-#ifndef CALLMANAGER_HPP
-#define CALLMANAGER_HPP
+#ifndef TELUX_TEL_CALLMANAGER_HPP
+#define TELUX_TEL_CALLMANAGER_HPP
 
 #include <memory>
 #include <string>
@@ -809,4 +809,4 @@ public:
 
 }  // End of namespace telux
 
-#endif  // CALLMANAGER_HPP
+#endif // TELUX_TEL_CALLMANAGER_HPP

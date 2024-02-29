@@ -70,8 +70,8 @@
 *
 */
 
-#ifndef CV2XCONFIG_HPP
-#define CV2XCONFIG_HPP
+#ifndef TELUX_CV2X_CV2XCONFIG_HPP
+#define TELUX_CV2X_CV2XCONFIG_HPP
 
 #include <string>
 #include <future>
@@ -212,4 +212,4 @@ public:
 
 
 
-#endif // #ifndef CV2XCONFIG_HPP
+#endif // TELUX_CV2X_CV2XCONFIG_HPP

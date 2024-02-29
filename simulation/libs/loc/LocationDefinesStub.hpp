@@ -44,8 +44,8 @@ namespace loc {
 
 #define DEFAULT_DELIMITER " "
 const std::string LOC_CONFIG = "loc_config";
-const std::string XTRA_DATA_STATUS = "xtra_status";
-const std::string CONSTELLATION_UPDATE = "constellation_update";
+const std::string XTRA_DATA_STATUS = "xtra";
+const std::string CONSTELLATION_UPDATE = "constellation";
 
 enum class LocEventType {
     UNKNOWN = -1,

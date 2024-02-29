@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
 * @file       ModemConfigDefines.hpp
@@ -37,8 +42,8 @@
 
 #include <telux/common/CommonDefines.hpp>
 
-#ifndef MODEMCONFIGDEFINES_HPP
-#define MODEMCONFIGDEFINES_HPP
+#ifndef TELUX_CONFIG_MODEMCONFIGDEFINES_HPP
+#define TELUX_CONFIG_MODEMCONFIGDEFINES_HPP
 
 #include <string>
 
@@ -94,4 +99,4 @@ enum class ConfigUpdateStatus {
 
 }  // end of namespace telux
 
-#endif  // MODEMCONFIGDEFINES_HPP
+#endif // TELUX_CONFIG_MODEMCONFIGDEFINES_HPP

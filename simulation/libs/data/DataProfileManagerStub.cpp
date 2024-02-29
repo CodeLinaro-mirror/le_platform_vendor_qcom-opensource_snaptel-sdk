@@ -8,8 +8,8 @@
 #include <telux/data/DataDefines.hpp>
 #include <telux/common/CommonDefines.hpp>
 
-#include "../common/Logger.hpp"
-#include "../common/event-manager/EventManager.hpp"
+#include "common/Logger.hpp"
+#include "common/CommonUtils.hpp"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -83,8 +83,7 @@ bool DataProfileManagerStub::isSubsystemReady() {
 void DataProfileManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lck(initMtx_);
-    stub_ = DataProfileManager::NewStub(grpc::CreateChannel("localhost:8089",
-        grpc::InsecureChannelCredentials()));
+    stub_ = CommonUtils::getGrpcStub<::dataStub::DataProfileManager>();
 
     ::dataStub::SlotInfo request;
     ::dataStub::GetServiceStatusReply response;

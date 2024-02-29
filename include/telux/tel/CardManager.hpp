@@ -69,8 +69,8 @@
  *             It provide APIs to enumerate cards, retrieve number of slots, get card state.
  */
 
-#ifndef CARDMANAGER_HPP
-#define CARDMANAGER_HPP
+#ifndef TELUX_TEL_CARDMANAGER_HPP
+#define TELUX_TEL_CARDMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -462,4 +462,4 @@ class ICardListener : public common::IServiceStatusListener {
 
 }  // End of namespace telux
 
-#endif  // CARDMANAGER_HPP
+#endif // TELUX_TEL_CARDMANAGER_HPP

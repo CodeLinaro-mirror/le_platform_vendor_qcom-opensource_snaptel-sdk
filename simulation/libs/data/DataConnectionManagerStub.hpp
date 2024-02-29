@@ -10,8 +10,8 @@
 #include <telux/common/CommonDefines.hpp>
 
 #include "DataCallStub.hpp"
-#include "../common/AsyncTaskQueue.hpp"
-#include "../../protos/proto-src/data.grpc.pb.h"
+#include "common/AsyncTaskQueue.hpp"
+#include "protos/proto-src/data.grpc.pb.h"
 
 using ::dataStub::DataConnectionManager;
 
@@ -61,12 +61,8 @@ public:
     int getSlotId() override;
     void onServiceStatusChange(common::ServiceStatus status) override;
 
-    void handleStartDataCallEvent(int profileId, SlotId slotId, std::string ifaceName,
-        IpFamilyType ipFamilyType,  std::string ipv4Address, std::string gwv4Address,
-        std::string dnsPrimaryAddress, std::string dnsSecondaryAddress,
-        std::string ipv6Address, std::string gwv6Address);
-
-    void handleStopDataCallEvent(int profileId, SlotId slotId, IpFamilyType ipFamilyType);
+    void handleStartDataCallEvent(::dataStub::StartDataCallEvent startEvent);
+    void handleStopDataCallEvent(::dataStub::StopDataCallEvent stopEvent);
 
     telux::common::Status cleanup();
 

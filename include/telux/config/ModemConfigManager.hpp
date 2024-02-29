@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -75,8 +75,8 @@
 #include <vector>
 #include <future>
 
-#ifndef MODEMCONFIGMANAGER_HPP
-#define MODEMCONFIGMANAGER_HPP
+#ifndef TELUX_CONFIG_MODEMCONFIGMANAGER_HPP
+#define TELUX_CONFIG_MODEMCONFIGMANAGER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/config/ModemConfigDefines.hpp>
@@ -289,7 +289,7 @@ public:
 
 } // end of namespace telux
 
-#endif  // MODEMCONFIGMANAGER_HPP
+#endif // TELUX_CONFIG_MODEMCONFIGMANAGER_HPP
 
 
 

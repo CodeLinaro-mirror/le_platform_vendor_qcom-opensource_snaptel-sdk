@@ -48,10 +48,10 @@
 #include "telux/loc/LocationManager.hpp"
 #include "ReportHandler.hpp"
 #include "ReportReader.hpp"
-#include "../common/AsyncTaskQueue.hpp"
+#include "common/AsyncTaskQueue.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;

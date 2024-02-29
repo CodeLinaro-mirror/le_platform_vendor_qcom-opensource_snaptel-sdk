@@ -16,12 +16,11 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 
-#include "../../../libs/common/Logger.hpp"
-#include "../../../libs/common/JsonParser.hpp"
-#include "../../../libs/common/ResponseHandler.hpp"
-#include "../../../libs/common/CommonUtils.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
 
-#include "../../../protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

@@ -187,4 +187,4 @@ struct EncryptedData {
 }  // end of namespace sec
 }  // end of namespace telux
 
-#endif  // TELUX_SEC_CRYPTODEFINES_HPP
+#endif // TELUX_SEC_CRYPTODEFINES_HPP

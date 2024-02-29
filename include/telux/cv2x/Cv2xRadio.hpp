@@ -69,8 +69,8 @@
 * @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
 */
 
-#ifndef CV2XRADIO_HPP
-#define CV2XRADIO_HPP
+#ifndef TELUX_CV2X_CV2XRADIO_HPP
+#define TELUX_CV2X_CV2XRADIO_HPP
 
 
 #include <telux/cv2x/Cv2xFactory.hpp>
@@ -786,4 +786,4 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XRADIO_HPP
+#endif // TELUX_CV2X_CV2XRADIO_HPP

@@ -37,7 +37,7 @@
 #include "DataProfileManagerStub.hpp"
 #include "ServingSystemManagerStub.hpp"
 
-#include "../common/Logger.hpp"
+#include "common/Logger.hpp"
 
 std::mutex dataMutex_;
 

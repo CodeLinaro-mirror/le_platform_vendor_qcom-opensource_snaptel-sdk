@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
   @file v2x_vehicle_api.h
@@ -35,8 +40,8 @@
   beacons.
  */
 
-#ifndef __V2X_VEHICLE_APIS_H__
-#define __V2X_VEHICLE_APIS_H__
+#ifndef TELUX_CV2X_LEGACY_V2X_VEHICLE_API_H
+#define TELUX_CV2X_LEGACY_V2X_VEHICLE_API_H
 
 #include "v2x_common.pb.h"
 
@@ -705,4 +710,4 @@ v2x_status_enum_type v2x_vehicle_deregister_for_callback(v2x_vehicle_handle_t ha
 }
 #endif
 
-#endif // __V2X_VEHICLE_APIS_H__
+#endif // TELUX_CV2X_LEGACY_V2X_VEHICLE_API_H

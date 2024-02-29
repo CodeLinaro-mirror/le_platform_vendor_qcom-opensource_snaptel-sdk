@@ -69,8 +69,8 @@
  * @brief      PowerFactory allows creation of TCU-activity manager class
  */
 
-#ifndef POWERFACTORY_HPP
-#define POWERFACTORY_HPP
+#ifndef TELUX_POWER_POWERFACTORY_HPP
+#define TELUX_POWER_POWERFACTORY_HPP
 
 #include <memory>
 
@@ -150,4 +150,4 @@ private:
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // POWERFACTORY_HPP
+#endif // TELUX_POWER_POWERFACTORY_HPP

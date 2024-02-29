@@ -67,8 +67,8 @@
  * @brief Defines the APIs to create and manage streams.
  */
 
-#ifndef AUDIOMANAGER_HPP
-#define AUDIOMANAGER_HPP
+#ifndef TELUX_AUDIO_AUDIOMANAGER_HPP
+#define TELUX_AUDIO_AUDIOMANAGER_HPP
 
 #include <telux/audio/AudioTranscoder.hpp>
 
@@ -913,4 +913,4 @@ class IAudioToneGeneratorStream : virtual public IAudioStream {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // end of AUDIOMANAGER_HPP
+#endif // TELUX_AUDIO_AUDIOMANAGER_HPP

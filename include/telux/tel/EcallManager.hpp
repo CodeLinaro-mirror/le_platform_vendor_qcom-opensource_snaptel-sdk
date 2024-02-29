@@ -146,4 +146,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_ECALLMANAGER_HPP

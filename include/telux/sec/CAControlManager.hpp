@@ -90,7 +90,7 @@ struct CACapacity {
 
 /**
  * Represents curve-wise absolute load as calculated in the time window defined
- * by @ref LoadConfig::loadCalculationInterval. For example, a value of 1000
+ * by @ref LoadConfig::calculationInterval. For example, a value of 1000
  * for sm2 means, in that time window, 1000 sm2 type verification were completed.
  * This verification includes both passed and failed signature.
  */
@@ -130,7 +130,7 @@ class ICAControlManagerListener {
 
     /**
      * Invoked to provide load on crypto accelerator, as observed during time window
-     * defined by @ref LoadConfig::loadCalculationInterval.
+     * defined by @ref LoadConfig::calculationInterval.
      *
      * @param[in] currentLoad Load as observed in the set time window.
      *
@@ -242,4 +242,4 @@ class ICAControlManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CACONTROLMANAGER_HPP
+#endif // TELUX_SEC_CACONTROLMANAGER_HPP

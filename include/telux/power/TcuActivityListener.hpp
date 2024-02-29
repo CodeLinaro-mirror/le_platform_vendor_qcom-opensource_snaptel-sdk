@@ -72,8 +72,8 @@
  *             make sure that the implementation is thread-safe.
  */
 
-#ifndef TCUACTIVITYLISTENER_HPP
-#define TCUACTIVITYLISTENER_HPP
+#ifndef TELUX_POWER_TCUACTIVITYLISTENER_HPP
+#define TELUX_POWER_TCUACTIVITYLISTENER_HPP
 
 #include <memory>
 #include <vector>
@@ -218,4 +218,4 @@ public:
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // TCUACTIVITYLISTENER_HPP
+#endif // TELUX_POWER_TCUACTIVITYLISTENER_HPP

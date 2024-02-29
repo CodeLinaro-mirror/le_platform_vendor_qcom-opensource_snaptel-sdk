@@ -1095,6 +1095,8 @@ enum GnssMeasurementsAdrStateValidityType {
     RESET_BIT       = 1;
     /** State is "cycle slip".*/
     CYCLE_SLIP_BIT  = 2;
+    /** State is "half cycle resolved".*/
+    HALF_CYCLE_RESOLVED_BIT = 3;
     /** State is unknown.*/
     UNKNOWN_STATE   = 99;
 }

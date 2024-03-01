@@ -373,6 +373,46 @@ grpc::Status ServingManagerServerImpl::RequestRFBandInfo(ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status ServingManagerServerImpl::RequestNetworkRejectInfo(ServerContext* context,
+    const ::telStub::RequestNetworkRejectInfoRequest* request,
+    telStub::RequestNetworkRejectInfoReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "requestNetworkRejectInfo";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.status == telux::common::Status::SUCCESS) {
+        int serviceDomain =  data.stateRootObj[MANAGER]["NetworkRejectInfo"]\
+            ["ServingSystemInfo"]["domain"].asInt();
+        response->set_reject_domain
+        (static_cast<telStub::ServiceDomainInfo_Domain>(serviceDomain));
+        int rat =  data.stateRootObj[MANAGER]["NetworkRejectInfo"]["ServingSystemInfo"]\
+            ["rat"].asInt();
+        response->set_reject_rat(static_cast<telStub::RadioTechnology>(rat));
+        int rejectCause = data.stateRootObj[MANAGER]["NetworkRejectInfo"]\
+            ["rejectCause"].asInt();
+        response->set_reject_cause(rejectCause);
+        std::string mcc = data.stateRootObj[MANAGER]["NetworkRejectInfo"]\
+            ["mcc"].asString();
+        response->set_mcc(mcc);
+        std::string mnc = data.stateRootObj[MANAGER]["NetworkRejectInfo"]\
+            ["mnc"].asString();
+        response->set_mnc(mnc);
+    }
+    //Create response
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
 void ServingManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
     LOG(DEBUG, __FUNCTION__, "Not Supported");
 }

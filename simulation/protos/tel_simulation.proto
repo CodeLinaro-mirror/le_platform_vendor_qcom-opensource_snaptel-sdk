@@ -144,6 +144,8 @@
      rpc GetDcStatus (GetDcStatusRequest) returns (GetDcStatusReply) {}
      rpc RequestNetworkTime (RequestNetworkTimeRequest) returns (RequestNetworkTimeReply) {}
      rpc RequestRFBandInfo (RequestRFBandInfoRequest) returns (RequestRFBandInfoReply) {}
+     rpc RequestNetworkRejectInfo (RequestNetworkRejectInfoRequest) returns
+         (RequestNetworkRejectInfoReply) {}
  }
 
  service NetworkSelectionService {
@@ -1466,6 +1468,15 @@ message UpdateECallMsdResponse {
      DcnrRestriction.Status dcnr_restriction = 2;
  }
 
+ message RequestNetworkRejectInfoReply {
+     RadioTechnology reject_rat = 1;
+     ServiceDomainInfo.Domain reject_domain = 2;
+     uint32 reject_cause = 3;
+     string mcc = 4;
+     string mnc = 5;
+     commonStub.Status status = 6;
+ }
+
  message RequestNetworkTimeRequest {
      int32 phone_id = 1;
  }
@@ -2386,4 +2397,8 @@ message ECallModeReason {
         ERA_GLONASS = 1;
     }
     Reason reason = 1;
+}
+
+message RequestNetworkRejectInfoRequest {
+    int32 phone_id = 1;
 }

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -493,4 +493,14 @@ std::string MyServingSystemHelper::RFBandWidthtoString(telux::tel::RFBandWidth b
 void MyServingSystemListener::onRFBandInfoChanged(telux::tel::RFBandInfo info) {
    PRINT_NOTIFICATION << " RF Band Info is changed. \n RF Band Info: \n";
    MyServingSystemHelper::logRFBandInfo(info);
+}
+
+void MyServingSystemListener::onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) {
+   PRINT_NOTIFICATION << " Network registration rejection occurred."
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(rejectInfo.rejectSrvInfo.rat)
+            << "\n Service Domain: "
+            << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
+            << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
+            << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc;
 }

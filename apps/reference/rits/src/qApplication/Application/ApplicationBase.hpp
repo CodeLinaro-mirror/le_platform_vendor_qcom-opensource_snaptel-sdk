@@ -115,7 +115,7 @@
 #define MAX_PADDING_LEN     1000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
 #define PP_BUFFER_MAX_SIZE 4096
-#define SHARED_BUFFER_MAX_SIZE 1024
+#define SHARED_BUFFER_MAX_SIZE 2048
 #define ASYNC_BATCH_SIZE 500
 #define VERIF_STAT_BATCH_SIZE 2500
 
@@ -174,6 +174,9 @@ typedef struct {
     double distFromRV;
     uint32_t RVsInRange;
     uint64_t txInterval;
+    double startLatencyTime;
+    double endLatencyTime;
+    VerifStats* asyncVerifStat;
 } asyncCbData_t;
 
 struct Config{

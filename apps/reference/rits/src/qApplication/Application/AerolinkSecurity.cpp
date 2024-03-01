@@ -946,13 +946,10 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkRelevance
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
-int AerolinkSecurity::asyncVerify(
-    Kinematics hvKine, Kinematics rvKine,
-    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
-
+int AerolinkSecurity::checkConsistencyandRelevancy(
+    Kinematics hvKine, Kinematics rvKine) {
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    int priority = 1;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
@@ -1006,6 +1003,31 @@ int AerolinkSecurity::asyncVerify(
                 fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
             return -1;
         }
+    }
+
+    return 1;
+}
+
+// A function to verify a signed packet that can handle multi-threading:
+//   smp_verifySignaturesAsync
+int AerolinkSecurity::asyncVerify(
+    Kinematics rvKine,
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
+
+    // Add new smp (if none exists) for this thread
+    AEROLINK_RESULT result;
+    int priority = 1;
+    std::thread::id thrId = std::this_thread::get_id();
+    addNewThrSmp(thrId);
+    sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+
+    // Get corresponding smp for this thread
+    SecuredMessageParserC* smp;
+    smp = getThrSmp(thrId);
+    if(smp == nullptr || thrVerifSemPtr == nullptr){
+        if(secVerbosity > 4)
+        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+        return -1;
     }
     // async verification
     result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);

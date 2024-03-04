@@ -133,6 +133,9 @@ public:
         telStub::ResumeReply* response);
     grpc::Status Swap(ServerContext* context, const telStub::SwapRequest* request,
         telStub::SwapReply* response);
+    grpc::Status RequestNetworkDeregistration(ServerContext* context,
+        const telStub::RequestNetworkDeregistrationRequest* request,
+        telStub::RequestNetworkDeregistrationReply* response);
     void startTimer(std::string timer);
     void msdTransmissionStatus(std::string msdtransmision );
     void changeCallState(int phoneId, std::string callstate, std::string remotepartyNumber);
@@ -160,7 +163,7 @@ private:
     void handleIncomingCallRequest(std::string eventParams);
     telux::common::Status handleStateMachine(int phoneId);
     void startTimers(std::string timer);
-    void triggerTimerExpiry(std::string timer);
+    void triggerTimerExpiry(std::string timer, int phoneId);
     void triggerIncomingCallEvent(CallInfo callInfo);
     void triggerCallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
     void triggerMsdPullrequestEvent(int phoneId);

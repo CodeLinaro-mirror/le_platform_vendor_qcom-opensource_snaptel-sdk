@@ -33,6 +33,7 @@
  */
 
 #include "EcallStateMachine.hpp"
+#include <telux/tel/ECallDefines.hpp>
 
 namespace telux {
 namespace tel {
@@ -254,7 +255,6 @@ void CRCCheckonMSD::onEnter() {
     } else {
         (ecallStateMachine->getCallservice())->startTimer("T7Timer");
     }
-
 }
 
 void CRCCheckonMSD::onExit() {
@@ -341,17 +341,51 @@ PSAPCallback::PSAPCallback(std::weak_ptr<BaseStateMachine> parent)
 }
 
 bool PSAPCallback::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, "Received event ", event->name_, " while in ", name_);
+    LOG(DEBUG, "Received event ", event->name_, " while in ", name_, "with event Id", event->id_);
     if(event->id_ == static_cast<int>(EcallStateMachine::EventID::ON_TIMER_EXPIRY)) {
         if(event->name_ == "T9Timer") {
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
             (ecallStateMachine->getCallservice())->expiryTimer("T9Timer");
-            ecallStateMachine->stop();
-            /**TODO: Add T10 timer if eCallOperating = ECALL_ONLY*/
+            if(getEcallOperatingMode(event->phoneId_) != telux::tel::ECallMode::ECALL_ONLY) {
+                ecallStateMachine->stop();
+            } else {
+                std::shared_ptr<EcallStateMachine> ecallStateMachine
+                = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
+                (ecallStateMachine->getCallservice())->startTimer("T10Timer");
+            }
+        }
+        if(event->name_ == "T10Timer") {
+            LOG(DEBUG, "Received event T10 expiry timer");
+            std::shared_ptr<EcallStateMachine> ecallStateMachine
+                = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
+            (ecallStateMachine->getCallservice())->expiryTimer("T10Timer");
+        }
+    }
+    if(event->id_ == static_cast<int>(
+        EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST)) {
+        if(event->name_ == "T10Timer") {
+            LOG(DEBUG, "Received event T10 stop timer");
+            std::shared_ptr<EcallStateMachine> ecallStateMachine
+                = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
+            (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "stop");
         }
     }
     return true;
+}
+
+telux::tel::ECallMode PSAPCallback::getEcallOperatingMode(int phoneId) {
+    JsonData data;
+    std::string apiJsonPath = (phoneId == SLOT_ID_1) ? "api/tel/IPhoneManagerSlot1.json" :
+                              "api/tel/IPhoneManagerSlot2.json";
+    std::string stateJsonPath = (phoneId == SLOT_ID_1) ?
+                               "system-state/tel/IPhoneManagerStateSlot1.json" :
+                               "system-state/tel/IPhoneManagerStateSlot2.json";
+    std::string method = "requestECallOperatingMode";
+    std::string subsystem = "IPhoneManager";
+    CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    int ecallMode = data.stateRootObj[subsystem]["eCallOperatingMode"]["ecallMode"].asInt();
+    return static_cast<telux::tel::ECallMode>(ecallMode);
 }
 
 void PSAPCallback::onEnter() {
@@ -485,8 +519,8 @@ bool EcallStateMachine::parseVectortoString(std::string compareTimer) {
 }
 
 std::shared_ptr<telux::common::Event> EcallStateMachine::createTelEvent(
-    EventID id, std::string timer) {
-    return std::make_shared<TelEvent>(id, timer);
+    EventID id, std::string timer, int phoneId) {
+    return std::make_shared<TelEvent>(id, timer, phoneId);
 }
 
 }  // namespace data

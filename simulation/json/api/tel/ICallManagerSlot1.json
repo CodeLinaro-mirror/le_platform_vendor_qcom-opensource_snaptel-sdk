@@ -84,6 +84,11 @@
         {
             "status" : "SUCCESS"
         },
+        "requestNetworkDeregistration" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
         "answer" :
         {
             "status" : "SUCCESS",

@@ -175,28 +175,28 @@ telux::common::Status CallManagerStub::makeCall(int phoneId, const std::string &
     request.set_is_msd_transmitted(false);
 
     grpc::Status reqstatus = stub_->MakeCall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-        if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback->makeCallResponse(error, info);
-            }).share();
-            taskQ_->add(f);
+        CallInfo callInfo;
+        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
+        callInfo.index = static_cast<int>(response.call().call_index());
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = telux::tel::CallState::CALL_IDLE;
+        auto info = std::make_shared<CallStub>(phoneId, callInfo);
+        logCallDetails(info);
+        if (status == telux::common::Status::SUCCESS ) {
+            if(callback) {
+                auto f = std::async(std::launch::async,
+                [this, error, info, callback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback->makeCallResponse(error, info);
+                }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -228,29 +228,29 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const ECallMsdData
     request.set_api(makeECallWithMsd);
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = true;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback->makeCallResponse(error, info);
-            }).share();
-            taskQ_->add(f);
+        CallInfo callInfo;
+        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
+        callInfo.index = static_cast<int>(response.call().call_index());
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = telux::tel::CallState::CALL_IDLE;
+        callInfo.transmitMsd = true;
+        auto info = std::make_shared<CallStub>(phoneId, callInfo);
+        logCallDetails(info);
+        if (status == telux::common::Status::SUCCESS ) {
+        if(callback) {
+                auto f = std::async(std::launch::async,
+                [this, error, info, callback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback->makeCallResponse(error, info);
+                }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -504,29 +504,29 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::vector<
     request.set_api(makeECallWithRawMsd);
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = true;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error, info);
-            }).share();
-            taskQ_->add(f);
+        CallInfo callInfo;
+        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
+        callInfo.index = static_cast<int>(response.call().call_index());
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = telux::tel::CallState::CALL_IDLE;
+        callInfo.transmitMsd = true;
+        auto info = std::make_shared<CallStub>(phoneId, callInfo);
+        logCallDetails(info);
+        if (status == telux::common::Status::SUCCESS ) {
+        if(callback) {
+                auto f = std::async(std::launch::async,
+                [this, error, info, callback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback(error, info);
+                }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -558,29 +558,29 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, int category, int 
     request.set_api(makeECallWithoutMsd);
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = false;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-        if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error, info);
-            }).share();
-            taskQ_->add(f);
+        CallInfo callInfo;
+        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
+        callInfo.index = static_cast<int>(response.call().call_index());
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = telux::tel::CallState::CALL_IDLE;
+        callInfo.transmitMsd = false;
+        auto info = std::make_shared<CallStub>(phoneId, callInfo);
+        logCallDetails(info);
+        if (status == telux::common::Status::SUCCESS ) {
+            if(callback) {
+                auto f = std::async(std::launch::async,
+                [this, error, info, callback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback(error, info);
+                }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -613,19 +613,19 @@ telux::common::Status CallManagerStub::updateECallMsd(int phoneId, const ECallMs
     request.set_api(updateEcallMsd);
 
     grpc::Status reqstatus = stub_->UpdateECallMsd(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-    if(callback) {
-        auto f = std::async(std::launch::async,
-        [this, error, callback, cbDelay]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback->commandResponse(error);
-        }).share();
-        taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback->commandResponse(error);
+            }).share();
+            taskQ_->add(f);
+        }
     }
     return status;
 }
@@ -651,19 +651,19 @@ telux::common::Status CallManagerStub::updateECallMsd(int phoneId,
     request.set_api(updateECallRawMsd);
 
     grpc::Status reqstatus = stub_->UpdateECallMsd(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-    if(callback) {
-        auto f = std::async(std::launch::async,
-        [this, error, callback, cbDelay]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(error);
-        }).share();
-        taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
     }
     return status;
 }
@@ -688,32 +688,32 @@ telux::common::Status CallManagerStub::requestECallHlapTimerStatus(int phoneId,
     request.set_phone_id(phoneId);
 
     grpc::Status reqstatus = stub_->RequestECallHlapTimerStatus(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    ECallHlapTimerStatus timersStatus;
-    timersStatus.t2 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t2());
-    timersStatus.t5 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t5());
-    timersStatus.t6 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t6());
-    timersStatus.t7 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t7());
-    timersStatus.t9 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t9());
-    timersStatus.t10 = static_cast<telux::tel::HlapTimerStatus>((
-        response.hlap_timer_status()).t10());
-    int cbDelay = static_cast<int>(response.delay());
-    if(callback) {
-        auto f = std::async(std::launch::async,
-        [this, error, phoneId, timersStatus, callback, cbDelay]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(error, phoneId, timersStatus);
-        }).share();
-        taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        ECallHlapTimerStatus timersStatus;
+        timersStatus.t2 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t2());
+        timersStatus.t5 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t5());
+        timersStatus.t6 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t6());
+        timersStatus.t7 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t7());
+        timersStatus.t9 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t9());
+        timersStatus.t10 = static_cast<telux::tel::HlapTimerStatus>((
+            response.hlap_timer_status()).t10());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, phoneId, timersStatus, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error, phoneId, timersStatus);
+            }).share();
+            taskQ_->add(f);
+        }
     }
     return status;
 }
@@ -795,22 +795,22 @@ telux::common::Status CallManagerStub::swap(std::shared_ptr<ICall> callToHold,
     }
 
     grpc::Status reqstatus = stub_->Swap(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+        int delay = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        if(callback) {
-            auto f = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback->commandResponse(error);
-                }).share();
-            taskQ_->add(f);
+        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+            if(callback) {
+                auto f = std::async(std::launch::async,
+                    [this, error, callback, delay]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback->commandResponse(error);
+                    }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -832,21 +832,21 @@ telux::common::Status CallManagerStub::hangupForegroundResumeBackground(int phon
     ClientContext context;
     request.set_phone_id(phoneId);
     grpc::Status reqstatus = stub_->HangupForegroundResumeBackground(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        if(callback) {
-            auto f = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(error);
-                }).share();
-            taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+        int delay = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+            if(callback) {
+                auto f = std::async(std::launch::async,
+                    [this, error, callback, delay]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback(error);
+                    }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -868,21 +868,21 @@ telux::common::Status CallManagerStub::hangupWaitingOrBackground(int phoneId,
     ClientContext context;
     request.set_phone_id(phoneId);
     grpc::Status reqstatus = stub_->HangupWaitingOrBackground(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(error);
-                }).share();
-            taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+        int delay = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+        if(callback) {
+                auto f = std::async(std::launch::async,
+                    [this, error, callback, delay]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback(error);
+                    }).share();
+                taskQ_->add(f);
+            }
         }
     }
     return status;
@@ -903,9 +903,9 @@ telux::common::Status CallManagerStub::requestEcbm(int phoneId, EcbmStatusCallba
     ::telStub::RequestEcbmReply response;
     ClientContext context;
     request.set_phone_id(phoneId);
-    telux::common::Status status = telux::common::Status::FAILED;
 
     grpc::Status reqstatus = stub_->RequestEcbm(&context, request, &response);
+    telux::common::Status status = telux::common::Status::FAILED;
     if (reqstatus.ok()) {
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
@@ -922,8 +922,6 @@ telux::common::Status CallManagerStub::requestEcbm(int phoneId, EcbmStatusCallba
                 taskQ_->add(f);
             }
         }
-    } else {
-        return telux::common::Status::FAILED;
     }
     return status;
 }
@@ -943,8 +941,8 @@ telux::common::Status CallManagerStub::exitEcbm(int phoneId, common::ResponseCal
     ::telStub::ExitEcbmReply response;
     ClientContext context;
     request.set_phone_id(phoneId);
-    telux::common::Status status = telux::common::Status::FAILED;
     grpc::Status reqstatus = stub_->ExitEcbm(&context, request, &response);
+    telux::common::Status status = telux::common::Status::FAILED;
     if (reqstatus.ok()) {
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
@@ -958,15 +956,43 @@ telux::common::Status CallManagerStub::exitEcbm(int phoneId, common::ResponseCal
                 }).share();
             taskQ_->add(f);
         }
-    } else {
-        return telux::common::Status::FAILED;
     }
     return status;
 }
 
 telux::common::Status CallManagerStub::requestNetworkDeregistration(int phoneId,
     common::ResponseCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__, " phoneId:", phoneId);
+    if(phoneId <= 0 || phoneId > noOfSlots_) {
+        LOG(ERROR, __FUNCTION__, " Invalid PhoneId");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
+        LOG(ERROR, __FUNCTION__, " Call Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::telStub::RequestNetworkDeregistrationRequest request;
+    ::telStub::RequestNetworkDeregistrationReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId);
+    grpc::Status reqstatus = stub_->RequestNetworkDeregistration(&context, request, &response);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+        if ((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
+            auto f = std::async(std::launch::async,
+                [this, error, cbDelay, callback]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback(error);
+                }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
 }
 
 telux::common::Status CallManagerStub::updateEcallHlapTimer(int phoneId, HlapTimerType type,
@@ -980,8 +1006,7 @@ telux::common::Status CallManagerStub::updateEcallHlapTimer(int phoneId, HlapTim
         LOG(ERROR, __FUNCTION__, " Call Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-
-    telux::common::Status status;
+    telux::common::Status status = telux::common::Status::FAILED;
     if(type == HlapTimerType::T10_TIMER) {
         ::telStub::UpdateEcallHlapTimerRequest request;
         ::telStub::UpdateEcallHlapTimerResponse response;
@@ -1005,8 +1030,6 @@ telux::common::Status CallManagerStub::updateEcallHlapTimer(int phoneId, HlapTim
                     }).share();
                 taskQ_->add(f);
             }
-        } else {
-            return telux::common::Status::FAILED;
         }
     } else {
         status = telux::common::Status::NOTSUPPORTED;
@@ -1025,7 +1048,8 @@ telux::common::Status CallManagerStub::requestEcallHlapTimer(int phoneId, HlapTi
         LOG(ERROR, __FUNCTION__, " Call Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    telux::common::Status status;
+    telux::common::Status status = telux::common::Status::FAILED;
+
     if(type == HlapTimerType::T10_TIMER) {
         ::telStub::RequestEcallHlapTimerRequest request;
         ::telStub::RequestEcallHlapTimerReply response;
@@ -1034,22 +1058,21 @@ telux::common::Status CallManagerStub::requestEcallHlapTimer(int phoneId, HlapTi
         request.set_phone_id(phoneId);
         request.set_type(static_cast<::telStub::HlapTimerType>(type));
         grpc::Status reqstatus = stub_->RequestEcallHlapTimer(&context, request, &response);
-        if (!reqstatus.ok()) {
-            return telux::common::Status::FAILED;
-        }
-        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        int cbDelay = static_cast<int>(response.delay());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int timeDuration = static_cast<bool>(response.time_duration());
-        if ((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
-            if(callback) {
-                auto f = std::async(std::launch::async,
-                [this, error , callback, cbDelay, timeDuration]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                    callback(error, timeDuration);
-                }).share();
-                taskQ_->add(f);
+        if (reqstatus.ok()) {
+            telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+            status = static_cast<telux::common::Status>(response.status());
+            int cbDelay = static_cast<int>(response.delay());
+            bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+            int timeDuration = static_cast<int>(response.time_duration());
+            if ((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
+                if(callback) {
+                    auto f = std::async(std::launch::async,
+                    [this, error , callback, cbDelay, timeDuration]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                        callback(error, timeDuration);
+                    }).share();
+                    taskQ_->add(f);
+                }
             }
         }
     } else {
@@ -1113,10 +1136,10 @@ telux::common::Status CallManagerStub::setECallConfig(EcallConfig config) {
         request.set_msd_version(config.msdVersion);
     }
     grpc::Status reqstatus = stub_->SetConfig(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
     }
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
 
@@ -1133,48 +1156,48 @@ telux::common::Status CallManagerStub::getECallConfig(EcallConfig &config) {
     validityMask.reset();
     config = {};
     grpc::Status reqstatus = stub_->GetConfig(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        if(response.is_mute_rx_audio_valid() == true) {
+            validityMask.set(ECALL_CONFIG_MUTE_RX_AUDIO);
+            config.muteRxAudio = response.mute_rx_audio();
+        }
+        if(response.is_num_type_valid() == true) {
+            validityMask.set(ECALL_CONFIG_NUM_TYPE);
+            config.numType = static_cast<telux::tel::ECallNumType>(response.num_type());
+        }
+        if(response.is_overridden_num_valid() == true) {
+                validityMask.set(ECALL_CONFIG_OVERRIDDEN_NUM);
+                config.overriddenNum = response.overridden_num();
+        }
+        if(response.is_use_canned_msd_valid() == true) {
+            validityMask.set(ECALL_CONFIG_USE_CANNED_MSD);
+            config.useCannedMsd = response.use_canned_msd();
+        }
+        if(response.is_gnss_update_interval_valid() == true) {
+            validityMask.set(ECALL_CONFIG_GNSS_UPDATE_INTERVAL);
+            config.gnssUpdateInterval = response.gnss_update_interval();
+        }
+        if(response.is_t2_timer_valid() == true) {
+            validityMask.set(ECALL_CONFIG_T2_TIMER);
+            config.t2Timer = response.t2_timer();
+        }
+        if(response.is_t7_timer_valid() == true) {
+            validityMask.set(ECALL_CONFIG_T7_TIMER);
+            config.t7Timer = response.t7_timer();
+        }
+        if(response.is_t9_timer_valid() == true) {
+            validityMask.set(ECALL_CONFIG_T9_TIMER);
+            config.t9Timer = response.t9_timer();
+        }
+        if(response.is_msd_version_valid() == true) {
+            validityMask.set(ECALL_CONFIG_MSD_VERSION);
+            config.msdVersion = response.msd_version();
+        }
+        config.configValidityMask = validityMask;
+        LOG(INFO, __FUNCTION__, " configValidityMask: ", validityMask.to_string());
     }
-    if(response.is_mute_rx_audio_valid() == true) {
-        validityMask.set(ECALL_CONFIG_MUTE_RX_AUDIO);
-        config.muteRxAudio = response.mute_rx_audio();
-    }
-    if(response.is_num_type_valid() == true) {
-        validityMask.set(ECALL_CONFIG_NUM_TYPE);
-        config.numType = static_cast<telux::tel::ECallNumType>(response.num_type());
-    }
-    if(response.is_overridden_num_valid() == true) {
-            validityMask.set(ECALL_CONFIG_OVERRIDDEN_NUM);
-            config.overriddenNum = response.overridden_num();
-    }
-    if(response.is_use_canned_msd_valid() == true) {
-        validityMask.set(ECALL_CONFIG_USE_CANNED_MSD);
-        config.useCannedMsd = response.use_canned_msd();
-    }
-    if(response.is_gnss_update_interval_valid() == true) {
-        validityMask.set(ECALL_CONFIG_GNSS_UPDATE_INTERVAL);
-        config.gnssUpdateInterval = response.gnss_update_interval();
-    }
-    if(response.is_t2_timer_valid() == true) {
-        validityMask.set(ECALL_CONFIG_T2_TIMER);
-        config.t2Timer = response.t2_timer();
-    }
-    if(response.is_t7_timer_valid() == true) {
-        validityMask.set(ECALL_CONFIG_T7_TIMER);
-        config.t7Timer = response.t7_timer();
-    }
-    if(response.is_t9_timer_valid() == true) {
-        validityMask.set(ECALL_CONFIG_T9_TIMER);
-        config.t9Timer = response.t9_timer();
-    }
-    if(response.is_msd_version_valid() == true) {
-        validityMask.set(ECALL_CONFIG_MSD_VERSION);
-        config.msdVersion = response.msd_version();
-    }
-    config.configValidityMask = validityMask;
-    LOG(INFO, __FUNCTION__, " configValidityMask: ", validityMask.to_string());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
 

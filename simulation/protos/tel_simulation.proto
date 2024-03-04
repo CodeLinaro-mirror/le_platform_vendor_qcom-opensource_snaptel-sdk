@@ -118,6 +118,8 @@
      rpc Resume(ResumeRequest) returns (ResumeReply) {}
      rpc Swap(SwapRequest) returns (SwapReply) {}
      rpc Hold(HoldRequest) returns (HoldReply) {}
+     rpc RequestNetworkDeregistration(RequestNetworkDeregistrationRequest) returns
+         (RequestNetworkDeregistrationReply) {}
  }
 
  service ImsServingSystem {
@@ -1300,6 +1302,17 @@ message UpdateECallMsdResponse {
  }
 
  message HoldReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+ message RequestNetworkDeregistrationRequest {
+    int32 phone_id = 1;
+ }
+
+ message RequestNetworkDeregistrationReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;

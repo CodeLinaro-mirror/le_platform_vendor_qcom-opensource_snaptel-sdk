@@ -43,6 +43,7 @@
 #define HANGUP_CALL_EVENT "hangupCall"
 #define INCOMING_CALL_EVENT "incomingCall"
 
+#define REST_TIMERS_ON_CALL_SETUP 2
 #define JSON_PATH1 "system-state/tel/ICallManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ICallManagerStateSlot2.json"
 #define JSON_PATH3 "api/tel/ICallManagerSlot1.json"
@@ -520,6 +521,7 @@ grpc::Status CallManagerServerImpl::UpdateEcallHlapTimer(ServerContext* context,
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         if(type == ::telStub::HlapTimerType::T10_TIMER) {
             rootObj[CALL_MANAGER]["eCallHlapTimer"]["t10"] = time;
+            rootObj[CALL_MANAGER]["eCallConfig"]["T10Timer"] = ((time*60)*1000);
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
         }
@@ -981,7 +983,7 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
                 telux::tel::EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
-                ""));
+                "", phoneId));
             } else {  //Voice call
                 changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
             }
@@ -1093,7 +1095,7 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
         if(info->iseCall) {
             ecallStateMachine_->onEvent(
             ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, ""));
+                telux::tel::EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
             //Clear call cache in server
            std::shared_ptr<CallInfo> call =
             findCallAndUpdateCallState
@@ -1128,6 +1130,52 @@ grpc::Status CallManagerServerImpl::UpdateECallMsd(ServerContext* context,
     }
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, input, status,
+            error, cbDelay );
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_delay(cbDelay);
+    }
+    return readStatus;
+}
+
+grpc::Status CallManagerServerImpl::RequestNetworkDeregistration(ServerContext* context,
+    const telStub::RequestNetworkDeregistrationRequest* request,
+    telStub::RequestNetworkDeregistrationReply* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    Json::Value rootObj;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonObjFileName = "";
+    bool isCallback = true;
+    std::string input = "requestNetworkDeregistration";
+    int phoneId = request->phone_id();
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        if(ecallStateMachine_ != nullptr) {
+            getJsonForSystemData(phoneId, jsonObjFileName, rootObj);
+            telux::tel::HlapTimerStatus T9Status = static_cast<telux::tel::HlapTimerStatus>(
+                rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T9Timer"].asInt());
+            telux::tel::HlapTimerStatus T10Status = static_cast<telux::tel::HlapTimerStatus>(
+                rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T10Timer"].asInt());
+            /* To ensure that network deregistration is requested after T9 timer is expired and T10
+             * timer is active.
+             */
+            if((T9Status == telux::tel::HlapTimerStatus::INACTIVE)
+                && (T10Status == telux::tel::HlapTimerStatus::ACTIVE)) {
+                ecallStateMachine_->onEvent(
+                ecallStateMachine_->createTelEvent(
+                telux::tel::EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST,
+                "T10Timer", phoneId));
+            }
+        }
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, input, status,
             error, cbDelay );
@@ -1293,11 +1341,13 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
             if(isNGeCall) {
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "NGeCall"));
+                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "NGeCall",
+                    phoneId));
             } else {
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "CSeCall"));
+                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "CSeCall",
+                    phoneId));
             }
         } else {
             LOG(ERROR, __FUNCTION__, "Incorrect JSON configuration ");
@@ -1458,49 +1508,42 @@ void CallManagerServerImpl::startTimers(std::string timer) {
             telux::tel::HlapTimerStatus status = static_cast<telux::tel::HlapTimerStatus>(
                 rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
             if(status == telux::tel::HlapTimerStatus::ACTIVE) {
-                this->triggerTimerExpiry(timer);
+                this->triggerTimerExpiry(timer, callInfo_.phoneId);
             }
         }).share();
         taskQ_->add(f);
-        if(timer == "T9Timer") {
-            // Reset the state machine so that again eCall can be triggered.
-            // T9 Timer will remain active as per the JSON configured timer and PSAP call will be
-            // handled.
-            if(ecallStateMachine_) {
-                ecallStateMachine_->stop();
-            }
-        }
-        // Reset T9 timer when a new eCall is triggered(and T2 starts with call setup) before
-        // T9 expiry.
+        /* Reset T9 timer and T10 timer when a new eCall is triggered
+         * (and T2 starts with call setup) before T9 expiry.
+         */
         if(timer == "T2Timer") {
-            telux::tel::HlapTimerStatus status = static_cast<telux::tel::HlapTimerStatus>(rootObj\
-                [CALL_MANAGER]["ecallHlapTimerStatus"]["T9Timer"].asInt());
-            if(status == telux::tel::HlapTimerStatus::ACTIVE) {
-                LOG(DEBUG, __FUNCTION__, "T9 Timer is active");
-                updateEcallHlapTimer("T9Timer", telux::tel::HlapTimerStatus::INACTIVE);
-                auto f = std::async(std::launch::async, [this, timer, status]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                    this->triggerCallInfoChangeEvent("T9Timer",
-                        telux::tel::HlapTimerEvent::STOPPED);
-                }).share();
-                taskQ_->add(f);
+            std::string timer[REST_TIMERS_ON_CALL_SETUP] = { "T9Timer", "T10Timer"};
+            for(int i = 0 ; i <= REST_TIMERS_ON_CALL_SETUP - 1; i++) {
+                telux::tel::HlapTimerStatus status = static_cast<telux::tel::HlapTimerStatus>(
+                    rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer[i]].asInt());
+                if(status == telux::tel::HlapTimerStatus::ACTIVE) {
+                    LOG(DEBUG, __FUNCTION__, "Timer", timer[i], "is active");
+                    updateEcallHlapTimer(timer[i], telux::tel::HlapTimerStatus::INACTIVE);
+                    auto f = std::async(std::launch::async, [this, timer, i, status]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                        this->triggerCallInfoChangeEvent(timer[i],
+                            telux::tel::HlapTimerEvent::STOPPED);
+                    }).share();
+                    taskQ_->add(f);
+                }
             }
         }
     }
 }
 
-void CallManagerServerImpl::triggerTimerExpiry(std::string timer) {
+void CallManagerServerImpl::triggerTimerExpiry(std::string timer, int phoneId) {
     LOG(DEBUG, __FUNCTION__);
     if((timer == "T2Timer") || (timer == "T5Timer") || (timer == "T6Timer") || (timer == "T7Timer")
-        || (timer == "T10Timer")) {
+        || (timer == "T10Timer") || (timer == "T9Timer")) {
         updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::INACTIVE);
         if(ecallStateMachine_) {
             ecallStateMachine_->onEvent(ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::ON_TIMER_EXPIRY, timer));
+                telux::tel::EcallStateMachine::EventID::ON_TIMER_EXPIRY, timer, phoneId));
         }
-    } else if (timer == "T9Timer") {
-        updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::INACTIVE);
-        expiryTimer(timer);
     } else {
       LOG(ERROR, __FUNCTION__, "Invalid timer");
     }
@@ -1516,6 +1559,7 @@ void CallManagerServerImpl::expiryTimer(std::string timer) {
 }
 
 void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
+    LOG(DEBUG, __FUNCTION__, "Timer event for ", timer, "timer status is", status);
     std::string value = timer + status;
     if(status == "start") {
         updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::ACTIVE);

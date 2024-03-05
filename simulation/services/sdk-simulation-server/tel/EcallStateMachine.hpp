@@ -115,7 +115,7 @@ class CallConnect : public telux::common::BaseState {
 
     /**
      * Event handler for CallConnect
-     * @param [in] event - The DataSubSystemEvent that needs to be handled
+     * @param [in] event - The TelEvent that needs to be handled
      * @returns true if the event was handled
      */
     bool onEvent(std::shared_ptr<telux::common::Event> event);
@@ -308,7 +308,6 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     bool isNGeCall_;
     int phoneId_;
     std::string remotePartyNumber_;
-
  public:
     /**
      * Constructor for EcallStateMachine
@@ -316,7 +315,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
      */
     EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
         std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall, int phoneId
-        , std::string remotePartyNumber);
+        , std::string remotePartyNumber, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -377,6 +376,8 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
 
     bool isNGeCall();
 
+    bool isEcallMSDUpdateInProgress();
+
     int getPhoneId();
 
     std::string getRemotePartyNumber();
@@ -391,6 +392,8 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
         STATE_CALL_CONVERSATION,
         STATE_PSAP_CALLBACK
     };
+
+    bool updateInProgress_;
 };
 
 }  // namespace tel

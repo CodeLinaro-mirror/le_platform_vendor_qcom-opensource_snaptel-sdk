@@ -173,7 +173,6 @@ private:
     std::string fetchNextToken(std::string& inputString, std::string delimiter);
     std::vector<std::shared_ptr<CallInfo>> calls_;
     CallInfo callInfo_;
-    bool updateInProgress_ = false;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool match(std::shared_ptr<CallInfo> call, CallInfo callToCompare);
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);

@@ -867,6 +867,11 @@ void LocationManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::locStub::ResetWindowEvent resetWindowEvent;
         event.UnpackTo(&resetWindowEvent);
         handleResetWindowEvent();
+    } else if (event.Is<::locStub::GnssDisasterCrisisReport>()) {
+        LOG(DEBUG, __FUNCTION__, " Disaster Crisis update");
+        ::locStub::GnssDisasterCrisisReport dcReport;
+        event.UnpackTo(&dcReport);
+        handleGnssDisasterCrisisReport(dcReport);
     }
 }
 
@@ -1247,6 +1252,33 @@ void LocationManagerStub::handleSysInfoUpdateEvent(::locStub::SysInfoUpdateEvent
         locSystemInfo.info.info.leapSecondsAfterChange = sysInfoEvent.leap_seconds_after_change();
     }
     invokeSysInfoUpdateEvent(locSystemInfo);
+}
+
+void LocationManagerStub::handleGnssDisasterCrisisReport(
+    ::locStub::GnssDisasterCrisisReport dcReport) {
+    if ((reportMask_ & telux::loc::GnssReportType::DISASTER_CRISIS) &&
+        ((sessionMask_ & telux::loc::DETAILED) || (sessionMask_ & telux::loc::DETAILED_ENGINE))) {
+
+        LOG(DEBUG, __FUNCTION__, " report Disaster Crisis Info");
+
+        telux::loc::GnssDisasterCrisisReport report;
+        report.dcReportType = static_cast<telux::loc::GnssReportDCType>(dcReport.dc_report_type());
+        report.numValidBits = static_cast<uint16_t>(dcReport.num_valid_bits());
+        std::copy(dcReport.dc_report_data().begin(),
+                  dcReport.dc_report_data().end(),
+                  std::back_inserter(report.dcReportData));
+
+        std::lock_guard<std::mutex> listenerLock(mutex_);
+        for (auto iter = listeners_.begin(); iter != listeners_.end();) {
+            auto spt = (*iter).lock();
+            if (spt != nullptr) {
+                spt->onGnssDisasterCrisisInfo(report);
+                ++iter;
+            } else {
+                iter = listeners_.erase(iter);
+            }
+        }
+    }
 }
 
 void LocationManagerStub::invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo) {

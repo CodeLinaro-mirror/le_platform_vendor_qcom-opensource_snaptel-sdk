@@ -106,8 +106,11 @@ Detailed PVT Location report, NMEA, SV, Measurements, and Jammer reports.
 Each row of the CSV represents a complete iteration of the report at time interval T.
 
 <b>Data reporting:</b>
-The location reports are reported at the same frequency with which they were recorded 
+The location reports are reported at the same frequency with which they were recorded
 in the target.
+On reaching the CSV's EOF, clients can configure if they wish the CSV to be replayed
+via the "sim.loc.location_report_replay" configuration in tel.conf.
+If the replay configuration is not selected, the location reports are stopped.
 
 <b>Client usage:</b>
 1. The prerecorded/captured CSV file is present by default under - ${ROOTFS}/data/telux/csv/PRE-RECORDED_LOCATION_DATA.csv.

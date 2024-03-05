@@ -126,6 +126,10 @@ message LastLocationInfo {
     string loc_report = 1;
 }
 
+message StreamingStoppedEvent {}
+
+message ResetWindowEvent {}
+
 message XtraStatusEvent {
     int32 enable = 1;
     int32 validity = 2;

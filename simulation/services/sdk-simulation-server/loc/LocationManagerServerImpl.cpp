@@ -55,6 +55,10 @@ void LocationManagerServerImpl::init() {
     fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
     fileBuffer_->startBuffering();
     bufferingInitialized_ = true;
+    std::string replayCsvStr = configParser.getValue("sim.loc.location_report_replay");
+    if(replayCsvStr == "TRUE") {
+        replayCsv_ = true;
+    }
 }
 
 void LocationManagerServerImpl::startStreaming() {
@@ -99,10 +103,40 @@ void LocationManagerServerImpl::startStreaming() {
         } else {
             //EOF is reached and request buffer is empty.
             previousTimestamp_ = 0;
-            LOG(INFO, " Last batch streamed. Streaming stopped.");
-            return;
+            if(replayCsv_) {
+                LOG(INFO, " Last batch streamed. Replaying CSV.");
+                triggerResetWindowEvent();
+                //Restart buffering
+                fileBuffer_->startBuffering();
+            } else {
+                LOG(INFO, " Last batch streamed. Streaming stopped.");
+                triggerStreamingStoppedEvent();
+                return;
+            }
         }
     }
+}
+
+void LocationManagerServerImpl::triggerResetWindowEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::ResetWindowEvent resetWindowEvent;
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("LOC_REPORTS");
+    anyResponse.mutable_any()->PackFrom(resetWindowEvent);
+    //posting the event to EventService event queue
+    auto &locationReportService = LocationReportService::getInstance();
+    locationReportService.updateEventQueue(anyResponse);
+}
+
+void LocationManagerServerImpl::triggerStreamingStoppedEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::StreamingStoppedEvent streamingStoppedEvent;
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("LOC_REPORTS");
+    anyResponse.mutable_any()->PackFrom(streamingStoppedEvent);
+    //posting the event to EventService event queue
+    auto &locationReportService = LocationReportService::getInstance();
+    locationReportService.updateEventQueue(anyResponse);
 }
 
 LocationManagerServerImpl::~LocationManagerServerImpl() {

@@ -110,6 +110,7 @@ enum class Status {
    NOSUCH,         /**< No such object */
    NOTSUPPORTED,   /**< Not supported on target platform */
    NOMEMORY,       /**< Not sufficient memory to process the request */
+   ACCESSDENIED    /**< Permission denied */
 };
 
 /**

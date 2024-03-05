@@ -433,9 +433,12 @@ telux::common::ErrorCode Alsa::startLoopback(snd_pcm_t *captureHandle, snd_pcm_t
         }
 
         actualLengthWritten = snd_pcm_writei (playHandle, buf, buf_frames);
-        if (actualLengthWritten == -EPIPE || actualLengthWritten == -ESTRPIPE) {
-            LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+        if (actualLengthWritten == -EPIPE) {
             snd_pcm_prepare(playHandle);
+            return telux::common::ErrorCode::SUCCESS;
+        }
+        if(actualLengthWritten == -ESTRPIPE) {
+            LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
     }
@@ -809,14 +812,14 @@ float Alsa::generateSignal(float t1, float t2) {
     float ret = 2;
 
     InFreq1_ = 2*cos(t1)*RegFreq1_[0]-RegFreq1_[1];
-    RegFreq1_[1]=RegFreq1_[0];
-    RegFreq1_[0]=InFreq1_;
+    RegFreq1_[1] = RegFreq1_[0];
+    RegFreq1_[0] = InFreq1_;
 
     ret += sin(t1)*RegFreq1_[1];
 
     InFreq2_ = 2*cos(t2)*RegFreq2_[0]-RegFreq2_[1];
-    RegFreq2_[1]=RegFreq2_[0];
-    RegFreq2_[0]=InFreq2_;
+    RegFreq2_[1] = RegFreq2_[0];
+    RegFreq2_[0] = InFreq2_;
 
     ret += sin(t2)*RegFreq2_[1];
 
@@ -828,6 +831,7 @@ void Alsa::genTone(std::vector<uint16_t> toneFrequency, int channels, uint32_t s
 
     int noOfFreq = toneFrequency.size();
     float t, t1, t2;
+
     switch(noOfFreq) {
         case 1:
             t = 2*M_PI*toneFrequency[0]/(sampleRate*channels);
@@ -888,6 +892,10 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
 telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sampleRate,
         uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
 
+    if(runTone_) {
+        stopTone(streamHandle);
+    }
+
     runTone_ = true;
     streamHandle.streamStarted = true;
     std::thread toneThread(&Alsa::generateTone, this, streamHandle, sampleRate, gain,
@@ -901,7 +909,7 @@ telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sa
 /*
  * Stop playing tone.
  */
-telux::common::ErrorCode Alsa::stopTone(StreamHandle streamHandle) {
+telux::common::ErrorCode Alsa::stopTone(StreamHandle& streamHandle) {
     runTone_ = false;
     streamHandle.streamStarted = false;
     for(std::thread &th: toneThread_) {
@@ -910,10 +918,12 @@ telux::common::ErrorCode Alsa::stopTone(StreamHandle streamHandle) {
         }
     }
 
-    RegFreq1_[0]=1;
-    RegFreq1_[1]=0;
-    RegFreq2_[0]=1;
-    RegFreq2_[1]=0;
+    RegFreq1_[0] = 1;
+    RegFreq1_[1] = 0;
+    RegFreq2_[0] = 1;
+    RegFreq2_[1] = 0;
+    snd_pcm_prepare(streamHandle.pcmHandle);
+
     return telux::common::ErrorCode::SUCCESS;
 }
 

@@ -10,7 +10,7 @@ extern "C" {
 }
 #include "libs/common/SimulationConfigParser.hpp"
 
-#define PCM_DEVICE "default"
+#define DEFAULT_DEVICE "default"
 
 /* #define DDEBUG 1 */
 
@@ -95,6 +95,8 @@ telux::common::ErrorCode Alsa::init(std::shared_ptr<ISSREventListener> ssrEventL
         /* Use default device mapping, if the user doesn't override it through
          * tel.conf or an error occurs while parsing tel.conf for mappings. */
          finalDevicesTable_ = Alsa::DEFAULT_DEVS_TABLE;
+         pcmDevice_ = DEFAULT_DEVICE;
+         sndCardCtlDevice_ = DEFAULT_DEVICE;
          LOG(INFO, __FUNCTION__, " default device mapping loaded");
     }
 
@@ -212,10 +214,10 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
     }
 
     if(StreamType::LOOPBACK == streamHandle.type){
-        ret = snd_pcm_open (&streamHandle.loopbackPlayHandle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK,
+        ret = snd_pcm_open (&streamHandle.loopbackPlayHandle, pcmDevice_.c_str(), SND_PCM_STREAM_PLAYBACK,
             0);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
@@ -227,10 +229,10 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
-        ret = snd_pcm_open (&streamHandle.loopbackCaptureHandle, PCM_DEVICE, SND_PCM_STREAM_CAPTURE,
+        ret = snd_pcm_open (&streamHandle.loopbackCaptureHandle, pcmDevice_.c_str(), SND_PCM_STREAM_CAPTURE,
             0);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
@@ -250,9 +252,9 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
         return ec;
     }
 
-    ret = snd_pcm_open(&streamHandle.pcmHandle, PCM_DEVICE, stream, 0);
+    ret = snd_pcm_open(&streamHandle.pcmHandle, pcmDevice_.c_str(), stream, 0);
     if (ret < 0) {
-        LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+        LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
@@ -496,7 +498,7 @@ telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
         LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
     }
 
-    if ((err = snd_mixer_attach(h_mixer, "default")) < 0) {
+    if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
         LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
     }
 
@@ -605,7 +607,7 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
         LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
     }
 
-    if ((err = snd_mixer_attach(h_mixer, "default")) < 0) {
+    if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
         LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
     }
 
@@ -983,6 +985,17 @@ int Alsa::loadUserDeviceMapping() {
     DeviceMappingTable deviceTbl{};
 
     if(config_){
+
+        pcmDevice_ = config_->getValue("PCM_DEVICE");
+        if (pcmDevice_.empty()) {
+            return -1;
+        }
+
+        sndCardCtlDevice_ = config_->getValue("SND_CARD_CTL_DEVICE");
+        if (sndCardCtlDevice_.empty()) {
+            return -1;
+        }
+
         std::string numOfDevices = config_->getValue("NUM_DEVICES");
         if (numOfDevices.empty()) {
             return -1;

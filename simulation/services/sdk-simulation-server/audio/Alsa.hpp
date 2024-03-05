@@ -158,17 +158,16 @@ private:
     float InFreq1_;
     float RegFreq2_[FILTER_ORDER]={1,0};
     float InFreq2_;
+    std::string pcmDevice_;
+    std::string sndCardCtlDevice_;
+
     int loadMappingArray(std::string key, MappedValueType mappedValueType,
         uint32_t numOfValues, DeviceMappingTable& deviceTbl);
-
     int loadUserDeviceMapping(void);
-
     telux::common::ErrorCode mapStreamType(StreamType streamType, snd_pcm_stream_t& stream);
     telux::common::ErrorCode mapStreamChannelMask( uint32_t channelTypeMask, int& channels);
-
     telux::common::ErrorCode setBufferSize(StreamHandle streamHandle,
         size_t& inSize, size_t& outSize);
-
     telux::common::ErrorCode startLoopback(snd_pcm_t *captureHandle, snd_pcm_t *playHandle,
         int channels);
     telux::common::ErrorCode generateTone(StreamHandle streamHandle, uint32_t sampleRate,

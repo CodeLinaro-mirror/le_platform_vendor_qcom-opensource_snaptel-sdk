@@ -340,6 +340,7 @@ public:
     * The threshold range list is as follows. See SignalStrength.hpp for more details.
     * - GSM_RSSI  : -113 to -51 (in dBm)
     * - WCDMA_RSSI: -113 to -51 (in dBm)
+    * - LTE_RSSI  : -113 to -51 (in dBm)
     * - LTE_SNR   : -200 to 300 (in dB)
     * - LTE_RSRQ  : -20 to -3   (in dB)
     * - LTE_RSRP  : -140 to -44 (in dBm)

@@ -382,7 +382,7 @@ void ServingSystemMenu::getNetworkRejectInfo(std::vector<std::string> userInput)
    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
    if(servingSystemMgr) {
       telux::tel::NetworkRejectInfo rejectInfo;
-      auto status = servingSystemMgr->requestNetworkRejectInfo(rejectInfo);
+      auto status = servingSystemMgr->getNetworkRejectInfo(rejectInfo);
       if(status == telux::common::Status::SUCCESS) {
          std::cout << "\n getNetworkRejectInfo is successful"
             << "\n RAT: "

@@ -157,14 +157,20 @@ std::string TelClientUtils::callEndCauseToString(telux::tel::CallEndCause callEn
         case telux::tel::CallEndCause::NORMAL:
             return std::string("Normal");
         case telux::tel::CallEndCause::BUSY:
+        case telux::tel::CallEndCause::USER_BUSY:
+        case telux::tel::CallEndCause::SIP_BUSY:
             return std::string("Busy");
         case telux::tel::CallEndCause::NO_USER_RESPONDING:
             return std::string("No user responding");
         case telux::tel::CallEndCause::NO_ANSWER_FROM_USER:
             return std::string("No answer from user");
         case telux::tel::CallEndCause::NOT_REACHABLE:
+        case telux::tel::CallEndCause::SIP_NOT_REACHABLE:
             return std::string("Not reachable");
         case telux::tel::CallEndCause::CALL_REJECTED:
+        case telux::tel::CallEndCause::USER_REJECT:
+        case telux::tel::CallEndCause::SIP_USER_REJECTED:
+        case telux::tel::CallEndCause::SIP_REQUEST_CANCELLED:
             return std::string("Call rejected");
         case telux::tel::CallEndCause::NUMBER_CHANGED:
             return std::string("Number changed");

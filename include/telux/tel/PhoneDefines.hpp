@@ -78,51 +78,56 @@ enum class CallState {
  * Reason for the recently terminated call (either normally ended or failed)
  */
 enum class CallEndCause {
-   UNOBTAINABLE_NUMBER = 1,
-   NO_ROUTE_TO_DESTINATION = 3,
-   CHANNEL_UNACCEPTABLE = 6,
-   OPERATOR_DETERMINED_BARRING = 8,
-   NORMAL = 16,
-   BUSY = 17,
-   NO_USER_RESPONDING = 18,
-   NO_ANSWER_FROM_USER = 19,
-   NOT_REACHABLE = 20,
-   CALL_REJECTED = 21,
-   NUMBER_CHANGED = 22,
-   PREEMPTION = 25,
-   DESTINATION_OUT_OF_ORDER = 27,
-   INVALID_NUMBER_FORMAT = 28,
-   FACILITY_REJECTED = 29,
-   RESP_TO_STATUS_ENQUIRY = 30,
-   NORMAL_UNSPECIFIED = 31,
-   CONGESTION = 34,
-   NETWORK_OUT_OF_ORDER = 38,
-   TEMPORARY_FAILURE = 41,
-   SWITCHING_EQUIPMENT_CONGESTION = 42,
-   ACCESS_INFORMATION_DISCARDED = 43,
+   UNOBTAINABLE_NUMBER = 1,              /**< Unassigned(unallocated) number */
+   NO_ROUTE_TO_DESTINATION = 3,          /**< No route  to destination */
+   CHANNEL_UNACCEPTABLE = 6,             /**< Channel unacceptable */
+   OPERATOR_DETERMINED_BARRING = 8,      /**< Operator determined barring */
+   NORMAL = 16,                          /**< Normal call barring */
+   BUSY = 17,                            /**< User busy */
+   NO_USER_RESPONDING = 18,              /**< No user responding */
+   NO_ANSWER_FROM_USER = 19,             /**< User alerting, no answer */
+   NOT_REACHABLE = 20,                   /**< Not reachable */
+   CALL_REJECTED = 21,                   /**< Call rejected */
+   NUMBER_CHANGED = 22,                  /**< Number changed */
+   PREEMPTION = 25,                      /**< Pre-emption */
+   DESTINATION_OUT_OF_ORDER = 27,        /**< Destination out of order */
+   INVALID_NUMBER_FORMAT = 28,           /**< Invalid number format (incomplete number) */
+   FACILITY_REJECTED = 29,               /**< Facility rejected */
+   RESP_TO_STATUS_ENQUIRY = 30,          /**< Response to STATUS ENQUIRY */
+   NORMAL_UNSPECIFIED = 31,              /**< Normal, unspecified */
+   CONGESTION = 34,                      /**< No circuit/channel available */
+   NETWORK_OUT_OF_ORDER = 38,            /**< Network out of order */
+   TEMPORARY_FAILURE = 41,               /**< Temporary failure */
+   SWITCHING_EQUIPMENT_CONGESTION = 42,  /**< Switching equipment congestion */
+   ACCESS_INFORMATION_DISCARDED = 43,    /**< Access information discarded */
    REQUESTED_CIRCUIT_OR_CHANNEL_NOT_AVAILABLE = 44,
-   RESOURCES_UNAVAILABLE_OR_UNSPECIFIED = 47,
-   QOS_UNAVAILABLE = 49,
-   REQUESTED_FACILITY_NOT_SUBSCRIBED = 50,
-   INCOMING_CALLS_BARRED_WITHIN_CUG = 55,
-   BEARER_CAPABILITY_NOT_AUTHORIZED = 57,
-   BEARER_CAPABILITY_UNAVAILABLE = 58,
-   SERVICE_OPTION_NOT_AVAILABLE = 63,
-   BEARER_SERVICE_NOT_IMPLEMENTED = 65,
-   ACM_LIMIT_EXCEEDED = 68,
-   REQUESTED_FACILITY_NOT_IMPLEMENTED = 69,
+                                         /**< Requested circuit/channel not available */
+   RESOURCES_UNAVAILABLE_OR_UNSPECIFIED = 47,/**< Resource unavailable, unspecified */
+   QOS_UNAVAILABLE = 49,                 /**< Quality of service unavailable */
+   REQUESTED_FACILITY_NOT_SUBSCRIBED = 50,/**< Requested facility not subscribed */
+   INCOMING_CALLS_BARRED_WITHIN_CUG = 55,/**< Incoming calls barred within the CUG */
+   BEARER_CAPABILITY_NOT_AUTHORIZED = 57,/**< Bearer capability not authorized */
+   BEARER_CAPABILITY_UNAVAILABLE = 58,   /**< Bearer capability not presently available */
+   SERVICE_OPTION_NOT_AVAILABLE = 63,    /**< Service or option not available, unspecified */
+   BEARER_SERVICE_NOT_IMPLEMENTED = 65,  /**< Bearer service not implemented */
+   ACM_LIMIT_EXCEEDED = 68,              /**< ACM equal to or greater than ACMmax */
+   REQUESTED_FACILITY_NOT_IMPLEMENTED = 69,/**< Requested facility not implemented */
    ONLY_DIGITAL_INFORMATION_BEARER_AVAILABLE = 70,
-   SERVICE_OR_OPTION_NOT_IMPLEMENTED = 79,
-   INVALID_TRANSACTION_IDENTIFIER = 81,
-   USER_NOT_MEMBER_OF_CUG = 87,
-   INCOMPATIBLE_DESTINATION = 88,
-   INVALID_TRANSIT_NW_SELECTION = 91,
-   SEMANTICALLY_INCORRECT_MESSAGE = 95,
-   INVALID_MANDATORY_INFORMATION = 96,
-   MESSAGE_TYPE_NON_IMPLEMENTED = 97,
+                                         /**< Only restricted digital information
+                                              bearer capability is available */
+   SERVICE_OR_OPTION_NOT_IMPLEMENTED = 79,/**< Service or option not implemented, unspecified */
+   INVALID_TRANSACTION_IDENTIFIER = 81,  /**< Invalid transaction identifier value */
+   USER_NOT_MEMBER_OF_CUG = 87,          /**< User not member of CUG */
+   INCOMPATIBLE_DESTINATION = 88,        /**< Incompatible destination */
+   INVALID_TRANSIT_NW_SELECTION = 91,    /**< Invalid transit network selection */
+   SEMANTICALLY_INCORRECT_MESSAGE = 95,  /**< Semantically incorrect message */
+   INVALID_MANDATORY_INFORMATION = 96,   /**< Invalid mandatory information */
+   MESSAGE_TYPE_NON_IMPLEMENTED = 97,    /**< Message type non-existent or not implemented */
    MESSAGE_TYPE_NOT_COMPATIBLE_WITH_PROTOCOL_STATE = 98,
-   INFORMATION_ELEMENT_NON_EXISTENT = 99,
-   CONDITIONAL_IE_ERROR = 100,
+                                         /**< Message type not compatible with protocol state */
+   INFORMATION_ELEMENT_NON_EXISTENT = 99,/**< Information element non-existent or
+                                              not implemented */
+   CONDITIONAL_IE_ERROR = 100,           /**< Conditional IE error */
    MESSAGE_NOT_COMPATIBLE_WITH_PROTOCOL_STATE = 101,
                                          /**< Message not compatible with protocol state */
    RECOVERY_ON_TIMER_EXPIRED = 102,      /**< Recovery on timer expiry */

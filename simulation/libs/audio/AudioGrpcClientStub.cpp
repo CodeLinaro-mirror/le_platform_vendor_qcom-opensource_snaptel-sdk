@@ -1362,17 +1362,26 @@ telux::common::Status AudioGrpcClientStub::write(uint32_t streamId, uint8_t *tra
 void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec,
         std::weak_ptr<telux::common::ICommandCallback> resultListener) {
 
+    AudioUserData *audioUserData;
     audioStub::writeResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
     {
         std::lock_guard<std::mutex> lock(update_);
-        if (sp) {
-            auto cb = std::static_pointer_cast<telux::audio::IWriteCb>(sp);
-            cb->onWriteResult(ec, response.streamid(),
-                    response.datalength(), userDataMap_[cmdId]);
-        }
+        audioUserData = userDataMap_[cmdId];
+    }
+
+    auto sp = callbackMap_[cmdId].lock();
+
+    if (sp) {
+        auto cb = std::static_pointer_cast<telux::audio::IWriteCb>(sp);
+        cb->onWriteResult(ec, response.streamid(),
+                response.datalength(), audioUserData);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(update_);
+
         userDataMap_.erase(cmdId);
         callbackMap_.erase(cmdId);
     }

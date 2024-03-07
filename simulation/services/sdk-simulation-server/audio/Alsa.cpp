@@ -707,12 +707,19 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
 
     /* Returns the no of frames written successfully. */
     actualLengthWritten = snd_pcm_writei(streamHandle.pcmHandle, data, streamHandle.frames);
-    if (actualLengthWritten == -EPIPE || actualLengthWritten == -ESTRPIPE) {
-        LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+    if (actualLengthWritten == -EPIPE) {
         snd_pcm_prepare(streamHandle.pcmHandle);
+        free(data);
+        actualLengthWritten = 0;
+        return telux::common::ErrorCode::SUCCESS;
+    }
+
+    if(actualLengthWritten == -ESTRPIPE) {
+        LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
         free(data);
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
+
     free(data);
     LOG(DEBUG, __FUNCTION__,"written frames ", actualLengthWritten);
     /*
@@ -720,7 +727,7 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
      * will be lesser than streamHandle.frames * streamHandle.channels * 2. And this will result in
      * ambigous data being sent from server.
      */
-    actualLengthWritten = actualLengthWritten* streamHandle.channels * 2;
+    actualLengthWritten = writeLengthRequested;
 
     return telux::common::ErrorCode::SUCCESS;
 }

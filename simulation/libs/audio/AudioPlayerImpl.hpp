@@ -3,7 +3,6 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-
 #ifndef AudioPlayerImpl_HPP
 #define AudioPlayerImpl_HPP
 
@@ -20,6 +19,29 @@
 namespace telux {
 namespace audio {
 
+class GetVolumeResponseListener {
+ public:
+    GetVolumeResponseListener(std::mutex& streamMtx);
+    bool responseReady = false;
+    StreamVolume volume;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void getVolumeCompletion(StreamVolume volume, telux::common::ErrorCode errorCode);
+ private:
+    std::mutex &streamMutex_;
+};
+
+class SetVolumeResponseListener {
+ public:
+    SetVolumeResponseListener(std::mutex& streamMtx);
+    bool responseReady = false;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void setVolumeCompletion(telux::common::ErrorCode errorCode);
+ private:
+    std::mutex &streamMutex_;
+};
+
 class AudioPlayerImpl : public IAudioPlayer,
                         public IPlayListener,
                         public IAudioListener,
@@ -35,6 +57,10 @@ class AudioPlayerImpl : public IAudioPlayer,
         std::weak_ptr<IPlayListListener> statusListener) override;
 
     telux::common::ErrorCode stopPlayback() override;
+
+    telux::common::ErrorCode setVolume(StreamVolume volume) override;
+
+    telux::common::ErrorCode getVolume(StreamVolume &volume) override;
 
     void onReadyForWrite() override;
     void onPlayStopped() override;
@@ -59,7 +85,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     const size_t BUFFER_POOL_SIZE = 2;
 
     /* Time in seconds for which player thread waits for the response from audio server */
-    const int WAIT_TIME = 10;
+    const int TIME_10_SECONDS = 10;
 
     bool isCompressed_ = false;
     bool isAdspWriteReady_ = true;
@@ -107,6 +133,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode waitAllWriteResponse();
     telux::common::ErrorCode setFormatAndOffset(
         AudioFormat audioFormat, long &contentOffset);
+    telux::common::ErrorCode adjustFileAndState(long contentOffset);
 
     void resetState();
     void terminatePlayback();

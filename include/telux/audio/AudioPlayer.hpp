@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -197,6 +197,28 @@ class IAudioPlayer {
                   to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode stopPlayback() = 0;
+
+   /**
+    * Sets the volume level of the audio stream.
+    *
+    * Note - direction set in the StreamVolume is not used.
+    *
+    * @param [in] volume Specifies the volume level to set
+    *
+    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the given volume is
+    *           set successfully, otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode setVolume(StreamVolume volume) = 0;
+
+   /**
+    * Retrieves the current volume level of the audio stream.
+    *
+    * @param [out] volume, Contains current volume information upon method return
+    *
+    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved
+    *           successfully, otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;
 
     /**
      * Destructor of the IAudioPlayer.

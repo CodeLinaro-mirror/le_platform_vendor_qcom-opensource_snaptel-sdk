@@ -22,6 +22,9 @@ FileBuffer::FileBuffer(std::string filePath, int thresholdValue) {
 
 void FileBuffer::startBuffering() {
     LOG(DEBUG, __FUNCTION__);
+    readNextBatch_ = false;
+    streamCurrentBatch_ = false;
+    reachedEOF_ = false;
     auto f = std::async(std::launch::async,
         [=]() {
             this->startBufferingSync();

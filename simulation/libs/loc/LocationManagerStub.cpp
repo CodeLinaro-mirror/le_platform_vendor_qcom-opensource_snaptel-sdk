@@ -857,6 +857,16 @@ void LocationManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::locStub::SysInfoUpdateEvent sysInfoEvent;
         event.UnpackTo(&sysInfoEvent);
         handleSysInfoUpdateEvent(sysInfoEvent);
+    } else if (event.Is<::locStub::StreamingStoppedEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " StreamingStopped update");
+        ::locStub::StreamingStoppedEvent streamingStoppedEvent;
+        event.UnpackTo(&streamingStoppedEvent);
+        handleStreamingStoppedEvent();
+    } else if (event.Is<::locStub::ResetWindowEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " ResetWindow update");
+        ::locStub::ResetWindowEvent resetWindowEvent;
+        event.UnpackTo(&resetWindowEvent);
+        handleResetWindowEvent();
     }
 }
 
@@ -870,34 +880,36 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
         if(sessionMask_ & telux::loc::BASIC)
         {
             //1. Check TBF w.r.t UTC field and reject if outside the window.
-            if (filter_ != nullptr) {
-                uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
-                telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
-                if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
-                    timestamp = std::stoull(message[2]);
-                }
-                if (filter_->isReportIgnored(timestamp, ReportType::BASIC)) {
-                    LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
-                    return;
-                }
-                //2. Update the timestamp
-                uint64_t utcTimestamp;
-                if(interval_ % 1000 == 0) {
-                    utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 1000) * 1000 ;
+            {
+                std::unique_lock<std::mutex> lck(filterMutex_);
+                if (filter_ != nullptr) {
+                    uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
+                    telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
+                    if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
+                        timestamp = std::stoull(message[2]);
+                    }
+                    if (filter_->isReportIgnored(timestamp, ReportType::BASIC)) {
+                        LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
+                        return;
+                    }
+                    //2. Update the timestamp
+                    uint64_t utcTimestamp;
+                    if(interval_ % 1000 == 0) {
+                        utcTimestamp =
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 1000) * 1000 ;
+                    } else {
+                        utcTimestamp =
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                    }
+                    message[2] = std::to_string(utcTimestamp);
                 } else {
+                    //2. Update the timestamp
+                    uint64_t utcTimestamp;
                     utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                    message[2] = std::to_string(utcTimestamp);
                 }
-                message[2] = std::to_string(utcTimestamp);
-            } else {
-                //2. Update the timestamp
-                uint64_t utcTimestamp;
-                utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
-                message[2] = std::to_string(utcTimestamp);
             }
-
             //3. Parse.
             std::shared_ptr<LocationInfoEx> locImpl = std::make_shared<LocationInfoEx>();
             parseDetailedPvtReports(locImpl, message);
@@ -918,41 +930,43 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             ((sessionMask_ & telux::loc::DETAILED) || (sessionMask_ & telux::loc::DETAILED_ENGINE)))
         {
             //1. Check TBF w.r.t UTC field and reject if outside the window.
-            if (filter_ != nullptr) {
-                uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
-                telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
-                if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
-                    timestamp = std::stoull(message[2]);
-                }
-                if(sessionMask_ & telux::loc::DETAILED) {
-                    if (filter_->isReportIgnored(timestamp, ReportType::DETAILED)) {
-                        LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
-                        return;
+            {
+                std::unique_lock<std::mutex> lck(filterMutex_);
+                if (filter_ != nullptr) {
+                    uint64_t timestamp = telux::loc::UNKNOWN_TIMESTAMP;
+                    telux::loc::LocationInfoValidity validity = std::stoul(message[13]);
+                    if(validity & telux::loc::HAS_TIMESTAMP_BIT) {
+                        timestamp = std::stoull(message[2]);
                     }
-                } else {
-                    if (filter_->isReportIgnored(timestamp, ReportType::DETAILED_ENG)) {
-                        LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
-                        return;
+                    if(sessionMask_ & telux::loc::DETAILED) {
+                        if (filter_->isReportIgnored(timestamp, ReportType::DETAILED)) {
+                            LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
+                            return;
+                        }
+                    } else {
+                        if (filter_->isReportIgnored(timestamp, ReportType::DETAILED_ENG)) {
+                            LOG(DEBUG, __FUNCTION__, " Report is filtered, hence not sending");
+                            return;
+                        }
                     }
-                }
-                //2. Update the timestamp
-                uint64_t utcTimestamp;
-                if(interval_ % 1000 == 0) {
-                    utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 1000) * 1000 ;
+                    //2. Update the timestamp
+                    uint64_t utcTimestamp;
+                    if(interval_ % 1000 == 0) {
+                        utcTimestamp =
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 1000) * 1000 ;
+                    } else {
+                        utcTimestamp =
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                    }
+                    message[2] = std::to_string(utcTimestamp);
                 } else {
+                    //2. Update the timestamp
+                    uint64_t utcTimestamp;
                     utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                            (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
+                    message[2] = std::to_string(utcTimestamp);
                 }
-                message[2] = std::to_string(utcTimestamp);
-            } else {
-                //2. Update the timestamp
-                uint64_t utcTimestamp;
-                utcTimestamp =
-                        (((std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000) / 100) * 100 ;
-                message[2] = std::to_string(utcTimestamp);
             }
-
             //Parse.
             std::shared_ptr<LocationInfoEx> loc = std::make_shared<LocationInfoEx>();
             parseDetailedPvtReports(loc, message);
@@ -1242,6 +1256,22 @@ void LocationManagerStub::invokeSysInfoUpdateEvent(telux::loc::LocationSystemInf
         } else {
             iter = systemInfoListener_.erase(iter);
         }
+    }
+}
+
+void LocationManagerStub::handleStreamingStoppedEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async, [this](){
+            this->stopReports(nullptr);
+        }).share();
+    taskQ_.add(f);
+}
+
+void LocationManagerStub::handleResetWindowEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lock(filterMutex_);
+    if (filter_ != nullptr) {
+        filter_->resetAllFilters();
     }
 }
 

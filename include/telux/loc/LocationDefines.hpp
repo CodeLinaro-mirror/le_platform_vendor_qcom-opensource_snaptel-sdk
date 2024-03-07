@@ -1265,7 +1265,15 @@ enum GnssMeasurementsClockValidityType {
     /** Validity of driftUncertaintyNsps.*/
     DRIFT_UNCERTAINTY_BIT             = (1<<7),
     /** Validity of hwClockDiscontinuityCount.*/
-    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8)
+    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8),
+    /** Validity of realTime.*/
+    ELAPSED_REAL_TIME_BIT             = (1<<9),
+    /** Validity of realTimeUncertainity.*/
+    ELAPSED_REAL_TIME_UNC_BIT         = (1<<10),
+    /** Validity of gPTPTime.*/
+    ELAPSED_GPTP_TIME_BIT             = (1<<11),
+    /** Validity of gPTPTimeUncertainity.*/
+    ELAPSED_GPTP_TIME_UNC_BIT         = (1<<12)
 };
 
 /** Specifies GnssMeasurementsClockValidityType.*/
@@ -1362,7 +1370,7 @@ struct GnssMeasurementsClock {
     double timeUncertaintyNs;
     /** Full bias, in uint of nanoseconds.*/
     int64_t fullBiasNs;
-    /** Sub-nanoseconds bias, in unit of nonoseconds.*/
+    /** Sub-nanoseconds bias, in unit of nanoseconds.*/
     double biasNs;
     /** Bias uncertainty (one sigma), in unit of nanoseconds.*/
     double biasUncertaintyNs;
@@ -1374,6 +1382,14 @@ struct GnssMeasurementsClock {
     /** HW clock discontinuity count - incremented
      *  for each discontinuity in HW clock.*/
     uint32_t hwClockDiscontinuityCount;
+    /** elapsed time since boot, in unit of nanoseconds.*/
+    uint64_t elapsedRealTime;
+    /** uncertainty of elapsedRealTime, in unit of nanoseconds.*/
+    uint64_t elapsedRealTimeUnc;
+    /** gPTP since boot, in unit of nanoseconds.*/
+    uint64_t elapsedgPTPTime;
+    /** uncertainty of elapsedgPTPTime, in unit of nanoseconds.*/
+    uint64_t elapsedgPTPTimeUnc;
 };
 
 /** Specify GNSS measurements clock and data.

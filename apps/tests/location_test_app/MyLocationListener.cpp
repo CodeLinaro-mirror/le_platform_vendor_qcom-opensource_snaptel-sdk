@@ -944,6 +944,18 @@ void MyLocationListener::printMeasurementsClockValidity(
   if(flags & telux::loc::HW_CLOCK_DISCONTINUITY_COUNT_BIT) {
     std::cout << " Valid hw clock discontinuity count" << std::endl;
   }
+  if(flags & telux::loc::ELAPSED_REAL_TIME_BIT) {
+    std::cout << " Valid elapsed real time" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_REAL_TIME_UNC_BIT) {
+    std::cout << " Valid elapsed real time uncertainity" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_GPTP_TIME_BIT) {
+    std::cout << " Valid elapsed gPTP time" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_GPTP_TIME_UNC_BIT) {
+    std::cout << " Valid elapsed gPTP time uncertainity" << std::endl;
+  }
 }
 
 void MyLocationListener::printMeasurementsDataValidity(
@@ -1728,7 +1740,11 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
       << " Clock drift " << measurementInfo.clock.driftNsps << std::endl
       << " Clock drift uncertainty " << measurementInfo.clock.driftUncertaintyNsps << std::endl
       << " HW clock discontinuity count " << measurementInfo.clock.hwClockDiscontinuityCount
-      << std::endl;
+      << std::endl
+      << " elapsed real time " << measurementInfo.clock.elapsedRealTime << std::endl
+      << " elapsed real time uncertainty " << measurementInfo.clock.elapsedRealTimeUnc << std::endl
+      << " elapsed gPTP time " << measurementInfo.clock.elapsedgPTPTime << std::endl
+      << " elapsed gPTP time uncertainty " << measurementInfo.clock.elapsedgPTPTimeUnc << std::endl;
    recordStream << measurementInfo.clock.leapSecond << ","
                 << measurementInfo.clock.timeNs << ","
                 << measurementInfo.clock.timeUncertaintyNs << ","
@@ -1737,7 +1753,11 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
                 << measurementInfo.clock.biasUncertaintyNs << ","
                 << measurementInfo.clock.driftNsps << ","
                 << measurementInfo.clock.driftUncertaintyNsps << ","
-                << measurementInfo.clock.hwClockDiscontinuityCount << ",";
+                << measurementInfo.clock.hwClockDiscontinuityCount << ","
+                << measurementInfo.clock.elapsedRealTime << ","
+                << measurementInfo.clock.elapsedRealTimeUnc << ","
+                << measurementInfo.clock.elapsedgPTPTime << ","
+                << measurementInfo.clock.elapsedgPTPTimeUnc << ",";
 
    for( auto &measData : measurementInfo.measurements) {
      std::cout << "\n*************** Measurement Data ******************* " << std::endl;

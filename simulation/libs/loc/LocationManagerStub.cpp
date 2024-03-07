@@ -1157,6 +1157,10 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             gnssMeas.clock.driftNsps = std::stod(message[rowItr++]);
             gnssMeas.clock.driftUncertaintyNsps = std::stod(message[rowItr++]);
             gnssMeas.clock.hwClockDiscontinuityCount = std::stoul(message[rowItr++]);
+            gnssMeas.clock.elapsedRealTime = std::stoull(message[rowItr++]);
+            gnssMeas.clock.elapsedRealTimeUnc = std::stoull(message[rowItr++]);
+            gnssMeas.clock.elapsedgPTPTime = std::stoull(message[rowItr++]);
+            gnssMeas.clock.elapsedgPTPTimeUnc = std::stoull(message[rowItr++]);
             while( (rowItr + 24) < message.size() - 1) {
                 telux::loc::GnssMeasurementsData data;
                 data.valid = std::stoul(message[rowItr++]);

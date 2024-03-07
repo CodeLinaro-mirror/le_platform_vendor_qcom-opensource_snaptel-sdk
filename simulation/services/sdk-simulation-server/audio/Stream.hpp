@@ -80,6 +80,7 @@ class Stream : public IStreamEventListener,
 
  private:
     bool isIncallStream = false;
+    bool isHpcmStream = false;
     std::shared_ptr<std::vector<uint8_t>> buffer_;
     StreamHandle streamHandle_;
     StreamParams streamParams_;

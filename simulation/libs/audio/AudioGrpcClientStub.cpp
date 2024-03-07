@@ -483,6 +483,7 @@ telux::common::Status AudioGrpcClientStub::createStream(telux::audio::StreamConf
             static_cast<::audioStub::AudioFormat_Type>(streamConfig.format));
     req.mutable_streamconfig()->mutable_ecnrmode()->set_type(
             static_cast<::audioStub::EcnrMode_Type>(streamConfig.ecnrMode));
+    req.mutable_streamconfig()->set_enablehpcm(streamConfig.enableHpcm);
 
     for(auto dev : streamConfig.deviceTypes) {
         audioStub::DeviceType* deviceType = req.mutable_streamconfig()->add_devicetypes();

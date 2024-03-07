@@ -997,7 +997,7 @@ void AudioGrpcServiceImpl::createStream(
         request.streamconfig().audioformat().type());
     config.streamConfig.ecnrMode = static_cast<telux::audio::EcnrMode>(
         request.streamconfig().ecnrmode().type());
-
+    config.streamConfig.enableHpcm = request.streamconfig().enablehpcm();
     for (auto dev : request.streamconfig().devicetypes()) {
         config.streamConfig.deviceTypes.push_back(static_cast<telux::audio::DeviceType>(
             dev.type()));
@@ -1580,7 +1580,8 @@ void AudioGrpcServiceImpl::read(
 void AudioGrpcServiceImpl::sendReadResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         uint32_t streamId, std::shared_ptr<std::vector<uint8_t>> data,
-        uint32_t actualReadLength, uint32_t offset, int64_t timeStamp, bool isIncallStream) {
+        uint32_t actualReadLength, uint32_t offset, int64_t timeStamp, bool isIncallStream,
+        bool isHpcmStream) {
 
     audioStub::AsyncResponseMessage resp{};
     audioStub::readResponse response{};
@@ -1608,7 +1609,7 @@ void AudioGrpcServiceImpl::sendReadResponse(
     response.set_buffer(bufferPtr, actualReadLength);
     resp.mutable_any()->PackFrom(response);
 
-    if(isIncallStream) {
+    if(isIncallStream || isHpcmStream) {
         std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
     }
 
@@ -1645,8 +1646,8 @@ void AudioGrpcServiceImpl::write(
 
 void AudioGrpcServiceImpl::sendWriteResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
-        uint32_t streamId, uint32_t actualDataLengthWritten, bool isIncallStream) {
-
+        uint32_t streamId, uint32_t actualDataLengthWritten, bool isIncallStream,
+        bool isHpcmStream) {
 
     audioStub::AsyncResponseMessage resp{};
     audioStub::writeResponse response{};
@@ -1672,7 +1673,7 @@ void AudioGrpcServiceImpl::sendWriteResponse(
     response.set_datalength(actualDataLengthWritten);
     resp.mutable_any()->PackFrom(response);
 
-    if(isIncallStream) {
+    if(isIncallStream || isHpcmStream) {
         std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
     }
 

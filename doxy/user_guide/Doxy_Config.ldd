@@ -29,7 +29,7 @@
 ##############################################################################
 #  Changes from Qualcomm Innovation Center are provided under the following license:
 #
-#  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+#  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted (subject to the limitations in the
@@ -304,6 +304,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/linux_platform_sdk.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/sdk_simulation.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/tel_simulation.dox \
+                         $(TELUX_GIT_ROOT)/doxy/user_guide/audio_simulation.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/using_sample_apps.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/logging.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/linux_group.dox \

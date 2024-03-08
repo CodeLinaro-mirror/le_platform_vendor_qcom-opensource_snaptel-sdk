@@ -376,13 +376,15 @@ void SaeApplication::basicFilterAndSafetyChecks(int l2SrcAddr, double distFromRV
         }
 
         fillBsm(reinterpret_cast<bsm_value_t *>(hostMc->j2735_msg));
-        std::shared_ptr<rv_specs> rvsp;
-        try {
-            rvsp = std::make_shared<rv_specs>();
-            rvsp->distFromRV = distFromRV;
-        } catch (std::bad_alloc & e) {
-            cerr << "Error: Create rv specs failed!" << endl;
-            return;
+        std::shared_ptr<rv_specs> rvsp = std::make_shared<rv_specs>(this->l2RvMap[l2SrcAddr]) ;
+        if(rvsp == nullptr){
+            try {
+                rvsp = std::make_shared<rv_specs>();
+                rvsp->distFromRV = distFromRV;
+            } catch (std::bad_alloc & e) {
+                cerr << "Error: Create rv specs failed!" << endl;
+                return;
+            }
         }
         fill_RV_specs(hostMc.get(), threadMc.get(), rvsp.get());
         if (appVerbosity > 5) {

@@ -36,7 +36,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_POWER_REF_DAEMON} ${TARGET_POWER_REF_DAEMON_SOURCES})
 target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power telux_connect
-    telux_data curl pthread)
+    telux_data pthread)
 
 if (CAN_WRAPPER_LIB_FOUND)
     target_link_libraries(${TARGET_POWER_REF_DAEMON} canwrapper)

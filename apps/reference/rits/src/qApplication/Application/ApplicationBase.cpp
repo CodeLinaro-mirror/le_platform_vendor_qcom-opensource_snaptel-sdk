@@ -966,6 +966,10 @@ int ApplicationBase::loadConfiguration(char* file) {
             }
         }
         this->saveConfiguration(configs);
+        int nice = getpriority(PRIO_PROCESS, 0);
+        if(configuration.appVerbosity){
+            fprintf(stdout, "Current process priority value is %d\n", nice);
+        }
         return 0;
     }
 
@@ -975,6 +979,18 @@ int ApplicationBase::loadConfiguration(char* file) {
 
 
 void ApplicationBase::saveConfiguration(map<string, string> configs) {
+
+    // by default the ITS process priority should be set to highest (-20)
+    // however, for testing purposes, qits priority can be altered
+    if (configs.end() != configs.find("procPriority")) {
+        this->configuration.procPriority =
+            stoi(configs["procPriority"], nullptr, 10);
+    }
+    if(setpriority(PRIO_PROCESS, 0,
+            this->configuration.procPriority) < 0) {
+        fprintf(stderr, "Setting priority failed\n");
+    }
+
     if (configs.end() != configs.find("EnablePreRecorded")) {
         istringstream is(configs["EnablePreRecorded"]);
         is >> boolalpha >> this->configuration.enablePreRecorded;

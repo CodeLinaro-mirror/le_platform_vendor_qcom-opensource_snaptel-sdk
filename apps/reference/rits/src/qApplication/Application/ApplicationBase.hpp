@@ -86,6 +86,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <sys/resource.h>
 #include <telux/cv2x/prop/CongestionControlManager.hpp>
 #include <telux/cv2x/prop/V2xPropFactory.hpp>
 #include "v2x_msg.h"
@@ -118,6 +119,7 @@
 #define SHARED_BUFFER_MAX_SIZE 2048
 #define ASYNC_BATCH_SIZE 500
 #define VERIF_STAT_BATCH_SIZE 2500
+#define DEFAULT_PROCESS_PRIORITY -20
 
 #define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
                        "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
@@ -180,6 +182,7 @@ typedef struct {
 } asyncCbData_t;
 
 struct Config{
+    int procPriority = DEFAULT_PROCESS_PRIORITY;
     bool isValid = false;
     int codecVerbosity = 0;
     int ldmVerbosity = 0;

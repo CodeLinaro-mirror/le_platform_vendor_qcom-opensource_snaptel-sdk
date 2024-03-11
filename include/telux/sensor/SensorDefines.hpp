@@ -21,7 +21,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -180,6 +180,8 @@ enum SensorConfigParams {
     SAMPLING_RATE,
     /** Corresponds to SensorConfiguration::batchCount */
     BATCH_COUNT,
+    /** Corresponds to SensorConfiguration::isRotated */
+    ROTATE,
     SENSOR_CONFIG_NUM_PARAMS
 };
 
@@ -253,6 +255,20 @@ struct SensorConfiguration {
     uint32_t batchCount;
 
     /**
+     * Configures if the sensor data provided is rotated as per Euler angles set.
+     *
+     * In case of @ref telux::sensor::ISensorClient::configure, if the flag "isRotated" is set,
+     * the data provided via @ref telux::sensor::ISensorEventListener::onEvent will be rotated
+     * based on Euler angle set via telux::sensor::ISensorManager::setEulerAngleConfig.
+     *
+     * In case of a configuration update received via
+     * @ref telux::sensor::ISensorEventListener::onConfigurationUpdate, the current rotation
+     * configuration is provided to the listener.
+     *
+     */
+    bool isRotated;
+
+    /**
      * Bitset indicating the validity of the received sensor configuration via @ref
      * telux::sensor::ISensorClient::getConfiguration and @ref
      * telux::sensor::ISensorEventListener::onConfigurationUpdate. The configuration items that were
@@ -260,10 +276,11 @@ struct SensorConfiguration {
      *
      * Further, this bitset should be set by the user to indicate the valid fields while configuring
      * the sensor using @ref telux::sensor::ISensorClient::configure.
-     * For continuous stream of data from a sensor, the validity of SAMPLING_RATE and BATCH_COUNT
-     * from @ref SensorConfigParams should be considered. If the sensor had been already configured
-     * with both sampling rate and batch count, it is possible to reconfigure the sensor partially
-     * with just one of these attributes and setting the required validity flag.
+     * For continuous stream of data from a sensor, the validity of SAMPLING_RATE, BATCH_COUNT and
+     * ROTATE from @ref SensorConfigParams should be considered. If the sensor had been already
+     * configured with sampling rate, batch count and rotation required, it is possible to
+     * reconfigure the sensor partially with just one of these attributes and setting the required
+     * validity flag.
      */
     SensorConfigMask validityMask;
 
@@ -272,6 +289,18 @@ struct SensorConfiguration {
      * telux::sensor::ISensorEventListener::onConfigurationUpdate
      */
     SensorConfigMask updateMask;
+};
+
+/**
+ * @brief Euler angles for a sensor.
+ */
+struct EulerAngleConfig {
+    /* rotation around Y [0 , 360] degrees, Positive counter-clockwise. */
+    float roll;
+    /* rotation around X [0 , 360] degrees, Positive counter-clockwise. */
+    float pitch;
+    /* rotation around Z [0 , 360] degrees, Positive counter-clockwise. */
+    float yaw;
 };
 
 /**

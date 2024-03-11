@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -172,10 +172,15 @@ void SensorControlMenu::initConsole() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Start_Self_Test", {},
             std::bind(&SensorControlMenu::startSelfTest, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> setEulerAnglesCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Set_Euler_Angles", {},
+            std::bind(&SensorControlMenu::setEulerAngles, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {listAvailableSensorsCommand, createSensorClientCommand, listCreatedSensorsCommand,
             configureSensorCommand, activateSensorCommand, deactivateSensorCommand,
-            deleteSensorClientCommand, listActiveClientsCommand, startSelfTestCommand};
+            deleteSensorClientCommand, listActiveClientsCommand, startSelfTestCommand,
+            setEulerAnglesCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -247,6 +252,17 @@ void SensorControlMenu::configureSensor(std::vector<std::string> userInput) {
     }
     SensorConfiguration config = SensorUtils::getSensorConfig(sensor);
     sensor->configure(config);
+}
+
+void SensorControlMenu::setEulerAngles(std::vector<std::string> userInput) {
+    telux::sensor::EulerAngleConfig EulerAngleConfig = SensorUtils::getEulerAngleConfig();
+    telux::common::Status status = sensorManager_->setEulerAngleConfig(EulerAngleConfig);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "sensor setEulerAngleConfig failed: ";
+        Utils::printStatus(status);
+    } else {
+        std::cout << "Sensor setEulerAngleConfig successful" << std::endl;
+    }
 }
 
 void SensorControlMenu::activateSensor(std::vector<std::string> userInput) {

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -159,6 +159,10 @@ void SensorClient::printInfo() {
               << (configuration.validityMask.test(SensorConfigParams::BATCH_COUNT)
                          ? std::to_string(configuration.batchCount)
                          : "NA")
+              << ", "
+              << (configuration.validityMask.test(SensorConfigParams::ROTATE)
+                         ? std::to_string(configuration.isRotated)
+                         : "NA")
               << "]"
               << ", Activated: " << (activated_ ? "Yes" : "No") << std::endl;
 }
@@ -207,7 +211,7 @@ void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
 void SensorClient::onConfigurationUpdate(SensorConfiguration configuration) {
     print_notification("ConfigUpdate")
         << tag_ << "Received configuration update: [" << configuration.samplingRate << ", "
-        << configuration.batchCount << "]" << std::endl;
+        << configuration.batchCount << "," << configuration.isRotated << "]" << std::endl;
 }
 
 telux::common::Status SensorClient::configure(SensorConfiguration config) {

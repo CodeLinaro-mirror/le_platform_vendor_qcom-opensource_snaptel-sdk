@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -159,15 +159,15 @@ void SensorTestApp::printHelp(std::string programName) {
               << std::endl
               << "To launch sensor test app in non-interactive mode, refer to the -a or -g options."
               << std::endl
-              << "-a samplerate,batchcount      Creates an accelerometer client with the arguments."
+              << "-a samplerate,batchcount,isRotated Creates an accelerometer client with the arguments."
                  "To create multiple accelerometer clients- "
               << std::endl
-              << " -a samplerate,batchcount -a samplerate,batchcount"
+              << " -a samplerate,batchcount,isRotated -a samplerate,batchcount,isRotated"
               << std::endl
-              << "-g samplerate,batchcount      Creates a gyroscope client with the arguments. "
+              << "-g samplerate,batchcount,isRotated Creates a gyroscope client with the arguments. "
                  "To create multiple gyroscope clients- "
               << std::endl
-              << " -g samplerate,batchcount -g samplerate,batchcount"
+              << " -g samplerate,batchcount,isRotated -g samplerate,batchcount,isRotated"
               << std::endl
               << "-h           This help" << std::endl
               << "In case -q and -n both are specified, the argument specified in the end would "
@@ -255,8 +255,10 @@ void SensorTestApp::updateSensorConfig(std::string str,
     }
     sensorConfig.samplingRate = std::stof(configList[0]);
     sensorConfig.batchCount = std::stoi(configList[1]);
+    sensorConfig.isRotated = std::stoi(configList[2]);
     sensorConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     sensorConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+    sensorConfig.validityMask.set(telux::sensor::SensorConfigParams::ROTATE);
 }
 
 void SensorTestApp::nonInteractiveLaunch() {
@@ -296,7 +298,7 @@ void SensorTestApp::nonInteractiveLaunch() {
         }
         std::cout << " Getting sensor: " << sensorName << " " << sensorID <<
             " Sampling Rate: " << it.second.samplingRate << " Batch Count: " <<
-                it.second.batchCount << "\n";
+                it.second.batchCount << "Rotate: " << it.second.isRotated << "\n";
 
         std::shared_ptr<SensorClient> sensorClient
             = std::make_shared<SensorClient>(sensorID, sensor, commandlineArgs_);

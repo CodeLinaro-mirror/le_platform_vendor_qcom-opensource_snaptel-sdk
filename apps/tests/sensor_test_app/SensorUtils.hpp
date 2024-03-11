@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -85,6 +85,7 @@ class SensorUtils {
     static std::string getSupportedRates(SensorInfo info);
     static std::string getBatchCountLimits(SensorInfo info);
     static SensorConfiguration getSensorConfig(std::shared_ptr<SensorClient> s);
+    static telux::sensor::EulerAngleConfig getEulerAngleConfig();
     static std::shared_ptr<SensorClient> getSensorClient(
         int cid, std::vector<std::shared_ptr<SensorClient>> &sensors);
     template <typename T>

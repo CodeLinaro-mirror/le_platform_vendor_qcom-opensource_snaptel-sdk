@@ -35,7 +35,6 @@
 #include "CallManagerServerImpl.hpp"
 #include "../../../libs/tel/TelDefinesStub.hpp"
 #include "SimulationServer.hpp"
-#include "../../../libs/tel/Helper.hpp"
 #include <telux/common/DeviceConfig.hpp>
 
 #define CALL_MANAGER "ICallManager"
@@ -51,8 +50,6 @@
 
 #define SLOT_1 1
 #define SLOT_2 2
-
-using namespace telux::tel;
 
 CallManagerServerImpl::CallManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -238,7 +235,7 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
 }
 
 void CallManagerServerImpl::handleCallMachine() {
-    if(callInfo_.callDirection == telux::tel::CallDirection::OUTGOING) {
+    if(callInfo_.callDirection == CallDirection::OUTGOING) {
         if(calls_.size() == 1) {
             changeCallState(callInfo_.phoneId , "CALL_DIALING", callInfo_.remotePartyNumber);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -275,9 +272,9 @@ grpc::Status CallManagerServerImpl::Answer(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
-            if(info->callState == telux::tel::CallState::CALL_INCOMING) {
+            if(info->callState == CallState::CALL_INCOMING) {
                 changeCallState(info->phoneId ,"CALL_ACTIVE", info->remotePartyNumber);
-            } else if(info->callState == telux::tel::CallState::CALL_WAITING){
+            } else if(info->callState == CallState::CALL_WAITING){
                 changeCallStateofActiveCalls(*info);
             }
             response->set_status(static_cast<commonStub::Status>(status));
@@ -294,7 +291,7 @@ void CallManagerServerImpl::changeCallStateofActiveCalls(CallInfo info) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if ((*callIterator)->index != info.index) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ACTIVE) {
+            if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
                 (*callIterator)->remotePartyNumber);
             }
@@ -333,6 +330,7 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
     } else {
         input = "makeECallWithMsd";
     }
+    LOG(DEBUG, __FUNCTION__, " API ", input);
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
@@ -371,7 +369,7 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
 
 grpc::Status CallManagerServerImpl::SetConfig(ServerContext* context,
     const telStub::SetConfigRequest* request,  telStub::SetConfigReply* response) {
-    telux::tel::EcallConfig config = {};
+    EcallConfig config = {};
     telux::common::ErrorCode error;
     telux::common::Status status;
     int cbDelay;
@@ -390,7 +388,7 @@ grpc::Status CallManagerServerImpl::SetConfig(ServerContext* context,
                 jsonObjSystemStateSlot_[SLOT_1] = rootObj;
         }
         if (request->is_num_type_valid()) {
-                config.numType = static_cast<telux::tel::ECallNumType>(request->num_type());
+                config.numType = static_cast<ECallNumType>(request->num_type());
                 rootObj[CALL_MANAGER]["eCallConfig"]["numType"] =
                 static_cast<int>(config.numType);
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
@@ -735,8 +733,8 @@ void CallManagerServerImpl::hangupWaitingOrBackgroundCalls(int phoneId) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if((*callIterator)->phoneId == phoneId) {
-            if(((*callIterator)->callState == telux::tel::CallState::CALL_ACTIVE)
-            ||((*callIterator)->callState == telux::tel::CallState::CALL_INCOMING)) {
+            if(((*callIterator)->callState == CallState::CALL_ACTIVE)
+            ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
             changeCallState((*callIterator)->phoneId, "CALL_ENDED",
             (*callIterator)->remotePartyNumber);
         }
@@ -749,7 +747,7 @@ void CallManagerServerImpl::resumeBackgroundCalls(int phoneId) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if((*callIterator)->phoneId == phoneId) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_WAITING) {
+            if((*callIterator)->callState == CallState::CALL_WAITING) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
                 (*callIterator)->remotePartyNumber);
                 foundCall = true;
@@ -760,7 +758,7 @@ void CallManagerServerImpl::resumeBackgroundCalls(int phoneId) {
     if(!foundCall) {
         for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
             ++callIterator) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ON_HOLD) {
+            if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
                 (*callIterator)->remotePartyNumber);
                 break;
@@ -802,7 +800,7 @@ void CallManagerServerImpl::resumeCall(int phoneId, int callIndex) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if(((*callIterator)->phoneId == phoneId) && ((*callIterator)->index )) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ON_HOLD) {
+            if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
                 (*callIterator)->remotePartyNumber);
                 break;
@@ -871,7 +869,7 @@ void CallManagerServerImpl::holdCall(int phoneId, int callIndex) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if(((*callIterator)->phoneId == phoneId) && ((*callIterator)->index )) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ACTIVE) {
+            if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
                 (*callIterator)->remotePartyNumber);
                 break;
@@ -886,14 +884,14 @@ void CallManagerServerImpl::swapCalls(int callHoldIndex, int phoneIndex,
         ++callIterator) {
         if(((*callIterator)->phoneId == phoneIndex)
             && ((*callIterator)->index  == callHoldIndex)) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ON_HOLD) {
+            if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
                 (*callIterator)->remotePartyNumber);
             }
         }
         if(((*callIterator)->phoneId == phoneIndex)
             && ((*callIterator)->index  == callActivateIndex)) {
-            if((*callIterator)->callState == telux::tel::CallState::CALL_ACTIVE) {
+            if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
                 (*callIterator)->remotePartyNumber);
             }
@@ -979,10 +977,10 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
-            if(info->iseCall) { //emergency call
+            if(info->isRegulatoryeCall) { //emergency call
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
+                EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
                 "", phoneId));
             } else {  //Voice call
                 changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
@@ -1092,14 +1090,14 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
     }
     std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
     if(info != nullptr) {
-        if(info->iseCall) {
+        if(info->isRegulatoryeCall) {
             ecallStateMachine_->onEvent(
             ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
+                EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
             //Clear call cache in server
            std::shared_ptr<CallInfo> call =
             findCallAndUpdateCallState
-                (getRemotePartyNumber(phoneId), telux::tel::CallState::CALL_ENDED);
+                (getRemotePartyNumber(phoneId), CallState::CALL_ENDED);
         } else {
             changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
         }
@@ -1112,6 +1110,7 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
 
 grpc::Status CallManagerServerImpl::UpdateECallMsd(ServerContext* context,
     const telStub::UpdateECallMsdRequest* request, telStub::UpdateECallMsdResponse* response) {
+    LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error;
     telux::common::Status status;
     bool isCallback = true;
@@ -1141,6 +1140,60 @@ grpc::Status CallManagerServerImpl::UpdateECallMsd(ServerContext* context,
         response->set_error(static_cast<commonStub::ErrorCode>(error));
         response->set_delay(cbDelay);
     }
+    if(ecallStateMachine_ != nullptr) {
+        if(!(ecallStateMachine_->isEcallMSDUpdateInProgress())) {
+            std::vector<std::string> input = parseUserInput();
+            if((input[0] == "SUCCESS")
+                && (ecallStateMachine_->getCurrentState() ==
+                EcallStateMachine::StateID::STATE_CALL_CONVERSATION)) {
+                bool isNGeCall = false;
+                if(callInfo_.isRegulatoryeCall) {
+                    LOG(DEBUG, __FUNCTION__, " PSAP update request for a regulatory eCall");
+                    isNGeCall = getUserConfiguredeCallRat();
+                } else {
+                    LOG(DEBUG, __FUNCTION__, " PSAP update request for a custom number eCall");
+                    isNGeCall = callInfo_.isTpseCallOverIms;
+                }
+                if(isNGeCall) {
+                    if((callInfo_.isRegulatoryeCall) ||
+                        /* For Private eCall, user sends raw MSD pdu after sending recieving
+                         * MSD pull request from PSAP using ICallManager::updateECallMsd.
+                         */
+                        ((callInfo_.isTpseCallOverIms) &&
+                         (updateECallMsdApiType == updateECallRawMsd))) {
+                            if(updateMsdRequestReceived_ != false) {
+                                //Reset the request after it is handled by state machine..
+                                updateMsdRequestReceived_ = false;
+                                ecallStateMachine_->onEvent(
+                                ecallStateMachine_->createTelEvent(
+                                EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP,
+                                "NGeCall", phoneId));
+                            }
+                    }
+                } else {
+                    // CS eCall
+                    if(callInfo_.isRegulatoryeCall) {
+                        if(updateMsdRequestReceived_ != false) {
+                            // Reset the request after it is handled by state machine.
+                            updateMsdRequestReceived_ = false;
+                        }
+                    } else {
+                        /* MSD update for a custom number eCall is triggered without MSD update
+                         * request from PSAP
+                         */
+                    }
+                    ecallStateMachine_->onEvent(
+                    ecallStateMachine_->createTelEvent(
+                    EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "CSeCall", phoneId));
+                }
+            } else {
+                LOG(ERROR, __FUNCTION__,
+                    "Incorrect JSON configuration or ecall is not in desired state");
+            }
+        }
+    } else {
+        LOG(DEBUG, __FUNCTION__, "The state machine is not yet initialised ");
+    }
     return readStatus;
 }
 
@@ -1161,18 +1214,18 @@ grpc::Status CallManagerServerImpl::RequestNetworkDeregistration(ServerContext* 
     if(readStatus.ok()) {
         if(ecallStateMachine_ != nullptr) {
             getJsonForSystemData(phoneId, jsonObjFileName, rootObj);
-            telux::tel::HlapTimerStatus T9Status = static_cast<telux::tel::HlapTimerStatus>(
+            HlapTimerStatus T9Status = static_cast<HlapTimerStatus>(
                 rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T9Timer"].asInt());
-            telux::tel::HlapTimerStatus T10Status = static_cast<telux::tel::HlapTimerStatus>(
+            HlapTimerStatus T10Status = static_cast<HlapTimerStatus>(
                 rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T10Timer"].asInt());
             /* To ensure that network deregistration is requested after T9 timer is expired and T10
              * timer is active.
              */
-            if((T9Status == telux::tel::HlapTimerStatus::INACTIVE)
-                && (T10Status == telux::tel::HlapTimerStatus::ACTIVE)) {
+            if((T9Status == HlapTimerStatus::INACTIVE)
+                && (T10Status == HlapTimerStatus::ACTIVE)) {
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST,
+                EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST,
                 "T10Timer", phoneId));
             }
         }
@@ -1266,11 +1319,11 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     CallInfo callInfo;
     callInfo.phoneId = phoneId;
     callInfo.index = calls_.size() + 1;
-    callInfo.callDirection = telux::tel::CallDirection::INCOMING;
+    callInfo.callDirection = CallDirection::INCOMING;
     if(callInfo.index > 1) { //MO or MT call already exist then callState = WAITING
-        callInfo.callState = telux::tel::CallState::CALL_WAITING;
+        callInfo.callState = CallState::CALL_WAITING;
     } else { //No MO or MT call already exist then callState = INCOMING
-        callInfo.callState = telux::tel::CallState::CALL_INCOMING;
+        callInfo.callState = CallState::CALL_INCOMING;
     }
     callInfo.remotePartyNumber = dialNumber;
     callInfo.isMsdTransmitted = false;
@@ -1326,31 +1379,13 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
             return;
         }
     }
+    updateMsdRequestReceived_ = true;
     if(ecallStateMachine_ != nullptr) {
         if(!(ecallStateMachine_->isEcallMSDUpdateInProgress())) {
             auto f = std::async(std::launch::async, [this, phoneId]() {
                 this->triggerMsdPullrequestEvent(phoneId);
             }).share();
             taskQ_->add(f);
-        }
-        std::vector<std::string> input = parseUserInput();
-        if((input[0] == "SUCCESS")
-            && (ecallStateMachine_->getCurrentState() ==
-            telux::tel::EcallStateMachine::StateID::STATE_CALL_CONVERSATION)) {
-            bool isNGeCall = getUserConfiguredeCallRat();
-            if(isNGeCall) {
-                ecallStateMachine_->onEvent(
-                ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "NGeCall",
-                    phoneId));
-            } else {
-                ecallStateMachine_->onEvent(
-                ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "CSeCall",
-                    phoneId));
-            }
-        } else {
-            LOG(ERROR, __FUNCTION__, "Incorrect JSON configuration ");
         }
     } else {
         LOG(DEBUG, __FUNCTION__, "The state machine is not yet initialised ");
@@ -1396,12 +1431,23 @@ std::string CallManagerServerImpl::fetchNextToken(std::string& inputString, std:
 
 telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    std::vector<std::string> input = parseUserInput();
-    bool isNGeCall = getUserConfiguredeCallRat();
-    std::string remotePartyNumber = getRemotePartyNumber(phoneId);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    ecallStateMachine_ = std::make_shared<telux::tel::EcallStateMachine>(shared_from_this(), input,
-        callInfo_.isMsdTransmitted, isNGeCall, phoneId, remotePartyNumber, false);
+    if(callInfo_.isRegulatoryeCall != true) {
+        // User configurable failures for Ecall HLAP timers are not applicable for a
+        // custom number eCall
+        std::vector<std::string> input = {"SUCCESS"};
+        ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
+            input, callInfo_.isMsdTransmitted, callInfo_.isTpseCallOverIms, phoneId,
+                callInfo_.remotePartyNumber, true, false);
+    } else {
+        // Regulatory eCall
+        std::vector<std::string> input = parseUserInput();
+        bool isNGeCall = getUserConfiguredeCallRat();
+        std::string remotePartyNumber = getRemotePartyNumber(phoneId);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
+            input, callInfo_.isMsdTransmitted, isNGeCall, phoneId, remotePartyNumber, false,
+            false);
+    }
     if(!ecallStateMachine_) {
         return telux::common::Status::NOMEMORY;
     } else {
@@ -1440,7 +1486,7 @@ bool CallManagerServerImpl::getUserConfiguredeCallRat() {
 }
 
 void CallManagerServerImpl::updateEcallHlapTimer(std::string timer,
-    telux::tel::HlapTimerStatus status) {
+    HlapTimerStatus status) {
     LOG(DEBUG, __FUNCTION__," Timer ", timer, " Timer status ", static_cast<int>(status));
     Json::Value rootObj;
     std::string jsonObjApiResponseFileName = "";
@@ -1457,12 +1503,12 @@ void CallManagerServerImpl::updateEcallHlapTimer(std::string timer,
 
 void CallManagerServerImpl::startTimer(std::string timer) {
     LOG(DEBUG, __FUNCTION__,"Start timer ", timer);
-    updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::ACTIVE);
+    updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
     if((timer == "T2Timer") || (timer == "T5Timer") || (timer == "T6Timer")
         || (timer == "T7Timer") || (timer == "T9Timer") || (timer == "T10Timer")) {
         startTimers(timer);
         auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerCallInfoChangeEvent(timer, telux::tel::HlapTimerEvent::STARTED);
+            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else {
@@ -1483,7 +1529,7 @@ void CallManagerServerImpl::changeCallState(int phoneId, std::string callstate,
 void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision ) {
     auto f = std::async(std::launch::async, [this, msdtransmision ]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(msdtransmision, telux::tel::HlapTimerEvent::UNCHANGED);
+            this->triggerCallInfoChangeEvent(msdtransmision, HlapTimerEvent::UNCHANGED);
         }).share();
     taskQ_->add(f);
 }
@@ -1493,7 +1539,7 @@ void CallManagerServerImpl::startTimers(std::string timer) {
     std::string jsonfilename = "";
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
-        updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::ACTIVE);
+        updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
         getJsonForSystemData(callInfo_.phoneId, jsonfilename, rootObj);
         LOG(DEBUG, __FUNCTION__,"Timer is ", timer, " Phone id is ", callInfo_.phoneId);
         int delay;
@@ -1505,9 +1551,9 @@ void CallManagerServerImpl::startTimers(std::string timer) {
         auto f = std::async(std::launch::async, [this, delay, timer, rootObj]() {
             LOG(DEBUG, __FUNCTION__,"Delay is", delay);
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            telux::tel::HlapTimerStatus status = static_cast<telux::tel::HlapTimerStatus>(
+            HlapTimerStatus status = static_cast<HlapTimerStatus>(
                 rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
-            if(status == telux::tel::HlapTimerStatus::ACTIVE) {
+            if(status == HlapTimerStatus::ACTIVE) {
                 this->triggerTimerExpiry(timer, callInfo_.phoneId);
             }
         }).share();
@@ -1518,15 +1564,15 @@ void CallManagerServerImpl::startTimers(std::string timer) {
         if(timer == "T2Timer") {
             std::string timer[REST_TIMERS_ON_CALL_SETUP] = { "T9Timer", "T10Timer"};
             for(int i = 0 ; i <= REST_TIMERS_ON_CALL_SETUP - 1; i++) {
-                telux::tel::HlapTimerStatus status = static_cast<telux::tel::HlapTimerStatus>(
+                HlapTimerStatus status = static_cast<HlapTimerStatus>(
                     rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer[i]].asInt());
-                if(status == telux::tel::HlapTimerStatus::ACTIVE) {
+                if(status == HlapTimerStatus::ACTIVE) {
                     LOG(DEBUG, __FUNCTION__, "Timer", timer[i], "is active");
-                    updateEcallHlapTimer(timer[i], telux::tel::HlapTimerStatus::INACTIVE);
+                    updateEcallHlapTimer(timer[i], HlapTimerStatus::INACTIVE);
                     auto f = std::async(std::launch::async, [this, timer, i, status]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                         this->triggerCallInfoChangeEvent(timer[i],
-                            telux::tel::HlapTimerEvent::STOPPED);
+                            HlapTimerEvent::STOPPED);
                     }).share();
                     taskQ_->add(f);
                 }
@@ -1539,10 +1585,10 @@ void CallManagerServerImpl::triggerTimerExpiry(std::string timer, int phoneId) {
     LOG(DEBUG, __FUNCTION__);
     if((timer == "T2Timer") || (timer == "T5Timer") || (timer == "T6Timer") || (timer == "T7Timer")
         || (timer == "T10Timer") || (timer == "T9Timer")) {
-        updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::INACTIVE);
+        updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
         if(ecallStateMachine_) {
             ecallStateMachine_->onEvent(ecallStateMachine_->createTelEvent(
-                telux::tel::EcallStateMachine::EventID::ON_TIMER_EXPIRY, timer, phoneId));
+                EcallStateMachine::EventID::ON_TIMER_EXPIRY, timer, phoneId));
         }
     } else {
       LOG(ERROR, __FUNCTION__, "Invalid timer");
@@ -1551,9 +1597,9 @@ void CallManagerServerImpl::triggerTimerExpiry(std::string timer, int phoneId) {
 
 void CallManagerServerImpl::expiryTimer(std::string timer) {
     LOG(DEBUG, __FUNCTION__,"timer is ", timer);
-    updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::INACTIVE);
+    updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
     auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerCallInfoChangeEvent(timer, telux::tel::HlapTimerEvent::EXPIRED);
+            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::EXPIRED);
     }).share();
     taskQ_->add(f);
 }
@@ -1562,17 +1608,17 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
     LOG(DEBUG, __FUNCTION__, "Timer event for ", timer, "timer status is", status);
     std::string value = timer + status;
     if(status == "start") {
-        updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::ACTIVE);
+        updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
         auto f = std::async(std::launch::async, [this, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(timer, telux::tel::HlapTimerEvent::STARTED);
+            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else if (status == "stop" ) {
-        updateEcallHlapTimer(timer, telux::tel::HlapTimerStatus::INACTIVE);
+        updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
         auto f = std::async(std::launch::async, [this, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(timer, telux::tel::HlapTimerEvent::STOPPED);
+            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STOPPED);
         }).share();
         taskQ_->add(f);
     } else {
@@ -1581,7 +1627,7 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
 }
 
 void CallManagerServerImpl::triggerCallInfoChangeEvent(std::string timer,
-    telux::tel::HlapTimerEvent action ) {
+    HlapTimerEvent action ) {
     LOG(DEBUG, __FUNCTION__);
     int slotId = 1;
     ::telStub::ECallInfoEvent eCallInfoEvent;
@@ -1599,7 +1645,7 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::string timer,
 void CallManagerServerImpl::triggerCallStateChangeEvent(int phoneId, std::string action,
     std::string remotepartyNumber) {
     LOG(DEBUG, __FUNCTION__);
-    telux::tel::CallState state = Helper::getCallState(action);
+    CallState state = Helper::getCallState(action);
     std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(remotepartyNumber, state);
     int callIndex = call->index;
     std::string remotePartyNumber = call->remotePartyNumber;
@@ -1617,7 +1663,7 @@ void CallManagerServerImpl::triggerCallStateChangeEvent(int phoneId, std::string
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 
-    if(state == telux::tel::CallState::CALL_ENDED ) {
+    if(state == CallState::CALL_ENDED ) {
         //Clear call cache in server
         auto f = std::async(std::launch::async, [this, callIndex]() {
          std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -1628,7 +1674,7 @@ void CallManagerServerImpl::triggerCallStateChangeEvent(int phoneId, std::string
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
-    std::string remotePartyNumber, telux::tel::CallState action) {
+    std::string remotePartyNumber, CallState action) {
     LOG(DEBUG, __FUNCTION__,"Remote party number is ",remotePartyNumber,
         "Call state is ", static_cast<int>(action) );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
@@ -1641,8 +1687,8 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
     if (iter != std::end(calls_)) {
         LOG(DEBUG, __FUNCTION__, " found matched call");
         (*iter)->callState = action;
-        if(action == telux::tel::CallState::CALL_ENDED) {
-            (*iter)->callEndCause = telux::tel::CallEndCause::NORMAL;
+        if(action == CallState::CALL_ENDED) {
+            (*iter)->callEndCause = CallEndCause::NORMAL;
         }
         return *iter;
     } else {
@@ -1651,7 +1697,7 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
 }
 
 bool CallManagerServerImpl::find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber,
-    telux::tel::CallState action) {
+    CallState action) {
     if(call->remotePartyNumber == remotePartyNumber) {
         return true;
     } else {

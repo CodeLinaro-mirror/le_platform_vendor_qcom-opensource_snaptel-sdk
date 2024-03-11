@@ -143,6 +143,18 @@ private:
     std::unique_ptr<::telStub::DialerService::Stub> stub_;
     std::vector<std::shared_ptr<CallStub>> calls_;
     void onEventUpdate(std::string event);
+    template <typename T>
+    T createRequest(int phoneId,
+        const std::string dialNumber, bool isMsdTransmitted, int inputApi) {
+        T request;
+        request.set_phone_id(phoneId);
+        if (dialNumber != "") { // Regulatory eCall
+            request.set_remote_party_number(dialNumber);
+        }
+        request.set_is_msd_transmitted(isMsdTransmitted);
+        request.set_api(inputApi);
+        return request;
+    }
 };
 
 } // end of namespace tel

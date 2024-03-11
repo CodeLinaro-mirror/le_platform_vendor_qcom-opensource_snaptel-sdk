@@ -315,6 +315,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     bool isNGeCall_;
     int phoneId_;
     std::string remotePartyNumber_;
+    bool isCustomNumbereCall_;
  public:
     /**
      * Constructor for EcallStateMachine
@@ -322,7 +323,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
      */
     EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
         std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall, int phoneId
-        , std::string remotePartyNumber, bool updateInProgress);
+        , std::string remotePartyNumber, bool isCustomNumberEcall, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -387,9 +388,13 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
 
     bool isEcallMSDUpdateInProgress();
 
+    bool isCustomNumberEcall();
+
     int getPhoneId();
 
     std::string getRemotePartyNumber();
+
+    bool updateInProgress_;
 
     enum StateID {
         STATE_IDLE = STATE_ID_INVALID,
@@ -401,8 +406,6 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
         STATE_CALL_CONVERSATION,
         STATE_PSAP_CALLBACK
     };
-
-    bool updateInProgress_;
 };
 
 }  // namespace tel

@@ -61,6 +61,7 @@
 #define makeTpsECallOverCSWithoutMsd 6
 #define updateEcallMsd 7
 #define updateECallRawMsd 8
+#define makeVoiceCall 9
 
 class Helper  {
 public:

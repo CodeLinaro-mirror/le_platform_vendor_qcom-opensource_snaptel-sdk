@@ -51,6 +51,7 @@
 #include "EcallStateMachine.hpp"
 #include "../event/ServerEventManager.hpp"
 #include "../event/EventService.hpp"
+#include "../../../libs/tel/Helper.hpp"
 
 
 namespace telux {
@@ -61,17 +62,20 @@ namespace tel {
 
 #define INVALID -1
 
+using namespace telux::tel;
+
 struct CallInfo {
-   telux::tel::CallState callState;
+   CallState callState;
    int index = INVALID;
-   telux::tel::CallDirection callDirection = telux::tel::CallDirection::NONE;
+   CallDirection callDirection = CallDirection::NONE;
    std::string remotePartyNumber = "";
-   telux::tel::CallEndCause callEndCause;
+   CallEndCause callEndCause;
    int phoneId;
-   bool iseCall = false;
+   bool isRegulatoryeCall = false;
    bool isMultiPartyCall = false;
    bool isMsdTransmitted = false;
    bool isMpty = false;
+   bool isTpseCallOverIms = false;
 };
 
 
@@ -153,7 +157,8 @@ private:
     std::map <int, Json::Value> jsonObjApiResponseSlot_;
     std::map <int, std::string> jsonObjApiResponseFileName_;
     std::mutex callManagerMutex_;
-    std::shared_ptr<telux::tel::EcallStateMachine> ecallStateMachine_;
+    std::shared_ptr<EcallStateMachine> ecallStateMachine_;
+    bool updateMsdRequestReceived_ = false;
     grpc::Status readJson();
     void getJsonForSystemData (int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,
@@ -165,11 +170,11 @@ private:
     void startTimers(std::string timer);
     void triggerTimerExpiry(std::string timer, int phoneId);
     void triggerIncomingCallEvent(CallInfo callInfo);
-    void triggerCallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
+    void triggerCallInfoChangeEvent(std::string timer, HlapTimerEvent action);
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(int phoneId, std::string action, std::string remotepartyNumber);
     bool findAndRemoveMatchingCall(int callIndex);
-    void updateEcallHlapTimer(std::string timer, telux::tel::HlapTimerStatus status);
+    void updateEcallHlapTimer(std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();
     bool getUserConfiguredeCallRat();
     std::string getRemotePartyNumber(int phoneId);
@@ -181,10 +186,10 @@ private:
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
     void logCallDetails();
     std::shared_ptr<CallInfo> findCallAndUpdateCallState(std::string remotePartyNumber,
-        telux::tel::CallState callState);
+        CallState callState);
     bool findMatchingCall(CallInfo callToCompare);
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
-    bool find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber, telux::tel::CallState action);
+    bool find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber, CallState action);
     void onEventUpdate(std::string event);
     void handleCallMachine();
     void changeCallStateofActiveCalls(CallInfo info);
@@ -199,13 +204,26 @@ private:
         int size = calls_.size();
         callInfo.phoneId = request->phone_id();
         callInfo.index = size + 1;
-        callInfo.callDirection = telux::tel::CallDirection::OUTGOING;
-        //No input will be passed from client for Standard eCall
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = CallState::CALL_IDLE;
+        int makeEcallApiType = static_cast<int>(request->api());
+        if((makeEcallApiType == makeECallWithMsd) || (makeEcallApiType == makeECallWithRawMsd) ||
+            (makeEcallApiType == makeECallWithoutMsd)) {
+            callInfo.isRegulatoryeCall = true;
+        } else {
+            callInfo.isRegulatoryeCall = false;
+        }
+        if(makeEcallApiType == makeTpsECallOverIMS) {
+            callInfo.isTpseCallOverIms = true;
+        } else {
+            callInfo.isTpseCallOverIms = false;
+        }
         if(request->remote_party_number() == "")
         {
+            // No input will be passed from client for regulatory eCall
             callInfo.remotePartyNumber = getRemotePartyNumber(request->phone_id());
-            callInfo.iseCall = true;
         } else {
+            // Normal Voice call and custom number eCall
             callInfo.remotePartyNumber = request->remote_party_number();
         }
         callInfo.isMsdTransmitted = request->is_msd_transmitted();

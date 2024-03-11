@@ -1203,6 +1203,7 @@ message UpdateECallMsdResponse {
      int32 phone_id = 1;
      string remote_party_number = 2;
      bool is_msd_transmitted = 3;
+     int32 api = 4;
  }
 
  message MakeCallReply {

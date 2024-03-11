@@ -493,9 +493,6 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
                     status = telux::common::Status::NOTSUPPORTED;
                 }
             }
-            if ((indexstodelete.size() == 0) && (delAtIndex)) {
-                status = telux::common::Status::FAILED;
-            }
             if(delAtIndex) {
                 error = deletedSmsatIndex(phoneId, indexstodelete);
             }
@@ -982,10 +979,10 @@ int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
     int nextIndex;
     bool flag = false;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    /* If sms message of index 1 is not present return index 1
+    /* If sms message of index 0 is not present return index 0
      * as it's the first missing element of database.
      */
-    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 1) {
+    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 0) {
         int size = getSMSStorage(phoneId);
         for (int i = 0; i < size - 1; i++) {
             currentIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
@@ -998,14 +995,14 @@ int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
             }
         }
         if(flag != true) {
-            LOG(DEBUG, __FUNCTION__, "Return Current index is ", size + 1);
-            return size + 1;
+            LOG(DEBUG, __FUNCTION__, "Return Current index is ", size);
+            return size;
         } else {
             LOG(DEBUG, __FUNCTION__, "Current index is ", currentIndex + 1 );
             return currentIndex + 1;
         }
     } else {
-        return 1;
+        return 0;
     }
 }
 
@@ -1235,11 +1232,11 @@ void SmsManagerServerImpl::sortDatabase(int phoneId, Json::Value newSms, int ind
     if(index > currentSMSCount - 1) {
         return;
     } else {
-        for (int i = currentSMSCount - 1; i > index - 1 ; --i ) {
+        for (int i = currentSMSCount - 1; i > index ; --i ) {
            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i] =
             rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i - 1];
         }
-        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index - 1] = newSms;
+        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index] = newSms;
     }
     JsonParser::writeToJsonFile(rootObj, jsonfilename);
     jsonObjSystemStateSlot_[phoneId] = rootObj;

@@ -12,7 +12,7 @@
             {
                 "mcc" : 810 , /* Refer telux::tel::PreferredNetworkInfo for more details*/
                 "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
-                "ratTypes" : "15 14 7 10" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7" /* Refer telux::tel::PreferredNetworkInfo for more details*/
             },
             {
                 "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
@@ -40,7 +40,7 @@
             {
                 "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/
                 "mnc" : 99, /* Refer telux::tel::PreferredNetworkInfo for more details*/
-                "ratTypes" : "15 14 7 10" /* Refer telux::tel::PreferredNetworkInfo for more details*/
+                "ratTypes" : "15 14 7" /* Refer telux::tel::PreferredNetworkInfo for more details*/
             },
             {
                 "mcc" : 810, /* Refer telux::tel::PreferredNetworkInfo for more details*/

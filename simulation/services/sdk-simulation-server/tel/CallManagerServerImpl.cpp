@@ -51,6 +51,9 @@
 #define SLOT_1 1
 #define SLOT_2 2
 
+#define MSD_VERSION_2 2
+#define MSD_VERSION_3 3
+
 CallManagerServerImpl::CallManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     readJson();
@@ -435,11 +438,18 @@ grpc::Status CallManagerServerImpl::SetConfig(ServerContext* context,
                 jsonObjSystemStateSlot_[SLOT_1] = rootObj;
         }
         if (request->is_msd_version_valid()) {
-                config.msdVersion = request->msd_version();
-                rootObj[CALL_MANAGER]["eCallConfig"]["msdVersion"]
-                    = config.msdVersion;
-                JsonParser::writeToJsonFile(rootObj, jsonfilename);
-                jsonObjSystemStateSlot_[SLOT_1] = rootObj;
+            if ((request->msd_version() == MSD_VERSION_2 ) ||
+                (request->msd_version() == MSD_VERSION_3 )) {
+                    config.msdVersion = request->msd_version();
+                    rootObj[CALL_MANAGER]["eCallConfig"]["msdVersion"] = config.msdVersion;
+                    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+                    jsonObjSystemStateSlot_[SLOT_1] = rootObj;
+            } else {
+                status = telux::common::Status::INVALIDPARAM;
+                response->set_status(static_cast<commonStub::Status>(status));
+                return readStatus;
+            }
+
         }
         getJsonForApiResponseSlot(SLOT_1, jsonObjApiResponseFileName, jsonObjApiResponse);
         CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, "setECallConfig", status,
@@ -676,17 +686,20 @@ grpc::Status CallManagerServerImpl::RequestEcbm(ServerContext* context,
 }
 
 bool CallManagerServerImpl::match(std::shared_ptr<CallInfo> call, CallInfo callToCompare) {
-    logCallDetails();
+    logCallDetails(call);
     return ((callToCompare.remotePartyNumber == call->remotePartyNumber)
         && (callToCompare.phoneId == call->phoneId));
 }
 
-void CallManagerServerImpl::logCallDetails() {
-    LOG(DEBUG, __FUNCTION__, " SlotId = ", static_cast<int>(callInfo_.phoneId),
-        " Call Info: remotePartyNumber = ", callInfo_.remotePartyNumber,
-        ", callIndex = ", callInfo_.index,
-        ", callDirection = ", static_cast<int>(callInfo_.callDirection),
-        ", callState = ", static_cast<int>(callInfo_.callState));
+void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
+    LOG(DEBUG, __FUNCTION__, " SlotId = ", static_cast<int>(call->phoneId),
+        " Call Info: remotePartyNumber = ", call->remotePartyNumber,
+        ", callIndex = ", call->index,
+        ", callDirection = ", static_cast<int>(call->callDirection),
+        ", isRegulatoryeCall = ", static_cast<bool>(call->isRegulatoryeCall),
+        ", isMsdTransmitted = ", static_cast<bool>(call->callState),
+        ", isMpty = ", static_cast<bool>(call->isMpty),
+        ", isTpseCallOverIms = ", static_cast<bool>(call->isTpseCallOverIms));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -707,7 +720,7 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, in
 }
 
 bool CallManagerServerImpl::match(std::shared_ptr<CallInfo> call, int slotId, int callIndex) {
-    logCallDetails();
+    logCallDetails(call);
     return ((call->index == callIndex) && (call->phoneId == slotId));
 }
 
@@ -978,10 +991,13 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
             if(info->isRegulatoryeCall) { //emergency call
-                ecallStateMachine_->onEvent(
-                ecallStateMachine_->createTelEvent(
-                EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
-                "", phoneId));
+                LOG(DEBUG, __FUNCTION__);
+                if(ecallStateMachine_ != nullptr) {
+                    ecallStateMachine_->onEvent(
+                    ecallStateMachine_->createTelEvent(
+                    EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
+                    "", phoneId));
+                }
             } else {  //Voice call
                 changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
             }
@@ -1091,9 +1107,11 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
     std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
     if(info != nullptr) {
         if(info->isRegulatoryeCall) {
-            ecallStateMachine_->onEvent(
-            ecallStateMachine_->createTelEvent(
-                EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
+            if(ecallStateMachine_ != nullptr) {
+                ecallStateMachine_->onEvent(
+                    ecallStateMachine_->createTelEvent(
+                    EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
+            }
             //Clear call cache in server
            std::shared_ptr<CallInfo> call =
             findCallAndUpdateCallState
@@ -1327,11 +1345,11 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     }
     callInfo.remotePartyNumber = dialNumber;
     callInfo.isMsdTransmitted = false;
-    callInfo.isMultiPartyCall = false;
+    callInfo.isMultiPartyCall = true;
     callInfo.isMpty = true;
     callInfo_ = callInfo;
-    logCallDetails();
     auto call = std::make_shared<CallInfo>(callInfo);
+    logCallDetails(call);
     if(!findMatchingCall(callInfo)) {
         calls_.emplace_back(call);
     } else {
@@ -1519,6 +1537,7 @@ void CallManagerServerImpl::startTimer(std::string timer) {
 void CallManagerServerImpl::changeCallState(int phoneId, std::string callstate,
     std::string remotepartyNumber) {
     //Update call state at server
+    LOG(DEBUG, __FUNCTION__);
     auto f = std::async(std::launch::async, [this, phoneId, callstate, remotepartyNumber ]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         this->triggerCallStateChangeEvent(phoneId, callstate, remotepartyNumber);

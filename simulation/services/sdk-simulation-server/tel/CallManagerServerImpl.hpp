@@ -184,7 +184,7 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool match(std::shared_ptr<CallInfo> call, CallInfo callToCompare);
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
-    void logCallDetails();
+    void logCallDetails(std::shared_ptr<CallInfo> call);
     std::shared_ptr<CallInfo> findCallAndUpdateCallState(std::string remotePartyNumber,
         CallState callState);
     bool findMatchingCall(CallInfo callToCompare);
@@ -206,6 +206,7 @@ private:
         callInfo.index = size + 1;
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
+        callInfo.isMultiPartyCall = true;
         int makeEcallApiType = static_cast<int>(request->api());
         if((makeEcallApiType == makeECallWithMsd) || (makeEcallApiType == makeECallWithRawMsd) ||
             (makeEcallApiType == makeECallWithoutMsd)) {
@@ -228,8 +229,8 @@ private:
         }
         callInfo.isMsdTransmitted = request->is_msd_transmitted();
         callInfo_ = callInfo;
-        logCallDetails();
         auto call = std::make_shared<CallInfo>(callInfo);
+        logCallDetails(call);
         if(!findMatchingCall(callInfo)) {
             calls_.emplace_back(call);
             return true;

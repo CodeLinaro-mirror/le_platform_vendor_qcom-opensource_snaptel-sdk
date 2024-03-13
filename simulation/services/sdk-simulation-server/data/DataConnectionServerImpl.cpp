@@ -739,6 +739,7 @@ void DataConnectionServerImpl::clearCachedDataCall(
         if (stopAllCalls) {
             this->triggerStopDataCallEvent(profileId, callObj->slotId,
                 callObj->ipFamilyType, callObj->ifaceName);
+            ++itr;
         } else {
             if (owners.find(client_id) != owners.end()) {
                 owners.erase(client_id);

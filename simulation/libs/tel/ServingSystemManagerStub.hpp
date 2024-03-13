@@ -47,7 +47,7 @@ public:
     telux::tel::DcStatus getDcStatus() override;
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
-    telux::common::Status requestNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
+    telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,

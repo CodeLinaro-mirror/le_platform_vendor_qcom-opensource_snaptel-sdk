@@ -644,12 +644,12 @@ public:
     *
     * @param [out] rejectInfo  Network reject information @ref NetworkRejectInfo
     *
-    * @returns Status of requestNetworkRejectInfo i.e. success or suitable error code.
+    * @returns Status of getNetworkRejectInfo i.e. success or suitable error code.
     *
     * @note   Eval: This is a new API and is being evaluated. It is subject to
     *         change and could break backwards compatibility.
     */
-   virtual telux::common::Status requestNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
+   virtual telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
 
    /**
     * Register a listener for specific updates from serving system.

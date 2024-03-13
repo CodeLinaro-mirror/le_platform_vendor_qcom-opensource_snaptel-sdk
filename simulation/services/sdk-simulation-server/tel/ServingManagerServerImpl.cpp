@@ -373,14 +373,14 @@ grpc::Status ServingManagerServerImpl::RequestRFBandInfo(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ServingManagerServerImpl::RequestNetworkRejectInfo(ServerContext* context,
-    const ::telStub::RequestNetworkRejectInfoRequest* request,
-    telStub::RequestNetworkRejectInfoReply* response) {
+grpc::Status ServingManagerServerImpl::GetNetworkRejectInfo(ServerContext* context,
+    const ::telStub::GetNetworkRejectInfoRequest* request,
+    telStub::GetNetworkRejectInfoReply* response) {
     LOG(DEBUG, __FUNCTION__);
     std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
     std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
     std::string subsystem = MANAGER;
-    std::string method = "requestNetworkRejectInfo";
+    std::string method = "getNetworkRejectInfo";
     JsonData data;
     telux::common::ErrorCode error =
         CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);

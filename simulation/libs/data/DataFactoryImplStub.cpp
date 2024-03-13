@@ -11,6 +11,9 @@
 #include "IpFilterImpl.hpp"
 #include "DataHelper.hpp"
 #include "ServingSystemManagerStub.hpp"
+#include "net/SocksManagerStub.hpp"
+#include "net/NatManagerStub.hpp"
+#include "net/L2tpManagerStub.hpp"
 
 #include "common/Logger.hpp"
 
@@ -281,7 +284,29 @@ std::shared_ptr<IIpFilter> DataFactoryImplStub::getNewIpFilter(IpProtocol proto)
 
 std::shared_ptr<telux::data::net::INatManager> DataFactoryImplStub::getNatManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+
+    if (oprType == telux::data::OperationType::DATA_REMOTE) {
+        return nullptr;
+    }
+
+    std::function<std::shared_ptr<telux::data::net::INatManager>(
+        telux::common::InitResponseCb)>
+        createAndInit = [oprType](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::INatManager> {
+        std::shared_ptr<telux::data::net::NatManagerStub> manager
+            = std::make_shared<telux::data::net::NatManagerStub>(oprType);
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("NAT manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " for operationType = ", static_cast<int>(oprType), " , callback = ", &natCallbacks_);
+    auto manager
+        = getManager<telux::data::net::INatManager>(type,
+            natManagerMap_[oprType], natCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::net::IFirewallManager> DataFactoryImplStub::getFirewallManager(
@@ -301,7 +326,29 @@ std::shared_ptr<telux::data::net::IVlanManager> DataFactoryImplStub::getVlanMana
 
 std::shared_ptr<telux::data::net::ISocksManager> DataFactoryImplStub::getSocksManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+
+    if (oprType == telux::data::OperationType::DATA_REMOTE) {
+        return nullptr;
+    }
+
+    std::function<std::shared_ptr<telux::data::net::ISocksManager>(
+        telux::common::InitResponseCb)>
+        createAndInit = [oprType](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::ISocksManager> {
+        std::shared_ptr<telux::data::net::SocksManagerStub> manager
+            = std::make_shared<telux::data::net::SocksManagerStub>(oprType);
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Socks manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " for operationType = ", static_cast<int>(oprType), " , callback = ", &socksCallbacks_);
+    auto manager
+        = getManager<telux::data::net::ISocksManager>(type,
+            socksManagerMap_[oprType], socksCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::net::IBridgeManager> DataFactoryImplStub::getBridgeManager(
@@ -311,7 +358,23 @@ std::shared_ptr<telux::data::net::IBridgeManager> DataFactoryImplStub::getBridge
 
 std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpManager(
     telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    std::function<std::shared_ptr<telux::data::net::IL2tpManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::IL2tpManager> {
+            std::shared_ptr<telux::data::net::L2tpManagerStub> manager
+                = std::make_shared<telux::data::net::L2tpManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("L2TP manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &l2tpCallbacks_);
+    auto manager
+        = getManager<telux::data::net::IL2tpManager>(type,
+            l2tpManager_, l2tpCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::IClientManager> DataFactoryImplStub::getClientManager(
@@ -348,7 +411,7 @@ std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataS
             appCallback.detach();
         }
         else {
-            LOG(DEBUG, __FUNCTION__, " Nat Manager initialization in progress.");
+            LOG(DEBUG, __FUNCTION__, " DataSettings Manager initialization in progress.");
             if (clientCallback) {
                 dataSettingsCallbacks_[oprType].push_back(clientCallback);
             }
@@ -409,6 +472,20 @@ void DataFactoryImplStub::initCompleteNotifierWithOprType(
         std::lock_guard<std::mutex> lock(dataMutex_);
         Callbacks = initCbs[oprType];
         initCbs.erase(oprType);
+    }
+    for (auto &callback : Callbacks) {
+        callback(status);
+    }
+}
+
+void DataFactoryImplStub::initCompleteNotifier(std::vector<telux::common::InitResponseCb>& initCbs,
+    telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<telux::common::InitResponseCb> Callbacks;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        Callbacks = initCbs;
+        initCbs.clear();
     }
     for (auto &callback : Callbacks) {
         callback(status);

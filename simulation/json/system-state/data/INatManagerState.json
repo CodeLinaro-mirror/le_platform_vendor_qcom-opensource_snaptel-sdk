@@ -1,0 +1,14 @@
+{
+    "INatManager": {
+        "snatEntries" : [
+            {
+                "profileId" : 1,
+                "slotId" : 1,
+                "addr" : "192.168.17.0",
+                "port" : 8080,
+                "globalPort" : 23,
+                "proto" : "TCP"
+            }
+        ]
+    }
+}

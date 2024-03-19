@@ -156,7 +156,7 @@ telux::common::Status CallManagerStub::removeListener(std::shared_ptr<ICallListe
 
 telux::common::Status CallManagerStub::makeCall(int phoneId, const std::string &dialNumber,
     std::shared_ptr<IMakeCallCallback> callback) {
-    LOG(DEBUG, "CallManager - ", __FUNCTION__);
+    LOG(DEBUG, " CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {
         LOG(DEBUG, __FUNCTION__, " Invalid PhoneId");
@@ -177,27 +177,69 @@ telux::common::Status CallManagerStub::makeCall(int phoneId, const std::string &
     if (reqstatus.ok()) {
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
+        std::string remotePartyNumber  =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
         int cbDelay = static_cast<int>(response.delay());
 
-        CallInfo callInfo;
-        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-        callInfo.index = static_cast<int>(response.call().call_index());
-        callInfo.callDirection = CallDirection::OUTGOING;
-        callInfo.callState = telux::tel::CallState::CALL_IDLE;
-        auto info = std::make_shared<CallStub>(phoneId, callInfo);
-        logCallDetails(info);
         if (status == telux::common::Status::SUCCESS ) {
-            if(callback) {
-                auto f = std::async(std::launch::async,
-                [this, error, info, callback, cbDelay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                    callback->makeCallResponse(error, info);
-                }).share();
-                taskQ_->add(f);
-            }
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, callback,
+            nullptr, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
+}
+
+/* This function updates the call details in the library cache and invokes the callback and
+ * same call object cached by client.
+ */
+
+void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,int phoneId,
+    int cbDelay, std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,
+    telux::common::ErrorCode error) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::shared_ptr<CallStub>>::iterator iter;
+    std::lock_guard<std::mutex> lock(callManagerMutex_);
+
+    iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallStub> call) {
+        return find(phoneId, call, remotePartyNumber);
+    });
+
+    if (iter != std::end(calls_)) {
+        LOG(DEBUG, __FUNCTION__, " found matched call");
+        (*iter)->setCallIndex(index);
+        if(iMakecallback) {
+            auto f = std::async(std::launch::async,
+                [this, error, iter, iMakecallback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    iMakecallback->makeCallResponse(error, *iter);
+                }).share();
+            taskQ_->add(f);
+        }
+        if(callback) {
+            auto f = std::async(std::launch::async,
+                [this, error, iter, callback, cbDelay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    callback(error, *iter);
+                }).share();
+            taskQ_->add(f);
+        }
+    }
+}
+
+bool CallManagerStub::find(int phoneId, std::shared_ptr<CallStub> call,
+    std::string remotePartyNumber) {
+    if((call->getRemotePartyNumber() == remotePartyNumber) &&
+        (call->getPhoneId() == phoneId)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string dialNumber,
@@ -219,29 +261,23 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
     ClientContext context;
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = true;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback->makeCallResponse(error, info);
-            }).share();
-            taskQ_->add(f);
+        if (status == telux::common::Status::SUCCESS ) {
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, callback,
+            nullptr, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -272,24 +308,18 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const ECallMsdData
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
         int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
 
-        CallInfo callInfo;
-        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-        callInfo.index = static_cast<int>(response.call().call_index());
-        callInfo.callDirection = CallDirection::OUTGOING;
-        callInfo.callState = telux::tel::CallState::CALL_IDLE;
-        callInfo.transmitMsd = true;
-        auto info = std::make_shared<CallStub>(phoneId, callInfo);
-        logCallDetails(info);
         if (status == telux::common::Status::SUCCESS ) {
-        if(callback) {
-                auto f = std::async(std::launch::async,
-                [this, error, info, callback, cbDelay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                    callback->makeCallResponse(error, info);
-                }).share();
-                taskQ_->add(f);
-            }
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, callback,
+            nullptr, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -317,37 +347,41 @@ void CallManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::CallStateChangeEvent callevent;
         event.UnpackTo(&callevent);
         handleCallInfoChanged(callevent);
-    } else if(event.Is<::telStub::Call>()) {
-        ::telStub::Call callevent;
+    } else if(event.Is<::telStub::HangupCallEvent>()) {
+        ::telStub::HangupCallEvent callevent;
         event.UnpackTo(&callevent);
-        handleIncomingCall(callevent);
+        handleHangup(callevent);
     } else {
         LOG(DEBUG, __FUNCTION__, "No handling required for other events");
     }
 }
 
-void CallManagerStub::handleIncomingCall(::telStub::Call event) {
-    CallInfo callInfo;
+void CallManagerStub::handleHangup(::telStub::HangupCallEvent event) {
     int phoneId = event.phone_id();
-    callInfo.callState = static_cast<telux::tel::CallState>(event.call_state());
-    callInfo.index = event.call_index();
-    callInfo.callDirection = static_cast<telux::tel::CallDirection>(event.call_direction());
-    callInfo.remotePartyNumber = event.remote_party_number();
-    callInfo.isMultiPartyCall = event.is_multi_party_call();
-    callInfo.isMpty = event.is_mpty();
-    auto call = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(call);
-    std::vector<std::weak_ptr<ICallListener>> applisteners;
-    if (listenerMgr_) {
-        listenerMgr_->getAvailableListeners(applisteners);
-        // Notify respective events
-        for(auto &wp : applisteners) {
-            if(auto sp = wp.lock()) {
-                sp->onIncomingCall(call);
-            }
+    int callIndex = event.call_index();
+    LOG(DEBUG, __FUNCTION__, " PhoneId is: ", phoneId, " and callIndex is: ", callIndex);
+    // Clear local cache for the call
+    findAndRemoveMatchingCall(phoneId, callIndex);
+}
+
+void CallManagerStub::findAndRemoveMatchingCall(int phoneId, int index) {
+    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId , " Call Index ", index);
+    std::vector<std::shared_ptr<CallStub>>::iterator iter;
+    std::lock_guard<std::mutex> lock(callManagerMutex_);
+
+    iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallStub> call) {
+        if((call->getPhoneId() == phoneId ) && (call->getCallIndex() == index)) {
+            return true;
+        } else {
+            return false;
         }
+    });
+
+    if (iter != std::end(calls_)) {
+        LOG(DEBUG, __FUNCTION__, " found matched call");
+        calls_.erase(iter);
     } else {
-        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+        LOG(DEBUG, __FUNCTION__, " call not found ");
     }
 }
 
@@ -368,32 +402,179 @@ void CallManagerStub::handleMsdUpdateRequest(::telStub::MsdPullRequestEvent even
 }
 
 void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent event) {
-    int callIndex = event.call_index();
-    std::string remotePartyNumber = event.remote_party_number();
-    std::string action = event.callstate();
-    int phoneId = event.phone_id();
 
-    LOG(DEBUG, __FUNCTION__, "The fetched callIndex is: ", callIndex);
+    std::vector<std::shared_ptr<CallStub>> calls ;
+    for (int i = 0; i < event.calls_size(); i++) {
+        CallInfo callInfo;
+        callInfo.callState = static_cast<telux::tel::CallState>(
+            event.calls(i).call_state());
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ",
+            static_cast<int>(callInfo.callState));
+        callInfo.index  =  static_cast<int>(event.calls(i).call_index());
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(callInfo.index));
+        callInfo.callDirection  =  static_cast<telux::tel::CallDirection>(
+            event.calls(i).call_direction());
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
+            static_cast<int>(callInfo.callDirection));
+        callInfo.remotePartyNumber = static_cast<std::string>(
+            event.calls(i).remote_party_number());
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
+            static_cast<std::string>(callInfo.remotePartyNumber));
+        callInfo.callEndCause = static_cast<telux::tel::CallEndCause>(
+            event.calls(i).call_end_cause());
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"callEndCause is ",
+            static_cast<int>(callInfo.callEndCause));
+        int phoneId = event.calls(i).phone_id();
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__," phoneId is ", phoneId);
+        callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMultiPartyCall is ", callInfo.isMultiPartyCall);
+        callInfo.isMpty = event.calls(i).is_mpty();
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMpty is ", callInfo.isMpty);
+        auto Info = std::make_shared<CallStub>(phoneId, callInfo);
+        {
+            calls.emplace_back(Info);
+        }
+    }
+    // updates/removes cached calls
+    refreshCachedCalls(calls);
 
-    telux::tel::CallState callState = Helper::getCallState(action);
+    // adds new calls into calls_ list
+    addLatestCalls(calls);
+}
 
-    LOG(DEBUG, __FUNCTION__, "The fetched callState is: ", action);
+void CallManagerStub::refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls) {
+    LOG(DEBUG, __FUNCTION__, " Number of latest calls: ", latestCalls.size());
 
-    getInProgressCalls();
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = remotePartyNumber;
-    callInfo.index = callIndex;
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = callState;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
+    std::vector<std::shared_ptr<CallStub>> callsToBeNotified;
+
+    {
+        std::lock_guard<std::mutex> lock(callManagerMutex_);
+        LOG(DEBUG, "Number of inProgress calls: ", calls_.size());
+
+        // we are taking each cached call and checking whether it matches any of the calls
+        // in the latest call list. Id it is found then we update the cached call info.
+        // If it is not found we assume that the modem has dropped the call.
+        // So we add it to the dropped call list.
+        for (auto cachedCall = std::begin(calls_); cachedCall != std::end(calls_);) {
+            auto iter = std::find_if(
+                std::begin(latestCalls), std::end(latestCalls), [=](
+                    std::shared_ptr<CallStub> latestCallInfo) {
+                    return (*cachedCall)->match(latestCallInfo);
+                });
+
+            if (iter != std::end(latestCalls)) {  // cached call found, update the call with latest
+                                                  // call info from ril
+                LOG(DEBUG, "Updating call details, Call pointer address ", *cachedCall);
+                if ((*cachedCall)->isInfoStale(*iter)) {
+                    LOG(DEBUG, "Updating stale call details: ");
+                    (*cachedCall)->updateCallInfo(*iter);
+                    callsToBeNotified.emplace_back(*cachedCall);
+                }
+                latestCalls.erase(iter);
+                cachedCall++;
+            } else {
+                LOG(DEBUG,
+                    "dropped call found, adding it to droppedCalls_ list and removing from "
+                    "calls_ list., Call pointer address ",
+                    *cachedCall);
+                (*cachedCall)->logCallDetails();  // Logging call details for debugging purposes
+                                                  // only
+                droppedCalls_.emplace_back(*cachedCall);
+                calls_.erase(cachedCall);  // dropped call, remove it
+            }
+        }
+    }
+    for (auto callIter = std::begin(callsToBeNotified); callIter != std::end(callsToBeNotified);
+        ++callIter) {
+        if((*callIter)->getCallState() != CallState::CALL_ENDED) {
+            /* Call ended notification is informed to application only after server drops
+             * the call.
+            */
+            notifyCallInfoChange(*callIter);
+        }
+    }
+    notifyAndRemoveDroppedCalls();
+}
+
+
+
+void CallManagerStub::addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls) {
+    LOG(DEBUG, __FUNCTION__, " Number of latest calls: ", latestCalls.size());
+    for (std::shared_ptr<CallStub> ci : latestCalls) {
+        {
+            std::lock_guard<std::mutex> lock(callManagerMutex_);
+            calls_.emplace_back(ci);
+        }
+        if (ci->getCallState() == CallState::CALL_INCOMING
+            || ci->getCallState() == CallState::CALL_WAITING) {
+            notifyIncomingCall(ci);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " CallManager: notifying listeners about the new call");
+            notifyCallInfoChange(ci);
+        }
+    }
+}
+
+/**
+ * Update call state on dropped calls and remove them
+ */
+void CallManagerStub::notifyAndRemoveDroppedCalls() {
+    std::vector<std::shared_ptr<CallStub>> callsToBeNotified;
+    LOG(DEBUG, __FUNCTION__);
+    {
+        std::lock_guard<std::mutex> lock(callManagerMutex_);
+        LOG(DEBUG, "Size of droppedCalls_ vector is ", droppedCalls_.size());
+        for (auto droppedCall = std::begin(droppedCalls_); droppedCall != std::end(droppedCalls_);
+             droppedCall++) {
+            (*droppedCall)->setCallState(CallState::CALL_ENDED);
+            // Move dropped calls into a local list for notifying listeners
+            callsToBeNotified.emplace_back(std::move(*droppedCall));
+            droppedCalls_.erase(droppedCall--);
+        }
+    }
+
+    // Notify listeners about the call info change
+    for (auto callIter = std::begin(callsToBeNotified); callIter != std::end(callsToBeNotified);
+         ++callIter) {
+        LOG(DEBUG, "Processing droppedCall ", *callIter);
+        notifyCallInfoChange(*callIter);
+        LOG(DEBUG, "Processing droppedCall ", *callIter, " completed.");
+    }
+}
+
+/**
+ * notifyCallInfoChange is a call back implementation
+ * This will be invoked to notify call info changes
+ */
+void CallManagerStub::notifyCallInfoChange(std::shared_ptr<ICall> call) {
+    LOG(DEBUG, __FUNCTION__);
     std::vector<std::weak_ptr<ICallListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
-        // Notify respective events
-        for(auto &wp : applisteners) {
-            if(auto sp = wp.lock()) {
-                sp->onCallInfoChange(info);
+        for (auto &wp : applisteners) {
+            if (auto sp = std::dynamic_pointer_cast<ICallListener>(wp.lock())) {
+                LOG(DEBUG, "found listener for call info change:", sp);
+                sp->onCallInfoChange(call);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+/**
+ * notifyIncomingCall is a call back implementation
+ * This will be invoked to notify the listeners about incoming calls
+ */
+void CallManagerStub::notifyIncomingCall(std::shared_ptr<ICall> call) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::weak_ptr<ICallListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        for (auto &wp : applisteners) {
+            if (auto sp = std::dynamic_pointer_cast<ICallListener>(wp.lock())) {
+                LOG(DEBUG, "found listener for incoming call:", sp);
+                sp->onIncomingCall(call);
             }
         }
     } else {
@@ -538,29 +719,22 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
     ClientContext context;
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = true;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error, info);
-            }).share();
-            taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
+        if (status == telux::common::Status::SUCCESS ) {
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            callback, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -583,31 +757,25 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::vector<
         makeECallWithRawMsd);
     ::telStub::MakeECallReply response;
     ClientContext context;
-
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
     telux::common::Status status = telux::common::Status::FAILED;
+
     if (reqstatus.ok()) {
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
         int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
 
-        CallInfo callInfo;
-        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-        callInfo.index = static_cast<int>(response.call().call_index());
-        callInfo.callDirection = CallDirection::OUTGOING;
-        callInfo.callState = telux::tel::CallState::CALL_IDLE;
-        callInfo.transmitMsd = true;
-        auto info = std::make_shared<CallStub>(phoneId, callInfo);
-        logCallDetails(info);
         if (status == telux::common::Status::SUCCESS ) {
-        if(callback) {
-                auto f = std::async(std::launch::async,
-                [this, error, info, callback, cbDelay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                    callback(error, info);
-                }).share();
-                taskQ_->add(f);
-            }
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            callback, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -632,29 +800,23 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
     ClientContext context;
 
     grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
 
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    callInfo.transmitMsd = true;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-       if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error, info);
-            }).share();
-            taskQ_->add(f);
+        if (status == telux::common::Status::SUCCESS ) {
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            callback, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -685,24 +847,18 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, int category, int 
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
         status = static_cast<telux::common::Status>(response.status());
         int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
 
-        CallInfo callInfo;
-        callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-        callInfo.index = static_cast<int>(response.call().call_index());
-        callInfo.callDirection = CallDirection::OUTGOING;
-        callInfo.callState = telux::tel::CallState::CALL_IDLE;
-        callInfo.transmitMsd = false;
-        auto info = std::make_shared<CallStub>(phoneId, callInfo);
-        logCallDetails(info);
         if (status == telux::common::Status::SUCCESS ) {
-            if(callback) {
-                auto f = std::async(std::launch::async,
-                [this, error, info, callback, cbDelay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                    callback(error, info);
-                }).share();
-                taskQ_->add(f);
-            }
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            callback, error );
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -727,28 +883,22 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
     ClientContext context;
 
     grpc::Status reqstatus = stub_->MakeCall(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-
-    CallInfo callInfo;
-    callInfo.remotePartyNumber = static_cast<std::string>(response.call().remote_party_number());
-    callInfo.index = static_cast<int>(response.call().call_index());
-    callInfo.callDirection = CallDirection::OUTGOING;
-    callInfo.callState = telux::tel::CallState::CALL_IDLE;
-    auto info = std::make_shared<CallStub>(phoneId, callInfo);
-    logCallDetails(info);
-    if (status == telux::common::Status::SUCCESS ) {
-        if(callback) {
-            auto f = std::async(std::launch::async,
-            [this, error, info, callback, cbDelay]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error, info);
-            }).share();
-            taskQ_->add(f);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
+        if (status == telux::common::Status::SUCCESS ) {
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber,phoneId, cbDelay, nullptr,
+                callback, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
         }
     }
     return status;
@@ -883,34 +1033,6 @@ telux::common::Status CallManagerStub::requestECallHlapTimerStatus(int phoneId,
 
 std::vector<std::shared_ptr<ICall>> CallManagerStub::getInProgressCalls() {
     LOG(DEBUG, "CallMgr - ", __FUNCTION__);
-
-    ::telStub::GetInProgressCallsReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status reqstatus = stub_->GetInProgressCalls(&context, request, &response);
-    if (reqstatus.ok()) {
-        std::lock_guard<std::mutex> lock(callManagerMutex_);
-        calls_.clear();
-        for (int i = 0; i < response.calls_size(); i++) {
-            CallInfo callInfo;
-            callInfo.callState = static_cast<telux::tel::CallState>(
-                response.calls(i).call_state());
-            callInfo.index  =  static_cast<int>(response.calls(i).call_index());
-            callInfo.callDirection  =  static_cast<telux::tel::CallDirection>(
-                response.calls(i).call_direction());
-            callInfo.remotePartyNumber = static_cast<std::string>(
-                response.calls(i).remote_party_number());
-            callInfo.callEndCause = static_cast<telux::tel::CallEndCause>(
-                response.calls(i).call_end_cause());
-            int phoneId = response.calls(i).phone_id();
-            callInfo.isMultiPartyCall = response.calls(i).is_multi_party_call();
-            callInfo.isMpty = response.calls(i).is_mpty();
-            auto Info = std::make_shared<CallStub>(phoneId, callInfo);
-            calls_.emplace_back(Info);
-        }
-    }
-    //Update local cache
     std::vector<std::shared_ptr<ICall>> iCalls(calls_.begin(), calls_.end());
     return iCalls;
 }

@@ -34,6 +34,8 @@
 
 #include "CallStub.hpp"
 
+#define INVALID_CALL_INDEX -1
+
 using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
@@ -349,3 +351,92 @@ void CallStub::setCallIndex(int index) {
     callInfo_.index = index;
 }
 
+/**
+ * Match new callinfo with cached call detail.
+ *
+ * @param CallInfo [in] call details
+ * @param slotId [in] call slotId
+ * @return bool, true on match other wise false
+ */
+
+bool CallStub::match(std::shared_ptr<CallStub> &ci) {
+    LOG(DEBUG, __FUNCTION__, " Stale Call:");
+    logCallDetails();  // Logging call details only for debugging purposes
+    LOG(DEBUG, __FUNCTION__, " SlotId = ", ci->getPhoneId(),
+        " Original Call CallInfo: remotePartyNumber = ", ci->getRemotePartyNumber(),
+        ", callIndex = ", ci->getCallIndex(), "call state = ",
+            static_cast<int>(ci->getCallState()),
+        ", callDirection = ",  static_cast<int>(ci->getCallDirection()));
+
+    /* In case of MO call initially the cached call index will be -1, so ignore comparing the
+       cached call index and new call info index and just compare the remote party number of
+       both along with call index for cached call with -1.
+
+       In case of MO eCall, initially remote party number will be saved as empty string in
+       cached call and will not be entered by user while dialing, so ignore comparing the cached
+       remote party number and new call info remote party number and just compare the call index
+       of both along with remote party number for cached call with empty string. The call index
+       get updated after dial eCall response is received. */
+    /* Follows below steps to match a given call(ci) with the cached call(callInfo)
+       1. If the cached call index is valid, then compare the index, slotId and direction(isMt)
+       2. If the cached call index is not valid, then consider comparing the remotePartyNumber.
+          a. If remotePartyNumber of cached call is not valid(i.e empty) then compare only the
+             direction(isMt) and slotId
+    */
+    if (callInfo_.index != INVALID_CALL_INDEX) {
+        if ((callInfo_.index == ci->getCallIndex()) &&
+            (callInfo_.callDirection == ci->getCallDirection())
+            && (ci->getPhoneId() == phoneId_)) {
+            return true;
+        }
+    } else if (((ci->getRemotePartyNumber() == callInfo_.remotePartyNumber)
+                   || (callInfo_.remotePartyNumber == ""))
+               && (callInfo_.callDirection == ci->getCallDirection())
+               && (ci->getPhoneId() == phoneId_)) {
+        return true;
+    }
+    return false;
+}
+
+bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
+    return ((callInfo_.index != ci->getCallIndex()) ||
+            (callInfo_.callDirection != ci->getCallDirection())
+            || (callInfo_.remotePartyNumber != ci->getRemotePartyNumber())
+            || (callInfo_.callState != ci->getCallState()));
+}
+
+/*
+ * Logs the attributes of this Call object
+ * To be used for debugging purposes
+ * ps: Debug logs will be disabled in Release builds
+ */
+void CallStub::logCallDetails() {
+    LOG(DEBUG, " SlotId = ", phoneId_,
+        " Call Info: remotePartyNumber = ", callInfo_.remotePartyNumber,
+        ", callIndex = ", callInfo_.index,
+        ", callDirection = ", static_cast<int>(callInfo_.callDirection),
+        ", callState = ", static_cast<int>(callInfo_.callState));
+}
+
+/**
+ * Update call details from RIL
+ */
+telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callInfo) {
+    LOG(DEBUG, "Current call details");
+    logCallDetails();
+    callInfo_.index = callInfo->getCallIndex();
+    callInfo_.callDirection = callInfo->getCallDirection();
+    callInfo_.remotePartyNumber = callInfo->getRemotePartyNumber();
+    callInfo_.callState = callInfo->getCallState();
+    LOG(DEBUG, "Updated call details");
+    logCallDetails();
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Set the current state of this call
+ */
+void CallStub::setCallState(CallState callState) {
+    LOG(DEBUG, "Call state is ", (int)callState);
+    callInfo_.callState = callState;
+}

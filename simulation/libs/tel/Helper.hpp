@@ -156,6 +156,28 @@ public:
             return telux::tel::CallState::CALL_IDLE;
         }
     }
+
+    static std::string getCallStateInString(telux::tel::CallState callState) {
+        if(callState == telux::tel::CallState::CALL_IDLE) {
+            return "CALL_IDLE";
+        } else if (callState == telux::tel::CallState::CALL_ACTIVE) {
+            return "CALL_ACTIVE";
+        } else if (callState == telux::tel::CallState::CALL_ON_HOLD) {
+            return "CALL_HOLD";
+        } else if (callState == telux::tel::CallState::CALL_DIALING) {
+            return "CALL_DIALING";
+        } else if (callState == telux::tel::CallState::CALL_INCOMING) {
+            return "CALL_INCOMING";
+        } else if (callState == telux::tel::CallState::CALL_WAITING) {
+            return "CALL_WAITING";
+        } else if (callState == telux::tel::CallState::CALL_ALERTING) {
+            return "CALL_ALERTING";
+        } else if (callState == telux::tel::CallState::CALL_ENDED) {
+            return "CALL_ENDED";
+        } else {
+            return "CALL_IDLE";
+        }
+    }
 };
 
 #endif // HELPER_HPP

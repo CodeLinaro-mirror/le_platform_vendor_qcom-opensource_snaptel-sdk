@@ -109,13 +109,18 @@ public:
     void updateCallState(CallState callState);
     void updateCallDirection(CallDirection callDirection);
     void setCallIndex(int index);
+    void setCallState(CallState callState);
+    bool match(std::shared_ptr<CallStub> &ci);
+    bool isInfoStale(const std::shared_ptr<CallStub> &ci);
+    telux::common::Status updateCallInfo(std::shared_ptr<CallStub> &callInfo);
+    void logCallDetails();
 private:
     std::unique_ptr<::telStub::DialerService::Stub> stub_;
     int phoneId_;
     CallInfo callInfo_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     void invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
-    ErrorCode error, int cbDelay);
+        ErrorCode error, int cbDelay);
 };
 
 } // end of namespace tel

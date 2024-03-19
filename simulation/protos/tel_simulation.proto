@@ -99,7 +99,6 @@
      rpc UpdateECallMsd(UpdateECallMsdRequest) returns (UpdateECallMsdResponse) {}
      rpc RequestECallHlapTimerStatus(RequestECallHlapTimerStatusRequest) returns
          (RequestECallHlapTimerStatusReply) {}
-     rpc GetInProgressCalls(google.protobuf.Empty) returns (GetInProgressCallsReply) {}
      rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
      rpc SetConfig(SetConfigRequest) returns (SetConfigReply) {}
      rpc GetConfig(google.protobuf.Empty) returns (GetConfigResponse) {}
@@ -219,10 +218,7 @@ message GetCardStateRequest {
  }
 
  message CallStateChangeEvent {
-    int32 call_index = 1;
-    string callstate = 2;
-    string remote_party_number = 3;
-    int32 phone_id = 4;
+    repeated Call calls = 1;
 }
 
  message MsdPullRequestEvent {
@@ -1059,10 +1055,6 @@ message UpdateECallMsdResponse {
     commonStub.ErrorCode error = 4;
     int32 delay = 5;
     bool iscallback = 6;
- }
-
-  message GetInProgressCallsReply {
-     repeated Call calls = 1;
  }
 
  message EcallConfig {

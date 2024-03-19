@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_RP_PLAYBACK_PCM repeated_playback_amrwbplus)
+set(TARGET_RP_PLAYBACK_AMR repeated_playback_amrwbplus)
 
-set(PLAYBACK_PCM_SOURCES
+set(PLAYBACK_AMR_SOURCES
     RepeatedPlayAMRWBPlus.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
@@ -20,10 +20,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_executable (${TARGET_RP_PLAYBACK_PCM} ${PLAYBACK_PCM_SOURCES})
-target_link_libraries(${TARGET_RP_PLAYBACK_PCM} telux_audio)
+add_executable (${TARGET_RP_PLAYBACK_AMR} ${PLAYBACK_AMR_SOURCES})
+target_link_libraries(${TARGET_RP_PLAYBACK_AMR} telux_audio)
 
 # install to target
-install ( TARGETS ${TARGET_RP_PLAYBACK_PCM}
+install ( TARGETS ${TARGET_RP_PLAYBACK_AMR}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )

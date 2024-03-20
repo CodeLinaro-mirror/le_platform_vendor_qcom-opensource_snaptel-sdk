@@ -76,6 +76,10 @@
             "system_msec:                    Time into the current week at reference tick",
             "leap_seconds_before_change:     Number of leap seconds prior to the leap second change event",
             "leap_seconds_after_change:      Number of leap seconds after the leap second change event"
+        ],
+        "disaster_crisis_report" : [
+            "telsdk_event_injector -f loc_mgr -e disaster_crisis_report <path>",
+            "path:                    path to the json file containing disaster and crisis report, for example: system-info/loc/ILocationManager.json"
         ]
     },
     "sensor_feature": {

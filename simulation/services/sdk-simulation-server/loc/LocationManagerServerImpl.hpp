@@ -81,6 +81,7 @@ class LocationManagerServerImpl final : public locStub::LocationManagerService::
     void triggerCapabilitiesUpdateEvent();
     void handleSysInfoUpdateCurrent(std::string event);
     void handleSysInfoUpdateLeapSecond(std::string event);
+    void handleDisasterCrisisReport(std::string event);
     void triggerSysinfoUpdateEvent();
     void triggerStreamingStoppedEvent();
     void triggerResetWindowEvent();

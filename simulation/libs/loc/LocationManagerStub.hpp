@@ -475,6 +475,7 @@ private:
     void handleSysInfoUpdateEvent(::locStub::SysInfoUpdateEvent sysInfoEvent);
     void handleStreamingStoppedEvent();
     void handleResetWindowEvent();
+    void handleGnssDisasterCrisisReport(::locStub::GnssDisasterCrisisReport dcReport);
     void invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo);
     void parseRequest(::locStub::StartReportsEvent startEvent);
     void adjustTimeInterval(uint32_t &interval);

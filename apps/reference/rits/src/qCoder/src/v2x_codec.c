@@ -131,6 +131,7 @@ int decode_msg(msg_contents *mc)
             } else {
                 if(gVerbosity > 3)
                     print_wsa(mc->wsa);
+                ret = 0;
             }
 #else
             if(gVerbosity)
@@ -142,6 +143,8 @@ int decode_msg(msg_contents *mc)
                     if(gVerbosity)
                         fprintf(stderr, "J2735 decode failure\n");
                     return -1;
+                }else{
+                    ret = 0;
                 }
             }
         }
@@ -159,7 +162,6 @@ int decode_msg(msg_contents *mc)
         }
 #endif
     }
-
     return ret;
 }
 /**

@@ -73,11 +73,11 @@ class IAudioMsgDispatcher {
     virtual void sendReadResponse(std::shared_ptr<AudioRequest> audioRequest,
         telux::common::ErrorCode ec, uint32_t streamId,
         std::shared_ptr<std::vector<uint8_t>> data, uint32_t actualReadLength,
-        uint32_t offset, int64_t timeStamp, bool isIncallStream) = 0;
+        uint32_t offset, int64_t timeStamp, bool isIncallStream, bool isHpcmStream) = 0;
 
     virtual void sendWriteResponse(std::shared_ptr<AudioRequest> audioRequest,
         telux::common::ErrorCode ec, uint32_t streamId, uint32_t actualDataLengthWritten,
-        bool isIncallStream) = 0;
+        bool isIncallStream, bool isHpcmStream) = 0;
 
     virtual void sendStartDtmfResponse(std::shared_ptr<AudioRequest> audioRequest,
         telux::common::ErrorCode ec, uint32_t streamId) = 0;

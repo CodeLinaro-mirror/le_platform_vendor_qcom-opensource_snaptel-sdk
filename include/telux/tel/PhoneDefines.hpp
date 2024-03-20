@@ -299,6 +299,7 @@ enum class EcbMode {
 enum class RadioSignalStrengthType {
    GSM_RSSI,     /**< GSM received signal strength indicator.*/
    WCDMA_RSSI,   /**< WCDMA received signal strength indicator.*/
+   LTE_RSSI,     /**< LTE received signal strength indicator.*/
    LTE_SNR,      /**< LTE signal-to-noise ratio.*/
    LTE_RSRQ,     /**< LTE reference signal received quality.*/
    LTE_RSRP,     /**< LTE reference signal received power.*/

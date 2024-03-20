@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,67 +32,55 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
- * This is Data Settings Manager Sample Application using Telematics SDK.
- * It is used to demonstrate APIs to interface with Settings applicable to Data Subsystem
+ * This is a Client Manager Sample Application using Telematics SDK.
+ * It is used to demonstrate APIs to set create, remove, bind, unbind, and query existing Clients
  */
 
-#ifndef DATASETTINGSMENU_HPP
-#define DATASETTINGSMENU_HPP
+#ifndef CLIENTMENU_HPP
+#define CLIENTMENU_HPP
 
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <map>
+#include <iomanip>
 
 
 #include "console_app_framework/ConsoleApp.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/ClientManager.hpp>
+
+#include "ClientListener.hpp"
 
 using namespace telux::data;
 using namespace telux::common;
 
-class DataSettingsMenu : public ConsoleApp ,
-                         public IDataSettingsListener,
-                         public std::enable_shared_from_this<DataSettingsMenu> {
- public:
-    // initialize menu
+class ClientMenu : public ConsoleApp,
+                 public IClientListener,
+                 public std::enable_shared_from_this<ClientMenu> {
+public:
+    // initialize menu and sdk
     bool init();
 
-    // Data Settings Manager APIs
-    void setBackhaulPref(std::vector<std::string> inputCommand);
-    void requestBackhaulPref(std::vector<std::string> inputCommand);
-    void setBandInterferenceConfig(std::vector<std::string> inputCommand);
-    void requestBandInterferenceConfig(std::vector<std::string> inputCommand);
-
-    void requestDdsSwitch(std::vector<std::string> inputCommand);
-    void requestCurrentDds(std::vector<std::string> inputCommand);
-    void setWwanConnectivityConfig(std::vector<std::string> inputCommand);
-    void requestWwanConnectivityConfig(std::vector<std::string> inputCommand);
-    void setMacSecState(std::vector<std::string> inputCommand);
-    void requestMacSecState(std::vector<std::string> inputCommand);
-    void switchBackHaul(std::vector<std::string> inputCommand);
-    void restoreFactorySettings(std::vector<std::string> inputCommand);
-    void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
-    void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
-    void onDdsChange(DdsInfo currentState) override;
-
-    //Initialization callback
+    // Initialization Callback
     void onInitComplete(telux::common::ServiceStatus status);
 
-    DataSettingsMenu(std::string appName, std::string cursor);
-    ~DataSettingsMenu();
- private:
+    // Client Manager APIs
+    void getDeviceDataUsageStats(std::vector<std::string> inputCommand);
+    void resetDataUsageStats(std::vector<std::string> inputCommand);
+    ClientMenu(std::string appName, std::string cursor);
+    ~ClientMenu();
+private:
+    bool initClientManager();
+
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;
-    std::map<telux::data::OperationType,
-      std::shared_ptr<telux::data::IDataSettingsManager>> dataSettingsManagerMap_;
     std::mutex mtx_;
     std::condition_variable cv_;
-    bool initDataSettingsManager(telux::data::OperationType opType);
+    std::shared_ptr<telux::data::IClientManager> clientManager_;
+    std::shared_ptr<ClientListener> clientListener_;
 };
 #endif

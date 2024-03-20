@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -168,6 +168,22 @@ std::string DataUtils::dataCallStatusToString(telux::data::DataCallStatus dcStat
          return "NEWADDR";
       case telux::data::DataCallStatus::NET_DELADDR:
          return "DELADDR";
+      default: { return "UNKNOWN"; }
+   }
+}
+
+std::string DataUtils::usageResetReasonToString(telux::data::UsageResetReason usageResetReason) {
+   switch(usageResetReason) {
+      case telux::data::UsageResetReason::SUBSYSTEM_UNAVAILABLE:
+         return "SUBSYSTEM_UNAVAILABLE";
+      case telux::data::UsageResetReason::BACKHAUL_SWITCHED:
+         return "BACKHAUL_SWITCHED";
+      case telux::data::UsageResetReason::DEVICE_DISCONNECTED:
+         return "DEVICE_DISCONNECTED";
+      case telux::data::UsageResetReason::WLAN_DISABLED:
+         return "WLAN_DISABLED";
+      case telux::data::UsageResetReason::WWAN_DISCONNECTED:
+         return "WWAN_DISCONNECTED";
       default: { return "UNKNOWN"; }
    }
 }

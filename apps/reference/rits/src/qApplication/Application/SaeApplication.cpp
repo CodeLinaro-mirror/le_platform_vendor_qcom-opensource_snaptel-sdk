@@ -325,8 +325,7 @@ void SaeApplication::printTxStats() {
 
 
 // fill data for logging related to received bsms
-//void SaeApplication::fillLoggingData(bsm_value_t* bsm, logData* logData){
-  void SaeApplication::fillLoggingData(bsm_value_t* bsm, bsm_data* bs){
+void SaeApplication::fillLoggingData(bsm_value_t* bsm, bsm_data* bs){
     bs->id = bsm->id;
     bs->timestamp_ms = bsm->timestamp_ms;
     bs->secMark_ms = bsm->secMark_ms;
@@ -616,6 +615,11 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                             }
                         }
 
+                        if(configuration.fakeRVTempIds){
+                           fakeTmpId++;
+                           fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+                           bsm->id = fakeTmpId;
+                        }
                         // perform operations on the message if it is an unsigned bsm
                         basicFilterAndSafetyChecks(l2SrcAddr, distFromRV);
                         fillLoggingData(bsm, &writelog_data.bs);
@@ -641,6 +645,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     {
         if (ret >= 0)
         {
+
             rxSuccess++;
             if (qMon)
             {
@@ -650,13 +655,18 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             totalRxSuccessPerSecond++;
             sem_post(&this->log_sem);
             if (MsgType == MessageType::BSM &&
-                (psid == PSID_BSM || configuration.overridePsidCheck)){
+                 (psid == PSID_BSM || configuration.overridePsidCheck)){
                 if(this->configuration.enableCongCtrl &&
                     this->congCtrlInitialized && !(this->configuration.enableAsync) )
                 {
                     /* If congestion control is enabled, we will pass the contents
                     of the decoded/verified BSM to the cong ctrl library */
                     bsm_value_t* rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
+                    if(configuration.fakeRVTempIds){
+                       fakeTmpId++;
+                       fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+                       rvBsm->id = fakeTmpId;
+                    }
                     unsigned int rvTmpId = rvBsm->id;
                     congestionControlManager->addCongestionControlData(
                         rvTmpId,rvBsm->Latitude/10000000.0,
@@ -1189,6 +1199,11 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         {
             asyncCbData[async_index].indexToData = async_index;
             memcpy(&asyncCbData[async_index].asyncBs, &bs, sizeof(bsm_data));
+            if(configuration.fakeRVTempIds){
+               fakeTmpId++;
+               fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+               asyncCbData[async_index].asyncBs.id = fakeTmpId;
+            }
             asyncCbData[async_index].msg_index = index;
             asyncCbData[async_index].l2SrcAddr = l2SrcAddr;
             asyncCbData[async_index].timestamp = timestamp;

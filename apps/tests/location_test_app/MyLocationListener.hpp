@@ -132,6 +132,8 @@ private:
    void printEphSrc(telux::loc::GnssEphSource ephSrc);
    void printEphAct(telux::loc::GnssEphAction ephAct);
    void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
+
+   void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

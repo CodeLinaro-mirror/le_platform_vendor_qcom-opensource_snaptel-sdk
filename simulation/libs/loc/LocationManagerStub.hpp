@@ -460,6 +460,7 @@ private:
     std::mutex terrestrialPositionMutex_;
     std::condition_variable cvTerrestrialPosition_;
     std::unique_ptr<::locStub::LocationManagerService::Stub> stub_;
+    LocReqEngine engineType_;
 
     bool waitForInitialization();
     void initSync(telux::common::InitResponseCb callback);

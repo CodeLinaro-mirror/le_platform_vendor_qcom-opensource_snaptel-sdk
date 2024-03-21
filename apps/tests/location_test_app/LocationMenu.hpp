@@ -124,7 +124,7 @@ public:
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
    void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
-   telux::common::Status launchAsRecordingUtility();
+   telux::common::Status launchAsRecordingUtility(LocReqEngine engineType);
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>
         &locationManager, std::shared_ptr<MyLocationListener> &posListener);

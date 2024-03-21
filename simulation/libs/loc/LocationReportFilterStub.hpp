@@ -18,9 +18,10 @@ namespace loc {
 
 enum class ReportType {
     UNKNOWN = -1,
-    BASIC = 0,
-    DETAILED = 1,
-    DETAILED_ENG = 2
+    FUSED,
+    SPE,
+    PPE,
+    VPE
 };
 
 class TimeWindow {

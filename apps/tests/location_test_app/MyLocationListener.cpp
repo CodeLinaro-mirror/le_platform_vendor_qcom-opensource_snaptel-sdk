@@ -1189,6 +1189,152 @@ void MyLocationListener::onBasicLocationUpdate(
    std::cout << "*************************************************************" << std::endl;
 }
 
+void MyLocationListener::recordLocationInfo(
+    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
+    //Recording Data.
+    std::ostringstream recordStream;
+    recordStream << LOCATION << ",";
+
+    telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
+    telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
+    telux::loc::GnssSystem system = sysTime.gnssSystemTimeSrc;
+
+    uint8_t leapSeconds = 0;
+    locationInfo->getLeapSeconds(leapSeconds);
+    std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
+    std::vector<uint16_t> SVIds;
+    locationInfo->getSVIds(SVIds);
+    std::vector<float> velocityEastNorthUp;
+    std::vector<float> velocityUncertaintyEastNorthUp;
+    locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp);
+    locationInfo->getVelocityEastNorthUp(velocityEastNorthUp);
+    recordStream << locationInfo->getTimeStamp() << "," <<
+    static_cast<int>(locationInfo->getLocOutputEngType()) << "," <<
+    locationInfo->getTechMask() << "," <<
+    locationInfo->getLatitude() << "," << locationInfo->getLongitude() << "," <<
+    locationInfo->getAltitude() << "," << locationInfo->getHeading() << "," <<
+    locationInfo->getSpeed() << "," << locationInfo->getHeadingUncertainty() << "," <<
+    locationInfo->getSpeedUncertainty() << "," << locationInfo->getHorizontalUncertainty() <<
+    "," << locationInfo->getVerticalUncertainty() << "," <<
+    locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
+    << locationInfo->getElapsedRealTimeUncertainty() << "," <<
+    locationInfo->getLocationInfoExValidity() << "," <<
+    locationInfo->getAltitudeMeanSeaLevel() << "," <<
+    locationInfo->getPositionDop() << "," <<
+    locationInfo->getHorizontalDop() << "," <<
+    locationInfo->getVerticalDop() << "," <<
+    locationInfo->getGeometricDop() << "," <<
+    locationInfo->getTimeDop() << "," <<
+    locationInfo->getMagneticDeviation() << "," <<
+    static_cast<int>(locationInfo->getHorizontalReliability()) << "," <<
+    static_cast<int>(locationInfo->getVerticalReliability()) << "," <<
+    locationInfo->getHorizontalUncertaintySemiMajor() << "," <<
+    locationInfo->getHorizontalUncertaintySemiMinor() << "," <<
+    locationInfo->getHorizontalUncertaintyAzimuth() << "," <<
+    locationInfo->getEastStandardDeviation() << "," <<
+    locationInfo->getNorthStandardDeviation() << "," <<
+    locationInfo->getNumSvUsed() << "," <<
+    locationInfo->getSvUsedInPosition().gps << "," <<
+    locationInfo->getSvUsedInPosition().glo << "," <<
+    locationInfo->getSvUsedInPosition().gal << "," <<
+    locationInfo->getSvUsedInPosition().bds << "," <<
+    locationInfo->getSvUsedInPosition().qzss << "," <<
+    locationInfo->getSvUsedInPosition().navic << "," <<
+    locationInfo->getSbasCorrection() << "," <<
+    locationInfo->getPositionTechnology() << "," <<
+    locationInfo->getBodyFrameData().latAccel << "," <<
+    locationInfo->getBodyFrameData().longAccel << "," <<
+    locationInfo->getBodyFrameData().vertAccel << "," <<
+    locationInfo->getBodyFrameData().yawRate << "," <<
+    locationInfo->getBodyFrameData().pitch << "," <<
+    locationInfo->getBodyFrameData().latAccelUnc << "," <<
+    locationInfo->getBodyFrameData().longAccelUnc << "," <<
+    locationInfo->getBodyFrameData().vertAccelUnc << "," <<
+    locationInfo->getBodyFrameData().yawRateUnc << "," <<
+    locationInfo->getBodyFrameData().pitchUnc << "," <<
+    locationInfo->getBodyFrameData().pitchRate << "," <<
+    locationInfo->getBodyFrameData().pitchRateUnc << "," <<
+    locationInfo->getBodyFrameData().roll << "," <<
+    locationInfo->getBodyFrameData().rollUnc << "," <<
+    locationInfo->getBodyFrameData().rollRate << "," <<
+    locationInfo->getBodyFrameData().rollRateUnc << "," <<
+    locationInfo->getBodyFrameData().yaw << "," <<
+    locationInfo->getBodyFrameData().yawUnc << "," <<
+    locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
+    locationInfo->getTimeUncMs() << ",";
+    recordStream << static_cast<int>(leapSeconds) << "," <<
+    unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
+    locationInfo->getCalibrationStatus() << "," <<
+    locationInfo->getConformityIndex() << "," <<
+    locationInfo->getVRPBasedLLA().latitude << "," <<
+    locationInfo->getVRPBasedLLA().longitude << "," <<
+    locationInfo->getVRPBasedLLA().altitude << "," <<
+    enuVelocityVRPBased[0] << "," <<
+    enuVelocityVRPBased[1] << "," <<
+    enuVelocityVRPBased[2] << "," <<
+    static_cast<int>(locationInfo->getAltitudeType()) << "," <<
+    static_cast<int>(locationInfo->getReportStatus()) << "," <<
+    locationInfo->getIntegrityRiskUsed() << "," <<
+    locationInfo->getProtectionLevelAlongTrack() << "," <<
+    locationInfo->getProtectionLevelCrossTrack() << "," <<
+    locationInfo->getProtectionLevelVertical() << "," <<
+    locationInfo->getSolutionStatus() << ",";
+
+    auto measInfo = locationInfo->getmeasUsageInfo();
+    recordStream << measInfo.size() << ",";
+
+    for (unsigned i = 0; i < measInfo.size(); ++i ) {
+        recordStream << measInfo[i].gnssSignalType << ","
+                     << static_cast<int>(measInfo[i].gnssConstellation)
+                     << "," << measInfo[i].gnssSvId << ",";
+    }
+
+    recordStream << velocityEastNorthUp.size() << ",";
+    for (auto vel : velocityEastNorthUp) {
+        recordStream << vel << ",";
+    }
+
+    recordStream << velocityUncertaintyEastNorthUp.size() << ",";
+    for (auto velUncert : velocityUncertaintyEastNorthUp) {
+        recordStream << velUncert << ",";
+    }
+
+    recordStream << SVIds.size() << ",";
+    for (auto id : SVIds) {
+        recordStream << id << ",";
+    }
+    recordStream << static_cast<int>(system) << ",";
+    if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+        telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;
+        recordStream << timeInfo.validityMask << "," <<
+                        timeInfo.numClockResets << "," <<
+                        timeInfo.refFCount << "," <<
+                        timeInfo.systemClkTimeUncMs << "," <<
+                        timeInfo.systemClkTimeBias << "," <<
+                        timeInfo.systemMsec << "," <<
+                        timeInfo.systemWeek << ",";
+    } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        telux::loc::GlonassTimeInfo info = sysTimeInfo.glo;
+        recordStream << info.validityMask << ","
+                     << info.gloDays << ","
+                     << info.gloMsec << ","
+                     << info.gloClkTimeBias << ","
+                     << info.gloClkTimeUncMs << ","
+                     << info.refFCount << ","
+                     << info.numClockResets << ","
+                     << info.gloFourYear << ",";
+    } // GNSS_LOC_SV_SYSTEM_SBAS, no timeInfo
+
+    recordStream << locationInfo->getNavigationSolution() << "," <<
+    locationInfo->getElapsedGptpTime() << "," <<
+    locationInfo->getElapsedGptpTimeUnc() << ",";
+    DETAILED_RECORDING << recordStream.str() << std::endl;
+}
+
 void MyLocationListener::onDetailedLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
    if(!isDetailedReportFlagEnabled_) {
@@ -1316,143 +1462,7 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getProtectionLevelVertical() << std::endl;
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
-       //Recording Data.
-        std::ostringstream recordStream;
-        recordStream << LOCATION << ",";
-
-        telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
-        telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
-        telux::loc::GnssSystem system = sysTime.gnssSystemTimeSrc;
-
-        uint8_t leapSeconds = 0;
-        locationInfo->getLeapSeconds(leapSeconds);
-        std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
-
-        recordStream << locationInfo->getTimeStamp() << "," << locationInfo->getTechMask() << "," <<
-        locationInfo->getLatitude() << "," << locationInfo->getLongitude() << "," <<
-        locationInfo->getAltitude() << "," << locationInfo->getHeading() << "," <<
-        locationInfo->getSpeed() << "," << locationInfo->getHeadingUncertainty() << "," <<
-        locationInfo->getSpeedUncertainty() << "," << locationInfo->getHorizontalUncertainty() <<
-        "," << locationInfo->getVerticalUncertainty() << "," <<
-        locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
-        << locationInfo->getElapsedRealTimeUncertainty() << "," <<
-        locationInfo->getLocationInfoExValidity() << "," <<
-        locationInfo->getAltitudeMeanSeaLevel() << "," <<
-        locationInfo->getPositionDop() << "," <<
-        locationInfo->getHorizontalDop() << "," <<
-        locationInfo->getVerticalDop() << "," <<
-        locationInfo->getGeometricDop() << "," <<
-        locationInfo->getTimeDop() << "," <<
-        locationInfo->getMagneticDeviation() << "," <<
-        static_cast<int>(locationInfo->getHorizontalReliability()) << "," <<
-        static_cast<int>(locationInfo->getVerticalReliability()) << "," <<
-        locationInfo->getHorizontalUncertaintySemiMajor() << "," <<
-        locationInfo->getHorizontalUncertaintySemiMinor() << "," <<
-        locationInfo->getHorizontalUncertaintyAzimuth() << "," <<
-        locationInfo->getEastStandardDeviation() << "," <<
-        locationInfo->getNorthStandardDeviation() << "," <<
-        locationInfo->getNumSvUsed() << "," <<
-        locationInfo->getSvUsedInPosition().gps << "," <<
-        locationInfo->getSvUsedInPosition().glo << "," <<
-        locationInfo->getSvUsedInPosition().gal << "," <<
-        locationInfo->getSvUsedInPosition().bds << "," <<
-        locationInfo->getSvUsedInPosition().qzss << "," <<
-        locationInfo->getSvUsedInPosition().navic << "," <<
-        locationInfo->getSbasCorrection() << "," <<
-        locationInfo->getPositionTechnology() << "," <<
-        locationInfo->getBodyFrameData().latAccel << "," <<
-        locationInfo->getBodyFrameData().longAccel << "," <<
-        locationInfo->getBodyFrameData().vertAccel << "," <<
-        locationInfo->getBodyFrameData().yawRate << "," <<
-        locationInfo->getBodyFrameData().pitch << "," <<
-        locationInfo->getBodyFrameData().latAccelUnc << "," <<
-        locationInfo->getBodyFrameData().longAccelUnc << "," <<
-        locationInfo->getBodyFrameData().vertAccelUnc << "," <<
-        locationInfo->getBodyFrameData().yawRateUnc << "," <<
-        locationInfo->getBodyFrameData().pitchUnc << "," <<
-        locationInfo->getBodyFrameData().pitchRate << "," <<
-        locationInfo->getBodyFrameData().pitchRateUnc << "," <<
-        locationInfo->getBodyFrameData().roll << "," <<
-        locationInfo->getBodyFrameData().rollUnc << "," <<
-        locationInfo->getBodyFrameData().rollRate << "," <<
-        locationInfo->getBodyFrameData().rollRateUnc << "," <<
-        locationInfo->getBodyFrameData().yaw << "," <<
-        locationInfo->getBodyFrameData().yawUnc << "," <<
-        locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
-        locationInfo->getTimeUncMs() << ",";
-        recordStream << static_cast<int>(leapSeconds) << "," <<
-        unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
-        locationInfo->getCalibrationStatus() << "," <<
-        locationInfo->getConformityIndex() << "," <<
-        locationInfo->getVRPBasedLLA().latitude << "," <<
-        locationInfo->getVRPBasedLLA().longitude << "," <<
-        locationInfo->getVRPBasedLLA().altitude << "," <<
-        enuVelocityVRPBased[0] << "," <<
-        enuVelocityVRPBased[1] << "," <<
-        enuVelocityVRPBased[2] << "," <<
-        static_cast<int>(locationInfo->getAltitudeType()) << "," <<
-        static_cast<int>(locationInfo->getReportStatus()) << "," <<
-        locationInfo->getIntegrityRiskUsed() << "," <<
-        locationInfo->getProtectionLevelAlongTrack() << "," <<
-        locationInfo->getProtectionLevelCrossTrack() << "," <<
-        locationInfo->getProtectionLevelVertical() << "," <<
-        static_cast<int>(locationInfo->getLocOutputEngType()) << "," <<
-        locationInfo->getLocOutputEngMask() << "," <<
-        locationInfo->getSolutionStatus() << ",";
-
-        auto measInfo = locationInfo->getmeasUsageInfo();
-        recordStream << measInfo.size() << ",";
-
-        for (unsigned i = 0; i < measInfo.size(); ++i ) {
-            recordStream << measInfo[i].gnssSignalType << ","
-                         << static_cast<int>(measInfo[i].gnssConstellation)
-                         << "," << measInfo[i].gnssSvId << ",";
-        }
-
-        recordStream << velocityEastNorthUp.size() << ",";
-        for (auto vel : velocityEastNorthUp) {
-            recordStream << vel << ",";
-        }
-
-        recordStream << velocityUncertaintyEastNorthUp.size() << ",";
-        for (auto velUncert : velocityUncertaintyEastNorthUp) {
-            recordStream << velUncert << ",";
-        }
-
-        recordStream << SVIds.size() << ",";
-        for (auto id : SVIds) {
-            recordStream << "," << id;
-        }
-        recordStream << static_cast<int>(system) << ",";
-        if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS ||
-            system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO ||
-            system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS ||
-            system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS ||
-            system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
-            telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;
-            recordStream << timeInfo.validityMask << "," <<
-                            timeInfo.numClockResets << "," <<
-                            timeInfo.refFCount << "," <<
-                            timeInfo.systemClkTimeUncMs << "," <<
-                            timeInfo.systemClkTimeBias << "," <<
-                            timeInfo.systemMsec << "," <<
-                            timeInfo.systemWeek << ",";
-        } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
-            telux::loc::GlonassTimeInfo info = sysTimeInfo.glo;
-            recordStream << info.validityMask << ","
-                         << info.gloDays << ","
-                         << info.gloMsec << ","
-                         << info.gloClkTimeBias << ","
-                         << info.gloClkTimeUncMs << ","
-                         << info.refFCount << ","
-                         << info.numClockResets << ","
-                         << info.gloFourYear << ",";
-        } // GNSS_LOC_SV_SYSTEM_SBAS, no timeInfo
-
-        recordStream << locationInfo->getNavigationSolution() << "," <<
-        locationInfo->getElapsedGptpTime() << "," <<
-        locationInfo->getElapsedGptpTimeUnc() << ",";
-        DETAILED_RECORDING << recordStream.str() << std::endl;
+       recordLocationInfo(locationInfo);
    }
 }
 
@@ -1581,6 +1591,10 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
      std::cout << "*************************************************************" << std::endl;
+
+     if(isRecordingEnabled_) {
+         recordLocationInfo(locationInfo);
+     }
     }
 }
 

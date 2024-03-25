@@ -518,6 +518,12 @@ grpc::Status PhoneManagerServerImpl::RequestCellInfoList(ServerContext* context,
                     cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                         set_bit_error_rate(requestedCell["wcdmaCellInfo"]\
                         ["wcdmaSignalStrengthInfo"]["bitErrorRate"].asInt());
+                    cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                        set_bit_error_rate(requestedCell["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["ecio"].asInt());
+                    cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                        set_bit_error_rate(requestedCell["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
                     break;
                 }
                 case telux::tel::CellType::NR5G: {
@@ -660,11 +666,21 @@ grpc::Status PhoneManagerServerImpl::GetSignalStrength(ServerContext* context,
         response->mutable_wcdma_signal_strength_info()->set_bit_error_rate(
             data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
             ["bitErrorRate"].asInt());
+        response->mutable_wcdma_signal_strength_info()->set_signal_strength(
+            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+            ["ecio"].asInt());
+        response->mutable_wcdma_signal_strength_info()->set_bit_error_rate(
+            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+            ["rscp"].asInt());
         LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength:",
             data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
             ["signalStrength"].asInt(), " bitErrorRate:",
             data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
-            ["bitErrorRate"].asInt());
+            ["bitErrorRate"].asInt(), "ecio:",
+            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+            ["ecio"].asInt(), "rscp:",
+            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+            ["rscp"].asInt());
         // nr5g signal strength
         response->mutable_nr5g_signal_strength_info()->set_rsrp(
             data.stateRootObj[TEL_PHONE_MANAGER]\
@@ -937,18 +953,31 @@ void PhoneManagerServerImpl::handleSignalStrengthChanged(std::string eventParams
                 token = EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int bitErrorRate = std::stoi(token);
+                token = EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int ecio = std::stoi(token);
+                token = EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rscp = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__," signalStrength:", signalStrength," bitErrorRate:",
-                    bitErrorRate);
+                    bitErrorRate, " ecio:", ecio, " rscp:", rscp);
 
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
                     ["signalStrength"] = signalStrength;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
                     ["bitErrorRate"] = bitErrorRate;
-
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+                    ["ecio"] = ecio;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+                    ["rscp"] = rscp;
                 signalStrengthChangeEvent.mutable_wcdma_signal_strength_info()->
                     set_signal_strength(signalStrength);
                 signalStrengthChangeEvent.mutable_wcdma_signal_strength_info()->
                     set_bit_error_rate(bitErrorRate);
+                signalStrengthChangeEvent.mutable_wcdma_signal_strength_info()->
+                    set_ecio(ecio);
+                signalStrengthChangeEvent.mutable_wcdma_signal_strength_info()->
+                    set_rscp(rscp);
             } else if(rat == "LTE") {
                 token = EventParserUtil::getNextToken(params[index], DEFAULT_DELIMITER);
                 int signalStrength = std::stoi(token);
@@ -1170,10 +1199,14 @@ void PhoneManagerServerImpl::handleCellInfoChanged(std::string eventParams) {
                     int signalStrength = std::stoi(token);
                     token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int bitErrorRate = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int ecio = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rscp = std::stoi(token);
 
                     LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " lac:", lac, " cid:",
                         cid, " psc:", psc, " uarfcn:", uarfcn, " signalStrength:", signalStrength
-                        , " bitErrorRate:", bitErrorRate);
+                        , " bitErrorRate:", bitErrorRate, " ecio:", ecio, " rscp:", rscp);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
                         ["wcdmaCellIdentity"]["mcc"] = mcc;
@@ -1191,6 +1224,10 @@ void PhoneManagerServerImpl::handleCellInfoChanged(std::string eventParams) {
                         ["wcdmaSignalStrengthInfo"]["signalStrength"] = signalStrength;
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
                         ["wcdmaSignalStrengthInfo"]["bitErrorRate"] = bitErrorRate;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["ecio"] = ecio;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["rscp"] = rscp;
 
                     cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_cell_identity()->
                         set_mcc(mcc);
@@ -1724,9 +1761,17 @@ void PhoneManagerServerImpl::updateJsonForDefaultValues(int phoneId, bool resetV
     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][0]["gsmCellInfo"]\
         ["gsmSignalStrengthInfo"]["gsmBitErrorRate"] = INVALID_SIGNAL_STRENGTH_VALUE;
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
-        ["wcdmaSignalStrength"] = INVALID_SIGNAL_STRENGTH_VALUE;
+        ["signalStrength"] = INVALID_SIGNAL_STRENGTH_VALUE;
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
-        ["wcdmaBitErrorRate"] = INVALID_SIGNAL_STRENGTH_VALUE;
+        ["bitErrorRate"] = INVALID_SIGNAL_STRENGTH_VALUE;
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+        ["signalStrength"] = INVALID_SIGNAL_STRENGTH_VALUE;
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+        ["bitErrorRate"] = INVALID_SIGNAL_STRENGTH_VALUE;
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+        ["ecio"] = INVALID_SIGNAL_STRENGTH_VALUE;
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+        ["rscp"] = INVALID_SIGNAL_STRENGTH_VALUE;
     // update signal strength for cellInfo list
     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][0]["wcdmaCellInfo"]\
         ["wcdmaSignalStrengthInfo"]["signalStrength"] = INVALID_SIGNAL_STRENGTH_VALUE;

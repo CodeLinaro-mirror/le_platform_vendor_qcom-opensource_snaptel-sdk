@@ -381,8 +381,8 @@ public:
     * - NR5G_RSRQ : -20 to -3   (in dB)
     *
     * This configuration is a global setting. The signal strength setting does not persist through
-    * device reboot and needs to be configured again. Default signal strength values are set after
-    * a device reboot.
+    * device reboot and needs to be configured again. Default signal strength configuration is set
+    * after a device reboot.
     *
     * On platforms with access control enabled, the caller needs to have the TELUX_TEL_PHONE_MGMT
     * permission to successfully invoke this API.
@@ -394,10 +394,81 @@ public:
     *
     * @returns Status of configureSignalStrength, i.e., success or the suitable error code.
     *
+    * @deprecated Use configureSignalStrength(std::vector<SignalStrengthConfigEx>).
     */
    virtual telux::common::Status configureSignalStrength(
         std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
         callback = nullptr) = 0;
+
+  /**
+    * Configures signal strength notifications based on the RAT(s) delta or threshold list.
+    * Additionally, the hysteresis dB can be applied on top of the threshold list. Furthermore,
+    * time hysteresis (hysteresis ms) can be applied either on top of the delta or on the
+    * threshold list, or even on top of both the threshold list and the hysteresis dB.
+    *
+    * - Delta (unsigned 2 bytes): A notification is sent when the difference between the current
+    * signal strength value and the last reported signal strength value crosses the specified
+    * delta.
+    * The value should be a non-zero positive integer, in units of 0.1dBm. For example, to set a
+    * delta of 10dBm, the value should be 100.
+    *
+    * - Threshold (signed 4 bytes): A notification is sent when the current signal strength
+    * crosses over or under any of the thresholds specified.
+    * For example, to set thresholds at -95 dBm and -80 dBm, the threshold list values are -950,
+    * -800, since the list values are in units of 0.1 dBm.
+    *
+    * - Hysteresis dB (unsigned 2 bytes): Prevents the generation of multiple notifications when
+    * the signal strength is close to a threshold value and experiencing frequent small changes.
+    * With a non-zero hysteresis, the signal strength indicators should cross over or under by
+    * more than the hysteresis value for a notification to be sent.
+    * To apply hysteresis, the value should be a non-zero positive integer, in units of 0.1 dBm.
+    * For example, to set a hysteresis dB of 10 dBm, the value should be 100.
+    *
+    * - Hysteresis ms (unsigned 2 bytes): Time hystersis can be applied to avoid multiple
+    * notifications even when all the other criteria for a notification are met. The time
+    * hystersis can be applied on top of any other criteria (delta, threshold, threshold and
+    * hysteresis).
+    *
+    * If the hysteresis(dB or ms) value is set to 0, the signal strength notification criteria just
+    * considers the threshold or delta. Once configured, the hysteresis value for a signal strength
+    * type is retained, until explicitly reconfigured to 0 again or device reboot.
+    *
+    * The threshold range list is as follows. See SignalStrength.hpp for more details.
+    * - RAT    Measurement type  : value
+    * - GSM     RSSI             : -113 to -51 (in dBm)
+    * - WCDMA   RSSI             : -113 to -51 (in dBm)
+    * - WCDMA   ECIO             : -24 to 0    (in dB)
+    * - WCDMA   RSCP             : -120 to -24 (in dBm)
+    * - LTE     RSSI             : -113 to -51 (in dBm)
+    * - LTE     SNR              : -200 to 300 (in dB)
+    * - LTE     RSRQ             : -20 to -3   (in dB)
+    * - LTE     RSRP             : -140 to -44 (in dBm)
+    * - NR5G    SNR              : -200 to 300 (in dB)
+    * - NR5G    RSRP             : -140 to -44 (in dBm)
+    * - NR5G    RSRQ             : -20 to -3   (in dB)
+    *
+    * This configuration is a global setting. The signal strength setting does not persist through
+    * device reboot and needs to be configured again. Default signal strength configuration is set
+    * after a device reboot.
+    *
+    * On platforms with access control enabled, the caller needs to have the TELUX_TEL_PHONE_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] signalStrengthConfigEx   Signal strength configuration.
+    * @param [in] hysteresisMs             (Optional) Signal strength hysteresis timer in
+    *                                      milliseconds.
+    * @param [in] callback                 Callback function to get the SignalStrength
+    *                                      configuration response.
+    *
+    * @returns Status of configureSignalStrength, i.e., success or the suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+
+   virtual telux::common::Status configureSignalStrength(
+       std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs = 0,
+       telux::common::ResponseCallback callback = nullptr) = 0;
 
    virtual ~IPhone(){};
 };

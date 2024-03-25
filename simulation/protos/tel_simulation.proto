@@ -2221,6 +2221,8 @@ message WcdmaCellIdentity {
 message WcdmaSignalStrengthInfo {
     int32 signal_strength = 1;
     int32 bit_error_rate = 2;
+    int32 ecio = 3;
+    int32 rscp = 4;
 }
 
 message LteCellInfo {

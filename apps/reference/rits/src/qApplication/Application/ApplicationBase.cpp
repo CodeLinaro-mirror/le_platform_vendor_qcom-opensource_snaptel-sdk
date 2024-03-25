@@ -626,14 +626,20 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 ApplicationBase::~ApplicationBase() {
-    std::cout << "ApplicationBase destructing" << std::endl;
+    if(appVerbosity){
+        std::cout << "ApplicationBase destructing" << std::endl;
+    }
     if (qMon) {
         delete qMon;
-        std::cout << "Closed qMon\n";
+        if(appVerbosity){
+            std::cout << "Closed qMon\n";
+        }
     }
     if (qMonConfig) {
         delete qMonConfig;
-        std::cout << "Closed qMonConfig\n";
+        if(appVerbosity){
+            std::cout << "Closed qMonConfig\n";
+        }
     }
     {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -2365,7 +2371,9 @@ void ApplicationBase::clearRadioInstance() {
 }
 
 void ApplicationBase::closeAllRadio() {
-    std::cout << "Attempting to close all flows\n";
+    if(appVerbosity){
+        std::cout << "Attempting to close all flows\n";
+    }
     exitApp = true;
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();

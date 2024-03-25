@@ -10,13 +10,15 @@
 
 #include <telux/audio/AudioFactory.hpp>
 
+#include "common/FactoryHelper.hpp"
+
 #include "AudioPlayerImpl.hpp"
 #include "AudioManagerImpl.hpp"
 
 namespace telux {
 namespace audio {
 
-class AudioFactoryImpl : public AudioFactory {
+class AudioFactoryImpl : public AudioFactory, public telux::common::FactoryHelper {
 
  public:
     static AudioFactory &getInstance();
@@ -24,13 +26,12 @@ class AudioFactoryImpl : public AudioFactory {
     std::shared_ptr<IAudioManager> getAudioManager(
         telux::common::InitResponseCb callback = nullptr) override;
 
-    telux::common::ErrorCode getAudioPlayer(
-        std::shared_ptr<IAudioPlayer>& audioPlayer) override;
+    telux::common::ErrorCode getAudioPlayer(std::shared_ptr<IAudioPlayer> &audioPlayer) override;
 
     void managerInitResult(telux::common::ServiceStatus status);
 
  private:
-    /* Time to wait for the audio service availability */
+    /* Time to wait in seconds for the audio service availability */
     const int INIT_WAIT_TIME = 10;
 
     bool serviceStatusReady_;
@@ -39,9 +40,7 @@ class AudioFactoryImpl : public AudioFactory {
     telux::common::ServiceStatus currentServiceStatus_;
     std::condition_variable serviceStatusAvailable_;
     std::vector<telux::common::InitResponseCb> initCompleteCallbacks_;
-    std::weak_ptr<AudioManagerImpl> audioMgr_;
-
-    void initCompleteNotifier(telux::common::ServiceStatus serviceNewStatus);
+    std::weak_ptr<IAudioManager> audioMgr_;
 
     AudioFactoryImpl();
     ~AudioFactoryImpl();

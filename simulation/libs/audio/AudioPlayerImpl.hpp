@@ -21,23 +21,25 @@ namespace audio {
 
 class GetVolumeResponseListener {
  public:
-    GetVolumeResponseListener(std::mutex& streamMtx);
+    GetVolumeResponseListener(std::mutex &streamMtx);
     bool responseReady = false;
     StreamVolume volume;
     telux::common::ErrorCode errorCode;
     std::condition_variable cv;
-    void getVolumeCompletion(StreamVolume volume, telux::common::ErrorCode errorCode);
+    void getVolumeComplete(StreamVolume volume, telux::common::ErrorCode errorCode);
+
  private:
     std::mutex &streamMutex_;
 };
 
 class SetVolumeResponseListener {
  public:
-    SetVolumeResponseListener(std::mutex& streamMtx);
+    SetVolumeResponseListener(std::mutex &streamMtx);
     bool responseReady = false;
     telux::common::ErrorCode errorCode;
     std::condition_variable cv;
-    void setVolumeCompletion(telux::common::ErrorCode errorCode);
+    void setVolumeComplete(telux::common::ErrorCode errorCode);
+
  private:
     std::mutex &streamMutex_;
 };
@@ -52,8 +54,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     ~AudioPlayerImpl();
 
     telux::common::ErrorCode startPlayback(
-        StreamConfig streamConfig,
-        std::vector<PlaybackFile> &filesToPlay,
+        std::vector<PlaybackConfig> &playbackConfigs,
         std::weak_ptr<IPlayListListener> statusListener) override;
 
     telux::common::ErrorCode stopPlayback() override;
@@ -66,17 +67,17 @@ class AudioPlayerImpl : public IAudioPlayer,
     void onPlayStopped() override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
-    void play();
+    void executePlayback();
 
-    void createStreamCompletion(std::shared_ptr<IAudioStream> &stream,
-        telux::common::ErrorCode result);
+    void createStreamComplete(
+        std::shared_ptr<IAudioStream> &stream, telux::common::ErrorCode result);
 
-    void deleteStreamCompletion(telux::common::ErrorCode result);
+    void deleteStreamComplete(telux::common::ErrorCode result);
 
-    void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error);
+    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytesWritten,
+        telux::common::ErrorCode error);
 
-    void stopAudioCompletion(telux::common::ErrorCode result);
+    void stopAudioComplete(telux::common::ErrorCode result);
 
     WriteResponseCb writeCompleteCb_;
 
@@ -85,29 +86,29 @@ class AudioPlayerImpl : public IAudioPlayer,
     const size_t BUFFER_POOL_SIZE = 2;
 
     /* Time in seconds for which player thread waits for the response from audio server */
-    const int TIME_10_SECONDS = 10;
+    const int32_t TIME_10_SECONDS = 10;
 
-    bool isCompressed_ = false;
-    bool isAdspWriteReady_ = true;
-    bool hasSsrOccurred_ = false;
-    bool isFileOpened_ = false;
-    bool isStreamOpened_ = false;
-    bool isPlayInProgress_ = false;
-    bool hasUserRequestedStop_ = false;
+    bool isCompressed_          = false;
+    bool isAdspWriteReady_      = true;
+    bool hasSsrOccurred_        = false;
+    bool isFileOpened_          = false;
+    bool isStreamOpened_        = false;
+    bool isPlayInProgress_      = false;
+    bool hasUserRequestedStop_  = false;
     bool isCreateResponseReady_ = false;
     bool isDeleteResponseReady_ = false;
-    bool isStopResponseReady_ = false;
-    bool isStopAudioReady_ = false;
-    uint32_t bufferSize_ = 0;
+    bool isStopResponseReady_   = false;
+    bool isStopAudioReady_      = false;
+    uint32_t bufferSize_        = 0;
+    long contentOffset_ = 0;
 
-    FILE *curFile_;
+    std::FILE *curFile_;
     std::string curFileName_;
-    StreamConfig streamConfig_;
     telux::common::Status status_;
     std::mutex writeMtx_;
     std::mutex playerMtx_;
     std::mutex streamMtx_;
-    std::vector<PlaybackFile> playbackFiles_;
+    std::vector<PlaybackConfig> playbackConfigs_;
     std::condition_variable adspReady_;
     std::condition_variable asyncResponse_;
     std::condition_variable bufferAvailable_;
@@ -120,7 +121,8 @@ class AudioPlayerImpl : public IAudioPlayer,
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> bufferPool_;
     telux::common::AsyncTaskQueue<void> asyncTaskQ_;
 
-    telux::common::ErrorCode initAudioStream();
+    telux::common::ErrorCode initAudioStream(StreamConfig streamConfig);
+    telux::common::ErrorCode reinitAudioStream(uint32_t curFileIdx);
     telux::common::ErrorCode deinitAudioStream();
     telux::common::ErrorCode initFileToPlay();
     telux::common::ErrorCode deinitFileToPlay();
@@ -128,13 +130,13 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode playAudioSamples();
     telux::common::ErrorCode finalizePlayback();
     telux::common::ErrorCode finalizeCompressedPlayback();
-    telux::common::ErrorCode registerForEvents();
-    telux::common::ErrorCode deregisterForEvents();
+    telux::common::ErrorCode registerForSSREvent();
+    telux::common::ErrorCode deregisterForSSREvent();
     telux::common::ErrorCode waitAllWriteResponse();
-    telux::common::ErrorCode setFormatAndOffset(
-        AudioFormat audioFormat, long &contentOffset);
-    telux::common::ErrorCode adjustFileAndState(long contentOffset);
+    telux::common::ErrorCode setFormatAndOffset(AudioFormat audioFormat);
+    telux::common::ErrorCode adjustFileAndState();
 
+    bool isStreamConfigurationSame(uint32_t curFileIdx);
     void resetState();
     void terminatePlayback();
     void reportError(telux::common::ErrorCode ec, std::string file);
@@ -148,4 +150,4 @@ class AudioPlayerImpl : public IAudioPlayer,
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AudioPlayerImpl_HPP
+#endif  // AudioPlayerImpl_HPP

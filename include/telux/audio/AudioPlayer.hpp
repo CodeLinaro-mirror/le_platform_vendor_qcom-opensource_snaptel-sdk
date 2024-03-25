@@ -85,13 +85,16 @@ struct RepeatInfo {
 /**
  *  Specifies files to play and how to play.
  */
-struct PlaybackFile {
+struct PlaybackConfig {
 
     /** Absolute path of the file */
     std::string absoluteFilePath;
 
     /** Defines how a file should be played */
     RepeatInfo repeatInfo;
+
+    /** Defines how an audio stream should be configured to play this file */
+    StreamConfig streamConfig;
 };
 
 /**
@@ -119,10 +122,10 @@ class IPlayListListener {
     /**
      * Invoked whenever an error occurs.
      *
-     * @param [in] error Appropriate error code @ref telux::common::ErrorCode
+     * @param[in] error Appropriate error code @ref telux::common::ErrorCode
      *
-     * @param [in] file File which was getting played when this error occurred.
-     *             It can be empty if error occurred before opening any file.
+     * @param[in] file File which was getting played when this error occurred.
+     *            It can be empty if error occurred before opening any file.
      */
     virtual void onError(telux::common::ErrorCode error, std::string file) { }
 
@@ -132,7 +135,7 @@ class IPlayListListener {
      * played indefinitely, it is called every time file is played completely.
      * If an error occurs or playback is stopped, this callback is not called.
      *
-     * @param [in] file File played successfully
+     * @param[in] file File played successfully
      */
     virtual void onFilePlayed(std::string file) { }
 
@@ -149,52 +152,59 @@ class IPlayListListener {
 };
 
 /**
- * This class manages playback of a playlist of audio files. The playlist could contain
+ * IAudioPlayer manages playback of a playlist of audio files. The playlist could contain
  * one or more files. Clients can also specify how many times the file should be played,
  * in case repetition is required.
  */
 class IAudioPlayer {
  public:
-
    /**
-    * Plays audio files as specified in the playlist. The playlist can contain one or
-    * more files to play. How many times a file should be played can also be specified.
-    * If a file is played indefinitely, playback can be stopped by calling stopPlayback()
-    * at any time.
+    * Plays audio files in the manner as specified by the `playbackConfigs`. Files can
+    * have same or different audio format. Multiple files can be specified in one call
+    * to this method.
     *
     * On platforms with access control enabled, the caller must have TELUX_AUDIO_PLAY,
     * permission to invoke this method successfully.
     *
-    * @param [in] streamConfig Audio stream parameters (format, sampling rate, devices etc.)
+    * @param[in] playbackConfigs List of files to play and the manner in which to play
     *
-    * @param [in] filesToPlay List of files to play. They all must be of same format;
-    *             for example; all PCM or all AMRWB.
+    * @param[in] statusListener Receives various status updates in @ref IPlayListListener
     *
-    * @param [in] statusListener Receives various status updates in @ref IPlayListListener
-    *
-    * @returns @ref telux::common::ErrorCode::SUCCESS, if the playback is started
-    *          otherwise, an appropriate error code
+    * @returns @ref telux::common::ErrorCode::SUCCESS, if the playback is started,
+    *          @ref telux::common::ErrorCode::ACCESS_DENIED, if the caller doesn't have
+    *          permission to call this API, @ref telux::common::ErrorCode::INVALID_STATE,
+    *          if a playback is already in progress,
+    *          @ref telux::common::ErrorCode::INVALID_ARGUMENTS, if no files are given,
+    *          an appropriate error code in all other cases.
     *
     * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
+    *             to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode startPlayback(
-        StreamConfig streamConfig,
-        std::vector<PlaybackFile> &filesToPlay,
+        std::vector<PlaybackConfig> &playbackConfigs,
         std::weak_ptr<IPlayListListener> statusListener) = 0;
 
    /**
     * Stops the playback started with @ref startPlayback().
     *
+    * If the file is configured with RepeatType::COUNT, there is no need to call this
+    * method as playback will stop automatically after file has been played successfully.
+    * However, client can call this method anytime to stop playback explicitly.
+    *
+    * If the file is configured with RepeatType::INDEFINITELY, calling this method is
+    * the only way to stop playback.
+    *
     * On platforms with access control enabled, the caller must have TELUX_AUDIO_PLAY,
     * permission to invoke this method successfully.
     *
-    * @returns @ref telux::common::ErrorCode::SUCCESS, if the playback is stopped.
+    * @returns @ref telux::common::ErrorCode::SUCCESS, if the playback is stopped,
     *          @ref telux::common::ErrorCode::INVALID_STATE, if there is no playback
-    *          in-progress. An appropriate error code in all other cases.
+    *          in-progress, @ref telux::common::ErrorCode::ACCESS_DENIED, if the caller
+    *          doesn't have permission to call this API, an appropriate error code in
+    *          all other cases.
     *
     * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
+    *             to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode stopPlayback() = 0;
 
@@ -203,20 +213,20 @@ class IAudioPlayer {
     *
     * Note - direction set in the StreamVolume is not used.
     *
-    * @param [in] volume Specifies the volume level to set
+    * @param[in] volume Specifies the volume level to set
     *
     * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the given volume is
-    *           set successfully, otherwise, an appropriate error code.
+    *          set, otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode setVolume(StreamVolume volume) = 0;
 
    /**
     * Retrieves the current volume level of the audio stream.
     *
-    * @param [out] volume, Contains current volume information upon method return
+    * @param[out] volume, Current volume
     *
-    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved
-    *           successfully, otherwise, an appropriate error code.
+    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved,
+    *          otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;
 

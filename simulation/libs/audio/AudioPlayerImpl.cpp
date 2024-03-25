@@ -14,46 +14,57 @@
 
 #include "AudioPlayerImpl.hpp"
 
-/* #define AUDIOPLAYERIMPL_DDBG 1 */
+#define AUDIOPLAYERIMPL_DDBG 1
 
 namespace telux {
 namespace audio {
 
 /*
- * Represents possible states for the below state machine.
+ * Player states and the associated state machine.
  *
  *                                                     <Enter>
  *                                                        |
- *                                                        |
- *                             ------------               v
- * .--------------------------|            |          -----------
- * |        .---------------> |            | <------ |INIT_PLAYER|
- * |        |        .------> |REPORT_ERROR|          -----------
- * |        |        |   .--> |            |              |
- * |        |        |   |     ------------               |
- * |        |        |   |                                |
- * |        |        |   |       .-------------.          |                 Explicit   SSR
- * |        |        |   |       |             |          |                   stop      |
- * |        |        |   |       v             |          v                    |        |
- * |        |        |   |   ---------       -------------------               |        |
- * |        |        |    --|INIT_FILE|  .- |SELECT_FILE_TO_PLAY|              |        |
- * |        |        |       ---------   |   -------------------               |        |
- * |        |         `------.   |       |     |   ^   ^      |                v        |
- * |        |                |   |       |     |   |   |      |              <Exit> <---'
- * |  -------------          -------     |     |   |   |      |               ^  ^
- * | |FILE_PLAY_END| <----- |PLAYING| <--'     |   |   |      v               |  |
- * |  -------------          -------           |   |   |    -------------     |  |
- * |        |   |               ^              |   |   |   |REPORT_FINISH| ---'  |
- * |        |   |               |              |   |   |    -------------        |
- * |        v    `--------------'              |   |   |                         |
- * |  -------------        -----------         |   |   |                         |
- * | |REPORT_PLAYED|      |DEINIT_FILE| <------'   |   |    ---------            |
- * |  -------------        -----------             |   |   |TERMINATE| ----------'
- * |        |                   `------------------'   |    ---------
- * |        |                                          |        ^
- * |         `-----------------------------------------'        |
- * |                                                            |
- *  `-----------------------------------------------------------'
+ *                                                        v
+ *                             ------------         -----------
+ * .--------------------------|            |       |        (1)|
+ * |        .---------------> |         (2)| <---- |INIT_PLAYER|
+ * |        |        .------> |REPORT_ERROR|        -----------
+ * |        |        |   .--> |            |            |
+ * |        |        |   |     ------------             |
+ * |        |        |   |        ^                     |
+ * |        |        |   |        |                     |
+ * |        |        |   |    ---------                 |
+ * |        |        |   |   |INIT_FILE| <----------.   |
+ * |        |        |   |    ---------             |   |
+ * |        |        |   |        |                 |   |
+ * |        |        |   |        v                 |   V
+ * |        |        |   |  -------------        -----------                          O
+ * |        |        |   '-|REINIT_STREAM|   .- |SELECT_FILE| ----.                 -- --
+ * |        |        |      -------------    |   -----------      |                   |
+ * |        |        '--------.   |          |    |   ^   ^       |                  / \
+ * |        |                 |   v          |    |   |   |       |             #Explicit stop#
+ * |  -------------         ------------     |    |   |   |       v                  |
+ * | |FILE_PLAY_END| <---- |PLAY_SAMPLES| <--'    |   |   |    -------------         |
+ * |  -------------         ------------          |   |   |   |          (4)|        v
+ * |        |   |               ^                 |   |   |   |REPORT_FINISH| --> <Exit> <- #SSR#
+ * |        |   |               |                 |   |   |    -------------         ^
+ * |        |   '---------------'                 |   |   |                          |
+ * |        v                                     |   |   |                          |
+ * |  -------------        -----------            |   |   |                          |
+ * | |          (3)|      |           |           |   |   |    ---------             |
+ * | |REPORT_PLAYED|      |DEINIT_FILE| <---------'   |   |   |      (5)|            |
+ * |  -------------        -----------                |   |   |TERMINATE| -----------'
+ * |        |                   '---------------------'   |    ---------
+ * |        |                                             |        ^
+ * |        '---------------------------------------------'        |
+ * '---------------------------------------------------------------'
+ *
+ * Client callbacks; called from a particular state.
+ * (1) onPlaybackStarted()
+ * (2) onError()
+ * (3) onFilePlayed()
+ * (4) onPlaybackFinished()
+ * (5) onPlaybackStopped()
  */
 enum class PlayerState {
 
@@ -64,31 +75,35 @@ enum class PlayerState {
     INIT_PLAYER,
 
     /*
-     * Represents heart of the player. Based on how to play the file (skip,
-     * count, indefinite), decision is made to skip or schedule the file for
-     * playback.
+     * Heart of the player. Based on how to play the file (skip, count, indefinite),
+     * decide to skip or schedule the file for playback.
      */
-    SELECT_FILE_TO_PLAY,
+    SELECT_FILE,
 
     /*
-     * File to play is opened from the application specified path.
+     * Open a file from the client specified path.
      */
     INIT_FILE,
 
     /*
-     * Audio sample are actually played.
+     * Open an audio stream. If required, existing stream is closed.
      */
-    PLAYING,
+    REINIT_STREAM,
 
     /*
-     * Final steps are taken to conclude playback of the file currently played.
-     * For example; play the last 2 buffers, handle errors as applicable and stop
-     * the compressed stream.
+     * Play audio samples.
+     */
+    PLAY_SAMPLES,
+
+    /*
+     * Take final steps to conclude playback of the file currently played.
+     * For example; play the last 2 buffers, handle errors as applicable and
+     * stop the compressed stream.
      */
     FILE_PLAY_END,
 
     /*
-     * Application is informed that a particular file has been played successfully.
+     * Inform client that a particular file has been played successfully.
      */
     REPORT_PLAYED,
 
@@ -99,12 +114,12 @@ enum class PlayerState {
 
     /*
      * Marks graceful completion of the whole playback. Stream is closed, resources
-     * are released, application is informed that playback is completed successfully.
+     * are released, client is informed - playback completed successfully.
      */
     REPORT_FINISH,
 
     /*
-     * Reached whenever an error is encountered during playback. Application is informed
+     * Entered whenever an error is encountered during playback. Client is informed
      * that an error has occurred.
      */
     REPORT_ERROR,
@@ -125,8 +140,8 @@ AudioPlayerImpl::~AudioPlayerImpl() {
     LOG(DEBUG, __FUNCTION__);
 
     /*
-     * It is not expected that an application releases AudioPlayerImpl instance
-     * during an ongoing playback. But if it happens, trigger cleanup and exit.
+     * It is not expected that a client will release AudioPlayerImpl instance
+     * during an ongoing playback. But if it happens, initiate cleanup and exit.
      */
     hasUserRequestedStop_ = true;
 
@@ -143,38 +158,43 @@ AudioPlayerImpl::~AudioPlayerImpl() {
  * Places a request to start playback.
  */
 telux::common::ErrorCode AudioPlayerImpl::startPlayback(
-        StreamConfig streamConfig,
-        std::vector<PlaybackFile> &filesToPlay,
-        std::weak_ptr<IPlayListListener> statusListener) {
+    std::vector<PlaybackConfig> &playbackConfigs,
+    std::weak_ptr<IPlayListListener> statusListener) {
 
-   {
-    std::lock_guard<std::mutex> lock(playerMtx_);
+    telux::common::Status status;
 
-    if (isPlayInProgress_) {
-        /* A playback is already running */
-        LOG(ERROR, __FUNCTION__, " playback in progress");
-        return telux::common::ErrorCode::INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(playerMtx_);
+
+        if (isPlayInProgress_) {
+            /* A playback is already running */
+            LOG(ERROR, __FUNCTION__, " playback in progress");
+            return telux::common::ErrorCode::INVALID_STATE;
+        }
+
+        if (playbackConfigs.empty()) {
+            LOG(ERROR, __FUNCTION__, " empty files list");
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        }
+
+        statusListener_ = statusListener;
+        playbackConfigs_ = playbackConfigs;
+
+        resetState();
+
+        /* Player thread */
+        auto future = std::async(std::launch::deferred, [this]() {
+            this->executePlayback();
+        }).share();
+
+        status = asyncTaskQ_.add(future);
+        if (status != telux::common::Status::SUCCESS) {
+            return telux::common::CommonUtils::toErrorCode(status);
+        }
+
+        isPlayInProgress_ = true;
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    if (filesToPlay.empty()) {
-        LOG(ERROR, __FUNCTION__, " empty files list");
-        return telux::common::ErrorCode::INVALID_ARGUMENTS;
-    }
-
-    streamConfig_ = streamConfig;
-    statusListener_ = statusListener;
-    playbackFiles_ = filesToPlay;
-
-    resetState();
-
-    /* Player thread */
-    auto f = std::async(std::launch::async, [this]() { this->play(); }).share();
-    asyncTaskQ_.add(f);
-
-    isPlayInProgress_ = true;
-
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
@@ -182,70 +202,69 @@ telux::common::ErrorCode AudioPlayerImpl::startPlayback(
  */
 telux::common::ErrorCode AudioPlayerImpl::stopPlayback() {
 
-   {
-    std::lock_guard<std::mutex> playerLock(playerMtx_);
+    {
+        std::lock_guard<std::mutex> playerLock(playerMtx_);
 
-    if (!isPlayInProgress_) {
-        LOG(ERROR, __FUNCTION__, " no playback running");
-        return telux::common::ErrorCode::INVALID_STATE;
+        if (!isPlayInProgress_) {
+            LOG(ERROR, __FUNCTION__, " no playback running");
+            return telux::common::ErrorCode::INVALID_STATE;
+        }
+
+        hasUserRequestedStop_ = true;
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    hasUserRequestedStop_ = true;
-
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
- * Reset internal state since application may start playback again
- * without releasing the current IAudioPlayer instance.
+ * Reset internal state since client can start playback again without
+ * releasing the IAudioPlayer instance it already has.
  */
 void AudioPlayerImpl::resetState() {
 
-    bufferSize_ = 0;
-    curFileName_ = "";
-    bufferPool_ = {};
-    curFile_ = nullptr;
-    isFileOpened_ = false;
-    hasSsrOccurred_ = false;
-    isStreamOpened_ = false;
-    isCompressed_ = false;
-    isAdspWriteReady_ = true;
-    isStopAudioReady_ = false;
-    hasUserRequestedStop_ = false;
-    isStopResponseReady_ = false;
+    bufferSize_            = 0;
+    contentOffset_         = 0;
+    curFileName_           = "";
+    bufferPool_            = {};
+    curFile_               = nullptr;
+    isFileOpened_          = false;
+    hasSsrOccurred_        = false;
+    isStreamOpened_        = false;
+    isCompressed_          = false;
+    isAdspWriteReady_      = true;
+    isStopAudioReady_      = false;
+    hasUserRequestedStop_  = false;
+    isStopResponseReady_   = false;
     isCreateResponseReady_ = false;
     isDeleteResponseReady_ = false;
-    errToReport_ = telux::common::ErrorCode::SUCCESS;
+    errToReport_           = telux::common::ErrorCode::SUCCESS;
 }
 
 /*
  * Identify how many bytes to skip in the given file before passing audio data to the PAL.
  * Multi-channel ("#!AMR_MC1.0\n"/"#!AMR-WB_MC1.0\n") playback is not supported.
  */
-telux::common::ErrorCode AudioPlayerImpl::setFormatAndOffset(AudioFormat audioFormat,
-        long &contentOffset) {
+telux::common::ErrorCode AudioPlayerImpl::setFormatAndOffset(AudioFormat audioFormat) {
 
     switch (audioFormat) {
         case AudioFormat::AMRWB_PLUS:
             isCompressed_ = true;
             /* As per ETSI TS 126 290 V8.0.0 (2009-01) section 8.3 */
-            contentOffset = 2;
+            contentOffset_ = 2;
             break;
         case AudioFormat::AMRWB:
             isCompressed_ = true;
             /* First 9 bytes in the file header are #!AMR-WB\n as per RFC4867 */
-            contentOffset = 9;
+            contentOffset_ = 9;
             break;
         case AudioFormat::AMRNB:
             isCompressed_ = true;
             /* First 6 bytes in the file header are #!AMR\n as per RFC4867 */
-            contentOffset = 6;
+            contentOffset_ = 6;
             break;
         case AudioFormat::PCM_16BIT_SIGNED:
             isCompressed_ = false;
             /* Every byte is data byte */
-            contentOffset = 0;
+            contentOffset_ = 0;
             break;
         default:
             LOG(ERROR, __FUNCTION__, " invalid fmt ", static_cast<int>(audioFormat));
@@ -258,119 +277,98 @@ telux::common::ErrorCode AudioPlayerImpl::setFormatAndOffset(AudioFormat audioFo
 /*
  * Directs what to play and how.
  */
-void AudioPlayerImpl::play() {
+void AudioPlayerImpl::executePlayback() {
 
-    int ret = 0;
-    long contentOffset = 0;
-    uint32_t curFileIdx = 0;
+    uint32_t curFileIdx         = 0;
     uint32_t numTimesFilePlayed = 0;
 
-    PlaybackFile curPbFile;
-    PlayerState nextState = PlayerState::INIT_PLAYER;
+    PlaybackConfig curPbCfg{};
+    PlayerState nextState       = PlayerState::INIT_PLAYER;
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
-    while(!hasUserRequestedStop_ && !hasSsrOccurred_) {
+    while (!hasUserRequestedStop_ && !hasSsrOccurred_) {
 
 #ifdef AUDIOPLAYERIMPL_DDBG
-        LOG(DEBUG, __FUNCTION__, " nextState ", static_cast<int>(nextState),
-            " contentOffset ", contentOffset, " curFileIdx ", curFileIdx,
-            " numTimesFilePlayed ", numTimesFilePlayed,
-            " isFileOpened_ ", static_cast<int>(isFileOpened_),
-            " ec ", static_cast<int>(ec));
+        LOG(DEBUG, __FUNCTION__, " nextState ", static_cast<int>(nextState), ", contentOffset ",
+            contentOffset_, ", curFileIdx ", curFileIdx, ", numTimesFilePlayed ", numTimesFilePlayed,
+            ", isFileOpened ", static_cast<int>(isFileOpened_), ", isStreamOpened ",
+            static_cast<int>(isStreamOpened_), ", isCompressed ", isCompressed_,
+            ", isAdspWriteReady ", isAdspWriteReady_, ", ec ", static_cast<int>(ec));
 #endif
 
         switch (nextState) {
             case PlayerState::INIT_PLAYER:
                 reportPlaybackStarted();
 
-                ec = initAudioStream();
+                curPbCfg = playbackConfigs_[curFileIdx];
+
+                ec = registerForSSREvent();
                 if (ec != telux::common::ErrorCode::SUCCESS) {
                     errToReport_ = ec;
-                    nextState = PlayerState::REPORT_ERROR;
+                    nextState    = PlayerState::REPORT_ERROR;
                     break;
                 }
 
-                ec = prepareBuffers();
-                if (ec != telux::common::ErrorCode::SUCCESS) {
-                    errToReport_ = ec;
-                    nextState = PlayerState::REPORT_ERROR;
-                    break;
-                }
-
-                ec = setFormatAndOffset(streamConfig_.format, contentOffset);
-                if (ec != telux::common::ErrorCode::SUCCESS) {
-                    errToReport_ = ec;
-                    nextState = PlayerState::REPORT_ERROR;
-                    break;
-                }
-
-                ec = registerForEvents();
-                if (ec != telux::common::ErrorCode::SUCCESS) {
-                    errToReport_ = ec;
-                    nextState = PlayerState::REPORT_ERROR;
-                    break;
-                }
-
-                writeCompleteCb_ = std::bind(&AudioPlayerImpl::writeCompletion, this,
+                writeCompleteCb_ = std::bind(&AudioPlayerImpl::writeComplete, this,
                     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-                nextState = PlayerState::SELECT_FILE_TO_PLAY;
+                nextState = PlayerState::SELECT_FILE;
                 break;
 
-            case PlayerState::SELECT_FILE_TO_PLAY:
-                if (curFileIdx >= playbackFiles_.size()) {
+            case PlayerState::SELECT_FILE:
+                if (curFileIdx >= playbackConfigs_.size()) {
                     /* All files played successfully */
                     nextState = PlayerState::REPORT_FINISH;
                     break;
                 }
 
-                curPbFile = playbackFiles_[curFileIdx];
+                curPbCfg = playbackConfigs_[curFileIdx];
 
-                if (curPbFile.repeatInfo.type == RepeatType::COUNT) {
-                    if (curPbFile.repeatInfo.count == 0) {
+                if (curPbCfg.repeatInfo.type == RepeatType::COUNT) {
+                    if (curPbCfg.repeatInfo.count == 0) {
                         /* Zero count is same as skip */
                         ++curFileIdx;
                     } else if (numTimesFilePlayed == 0) {
                         /* First time playing this file */
-                        curFileName_ = curPbFile.absoluteFilePath;
-                        nextState = PlayerState::INIT_FILE;
-                    } else if (numTimesFilePlayed < curPbFile.repeatInfo.count) {
+                        curFileName_ = curPbCfg.absoluteFilePath;
+                        nextState    = PlayerState::INIT_FILE;
+                    } else if (numTimesFilePlayed < curPbCfg.repeatInfo.count) {
                         /*
                          * Play this file again.
                          * Move the file position indicator to the 1st audio sample
                          * and clear end-of-file and error indicators.
                          */
-                        ec = adjustFileAndState(contentOffset);
+                        ec = adjustFileAndState();
                         if (ec != telux::common::ErrorCode::SUCCESS) {
                             errToReport_ = ec;
-                            nextState = PlayerState::REPORT_ERROR;
+                            nextState    = PlayerState::REPORT_ERROR;
                             break;
                         }
-                        nextState = PlayerState::PLAYING;
+                        nextState = PlayerState::PLAY_SAMPLES;
                     } else {
                         /* File has been played for the given iterations */
                         numTimesFilePlayed = 0;
                         ++curFileIdx;
                         nextState = PlayerState::DEINIT_FILE;
                     }
-                } else if (curPbFile.repeatInfo.type == RepeatType::SKIP) {
+                } else if (curPbCfg.repeatInfo.type == RepeatType::SKIP) {
                     /* Skip this file */
                     ++curFileIdx;
                 } else {
                     /* Play the file indefinitely */
                     if (!isFileOpened_) {
                         /* Playing file for the very first time, open it */
-                        curFileName_ = curPbFile.absoluteFilePath;
-                        nextState = PlayerState::INIT_FILE;
+                        curFileName_ = curPbCfg.absoluteFilePath;
+                        nextState    = PlayerState::INIT_FILE;
                     } else {
                         /* Play this file again */
-                        ec = adjustFileAndState(contentOffset);
+                        ec = adjustFileAndState();
                         if (ec != telux::common::ErrorCode::SUCCESS) {
                             errToReport_ = ec;
-                            nextState = PlayerState::REPORT_ERROR;
+                            nextState    = PlayerState::REPORT_ERROR;
                             break;
                         }
-                        nextState = PlayerState::PLAYING;
+                        nextState = PlayerState::PLAY_SAMPLES;
                     }
                 }
                 break;
@@ -379,23 +377,24 @@ void AudioPlayerImpl::play() {
                 ec = initFileToPlay();
                 if (ec != telux::common::ErrorCode::SUCCESS) {
                     errToReport_ = ec;
-                    nextState = PlayerState::REPORT_ERROR;
+                    nextState    = PlayerState::REPORT_ERROR;
                     break;
                 }
 
-                /* Discard header for the compressed format file as expected by PAL */
-                ret = std::fseek(curFile_, contentOffset, SEEK_CUR);
-                if (ret) {
-                    LOG(ERROR, __FUNCTION__, " can't fseek");
-                    errToReport_ = telux::common::ErrorCode::SYSTEM_ERR;
-                    nextState = PlayerState::REPORT_ERROR;
-                    break;
-                }
-
-                nextState = PlayerState::PLAYING;
+                nextState = PlayerState::REINIT_STREAM;
                 break;
 
-            case PlayerState::PLAYING:
+            case PlayerState::REINIT_STREAM:
+                ec = reinitAudioStream(curFileIdx);
+                if (ec != telux::common::ErrorCode::SUCCESS) {
+                    nextState = PlayerState::REPORT_ERROR;
+                    break;
+                }
+
+                nextState = PlayerState::PLAY_SAMPLES;
+                break;
+
+            case PlayerState::PLAY_SAMPLES:
                 ec = playAudioSamples();
                 if (ec != telux::common::ErrorCode::SUCCESS) {
                     nextState = PlayerState::REPORT_ERROR;
@@ -416,7 +415,7 @@ void AudioPlayerImpl::play() {
                      * ADSP pipeline is full, need to resend same buffer again once
                      * ADSP is ready to accept next buffer.
                      */
-                    nextState = PlayerState::PLAYING;
+                    nextState = PlayerState::PLAY_SAMPLES;
                 } else {
                     nextState = PlayerState::REPORT_ERROR;
                 }
@@ -425,16 +424,16 @@ void AudioPlayerImpl::play() {
             case PlayerState::REPORT_PLAYED:
                 reportPlayed();
 
-                if (curPbFile.repeatInfo.type == RepeatType::COUNT) {
+                if (curPbCfg.repeatInfo.type == RepeatType::COUNT) {
                     ++numTimesFilePlayed;
                 }
 
-                nextState = PlayerState::SELECT_FILE_TO_PLAY;
+                nextState = PlayerState::SELECT_FILE;
                 break;
 
             case PlayerState::DEINIT_FILE:
                 deinitFileToPlay();
-                nextState = PlayerState::SELECT_FILE_TO_PLAY;
+                nextState = PlayerState::SELECT_FILE;
                 break;
 
             case PlayerState::REPORT_ERROR:
@@ -442,8 +441,7 @@ void AudioPlayerImpl::play() {
                 nextState = PlayerState::TERMINATE;
                 break;
 
-            case PlayerState::REPORT_FINISH:
-               {
+            case PlayerState::REPORT_FINISH: {
                 std::lock_guard<std::mutex> playerLock(playerMtx_);
 
                 if (hasUserRequestedStop_) {
@@ -456,13 +454,13 @@ void AudioPlayerImpl::play() {
                  * correct order of execution and sanity of variables.
                  */
                 deinitAudioStream();
-                deregisterForEvents();
-                bufferPool_ = {};
-                isPlayInProgress_ = false;
+                deregisterForSSREvent();
+                bufferPool_           = {};
+                isPlayInProgress_     = false;
                 hasUserRequestedStop_ = false;
                 reportPlaybackFinished();
                 return;
-               }
+            }
 
             case PlayerState::TERMINATE:
                 terminatePlayback();
@@ -472,32 +470,32 @@ void AudioPlayerImpl::play() {
             default:
                 LOG(ERROR, __FUNCTION__, " invalid state ", static_cast<int>(nextState));
                 errToReport_ = telux::common::ErrorCode::INVALID_STATE;
-                nextState = PlayerState::REPORT_ERROR;
+                nextState    = PlayerState::REPORT_ERROR;
                 break;
         }
     }
 
 #ifdef AUDIOPLAYERIMPL_DDBG
     LOG(DEBUG, __FUNCTION__, " hasUserRequestedStop_ ", static_cast<int>(hasUserRequestedStop_),
-        " hasSsrOccurred_ ", static_cast<int>(hasSsrOccurred_));
+        ", hasSsrOccurred_ ", static_cast<int>(hasSsrOccurred_));
 #endif
 
     /*
      * (1) An error occurs, TERMINATE state is entered, cleanup is done, onPlaybackStopped()
-     * is called. Player thread is pre-empted. Application calls stopPlayback() which sets
+     * is called. Player thread is pre-empted. Client calls stopPlayback() which sets
      * hasUserRequestedStop_. Since we return from TERMINATE state, player thread will not
-     * execute below code. Therefore, there is no race between application and player thread.
-     * (2) An error occurs, player thread is pre-empted. Application calls stopPlayback()
+     * execute below code. Therefore, there is no race between clieny and player thread.
+     * (2) An error occurs, player thread is pre-empted. Client calls stopPlayback()
      * which sets hasUserRequestedStop_. While loop breaks, and code below will be executed.
-     * TERMINATE state is never entered. Therefore, no race between application and player
+     * TERMINATE state is never entered. Therefore, no race between client and player
      * thread.
-     * (3) Application calls startPlay() immediately followed by stopPlay() such that player
+     * (3) Client calls startPlay() immediately followed by stopPlay() such that player
      * thread doesn't get chance to execute state machine (enter while loop). When the player
      * thread is scheduled control reaches here and termination occurs as expected. Check for
      * valid object/pointer/value maintains sanity of the cleanup.
      */
     terminatePlayback();
-    deregisterForEvents();
+    deregisterForSSREvent();
     reportPlaybackStopped();
 }
 
@@ -509,42 +507,42 @@ void AudioPlayerImpl::terminatePlayback() {
     LOG(DEBUG, __FUNCTION__);
 #endif
 
-   {
-    /*
-     * Protect from player thread terminating playback and application giving up
-     * this class instance. Also prevents against accessing invalid variables,
-     * objects and pointers.
-     */
-    std::lock_guard<std::mutex> playerLock(playerMtx_);
+    {
+        /*
+         * Protect from player thread terminating playback and client giving up
+         * this class instance. Also prevents against accessing invalid variables,
+         * objects and pointers.
+         */
+        std::lock_guard<std::mutex> playerLock(playerMtx_);
 
-    if (!isPlayInProgress_) {
-        return;
+        if (!isPlayInProgress_) {
+            return;
+        }
+
+        if (!hasSsrOccurred_) {
+            waitAllWriteResponse();
+            deinitAudioStream();
+        }
+
+        deinitFileToPlay();
+
+        bufferPool_           = {};
+        isPlayInProgress_     = false;
+        hasUserRequestedStop_ = false;
     }
-
-    if (!hasSsrOccurred_) {
-        waitAllWriteResponse();
-        deinitAudioStream();
-    }
-
-    deinitFileToPlay();
-
-    bufferPool_ = {};
-    isPlayInProgress_ = false;
-    hasUserRequestedStop_ = false;
-   }
 }
 
 /*
  * When playing file for the next time, reset state variable and update file
  * pointer at the 1st audio sample.
  */
-telux::common::ErrorCode AudioPlayerImpl::adjustFileAndState(long contentOffset) {
-
+telux::common::ErrorCode AudioPlayerImpl::adjustFileAndState() {
     int ret = 0;
 
     std::rewind(curFile_);
+
     if (isCompressed_) {
-        ret = std::fseek(curFile_, contentOffset, SEEK_CUR);
+        ret = std::fseek(curFile_, contentOffset_, SEEK_CUR);
         if (ret) {
             LOG(ERROR, __FUNCTION__, " can't fseek");
             return telux::common::ErrorCode::SYSTEM_ERR;
@@ -555,98 +553,197 @@ telux::common::ErrorCode AudioPlayerImpl::adjustFileAndState(long contentOffset)
 }
 
 /*
- * When an async request to create stream is sent to the audio server, TIME_10_SECONDS second
- * timeout is used to ensure that the player thread doesn't get stuck forever waiting
- * for async response from server.
- *
+ * Returns true, if the previously played audio stream and the current stream
+ * have same configuration, otherwise false.
+ */
+bool AudioPlayerImpl::isStreamConfigurationSame(uint32_t curFileIdx) {
+
+    StreamConfig oldCfg{};
+    StreamConfig curCfg{};
+    telux::audio::AmrwbpParams *amrPrmsOld = NULL;
+    telux::audio::AmrwbpParams *amrPrmsCur = NULL;
+
+    oldCfg = playbackConfigs_[curFileIdx - 1].streamConfig;
+    curCfg = playbackConfigs_[curFileIdx].streamConfig;
+
+    if ((oldCfg.type != curCfg.type) ||
+        (oldCfg.sampleRate != curCfg.sampleRate) ||
+        (oldCfg.format != curCfg.format) ||
+        (oldCfg.channelTypeMask != curCfg.channelTypeMask) ||
+        (oldCfg.deviceTypes != curCfg.deviceTypes)) {
+        return false;
+    }
+
+    if (curCfg.format == telux::audio::AudioFormat::PCM_16BIT_SIGNED) {
+        /* AMR checks are not needed for PCM, so return from here */
+        return true;
+    }
+
+    if ((!oldCfg.formatParams) || (!curCfg.formatParams)) {
+        return false;
+    }
+
+    amrPrmsOld = static_cast<telux::audio::AmrwbpParams *>(oldCfg.formatParams);
+    amrPrmsCur = static_cast<telux::audio::AmrwbpParams *>(curCfg.formatParams);
+
+    if ((amrPrmsOld->bitWidth != amrPrmsCur->bitWidth) ||
+        (amrPrmsOld->frameFormat != amrPrmsCur->frameFormat)) {
+        return false;
+    }
+
+    return true;
+}
+
+/*
+ * Open an audio stream, if required, close existing stream.
+ */
+telux::common::ErrorCode AudioPlayerImpl::reinitAudioStream(uint32_t curFileIdx) {
+    bool ret = false;
+    telux::common::Status status;
+    telux::common::ErrorCode ec;
+
+    /* Reset write ready state */
+    isAdspWriteReady_ = true;
+
+    if (isStreamOpened_) {
+        ret = isStreamConfigurationSame(curFileIdx);
+        if (ret) {
+            /*
+             * Optimization; if previous and current stream have the same configuration,
+             * reuse the existing stream to save time spent in closing and then opening
+             * new stream again.
+             */
+            return telux::common::ErrorCode::SUCCESS;
+        }
+        if (isCompressed_) {
+            audioPlayStream_->deRegisterListener(shared_from_this());
+        }
+        deinitAudioStream();
+        bufferPool_ = {};
+    }
+
+    ec = initAudioStream(playbackConfigs_[curFileIdx].streamConfig);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        return ec;
+    }
+
+    ec = prepareBuffers();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        deinitAudioStream();
+        return ec;
+    }
+
+    ec = setFormatAndOffset(playbackConfigs_[curFileIdx].streamConfig.format);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        deinitAudioStream();
+        bufferPool_ = {};
+        return ec;
+    }
+
+    if (isCompressed_) {
+        /* Register for onReadyForWrite() and onPlayStopped() callbacks */
+        status = audioPlayStream_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            ec = telux::common::CommonUtils::toErrorCode(status);
+            LOG(ERROR, __FUNCTION__, " can't register compresscb, err ", static_cast<int>(ec));
+            deinitAudioStream();
+            bufferPool_ = {};
+            return ec;
+        }
+    }
+
+    return telux::common::ErrorCode::SUCCESS;
+}
+
+/*
  * CreateStreamResponseCb callback must be valid/existent in memory if the response
  * comes after this timeout. Therefore, define a method whose lifetime is more than
  * that of the AudioManagerImpl.
  */
-void AudioPlayerImpl::createStreamCompletion(std::shared_ptr<IAudioStream> &stream,
-        telux::common::ErrorCode result) {
-   {
-    std::lock_guard<std::mutex> streamLock(streamMtx_);
+void AudioPlayerImpl::createStreamComplete(
+    std::shared_ptr<IAudioStream> &stream, telux::common::ErrorCode result) {
+    {
+        std::lock_guard<std::mutex> streamLock(streamMtx_);
 
-    if (result == telux::common::ErrorCode::SUCCESS) {
-      audioPlayStream_ = std::dynamic_pointer_cast<telux::audio::IAudioPlayStream>(stream);
-      isStreamOpened_ = true;
+        if (result == telux::common::ErrorCode::SUCCESS) {
+            audioPlayStream_ = std::dynamic_pointer_cast<telux::audio::IAudioPlayStream>(stream);
+            isStreamOpened_  = true;
+        }
+
+        errToReport_           = result;
+        isCreateResponseReady_ = true;
+        asyncResponse_.notify_all();
     }
-
-    errToReport_ = result;
-    isCreateResponseReady_ = true;
-    asyncResponse_.notify_all();
-   }
 }
 
 /*
  * Creates an audio stream.
  */
-telux::common::ErrorCode AudioPlayerImpl::initAudioStream() {
+telux::common::ErrorCode AudioPlayerImpl::initAudioStream(StreamConfig streamConfig) {
 
     bool waitResult = false;
     telux::common::ErrorCode ec;
     telux::common::Status status;
 
-    auto createStreamResponseCb = std::bind(&AudioPlayerImpl::createStreamCompletion,
-        this, std::placeholders::_1, std::placeholders::_2);
+    auto createStreamResponseCb = std::bind(&AudioPlayerImpl::createStreamComplete, this,
+        std::placeholders::_1, std::placeholders::_2);
 
-    status = audioManager_->createStream(streamConfig_, createStreamResponseCb);
+    isCreateResponseReady_ = false;
+    status = audioManager_->createStream(streamConfig, createStreamResponseCb);
     if (status != telux::common::Status::SUCCESS) {
         ec = telux::common::CommonUtils::toErrorCode(status);
         LOG(ERROR, __FUNCTION__, " failed create stream ", static_cast<int>(ec));
         return ec;
     }
 
-   {
-    std::unique_lock<std::mutex> streamLock(streamMtx_);
+    {
+        std::unique_lock<std::mutex> streamLock(streamMtx_);
 
-    /*
-     * When an async request to create stream is sent to the audio server,
-     * we don't know whether the response from server will come or not in
-     * error scenarios for example, SSR. If it comes, how much time it will
-     * take. Use a TIME_10_SECONDS second timeout to prevent player thread from
-     * remaining blocked forever if response doesn't come.
-     */
-    waitResult = asyncResponse_.wait_for(streamLock,
-        std::chrono::seconds(TIME_10_SECONDS),
-        [=] { return (isCreateResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
+        /*
+         * When an async request to create stream is sent to the audio server,
+         * we don't know whether the response from server will come or not in
+         * error scenarios for example, SSR. If it comes, how much time it will
+         * take. Use a TIME_10_SECONDS second timeout to prevent player thread from
+         * remaining blocked forever if response doesn't come.
+         */
+        waitResult = asyncResponse_.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (isCreateResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
 
-    if (!waitResult) {
-        LOG(ERROR, __FUNCTION__, " timedout");
-        return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        if (!waitResult) {
+            LOG(ERROR, __FUNCTION__, " timedout");
+            return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        }
+
+        if (hasSsrOccurred_) {
+            LOG(ERROR, __FUNCTION__, " ssr occurred");
+            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+        }
+
+        if (hasUserRequestedStop_) {
+            LOG(ERROR, __FUNCTION__, " user stopped");
+            return telux::common::ErrorCode::CANCELLED;
+        }
+
+        if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " can't create stream ", static_cast<int>(errToReport_));
+            return errToReport_;
+        }
+
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    if (hasSsrOccurred_) {
-        LOG(ERROR, __FUNCTION__, " ssr occurred");
-        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-    }
-
-    if (hasUserRequestedStop_) {
-        LOG(ERROR, __FUNCTION__, " user stopped");
-        return telux::common::ErrorCode::CANCELLED;
-    }
-
-    if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't create stream ", static_cast<int>(errToReport_));
-        return errToReport_;
-    }
-
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
  * Receives response of the delete stream.
  */
-void AudioPlayerImpl::deleteStreamCompletion(telux::common::ErrorCode result) {
-   {
-    std::lock_guard<std::mutex> streamLock(streamMtx_);
+void AudioPlayerImpl::deleteStreamComplete(telux::common::ErrorCode result) {
+    {
+        std::lock_guard<std::mutex> streamLock(streamMtx_);
 
-    errToReport_ = result;
-    isDeleteResponseReady_ = true;
-    asyncResponse_.notify_all();
-   }
+        errToReport_           = result;
+        isDeleteResponseReady_ = true;
+        asyncResponse_.notify_all();
+    }
 }
 
 /*
@@ -660,50 +757,50 @@ telux::common::ErrorCode AudioPlayerImpl::deinitAudioStream() {
 
     if (!isStreamOpened_ || !audioPlayStream_) {
         /* Stream already closed or doesn't exist */
-        LOG(ERROR, __FUNCTION__, " no stream");
+        LOG(DEBUG, __FUNCTION__, " no stream");
         return telux::common::ErrorCode::SUCCESS;
     }
 
-    auto deleteStreamResponseCb = std::bind(&AudioPlayerImpl::deleteStreamCompletion,
-        this, std::placeholders::_1);
+    auto deleteStreamResponseCb
+        = std::bind(&AudioPlayerImpl::deleteStreamComplete, this, std::placeholders::_1);
 
-    status = audioManager_-> deleteStream(audioPlayStream_, deleteStreamResponseCb);
+    isDeleteResponseReady_ = false;
+    status = audioManager_->deleteStream(audioPlayStream_, deleteStreamResponseCb);
     if (status != telux::common::Status::SUCCESS) {
         ec = telux::common::CommonUtils::toErrorCode(status);
         LOG(ERROR, __FUNCTION__, " failed delete stream ", static_cast<int>(ec));
         return ec;
     }
 
-   {
-    std::unique_lock<std::mutex> streamLock(streamMtx_);
+    {
+        std::unique_lock<std::mutex> streamLock(streamMtx_);
 
-    waitResult = asyncResponse_.wait_for(streamLock,
-        std::chrono::seconds(TIME_10_SECONDS),
-        [=] { return (isDeleteResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
+        waitResult = asyncResponse_.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (isDeleteResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
 
-    if (!waitResult) {
-        LOG(ERROR, __FUNCTION__, " timedout");
-        return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        if (!waitResult) {
+            LOG(ERROR, __FUNCTION__, " timedout");
+            return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        }
+
+        if (hasSsrOccurred_) {
+            LOG(ERROR, __FUNCTION__, " ssr occurred");
+            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+        }
+
+        if (hasUserRequestedStop_) {
+            LOG(ERROR, __FUNCTION__, " user stopped");
+            return telux::common::ErrorCode::CANCELLED;
+        }
+
+        if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " can't delete stream ", static_cast<int>(errToReport_));
+            return errToReport_;
+        }
+
+        isStreamOpened_ = false;
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    if (hasSsrOccurred_) {
-        LOG(ERROR, __FUNCTION__, " ssr occurred");
-        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-    }
-
-    if (hasUserRequestedStop_) {
-        LOG(ERROR, __FUNCTION__, " user stopped");
-        return telux::common::ErrorCode::CANCELLED;
-    }
-
-    if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't delete stream ", static_cast<int>(errToReport_));
-        return errToReport_;
-    }
-
-    isStreamOpened_ = false;
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
@@ -720,20 +817,20 @@ telux::common::ErrorCode AudioPlayerImpl::prepareBuffers() {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             LOG(ERROR, __FUNCTION__, " can't allocate buffers");
+            bufferPool_ = {};
             return telux::common::ErrorCode::NO_MEMORY;
         }
 
         bufferPool_.push(streamBuffer);
 
         /*
-         * Identify optimal buffer size for this stream type and set it.
-         * The getMinSize() gives optimal buffer size for given stream (use case).
-         * If it doesn't give us any value, set buffer size to the maximum possible
-         * value to minimize playback latency.
+         * Identify optimal buffer size for this stream type and set it. The getMinSize()
+         * gives optimal buffer size for given stream (use case). If it doesn't give us
+         * any value, set buffer size to the maximum value to minimize playback latency.
          */
         bufferSize_ = streamBuffer->getMinSize();
         if (!bufferSize_) {
-            bufferSize_ =  streamBuffer->getMaxSize();
+            bufferSize_ = streamBuffer->getMaxSize();
         }
         streamBuffer->setDataSize(bufferSize_);
     }
@@ -751,9 +848,10 @@ telux::common::ErrorCode AudioPlayerImpl::initFileToPlay() {
         return telux::common::ErrorCode::MISSING_RESOURCE;
     }
 
-    curFile_ = std::fopen(curFileName_.c_str(), "r");
+    curFile_ = std::fopen(curFileName_.c_str(), "rb");
     if (!curFile_) {
-        LOG(ERROR, __FUNCTION__, " can't open file, lnx err ", static_cast<int>(errno));
+        LOG(ERROR, __FUNCTION__, " can't open file ", curFileName_,
+            ", lnx err ", static_cast<int>(errno));
         return telux::common::ErrorCode::NO_SUCH_ELEMENT;
     }
 
@@ -765,15 +863,13 @@ telux::common::ErrorCode AudioPlayerImpl::initFileToPlay() {
  * Closes the file.
  */
 telux::common::ErrorCode AudioPlayerImpl::deinitFileToPlay() {
-
     int ret;
 
     /*
      * 1. File closed when in DEINIT_FILE state.
      * 2. Explicit stop playback request received, termination sequence started.
      * 3. This method is called again.
-     * Since curFile_ becomes invalid after step 1, prevent accessing it otherwise
-     * crash occurs.
+     * Since curFile_ becomes invalid after step 1, prevent access to it.
      */
     if (!isFileOpened_ || !curFile_) {
         LOG(ERROR, __FUNCTION__, " no opened file");
@@ -802,37 +898,36 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
-   {
-    std::unique_lock<std::mutex> writeLock(writeMtx_);
+    {
+        std::unique_lock<std::mutex> writeLock(writeMtx_);
 
-    if(bufferPool_.empty()) {
-        /* Wait for a free buffer. Predicate is not used because of ping-pong */
-        waitResultNoPredicate = bufferAvailable_.wait_for(writeLock,
-            std::chrono::seconds(TIME_10_SECONDS));
+        if (bufferPool_.empty()) {
+            /* Wait for a free buffer. Predicate is not used because of ping-pong */
+            waitResultNoPredicate
+                = bufferAvailable_.wait_for(writeLock, std::chrono::seconds(TIME_10_SECONDS));
 
-        if (waitResultNoPredicate == std::cv_status::timeout) {
-            LOG(ERROR, __FUNCTION__, " timedout");
-            errToReport_ = telux::common::ErrorCode::OPERATION_TIMEOUT;
-            return errToReport_;
+            if (waitResultNoPredicate == std::cv_status::timeout) {
+                LOG(ERROR, __FUNCTION__, " timedout");
+                errToReport_ = telux::common::ErrorCode::OPERATION_TIMEOUT;
+                return errToReport_;
+            }
+
+            if (hasSsrOccurred_) {
+                LOG(ERROR, __FUNCTION__, " ssr occurred");
+                errToReport_ = telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+                return errToReport_;
+            }
+
+            if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
+                /* Error encountered while playing previously sent buffer, bail out */
+                return errToReport_;
+            }
         }
 
-        if (hasSsrOccurred_) {
-            LOG(ERROR, __FUNCTION__, " ssr occurred");
-            errToReport_ = telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-            return errToReport_;
-        }
-
-        if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
-            /* Error encountered while playing previously sent buffer, bail out */
-            return errToReport_;
-        }
-    }
-
-    if(isCompressed_ && !isAdspWriteReady_) {
-        /* Although buffer is available but ADSP can't accept at the moment */
-        waitResult = adspReady_.wait_for(writeLock,
-            std::chrono::seconds(TIME_10_SECONDS),
-            [=] { return (isAdspWriteReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
+        if (isCompressed_ && !isAdspWriteReady_) {
+            /* Although buffer is available but ADSP can't accept at the moment */
+            waitResult = adspReady_.wait_for(writeLock, std::chrono::seconds(TIME_10_SECONDS),
+                [=] { return (isAdspWriteReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
 
             if (!waitResult) {
                 LOG(ERROR, __FUNCTION__, " timedout");
@@ -851,40 +946,44 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
                 errToReport_ = telux::common::ErrorCode::CANCELLED;
                 return errToReport_;
             }
-    }
+        }
 
-    streamBuffer = bufferPool_.front();
-    bufferPool_.pop();
+        streamBuffer = bufferPool_.front();
+        bufferPool_.pop();
 
-    numBytesRead = fread(streamBuffer->getRawBuffer(), 1, bufferSize_, curFile_);
-
-    if ((numBytesRead == 0) && std::feof(curFile_)) {
-        /* Complete file has been played */
-        bufferPool_.push(streamBuffer);
-        return telux::common::ErrorCode::SUCCESS;
-    }
-
-    if((numBytesRead != bufferSize_) && !std::feof(curFile_)) {
-        /* Can't read requested number of bytes from the file system */
-        bufferPool_.push(streamBuffer);
-        LOG(ERROR, __FUNCTION__, " can't read file, numBytesRead ", numBytesRead);
-        return telux::common::ErrorCode::SYSTEM_ERR;
-    }
-
-    streamBuffer->setDataSize(numBytesRead);
+        numBytesRead = fread(streamBuffer->getRawBuffer(), 1, bufferSize_, curFile_);
 
 #ifdef AUDIOPLAYERIMPL_DDBG
-    LOG(DEBUG, __FUNCTION__, " writing size ", numBytesRead);
+        LOG(DEBUG, __FUNCTION__, " bytes read from file ", numBytesRead);
 #endif
 
-    status = audioPlayStream_->write(streamBuffer, writeCompleteCb_);
-    if(status != telux::common::Status::SUCCESS) {
-        bufferPool_.push(streamBuffer);
-        ec = telux::common::CommonUtils::toErrorCode(status);
-        LOG(ERROR, __FUNCTION__, " can't write, err ", static_cast<int>(ec));
-        return ec;
+        if ((numBytesRead == 0) && std::feof(curFile_)) {
+            /* Complete file has been played */
+            bufferPool_.push(streamBuffer);
+            return telux::common::ErrorCode::SUCCESS;
+        }
+
+        if ((numBytesRead != bufferSize_) && !std::feof(curFile_)) {
+            /* Can't read requested number of bytes from the file system */
+            bufferPool_.push(streamBuffer);
+            LOG(ERROR, __FUNCTION__, " can't read file, numBytesRead ", numBytesRead);
+            return telux::common::ErrorCode::SYSTEM_ERR;
+        }
+
+        streamBuffer->setDataSize(numBytesRead);
+
+#ifdef AUDIOPLAYERIMPL_DDBG
+        LOG(DEBUG, __FUNCTION__, " writing size ", numBytesRead);
+#endif
+
+        status = audioPlayStream_->write(streamBuffer, writeCompleteCb_);
+        if (status != telux::common::Status::SUCCESS) {
+            bufferPool_.push(streamBuffer);
+            ec = telux::common::CommonUtils::toErrorCode(status);
+            LOG(ERROR, __FUNCTION__, " can't write, err ", static_cast<int>(ec));
+            return ec;
+        }
     }
-   }
 
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -892,49 +991,47 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
 /*
  * Response calback to confirm samples played actually or playback failed.
  */
-void AudioPlayerImpl::writeCompletion(
-        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode ec) {
+void AudioPlayerImpl::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+    uint32_t bytesWritten, telux::common::ErrorCode ec) {
 
 #ifdef AUDIOPLAYERIMPL_DDBG
-    LOG(DEBUG, __FUNCTION__, " bytesWritten ", bytesWritten, " ec ", static_cast<int>(ec));
+    LOG(DEBUG, __FUNCTION__, " bytesWritten ", bytesWritten, ", ec ", static_cast<int>(ec));
 #endif
 
-    long offset = 0;
+    long rewindLength = 0;
 
     if (ec != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " write failed, err ", static_cast<int>(ec));
     } else if (buffer->getDataSize() != bytesWritten) {
         /*
-         * Whole buffer can't be played successfully,
-         * calculate how many bytes (offset) we need to play again and rewind to it.
+         * Whole buffer can't be played successfully. Calculate how many bytes
+         * (rewindLength) we need to play again and rewind to it.
          */
-        offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
-        std::fseek(curFile_, offset, SEEK_CUR);
+        rewindLength = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
+        std::fseek(curFile_, rewindLength, SEEK_CUR);
     } else {
         /* Success, send next buffer to play */
     }
 
-   {
-    std::lock_guard<std::mutex> writeLock(writeMtx_);
+    {
+        std::lock_guard<std::mutex> writeLock(writeMtx_);
 
-    /* Let the player thread know play success/failure for this buffer */
-    errToReport_ = ec;
+        /* Let the player thread know play success/failure for this buffer */
+        errToReport_ = ec;
 
-    if (isCompressed_ && offset) {
-        /* ADSP pipeline can't accept more buffers to play at the moment */
-        isAdspWriteReady_ = false;
+        if (isCompressed_ && rewindLength) {
+            /* ADSP pipeline can't accept more buffers to play at the moment */
+            isAdspWriteReady_ = false;
+        }
+
+        bufferPool_.push(buffer);
+        bufferAvailable_.notify_all();
     }
-
-    bufferPool_.push(buffer);
-
-    bufferAvailable_.notify_all();
-   }
 }
 
 /*
  * Wait for responses to all the write request sent to the audio server
- * till now. This ensures writeCompletion() exist in memory till the time
+ * till now. This ensures writeComplete() exist in memory till the time
  * it will be accessed to deliver the write results from the server.
  */
 telux::common::ErrorCode AudioPlayerImpl::waitAllWriteResponse() {
@@ -944,36 +1041,36 @@ telux::common::ErrorCode AudioPlayerImpl::waitAllWriteResponse() {
 
     std::cv_status waitResult{};
 
-   {
-    std::unique_lock<std::mutex> bufferWaitLock(writeMtx_);
+    {
+        std::unique_lock<std::mutex> bufferWaitLock(writeMtx_);
 
-    while(bufferPool_.size() != BUFFER_POOL_SIZE) {
-        /*
-         * Predicate is not used since there are two writes active at any time
-         * instant and response of latest write will overwrite response of
-         * previous write. Therefore, practically, predicate will be true always
-         * and will not server its actual purpose.
-         */
-        waitResult = bufferAvailable_.wait_for(bufferWaitLock,
-            std::chrono::seconds(TIME_10_SECONDS));
+        while (bufferPool_.size() != BUFFER_POOL_SIZE) {
+            /*
+             * Predicate is not used since there are two writes active at any time
+             * instant and response of latest write will overwrite response of
+             * previous write. Therefore, practically, predicate will be true always
+             * and will not server its actual purpose.
+             */
+            waitResult
+                = bufferAvailable_.wait_for(bufferWaitLock, std::chrono::seconds(TIME_10_SECONDS));
 
-        if (waitResult == std::cv_status::timeout) {
-            LOG(ERROR, __FUNCTION__, " timedout");
-            return telux::common::ErrorCode::OPERATION_TIMEOUT;
+            if (waitResult == std::cv_status::timeout) {
+                LOG(ERROR, __FUNCTION__, " timedout");
+                return telux::common::ErrorCode::OPERATION_TIMEOUT;
+            }
+
+            if (hasSsrOccurred_) {
+                LOG(ERROR, __FUNCTION__, " ssr occurred");
+                return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+            }
         }
 
-        if (hasSsrOccurred_) {
-            LOG(ERROR, __FUNCTION__, " ssr occurred");
-            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-        }
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
- * Updates application that an error has occurred.
+ * Updates client that an error has occurred.
  */
 void AudioPlayerImpl::reportError(telux::common::ErrorCode ec, std::string file) {
 #ifdef AUDIOPLAYERIMPL_DDBG
@@ -987,7 +1084,7 @@ void AudioPlayerImpl::reportError(telux::common::ErrorCode ec, std::string file)
 }
 
 /*
- *  Updates application that the file has been played.
+ *  Updates client that the file has been played.
  */
 void AudioPlayerImpl::reportPlayed() {
 #ifdef AUDIOPLAYERIMPL_DDBG
@@ -996,13 +1093,13 @@ void AudioPlayerImpl::reportPlayed() {
 
     auto playListListener = statusListener_.lock();
     if (playListListener) {
-      playListListener->onFilePlayed(curFileName_);
+        playListListener->onFilePlayed(curFileName_);
     }
 }
 
 /*
- *  Updates application that all the files given have been played in the
- *  manner specified by the application.
+ *  Updates client that all the given files have been played in the
+ *  manner specified by the client.
  */
 void AudioPlayerImpl::reportPlaybackFinished() {
 #ifdef AUDIOPLAYERIMPL_DDBG
@@ -1016,7 +1113,7 @@ void AudioPlayerImpl::reportPlaybackFinished() {
 }
 
 /*
- *  Updates application that the playback is started.
+ *  Updates client that the playback is started.
  */
 void AudioPlayerImpl::reportPlaybackStarted() {
 #ifdef AUDIOPLAYERIMPL_DDBG
@@ -1030,7 +1127,7 @@ void AudioPlayerImpl::reportPlaybackStarted() {
 }
 
 /*
- *  Updates application that the playback is terminated.
+ *  Updates client that the playback is terminated.
  */
 void AudioPlayerImpl::reportPlaybackStopped() {
 #ifdef AUDIOPLAYERIMPL_DDBG
@@ -1069,60 +1166,60 @@ telux::common::ErrorCode AudioPlayerImpl::finalizePlayback() {
         return ec;
     }
 
-   {
-    std::unique_lock<std::mutex> writeLock1(writeMtx_);
+    {
+        std::unique_lock<std::mutex> writeLock1(writeMtx_);
 
-    /* Case 1 */
-    if ((errToReport_ == telux::common::ErrorCode::SUCCESS) && isAdspWriteReady_) {
-        if (!isCompressed_) {
-            /* PCM playback completed successfully */
-            return telux::common::ErrorCode::SUCCESS;
+        /* Case 1 */
+        if ((errToReport_ == telux::common::ErrorCode::SUCCESS) && isAdspWriteReady_) {
+            if (!isCompressed_) {
+                /* PCM playback completed successfully */
+                return telux::common::ErrorCode::SUCCESS;
+            }
+            finalizeAMR = true;
         }
-        finalizeAMR = true;
-    }
-   }
-
-   if (finalizeAMR) {
-       return finalizeCompressedPlayback();
-   }
-
-   {
-    std::unique_lock<std::mutex> writeLock2(writeMtx_);
-    /*
-     * Case 2,3,4.
-     * As per the current design, audio server's response to the last write overwrites
-     * response to the 2nd last write call. If a real error occurred return it. If the
-     * ADSP couldn't play buffers, inform player thread to resend them.
-     */
-    if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
-        /* Error occurred while trying to play the last two buffers */
-        return errToReport_;
     }
 
-    if (!isAdspWriteReady_) {
-        /* Need to resend the buffer */
-        return telux::common::ErrorCode::REQUEST_RATE_LIMITED;
+    if (finalizeAMR) {
+        return finalizeCompressedPlayback();
     }
 
-    return telux::common::ErrorCode::SUCCESS;
-   }
+    {
+        std::unique_lock<std::mutex> writeLock2(writeMtx_);
+        /*
+         * Case 2,3,4.
+         * As per the current design, audio server's response to the last write overwrites
+         * response to the 2nd last write call. If a real error occurred return it. If the
+         * ADSP couldn't play buffers, inform player thread to resend them.
+         */
+        if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
+            /* Error occurred while trying to play the last two buffers */
+            return errToReport_;
+        }
+
+        if (!isAdspWriteReady_) {
+            /* Need to resend the buffer */
+            return telux::common::ErrorCode::REQUEST_RATE_LIMITED;
+        }
+
+        return telux::common::ErrorCode::SUCCESS;
+    }
 }
 
 /*
  * Receives response of the stop audio for compressed playback.
  */
-void AudioPlayerImpl::stopAudioCompletion(telux::common::ErrorCode result) {
+void AudioPlayerImpl::stopAudioComplete(telux::common::ErrorCode result) {
 #ifdef AUDIOPLAYERIMPL_DDBG
     LOG(DEBUG, __FUNCTION__, " result ", static_cast<int>(result));
 #endif
 
-   {
-    std::lock_guard<std::mutex> streamLock(streamMtx_);
+    {
+        std::lock_guard<std::mutex> streamLock(streamMtx_);
 
-    errToReport_ = result;
-    isStopResponseReady_ = true;
-    asyncResponse_.notify_all();
-   }
+        errToReport_         = result;
+        isStopResponseReady_ = true;
+        asyncResponse_.notify_all();
+    }
 }
 
 /*
@@ -1135,14 +1232,14 @@ telux::common::ErrorCode AudioPlayerImpl::finalizeCompressedPlayback() {
     telux::common::ErrorCode ec;
     telux::common::Status status;
 
-    auto stopAudioResponseCb = std::bind(&AudioPlayerImpl::stopAudioCompletion,
-        this, std::placeholders::_1);
+    auto stopAudioResponseCb
+        = std::bind(&AudioPlayerImpl::stopAudioComplete, this, std::placeholders::_1);
 
 #ifdef AUDIOPLAYERIMPL_DDBG
     LOG(DEBUG, __FUNCTION__);
 #endif
 
-    isStopAudioReady_ = false;
+    isStopAudioReady_    = false;
     isStopResponseReady_ = false;
 
     status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY, stopAudioResponseCb);
@@ -1152,82 +1249,69 @@ telux::common::ErrorCode AudioPlayerImpl::finalizeCompressedPlayback() {
         return ec;
     }
 
-   {
-    std::unique_lock<std::mutex> streamLock(streamMtx_);
+    {
+        std::unique_lock<std::mutex> streamLock(streamMtx_);
 
-    waitResult = asyncResponse_.wait_for(streamLock,
-        std::chrono::seconds(TIME_10_SECONDS),
-        [=] { return (isStopResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
+        waitResult = asyncResponse_.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (isStopResponseReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
 
-    if (!waitResult) {
-        LOG(ERROR, __FUNCTION__, " timedout");
-        return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        if (!waitResult) {
+            LOG(ERROR, __FUNCTION__, " timedout");
+            return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        }
+
+        if (hasSsrOccurred_) {
+            LOG(ERROR, __FUNCTION__, " ssr occurred");
+            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+        }
+
+        if (hasUserRequestedStop_) {
+            LOG(ERROR, __FUNCTION__, " user stopped");
+            return telux::common::ErrorCode::CANCELLED;
+        }
+
+        if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " can't stop stream ", static_cast<int>(errToReport_));
+            return errToReport_;
+        }
     }
 
-    if (hasSsrOccurred_) {
-        LOG(ERROR, __FUNCTION__, " ssr occurred");
-        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+    {
+        std::unique_lock<std::mutex> writeLock(writeMtx_);
+
+        /* Wait for response from ADSP confirming it stopped (drain done) */
+        waitResult
+            = compressedPlayStopped_.wait_for(writeLock, std::chrono::seconds(TIME_10_SECONDS),
+                [=] { return (isStopAudioReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
+
+        if (!waitResult) {
+            LOG(ERROR, __FUNCTION__, " timedout");
+            return telux::common::ErrorCode::OPERATION_TIMEOUT;
+        }
+
+        if (hasSsrOccurred_) {
+            LOG(ERROR, __FUNCTION__, " ssr occurred");
+            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+        }
+
+        if (hasUserRequestedStop_) {
+            LOG(ERROR, __FUNCTION__, " user stopped");
+            return telux::common::ErrorCode::CANCELLED;
+        }
+
+        /* Compressed playback completed successfully */
+        return telux::common::ErrorCode::SUCCESS;
     }
-
-    if (hasUserRequestedStop_) {
-        LOG(ERROR, __FUNCTION__, " user stopped");
-        return telux::common::ErrorCode::CANCELLED;
-    }
-
-    if (errToReport_ != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't stop stream ", static_cast<int>(errToReport_));
-        return errToReport_;
-    }
-   }
-
-   {
-    std::unique_lock<std::mutex> writeLock(writeMtx_);
-
-    /* Wait for response from ADSP confirming it stopped (drain done) */
-    waitResult = compressedPlayStopped_.wait_for(writeLock,
-        std::chrono::seconds(TIME_10_SECONDS),
-        [=] { return (isStopAudioReady_ || hasSsrOccurred_ || hasUserRequestedStop_); });
-
-    if (!waitResult) {
-        LOG(ERROR, __FUNCTION__, " timedout");
-        return telux::common::ErrorCode::OPERATION_TIMEOUT;
-    }
-
-    if (hasSsrOccurred_) {
-        LOG(ERROR, __FUNCTION__, " ssr occurred");
-        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-    }
-
-    if (hasUserRequestedStop_) {
-        LOG(ERROR, __FUNCTION__, " user stopped");
-        return telux::common::ErrorCode::CANCELLED;
-    }
-
-    /* Compressed playback completed successfully */
-    return telux::common::ErrorCode::SUCCESS;
-   }
 }
 
 /*
- *  Registers for async events from the audio server.
+ * Register for SSR onServiceStatusChange() callback.
  */
-telux::common::ErrorCode AudioPlayerImpl::registerForEvents() {
+telux::common::ErrorCode AudioPlayerImpl::registerForSSREvent() {
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
 
-    if (isCompressed_) {
-        /* Register for onReadyForWrite() and onPlayStopped() callbacks */
-        status = audioPlayStream_->registerListener(shared_from_this());
-        if (status != telux::common::Status::SUCCESS) {
-            ec = telux::common::CommonUtils::toErrorCode(status);
-            LOG(ERROR, __FUNCTION__,
-                " can't register compresscb, err ", static_cast<int>(ec));
-            return ec;
-        }
-    }
-
-    /* Register for SSR onServiceStatusChange() callback */
     status = audioManager_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         ec = telux::common::CommonUtils::toErrorCode(status);
@@ -1242,9 +1326,9 @@ telux::common::ErrorCode AudioPlayerImpl::registerForEvents() {
 }
 
 /*
- *  Deregisters for async events from the audio server.
+ *  Deregisters for SSR onServiceStatusChange() callback.
  */
-telux::common::ErrorCode AudioPlayerImpl::deregisterForEvents() {
+telux::common::ErrorCode AudioPlayerImpl::deregisterForSSREvent() {
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -1267,12 +1351,12 @@ void AudioPlayerImpl::onReadyForWrite() {
     LOG(DEBUG, __FUNCTION__);
 #endif
 
-   {
-    std::lock_guard<std::mutex> writeLock(writeMtx_);
+    {
+        std::lock_guard<std::mutex> writeLock(writeMtx_);
 
-    isAdspWriteReady_ = true;
-    adspReady_.notify_all();
-   }
+        isAdspWriteReady_ = true;
+        adspReady_.notify_all();
+    }
 }
 
 /*
@@ -1283,12 +1367,12 @@ void AudioPlayerImpl::onPlayStopped() {
     LOG(DEBUG, __FUNCTION__);
 #endif
 
-   {
-    std::lock_guard<std::mutex> compressStopLock(writeMtx_);
+    {
+        std::lock_guard<std::mutex> compressStopLock(writeMtx_);
 
-    isStopAudioReady_ = true;
-    compressedPlayStopped_.notify_all();
-   }
+        isStopAudioReady_ = true;
+        compressedPlayStopped_.notify_all();
+    }
 }
 
 /*
@@ -1329,38 +1413,38 @@ void AudioPlayerImpl::onServiceStatusChange(telux::common::ServiceStatus status)
  * 5. Player thread exits due to a fatal error.
  */
 void AudioPlayerImpl::unblockPlayerThread(bool setSSRStatus) {
-   {
-    /*
-     * This lock synchronizes player thread, AudioPlayerImpl destruction and
-     * caller thread of this method.
-     */
-    std::lock_guard<std::mutex> playerLock(playerMtx_);
     {
-     /* This lock prevents spurious/false wake ups */
-     std::lock_guard<std::mutex> ssrLock(writeMtx_);
+        /*
+         * This lock synchronizes player thread, AudioPlayerImpl destruction and
+         * caller thread of this method.
+         */
+        std::lock_guard<std::mutex> playerLock(playerMtx_);
+        {
+            /* This lock prevents spurious/false wake ups */
+            std::lock_guard<std::mutex> ssrLock(writeMtx_);
 
-     if (setSSRStatus) {
-        hasSsrOccurred_ = true;
-     }
+            if (setSSRStatus) {
+                hasSsrOccurred_ = true;
+            }
 
-     asyncResponse_.notify_all();
-     adspReady_.notify_all();
-     bufferAvailable_.notify_all();
-     compressedPlayStopped_.notify_all();
+            asyncResponse_.notify_all();
+            adspReady_.notify_all();
+            bufferAvailable_.notify_all();
+            compressedPlayStopped_.notify_all();
+        }
     }
-   }
 }
 
 /*
  *  Receives response for the setVolume().
  */
-SetVolumeResponseListener::SetVolumeResponseListener(
-    std::mutex& streamMtx): streamMutex_(streamMtx) {
+SetVolumeResponseListener::SetVolumeResponseListener(std::mutex &streamMtx)
+   : streamMutex_(streamMtx) {
 }
-void SetVolumeResponseListener::setVolumeCompletion(telux::common::ErrorCode errorCode) {
+void SetVolumeResponseListener::setVolumeComplete(telux::common::ErrorCode errorCode) {
     {
         std::lock_guard<std::mutex> streamLock(streamMutex_);
-        this->errorCode = errorCode;
+        this->errorCode     = errorCode;
         this->responseReady = true;
         this->cv.notify_one();
     }
@@ -1375,8 +1459,8 @@ telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
     telux::common::Status status;
     SetVolumeResponseListener listener(streamMtx_);
 
-    auto responseCb =  std::bind(
-        &SetVolumeResponseListener::setVolumeCompletion, &listener, std::placeholders::_1);
+    auto responseCb = std::bind(
+        &SetVolumeResponseListener::setVolumeComplete, &listener, std::placeholders::_1);
 
     {
         std::unique_lock<std::mutex> streamLock(streamMtx_);
@@ -1391,9 +1475,8 @@ telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
             return telux::common::CommonUtils::toErrorCode(status);
         }
 
-        waitResult = listener.cv.wait_for(streamLock,
-            std::chrono::seconds(TIME_10_SECONDS),
-            [&]{ return (listener.responseReady || hasSsrOccurred_); });
+        waitResult = listener.cv.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS),
+            [&] { return (listener.responseReady || hasSsrOccurred_); });
 
         if (!waitResult) {
             LOG(ERROR, __FUNCTION__, " timed out");
@@ -1412,15 +1495,15 @@ telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
 /*
  *  Receives response for the getVolume().
  */
-GetVolumeResponseListener::GetVolumeResponseListener(
-    std::mutex& streamMtx): streamMutex_(streamMtx) {
+GetVolumeResponseListener::GetVolumeResponseListener(std::mutex &streamMtx)
+   : streamMutex_(streamMtx) {
 }
-void GetVolumeResponseListener::getVolumeCompletion(StreamVolume volume,
-    telux::common::ErrorCode errorCode) {
+void GetVolumeResponseListener::getVolumeComplete(
+    StreamVolume volume, telux::common::ErrorCode errorCode) {
     {
         std::lock_guard<std::mutex> streamLock(streamMutex_);
-        this->errorCode = errorCode;
-        this->volume = volume;
+        this->errorCode     = errorCode;
+        this->volume        = volume;
         this->responseReady = true;
         this->cv.notify_one();
     }
@@ -1435,8 +1518,7 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
     telux::common::Status status;
     GetVolumeResponseListener listener(streamMtx_);
 
-    auto responseCb =  std::bind(
-        &GetVolumeResponseListener::getVolumeCompletion, &listener,
+    auto responseCb = std::bind(&GetVolumeResponseListener::getVolumeComplete, &listener,
         std::placeholders::_1, std::placeholders::_2);
 
     {
@@ -1452,9 +1534,8 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
             return telux::common::CommonUtils::toErrorCode(status);
         }
 
-        waitResult = listener.cv.wait_for(streamLock,
-            std::chrono::seconds(TIME_10_SECONDS),
-            [&]{ return (listener.responseReady || hasSsrOccurred_); });
+        waitResult = listener.cv.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS),
+            [&] { return (listener.responseReady || hasSsrOccurred_); });
 
         if (!waitResult) {
             LOG(ERROR, __FUNCTION__, " timed out");

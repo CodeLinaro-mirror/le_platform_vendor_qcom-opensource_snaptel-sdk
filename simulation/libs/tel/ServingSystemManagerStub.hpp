@@ -49,6 +49,8 @@ public:
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
     telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
     telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) override;
+    telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) override;
+    telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,

@@ -192,6 +192,54 @@ std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain do
    return domainString;
 }
 
+std::string MyServingSystemHelper::getSmsDomain(telux::tel::SmsDomain domain) {
+   std::string domainString = " Unknown ";
+   switch(domain) {
+      case telux::tel::SmsDomain::NO_SMS:
+         domainString = " No SMS ";
+         break;
+      case telux::tel::SmsDomain::SMS_ON_IMS:
+         domainString = " SMS on IMS ";
+         break;
+      case telux::tel::SmsDomain::SMS_ON_3GPP:
+         domainString = " SMS on 3GPP ";
+         break;
+      case telux::tel::SmsDomain::UNKNOWN:
+         domainString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return domainString;
+}
+
+std::string MyServingSystemHelper::getLteCsCapability(telux::tel::LteCsCapability capability) {
+   std::string capabilityString = " Unknown ";
+   switch(capability) {
+      case telux::tel::LteCsCapability::FULL_SERVICE:
+         capabilityString = " Full Service ";
+         break;
+      case telux::tel::LteCsCapability::CSFB_NOT_PREFERRED:
+         capabilityString = " CSFB Not Preferred ";
+         break;
+      case telux::tel::LteCsCapability::SMS_ONLY:
+         capabilityString = " SMS Only ";
+         break;
+      case telux::tel::LteCsCapability::LIMITED:
+         capabilityString = " Limited ";
+         break;
+      case telux::tel::LteCsCapability::BARRED:
+         capabilityString = " Barred ";
+         break;
+      case telux::tel::LteCsCapability::UNKNOWN:
+         capabilityString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return capabilityString;
+}
+
 std::string MyServingSystemHelper::getCallBarringType(telux::tel::CallsAllowedInCell type) {
    std::string typeString = " Unknown ";
    switch(type) {
@@ -541,4 +589,18 @@ void MyServingSystemListener::onCallBarringInfoChanged
          << MyServingSystemHelper::getCallBarringType(barringInfo[index].callType)
          << std::endl;
    }
+}
+
+void MyServingSystemListener::onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) {
+   PRINT_NOTIFICATION << " SMS capability changed."
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(smsCapability.rat)
+            << "\n SMS Domain: "
+            << MyServingSystemHelper::getSmsDomain(smsCapability.domain);
+}
+
+void MyServingSystemListener::onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) {
+   PRINT_NOTIFICATION << " LTE CS capability changed."
+            << "\n LTE CS capability: "
+            << MyServingSystemHelper::getLteCsCapability(lteCapability);
 }

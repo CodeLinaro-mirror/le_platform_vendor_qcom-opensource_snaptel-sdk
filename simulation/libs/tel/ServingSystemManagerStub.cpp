@@ -439,6 +439,19 @@ telux::common::Status ServingSystemManagerStub::getCallBarringInfo
     return status;
 }
 
+telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
+    (SmsCapability &smsCapability) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::SUCCESS;
+}
+
+
+telux::common::Status ServingSystemManagerStub::getLteCsCapability
+    (LteCsCapability &lteCapability) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::SUCCESS;
+}
+
 void ServingSystemManagerStub::handleCallBarringInfosChanged
     (::telStub::CallBarringInfosEvent event) {
     LOG(DEBUG, __FUNCTION__);

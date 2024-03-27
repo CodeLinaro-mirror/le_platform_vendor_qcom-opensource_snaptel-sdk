@@ -6,6 +6,9 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/DataSettingsServerImpl.cpp
     data/ServingSystemServerImpl.cpp
     data/DataFilterServerImpl.cpp
+    data/net/SocksServerImpl.cpp
+    data/net/NatServerImpl.cpp
+    data/net/L2tpServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

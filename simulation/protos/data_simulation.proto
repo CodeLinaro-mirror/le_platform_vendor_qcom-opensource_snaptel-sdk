@@ -96,12 +96,17 @@ service DataFilterManager {
   */
 
   service L2tpManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc SetConfig(SetConfigRequest) returns (google.protobuf.Empty) {}
+    rpc SetConfig(SetConfigRequest) returns (DefaultReply) {}
     rpc RequestConfig(google.protobuf.Empty) returns (RequestConfigReply) {}
-    rpc AddTunnel(AddTunnelRequest) returns (google.protobuf.Empty) {}
-    rpc RemoveTunnel(RemoveTunnelRequest) returns (google.protobuf.Empty) {}
+    rpc AddTunnel(AddTunnelRequest) returns (DefaultReply) {}
+    rpc RemoveTunnel(RemoveTunnelRequest) returns (DefaultReply) {}
+    rpc AddSession(AddSessionRequest) returns (DefaultReply) {}
+    rpc RemoveSession(RemoveSessionRequest) returns (DefaultReply) {}
+    rpc BindSessionToBackhaul(SessionConfigRequest) returns (DefaultReply) {}
+    rpc UnBindSessionToBackhaul(SessionConfigRequest) returns (DefaultReply) {}
+    rpc QueryBindSessionToBackhaul(QueryBindSessionRequest) returns (QueryBindSessionReply) {}
 }
 
 /*
@@ -136,10 +141,9 @@ service DataFilterManager {
   */
 
   service SnatManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
-    rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc AddStaticNatEntry(AddStaticNatEntryRequest) returns (google.protobuf.Empty) {}
-    rpc RemoveStaticNatEntry(RemoveStaticNatEntryRequest) returns (google.protobuf.Empty) {}
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc AddStaticNatEntry(StaticNatRequest) returns (DefaultReply) {}
+    rpc RemoveStaticNatEntry(StaticNatRequest) returns (DefaultReply) {}
     rpc RequestStaticNatEntries(RequestStaticNatEntriesRequest) returns
         (RequestStaticNatEntriesReply) {}
 }
@@ -186,6 +190,11 @@ service DataFilterManager {
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
+  }
+
+  service SocksManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc enableSocks(EnableSocksRequest) returns (DefaultReply) {}
   }
 
 /*******************************************************************
@@ -641,10 +650,12 @@ message L2tpTunnelConfig {
     uint32 local_udp_port = 4;
     uint32 peer_udp_port = 5;
     string peer_ipv6_addr = 6;
-    string peer_ipv4_addr = 7;
-    string loc_iface = 8;
-    IpFamilyType ip_family_type = 9;
-    repeated L2tpSessionConfig session_config = 10;
+    string peer_ipv6_gw_addr = 7;
+    string peer_ipv4_addr = 8;
+    string peer_ipv4_gw_addr = 9;
+    string loc_iface = 10;
+    IpFamilyType ip_family_type = 11;
+    repeated L2tpSessionConfig session_config = 12;
 }
 
 message RequestConfigReply {
@@ -652,10 +663,37 @@ message RequestConfigReply {
     bool enable_mtu = 2;
     bool enable_tcp_mss = 3;
     int32 mtu_size = 4;
+    DefaultReply reply = 5;
 }
 
 message AddTunnelRequest {
     L2tpTunnelConfig l2tp_tunnel_config = 1;
+}
+
+message AddSessionRequest {
+    L2tpSessionConfig session_config = 1;
+    uint32 tunnel_id = 2;
+}
+
+message RemoveSessionRequest {
+    uint32 session_id = 1;
+    uint32 tunnel_id = 2;
+}
+
+message SessionConfigRequest {
+    int32 loc_id = 1;
+    BackhaulPreference backhaul_type = 2;
+    int32 slot_id = 3;
+    int32 profile_id = 4;
+}
+
+message QueryBindSessionRequest {
+    BackhaulPreference backhaul_type = 1;
+}
+
+message QueryBindSessionReply {
+    repeated SessionConfigRequest session_configs = 1;
+    DefaultReply reply = 2;
 }
 
 message RemoveTunnelRequest {
@@ -801,24 +839,23 @@ message NatConfig {
 message StaticNatEntryRequest {
     int32 profile_id = 1;
     int32 slot_id = 2;
-    NatConfig nat_config = 3;
+    OperationType operation_type = 3;
+    NatConfig nat_config = 4;
 }
 
-message AddStaticNatEntryRequest {
-    StaticNatEntryRequest add_static_nat_entry = 1;
-}
-
-message RemoveStaticNatEntryRequest {
-    StaticNatEntryRequest remove_static_nat_entry = 2;
+message StaticNatRequest {
+    StaticNatEntryRequest static_nat_entry = 1;
 }
 
 message RequestStaticNatEntriesRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
+    OperationType operation_type = 3;
 }
 
 message RequestStaticNatEntriesReply {
     repeated NatConfig nat_config = 1;
+    DefaultReply reply = 2;
 }
 
 message SetFirewallRequest {
@@ -1042,4 +1079,9 @@ message switchBackHaulRequest {
     int32 slot_id = 2;
     int32 profile_id = 3;
     OperationType operation_type = 5;
+}
+
+message EnableSocksRequest {
+    bool enable = 1;
+    OperationType operation_type = 2;
 }

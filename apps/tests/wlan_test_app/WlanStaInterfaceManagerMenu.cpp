@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -108,7 +108,6 @@ void WlanStaInterfaceManagerMenu::setIpConfig(std::vector<std::string> userInput
     if(ipConfig == 2){
         staIpConfig = telux::wlan::StaIpConfig::STATIC_IP;
         std::string userInput{};
-        telux::wlan::StaStaticIpConfig staticIpConfig;
         std::cout << "Enter IPv4 Address: ";
         std::cin >> userInput;
         Utils::validateInput(userInput);

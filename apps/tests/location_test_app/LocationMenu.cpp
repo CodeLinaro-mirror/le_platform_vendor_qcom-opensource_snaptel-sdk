@@ -552,13 +552,9 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
    if(locationManager_) {
       char delimiter = '\n';
       std::string minItervalInput;
-      std::string distanceInput;
       std::cout << "Enter Interval in Milliseconds (default: 1000ms): ";
       std::getline(std::cin, minItervalInput, delimiter);
-      std::cout << "Enter Distance in Meters (default: 0m): ";
-      std::getline(std::cin, distanceInput, delimiter);
       int optInterval = -1;
-      int optDistance = -1;
       if(!minItervalInput.empty()) {
          try {
             optInterval = std::stoi(minItervalInput);
@@ -569,20 +565,10 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
       } else {
          optInterval = 1000;
       }
-      if(!distanceInput.empty()) {
-         try {
-            optDistance = std::stoi(distanceInput);
-         } catch(const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << optDistance
-                      << std::endl;
-         }
-      } else {
-         optDistance = 0;
-      }
 
-      if(optInterval > 0 && optDistance >= 0) {
+      if(optInterval > 0) {
          myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Basic report request");
-         locationManager_->startBasicReports((uint32_t)optDistance, (uint32_t)optInterval,
+         locationManager_->startBasicReports((uint32_t)optInterval,
                                              std::bind(&MyLocationCommandCallback::commandResponse,
                                                        myLocCmdResponseCb_, std::placeholders::_1));
       } else {

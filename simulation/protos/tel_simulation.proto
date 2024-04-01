@@ -146,6 +146,8 @@
      rpc RequestRFBandInfo (RequestRFBandInfoRequest) returns (RequestRFBandInfoReply) {}
      rpc GetNetworkRejectInfo (GetNetworkRejectInfoRequest) returns
          (GetNetworkRejectInfoReply) {}
+     rpc GetCallBarringInfo (GetCallBarringInfoRequest) returns
+         (GetCallBarringInfoReply) {}
  }
 
  service NetworkSelectionService {
@@ -1477,6 +1479,32 @@ message UpdateECallMsdResponse {
      commonStub.Status status = 6;
  }
 
+ message CallsAllowedInCell {
+     enum Type {
+         NORMAL_ONLY = 0;
+         EMERGENCY_ONLY = 1;
+         NO_CALLS = 2;
+         ALL_CALLS = 3;
+         UNKNOWN = -1;
+     }
+ }
+
+ message CallBarringInfo {
+     RadioTechnology rat = 1;
+     ServiceDomainInfo.Domain domain = 2;
+     CallsAllowedInCell.Type call_type = 3;
+ }
+
+ message GetCallBarringInfoReply {
+     repeated CallBarringInfo barring_infos = 1;
+     commonStub.Status status = 2;
+ }
+
+ message CallBarringInfosEvent {
+     repeated CallBarringInfo barring_infos = 1;
+     int32 phone_id = 2;
+ }
+
  message RequestNetworkTimeRequest {
      int32 phone_id = 1;
  }
@@ -2400,5 +2428,9 @@ message ECallModeReason {
 }
 
 message GetNetworkRejectInfoRequest {
+    int32 phone_id = 1;
+}
+
+message GetCallBarringInfoRequest {
     int32 phone_id = 1;
 }

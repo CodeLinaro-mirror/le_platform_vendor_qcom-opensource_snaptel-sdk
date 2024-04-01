@@ -41,6 +41,10 @@
         "getNetworkRejectInfo" :
         {
             "status" : "SUCCESS"
+        },
+        "getCallBarringInfo" :
+        {
+            "status" : "SUCCESS"
         }
     }
 }

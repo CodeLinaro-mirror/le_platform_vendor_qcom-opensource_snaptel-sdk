@@ -25,6 +25,7 @@ class ServingManagerServerImpl final : public telStub::ServingSystemService::Ser
 
 public:
     ServingManagerServerImpl();
+    ~ServingManagerServerImpl();
     grpc::Status InitService(ServerContext* context,
         const ::commonStub::GetServiceStatusRequest* request,
         commonStub::GetServiceStatusReply* response) override;
@@ -58,9 +59,18 @@ public:
     grpc::Status GetNetworkRejectInfo(ServerContext* context,
         const ::telStub::GetNetworkRejectInfoRequest* request,
         telStub::GetNetworkRejectInfoReply* response) override;
+    grpc::Status GetCallBarringInfo(ServerContext* context,
+        const ::telStub::GetCallBarringInfoRequest* request,
+        telStub::GetCallBarringInfoReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
+
+private:
+    void handleCallBarringUpdate(std::string eventParams);
+    void triggerChangeEvent(::eventService::EventResponse anyResponse);
+    void onEventUpdate(std::string event);
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
 #endif // SERVING_SYSTEM_MANAGER_SERVER_HPP

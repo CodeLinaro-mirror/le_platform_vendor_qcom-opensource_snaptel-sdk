@@ -113,6 +113,7 @@ public:
    static std::string RFBandtoString(telux::tel::RFBand band);
    static std::string RFBandWidthtoString(telux::tel::RFBandWidth bandWidth);
    static void logRFBandInfo(telux::tel::RFBandInfo info);
+   static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
 };
 
 class MyServingSystemListener : public telux::tel::IServingSystemListener {
@@ -124,6 +125,7 @@ public:
    void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;
    void onRFBandInfoChanged(telux::tel::RFBandInfo bandInfo) override;
    void onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) override;
+   void onCallBarringInfoChanged(std::vector<telux::tel::CallBarringInfo> barringInfo) override;
 };
 
 #endif  // MYSERVINGSYSTEMHANDLER_HPP

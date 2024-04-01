@@ -11,6 +11,7 @@ set(LIBQAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/SaeApplication.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/NullSecurity.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Ldm/Ldm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/./Utils/qUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./SafetyApps/safetyapp_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Monitor/qMonitor.cpp
 

@@ -107,6 +107,12 @@ class ICommunicator {
 
     virtual telux::common::Status stopTone(uint32_t streamId,
         std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status flush(uint32_t streamId,
+        std::shared_ptr<telux::audio::IFlushCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status drain(uint32_t streamId,
+        std::shared_ptr<telux::audio::IDrainCb> resultListener, int cmdId) = 0;
 };
 
 }  // end of namespace audio

@@ -80,6 +80,10 @@ class Stream : public IStreamEventListener,
 
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
 
+    void flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
+
+    void drain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
+
     /* IStreamEventListener overrides */
 
     void onWriteReadyEvent(uint32_t streamId) override;
@@ -92,6 +96,13 @@ class Stream : public IStreamEventListener,
  private:
     bool isIncallStream = false;
     bool isHpcmStream = false;
+    /* No. of buffers in the pipeline to play. */
+    int pipelineLength = 0;
+    /* Keep track of buffers played. When this no. becomes a multiple of maxPipeLineLen, then send a
+       send a pipeline full notification to simulate the notifications for compressed playback. */
+    int sendPipelineFull = 0;
+    /* Max no. of bufffers after which pipeline full notification is sent. */
+    int maxPipeLineLen = 0;
     std::shared_ptr<std::vector<uint8_t>> buffer_;
     StreamHandle streamHandle_;
     StreamParams streamParams_;

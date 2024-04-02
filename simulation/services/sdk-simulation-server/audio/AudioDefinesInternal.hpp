@@ -33,6 +33,8 @@
 #define STREAM_TONE_STOP_REQ 19
 #define DELETE_TRANSCODER_REQ 20
 #define CREATE_TRANSCODER_REQ  21
+#define STREAM_FLUSH_REQ 22
+#define STREAM_DRAIN_REQ 23
 #define STREAM_DTMF_DETECTED_IND 26
 #define AUDIO_STATUS_IND 27
 #define STREAM_WRITE_IND 28
@@ -98,6 +100,7 @@ struct StreamHandle {
     PrivateStreamData *privateStreamData;
     bool streamStarted = false;
     bool dtmfStarted = false;
+    bool isAMR = false;
 };
 
 /*

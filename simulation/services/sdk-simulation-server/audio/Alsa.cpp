@@ -323,6 +323,7 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
     {
     case StreamType::PLAY:
         writeBufferMinSize = streamHandle.frames * streamHandle.channels * 2;
+
         ec = setVolume(streamHandle, StreamDirection::RX , channelsVolume);
         if (ec != telux::common::ErrorCode::SUCCESS) {
             return telux::common::ErrorCode::SYSTEM_ERR;
@@ -782,10 +783,17 @@ telux::common::ErrorCode Alsa::read(StreamHandle& streamHandle,
 }
 
 telux::common::ErrorCode Alsa::drain(StreamHandle streamHandle) {
+
+    auto streamEventListener = streamHandle.privateStreamData->streamEventListener.lock();
+    if (streamEventListener) {
+        streamEventListener->onDrainDoneEvent(streamHandle.privateStreamData->streamId);
+    }
+
     return telux::common::ErrorCode::SUCCESS;
 }
 
 telux::common::ErrorCode Alsa::flush(StreamHandle streamHandle) {
+
     return telux::common::ErrorCode::SUCCESS;
 }
 

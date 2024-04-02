@@ -103,6 +103,12 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
     grpc::Status DeleteTranscoder(::grpc::ServerContext* context,
         const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response);
 
+    grpc::Status Flush(::grpc::ServerContext* context, const ::audioStub::AudioRequest* request,
+        ::commonStub::StatusMsg* response);
+
+    grpc::Status Drain(::grpc::ServerContext* context, const ::audioStub::AudioRequest* request,
+        ::commonStub::StatusMsg* response);
+
     /*** Overrides - IAudioMsgDispatcher ***/
 
     void broadcastServiceStatus(uint32_t newStatus) override;
@@ -323,6 +329,16 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
             std::shared_ptr<IAudioMsgListener> audioMsgListener);
 
     void stopTone(
+            google::protobuf::Any any,
+            std::shared_ptr<AudioRequest> audioReq,
+            std::shared_ptr<IAudioMsgListener> audioMsgListener);
+
+    void drain(
+            google::protobuf::Any any,
+            std::shared_ptr<AudioRequest> audioReq,
+            std::shared_ptr<IAudioMsgListener> audioMsgListener);
+
+    void flush(
             google::protobuf::Any any,
             std::shared_ptr<AudioRequest> audioReq,
             std::shared_ptr<IAudioMsgListener> audioMsgListener);

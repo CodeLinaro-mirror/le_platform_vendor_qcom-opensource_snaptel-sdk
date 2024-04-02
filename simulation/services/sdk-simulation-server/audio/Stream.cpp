@@ -21,6 +21,8 @@ Stream::Stream( std::shared_ptr<IAudioBackend> audioBackend,
      * application. */
     streamTaskExecutor_ = std::unique_ptr<telux::common::TaskDispatcher>(
         new telux::common::TaskDispatcher());
+    /* Max no. of bufffers after which pipeline full notification is sent. */
+    maxPipeLineLen = rand() % 100;
 }
 
 Stream::~Stream() {
@@ -73,7 +75,16 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
                 isHpcmStream = true;
                 writeMinSize = MAX_BUFFER_SIZE;
             }
-            break;
+            switch (config.streamConfig.format) {
+                case AudioFormat::AMRWB_PLUS:
+                case AudioFormat::AMRWB:
+                case AudioFormat::AMRNB:
+                    streamHandle_.isAMR = true;
+                    break;
+                default:
+                    streamHandle_.isAMR = false;
+                    break;
+            }
         case StreamType::CAPTURE:
             /*
              * Pre-allocate memory used for read to minimize memory allocation
@@ -118,6 +129,15 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
             buffer_ = nullptr;
         }
     }
+
+    streamHandle_.privateStreamData = new (std::nothrow) PrivateStreamData();
+    if (!streamHandle_.privateStreamData) {
+        LOG(ERROR, __FUNCTION__, " can't allocate PrivateStreamData");
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    streamHandle_.privateStreamData->streamId = streamId;
+    streamHandle_.privateStreamData->streamEventListener = shared_from_this();
 
     return ec;
 }
@@ -886,6 +906,27 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
     int64_t actualLengthWritten = 0;
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
+    if(streamHandle_.isAMR) {
+        pipelineLength += 1;
+        sendPipelineFull += 1;
+        if(sendPipelineFull%maxPipeLineLen == 0 && (!isLastBuffer) && (pipelineLength>0)){
+            auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
+            if (!audioMsgDispatcher) {
+                return;
+            }
+
+            audioMsgDispatcher->sendWriteResponse(audioReq, ec, streamId, actualLengthWritten,
+                isIncallStream, isHpcmStream);
+
+            pipelineLength -= 1;
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            onWriteReadyEvent(streamId);
+
+            return;
+        }
+    }
+
     if(!isIncallStream || !isHpcmStream){
         ec = audioBackend_->write(streamHandle_, data, writeLengthRequested, offset,
             timeStamp, isLastBuffer, actualLengthWritten);
@@ -901,6 +942,10 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
     /* LOG(DEBUG, __FUNCTION__,
         " data written, strmid: ", streamId, " length ", actualLengthWritten); */
 
+    if(streamHandle_.isAMR && (actualLengthWritten == 0)) {
+        onWriteReadyEvent(streamId);
+    }
+
     auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
     if (!audioMsgDispatcher) {
         return;
@@ -908,6 +953,13 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
 
     audioMsgDispatcher->sendWriteResponse(audioReq, ec, streamId, actualLengthWritten,
         isIncallStream, isHpcmStream);
+
+    pipelineLength -= 1;
+
+    if(isLastBuffer){
+        sendPipelineFull = 0;
+        pipelineLength = 0;
+    }
 }
 
 void Stream::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
@@ -917,6 +969,63 @@ void Stream::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
     streamTaskExecutor_->submitTask( [=]{ doWrite(audioReq, streamId, writeLengthRequested,
         offset, timeStamp, isLastBuffer, data, voiceCallList); });
 }
+
+/*
+ * Finish playing current buffer and then discard all the buffers queued for playing.
+ */
+void Stream::doDrain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
+
+    telux::common::ErrorCode ec;
+
+    auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    ec = audioBackend_->drain(streamHandle_);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        goto result;
+    }
+
+    LOG(DEBUG, __FUNCTION__, " stream drained, strmid: ", streamId);
+
+result:
+    audioMsgDispatcher->sendDrainResponse(audioReq, ec, streamId);
+}
+
+void Stream::drain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
+
+    streamTaskExecutor_->submitTask( [=]{ doDrain(audioReq, streamId); });
+}
+
+/*
+ * Discard all the buffers currently queued for playing unconditionally.
+ */
+void Stream::doFlush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
+
+    telux::common::ErrorCode ec;
+
+    auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    ec = audioBackend_->flush(streamHandle_);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        goto result;
+    }
+
+    LOG(DEBUG, __FUNCTION__, " stream flushed, strmid: ", streamId);
+
+result:
+    audioMsgDispatcher->sendFlushResponse(audioReq, ec, streamId);
+}
+
+void Stream::flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
+
+    streamTaskExecutor_->submitTask( [=]{ doFlush(audioReq, streamId); });
+}
+
 
 /*
  * ADSP/Q6 is about to finish playing audio samples. Inform application about

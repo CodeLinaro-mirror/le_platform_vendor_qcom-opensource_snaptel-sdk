@@ -84,13 +84,13 @@ class IReadCb : public telux::common::ICommandCallback {
 class IFlushCb : public telux::common::ICommandCallback {
  public:
     virtual void onFlushResult(telux::common::ErrorCode ec,
-                    uint32_t streamId, void *userData) = 0;
+                    uint32_t streamId, int cmdId) = 0;
 };
 
 class IDrainCb : public telux::common::ICommandCallback {
  public:
     virtual void onDrainResult(telux::common::ErrorCode ec,
-                    uint32_t streamId, void *userData) = 0;
+                    uint32_t streamId, int cmdId) = 0;
 };
 
 class ISetGetDeviceCb : public telux::common::ICommandCallback {

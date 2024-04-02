@@ -60,6 +60,13 @@ class AudioGrpcClientStub : public ICommunicator,
     telux::common::Status deleteStream(uint32_t streamId,
         std::shared_ptr<telux::audio::IDeleteStreamCb> resultListener, int cmdId) override;
 
+    telux::common::Status createTranscoder(telux::audio::FormatInfo inInfo,
+        telux::audio::FormatInfo outInfo,
+        std::shared_ptr<telux::audio::ITranscodeCreateCb> resultListener, int cmdId) override;
+
+    telux::common::Status deleteTranscoder(uint32_t inStreamId, uint32_t outStreamId,
+        std::shared_ptr<telux::audio::ITranscodeDeleteCb> resultListener, int cmdId) override;
+
     telux::common::Status startStream(uint32_t streamId,
         std::shared_ptr<telux::audio::IStartStreamCb> resultListener, int cmdId) override;
 
@@ -109,10 +116,13 @@ class AudioGrpcClientStub : public ICommunicator,
         std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
 
     telux::common::Status registerForVoiceStreamEvents(uint32_t streamId,
-        std::weak_ptr<telux::audio::IVoiceStreamEventsCb> listener);
+        std::weak_ptr<telux::audio::IVoiceStreamEventsCb> listener) override;
 
     telux::common::Status registerForServiceStatusEvents(
-        std::weak_ptr<telux::audio::IServiceStatusEventsCb> listener);
+        std::weak_ptr<telux::audio::IServiceStatusEventsCb> listener) override;
+
+    telux::common::Status registerForPlayStreamEvents(
+        std::weak_ptr<telux::audio::IPlayStreamEventsCb> listener) override;
 
     bool waitForInitialization();
     /**
@@ -148,6 +158,12 @@ class AudioGrpcClientStub : public ICommunicator,
             std::weak_ptr<telux::common::ICommandCallback> resultListener);
 
     void onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
             std::weak_ptr<telux::common::ICommandCallback> resultListener);
 
     void onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
@@ -199,6 +215,8 @@ class AudioGrpcClientStub : public ICommunicator,
 
     void onDtmfToneDetected(::audioStub::DtmfTone dtmfTone);
     void onSSRUpdate(commonStub::GetServiceStatusReply serviceStatus);
+    void onDrainDone(audioStub::DrainEvent drainEvent);
+    void onWriteReady(audioStub::WriteReadyEvent writeReadyEvent);
 
     /* Set to true to indicate - destruction is started */
     static std::atomic<bool> exitNow_;
@@ -207,9 +225,14 @@ class AudioGrpcClientStub : public ICommunicator,
 
  private:
     void createServerStreaming();
+    uint32_t inTranscodeStreamId_;
+    uint32_t outTranscodeStreamId_;
 
     std::shared_ptr<telux::common::ListenerManager<
         telux::audio::IVoiceStreamEventsCb>> voiceListenerMgr_;
+
+    std::shared_ptr<telux::common::ListenerManager<
+        telux::audio::IPlayStreamEventsCb>> playListenerMgr_;
 
     std::shared_ptr<telux::common::ListenerManager<
          telux::audio::IServiceStatusEventsCb>> serviceStatusListenerMgr_;

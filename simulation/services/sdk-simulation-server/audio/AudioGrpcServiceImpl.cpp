@@ -89,6 +89,8 @@ AudioGrpcServiceImpl::AudioGrpcServiceImpl() {
     opLookup[STREAM_READ_REQ]           = &AudioGrpcServiceImpl::read;
     opLookup[STREAM_TONE_START_REQ]     = &AudioGrpcServiceImpl::startTone;
     opLookup[STREAM_TONE_STOP_REQ]      = &AudioGrpcServiceImpl::stopTone;
+    opLookup[CREATE_TRANSCODER_REQ]      = &AudioGrpcServiceImpl::createTranscoder;
+    opLookup[DELETE_TRANSCODER_REQ]      = &AudioGrpcServiceImpl::deleteTranscoder;
 }
 
 AudioGrpcServiceImpl::~AudioGrpcServiceImpl() {
@@ -758,6 +760,56 @@ grpc::Status AudioGrpcServiceImpl::StopTone(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status AudioGrpcServiceImpl::CreateTranscoder(::grpc::ServerContext* context,
+        const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response) {
+
+    telux::common::Status status;
+    status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, ":: Json not found");
+    }
+
+    status = jsonHelper_->getApiRequestStatus("createTranscoder");
+
+    response->set_status(static_cast<commonStub::Status>(status));
+    if(status != telux::common::Status::SUCCESS){
+        return grpc::Status::OK;
+    }
+
+    telux::common::ErrorCode error = onClientProcessReq(request);
+    if(error != telux::common::ErrorCode::SUCCESS){
+        return grpc::Status(grpc::StatusCode::CANCELLED, ":: Cannot process request");
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status AudioGrpcServiceImpl::DeleteTranscoder(::grpc::ServerContext* context,
+        const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response) {
+
+    telux::common::Status status;
+    status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, ":: Json not found");
+    }
+
+    status = jsonHelper_->getApiRequestStatus("deleteTranscoder");
+
+    response->set_status(static_cast<commonStub::Status>(status));
+    if(status != telux::common::Status::SUCCESS){
+        return grpc::Status::OK;
+    }
+
+    telux::common::ErrorCode error = onClientProcessReq(request);
+    if(error != telux::common::ErrorCode::SUCCESS){
+        return grpc::Status(grpc::StatusCode::CANCELLED, ":: Cannot process request");
+    }
+
+    return grpc::Status::OK;
+}
+
 grpc::Status AudioGrpcServiceImpl::SetupAsyncResponseStream(::grpc::ServerContext* context,
         const ::audioStub::AudioClientConnect* request,
             ::grpc::ServerWriter< ::audioStub::AsyncResponseMessage>* writer) {
@@ -802,7 +854,6 @@ grpc::Status AudioGrpcServiceImpl::ClientDisconnected(::grpc::ServerContext* con
 
     return grpc::Status::OK;
 }
-
 
 telux::common::ErrorCode AudioGrpcServiceImpl::onClientProcessReq(const ::audioStub::AudioRequest*
         request) {
@@ -1015,6 +1066,7 @@ void AudioGrpcServiceImpl::sendCreateStreamResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         uint32_t streamId, StreamType streamType, uint32_t readMinSize,
         uint32_t writeMinSize) {
+
     audioStub::CreateStreamResponse response{};
     audioStub::AsyncResponseMessage resp{};
     ApiResponse apiResp{};
@@ -1926,15 +1978,137 @@ void AudioGrpcServiceImpl::sendFlushResponse(
 
 }
 
+void AudioGrpcServiceImpl::createTranscoder(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener) {
+
+    TranscodingFormatInfo inInfo{};
+    TranscodingFormatInfo outInfo{};
+    // CreatedTranscoderInfo createdTranscoderInfo{};
+    audioStub::FormatInfo request{};
+    any.UnpackTo(&request);
+
+    inInfo.sampleRate = request.insamplerate();
+    inInfo.mask = static_cast<telux::audio::ChannelTypeMask>(
+        request.inchanneltype().type());
+    inInfo.format = static_cast<AudioFormat>(request.inaudioformat().type());
+    inInfo.bitWidth = request.inparams().bitwidth();
+    inInfo.frameFormat = static_cast<AmrwbpFrameFormat>(request.inparams().frameformat().type());
+
+    outInfo.sampleRate = request.outsamplerate();
+    outInfo.mask = static_cast<telux::audio::ChannelTypeMask>(
+        request.outchanneltype().type());
+    outInfo.format = static_cast<AudioFormat>(request.outaudioformat().type());
+    outInfo.bitWidth = request.outparams().bitwidth();
+    outInfo.frameFormat = static_cast<AmrwbpFrameFormat>(request.outparams().frameformat().type());
+
+    audioMsgListener->createTranscoder(audioReq, inInfo, outInfo);
+}
+
 void AudioGrpcServiceImpl::sendCreateTranscoderResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         CreatedTranscoderInfo createdTranscoderInfo) {
+
+    audioStub::CreatedTranscoderInfo response{};
+    audioStub::AsyncResponseMessage resp{};
+    ApiResponse apiResp{};
+
+    telux::common::Status status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+    }
+
+    jsonHelper_->getApiResponse(&apiResp, "IAudioManager", "createTranscoder");
+
+    if (apiResp.cbDelay == SKIP_CALLBACK) {
+        LOG(INFO, __FUNCTION__, " Dropping response based on json config");
+        return;
+    }
+
+    resp.set_msgid(audioReq->getMsgId());
+    resp.set_cmdid(audioReq->getCmdId());
+    if(ec == telux::common::ErrorCode::SUCCESS){
+        resp.set_error(static_cast<commonStub::ErrorCode>(apiResp.error));
+    } else{
+        std::cout << "sendCreateTranscoderResponse error code" << (int)ec <<std::endl;
+        resp.set_error(static_cast<commonStub::ErrorCode>(ec));
+    }
+
+    response.set_instreamid(createdTranscoderInfo.inStreamId);
+    response.set_outstreamid(createdTranscoderInfo.outStreamId);
+    response.set_readminsize(createdTranscoderInfo.readMinSize);
+    response.set_readmaxsize(MAX_BUFFER_SIZE);
+    response.set_writeminsize(createdTranscoderInfo.writeMinSize);
+    response.set_writemaxsize(MAX_BUFFER_SIZE);
+    resp.mutable_any()->PackFrom(response);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
+
+    if(serverStreamMap_.find(audioReq->getClientId())!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, " Client Id ", audioReq->getClientId());
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[audioReq->getClientId()]->Write(resp);
+        }
+    }
+}
+
+void AudioGrpcServiceImpl::deleteTranscoder(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener) {
+    audioStub::DeleteTranscoder request{};
+    any.UnpackTo(&request);
+
+    audioMsgListener->deleteTranscoder(audioReq, request.instreamid(), request.outstreamid());
+
 }
 
 void AudioGrpcServiceImpl::sendDeleteTranscoderResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         uint32_t inStreamId, uint32_t outStreamId) {
 
+    audioStub::AsyncResponseMessage resp{};
+    audioStub::DeleteTranscoder response{};
+    ApiResponse apiResp{};
+
+    telux::common::Status status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+    }
+
+    jsonHelper_->getApiResponse(&apiResp, "IAudioManager", "deleteStream");
+
+    if (apiResp.cbDelay == SKIP_CALLBACK) {
+        LOG(INFO, __FUNCTION__, " Dropping response based on json config");
+        return;
+    }
+
+    resp.set_msgid(audioReq->getMsgId());
+    resp.set_cmdid(audioReq->getCmdId());
+    if(ec == telux::common::ErrorCode::SUCCESS){
+        resp.set_error(static_cast<commonStub::ErrorCode>(apiResp.error));
+    } else{
+        resp.set_error(static_cast<commonStub::ErrorCode>(ec));
+    }
+
+    response.set_instreamid(inStreamId);
+    response.set_outstreamid(outStreamId);
+    resp.mutable_any()->PackFrom(response);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
+
+    if(serverStreamMap_.find(audioReq->getClientId())!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, "Client Id", audioReq->getClientId());
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[audioReq->getClientId()]->Write(resp);
+        }
+        return;
+    }
+
+    LOG(ERROR, __FUNCTION__, "Client Id not found" );
 }
 
 void AudioGrpcServiceImpl::getCalibrationStatus(
@@ -1981,6 +2155,48 @@ void AudioGrpcServiceImpl::sendGetCalibrationStatusResponse(
         {
             std::lock_guard<std::mutex> lk(streamWriterMtx_);
             serverStreamMap_[audioReq->getClientId()]->Write(resp);
+        }
+    }
+}
+
+void AudioGrpcServiceImpl::sendWriteReadyEvent(
+        int clientId,
+        uint32_t streamId) {
+
+    audioStub::WriteReadyEvent writeReadyEvent{};
+    audioStub::AsyncResponseMessage resp{};
+
+    writeReadyEvent.set_streamid(streamId);
+    resp.mutable_any()->PackFrom(writeReadyEvent);
+    resp.set_msgid(STREAM_WRITE_IND);
+
+    /* Send the indication on audio server grpc stream */
+    if(serverStreamMap_.find(clientId)!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, "Client Id", clientId);
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[clientId]->Write(resp);
+        }
+    }
+}
+
+void AudioGrpcServiceImpl::sendDrainDoneEvent(
+        int clientId,
+        uint32_t streamId) {
+
+    audioStub::DrainEvent drainEvent{};
+    audioStub::AsyncResponseMessage resp{};
+
+    drainEvent.set_streamid(streamId);
+    resp.mutable_any()->PackFrom(drainEvent);
+    resp.set_msgid(STREAM_DRAIN_IND);
+
+    /* Send the indication on audio server grpc stream */
+    if(serverStreamMap_.find(clientId)!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, "Client Id", clientId);
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[clientId]->Write(resp);
         }
     }
 }

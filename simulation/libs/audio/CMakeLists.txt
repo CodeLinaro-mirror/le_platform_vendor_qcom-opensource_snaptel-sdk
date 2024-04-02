@@ -35,6 +35,7 @@ set(AUDIO_STUB_SOURCES
     CaptureStreamImpl.cpp
     LoopbackStreamImpl.cpp
     ToneGeneratorStreamImpl.cpp
+    TranscoderImpl.cpp
 )
 
 FILE(GLOB SOURCE "${PROTO_SRC_DIR}/*.cc")

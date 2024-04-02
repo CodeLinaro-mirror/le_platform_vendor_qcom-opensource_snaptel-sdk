@@ -33,6 +33,12 @@ class Stream : public IStreamEventListener,
     telux::common::ErrorCode setupStream(StreamConfiguration config,
         uint32_t streamId, uint32_t& readMinSize, uint32_t& writeMinSize);
 
+    telux::common::ErrorCode setupInTranscodeStream(TranscodingFormatInfo inInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo);
+
+    telux::common::ErrorCode setupOutTranscodeStream(TranscodingFormatInfo outInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo);
+
     telux::common::ErrorCode cleanupStream(std::vector<int>& voiceCallList);
 
     void start(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
@@ -75,6 +81,11 @@ class Stream : public IStreamEventListener,
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
 
     /* IStreamEventListener overrides */
+
+    void onWriteReadyEvent(uint32_t streamId) override;
+
+    void onDrainDoneEvent(uint32_t streamId);
+
     void onDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
             uint32_t highFreq, StreamDirection streamDirection);
 

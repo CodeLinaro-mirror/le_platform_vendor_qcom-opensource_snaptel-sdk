@@ -111,6 +111,10 @@ class IAudioMsgDispatcher {
     virtual void sendDTMFDetectedEvent(int clientId,
         uint32_t streamId, uint32_t lowFreq, uint32_t highFreq,
         StreamDirection streamDirection) = 0;
+
+    virtual void sendDrainDoneEvent( int clientId, uint32_t streamId) = 0;
+
+    virtual void sendWriteReadyEvent(int clientId, uint32_t streamId) = 0;
 };
 
 }  // end of namespace audio

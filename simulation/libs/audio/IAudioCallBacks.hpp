@@ -132,13 +132,13 @@ class IDTMFCb : public telux::common::ICommandCallback {
 class ITranscodeCreateCb : public telux::common::ICommandCallback {
  public:
     virtual void onCreateTranscoderResult(telux::common::ErrorCode ec,
-        CreatedTranscoderInfo transcoderInfo, void *userData) = 0;
+        CreatedTranscoderInfo transcoderInfo, int cmdId) = 0;
 };
 
 class ITranscodeDeleteCb : public telux::common::ICommandCallback {
  public:
     virtual void onDeleteTranscoderResult(telux::common::ErrorCode ec,
-        uint32_t inStreamId, uint32_t outStreamId, void *userData) = 0;
+        uint32_t inStreamId, uint32_t outStreamId, int cmdId) = 0;
 };
 
 class IIndicationCb : public telux::common::ICommandCallback {

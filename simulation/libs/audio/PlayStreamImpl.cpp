@@ -9,6 +9,7 @@
 #include "PlayStreamImpl.hpp"
 #include "AudioDefinesLibInternal.hpp"
 
+
 namespace telux {
 namespace audio {
 
@@ -25,7 +26,18 @@ PlayStreamImpl::~PlayStreamImpl() {
 }
 
 telux::common::Status PlayStreamImpl::init() {
-    return telux::common::Status::SUCCESS;
+    /* Used to pass events on playback-stream like drain done and write ready
+     * to the registered client (application) */
+    try {
+        eventListenerMgr_ = std::make_shared<telux::common::ListenerManager<IPlayListener>>();
+    } catch (const std::exception& e) {
+        LOG(ERROR, __FUNCTION__, " can't create ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+
+    /* Register to get drain done and write ready events */
+    return transportClient_->registerForPlayStreamEvents(
+                downcasted_shared_from_this<PlayStreamImpl>());
 }
 
 /*
@@ -174,8 +186,74 @@ void PlayStreamImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamI
  */
 telux::common::Status PlayStreamImpl::stopAudio(StopType stopType,
         telux::common::ResponseCallback callback) {
-    return telux::common::Status::SUCCESS;
+    intptr_t cmdId;
+    telux::common::Status status;
+
+    cmdId = INVALID_COMMAND_ID;
+    if (callback) {
+        cmdId = cmdCallbackMgr_.addCallback(callback);
+    }
+
+    switch (stopType) {
+        case StopType::FORCE_STOP:
+            status = transportClient_->flush(streamId_, downcasted_shared_from_this<PlayStreamImpl>(
+                ), cmdId);
+            break;
+        case StopType::STOP_AFTER_PLAY:
+            status = transportClient_->drain(streamId_, downcasted_shared_from_this<PlayStreamImpl>(
+                ), cmdId);
+            break;
+        default:
+            LOG(ERROR, __FUNCTION__, " invalid stop type ", static_cast<int>(stopType));
+            if (callback) {
+                cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+            }
+            return telux::common::Status::INVALIDPARAM;
+    }
+
+    if(status != telux::common::Status::SUCCESS && callback){
+        cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+    }
+
+    return status;;
 }
+
+/*
+ * If application provided a callback to receive the result of PlayStreamImpl::stopAudio
+ * invocation, it calls that callback method otherwise simply drops the result.
+ */
+void PlayStreamImpl::onFlushResult(telux::common::ErrorCode ec, uint32_t streamId,
+        int cmdId) {
+
+    std::shared_ptr<telux::common::ICommandCallback> resultListener;
+
+    resultListener = cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+    if (!resultListener) {
+        LOG(ERROR, __FUNCTION__, " can't find callback, cmdId ", cmdId);
+        return;
+    }
+
+    cmdCallbackMgr_.executeCallback(resultListener, ec);
+}
+
+/*
+ * If application provided a callback to receive the result of PlayStreamImpl::stopAudio
+ * invocation, it calls that callback method otherwise simply drops the result.
+ */
+void PlayStreamImpl::onDrainResult(telux::common::ErrorCode ec, uint32_t streamId,
+        int cmdId) {
+
+    std::shared_ptr<telux::common::ICommandCallback> resultListener;
+
+    resultListener = cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+    if (!resultListener) {
+        LOG(ERROR, __FUNCTION__, " can't find callback, cmdId ", cmdId);
+        return;
+    }
+
+    cmdCallbackMgr_.executeCallback(resultListener, ec);
+}
+
 
 /*
  * When AMR* format audio is played, these listeners, listen for drain, flush
@@ -197,12 +275,61 @@ telux::common::Status PlayStreamImpl::stopAudio(StopType stopType,
  */
 telux::common::Status PlayStreamImpl::registerListener(
         std::weak_ptr<IPlayListener> listener) {
-    return telux::common::Status::SUCCESS;
+
+    std::vector<std::weak_ptr<IPlayListener>> playListener;
+
+    eventListenerMgr_->getAvailableListeners(playListener);
+
+    return eventListenerMgr_->registerListener(listener);
 }
 
 telux::common::Status PlayStreamImpl::deRegisterListener(
         std::weak_ptr<IPlayListener> listener) {
-    return telux::common::Status::SUCCESS;
+
+    return eventListenerMgr_->deRegisterListener(listener);
+}
+
+/*
+ * Indicates that the last buffer sent has been successfully played.
+ * Let us stop now sending more buffers.
+ */
+void PlayStreamImpl::onDrainDone(uint32_t streamId) {
+
+    std::vector<std::weak_ptr<IPlayListener>> listeners;
+
+    eventListenerMgr_->getAvailableListeners(listeners);
+
+    if (listeners.size() == 0) {
+        /* There is no listener or it unregistered just before this
+         * indication came, drop the indication */
+        return;
+    }
+
+    for (auto &wp : listeners) {
+        if (auto sp = std::dynamic_pointer_cast<IPlayListener>(wp.lock())) {
+            sp->onPlayStopped();
+        }
+    }
+}
+
+/*
+ * Indicates that ALSA is ready to accept next buffer to play.
+ */
+void PlayStreamImpl::onWriteReady(uint32_t streamId) {
+
+    std::vector<std::weak_ptr<IPlayListener>> listeners;
+
+    eventListenerMgr_->getAvailableListeners(listeners);
+
+    if (listeners.size() == 0) {
+        return;
+    }
+
+    for (auto &wp : listeners) {
+        if (auto sp = std::dynamic_pointer_cast<IPlayListener>(wp.lock())) {
+            sp->onReadyForWrite();
+        }
+    }
 }
 
 }  // end of namespace audio

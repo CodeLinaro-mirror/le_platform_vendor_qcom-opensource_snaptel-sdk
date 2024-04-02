@@ -80,18 +80,22 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+
         "write": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+
         "read": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+
         "startTone": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+
         "stopTone": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
@@ -103,6 +107,16 @@
         },
 
         "deleteTranscoder": {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+
+        "flush": {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+
+        "drain": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         }

@@ -44,6 +44,8 @@
      rpc StopTone(AudioRequest) returns (commonStub.StatusMsg) {}
      rpc CreateTranscoder(AudioRequest) returns (commonStub.StatusMsg) {}
      rpc DeleteTranscoder(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc Flush(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc Drain(AudioRequest) returns (commonStub.StatusMsg) {}
      /*
       * When a client connects to the server, the audio requests are sent using the above unary
       * rpc calls and the status of the request is returned in the response of the rpc call. If the
@@ -112,6 +114,12 @@ message AudioFormat {
     enum Type {
         DUMMY = 0;
         PCM_16BIT_SIGNED = 1;
+        /** Adaptive multirate narrow band format */
+        AMRNB = 2;
+        /** Adaptive multirate wide band format */
+        AMRWB = 3;
+        /** Extended adaptive multirate wide band format */
+        AMRWB_PLUS = 4;
         UNKNOWN = -1;
     }
     Type type = 1;
@@ -419,6 +427,22 @@ message StopStreamRequest {
 }
 
 message StopStreamResponse {
+    uint32 streamId = 1;
+}
+
+message FlushRequest {
+    uint32 streamId = 1;
+}
+
+message FlushResponse {
+    uint32 streamId = 1;
+}
+
+message DrainRequest {
+    uint32 streamId = 1;
+}
+
+message DrainResponse {
     uint32 streamId = 1;
 }
 

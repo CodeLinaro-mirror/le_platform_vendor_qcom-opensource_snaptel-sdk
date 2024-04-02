@@ -641,10 +641,22 @@ void AudioServiceImpl::stopTone(std::shared_ptr<AudioRequest> audioReq,
 
 void AudioServiceImpl::drain(std::shared_ptr<AudioRequest> audioReq,
         uint32_t streamId) {
+
+    std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
+    if (stream) {
+        stream->drain(audioReq, streamId);
+        return;
+    }
 }
 
 void AudioServiceImpl::flush(std::shared_ptr<AudioRequest> audioReq,
         uint32_t streamId) {
+
+    std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
+    if (stream) {
+        stream->flush(audioReq, streamId);
+        return;
+    }
 }
 
 void AudioServiceImpl::registerForIndication(std::shared_ptr<AudioRequest> audioReq,

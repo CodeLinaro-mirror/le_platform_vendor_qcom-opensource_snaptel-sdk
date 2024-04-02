@@ -91,6 +91,8 @@ AudioGrpcServiceImpl::AudioGrpcServiceImpl() {
     opLookup[STREAM_TONE_STOP_REQ]      = &AudioGrpcServiceImpl::stopTone;
     opLookup[CREATE_TRANSCODER_REQ]      = &AudioGrpcServiceImpl::createTranscoder;
     opLookup[DELETE_TRANSCODER_REQ]      = &AudioGrpcServiceImpl::deleteTranscoder;
+    opLookup[STREAM_FLUSH_REQ]           = &AudioGrpcServiceImpl::flush;
+    opLookup[STREAM_DRAIN_REQ]           = &AudioGrpcServiceImpl::drain;
 }
 
 AudioGrpcServiceImpl::~AudioGrpcServiceImpl() {
@@ -808,6 +810,57 @@ grpc::Status AudioGrpcServiceImpl::DeleteTranscoder(::grpc::ServerContext* conte
     }
 
     return grpc::Status::OK;
+}
+
+grpc::Status AudioGrpcServiceImpl::Flush(::grpc::ServerContext* context,
+    const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response) {
+
+    telux::common::Status status;
+    status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, ":: Json not found");
+    }
+
+    status = jsonHelper_->getApiRequestStatus("flush");
+
+    response->set_status(static_cast<commonStub::Status>(status));
+    if(status != telux::common::Status::SUCCESS){
+        return grpc::Status::OK;
+    }
+
+    telux::common::ErrorCode error = onClientProcessReq(request);
+    if(error != telux::common::ErrorCode::SUCCESS){
+        return grpc::Status(grpc::StatusCode::CANCELLED, ":: Cannot process request");
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status AudioGrpcServiceImpl::Drain(::grpc::ServerContext* context, const ::audioStub::AudioRequest* request,
+    ::commonStub::StatusMsg* response) {
+
+    telux::common::Status status;
+    status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, ":: Json not found");
+    }
+
+    status = jsonHelper_->getApiRequestStatus("drain");
+
+    response->set_status(static_cast<commonStub::Status>(status));
+    if(status != telux::common::Status::SUCCESS){
+        return grpc::Status::OK;
+    }
+
+    telux::common::ErrorCode error = onClientProcessReq(request);
+    if(error != telux::common::ErrorCode::SUCCESS){
+        return grpc::Status(grpc::StatusCode::CANCELLED, ":: Cannot process request");
+    }
+
+    return grpc::Status::OK;
+
 }
 
 grpc::Status AudioGrpcServiceImpl::SetupAsyncResponseStream(::grpc::ServerContext* context,
@@ -1966,16 +2019,108 @@ void AudioGrpcServiceImpl::sendStopToneResponse(
     LOG(ERROR, __FUNCTION__, "Client Id not found" );
 }
 
+void AudioGrpcServiceImpl::drain(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener) {
+
+    audioStub::DrainRequest request{};
+    any.UnpackTo(&request);
+
+    audioMsgListener->drain(audioReq, request.streamid());
+}
+
 void AudioGrpcServiceImpl::sendDrainResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         uint32_t streamId) {
 
+    audioStub::AsyncResponseMessage resp{};
+    audioStub::StopStreamResponse response{};
+    ApiResponse apiResp{};
+
+    telux::common::Status status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+    }
+
+    jsonHelper_->getApiResponse(&apiResp, "IAudioManager", "drain");
+
+    if (apiResp.cbDelay == SKIP_CALLBACK) {
+        LOG(INFO, __FUNCTION__, " Dropping response based on json config");
+        return;
+    }
+
+    resp.set_msgid(audioReq->getMsgId());
+    resp.set_cmdid(audioReq->getCmdId());
+    resp.set_error(static_cast<commonStub::ErrorCode>(ec));
+
+    response.set_streamid(streamId);
+    resp.mutable_any()->PackFrom(response);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
+
+    if(serverStreamMap_.find(audioReq->getClientId())!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, "Client Id", audioReq->getClientId());
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[audioReq->getClientId()]->Write(resp);
+        }
+        return;
+    }
+
+    LOG(ERROR, __FUNCTION__, "Client Id not found" );
+}
+
+void AudioGrpcServiceImpl::flush(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener) {
+
+    audioStub::FlushRequest request{};
+    any.UnpackTo(&request);
+
+    audioMsgListener->flush(audioReq, request.streamid());
 }
 
 void AudioGrpcServiceImpl::sendFlushResponse(
         std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
         uint32_t streamId) {
 
+    audioStub::AsyncResponseMessage resp{};
+    audioStub::StopStreamResponse response{};
+    ApiResponse apiResp{};
+
+    telux::common::Status status = jsonHelper_->loadJson();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+    }
+
+    jsonHelper_->getApiResponse(&apiResp, "IAudioManager", "flush");
+
+    if (apiResp.cbDelay == SKIP_CALLBACK) {
+        LOG(INFO, __FUNCTION__, " Dropping response based on json config");
+        return;
+    }
+
+    resp.set_msgid(audioReq->getMsgId());
+    resp.set_cmdid(audioReq->getCmdId());
+    resp.set_error(static_cast<commonStub::ErrorCode>(ec));
+
+    response.set_streamid(streamId);
+    resp.mutable_any()->PackFrom(response);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(apiResp.cbDelay));
+
+    if(serverStreamMap_.find(audioReq->getClientId())!=serverStreamMap_.end()){
+        LOG(ERROR, __FUNCTION__, "Client Id", audioReq->getClientId());
+        {
+            std::lock_guard<std::mutex> lk(streamWriterMtx_);
+            serverStreamMap_[audioReq->getClientId()]->Write(resp);
+        }
+        return;
+    }
+
+    LOG(ERROR, __FUNCTION__, "Client Id not found" );
 }
 
 void AudioGrpcServiceImpl::createTranscoder(
@@ -2031,7 +2176,6 @@ void AudioGrpcServiceImpl::sendCreateTranscoderResponse(
     if(ec == telux::common::ErrorCode::SUCCESS){
         resp.set_error(static_cast<commonStub::ErrorCode>(apiResp.error));
     } else{
-        std::cout << "sendCreateTranscoderResponse error code" << (int)ec <<std::endl;
         resp.set_error(static_cast<commonStub::ErrorCode>(ec));
     }
 

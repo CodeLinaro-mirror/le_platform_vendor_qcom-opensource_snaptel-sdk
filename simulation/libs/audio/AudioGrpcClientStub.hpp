@@ -124,6 +124,12 @@ class AudioGrpcClientStub : public ICommunicator,
     telux::common::Status registerForPlayStreamEvents(
         std::weak_ptr<telux::audio::IPlayStreamEventsCb> listener) override;
 
+    telux::common::Status flush(uint32_t streamId,
+        std::shared_ptr<telux::audio::IFlushCb> resultListener, int cmdId) override;
+
+    telux::common::Status drain(uint32_t streamId,
+        std::shared_ptr<telux::audio::IDrainCb> resultListener, int cmdId) override;
+
     bool waitForInitialization();
     /**
     * Checks the status of grpc Service and returns the result.
@@ -209,6 +215,12 @@ class AudioGrpcClientStub : public ICommunicator,
             std::weak_ptr<telux::common::ICommandCallback> resultListener);
 
     void onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onDrain(google::protobuf::Any any, int cmdId, ErrorCode ec,
+            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+
+    void onFlush(google::protobuf::Any any, int cmdId, ErrorCode ec,
             std::weak_ptr<telux::common::ICommandCallback> resultListener);
 
     /* Receiving GRPC indication */

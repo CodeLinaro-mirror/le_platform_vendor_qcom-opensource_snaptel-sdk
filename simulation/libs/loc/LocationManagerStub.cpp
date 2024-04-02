@@ -695,9 +695,9 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
         velocityEastNorthUp.push_back(std::stof(message[itr++]));
     }
     loc->setVelocityEastNorthUp(velocityEastNorthUp);
-    size_t enuVelocityUncertainitySize = std::stoi(message[itr++]);
+    size_t enuVelocityUncertaintySize = std::stoi(message[itr++]);
     std::vector<float> setVelocityEastNorthUpUnc;
-    for(size_t i = 0; i < enuVelocityUncertainitySize; i++) {
+    for(size_t i = 0; i < enuVelocityUncertaintySize; i++) {
         setVelocityEastNorthUpUnc.push_back(std::stof(message[itr++]));
     }
     loc->setVelocityUncertaintyEastNorthUp(setVelocityEastNorthUpUnc);
@@ -776,6 +776,7 @@ void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> 
     loc->setLocationInfoValidity(locImpl->getLocationInfoValidity());
     loc->setElapsedRealTime(locImpl->getElapsedRealTime());
     loc->setElapsedRealTimeUncertainty(locImpl->getElapsedRealTimeUncertainty());
+    loc->setTimeUncMs(locImpl->getTimeUncMs());
     loc->setElapsedGptpTime(locImpl->getElapsedGptpTime());
     loc->setElapsedGptpTimeUnc(locImpl->getElapsedGptpTimeUnc());
 }

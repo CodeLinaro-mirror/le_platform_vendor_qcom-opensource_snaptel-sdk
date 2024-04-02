@@ -282,6 +282,9 @@ void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity 
    if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_UNC_BIT)) {
       std::cout << "valid elapsed real time uncertainty" << std::endl;
    }
+   if((validityMask & telux::loc::HAS_TIME_UNC_BIT)) {
+      std::cout << "valid timeUncMs" << std::endl;
+   }
    if((validityMask & telux::loc::HAS_GPTP_TIME_BIT)) {
       std::cout << "valid elapsed gPTP time" << std::endl;
    }
@@ -1183,6 +1186,7 @@ void MyLocationListener::onBasicLocationUpdate(
              << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
              << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
              << std::endl
+             << "Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
              << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
              << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
 
@@ -1377,6 +1381,7 @@ void MyLocationListener::onDetailedLocationUpdate(
       << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
       << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
       << std::endl
+      << "Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
       << "elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
       << "elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
       << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
@@ -1512,6 +1517,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
         << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
         << std::endl
+        << ", Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
         << ", elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
         << ", elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
         << "HorizontalUncertainty\nSemiMajor: " <<

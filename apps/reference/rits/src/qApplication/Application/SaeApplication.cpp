@@ -723,10 +723,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
 
         // check if valid msg contents pointer and if BSM for additional logging
-        if (threadMc){
-            if((psid == PSID_BSM || configuration.overridePsidCheck) &&
-                threadMc.get()->j2735_msg )
-            {
+        if (!isRxSim && threadMc){
+            if ((psid == PSID_BSM || configuration.overridePsidCheck) &&
+               threadMc.get()->j2735_msg && radioReceives.size() > index) {
                 uint64_t monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
                 uint8_t cbr = radioReceives[index].getCBRValue();
                 // write the log here for this tx now. using tx timestamp made before sendto

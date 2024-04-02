@@ -25,8 +25,7 @@ std::mutex AudioGrpcClientStub::destructorGuard_;
  * AudioGrpcClientStub class.
  */
 using AudioResponseHandler = void (telux::audio::AudioGrpcClientStub::*)(
-            google::protobuf::Any any, int cmdId, ErrorCode err,
-            std::weak_ptr<telux::common::ICommandCallback> callback);
+            google::protobuf::Any any, int cmdId, ErrorCode err);
 
 /*
  * Response handler look up corresponding to the operation performed on the server side.
@@ -179,12 +178,8 @@ void AudioGrpcClientStub::createServerStreaming() {
 
         {
             std::lock_guard<std::mutex> lk(update_);
-            if(callbackMap_.find(resp.cmdid())!= callbackMap_.end()){
-                serverMsgProcessor_->submitTask([=]{(this->*opLookup[msgId])(resp.any(),
-                resp.cmdid(), static_cast<ErrorCode>(resp.error()), callbackMap_[resp.cmdid()]);});
-            } else {
-                LOG(INFO, __FUNCTION__, " Cmd id not found");
-            }
+            serverMsgProcessor_->submitTask([=]{(this->*opLookup[msgId])(resp.any(),
+                resp.cmdid(), static_cast<ErrorCode>(resp.error()));});
         }
     }
 
@@ -328,7 +323,7 @@ telux::common::Status AudioGrpcClientStub::flush(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_FLUSH_REQ);
@@ -342,7 +337,7 @@ telux::common::Status AudioGrpcClientStub::flush(uint32_t streamId,
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({streamId, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -350,26 +345,25 @@ telux::common::Status AudioGrpcClientStub::flush(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onFlush(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onFlush(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::FlushResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IFlushCb>(sp);
         cb->onFlushResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 
 }
@@ -384,7 +378,7 @@ telux::common::Status AudioGrpcClientStub::drain(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_DRAIN_REQ);
@@ -398,7 +392,7 @@ telux::common::Status AudioGrpcClientStub::drain(uint32_t streamId,
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({streamId, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -406,26 +400,25 @@ telux::common::Status AudioGrpcClientStub::drain(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onDrain(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onDrain(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::DrainResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IDrainCb>(sp);
         cb->onDrainResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -465,7 +458,7 @@ telux::common::Status AudioGrpcClientStub::getDevices(
     grpc::Status reqStatus;
 
     //Cache the resultListener with cmdId to invoke when response is received.
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(GET_SUPPORTED_DEVICES_REQ);
@@ -475,7 +468,7 @@ telux::common::Status AudioGrpcClientStub::getDevices(
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({-1, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -484,14 +477,13 @@ telux::common::Status AudioGrpcClientStub::getDevices(
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onGetDevices(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onGetDevices(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     std::vector<telux::audio::DeviceType> deviceTypes;
     std::vector<telux::audio::DeviceDirection> deviceDirections;
@@ -507,14 +499,14 @@ void AudioGrpcClientStub::onGetDevices(google::protobuf::Any any, int cmdId, Err
         }
     }
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IGetDevicesCb>(sp);
         cb->onGetDevicesResult(ec, deviceTypes, deviceDirections, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -527,7 +519,7 @@ telux::common::Status AudioGrpcClientStub::getStreamTypes(
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
     request.set_clientid(getpid());
     request.set_msgid(GET_SUPPORTED_STREAMS_REQ);
     request.set_cmdid(cmdId);
@@ -537,7 +529,7 @@ telux::common::Status AudioGrpcClientStub::getStreamTypes(
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({-1, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -545,14 +537,13 @@ telux::common::Status AudioGrpcClientStub::getStreamTypes(
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onGetStreamTypes(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onGetStreamTypes(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     std::vector<telux::audio::StreamType> streamTypes;
     audioStub::GetStreamTypesResponse response;
@@ -562,7 +553,7 @@ void AudioGrpcClientStub::onGetStreamTypes(google::protobuf::Any any, int cmdId,
         streamTypes.push_back(static_cast<telux::audio::StreamType>(streamVal.type()));
     }
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IGetStreamsCb>(sp);
         cb->onGetStreamsResult(ec, streamTypes, cmdId);
@@ -570,7 +561,7 @@ void AudioGrpcClientStub::onGetStreamTypes(google::protobuf::Any any, int cmdId,
 
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -583,7 +574,7 @@ telux::common::Status AudioGrpcClientStub::getCalibrationInitStatus(
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(GET_CAL_INIT_STATUS_REQ);
@@ -593,7 +584,7 @@ telux::common::Status AudioGrpcClientStub::getCalibrationInitStatus(
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({-1, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -601,19 +592,19 @@ telux::common::Status AudioGrpcClientStub::getCalibrationInitStatus(
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
 void AudioGrpcClientStub::onGetCalibrationInitStatus(google::protobuf::Any any, int cmdId,
-        ErrorCode ec, std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+        ErrorCode ec) {
 
     audioStub::GetCalibrationInitStatusResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IGetCalInitStatusCb>(sp);
         cb->onGetCalInitStatusResult(ec,
@@ -621,7 +612,7 @@ void AudioGrpcClientStub::onGetCalibrationInitStatus(google::protobuf::Any any, 
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -640,7 +631,7 @@ telux::common::Status AudioGrpcClientStub::createStream(telux::audio::StreamConf
      * Protobuf doesn't support pointer type. Hence, these are cached on the library side with the
      * cmd Id and used when the response arrives.
      */
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(CREATE_STREAM_REQ);
@@ -677,7 +668,7 @@ telux::common::Status AudioGrpcClientStub::createStream(telux::audio::StreamConf
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({-1, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -687,14 +678,13 @@ telux::common::Status AudioGrpcClientStub::createStream(telux::audio::StreamConf
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onCreateStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onCreateStream(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     telux::audio::CreatedStreamInfo createdStreamInfo;
     audioStub::CreateStreamResponse response;
@@ -702,20 +692,20 @@ void AudioGrpcClientStub::onCreateStream(google::protobuf::Any any, int cmdId, E
 
     createdStreamInfo.streamType = static_cast<telux::audio::StreamType>(
             response.createdstreaminfo().streamtype().type());
-	createdStreamInfo.streamId = response.createdstreaminfo().streamid();
+    createdStreamInfo.streamId = response.createdstreaminfo().streamid();
     createdStreamInfo.writeMinSize = response.createdstreaminfo().writeminsize();
     createdStreamInfo.writeMaxSize = response.createdstreaminfo().writemaxsize();
     createdStreamInfo.readMinSize = response.createdstreaminfo().readminsize();
     createdStreamInfo.readMaxSize = response.createdstreaminfo().readmaxsize();
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ICreateStreamCb>(sp);
         cb->onCreateStreamResult(ec, createdStreamInfo, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -729,7 +719,7 @@ telux::common::Status AudioGrpcClientStub::deleteStream(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(DELETE_STREAM_REQ);
@@ -743,7 +733,7 @@ telux::common::Status AudioGrpcClientStub::deleteStream(uint32_t streamId,
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({-1, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -751,26 +741,25 @@ telux::common::Status AudioGrpcClientStub::deleteStream(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::DeleteStreamResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IDeleteStreamCb>(sp);
         cb->onDeleteStreamResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -788,7 +777,7 @@ telux::common::Status AudioGrpcClientStub::createTranscoder(
     telux::audio::AmrwbpParams *inputParams;
     telux::audio::AmrwbpParams *outputParams;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(-1, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(CREATE_TRANSCODER_REQ);
@@ -829,7 +818,7 @@ telux::common::Status AudioGrpcClientStub::createTranscoder(
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({-1, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -839,14 +828,13 @@ telux::common::Status AudioGrpcClientStub::createTranscoder(
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::CreatedTranscoderInfo response;
     any.UnpackTo(&response);
@@ -864,14 +852,14 @@ void AudioGrpcClientStub::onCreateTranscoder(google::protobuf::Any any, int cmdI
     inTranscodeStreamId_ = transcoderInfo.inStreamId;
     outTranscodeStreamId_ = transcoderInfo.outStreamId;
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{-1, cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ITranscodeCreateCb>(sp);
         cb->onCreateTranscoderResult(ec, transcoderInfo, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({-1, cmdId});
     }
 }
 
@@ -886,7 +874,7 @@ telux::common::Status AudioGrpcClientStub::deleteTranscoder(
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(inStreamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(DELETE_TRANSCODER_REQ);
@@ -901,7 +889,7 @@ telux::common::Status AudioGrpcClientStub::deleteTranscoder(
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({inStreamId, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -909,19 +897,18 @@ telux::common::Status AudioGrpcClientStub::deleteTranscoder(
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({inStreamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::DeleteTranscoder response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.instreamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ITranscodeDeleteCb>(sp);
         cb->onDeleteTranscoderResult(ec, response.instreamid(), response.outstreamid(), cmdId);
@@ -929,7 +916,7 @@ void AudioGrpcClientStub::onDeleteTranscoder(google::protobuf::Any any, int cmdI
 
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.instreamid(), cmdId});
     }
 }
 
@@ -943,7 +930,7 @@ telux::common::Status AudioGrpcClientStub::startStream(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_START_REQ);
@@ -955,7 +942,7 @@ telux::common::Status AudioGrpcClientStub::startStream(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -964,26 +951,25 @@ telux::common::Status AudioGrpcClientStub::startStream(uint32_t streamId,
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
-    audioStub::StartStreamResponse request;
-    any.UnpackTo(&request);
+    audioStub::StartStreamResponse response;
+    any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IStartStreamCb>(sp);
-        cb->onStreamStartResult(ec, request.streamid(), cmdId);
+        cb->onStreamStartResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -997,7 +983,7 @@ telux::common::Status AudioGrpcClientStub::stopStream(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_STOP_REQ);
@@ -1009,7 +995,7 @@ telux::common::Status AudioGrpcClientStub::stopStream(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1017,26 +1003,25 @@ telux::common::Status AudioGrpcClientStub::stopStream(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-		callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onStopStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onStopStream(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
-    audioStub::StopStreamResponse request;
-    any.UnpackTo(&request);
+    audioStub::StopStreamResponse response;
+    any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IStopStreamCb>(sp);
-        cb->onStreamStopResult(ec, request.streamid(), cmdId);
+        cb->onStreamStopResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1051,7 +1036,7 @@ telux::common::Status AudioGrpcClientStub::playDtmfTone(telux::audio::DtmfTone d
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_DTMF_START_REQ);
@@ -1072,7 +1057,7 @@ telux::common::Status AudioGrpcClientStub::playDtmfTone(telux::audio::DtmfTone d
         LOG(ERROR, __FUNCTION__, " grpc request failed");
         {
             std::lock_guard<std::mutex> lock(update_);
-            callbackMap_.erase(cmdId);
+            callbackMap_.erase({streamId, cmdId});
         }
         return telux::common::Status::FAILED;
     }
@@ -1080,26 +1065,25 @@ telux::common::Status AudioGrpcClientStub::playDtmfTone(telux::audio::DtmfTone d
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-		callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onPlayDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onPlayDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::StartDtmfToneResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IDTMFCb>(sp);
         cb->onPlayDtmfResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1114,7 +1098,7 @@ telux::common::Status AudioGrpcClientStub::stopDtmfTone(telux::audio::StreamDire
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_DTMF_STOP_REQ);
@@ -1128,7 +1112,7 @@ telux::common::Status AudioGrpcClientStub::stopDtmfTone(telux::audio::StreamDire
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1136,26 +1120,25 @@ telux::common::Status AudioGrpcClientStub::stopDtmfTone(telux::audio::StreamDire
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-		callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onStopDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onStopDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::StopDtmfToneResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IDTMFCb>(sp);
         cb->onStopDtmfResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1170,7 +1153,7 @@ telux::common::Status AudioGrpcClientStub::playTone(uint32_t streamId, std::vect
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_TONE_START_REQ);
@@ -1188,7 +1171,7 @@ telux::common::Status AudioGrpcClientStub::playTone(uint32_t streamId, std::vect
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1196,25 +1179,24 @@ telux::common::Status AudioGrpcClientStub::playTone(uint32_t streamId, std::vect
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onPlayTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onPlayTone(google::protobuf::Any any, int cmdId, ErrorCode ec) {
     audioStub::PlayToneResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IToneCb>(sp);
         cb->onToneStartResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1228,7 +1210,7 @@ telux::common::Status AudioGrpcClientStub::stopTone(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_TONE_STOP_REQ);
@@ -1240,7 +1222,7 @@ telux::common::Status AudioGrpcClientStub::stopTone(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1248,26 +1230,25 @@ telux::common::Status AudioGrpcClientStub::stopTone(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-		callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
-    audioStub::StopToneResponse request;
-    any.UnpackTo(&request);
+    audioStub::StopToneResponse response;
+    any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IToneCb>(sp);
-        cb->onToneStopResult(ec, request.streamid(), cmdId);
+        cb->onToneStopResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1282,7 +1263,7 @@ telux::common::Status AudioGrpcClientStub::setDevice(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_SET_DEVICE_REQ);
@@ -1301,7 +1282,7 @@ telux::common::Status AudioGrpcClientStub::setDevice(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1309,26 +1290,25 @@ telux::common::Status AudioGrpcClientStub::setDevice(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-		callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onSetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onSetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::SetDeviceResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetDeviceCb>(sp);
         cb->onSetDeviceResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1342,7 +1322,7 @@ telux::common::Status AudioGrpcClientStub::getDevice(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_GET_DEVICE_REQ);
@@ -1354,7 +1334,7 @@ telux::common::Status AudioGrpcClientStub::getDevice(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1362,14 +1342,13 @@ telux::common::Status AudioGrpcClientStub::getDevice(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onGetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onGetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec) {
     audioStub::GetDeviceResponse response;
     any.UnpackTo(&response);
 
@@ -1381,14 +1360,14 @@ void AudioGrpcClientStub::onGetDevice(google::protobuf::Any any, int cmdId, Erro
         }
     }
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetDeviceCb>(sp);
         cb->onGetDeviceResult(ec, response.streamid(), devices, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1404,7 +1383,7 @@ telux::common::Status AudioGrpcClientStub::setVolume(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_SET_VOLUME_REQ);
@@ -1425,7 +1404,7 @@ telux::common::Status AudioGrpcClientStub::setVolume(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1433,26 +1412,25 @@ telux::common::Status AudioGrpcClientStub::setVolume(uint32_t streamId,
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onSetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onSetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::SetVolumeResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetVolumeCb>(sp);
         cb->onSetVolumeResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1468,7 +1446,7 @@ telux::common::Status AudioGrpcClientStub::getVolume(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_GET_VOLUME_REQ);
@@ -1481,7 +1459,7 @@ telux::common::Status AudioGrpcClientStub::getVolume(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1490,14 +1468,13 @@ telux::common::Status AudioGrpcClientStub::getVolume(uint32_t streamId,
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onGetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onGetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec) {
     audioStub::GetVolumeResponse response;
     any.UnpackTo(&response);
     telux::audio::StreamVolume streamVolume{};
@@ -1514,14 +1491,14 @@ void AudioGrpcClientStub::onGetVolume(google::protobuf::Any any, int cmdId, Erro
         }
     }
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetVolumeCb>(sp);
         cb->onGetVolumeResult(ec, response.streamid(), streamVolume, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1535,7 +1512,7 @@ telux::common::Status AudioGrpcClientStub::setMute(uint32_t streamId,
     ClientContext context{};
     telux::common::Status status;
     grpc::Status reqStatus;
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_SET_MUTE_STATE_REQ);
@@ -1552,7 +1529,7 @@ telux::common::Status AudioGrpcClientStub::setMute(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1561,26 +1538,25 @@ telux::common::Status AudioGrpcClientStub::setMute(uint32_t streamId,
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onSetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onSetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::SetMuteResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetMuteCb>(sp);
         cb->onSetMuteResult(ec, response.streamid(), cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1595,7 +1571,7 @@ telux::common::Status AudioGrpcClientStub::getMute(uint32_t streamId,
     telux::common::Status status;
     grpc::Status reqStatus;
 
-    callbackMap_[cmdId] = resultListener;
+    callbackMap_[std::make_pair(streamId, cmdId)] = resultListener;
 
     request.set_clientid(getpid());
     request.set_msgid(STREAM_GET_MUTE_STATE_REQ);
@@ -1609,7 +1585,7 @@ telux::common::Status AudioGrpcClientStub::getMute(uint32_t streamId,
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(cmdId);
+                callbackMap_.erase({streamId, cmdId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1618,14 +1594,13 @@ telux::common::Status AudioGrpcClientStub::getMute(uint32_t streamId,
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({streamId, cmdId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onGetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onGetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     audioStub::GetMuteResponse response;
     any.UnpackTo(&response);
@@ -1638,14 +1613,14 @@ void AudioGrpcClientStub::onGetMuteState(google::protobuf::Any any, int cmdId, E
             response.mutestatus().direction().type());
     }
 
-    auto sp = resultListener.lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::ISetGetMuteCb>(sp);
         cb->onGetMuteResult(ec, response.streamid(), streamMute, cmdId);
     }
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(cmdId);
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1661,8 +1636,8 @@ telux::common::Status AudioGrpcClientStub::write(uint32_t streamId, uint8_t *tra
     grpc::Status reqStatus;
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_[userData->cmdCallbackId] = resultListener;
-        userDataMap_[userData->cmdCallbackId] = userData;
+        callbackMap_[std::make_pair(streamId, userData->cmdCallbackId)] = resultListener;
+        userDataMap_[std::make_pair(streamId, userData->cmdCallbackId)] = userData;
     }
     request.set_clientid(getpid());
     request.set_msgid(STREAM_WRITE_REQ);
@@ -1679,7 +1654,7 @@ telux::common::Status AudioGrpcClientStub::write(uint32_t streamId, uint8_t *tra
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(userData->cmdCallbackId);
+                callbackMap_.erase({streamId, userData->cmdCallbackId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1687,13 +1662,13 @@ telux::common::Status AudioGrpcClientStub::write(uint32_t streamId, uint8_t *tra
     status = static_cast<telux::common::Status>(response.status());
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(userData->cmdCallbackId);
+        callbackMap_.erase({streamId, userData->cmdCallbackId});
     }
+
     return status;
 }
 
-void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     AudioUserData *audioUserData;
     audioStub::writeResponse response;
@@ -1701,10 +1676,10 @@ void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCod
 
     {
         std::lock_guard<std::mutex> lock(update_);
-        audioUserData = userDataMap_[cmdId];
+        audioUserData = userDataMap_[{response.streamid(), cmdId}];
     }
 
-    auto sp = callbackMap_[cmdId].lock();
+    auto sp = callbackMap_[std::make_pair(response.streamid(), cmdId)].lock();
 
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IWriteCb>(sp);
@@ -1715,8 +1690,8 @@ void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCod
     {
         std::lock_guard<std::mutex> lock(update_);
 
-        userDataMap_.erase(cmdId);
-        callbackMap_.erase(cmdId);
+        userDataMap_.erase({response.streamid(), cmdId});
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 }
 
@@ -1733,8 +1708,8 @@ telux::common::Status AudioGrpcClientStub::read(uint32_t streamId, uint32_t numB
     grpc::Status reqStatus;
     {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_[audioUserData->cmdCallbackId] = resultListener;
-        userDataMap_[audioUserData->cmdCallbackId] = audioUserData;
+        callbackMap_[{streamId, audioUserData->cmdCallbackId}] = resultListener;
+        userDataMap_[{streamId, audioUserData->cmdCallbackId}] = audioUserData;
     }
     request.set_clientid(getpid());
     request.set_msgid(STREAM_READ_REQ);
@@ -1748,7 +1723,7 @@ telux::common::Status AudioGrpcClientStub::read(uint32_t streamId, uint32_t numB
             LOG(ERROR, __FUNCTION__, " grpc request failed");
             {
                 std::lock_guard<std::mutex> lock(update_);
-                callbackMap_.erase(audioUserData->cmdCallbackId);
+                callbackMap_.erase({streamId, audioUserData->cmdCallbackId});
             }
             return telux::common::Status::FAILED;
     }
@@ -1757,14 +1732,13 @@ telux::common::Status AudioGrpcClientStub::read(uint32_t streamId, uint32_t numB
 
     if (status != telux::common::Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(update_);
-        callbackMap_.erase(audioUserData->cmdCallbackId);
+        callbackMap_.erase({streamId, audioUserData->cmdCallbackId});
     }
 
     return status;
 }
 
-void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode ec) {
 
     AudioUserData *audioUserData;
     audioStub::readResponse response;
@@ -1772,7 +1746,7 @@ void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode
 
     {
         std::lock_guard<std::mutex> lock(update_);
-        audioUserData = userDataMap_[cmdId];
+        audioUserData = userDataMap_[{response.streamid(), cmdId}];
     }
 
     if(response.streamid()!=outTranscodeStreamId_) {
@@ -1783,7 +1757,7 @@ void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode
         }
     }
 
-    auto sp = callbackMap_[cmdId].lock();
+    auto sp = callbackMap_[{response.streamid(), cmdId}].lock();
     if (sp) {
         auto cb = std::static_pointer_cast<telux::audio::IReadCb>(sp);
         cb->onReadResult(ec, response.streamid(), response.datalength(), audioUserData);
@@ -1792,8 +1766,8 @@ void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode
 
     {
         std::lock_guard<std::mutex> lock(update_);
-        userDataMap_.erase(cmdId);
-        callbackMap_.erase(cmdId);
+        userDataMap_.erase({response.streamid(), cmdId});
+        callbackMap_.erase({response.streamid(), cmdId});
     }
 
     /* No need to free data here, it is freed from StreamBufferImpl destructor */

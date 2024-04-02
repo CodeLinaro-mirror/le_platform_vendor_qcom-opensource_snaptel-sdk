@@ -103,6 +103,7 @@ class Stream : public IStreamEventListener,
     int sendPipelineFull = 0;
     /* Max no. of bufffers after which pipeline full notification is sent. */
     int maxPipeLineLen = 0;
+    bool isBtStream = false;
     std::shared_ptr<std::vector<uint8_t>> buffer_;
     StreamHandle streamHandle_;
     StreamParams streamParams_;

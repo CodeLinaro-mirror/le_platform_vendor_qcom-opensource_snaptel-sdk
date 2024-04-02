@@ -7,7 +7,7 @@
 #define AUDIOGRPCCLIENTSTUB_HPP
 
 #include <grpcpp/grpcpp.h>
-#include <map>
+#include <unordered_map>
 
 #include "protos/proto-src/audio_simulation.grpc.pb.h"
 #include "common/TaskDispatcher.hpp"
@@ -22,6 +22,19 @@ using grpc::Status;
 using grpc::ClientReader;
 
 using audioStub::AudioService;
+
+/* std::unordered_map is implemented by means of a hash table. std::hash is not defined for std::set
+   Therefore, adding hashing function using the third template parameter of unordered_map.
+ */
+struct keyPairHash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &p) const {
+        auto hash1 = std::hash<T1>{}(p.first);
+        auto hash2 = std::hash<T2>{}(p.second);
+
+        return hash1 ^ hash2;
+    }
+};
 
 namespace telux {
 namespace audio {
@@ -154,74 +167,51 @@ class AudioGrpcClientStub : public ICommunicator,
 
     /* Receiving GRPC responses */
 
-    void onGetDevices(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetDevices(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onGetStreamTypes(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetStreamTypes(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onCreateStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onCreateStream(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onDeleteStream(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onStartStream(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onStopStream(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onStopStream(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onSetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onSetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onGetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetDevice(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onSetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onSetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onGetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetVolume(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onSetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onSetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onGetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetMuteState(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onPlayDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onPlayDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onStopDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onStopDtmfTone(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onGetCalibrationInitStatus(google::protobuf::Any any, int cmdId, ErrorCode ec,
-        std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onGetCalibrationInitStatus(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onRead(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onRead(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onPlayTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onPlayTone(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onStopTone(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onDrain(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onDrain(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
-    void onFlush(google::protobuf::Any any, int cmdId, ErrorCode ec,
-            std::weak_ptr<telux::common::ICommandCallback> resultListener);
+    void onFlush(google::protobuf::Any any, int cmdId, ErrorCode ec);
 
     /* Receiving GRPC indication */
 
@@ -251,8 +241,11 @@ class AudioGrpcClientStub : public ICommunicator,
 
     std::unique_ptr<telux::common::TaskDispatcher> serverMsgProcessor_;
     std::unique_ptr<::audioStub::AudioService::Stub> stub_;
-    std::unordered_map<int, std::weak_ptr<telux::common::ICommandCallback>> callbackMap_;
-    std::unordered_map<int, telux::audio::AudioUserData*> userDataMap_;
+    //Stores a resultListener for a request on a particular stream.
+    std::unordered_map<std::pair<int ,int>, std::weak_ptr<telux::common::ICommandCallback>,
+        keyPairHash> callbackMap_;
+    //Stores audio user data for read/write requests.
+    std::unordered_map<std::pair<int ,int>, telux::audio::AudioUserData*, keyPairHash> userDataMap_;
     std::mutex update_;
     // Check the readiness of the service
     std::mutex grpcClientMutex_;

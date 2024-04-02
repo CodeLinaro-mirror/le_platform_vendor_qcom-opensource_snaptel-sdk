@@ -344,7 +344,6 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
 }
 
 telux::common::ErrorCode Alsa::deleteStream(StreamHandle& streamHandle) {
-    LOG(ERROR, __FUNCTION__);
 
     int ret;
 
@@ -363,7 +362,7 @@ telux::common::ErrorCode Alsa::deleteStream(StreamHandle& streamHandle) {
             return telux::common::ErrorCode::SUCCESS;
         }
 
-        ret = snd_pcm_drain(streamHandle.pcmHandle);
+        ret = snd_pcm_drop(streamHandle.pcmHandle);
         if (ret  < 0){
             LOG(ERROR, __FUNCTION__,"Can't drain PCM. ");
             return telux::common::ErrorCode::SYSTEM_ERR;
@@ -760,8 +759,6 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
 telux::common::ErrorCode Alsa::read(StreamHandle& streamHandle,
         std::shared_ptr<std::vector<uint8_t>> data, uint32_t readLengthRequested,
         int64_t& actualReadLength) {
-
-    LOG(ERROR, __FUNCTION__);
 
     if(streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
         actualReadLength = readLengthRequested;

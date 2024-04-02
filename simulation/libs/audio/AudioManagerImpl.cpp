@@ -603,7 +603,74 @@ void AudioManagerImpl::onDeleteStreamResult(telux::common::ErrorCode ec,
  */
 telux::common::Status AudioManagerImpl::createTranscoder(
         FormatInfo input, FormatInfo output, CreateTranscoderResponseCb callback) {
-    return telux::common::Status::NOTSUPPORTED;
+
+    intptr_t cmdId;
+    telux::common::Status status;
+
+    if (!input.params) {
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    if (!callback) {
+        /*
+         * When transcoder streams (playback/capture) are created successfully on the
+         * server side, corresponding *StreamImpl objects are created on the client side
+         * to represent these streams (encapsulated in TranscoderImpl). Callback is the
+         * only way through which an application can use these streams via ITranscoder.
+         * Therefore, application must provide this callback.
+         */
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    cmdId = cmdCallbackMgr_.addCallback(callback);
+
+    status = transportClient_->createTranscoder(input, output, shared_from_this(), cmdId);
+
+    if (status != telux::common::Status::SUCCESS) {
+        cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+    }
+
+    return status;
+}
+
+void AudioManagerImpl::onCreateTranscoderResult(telux::common::ErrorCode ec,
+        CreatedTranscoderInfo transcoderInfo, int cmdId) {
+
+    telux::common::Status status;
+    std::shared_ptr<TranscoderImpl> transcoder;
+    std::shared_ptr<telux::common::ICommandCallback> resultListener;
+
+    resultListener = cmdCallbackMgr_.findAndRemoveCallback(cmdId);
+    if (!resultListener) {
+        LOG(ERROR, __FUNCTION__, " can't find callback, cmdId ", cmdId);
+        return;
+    }
+
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        /* Transcoder creation failed at server-side */
+        cmdCallbackMgr_.executeCallback(resultListener, nullptr, ec);
+        return;
+    }
+
+    try {
+        transcoder = std::make_shared<TranscoderImpl>(transcoderInfo, transportClient_);
+    } catch (const std::exception& e) {
+        LOG(ERROR, __FUNCTION__, " can't create TranscoderImpl");
+        cmdCallbackMgr_.executeCallback(resultListener, nullptr,
+            telux::common::ErrorCode::NO_MEMORY);
+        return;
+    }
+
+    status = transcoder->init();
+    if (status != telux::common::Status::SUCCESS) {
+        cmdCallbackMgr_.executeCallback(resultListener, nullptr,
+            telux::common::ErrorCode::GENERIC_FAILURE);
+        return;
+    }
+
+    createdTranscoders_.push_back(transcoder);
+
+    cmdCallbackMgr_.executeCallback(resultListener, transcoder, ec);
 }
 
 /* deprecated */

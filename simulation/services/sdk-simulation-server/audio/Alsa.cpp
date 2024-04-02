@@ -59,17 +59,6 @@ const DeviceMappingTable Alsa::DEFAULT_DEVS_TABLE = {10,
 extern "C" {
 #endif
 
-/*
- * When a stream is created, this data is allocated and associated with that
- * stream and passed to PAL layer. It is then sent back to us as cookie in
- * the stream event callback so that we can retrieve information needed to
- * process that event further.
- */
-struct PrivateStreamData {
-    uint32_t streamId;
-    std::weak_ptr<IStreamEventListener> streamEventListener;
-};
-
 Alsa::Alsa() {
     LOG(DEBUG, __FUNCTION__);
      try{
@@ -79,6 +68,8 @@ Alsa::Alsa() {
     }
     runLoopback_ = false;
     runTone_ = false;
+    pipelineLen = rand() % 10;
+    sendWriteReady = 0;
 }
 
 Alsa::~Alsa() {
@@ -367,11 +358,16 @@ telux::common::ErrorCode Alsa::deleteStream(StreamHandle& streamHandle) {
             }
         }
     case StreamType::PLAY:
+        if(streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
+            return telux::common::ErrorCode::SUCCESS;
+        }
+
         ret = snd_pcm_drain(streamHandle.pcmHandle);
         if (ret  < 0){
             LOG(ERROR, __FUNCTION__,"Can't drain PCM. ");
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
+
         ret = snd_pcm_close(streamHandle.pcmHandle);
         if (ret  < 0){
             LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
@@ -379,6 +375,10 @@ telux::common::ErrorCode Alsa::deleteStream(StreamHandle& streamHandle) {
         }
         break;
     case StreamType::CAPTURE:
+        if(streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
+            return telux::common::ErrorCode::SUCCESS;
+        }
+
         ret = snd_pcm_close(streamHandle.pcmHandle);
         if (ret  < 0){
             LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
@@ -705,6 +705,30 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
         uint32_t offset, int64_t timeStamp, bool isLastBuffer,
         int64_t& actualLengthWritten) {
 
+    if(streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
+        sendWriteReady++;
+        if(sendWriteReady%pipelineLen == 0 && (!isLastBuffer)){
+            auto streamEventListener = streamHandle.privateStreamData->streamEventListener.lock();
+            if (streamEventListener) {
+                streamEventListener->onWriteReadyEvent(inTranscodeStreamId_);
+            }
+
+            actualLengthWritten = 0;
+
+            return telux::common::ErrorCode::SUCCESS;
+        }
+
+        actualLengthWritten = writeLengthRequested;
+        if(isLastBuffer){
+            auto streamEventListener = streamHandle.privateStreamData->streamEventListener.lock();
+            if (streamEventListener) {
+                streamEventListener->onDrainDoneEvent(inTranscodeStreamId_);
+            }
+            sendWriteReady = 0;
+        }
+        return telux::common::ErrorCode::SUCCESS;
+    }
+
     /* Returns the no of frames written successfully. */
     actualLengthWritten = snd_pcm_writei(streamHandle.pcmHandle, data, streamHandle.frames);
     if (actualLengthWritten == -EPIPE) {
@@ -735,7 +759,14 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
 telux::common::ErrorCode Alsa::read(StreamHandle& streamHandle,
         std::shared_ptr<std::vector<uint8_t>> data, uint32_t readLengthRequested,
         int64_t& actualReadLength) {
+
     LOG(ERROR, __FUNCTION__);
+
+    if(streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
+        actualReadLength = readLengthRequested;
+        return telux::common::ErrorCode::SUCCESS;
+    }
+
     uint8_t* bufferPtr = data->data();
     actualReadLength = snd_pcm_readi(streamHandle.pcmHandle, bufferPtr, streamHandle.frames);
 
@@ -801,6 +832,17 @@ telux::common::ErrorCode Alsa::setupInTranscodeStream(StreamHandle& streamHandle
         uint32_t streamId, TranscodingFormatInfo inInfo,
         std::shared_ptr<IStreamEventListener> streamEventListener,
         uint32_t& writeMinSize) {
+    streamHandle.inTranscodeStreamId = streamId;
+    inTranscodeStreamId_ = streamId;
+
+    streamHandle.privateStreamData = new (std::nothrow) PrivateStreamData();
+    if (!streamHandle.privateStreamData) {
+        LOG(ERROR, __FUNCTION__, " can't allocate PrivateStreamData");
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    streamHandle.privateStreamData->streamId = streamId;
+    streamHandle.privateStreamData->streamEventListener = streamEventListener;
 
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -809,6 +851,18 @@ telux::common::ErrorCode Alsa::setupOutTranscodeStream(StreamHandle& streamHandl
         uint32_t streamId, TranscodingFormatInfo outInfo,
         std::shared_ptr<IStreamEventListener> streamEventListener,
         uint32_t& readMinSize) {
+
+    streamHandle.outTranscodeStreamId = streamId;
+    outTranscodeStreamId_ = streamId;
+
+     streamHandle.privateStreamData = new (std::nothrow) PrivateStreamData();
+    if (!streamHandle.privateStreamData) {
+        LOG(ERROR, __FUNCTION__, " can't allocate PrivateStreamData");
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    streamHandle.privateStreamData->streamId = streamId;
+    streamHandle.privateStreamData->streamEventListener = streamEventListener;
 
     return telux::common::ErrorCode::SUCCESS;
 }

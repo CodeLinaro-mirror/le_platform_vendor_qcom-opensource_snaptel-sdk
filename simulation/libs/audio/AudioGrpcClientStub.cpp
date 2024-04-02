@@ -65,6 +65,8 @@ AudioGrpcClientStub::AudioGrpcClientStub() {
     opLookup[STREAM_READ_RESP]           = &AudioGrpcClientStub::onRead;
     opLookup[STREAM_TONE_START_RESP]     = &AudioGrpcClientStub::onPlayTone;
     opLookup[STREAM_TONE_STOP_RESP]      = &AudioGrpcClientStub::onStopTone;
+    opLookup[CREATE_TRANSCODER_RESP]      = &AudioGrpcClientStub::onCreateTranscoder;
+    opLookup[DELETE_TRANSCODER_RESP]      = &AudioGrpcClientStub::onDeleteTranscoder;
 }
 
 AudioGrpcClientStub::~AudioGrpcClientStub() {
@@ -144,7 +146,7 @@ void AudioGrpcClientStub::createServerStreaming() {
             continue;
         }
 
-        if(msgId == STREAM_DTMF_DETECTED_IND){
+        if(msgId == STREAM_DTMF_DETECTED_IND) {
             audioStub::DtmfTone dtmfDetectionEvent;
             resp.any().UnpackTo(&dtmfDetectionEvent);
 
@@ -152,10 +154,24 @@ void AudioGrpcClientStub::createServerStreaming() {
                 onDtmfToneDetected(dtmfDetectionEvent);;
             });
             continue;
-        } else if (msgId == AUDIO_STATUS_IND){
+        } else if (msgId == AUDIO_STATUS_IND) {
             commonStub::GetServiceStatusReply serviceStatus;
             resp.any().UnpackTo(&serviceStatus);
             onSSRUpdate(serviceStatus);
+            continue;
+        } else if (msgId == STREAM_DRAIN_IND){
+            audioStub::DrainEvent drainEvent;
+            resp.any().UnpackTo(&drainEvent);
+            serverMsgProcessor_->submitTask([=] {
+                onDrainDone(drainEvent);
+            });
+            continue;
+        } else if (msgId == STREAM_WRITE_IND){
+            audioStub::WriteReadyEvent writeReadyEvent;
+            resp.any().UnpackTo(&writeReadyEvent);
+            serverMsgProcessor_->submitTask([=] {
+                onWriteReady(writeReadyEvent);
+            });
             continue;
         }
 
@@ -165,7 +181,7 @@ void AudioGrpcClientStub::createServerStreaming() {
                 serverMsgProcessor_->submitTask([=]{(this->*opLookup[msgId])(resp.any(),
                 resp.cmdid(), static_cast<ErrorCode>(resp.error()), callbackMap_[resp.cmdid()]);});
             } else {
-                std::cout << "cmd id not found " << resp.cmdid() << std::endl;
+                LOG(INFO, __FUNCTION__, " Cmd id not found");
             }
         }
     }
@@ -186,6 +202,9 @@ telux::common::Status AudioGrpcClientStub::setup() {
     try {
         voiceListenerMgr_ = std::make_shared<
             telux::common::ListenerManager<telux::audio::IVoiceStreamEventsCb>>();
+
+        playListenerMgr_ = std::make_shared<
+            telux::common::ListenerManager<telux::audio::IPlayStreamEventsCb>>();
 
         serviceStatusListenerMgr_ = std::make_shared<
             telux::common::ListenerManager<telux::audio::IServiceStatusEventsCb>>();
@@ -279,6 +298,46 @@ void AudioGrpcClientStub::onDtmfToneDetected(::audioStub::DtmfTone dtmfTone) {
     for (auto &listener : listeners) {
         if(auto sp = listener.lock()) {
             sp->onDtmfToneDetected(dtmfToneEvent);
+        }
+    }
+}
+
+/*
+ * Register listener for write ready and drain done events.
+ */
+telux::common::Status AudioGrpcClientStub::registerForPlayStreamEvents(
+        std::weak_ptr<telux::audio::IPlayStreamEventsCb> listener) {
+
+    if (!playListenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " invalid listener mgr");
+        return telux::common::Status::INVALIDSTATE;
+    }
+
+    return playListenerMgr_->registerListener(listener);
+}
+
+void AudioGrpcClientStub::onDrainDone(audioStub::DrainEvent drainEvent) {
+
+    std::vector<std::weak_ptr<telux::audio::IPlayStreamEventsCb>> listeners;
+
+    playListenerMgr_->getAvailableListeners(listeners);
+
+    for (auto &listener : listeners) {
+        if(auto sp = listener.lock()) {
+            sp->onDrainDone(drainEvent.streamid());
+        }
+    }
+}
+
+void AudioGrpcClientStub::onWriteReady(audioStub::WriteReadyEvent writeReadyEvent) {
+
+    std::vector<std::weak_ptr<telux::audio::IPlayStreamEventsCb>> listeners;
+
+    playListenerMgr_->getAvailableListeners(listeners);
+
+    for (auto &listener : listeners) {
+        if(auto sp = listener.lock()) {
+            sp->onWriteReady(writeReadyEvent.streamid());
         }
     }
 }
@@ -595,6 +654,165 @@ void AudioGrpcClientStub::onDeleteStream(google::protobuf::Any any, int cmdId, E
         auto cb = std::static_pointer_cast<telux::audio::IDeleteStreamCb>(sp);
         cb->onDeleteStreamResult(ec, response.streamid(), cmdId);
     }
+    {
+        std::lock_guard<std::mutex> lock(update_);
+        callbackMap_.erase(cmdId);
+    }
+}
+
+telux::common::Status AudioGrpcClientStub::createTranscoder(
+        telux::audio::FormatInfo inInfo, telux::audio::FormatInfo outInfo,
+        std::shared_ptr<telux::audio::ITranscodeCreateCb> resultListener, int cmdId) {
+
+    audioStub::AudioRequest request{};
+    audioStub::FormatInfo req{};
+    commonStub::StatusMsg response{};
+    ClientContext context{};
+    telux::common::Status status;
+    grpc::Status reqStatus;
+
+    telux::audio::AmrwbpParams *inputParams;
+    telux::audio::AmrwbpParams *outputParams;
+
+    callbackMap_[cmdId] = resultListener;
+
+    request.set_clientid(getpid());
+    request.set_msgid(CREATE_TRANSCODER_REQ);
+    request.set_cmdid(cmdId);
+
+    req.set_insamplerate(inInfo.sampleRate);
+    req.mutable_inchanneltype()->set_type(
+        static_cast<::audioStub::ChannelType_Type>(inInfo.mask));
+    req.mutable_inaudioformat()->set_type(
+            static_cast<::audioStub::AudioFormat_Type>(inInfo.format));
+    inputParams = static_cast<telux::audio::AmrwbpParams *>(inInfo.params);
+    req.mutable_inparams()->set_bitwidth(inputParams->bitWidth);
+    req.mutable_inparams()->mutable_frameformat()->set_type(
+        static_cast<::audioStub::AmrwbpFrameFormat_Type>(inputParams->frameFormat));
+
+    req.set_outsamplerate(outInfo.sampleRate);
+    req.mutable_outchanneltype()->set_type(
+        static_cast<::audioStub::ChannelType_Type>(outInfo.mask));
+    req.mutable_outaudioformat()->set_type(
+            static_cast<::audioStub::AudioFormat_Type>(outInfo.format));
+
+    if (outInfo.params) {
+        outputParams = static_cast<telux::audio::AmrwbpParams *>(outInfo.params);
+        req.mutable_outparams()->set_bitwidth(outputParams->bitWidth);
+        req.mutable_outparams()->mutable_frameformat()->set_type(
+            static_cast<::audioStub::AmrwbpFrameFormat_Type>(outputParams->frameFormat));
+    } else {
+        req.mutable_outparams()->set_bitwidth(0);
+        req.mutable_outparams()->mutable_frameformat()->set_type(
+            static_cast<::audioStub::AmrwbpFrameFormat_Type>(-1));
+    }
+
+    request.mutable_any()->PackFrom(req);
+
+    reqStatus = stub_->CreateTranscoder(&context,request,&response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " grpc request failed");
+        {
+            std::lock_guard<std::mutex> lock(update_);
+            callbackMap_.erase(cmdId);
+        }
+        return telux::common::Status::FAILED;
+    }
+
+    /* API request status read from IAudioManager.json for audio request. */
+    status = static_cast<telux::common::Status>(response.status());
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::lock_guard<std::mutex> lock(update_);
+        callbackMap_.erase(cmdId);
+    }
+
+    return status;
+}
+
+void AudioGrpcClientStub::onCreateTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
+        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+
+    audioStub::CreatedTranscoderInfo response;
+    any.UnpackTo(&response);
+    telux::audio::CreatedTranscoderInfo transcoderInfo;
+
+    if (ec == telux::common::ErrorCode::SUCCESS) {
+        transcoderInfo.inStreamId = response.instreamid();
+        transcoderInfo.outStreamId = response.outstreamid();
+        transcoderInfo.readMinSize = response.readminsize();
+        transcoderInfo.readMaxSize = response.readmaxsize();
+        transcoderInfo.writeMinSize = response.writeminsize();
+        transcoderInfo.writeMaxSize = response.writemaxsize();
+    }
+
+    inTranscodeStreamId_ = transcoderInfo.inStreamId;
+    outTranscodeStreamId_ = transcoderInfo.outStreamId;
+
+    auto sp = resultListener.lock();
+    if (sp) {
+        auto cb = std::static_pointer_cast<telux::audio::ITranscodeCreateCb>(sp);
+        cb->onCreateTranscoderResult(ec, transcoderInfo, cmdId);
+    }
+    {
+        std::lock_guard<std::mutex> lock(update_);
+        callbackMap_.erase(cmdId);
+    }
+}
+
+telux::common::Status AudioGrpcClientStub::deleteTranscoder(
+        uint32_t inStreamId, uint32_t outStreamId,
+        std::shared_ptr<telux::audio::ITranscodeDeleteCb> resultListener, int cmdId) {
+
+    audioStub::AudioRequest request;
+    audioStub::DeleteTranscoder req;
+    commonStub::StatusMsg response;
+    ClientContext context{};
+    telux::common::Status status;
+    grpc::Status reqStatus;
+
+    callbackMap_[cmdId] = resultListener;
+
+    request.set_clientid(getpid());
+    request.set_msgid(DELETE_TRANSCODER_REQ);
+    request.set_cmdid(cmdId);
+    req.set_instreamid(inStreamId);
+    req.set_outstreamid(outStreamId);
+    request.mutable_any()->PackFrom(req);
+
+    reqStatus = stub_->DeleteTranscoder(&context,request,&response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " grpc request failed");
+        {
+            std::lock_guard<std::mutex> lock(update_);
+            callbackMap_.erase(cmdId);
+        }
+        return telux::common::Status::FAILED;
+    }
+
+    status = static_cast<telux::common::Status>(response.status());
+    if (status != telux::common::Status::SUCCESS) {
+        std::lock_guard<std::mutex> lock(update_);
+        callbackMap_.erase(cmdId);
+    }
+
+    return status;
+}
+
+void AudioGrpcClientStub::onDeleteTranscoder(google::protobuf::Any any, int cmdId, ErrorCode ec,
+        std::weak_ptr<telux::common::ICommandCallback> resultListener) {
+
+    audioStub::DeleteTranscoder response;
+    any.UnpackTo(&response);
+
+    auto sp = resultListener.lock();
+    if (sp) {
+        auto cb = std::static_pointer_cast<telux::audio::ITranscodeDeleteCb>(sp);
+        cb->onDeleteTranscoderResult(ec, response.instreamid(), response.outstreamid(), cmdId);
+    }
+
     {
         std::lock_guard<std::mutex> lock(update_);
         callbackMap_.erase(cmdId);
@@ -1443,10 +1661,12 @@ void AudioGrpcClientStub::onRead(google::protobuf::Any any, int cmdId, ErrorCode
         audioUserData = userDataMap_[cmdId];
     }
 
-    uint8_t* data = audioUserData->streamBuffer->getTransportBuffer();
-    std::string buffer = response.buffer();
-    for (uint32_t i = 0; i < buffer.size(); i++) {
-        data[i] = buffer[i];
+    if(response.streamid()!=outTranscodeStreamId_) {
+        uint8_t* data = audioUserData->streamBuffer->getTransportBuffer();
+        std::string buffer = response.buffer();
+        for (uint32_t i = 0; i < buffer.size(); i++) {
+            data[i] = buffer[i];
+        }
     }
 
     auto sp = callbackMap_[cmdId].lock();

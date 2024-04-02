@@ -31,8 +31,12 @@
 #define GET_CAL_INIT_STATUS_REQ 17
 #define STREAM_TONE_START_REQ 18
 #define STREAM_TONE_STOP_REQ 19
+#define DELETE_TRANSCODER_REQ 20
+#define CREATE_TRANSCODER_REQ  21
 #define STREAM_DTMF_DETECTED_IND 26
 #define AUDIO_STATUS_IND 27
+#define STREAM_WRITE_IND 28
+#define STREAM_DRAIN_IND 29
 
 #define SKIP_CALLBACK -1
 #define JSON_AUDIO_API "api/audio/IAudioManager.json"
@@ -71,16 +75,27 @@ enum StreamPurpose {
 };
 
 /*
+ * When a stream is created, this data is allocated and associated with that
+ * stream.
+ */
+struct PrivateStreamData {
+    uint32_t streamId;
+    std::weak_ptr<IStreamEventListener> streamEventListener;
+};
+
+/*
  * Data that needs to be passed back and forth between service and backend.
  */
 struct StreamHandle {
     StreamType type;
+    uint32_t inTranscodeStreamId;
+    uint32_t outTranscodeStreamId;
     snd_pcm_t *pcmHandle;
     snd_pcm_t *loopbackPlayHandle;
     snd_pcm_t *loopbackCaptureHandle;
     snd_pcm_uframes_t frames;
     int channels = 0;
-    void *streamPrivateData;
+    PrivateStreamData *privateStreamData;
     bool streamStarted = false;
     bool dtmfStarted = false;
 };

@@ -95,6 +95,16 @@
         "stopTone": {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+
+        "createTranscoder": {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+
+        "deleteTranscoder": {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

@@ -15,6 +15,7 @@
 #include "AudioGrpcClientStub.hpp"
 #include "ICommunicator.hpp"
 #include "AudioStreamImpl.hpp"
+#include "TranscoderImpl.hpp"
 
 
 namespace telux {
@@ -26,6 +27,7 @@ class AudioManagerImpl : public IAudioManager,
                          public IGetDevicesCb,
                          public ICreateStreamCb,
                          public IDeleteStreamCb,
+                         public ITranscodeCreateCb,
                          public IServiceStatusEventsCb,
                          public std::enable_shared_from_this<AudioManagerImpl> {
 
@@ -87,6 +89,10 @@ class AudioManagerImpl : public IAudioManager,
     void onDeleteStreamResult(telux::common::ErrorCode ec,
                     uint32_t streamId, int cmdId) override;
 
+    /* ITranscode overrides */
+    void onCreateTranscoderResult(telux::common::ErrorCode ec,
+        CreatedTranscoderInfo transcoderInfo, int cmdId) override;
+
     /* deprecated */
     bool isSubsystemReady() override;
     std::future<bool> onSubsystemReady() override;
@@ -100,6 +106,7 @@ class AudioManagerImpl : public IAudioManager,
     std::shared_ptr<telux::common::ListenerManager<IAudioListener>> serviceStatusListenerMgr_;
     std::condition_variable cv_;
     std::vector<std::weak_ptr<AudioStreamImpl>> createdStreams_;
+    std::vector<std::weak_ptr<TranscoderImpl>> createdTranscoders_;
 
     telux::common::ServiceStatus serviceCurrentStatus_ =
             telux::common::ServiceStatus::SERVICE_UNAVAILABLE;

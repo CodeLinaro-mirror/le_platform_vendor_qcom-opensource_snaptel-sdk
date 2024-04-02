@@ -97,6 +97,12 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
     grpc::Status StopTone(::grpc::ServerContext* context, const ::audioStub::AudioRequest* request,
         ::commonStub::StatusMsg* response);
 
+    grpc::Status CreateTranscoder(::grpc::ServerContext* context,
+        const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response);
+
+    grpc::Status DeleteTranscoder(::grpc::ServerContext* context,
+        const ::audioStub::AudioRequest* request, ::commonStub::StatusMsg* response);
+
     /*** Overrides - IAudioMsgDispatcher ***/
 
     void broadcastServiceStatus(uint32_t newStatus) override;
@@ -201,6 +207,12 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
             std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
             CalibrationInitStatus status) override;
 
+    void sendDrainDoneEvent(
+        int clientId, uint32_t streamId) override;
+
+    void sendWriteReadyEvent(
+        int clientId, uint32_t streamId) override;
+
     void sendDTMFDetectedEvent(
         int clientId,
         uint32_t streamId, uint32_t lowFreq, uint32_t highFreq,
@@ -229,6 +241,16 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
             google::protobuf::Any any,
             std::shared_ptr<AudioRequest> audioReq,
             std::shared_ptr<IAudioMsgListener> audioMsgListener);
+
+    void createTranscoder(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener);
+
+    void deleteTranscoder(
+        google::protobuf::Any any,
+        std::shared_ptr<AudioRequest> audioReq,
+        std::shared_ptr<IAudioMsgListener> audioMsgListener);
 
     void start(
             google::protobuf::Any any,

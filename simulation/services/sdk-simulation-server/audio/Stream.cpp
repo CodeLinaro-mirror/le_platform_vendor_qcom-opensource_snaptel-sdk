@@ -122,6 +122,54 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
     return ec;
 }
 
+telux::common::ErrorCode Stream::setupInTranscodeStream(TranscodingFormatInfo inInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo) {
+
+    telux::common::ErrorCode ec;
+
+    streamHandle_.type = StreamType::PLAY;
+
+    try {
+        buffer_ = std::make_shared<std::vector<uint8_t>>(MAX_BUFFER_SIZE);
+    } catch (const std::exception& e) {
+        LOG(ERROR, __FUNCTION__, " can't allocate memory for stream");
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    ec = audioBackend_->setupInTranscodeStream(streamHandle_,
+            createdTranscoderInfo->inStreamId, inInfo,
+            shared_from_this(), createdTranscoderInfo->writeMinSize);
+
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        buffer_ = nullptr;
+    }
+
+    return ec;
+}
+
+telux::common::ErrorCode Stream::setupOutTranscodeStream(TranscodingFormatInfo outInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo) {
+
+    telux::common::ErrorCode ec;
+
+    streamHandle_.type = StreamType::CAPTURE;
+
+    try {
+        buffer_ = std::make_shared<std::vector<uint8_t>>(MAX_BUFFER_SIZE);
+    } catch (const std::exception& e) {
+        LOG(ERROR, __FUNCTION__, " can't allocate memory for stream");
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    ec = audioBackend_->setupOutTranscodeStream(streamHandle_,
+            createdTranscoderInfo->outStreamId, outInfo,
+            shared_from_this(), createdTranscoderInfo->readMinSize);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        buffer_ = nullptr;
+    }
+
+    return ec;
+}
 
 telux::common::ErrorCode Stream::cleanupStream(std::vector<int>& voiceCallList) {
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
@@ -868,6 +916,52 @@ void Stream::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
 
     streamTaskExecutor_->submitTask( [=]{ doWrite(audioReq, streamId, writeLengthRequested,
         offset, timeStamp, isLastBuffer, data, voiceCallList); });
+}
+
+/*
+ * ADSP/Q6 is about to finish playing audio samples. Inform application about
+ * this state.
+ */
+void Stream::doOnDrainDoneEvent(uint32_t streamId) {
+
+    std::shared_ptr<AudioClient> audioClient;
+
+    audioClient = clientCache_->getAudioClientByStreamId(streamId);
+
+    auto audioMsgDispatcher = audioClient->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    audioMsgDispatcher->sendDrainDoneEvent(audioClient->getClientId(), streamId);
+}
+
+void Stream::onDrainDoneEvent(uint32_t streamId) {
+    streamTaskExecutor_->submitTask( [=]{ doOnDrainDoneEvent(streamId); });
+}
+
+
+/*
+ * ADSP/Q6 just finished playing current buffer. It is not ready to accept the
+ * next audio samples buffer to play. Inform application about this.
+ */
+void Stream::doOnWriteReadyEvent(uint32_t streamId) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::shared_ptr<AudioClient> audioClient;
+
+    audioClient = clientCache_->getAudioClientByStreamId(streamId);
+
+    auto audioMsgDispatcher = audioClient->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    audioMsgDispatcher->sendWriteReadyEvent(audioClient->getClientId(), streamId);
+}
+
+void Stream::onWriteReadyEvent(uint32_t streamId) {
+    streamTaskExecutor_->submitTask( [=]{ doOnWriteReadyEvent(streamId); });
 }
 
 /*

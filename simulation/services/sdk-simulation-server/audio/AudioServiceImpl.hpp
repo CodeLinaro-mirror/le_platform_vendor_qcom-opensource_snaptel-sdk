@@ -127,11 +127,19 @@ class AudioServiceImpl : public IAudioMsgListener,
     void doGetCalibrationStatus(std::shared_ptr<AudioRequest> audioReq);
 
     telux::common::ErrorCode doCreateStream(
-        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config);
+        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config,
+        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
+        StreamPurpose streamPurpose, CreatedTranscoderInfo *createdTranscoderInfo);
 
     telux::common::ErrorCode doDeleteStream(
         std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
         bool sendResponse);
+
+    void doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq,
+        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo);
+
+    void doDeleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
+        uint32_t inStreamId, uint32_t outStreamId);
 
     /*
      * Audio service-wide flag to indicate we are currently undergoing SSR therefore

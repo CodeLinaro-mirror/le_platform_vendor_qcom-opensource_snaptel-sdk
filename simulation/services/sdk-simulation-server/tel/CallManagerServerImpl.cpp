@@ -77,31 +77,6 @@ grpc::Status CallManagerServerImpl::CleanUpService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status CallManagerServerImpl::GetInProgressCalls(ServerContext* context,
-    const ::google::protobuf::Empty* request, telStub::GetInProgressCallsReply* response) {
-    LOG(DEBUG, __FUNCTION__);
-    std::vector<std::shared_ptr<CallInfo>> calls = calls_;
-    for(auto &it : calls) {
-        telStub::Call *result = response->add_calls();
-        result->set_call_state(static_cast<telStub::CallState>(it->callState));
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ", static_cast<int>(it->callState));
-        result->set_call_index(it->index);
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(it->index));
-        result->set_call_direction
-        (static_cast<telStub::CallDirection_Direction>(it->callDirection));
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
-        static_cast<int>(it->callDirection));
-        result->set_remote_party_number(it->remotePartyNumber);
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
-        static_cast<std::string>(it->remotePartyNumber));
-        result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
-        result->set_phone_id(it->phoneId);
-        result->set_is_multi_party_call(it->isMultiPartyCall);
-        result->set_is_mpty(it->isMpty);
-    }
-    return grpc::Status::OK;
-}
-
 grpc::Status CallManagerServerImpl::readJson() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error =
@@ -249,8 +224,7 @@ void CallManagerServerImpl::handleCallMachine() {
             changeCallState(callInfo_.phoneId ,"CALL_DIALING", callInfo_.remotePartyNumber);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.remotePartyNumber);
-            CallInfo info = callInfo_;
-            changeCallStateofActiveCalls(info);
+            changeCallStateofActiveCalls(callInfo_);
         }
     }
 }
@@ -728,7 +702,6 @@ bool CallManagerServerImpl::findMatchingCall(CallInfo callToCompare) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
-
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
         return match(call, callToCompare);
     });
@@ -746,7 +719,7 @@ void CallManagerServerImpl::hangupWaitingOrBackgroundCalls(int phoneId) {
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
         if((*callIterator)->phoneId == phoneId) {
-            if(((*callIterator)->callState == CallState::CALL_ACTIVE)
+            if(((*callIterator)->callState == CallState::CALL_ON_HOLD)
             ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
             changeCallState((*callIterator)->phoneId, "CALL_ENDED",
             (*callIterator)->remotePartyNumber);
@@ -1351,35 +1324,19 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     auto call = std::make_shared<CallInfo>(callInfo);
     logCallDetails(call);
     if(!findMatchingCall(callInfo)) {
-        calls_.emplace_back(call);
+        std::lock_guard<std::mutex> lock(callManagerMutex_);
+        {
+            calls_.emplace_back(call);
+        }
     } else {
-        LOG(DEBUG, __FUNCTION__, "DialNumber is already in progress: ", dialNumber);
+        LOG(ERROR, __FUNCTION__, "DialNumber is already in progress: ", dialNumber);
         return;
     }
     auto f = std::async(std::launch::async, [this, callInfo]() {
-            this->triggerIncomingCallEvent(callInfo);
+            this->changeCallState(callInfo.phoneId,
+                Helper::getCallStateInString(callInfo.callState), callInfo.remotePartyNumber);
         }).share();
     taskQ_->add(f);
-}
-
-void CallManagerServerImpl::triggerIncomingCallEvent(CallInfo callInfo ) {
-    LOG(DEBUG, __FUNCTION__);
-    ::telStub::Call callEvent;
-    ::eventService::EventResponse anyResponse;
-
-    callEvent.set_call_state(static_cast<telStub::CallState>(callInfo.callState));
-    callEvent.set_call_index(callInfo.index);
-    callEvent.set_call_direction(
-    static_cast<telStub::CallDirection_Direction>(callInfo.callDirection));
-    callEvent.set_remote_party_number(callInfo.remotePartyNumber);
-    callEvent.set_phone_id(callInfo.phoneId);
-    callEvent.set_is_multi_party_call(callInfo.isMultiPartyCall);
-    callEvent.set_is_mpty(callInfo.isMpty);
-    anyResponse.set_filter("tel_call");
-    anyResponse.mutable_any()->PackFrom(callEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
-    eventImpl.updateEventQueue(anyResponse);
 }
 
 void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
@@ -1534,17 +1491,6 @@ void CallManagerServerImpl::startTimer(std::string timer) {
     }
 }
 
-void CallManagerServerImpl::changeCallState(int phoneId, std::string callstate,
-    std::string remotepartyNumber) {
-    //Update call state at server
-    LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async, [this, phoneId, callstate, remotepartyNumber ]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        this->triggerCallStateChangeEvent(phoneId, callstate, remotepartyNumber);
-    }).share();
-    taskQ_->add(f);
-}
-
 void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision ) {
     auto f = std::async(std::launch::async, [this, msdtransmision ]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -1661,21 +1607,34 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::string timer,
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::triggerCallStateChangeEvent(int phoneId, std::string action,
+void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
     std::string remotepartyNumber) {
     LOG(DEBUG, __FUNCTION__);
     CallState state = Helper::getCallState(action);
     std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(remotepartyNumber, state);
     int callIndex = call->index;
-    std::string remotePartyNumber = call->remotePartyNumber;
-
     ::telStub::CallStateChangeEvent callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
 
-    callStateChangeEvent.set_callstate(action);
-    callStateChangeEvent.set_call_index(callIndex);
-    callStateChangeEvent.set_phone_id(phoneId);
-    callStateChangeEvent.set_remote_party_number(remotePartyNumber);
+    std::vector<std::shared_ptr<CallInfo>> calls = calls_;
+    for(auto &it : calls) {
+        telStub::Call *result = callStateChangeEvent.add_calls();
+        result->set_call_state(static_cast<telStub::CallState>(it->callState));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ", static_cast<int>(it->callState));
+        result->set_call_index(it->index);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(it->index));
+        result->set_call_direction
+        (static_cast<telStub::CallDirection_Direction>(it->callDirection));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
+        static_cast<int>(it->callDirection));
+        result->set_remote_party_number(it->remotePartyNumber);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
+        static_cast<std::string>(it->remotePartyNumber));
+        result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_phone_id(it->phoneId);
+        result->set_is_multi_party_call(it->isMultiPartyCall);
+        result->set_is_mpty(it->isMpty);
+    }
     anyResponse.set_filter("tel_call");
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
     //posting the event to EventService event queue
@@ -1686,10 +1645,44 @@ void CallManagerServerImpl::triggerCallStateChangeEvent(int phoneId, std::string
         //Clear call cache in server
         auto f = std::async(std::launch::async, [this, callIndex]() {
          std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-            findAndRemoveMatchingCall(callIndex);
+            bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
+            if(isCallRemoved) {
+                // Event to update the call cache for clients.
+                triggerCallListAfterCallEnd();
+            }
         }).share();
         taskQ_->add(f);
     }
+}
+
+void CallManagerServerImpl::triggerCallListAfterCallEnd() {
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::CallStateChangeEvent callStateChangeEvent;
+    ::eventService::EventResponse anyResponse;
+    std::vector<std::shared_ptr<CallInfo>> calls = calls_;
+    for(auto &it : calls) {
+        telStub::Call *result = callStateChangeEvent.add_calls();
+        result->set_call_state(static_cast<telStub::CallState>(it->callState));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ", static_cast<int>(it->callState));
+        result->set_call_index(it->index);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(it->index));
+        result->set_call_direction
+        (static_cast<telStub::CallDirection_Direction>(it->callDirection));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
+        static_cast<int>(it->callDirection));
+        result->set_remote_party_number(it->remotePartyNumber);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
+        static_cast<std::string>(it->remotePartyNumber));
+        result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_phone_id(it->phoneId);
+        result->set_is_multi_party_call(it->isMultiPartyCall);
+        result->set_is_mpty(it->isMpty);
+    }
+    anyResponse.set_filter("tel_call");
+    anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
@@ -1706,9 +1699,6 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
     if (iter != std::end(calls_)) {
         LOG(DEBUG, __FUNCTION__, " found matched call");
         (*iter)->callState = action;
-        if(action == CallState::CALL_ENDED) {
-            (*iter)->callEndCause = CallEndCause::NORMAL;
-        }
         return *iter;
     } else {
         return nullptr;

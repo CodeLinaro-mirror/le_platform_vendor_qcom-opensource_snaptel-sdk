@@ -69,7 +69,7 @@ struct CallInfo {
    int index = INVALID;
    CallDirection callDirection = CallDirection::NONE;
    std::string remotePartyNumber = "";
-   CallEndCause callEndCause;
+   telux::tel::CallEndCause callEndCause = telux::tel::CallEndCause::NORMAL;
    int phoneId;
    bool isRegulatoryeCall = false;
    bool isMultiPartyCall = false;
@@ -101,8 +101,6 @@ public:
         telStub::RequestECallHlapTimerStatusReply* response);
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response);
-    grpc::Status GetInProgressCalls(ServerContext* context,
-        const ::google::protobuf::Empty* request, telStub::GetInProgressCallsReply* response);
     grpc::Status SetConfig(ServerContext* context,
         const telStub::SetConfigRequest* request,  telStub::SetConfigReply* response);
     grpc::Status GetConfig(ServerContext* context,
@@ -169,10 +167,10 @@ private:
     telux::common::Status handleStateMachine(int phoneId);
     void startTimers(std::string timer);
     void triggerTimerExpiry(std::string timer, int phoneId);
-    void triggerIncomingCallEvent(CallInfo callInfo);
-    void triggerCallInfoChangeEvent(std::string timer, HlapTimerEvent action);
+    void triggerCallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(int phoneId, std::string action, std::string remotepartyNumber);
+    void triggerCallListAfterCallEnd();
     bool findAndRemoveMatchingCall(int callIndex);
     void updateEcallHlapTimer(std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();

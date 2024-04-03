@@ -22,9 +22,9 @@ namespace telux {
 namespace audio {
 
 class AudioManagerImpl : public IAudioManager,
+                         public IGetDevicesCb,
                          public IGetStreamsCb,
                          public IGetCalInitStatusCb,
-                         public IGetDevicesCb,
                          public ICreateStreamCb,
                          public IDeleteStreamCb,
                          public ITranscodeCreateCb,
@@ -39,11 +39,11 @@ class AudioManagerImpl : public IAudioManager,
 
     /* Audio service availability management */
 
-    void initSync(telux::common::InitResponseCb initResultListener);
+    void initSync();
 
-    void onServiceStatusUpdate(telux::common::ServiceStatus newStatus) override;
+    void onQ6SSRUpdate(telux::common::ServiceStatus newStatus) override;
 
-    void onSSRUpdate(telux::common::ServiceStatus newStatus) override;
+    void onTransportStatusUpdate(telux::common::ServiceStatus newStatus) override;
 
     /* IAudioManager overrides */
 
@@ -59,11 +59,11 @@ class AudioManagerImpl : public IAudioManager,
 
     telux::common::Status getCalibrationInitStatus(GetCalInitStatusResponseCb callback) override;
 
-    telux::common::Status createStream(StreamConfig streamConfig,
-        CreateStreamResponseCb callback = nullptr) override;
+    telux::common::Status createStream(
+        StreamConfig streamConfig, CreateStreamResponseCb callback = nullptr) override;
 
-    telux::common::Status deleteStream(std::shared_ptr<IAudioStream> stream,
-        DeleteStreamResponseCb callback = nullptr) override;
+    telux::common::Status deleteStream(
+        std::shared_ptr<IAudioStream> stream, DeleteStreamResponseCb callback = nullptr) override;
 
     telux::common::Status createTranscoder(
         FormatInfo input, FormatInfo output, CreateTranscoderResponseCb callback) override;
@@ -100,6 +100,7 @@ class AudioManagerImpl : public IAudioManager,
  private:
     static std::mutex serviceStatusGuard_;
     static std::atomic<bool> exitNow_;
+    bool isInitComplete_ = false;
     telux::common::CommandCallbackManager cmdCallbackMgr_;
     std::shared_ptr<ICommunicator> transportClient_;
     telux::common::AsyncTaskQueue<void> asyncTaskQueue_;
@@ -108,8 +109,15 @@ class AudioManagerImpl : public IAudioManager,
     std::vector<std::weak_ptr<AudioStreamImpl>> createdStreams_;
     std::vector<std::weak_ptr<TranscoderImpl>> createdTranscoders_;
 
-    telux::common::ServiceStatus serviceCurrentStatus_ =
-            telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::InitResponseCb initCb_;
+    telux::common::ServiceStatus lastServiceStatusSent_
+        = telux::common::ServiceStatus::SERVICE_FAILED;
+    telux::common::ServiceStatus statusFromQ6SSRUpdate_
+        = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    telux::common::ServiceStatus statusFromGRPCConnection_
+        = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    telux::common::ServiceStatus serviceCurrentStatus_
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     bool waitForInitialization(void);
     void sendNewStatusToClients(telux::common::ServiceStatus newStatus);

@@ -164,9 +164,9 @@ class IVoiceStreamEventsCb {
 
 class IServiceStatusEventsCb {
  public:
-    virtual void onSSRUpdate(telux::common::ServiceStatus newStatus) = 0;
+    virtual void onQ6SSRUpdate(telux::common::ServiceStatus newStatus) = 0;
 
-    virtual void onServiceStatusUpdate(telux::common::ServiceStatus newStatus) = 0;
+    virtual void onTransportStatusUpdate(telux::common::ServiceStatus newStatus) = 0;
 };
 
 }  // end of namespace audio

@@ -262,7 +262,7 @@ void AudioGrpcClientStub::onSSRUpdate(commonStub::GetServiceStatusReply serviceS
 
     for (auto &listener : listeners) {
         if(auto sp = listener.lock()) {
-            sp->onSSRUpdate(newStatus);
+            sp->onQ6SSRUpdate(newStatus);
         }
     }
 }

@@ -18,11 +18,13 @@ std::atomic<bool> AudioManagerImpl::exitNow_;
 std::mutex AudioManagerImpl::serviceStatusGuard_;
 
 AudioManagerImpl::AudioManagerImpl() {
+    AudioManagerImpl::exitNow_ = false;
 }
 
 AudioManagerImpl::~AudioManagerImpl() {
-    std::lock_guard<std::mutex> lock(AudioManagerImpl::serviceStatusGuard_);
     LOG(DEBUG, __FUNCTION__);
+
+    std::lock_guard<std::mutex> lock(AudioManagerImpl::serviceStatusGuard_);
     AudioManagerImpl::exitNow_ = true;
 }
 
@@ -30,8 +32,7 @@ AudioManagerImpl::~AudioManagerImpl() {
  * Setup/initiate connection to audio grpc server.
  * Complete non-blocking initializations and schedule blocking ones.
  */
-telux::common::Status AudioManagerImpl::init(
-        telux::common::InitResponseCb initResultListener) {
+telux::common::Status AudioManagerImpl::init(telux::common::InitResponseCb initResultListener) {
 
     telux::common::Status status;
     std::shared_future<void> future;
@@ -55,21 +56,71 @@ telux::common::Status AudioManagerImpl::init(
         return telux::common::Status::FAILED;
     }
 
+	initCb_ = initResultListener;
+
     /* Schedule blocking initializations */
-    future = std::async(std::launch::async, [=]() {
-                this->initSync(initResultListener);
-             }).share();
+    future = std::async(std::launch::async, [this]() { this->initSync(); }).share();
 
     /* Hold onto future's reference until initSync() finishes */
-    asyncTaskQueue_.add(future);
+    status = asyncTaskQueue_.add(future);
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " can't add to queue");
+        return status;
+    }
 
     return telux::common::Status::SUCCESS;
 }
 
 /*
- * Complete blocking initializations.
+ * Completes blocking initializations establishing physical GRPC connection
+ * with the audio server.
+ *
+ * Following 24 cases are possible with few more possible due to thread scheduling. These
+ * are handled by the overall implementation of the subsystem readiness design. Audio server
+ * can report service is available/unavailable from Q6/ADSP SSR point of view. GRPC framework
+ * reports whether it is able to find intended GRPC service or not, hence reporting service
+ * available/unavailable. SSR and GRPC are independent of each other, therefore, below
+ * combinations are possible.
+ *
+ * [1] SSR-available, SSR-unavailable,     [2] GRPC-available,   GRPC-unavailable
+ * SSR-unavailable,   SSR-available,       [2] GRPC-available,   GRPC-unavailable
+ * [3] GRPC-available, SSR-available,       SSR-unavailable,     GRPC-unavailable
+ * SSR-available,     [2] GRPC-available,   SSR-unavailable,     GRPC-unavailable
+ * SSR-unavailable,   [2] GRPC-available,   SSR-available,       GRPC-unavailable
+ * GRPC-available,     SSR-unavailable,     SSR-available,       GRPC-unavailable
+ * GRPC-available,     SSR-unavailable,     GRPC-unavailable,     SSR-available
+ * SSR-unavailable,   [2] GRPC-available,   GRPC-unavailable,     SSR-available
+ * GRPC-unavailable,   GRPC-available,       SSR-unavailable,     SSR-available
+ * GRPC-available,     GRPC-unavailable,     [4] SSR-unavailable, SSR-available
+ * SSR-unavailable,   GRPC-unavailable,     GRPC-available,       [6] SSR-available
+ * GRPC-unavailable,   [4] SSR-unavailable, GRPC-available,       SSR-available
+ * GRPC-unavailable,   [4] SSR-available,   GRPC-available,       SSR-unavailable
+ * SSR-available,     GRPC-unavailable,     GRPC-available,       SSR-unavailable
+ * GRPC-available,     GRPC-unavailable,     SSR-available,       SSR-unavailable
+ * GRPC-unavailable,   GRPC-available,       SSR-available,       SSR-unavailable
+ * SSR-available,     [5] GRPC-available,   GRPC-unavailable,     SSR-unavailable
+ * GRPC-available,     SSR-available,       GRPC-unavailable,     SSR-unavailable
+ * SSR-unavailable,   SSR-available,       GRPC-unavailable,     GRPC-available
+ * SSR-available,     SSR-unavailable,     GRPC-unavailable,     GRPC-available
+ * GRPC-unavailable,   [4] SSR-unavailable, SSR-available,       GRPC-available
+ * SSR-unavailable,   GRPC-unavailable,     [4] SSR-available,   GRPC-available
+ * SSR-available,     GRPC-unavailable,     [4] SSR-unavailable, GRPC-available
+ * GRPC-unavailable,   [4] SSR-available,   SSR-unavailable,     GRPC-available
+ *
+ * [1] Q6 SSR occurred, and then audio server is launched. So, it missed unavailable event.
+ *     Now, server gets service available from HAL/PAL and delivers it to the client.
+ * [2] Since SSR event is received, GRPC-connection exist, therefore, further sequence
+ *     is invalid.
+ * [3] This is possible when first application is run and then audio server is launched.
+ * [4] After GRPC connection becomes unavailable, SSR event from server will not reach
+ *     client, therefore, further sequence is invalid.
+ * [5] If SSR reports available, GRPC service must be available already, therefore,
+ *     further sequence is invalid.
+ * [6] Q6 crashed followed by the server crash. If the server doesn't start early enough to
+ *     receive service available event from PAL, application will never receive service
+ *     available event since it is not sent by the server itself.
  */
-void AudioManagerImpl::initSync(telux::common::InitResponseCb initResultListener) {
+void AudioManagerImpl::initSync() {
     LOG(DEBUG, __FUNCTION__);
 
     bool isSvcReady;
@@ -84,92 +135,169 @@ void AudioManagerImpl::initSync(telux::common::InitResponseCb initResultListener
 
     transportClient_->registerForServiceStatusEvents(shared_from_this());
 
-    /* Once connected, update local copy of current service state */
+    /* Once connected, update local copy of the current service state */
     {
-      std::lock_guard<std::mutex> lock(serviceStatusGuard_);
-      if (AudioManagerImpl::exitNow_) {
-          LOG(WARNING, __FUNCTION__, " dropping initSync");
-          return;
-      }
-      if (isSvcReady) {
-          serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
-      } else {
-          serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_FAILED;
-      }
+        std::lock_guard<std::mutex> lock(serviceStatusGuard_);
+        if (AudioManagerImpl::exitNow_) {
+            LOG(WARNING, __FUNCTION__, " dropping initSync");
+            return;
+        }
+
+        /*
+         * The serviceStatusGuard_ along with statusFromQ6SSRUpdate_ and statusFromGRPCConnection_,
+         * ensures that the initSync(), onQ6SSRUpdate() and application have consistent view;
+         * either the service is available or unavailable. The initSync() and onQ6SSRUpdate()/
+         * onTransportStatusUpdate() executes on different threads therefore, need to kept in
+         * sync when deciding service is available or not.
+         */
+        if (isSvcReady
+            && (statusFromQ6SSRUpdate_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)
+            && (statusFromGRPCConnection_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
+            /*
+             * Connection with server established, neither SSR occurred nor server crashed.
+             * Inform the client interested in the service's status, we are live.
+             */
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+            if (initCb_) {
+                initCb_(serviceCurrentStatus_);
+            }
+        } else {
+            /* Currently, service is unavailable, let the SSR callback update application later */
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_FAILED;
+        }
+
+        isInitComplete_ = true;
     }
 
     cv_.notify_all();
-
-    /* Inform the client interested in 'init response', we are live */
-    if (initResultListener) {
-        initResultListener(serviceCurrentStatus_);
-    }
 }
 
+/*
+ * Gives current state of the audio service.
+ */
+telux::common::ServiceStatus AudioManagerImpl::getServiceStatus() {
+
+    std::lock_guard<std::mutex> lock(serviceStatusGuard_);
+
+    return serviceCurrentStatus_;
+}
+
+/*
+ * Application registration for service status events.
+ */
+telux::common::Status AudioManagerImpl::registerListener(std::weak_ptr<IAudioListener> listener) {
+    LOG(DEBUG, __FUNCTION__);
+
+    return serviceStatusListenerMgr_->registerListener(listener);
+}
+
+/*
+ * Application de-registration for service status events.
+ */
+telux::common::Status AudioManagerImpl::deRegisterListener(std::weak_ptr<IAudioListener> listener) {
+    LOG(DEBUG, __FUNCTION__);
+
+    return serviceStatusListenerMgr_->deRegisterListener(listener);
+}
 
 /*
  * Audio server subsystem-restart process is either started or finished.
  * Update application about it.
  *
- * AudioManagerImpl::onSSRUpdate() and AudioManagerImpl::onServiceStatusUpdate()
+ * AudioManagerImpl::onQ6SSRUpdate() and AudioManagerImpl::onTransportStatusUpdate()
  * are called from the same dispatcher thread therefore serialized. Therefore,
  * flag serviceCurrentStatus_ will have a valid value at any instant of time.
  */
-void AudioManagerImpl::onSSRUpdate(telux::common::ServiceStatus newStatus) {
-    {
-      std::lock_guard<std::mutex> lock(serviceStatusGuard_);
-      LOG(DEBUG, __FUNCTION__);
+void AudioManagerImpl::onQ6SSRUpdate(telux::common::ServiceStatus newStatus) {
+    LOG(DEBUG, __FUNCTION__, " status ", static_cast<int>(newStatus));
 
-      if (AudioManagerImpl::exitNow_) {
-          LOG(WARNING, __FUNCTION__, " dropping ssr update");
-          return;
-      }
-      /*
-       * Handle two or more consecutive service available or unavailable events.
-       *
-       * 1. SSR happens, service becomes unavailable, we sent unavailable
-       *    status to the applcation.
-       * 2. Application is now waiting for service available status.
-       * 3. Server crashed, connection lost, AudioManagerImpl::onServiceStatusChange()
-       *    invoked, leading to second consecutive service unavailable status message
-       *    sent to application. Prevent sending this 2nd same status as there is no
-       *    advantage of sending it to the application.
-       */
-      if (newStatus == serviceCurrentStatus_) {
-          return;
-      }
-      serviceCurrentStatus_ = newStatus;
+    {
+        std::lock_guard<std::mutex> lock(serviceStatusGuard_);
+
+        statusFromQ6SSRUpdate_ = newStatus;
+
+        if (AudioManagerImpl::exitNow_) {
+            LOG(WARNING, __FUNCTION__, " dropped update");
+            return;
+        }
+
+        if (!isInitComplete_) {
+            LOG(WARNING, __FUNCTION__, " dropped event");
+            return;
+        }
+
+        if ((statusFromQ6SSRUpdate_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)
+            && (statusFromGRPCConnection_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+        } else {
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+        }
     }
 
-    sendNewStatusToClients(newStatus);
+    /*
+     * Inform application via getAudioManager's init response callback that we are live.
+     * This update is sent as part of the subsystem readiness design. Note, once callbacks
+     * referred by initCb_ are invoked that list is cleared, so invoking it again will not
+     * result in application's init response callback getting called two or more times.
+     */
+    if (initCb_ && (serviceCurrentStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
+        initCb_(serviceCurrentStatus_);
+    }
+
+    /*
+     * This update to the application is sent, if it has registered for the SSR events.
+     */
+    sendNewStatusToClients(serviceCurrentStatus_);
 }
 
 /*
  * We are connected/disconnected from server. Update application about it.
  */
-void AudioManagerImpl::onServiceStatusUpdate(telux::common::ServiceStatus newStatus) {
-    {
-      std::lock_guard<std::mutex> lock(serviceStatusGuard_);
-      LOG(DEBUG, __FUNCTION__);
+void AudioManagerImpl::onTransportStatusUpdate(telux::common::ServiceStatus newStatus) {
 
-      if (AudioManagerImpl::exitNow_) {
-          LOG(WARNING, __FUNCTION__, " dropping service status");
-          return;
-      }
-      if (newStatus == serviceCurrentStatus_) {
-          return;
-      }
-      serviceCurrentStatus_ = newStatus;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    LOG(DEBUG, __FUNCTION__, " status ", static_cast<int>(newStatus));
+
+    {
+        std::lock_guard<std::mutex> lock(serviceStatusGuard_);
+
+        statusFromGRPCConnection_ = newStatus;
+
+        if (AudioManagerImpl::exitNow_) {
+            LOG(WARNING, __FUNCTION__, " dropped status");
+            return;
+        }
+
+        if (!isInitComplete_) {
+            LOG(WARNING, __FUNCTION__, " dropped event");
+            return;
+        }
+
+        if ((statusFromQ6SSRUpdate_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)
+            && (statusFromGRPCConnection_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+        } else {
+            serviceCurrentStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+        }
+
+        if (statusFromGRPCConnection_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            /* Re-subscribe for server-connection events */
+            auto f = std::async(std::launch::async, [&]() { this->initSync(); }).share();
+
+            status = asyncTaskQueue_.add(f);
+            if (status != telux::common::Status::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " can't add to queue");
+                return;
+            }
+        }
     }
 
-    sendNewStatusToClients(newStatus);
+    if (initCb_ && (serviceCurrentStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
+        initCb_(serviceCurrentStatus_);
+    }
 
-    /* Re-subscribe for server-connection events */
-    auto f = std::async(std::launch::async, [&]() {
-                this->initSync(nullptr);
-             }).share();
-
-    asyncTaskQueue_.add(f);
+    sendNewStatusToClients(serviceCurrentStatus_);
 }
 
 /*
@@ -187,7 +315,34 @@ void AudioManagerImpl::sendNewStatusToClients(telux::common::ServiceStatus newSt
             }
         }
         createdStreams_.clear();
+
+        for (auto &wp : createdTranscoders_) {
+            if (auto sp = wp.lock()) {
+                sp->onServiceStatusChange();
+            }
+        }
+        createdTranscoders_.clear();
     }
+
+    /*
+     * Handle two or more consecutive service available or unavailable events.
+     *
+     * 1. SSR happens, service becomes unavailable, we sent unavailable
+     *    status to the applcation.
+     * 2. Application is now waiting for service available status.
+     * 3. Server crashed, connection lost, AudioManagerImpl::onServiceStatusChange()
+     *    invoked, leading to second consecutive service unavailable status message
+     *    sent to the application. Prevent sending this 2nd same status as there is
+     *    no advantage of sending it to the application.
+     *
+     * This scenario may further complicate things if it happens during initSync().
+     * statusFromGRPCConnection_ is used in initSync() to address this.
+     */
+    if (lastServiceStatusSent_ == newStatus) {
+        LOG(DEBUG, __FUNCTION__, " dropped repeated status");
+        return;
+    }
+    lastServiceStatusSent_ = newStatus;
 
     /* Send new service status to all registered application listeners */
     if (!serviceStatusListenerMgr_) {
@@ -196,10 +351,15 @@ void AudioManagerImpl::sendNewStatusToClients(telux::common::ServiceStatus newSt
     }
     serviceStatusListenerMgr_->getAvailableListeners(applisteners);
 
-    for (auto &wp : applisteners) {
-        if (auto sp = wp.lock()) {
-            sp->onServiceStatusChange(newStatus);
+    if (!applisteners.empty()) {
+        for (auto &wp : applisteners) {
+            if (auto sp = std::dynamic_pointer_cast<IAudioListener>(wp.lock())) {
+                sp->onServiceStatusChange(newStatus);
+            }
         }
+        LOG(DEBUG, __FUNCTION__, " sent status ", static_cast<int>(newStatus));
+    } else {
+        LOG(DEBUG, __FUNCTION__, " no status listener");
     }
 
     if (newStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
@@ -215,36 +375,6 @@ void AudioManagerImpl::sendNewStatusToClients(telux::common::ServiceStatus newSt
          */
         cmdCallbackMgr_.reset();
     }
-
-    LOG(DEBUG, __FUNCTION__, " new status sent ", static_cast<int>(newStatus));
-}
-
-/*
- * Gives current state of the audio service.
- */
-telux::common::ServiceStatus AudioManagerImpl::getServiceStatus() {
-
-    std::lock_guard<std::mutex> lock(serviceStatusGuard_);
-
-    return serviceCurrentStatus_;
-}
-
-/*
- * Application registration for service status events.
- */
-telux::common::Status AudioManagerImpl::registerListener(
-        std::weak_ptr<IAudioListener> listener) {
-    LOG(DEBUG, __FUNCTION__);
-    return serviceStatusListenerMgr_->registerListener(listener);
-}
-
-/*
- * Application de-registration for service status events.
- */
-telux::common::Status AudioManagerImpl::deRegisterListener(
-        std::weak_ptr<IAudioListener> listener) {
-    LOG(DEBUG, __FUNCTION__);
-    return serviceStatusListenerMgr_->deRegisterListener(listener);
 }
 
 /*
@@ -399,8 +529,8 @@ void AudioManagerImpl::onGetCalInitStatusResult(telux::common::ErrorCode ec,
  * causes stream creation on the server side whose ID is obtained in method
  * AudioManagerImpl::onCreateStreamResult().
  */
-telux::common::Status AudioManagerImpl::createStream(StreamConfig streamConfig,
-        CreateStreamResponseCb callback) {
+telux::common::Status AudioManagerImpl::createStream(
+    StreamConfig streamConfig, CreateStreamResponseCb callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -448,9 +578,9 @@ void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
         CreatedStreamInfo createdStreamInfo, int cmdId) {
 
     telux::common::Status status;
-    std::shared_ptr<IAudioStream> audioStream;;
-    std::shared_ptr<VoiceStreamImpl> voiceStream;
+    std::shared_ptr<IAudioStream> audioStream;
     std::shared_ptr<PlayStreamImpl> playStream;
+    std::shared_ptr<VoiceStreamImpl> voiceStream;
     std::shared_ptr<CaptureStreamImpl> captureStream;
     std::shared_ptr<LoopbackStreamImpl> loopbackStream;
     std::shared_ptr<ToneGeneratorStreamImpl> toneStream;
@@ -549,8 +679,8 @@ error1:
 /*
  * Closes stream and release all resources allocated.
  */
-telux::common::Status AudioManagerImpl::deleteStream(std::shared_ptr<IAudioStream> stream,
-        DeleteStreamResponseCb callback) {
+telux::common::Status AudioManagerImpl::deleteStream(
+    std::shared_ptr<IAudioStream> stream, DeleteStreamResponseCb callback) {
 
     intptr_t cmdId;
     uint32_t streamId;
@@ -558,6 +688,7 @@ telux::common::Status AudioManagerImpl::deleteStream(std::shared_ptr<IAudioStrea
     std::shared_ptr<AudioStreamImpl> audioStreamImpl;
 
     if (!stream) {
+        LOG(ERROR, __FUNCTION__, " no stream given");
         return telux::common::Status::INVALIDPARAM;
     }
 
@@ -685,9 +816,8 @@ bool AudioManagerImpl::waitForInitialization() {
     }
 
     std::unique_lock<std::mutex> cvLock(serviceStatusGuard_);
-    cv_.wait(cvLock, [&] {
-        return (serviceCurrentStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE);
-    });
+    cv_.wait(cvLock,
+        [&] { return (serviceCurrentStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE); });
 
     return true;
 }

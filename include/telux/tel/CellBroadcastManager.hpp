@@ -71,9 +71,6 @@
  *             per 3GPP TS 23.041 specification. Currently 3GPP2 cell broadcast
  *             message is not supported.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
- *
  */
 
 #ifndef TELUX_TEL_CELLBROADCASTMANAGER_HPP

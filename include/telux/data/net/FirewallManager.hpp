@@ -131,9 +131,6 @@ struct FirewallEntryInfo {
  * @param [in] error             Return code which indicates whether the operation
  *                               succeeded or not. @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
- *
 */
 using FirewallConfigCb
     = std::function<void(FirewallConfig status, telux::common::ErrorCode error)>;
@@ -156,8 +153,6 @@ using FirewallEntryInfoCb = std::function<void(
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not. @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using DmzEntryInfoCb
     = std::function<void(std::vector<DmzConfig> dmzEntries, telux::common::ErrorCode error)>;
@@ -260,9 +255,6 @@ class IFirewallManager {
      *
      * @returns Status of setFirewallConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
-     *
      */
     virtual telux::common::Status setFirewallConfig(FirewallConfig fwConfig,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -274,9 +266,6 @@ class IFirewallManager {
      * @param [in] callback          callback to get the response of requestFirewallConfig
      *
      * @returns Status of requestFirewallConfig i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      *
      */
     virtual telux::common::Status requestFirewallConfig(BackhaulInfo bhInfo,
@@ -293,9 +282,6 @@ class IFirewallManager {
      *
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
-     *
      */
     virtual telux::common::Status addFirewallEntry(FirewallEntryInfo entry,
         AddFirewallEntryCb callback = nullptr) = 0;
@@ -307,9 +293,6 @@ class IFirewallManager {
      * @param [in] callback          callback to get the response requestFirewallEntries.
      *
      * @returns Status of requestFirewallEntries i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      *
      */
     virtual telux::common::Status requestFirewallEntries(BackhaulInfo bhInfo,
@@ -337,8 +320,6 @@ class IFirewallManager {
      *
      * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addHwAccelerationFirewallEntry(FirewallEntryInfo entry,
         AddFirewallEntryCb callback = nullptr) = 0;
@@ -352,8 +333,6 @@ class IFirewallManager {
      *
      * @returns Status of requestHwAccelerationFirewallEntries i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestHwAccelerationFirewallEntries(BackhaulInfo bhInfo,
         FirewallEntryInfoCb callback) = 0;
@@ -369,8 +348,6 @@ class IFirewallManager {
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeFirewallEntry(BackhaulInfo bhInfo, uint32_t handle,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -383,8 +360,6 @@ class IFirewallManager {
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status enableDmz(DmzConfig config,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -398,8 +373,6 @@ class IFirewallManager {
      *
      * @returns Status of disableDmz i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status disableDmz(BackhaulInfo bhInfo, const IpFamilyType ipType,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -412,8 +385,6 @@ class IFirewallManager {
      *
      * @returns Status of requestDmzEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestDmzEntry(BackhaulInfo bhInfo, DmzEntryInfoCb callback) = 0;
 

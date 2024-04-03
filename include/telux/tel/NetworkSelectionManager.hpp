@@ -334,8 +334,6 @@ public:
     *
     * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backward compatibility.
     */
    virtual telux::common::Status
       requestNetworkSelectionMode(SelectionModeInfoCb callback)
@@ -555,8 +553,6 @@ public:
     *
     * @param [in] info   Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backward compatibility.
     */
    virtual void onSelectionModeChanged(NetworkModeInfo info) {
    }

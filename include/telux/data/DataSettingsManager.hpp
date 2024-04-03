@@ -437,8 +437,6 @@ public:
      *
      * @returns Status of switchBackHaul, i.e., success or applicable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;

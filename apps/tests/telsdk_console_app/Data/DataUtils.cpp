@@ -676,3 +676,10 @@ void DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
       backhaulInfo.backhaul = telux::data::BackhaulType::WLAN;
    }
 }
+
+std::string DataUtils::emergencyAllowedTypeToString(telux::data::EmergencyCapability cap) {
+  std::string retString{"No"};
+  if (cap == telux::data::EmergencyCapability::ALLOWED)
+    retString = "yes";
+  return retString;
+}

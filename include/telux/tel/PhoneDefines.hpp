@@ -212,6 +212,15 @@ enum class CallEndCause {
    ERROR_UNSPECIFIED = 0xffff,           /**< Error unspecified */
 };
 
+/**
+ * Defines the real time text (RTT) mode of a call.
+ */
+enum class RttMode {
+   UNKNOWN = -1,  /*< RTT mode data is unknown */
+   DISABLED = 0,  /*< RTT mode is not enabled */
+   FULL = 1,      /*< RTT call being used by both the parties*/
+};
+
 /** @} */ /* end_addtogroup telematics_call */
 
 /** @addtogroup telematics_phone

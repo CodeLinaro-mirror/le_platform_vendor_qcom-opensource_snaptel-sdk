@@ -96,6 +96,10 @@ public:
         std::vector<uint8_t> &data) override;
     telux::common::ErrorCode encodeECallMsd(telux::tel::ECallMsdData eCallMsdData,
         std::vector<uint8_t> &data) override;
+    telux::common::Status makeRttCall(int phoneId, const std::string &dialNumber,
+        std::shared_ptr<IMakeCallCallback> callback) override;
+    telux::common::Status sendRtt(int phoneId,
+      std::string message, common::ResponseCallback callback) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

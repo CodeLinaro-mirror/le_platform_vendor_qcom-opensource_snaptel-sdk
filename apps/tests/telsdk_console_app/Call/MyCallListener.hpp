@@ -69,6 +69,7 @@
 #include <telux/tel/CallManager.hpp>
 #include <telux/tel/CallListener.hpp>
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
 #include "../Audio/AudioClient.hpp"
 
@@ -79,9 +80,12 @@ public:
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
    void onRingbackTone(bool isAlerting, int phoneId) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+   void onModifyCallRequest(telux::tel::RttMode rttMode, int callId , int phoneId) override;
+   void onRttMessage(int phoneId, std::string text) override;
 
    std::string getCallStateString(telux::tel::CallState cs);
    std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
+   std::string getRttModeString(telux::tel::RttMode mode);
    std::string getCurrentTime();
 
    ~MyCallListener() {
@@ -115,6 +119,11 @@ class MyHangupCallback {
 public:
    static void hangupFgResumeBgResponse(telux::common::ErrorCode error);
    static void hangupWaitingOrBgResponse(telux::common::ErrorCode error);
+};
+
+class MyRttMessageCallback {
+public:
+    static void sendRttMessageResponse(telux::common::ErrorCode error);
 };
 
 #endif  // MYCALLLISTENER_HPP

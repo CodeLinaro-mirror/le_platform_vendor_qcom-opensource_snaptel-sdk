@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -95,13 +95,15 @@ class ICall {
 public:
    /**
     * Allows the client to answer the call. This is only applicable for CallState::INCOMING and
-    * CallState::WAITING calls.
+    * CallState::WAITING calls during a normal voice call.
     * If a Waiting call is being answered and the existing call is Active, then existing call
     * will move to Hold state.If the existing call is on Hold already, then it will remain on Hold.
     * The waiting call state transition from Waiting to Active.
+    * Answering an incoming RTT call is supported.
+    * However, if an RTT call is waiting, there is no support to answer such a call currently.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callback - optional callback pointer to get the response of answer request
     * below are possible error codes for callback response
@@ -115,18 +117,23 @@ public:
     *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
     *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
     *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    * @param [in] mode - @ref telux::tel::RttMode::DISABLED - To answer incoming call as a normal
+    *                    voice call.
+    *                    @ref telux::tel::RttMode::FULL - To answer incoming call as a real time
+    *                    text (RTT) call.
     *
-    * @returns Status of hold function i.e. success or suitable error code.
+    * @returns Status of answer function i.e. success or suitable error code.
     */
    virtual telux::common::Status
-      answer(std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      answer(std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
+        RttMode mode = RttMode::DISABLED)
       = 0;
 
    /**
     * Puts the ongoing call on hold.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callback - optional callback pointer to get the response of hold request
     * below are possible error codes for callback response
@@ -176,8 +183,8 @@ public:
     * Reject the incoming/waiting call. Only applicable for CallState::INCOMING and
     * CallState::WAITING calls.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callback - optional callback pointer to get the response of reject request
     * below are possible error codes for callback response
@@ -202,8 +209,8 @@ public:
     * Reject the call and  send an SMS to caller. Only applicable for CallState::INCOMING
     * and CallState::WAITING calls.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] rejectSMS SMS string used to send in response to a call rejection.
     * @param [in] callback - optional callback pointer to get the response of rejectwithSMS request
@@ -232,8 +239,8 @@ public:
    /**
     * Hangup the call if the call state is either active, hold, dialing, waiting or alerting.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
@@ -260,8 +267,8 @@ public:
     * This API is used to play DTMF tone on TX path so that it is heard on far end. For DTMF
     * playback on local device on the RX path use @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     *
@@ -280,8 +287,8 @@ public:
     * far end. For DTMF playback on local device on the RX path use
     * @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     * @param [in] callback - Optional callback pointer to get the result of
@@ -296,8 +303,8 @@ public:
    /**
     * Stop the currently playing continuous DTMF tone.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callback - Optional callback pointer to get the result of
     *                        stopDtmfTone function.
@@ -311,8 +318,8 @@ public:
    /**
     * Get the current state of the call, such as ringing, in progress etc.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
     *
     * @returns CallState - enumeration representing call State
     */
@@ -321,8 +328,8 @@ public:
    /**
     * Get the unique index of the call assigned by Telephony subsystem
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @returns Call Index
     */
@@ -331,8 +338,8 @@ public:
    /**
     * Get the direction of the call
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @returns CallDirection - enumeration representing call direction
     *                          i.e. INCOMING/ OUTGOING
@@ -342,8 +349,8 @@ public:
    /**
     * Get the dailing number
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_PRIVATE_INFO
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have
+    * TELUX_TEL_CALL_PRIVATE_INFO permission to successfully invoke this API.
     *
     * @returns Phone Number to which the call was dialed out.
     *          Empty string in case of INCOMING call direction.
@@ -353,8 +360,8 @@ public:
    /**
     * Get the cause of the termination of the call.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
     *
     * @returns Enum representing call end cause.
     */
@@ -364,8 +371,8 @@ public:
     * Get id of the phone object which represents the network/SIM on which
     * the call is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
     *
     * @returns Phone Id.
     */
@@ -374,14 +381,112 @@ public:
    /**
     *  To check if call is in multi party call(conference) or not
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
     *
     * @returns True if call is in conference otherwise false.
     *
     */
    virtual bool isMultiPartyCall() = 0;
 
+   /**
+    * Retrieves the RTT mode of the call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual RttMode getRttMode() = 0;
+
+   /**
+    * Retrieves the local RTT capability of the call, indicating whether a local
+    * device can support a RTT call. Users can upgrade to a RTT call using
+    * @ref telux::tel::ICall::modify.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual RttMode getLocalRttCapability() = 0;
+
+   /**
+    * Retrieves the peer RTT capability of the call, indicating whether a peer device
+    * can support a RTT call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual RttMode getPeerRttCapability() = 0;
+
+   /**
+    * Request to upgrade the call from a normal voice call to a RTT call or downgrade the call from
+    * a RTT call to a normal voice call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] mode -     Parameter to send desired real time text mode for a call
+    *                        @ref telux::tel::RttMode::DISABLED, to send request to
+    *                             downgrade a RTT call to normal voice call.
+    *                        @ref telux::tel::RttMode::FULL, to send upgrade normal voice
+    *                             call to a RTT call.
+    * @param [in] callback - optional callback pointer to get the response of modify
+    * request below are possible error codes for callback response
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of modify i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status
+      modify(RttMode mode,
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    *
+    * Accepts or rejects a modify call request triggered by a remote party after the user receives
+    * a notification to modify the call using @ref ICallListener::onModifyCallRequest.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    *
+    * @param [in] modifyResponseType -  Send the response to accept or reject the modify request
+    *                                   Accept corresponds to true and reject corresponds to false
+    * @param [in] callback -            Optional, callback pointer to get the response of
+    *                                   the respondToModifyRequest request.
+    *
+    * Below are possible error codes for callback response
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of respondToModifyRequest i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status
+      respondToModifyRequest(bool modifyResponseType,
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
 
    virtual ~ICall() {
    }

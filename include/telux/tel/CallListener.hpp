@@ -108,7 +108,7 @@ public:
    /**
     * This function is called when device receives an incoming/waiting call.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
     * permission to receive this notification.
     *
     * @param [in] call -  Pointer to ICall instance
@@ -119,7 +119,7 @@ public:
    /**
     * This function is called when there is a change in call attributes
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
     * permission to receive this notification.
     *
     * @param [in] call -  Pointer to ICall instance
@@ -130,8 +130,8 @@ public:
    /**
     * This function is called when device completes MSD Transmission.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to receive this notification.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] errorCode - Indicates MSD Transmission status i.e. success or failure
@@ -148,7 +148,7 @@ public:
     * responds to MSD pull request from PSAP.
     *
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
@@ -169,7 +169,7 @@ public:
     * In situations, where the client fails to update the MSD, modem will time out and send the
     * outdated MSD from its cache.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD update request is received.
@@ -189,8 +189,8 @@ public:
     * This function is called when the eCall High Level Application Protocol(HLAP) timers status
     * is changed.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to receive this notification.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which HLAP timer status is being reported
     * @param [in] timersStatus - Indicates the HLAP timer event
@@ -211,8 +211,8 @@ public:
     * placed and the call state changes to the active state.
     * If the network scan fails then this function will be invoked after one round of network scan.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to receive this notification.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
     *
@@ -235,7 +235,7 @@ public:
     * can play the ringback tone locally based on this notification. This function is called when
     * the ringback tone needs to be started or stopped.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
     * permission to receive this notification.
     *
     * @param [in] isAlerting - true to start playing ringback tone, false to stop playing ringback
@@ -247,6 +247,40 @@ public:
     */
    virtual void onRingbackTone(bool isAlerting, int phoneId) {
    }
+
+   /**
+    * This function is called when a modification request is triggered by the other party to
+    * change the call from a normal voice call to a real time text (RTT) call. This API shall not
+    * be invoked when other party sends the modification request to change the call from real time
+    * text (RTT) to normal voice call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to receive this notification.
+    *
+    * @param [in] rttMode - @ref telux::tel::RttMode::FULL to indicate a upgrade request,
+    * @param [in] callId - Unique CallId on which upgrade request was triggered.
+    * @param [in] phoneId - Unique Id of phone on which upgrade request was triggered.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual void onModifyCallRequest(RttMode rttMode, int callId , int phoneId) {
+   }
+
+   /**
+    * This function is called when a RTT message is received from a remote party.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to receive this notification.
+    *
+    * @param [in] phoneId  Unique Id of phone on which RTT message is received.
+    * @param [in] message  Text message received from device is in UTF8 encoding format.
+    *                      It supports the English language.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual void onRttMessage(int phoneId, std::string message) {}
 
    virtual ~ICallListener() {
    }

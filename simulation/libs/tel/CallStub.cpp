@@ -49,7 +49,7 @@ CallStub::CallStub(int phoneId, CallInfo callInfo)
 }
 
 telux::common::Status CallStub::answer(
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    std::shared_ptr<telux::common::ICommandResponseCallback> callback, RttMode mode) {
     LOG(DEBUG, "answer()");
     telux::common::Status status = telux::common::Status::FAILED;
     if ((callInfo_.callState == CallState::CALL_INCOMING ) ||
@@ -439,4 +439,27 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
 void CallStub::setCallState(CallState callState) {
     LOG(DEBUG, "Call state is ", (int)callState);
     callInfo_.callState = callState;
+}
+
+RttMode CallStub::getRttMode() {
+    return RttMode::DISABLED;
+}
+
+RttMode CallStub::getLocalRttCapability() {
+    return RttMode::DISABLED;
+}
+
+RttMode CallStub::getPeerRttCapability() {
+    return RttMode::DISABLED;
+
+}
+
+telux::common::Status CallStub::modify(RttMode mode,
+    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status  CallStub::respondToModifyRequest(bool modifyResponseType,
+    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    return telux::common::Status::NOTSUPPORTED;
 }

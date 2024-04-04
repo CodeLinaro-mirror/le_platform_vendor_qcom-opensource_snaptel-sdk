@@ -95,7 +95,13 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << (int)call->getCallDirection()
                       << ", Phone Number: " << call->getRemotePartyNumber()
-                      << ", Slot Id: " << call->getPhoneId() << std::endl;
+                      << ", Slot Id: " << call->getPhoneId()
+                      << ", RTT mode of the call " << getRttModeString(call->getRttMode())
+                      << ", Local capability of call "
+                      << getRttModeString(call->getLocalRttCapability())
+                      << ", Peer capability of call "
+                      << getRttModeString(call->getPeerRttCapability())
+                      << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
        int phoneId = call->getPhoneId();
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
@@ -145,6 +151,18 @@ void MyCallListener::onServiceStatusChange(telux::common::ServiceStatus status) 
     PRINT_NOTIFICATION << " Call onServiceStatusChange" << stat << "\n";
 }
 
+void MyCallListener::onModifyCallRequest(telux::tel::RttMode rttMode, int callId , int phoneId) {
+   PRINT_NOTIFICATION << "onModifyCallRequest: "
+                      << (rttMode == telux::tel::RttMode::FULL ?
+                      " upgrade normal voice call to RTT call ":
+                      " downgrade RTT call to normal voice call") << " on slot "
+                      << phoneId << " for callIndex " << callId << std::endl;
+}
+
+void MyCallListener::onRttMessage(int phoneId, std::string text) {
+    PRINT_NOTIFICATION << "RTT message is " << text << " on slot " << phoneId << std::endl;
+}
+
 std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
    switch(cs) {
       case telux::tel::CallState::CALL_IDLE:
@@ -165,6 +183,18 @@ std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
          return std::string("Call ended");
       default:
          std::cout << "Unexpected CallState = " << (int)cs << std::endl;
+         return std::string("unknown");
+   }
+}
+
+std::string MyCallListener::getRttModeString(telux::tel::RttMode mode) {
+   switch(mode) {
+      case telux::tel::RttMode::DISABLED:
+         return std::string("RTT mode DISABLED");
+      case telux::tel::RttMode::FULL:
+         return std::string("RTT mode FULL");
+      case telux::tel::RttMode::UNKNOWN:
+      default:
          return std::string("unknown");
    }
 }
@@ -457,6 +487,16 @@ void MyHangupCallback::hangupWaitingOrBgResponse(telux::common::ErrorCode error)
         PRINT_CB << " Hangup waiting or background request executed successfully \n";
     } else {
         PRINT_CB << " Hangup waiting or background request request failed with error: "
+                 << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+void MyRttMessageCallback::sendRttMessageResponse(telux::common::ErrorCode error) {
+    std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << " Send RTT data request is successful \n";
+    } else {
+        PRINT_CB << "Send RTT data request request failed with error: "
                  << Utils::getErrorCodeAsString(error) << "\n";
    }
 }

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -46,6 +46,7 @@
 #include <telux/common/DeviceConfig.hpp>
 
 #include "conference/ConferenceMenu.hpp"
+#include "realTimeText/RttMenu.hpp"
 #include "CallMenu.hpp"
 
 //Minimum number of calls required to perform conference or swap
@@ -164,6 +165,9 @@ bool CallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "15", "Hangup_foreground_call(s)_resume_background", {},
             std::bind(&CallMenu::hangupForegroundResumeBackground, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> rttCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("16", "Real_Time_Text_Call_Menu", {},
+         std::bind(&CallMenu::realTimeTextSubMenu, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCallSubMenu
       = {dialCommand,
@@ -180,7 +184,8 @@ bool CallMenu::init() {
          startDtmfToneCommand,
          stopDtmfToneCommand,
          enableAudioCommand,
-         hangupForegroundResumeBackgroundCommand};
+         hangupForegroundResumeBackgroundCommand,
+         rttCommand};
    addCommands(commandsListCallSubMenu);
    ConsoleApp::displayMenu();
    return true;
@@ -598,6 +603,16 @@ void CallMenu::conferenceSubMenu(std::vector<std::string> userInput) {
     ConsoleApp::displayMenu();
 }
 
+void CallMenu::realTimeTextSubMenu(std::vector<std::string> userInput) {
+    std::cout << "Enter realTimeTextSubMenu ";
+    auto rttMenu = std::make_shared<RttMenu>("Real Time Text Call Menu", "realTimeText> ");
+    if(rttMenu->init()) {
+        rttMenu->mainLoop();
+    }
+    rttMenu = nullptr;
+    ConsoleApp::displayMenu();
+}
+
 void CallMenu::conference(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -732,7 +747,17 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                 << " Call Direction: " << (int)(*callIterator)->getCallDirection()
                 << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
                 << " SlotId: " << (*callIterator)->getPhoneId()
-                << " isMpty: " << (*callIterator)->isMultiPartyCall() << std::endl;
+                << " isMpty: " << (*callIterator)->isMultiPartyCall()
+                << ", RTT mode of the call "
+                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                     ->getRttModeString((*callIterator)->getRttMode())
+                << ", Local capability of call "
+                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                     ->getRttModeString((*callIterator)->getLocalRttCapability())
+                << ", Peer capability of call "
+                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                     ->getRttModeString((*callIterator)->getPeerRttCapability())
+                << std::endl;
    }
 }
 

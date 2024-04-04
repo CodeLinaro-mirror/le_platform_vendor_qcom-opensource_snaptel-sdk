@@ -78,7 +78,8 @@ public:
     CallStub(int phoneId, CallInfo callInfo);
 
     telux::common::Status answer(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
+        RttMode mode = RttMode::DISABLED);
 
     telux::common::Status hold(
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
@@ -98,6 +99,13 @@ public:
     telux::common::Status startDtmfTone(
         char tone, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     telux::common::Status stopDtmfTone(
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    RttMode getRttMode();
+    RttMode getLocalRttCapability();
+    RttMode getPeerRttCapability();
+    telux::common::Status modify(RttMode mode,
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     CallState getCallState();
     int getCallIndex();

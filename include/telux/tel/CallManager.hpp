@@ -175,8 +175,8 @@ public:
     * This is not meant for an automotive eCall.
     * Regular voice call will be blocked by device while eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents phone corresponding to which on make
     *                          call operation is performed
@@ -207,6 +207,50 @@ public:
     * @returns Status of makeCall i.e. success or suitable status code.
     */
    virtual telux::common::Status makeCall(int phoneId, const std::string &dialNumber,
+                                          std::shared_ptr<IMakeCallCallback> callback = nullptr)
+      = 0;
+  /**
+    * Initiate a real time text (RTT) voice call. This API can also be used for e911/e112 emergency
+    * calls. This is not meant to originate an automotive eCall.
+    * During an ongoing eCall, regular RTT voice calls cannot be originated by the device.
+    * To enable RTT calls, the RTT service must be enabled first using the
+    * @ref telux::tel::IImsSettingsManager::setServiceConfig method.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId      Represents the phone corresponding to which the
+    *                          call operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] callback     Optional callback pointer to get the response of
+    *                          makeRttCall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_SS
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::NO_RESOURCES
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::FDN_CHECK_FAILURE
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::NO_SUBSCRIPTION
+    *                          - @ref telux::common::ErrorCode::NO_NETWORK_FOUND
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::DEVICE_IN_USE
+    *                          - @ref telux::common::ErrorCode::MODE_NOT_SUPPORTED
+    *                          - @ref telux::common::ErrorCode::ABORTED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeRttCall i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual telux::common::Status makeRttCall(int phoneId, const std::string &dialNumber,
                                           std::shared_ptr<IMakeCallCallback> callback = nullptr)
       = 0;
 
@@ -295,8 +339,8 @@ public:
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-    * permissionto invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -321,8 +365,8 @@ public:
     * Initiate an automotive eCall with raw MSD pdu.
     * Regular voice calls will be blocked by device while eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -361,8 +405,8 @@ public:
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -396,8 +440,8 @@ public:
     * Initiate an automotive eCall without transmitting Minimum Set of Data (MSD) at call connect.
     * Regular voice calls will be blocked by device while eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -434,8 +478,8 @@ public:
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -465,8 +509,8 @@ public:
     * Update the eCall MSD in modem to be sent to Public Safety Answering Point
     * (PSAP) when requested.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents phone corresponding to which
     *                       updateECallMsd operation is performed
@@ -487,8 +531,8 @@ public:
     * from the PSAP.The modem will not automatically update MSD to the Public Safety Answering
     * Point(PSAP) @ref- telux::tel::ICallListener::OnMsdUpdateRequest.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents phone corresponding to which
     *                       updateECallMsd operation is performed
@@ -512,8 +556,8 @@ public:
     * by the UE state machine. This does not retrieve status of timers maintained by the PSAP.
     * The provided timers are as per EN 16062:2015 standard.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents phone corresponding on which requestECallHlapTimerStatus
     *                       operation is performed
@@ -528,8 +572,8 @@ public:
    /**
     * Get in-progress calls.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
     *
     * @returns List of active calls.
     */
@@ -538,8 +582,8 @@ public:
    /**
     * Merge two calls in a conference.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] call1     Call object to conference.
     * @param [in] call2     Call object to conference.
@@ -556,8 +600,8 @@ public:
    /**
     * Swap calls to make one active and put the another on hold.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] callToHold      Active call object to swap to hold state.
     * @param [in] callToActivate  Hold call object to swap to active state.
@@ -583,9 +627,10 @@ public:
     * be accepted.
     * In case of hold, active and waiting scenario, the hold call will still be on hold, active
     * call will be ended and waiting call will be accepted.
+    * Answering a waiting RTT call during the above scenarios is not supported.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId - Represents phone corresponding to which this operation is performed.
     * @param [in] callback - optional callback pointer to get the response of hangup request
@@ -618,8 +663,8 @@ public:
     * In case of hold, active and waiting scenario, the active call will still be on active, hold
     * and waiting call will be ended.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId - Represents phone corresponding to which this operation is performed.
     * @param [in] callback - optional callback pointer to get the response of hangup request
@@ -657,8 +702,8 @@ public:
    /**
     * Exit emergency callback mode.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_EMERGENCY_OPS
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_EMERGENCY_OPS
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents the phone corresponding to which the emergency callback
     *                          mode(ECBM) exit is requested.
@@ -675,8 +720,8 @@ public:
     * This is typically done after the T9 eCall HLAP timer has expired to stop the T10 eCall HLAP
     * timer and deregister from the serving network.
     *
-    * To invoke this API on platforms with access control enabled, the caller needs to have
-    * TELUX_TEL_ECALL_MGMT permission.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId   Represents the phone corresponding to which the network deregistration
     *                       will be performed.
@@ -693,8 +738,8 @@ public:
     * Set the value of an eCall HLAP timer.
     * Only the T10 Timer is supported currently.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [in] phoneId      Represents the phone corresponding to which the value of T10 eCall
     *                          HLAP timer updated will be performed.
@@ -715,8 +760,8 @@ public:
     * Get the value of an eCall HLAP timer.
     * Only the T10 Timer is supported currently.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API
     *
     * @param [in] phoneId      Represents the phone corresponding to which the value of eCall HLAP
     *                          timer query will be performed.
@@ -737,8 +782,8 @@ public:
     * Minimum value of EcallConfig.t9Timer value should be 3600000. If a lesser value is provided,
     * this API will still succeed but the actual value would be set to 3600000.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-    * permissionto invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API
     *
     * @param [in] config   eCall configuration to be set
     *                      @ref EcallConfig
@@ -751,8 +796,8 @@ public:
    /**
     * Get the configuration related to emergency call.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-    * permissionto invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
     *
     * @param [out] config   Parameter to hold the fetched eCall configuration
     *                       @ref EcallConfig
@@ -800,6 +845,23 @@ public:
     virtual telux::common::Status encodeEuroNcapOptionalAdditionalData(
         telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data)
         = 0;
+
+   /**
+    * Sends real Time Text (RTT) to remote party during an active RTT call session.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId        PhoneId to which text is sent.
+    * @param [in] message        Text to be sent to a remote party in UTF8 encoding format.
+    *                            Maximum length of the message is 127 characters.
+    * @param [in] callback       Callback function to get the response of sendRtt request.
+    *
+    * @returns Status of sendRtt i.e. success or suitable error code.
+    *
+    */
+   virtual telux::common::Status sendRtt(int phoneId,
+      std::string message, common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Add a listener to listen for incoming call, call info change and eCall MSD

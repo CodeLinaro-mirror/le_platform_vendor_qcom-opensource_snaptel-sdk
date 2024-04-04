@@ -1468,3 +1468,13 @@ telux::common::ErrorCode CallManagerStub::encodeECallMsd(telux::tel::ECallMsdDat
     std::vector<uint8_t> &data) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
+
+telux::common::Status CallManagerStub::makeRttCall(int phoneId, const std::string &dialNumber,
+    std::shared_ptr<IMakeCallCallback> callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CallManagerStub::sendRtt(int phoneId, std::string message,
+    common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}

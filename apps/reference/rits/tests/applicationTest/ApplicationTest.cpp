@@ -1548,5 +1548,10 @@ int main(int argc, char** argv) {
     }
 
     joinThreads();
+
+    if(!rxSim && !txSim && application){
+        application->closeAllRadio();
+    }
+
     return 0;
 }

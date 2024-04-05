@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -282,6 +282,22 @@ telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    std::vector<uint8_t> data;
+    auto status = telClient_->getEncodedOptionalAdditionalDataContent(
+        optionalAdditionalDataContent_, data);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded optional additional data content"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 /**
  * Function to enable necessary functionalities in various subsystems(location, audio, etc.),
  * that are required for an eCall
@@ -398,6 +414,18 @@ void ECallManager::parseAppConfig() {
     if(!param.empty()) {
         MsdProvider msdSettings;
         std::string filePath = appSettings->getValue("MSD_FILE_PATH");
+        optionalAdditionalDataContent_ = msdSettings.readEuroNcapOptionalAdditionalDataContent(
+            param, filePath);
+        std::vector<uint8_t> data;
+        if (telClient_) {
+            auto status = telClient_->getEncodedOptionalAdditionalDataContent(
+                optionalAdditionalDataContent_, data);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << CLIENT_NAME << "Optional additional data content encoding failed"
+                    << std::endl;
+            }
+            msdSettings.setOptionalAdditionalDataContent(data);
+        }
         msdSettings.init(param, filePath);
         msdData_ = msdSettings.getMsd();
     } else {

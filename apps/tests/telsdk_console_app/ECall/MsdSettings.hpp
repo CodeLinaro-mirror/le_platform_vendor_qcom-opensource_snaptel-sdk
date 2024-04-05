@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @brief MsdSettings class reads config file and caches the config msdSettings
  * It provides utility functions to read the config values
@@ -57,10 +64,18 @@ public:
 
    telux::tel::ECallMsdData readMsdFromFile(std::string filename);
 
+   telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
+       std::string filename);
+
+   void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
+
+   std::vector<uint8_t> getOptionalAdditionalDataContent();
+
 private:
    // Hashmap to store all msdSettings as key-value pairs
    static std::map<std::string, std::string> msdSettingsMap_;
    static std::string filename_;
+   std::vector<uint8_t> encodedOptionalAdditionalDataContent_;
 };  // end of class MsdSettings
 
 #endif  // MSDSETTINGS_HPP

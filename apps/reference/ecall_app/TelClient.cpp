@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -554,6 +554,27 @@ telux::common::Status TelClient::setECallConfig(EcallConfig config) {
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
         return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
+    ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid ECall Manager, Failed to get encoded optional"
+            << " additional data content" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->encodeEuroNcapOptionalAdditionalData(optionalEuroNcapData, data);
+    std::vector<uint8_t> optionalAdditionalDataContent = data;
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded optional additional data content"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::string encodedString(optionalAdditionalDataContent.begin(),
+            optionalAdditionalDataContent.end());
+        TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
     }
     return telux::common::Status::SUCCESS;
 }

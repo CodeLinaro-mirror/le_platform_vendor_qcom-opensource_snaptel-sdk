@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MSDPROVIDER_HPP
 #define MSDPROVIDER_HPP
 
@@ -46,9 +53,14 @@ public:
 
     // Function to fetch the MSD Data
     static telux::tel::ECallMsdData getMsd();
+    telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
+        std::string filename, std::string filepath);
+
+    void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
 
 private:
     static telux::tel::ECallMsdData msdData_;
+    static std::vector<uint8_t>  optionalAdditionalDataContent_;
 };  // end of class MsdProvider
 
 #endif  // MSDPROVIDER_HPP

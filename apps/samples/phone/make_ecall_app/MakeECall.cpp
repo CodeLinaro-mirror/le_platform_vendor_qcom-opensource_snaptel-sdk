@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 
@@ -69,8 +76,29 @@ using namespace telux::common;
 #define NUMBER_OF_PASSENGERS 2
 #define VIN "ECALLEXAMPLE02013"
 #define OPTIONAL_ADDITIONAL_DATA_PRESENT 1
-#define OID_DATA "1.2.3"
-#define OAD_DATA "0123456789ABCDEF"
+#define OID_DATA "8.1"
+/*If already encoded optional additional data content is available, fill "OAD_DATA",
+otherwise fill Euro NCAP optional additional data content fields.
+# For example, OAD_DATA = "0832D28480" */
+static const std::string OAD_DATA = " ";
+/* Below are the Euro NCAP optional additional data content fields. */
+#define EURONCAP_LOCATION_OF_IMPACT 2
+/* Possible LOCATION_OF_IMPACT values are 0 to 6
+  0 = unknown
+  1 = none,
+  2 = front,
+  3 = rear,
+  4 = driver_side,
+  5 = non_driver_side,
+  6 = other */
+#define EURONCAP_ROLL_OVER_DETECTED_PRESENT 0
+#define EURONCAP_ROLL_OVER_DETECTED 0
+// range limit is 100 to 255
+#define EURONCAP_DELTAV_RANGELIMIT 125
+// delta VX range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVX -45
+// delta VY range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVY 10
 
 // ##### 6.1. implement IMakeCallCallback interface to receive response for the dial request -
 // optional
@@ -113,7 +141,7 @@ int main(int, char **) {
 
    // Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
+      std::cout << " *** PhoneManager Subsystem Ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
       return 1;
@@ -121,7 +149,7 @@ int main(int, char **) {
 
    // ### 4. Instantiate Phone and call manager
    auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   auto callManager = phoneFactory.getCallManager();
 
    // ### 5. Get unique id of the phone
    int phoneId = DEFAULT_PHONE_ID;
@@ -165,14 +193,36 @@ int main(int, char **) {
    eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
    eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
    eCallMsdData.optionalPdu.oid = OID_DATA;
-   std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
-   msdData_.optionalPdu.data = data;
+   if (!OAD_DATA.empty()) {
+       std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
+       eCallMsdData.optionalPdu.data = data;
+   } else {
+       std::vector<uint8_t> data;
+       // get encoded optional additional data content
+       ECallOptionalEuroNcapData optionalEuroNcapData = {};
+       optionalEuroNcapData.locationOfImpact =
+           static_cast<ECallLocationOfImpact>(EURONCAP_LOCATION_OF_IMPACT);
+       optionalEuroNcapData.rollOverDetectedPresent = EURONCAP_ROLL_OVER_DETECTED_PRESENT;
+       optionalEuroNcapData.rollOverDetected = EURONCAP_ROLL_OVER_DETECTED;
+       optionalEuroNcapData.deltaV.rangeLimit = EURONCAP_DELTAV_RANGELIMIT;
+       optionalEuroNcapData.deltaV.deltaVX = EURONCAP_DELTAV_DELTAVX;
+       optionalEuroNcapData.deltaV.deltaVY = EURONCAP_DELTAV_DELTAVY;
+       auto encodeOADContentStatus = callManager->encodeEuroNcapOptionalAdditionalData(
+           optionalEuroNcapData, data);
+       if (encodeOADContentStatus != telux::common::Status::SUCCESS) {
+           std::cout << " Optional additional data content encoding is failed" << std::endl;
+           return 1;
+       }
+       eCallMsdData.optionalPdu.data = data;
+   }
 
    // ### 9. Send a eCall request
-   if(callManager) {
+   if (callManager) {
       auto makeCallStatus
          = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
-      std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+      std::cout << "Dial ECall Status: " << (int)makeCallStatus << std::endl;
+   } else {
+      std::cout << "ERROR: Call Manager is NULL so couldn't make ECall" << std::endl;
    }
 
    // ### 10. Exit logic is specific to an application

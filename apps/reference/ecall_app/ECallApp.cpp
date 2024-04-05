@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -153,11 +153,16 @@ void ECallApp::init() {
         ConsoleAppCommand("12", "Set_ECall_Config", {}, std::bind(&ECallApp::setECallConfig,
         this)));
 
+    std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand =
+        std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("13", "Get_Encoded_Optional_Additional_Data_Content", {},
+        std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
-            setEcallConfigCommand};
+            setEcallConfigCommand, getEncodedOADContentCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -614,6 +619,20 @@ void ECallApp::setECallConfig() {
     auto ret = eCallMgr_->setECallConfig(config);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to set eCall configuration" << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getEncodedOptionalAdditionalDataContent() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getEncodedOptionalAdditionalDataContent();
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get encoded optional additional data content"
+            << std::endl;
         return;
     }
 }

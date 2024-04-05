@@ -62,6 +62,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef ECALLMENU_HPP
 #define ECALLMENU_HPP
 
@@ -198,6 +205,12 @@ private:
 
    /* This method is used to exit emergency callback mode */
    void exitEcbm(std::vector<std::string> userInput);
+
+   /* To get the encoded optional additional data content for Euro NCAP */
+   void getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput);
+
+   /* Updates static optional additional data content to main MSD. */
+   void updateOptionalAdditionalDataContent(MsdSettings &msdSettings);
 
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::ICallListener> callListener_;

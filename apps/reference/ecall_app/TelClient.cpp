@@ -728,3 +728,24 @@ telux::common::Status TelClient::setECallConfig(EcallConfig config) {
     }
     return telux::common::Status::SUCCESS;
 }
+
+telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
+    ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid ECall Manager, Failed to get encoded optional"
+            << " additional data content" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->encodeEuroNcapOptionalAdditionalData(optionalEuroNcapData, data);
+    std::vector<uint8_t> optionalAdditionalDataContent = data;
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded optional additional data content"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::string encodedString(optionalAdditionalDataContent.begin(),
+            optionalAdditionalDataContent.end());
+        TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
+    }
+    return telux::common::Status::SUCCESS;
+}

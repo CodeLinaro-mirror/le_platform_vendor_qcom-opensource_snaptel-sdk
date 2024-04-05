@@ -268,6 +268,19 @@ public:
     telux::common::Status setECallConfig(EcallConfig config);
 
     /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @param [in] optionalAdditionalDataConteny  Euro NCAP optional additional data content.
+     * @param [out] data                          Encoded vector of bytes.
+     *
+     * @returns Status of getEncodedOptionalAdditionalDataContent i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent(ECallOptionalEuroNcapData
+        optionalAdditionalDataContent, std::vector<uint8_t> &data);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.

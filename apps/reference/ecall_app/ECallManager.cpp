@@ -300,6 +300,22 @@ telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    std::vector<uint8_t> data;
+    auto status = telClient_->getEncodedOptionalAdditionalDataContent(
+        optionalAdditionalDataContent_, data);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded optional additional data content"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 /**
  * Request to stop T10 eCall High Level Application Protocol(HLAP) timer
  */
@@ -473,6 +489,18 @@ void ECallManager::parseAppConfig() {
     if(!param.empty()) {
         MsdProvider msdSettings;
         std::string filePath = appSettings->getValue("MSD_FILE_PATH");
+        optionalAdditionalDataContent_ = msdSettings.readEuroNcapOptionalAdditionalDataContent(
+            param, filePath);
+        std::vector<uint8_t> data;
+        if (telClient_) {
+            auto status = telClient_->getEncodedOptionalAdditionalDataContent(
+                optionalAdditionalDataContent_, data);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << CLIENT_NAME << "Optional additional data content encoding failed"
+                    << std::endl;
+            }
+            msdSettings.setOptionalAdditionalDataContent(data);
+        }
         msdSettings.init(param, filePath);
         msdData_ = msdSettings.getMsd();
         if (telClient_) {

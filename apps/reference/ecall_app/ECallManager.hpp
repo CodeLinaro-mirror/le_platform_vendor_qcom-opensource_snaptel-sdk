@@ -205,6 +205,15 @@ public:
      */
     telux::common::Status setECallConfig(EcallConfig config);
 
+    /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent();
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
@@ -272,6 +281,8 @@ private:
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;
     EcnrMode ecnrMode_;
+    /** Local copy of MSD optional additional data content. */
+    ECallOptionalEuroNcapData optionalAdditionalDataContent_;
 };
 
 #endif  // ECALLMANAGER_HPP

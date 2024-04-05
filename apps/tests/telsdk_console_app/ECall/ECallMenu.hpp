@@ -169,6 +169,12 @@ private:
    /* This method is used to exit emergency callback mode */
    void exitEcbm(std::vector<std::string> userInput);
 
+   /* To get the encoded optional additional data content for Euro NCAP */
+   void getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput);
+
+   /* Updates static optional additional data content to main MSD. */
+   void updateOptionalAdditionalDataContent(MsdSettings &msdSettings);
+
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::ICallListener> callListener_;
 

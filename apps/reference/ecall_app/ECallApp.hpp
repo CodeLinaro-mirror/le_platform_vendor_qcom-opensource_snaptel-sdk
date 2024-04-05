@@ -176,6 +176,11 @@ private:
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;
+
+    /**
+     * Gets encoded optional additional data content for Euro NCAP.
+     */
+    void getEncodedOptionalAdditionalDataContent();
 };
 
 #endif  // ECALLAPP_HPP

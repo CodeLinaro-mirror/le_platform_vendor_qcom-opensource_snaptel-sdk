@@ -636,6 +636,29 @@ public:
    virtual telux::common::Status getConfig(EcallConfig &config) = 0;
 
    /**
+    * Gets encoded bytes of optional additional data content as per the Euro NCAP Technical
+    * Bulletin TB 040. Client needs to pass this vector of bytes to the data field of the
+    * ECallOptionalPdu. @ref telux::tel::ECallOptionalPdu::data
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to invoke this API successfully.
+    *
+    * @param [in] optionalEuroNcapData   ECall optional additional data as per Euro NCAP
+    *                                    Technical Bulletin TB 040.
+                                         @ref telux::tel::ECallOptionalEuroNcapData
+    * @param [out] data                  Encoded optional additional data.
+    *
+    * @returns Status of encodeEuroNcapOptionalAdditionalData i.e. success or
+    * suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+    virtual telux::common::Status encodeEuroNcapOptionalAdditionalData(
+        telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData,
+        std::vector<uint8_t> &data) = 0;
+
+   /**
     * Add a listener to listen for incoming call, call info change and eCall MSD
     * transmission status change.
     *

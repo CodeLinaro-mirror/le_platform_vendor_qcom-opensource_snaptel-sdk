@@ -29,12 +29,14 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
 #include <memory>
+#include <chrono>
+#include <thread>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
 
    // ### 2. Wait for the Call Manager subsystem to be ready.
    telux::common::ServiceStatus status = cbProm.get_future().get();
-   if(status == SERVICE_AVAILABLE) {
+   if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       std::cout << "Call Manager subsystem is ready" << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]) {
    std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
 
    // ### 5. Wait for the call state to become active and hang-up the call after conversation
-   sleep(10);
+   std::this_thread::sleep_for(std::chrono::seconds(10));
    if(dialedCall) {
       dialedCall->hangup();
    }

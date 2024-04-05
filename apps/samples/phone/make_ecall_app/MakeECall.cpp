@@ -130,10 +130,36 @@ class ECaller : public telux::tel::IMakeCallCallback,
         eCallMsdData.recentVehicleLocationN2.latitudeDelta = -1;
         eCallMsdData.recentVehicleLocationN2.longitudeDelta = -30;
         eCallMsdData.numberOfPassengers = 2;
-        eCallMsdData.optionalPdu.oid = "1.2.3";
-        std::string oadData("0123456789ABCDEF");
-        std::vector<uint8_t> data(oadData.begin(), oadData.end());
-        eCallMsdData.optionalPdu.data = data;
+        eCallMsdData.optionalPdu.oid = "8.1";
+        /* If already encoded optional additional data content is available, fill "oadData",
+          otherwise fill Euro NCAP optional additional data content fields.
+          # For example, std::string oadData("0832D28480"); */
+        std::string oadData("");
+        if (!oadData.empty()) {
+            std::vector<uint8_t> data(oadData.begin(), oadData.end());
+            eCallMsdData.optionalPdu.data = data;
+        } else {
+            std::vector<uint8_t> data;
+            // get encoded optional additional data content
+            telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData = {};
+            // refer ECallLocationOfImpact for more values.
+            optionalEuroNcapData.locationOfImpact = telux::tel::ECallLocationOfImpact::FRONT;
+            optionalEuroNcapData.rollOverDetectedPresent = false;
+            optionalEuroNcapData.rollOverDetected = false;
+            // deltav range limit is 100 to 255
+            optionalEuroNcapData.deltaV.rangeLimit = 125;
+            // deltav VX range is -255 to 255
+            optionalEuroNcapData.deltaV.deltaVX = -45;
+            // deltav VY range is -255 to 255
+            optionalEuroNcapData.deltaV.deltaVY = 10;
+            auto encodeOADContentStatus = callMgr_->encodeEuroNcapOptionalAdditionalData(
+                optionalEuroNcapData, data);
+            if (encodeOADContentStatus != telux::common::Status::SUCCESS) {
+                std::cout << " Optional additional data content encoding failed" << std::endl;
+                return 1;
+            }
+            eCallMsdData.optionalPdu.data = data;
+        }
 
         /* Step - 4 */
         status = callMgr_->makeECall(phoneId,

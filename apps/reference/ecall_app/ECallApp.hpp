@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -165,6 +165,11 @@ class ECallApp : public ConsoleApp {
      * Set various configuration parameters related to eCall
      */
     void setECallConfig();
+
+    /**
+     * Gets encoded optional additional data content for Euro NCAP.
+     */
+    void getEncodedOptionalAdditionalDataContent();
 
     /**
      * Function to get eCall category from the user-interface

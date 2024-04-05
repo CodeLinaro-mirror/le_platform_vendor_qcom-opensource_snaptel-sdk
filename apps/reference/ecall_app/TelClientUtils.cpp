@@ -444,3 +444,13 @@ void TelClientUtils::printEcallConfig(EcallConfig config) {
             << std::endl;
     }
 }
+
+void TelClientUtils::printEncodedOptionalAdditionalDataContent(std::string encodedString) {
+    if (!encodedString.empty()) {
+        std::cout << CLIENT_NAME << " Encoded optional additional data content: "
+            << encodedString << std::endl;
+    } else {
+        std::cout << CLIENT_NAME << " Encoded optional additional data content is empty"
+            << std::endl;
+    }
+}

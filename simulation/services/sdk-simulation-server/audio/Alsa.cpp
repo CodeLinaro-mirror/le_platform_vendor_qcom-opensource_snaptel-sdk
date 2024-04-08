@@ -1131,7 +1131,7 @@ void Alsa::onEventUpdate(std::string event) {
     token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
 
     if (DTMF_EVENT == token) {
-        /* INPUT-token: dtmf_detection
+        /* INPUT-token: dtmf_tone
          * INPUT-event: lowFreq highFreq
          */
         handleDTMFDetectedEvent(event);

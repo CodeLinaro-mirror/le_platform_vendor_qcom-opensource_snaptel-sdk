@@ -44,7 +44,7 @@
 #define JSON_AUDIO_API "api/audio/IAudioManager.json"
 
 #define DEFAULT_DELIMITER " "
-#define DTMF_EVENT "dtmf_detection"
+#define DTMF_EVENT "dtmf_tone"
 #define SSR_EVENT "ssr"
 #define AUDIO_FILTER "audio"
 

@@ -158,7 +158,7 @@ In a simulated environment telsdk_event_injector is used to inject the DTMF tone
 
 Sample input:<br>
 \code{.sh}
-telsdk_event_injector -f audio -e dtmf_detection 697 1209
+telsdk_event_injector -f audio -e dtmf_tone 697 1209
 \endcode
 
 <br>

@@ -311,6 +311,7 @@ class LocationInfoEx : public ILocationInfoEx {
     LLAInfo vrpLla_;
     std::vector<float> vrpVel_;
     uint32_t drSolutionStatus_ = 0;
+    std::vector<uint16_t> dgnssStationIds_;
 
 public:
 /**
@@ -841,6 +842,14 @@ public:
  */
   virtual DrSolutionStatus getSolutionStatus() { return drSolutionStatus_; }
 
+/** List of DGNSS station IDs providing corrections.
+ *  Range:
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - Other values reserved.
+ */
+  virtual std::vector<uint16_t> getDgnssStationIds() override { return dgnssStationIds_; }
+
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
     void setSpeed(float val) { speed_ = val;}
@@ -933,6 +942,9 @@ public:
     }
     void setSolutionStatus(uint32_t drSolutionStatus) {
         drSolutionStatus_ = drSolutionStatus;
+    }
+    void setDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
+        dgnssStationIds_ = dgnssStationIds;
     }
 };
 

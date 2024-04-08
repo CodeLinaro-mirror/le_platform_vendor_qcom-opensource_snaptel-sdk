@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -152,20 +152,38 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
             || (type == SensorType::ACCELEROMETER_UNCALIBRATED))) {
         float samplingRate = 0;
         uint32_t batchCount = 0;
+        bool isRotated = true;
         std::string supportedRates = getSupportedRates(sensor->getSensorInfo());
         std::string batchCountLimits = getBatchCountLimits(sensor->getSensorInfo());
         SensorUtils::getInput("Enter sampling rate " + supportedRates + ": ", samplingRate);
         SensorUtils::getInput("Enter batch count " + batchCountLimits + ": ", batchCount);
+        SensorUtils::getInput("Enter isRotated: ", isRotated);
 
         // Set the sensor configuration
         SensorConfiguration s;
         s.samplingRate = samplingRate;
         s.batchCount = batchCount;
+        s.isRotated = isRotated;
         s.validityMask.set(SensorConfigParams::SAMPLING_RATE);
         s.validityMask.set(SensorConfigParams::BATCH_COUNT);
+        s.validityMask.set(SensorConfigParams::ROTATE);
         return s;
     }
     return SensorConfiguration();
+}
+
+telux::sensor::EulerAngleConfig SensorUtils::getEulerAngleConfig() {
+        telux::sensor::EulerAngleConfig EulerAngleConfig = {0, 0, 0};
+        SensorUtils::getInput("Enter roll angle: ", EulerAngleConfig.roll);
+        SensorUtils::getInput("Enter pitch angle: ", EulerAngleConfig.pitch);
+        SensorUtils::getInput("Enter yaw angle: ", EulerAngleConfig.yaw);
+
+        // Set the sensor Euler angle configuration
+        telux::sensor::EulerAngleConfig e;
+        e.roll = EulerAngleConfig.roll;
+        e.pitch = EulerAngleConfig.pitch;
+        e.yaw = EulerAngleConfig.yaw;
+        return e;
 }
 
 std::shared_ptr<SensorClient> SensorUtils::getSensorClient(

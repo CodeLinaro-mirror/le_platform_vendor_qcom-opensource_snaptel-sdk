@@ -137,9 +137,9 @@ class ISensorClient {
     virtual SensorInfo getSensorInfo() = 0;
 
     /**
-     * Configure the sensor client with desired sampling rate and batch count. Any change in
-     * sampling rate or batch count of the sensor will be notified via
-     * @ref telux::sensor::ISensorEventListener::onConfigurationUpdate.
+     * Configure the sensor client with desired sampling rate, batch count and rotation
+     * configuration. Any change in sampling rate or batch count or rotation configuration of the
+     * sensor will be notified via @ref telux::sensor::ISensorEventListener::onConfigurationUpdate.
      *
      * In case a sensor client needs to be reconfigured after having been activated, the client
      * should be deactivated, configured and activated again as a part of the reconfiguration
@@ -148,9 +148,10 @@ class ISensorClient {
      * It is always recommended that configuration of a client is done before activating it. If a
      * client is activated without configuration, the client is configured with a default
      * configuration and activated. The default configuration would have the sampling rate set to
-     * minimum sampling rate supported @ref telux::sensor::SensorInfo::samplingRates and the batch
+     * minimum sampling rate supported @ref telux::sensor::SensorInfo::samplingRates, the batch
      * count set to maximum batch count supported @ref
-     * telux::sensor::SensorInfo::maxBatchCountSupported
+     * telux::sensor::SensorInfo::maxBatchCountSupported and rotated data will be delivered via
+     * @ref telux::sensor::ISensorEventListener::onEvent.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_DATA_READ
      * permission to invoke this API successfully.
@@ -186,9 +187,10 @@ class ISensorClient {
      * It is always recommended that configuration of a client is done before activating it. If a
      * client is activated without configuration, the client is configured with the default
      * configuration and activated. The default configuration would have the sampling rate set to
-     * minimum sampling rate supported @ref telux::sensor::SensorInfo::samplingRates and the batch
+     * minimum sampling rate supported @ref telux::sensor::SensorInfo::samplingRates, the batch
      * count set to maximum batch count supported @ref
-     * telux::sensor::SensorInfo::maxBatchCountSupported. Activating an already activated sensor
+     * telux::sensor::SensorInfo::maxBatchCountSupported and rotated data will be delivered via
+     * @ref telux::sensor::ISensorEventListener::onEvent. Activating an already activated sensor
      * would result in the API returning @ref telux::common::Status::SUCCESS.
      *
      * Activating this sensor client would not impact other inactive sensor clients.

@@ -8,6 +8,8 @@
 #include "NatServerImpl.hpp"
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
+#include "libs/data/DataUtilsStub.hpp"
+#include "libs/data/DataHelper.hpp"
 
 #define NAT_MANAGER_API_LOCAL_JSON "api/data/INatManagerLocal.json"
 #define NAT_MANAGER_STATE_JSON "system-state/data/INatManagerState.json"
@@ -69,6 +71,21 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
+    if ((!DataUtilsStub::isValidIpv4Address(
+        request->static_nat_entry().nat_config().address()))
+        && (!DataUtilsStub::isValidIpv6Address(
+        request->static_nat_entry().nat_config().address()))) {
+
+        LOG(ERROR, __FUNCTION__, " Address provided shall be in either IPv4 or Ipv6 format");
+        data.error = telux::common::ErrorCode::INTERNAL;
+    }
+
+    if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
+        request->static_nat_entry().nat_config().ip_protocol()))) {
+        LOG(ERROR, __FUNCTION__, " unexpected protocol");
+        data.error = telux::common::ErrorCode::INTERNAL;
+    }
+
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
         Json::Value newSnatEntry;
@@ -121,6 +138,21 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
+    if ((!DataUtilsStub::isValidIpv4Address(
+        request->static_nat_entry().nat_config().address()))
+        && (!DataUtilsStub::isValidIpv6Address(
+        request->static_nat_entry().nat_config().address()))) {
+
+        LOG(ERROR, __FUNCTION__, " Address provided shall be in either IPv4 or Ipv6 format");
+        data.error = telux::common::ErrorCode::INTERNAL;
+    }
+
+    if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
+        request->static_nat_entry().nat_config().ip_protocol()))) {
+        LOG(ERROR, __FUNCTION__, " unexpected protocol");
+        data.error = telux::common::ErrorCode::INTERNAL;
+    }
+
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
         int currentEntryCount =
@@ -144,6 +176,8 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
             data.stateRootObj[subsystem]["snatEntries"]
                 = newRoot[subsystem]["snatEntries"];
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+        } else {
+            data.error = telux::common::ErrorCode::INTERNAL;
         }
     }
 

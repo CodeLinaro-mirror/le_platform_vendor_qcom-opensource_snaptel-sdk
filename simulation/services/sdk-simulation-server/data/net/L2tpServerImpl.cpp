@@ -193,42 +193,89 @@ grpc::Status L2tpServerImpl::AddTunnel(ServerContext* context,
         Json::Value newTunnel;
         int currentCount =
             data.stateRootObj[subsystem]["l2tpConfig"]["tunnelConfigs"].size();
-
-        if (currentCount > MAX_TUNNEL) {
-            LOG(DEBUG, __FUNCTION__, " exceeding max tunnels supported");
-            data.error = telux::common::ErrorCode::NOT_SUPPORTED;
-        } else {
-            LOG(DEBUG, __FUNCTION__, " adding tunnel ",
-            request->l2tp_tunnel_config().loc_id());
-            newTunnel["prot"] = DataUtilsStub::l2tpProtocolToString(
-                request->l2tp_tunnel_config().l2tp_prot());
-            newTunnel["locId"] = request->l2tp_tunnel_config().loc_id();
-            newTunnel["peerId"] = request->l2tp_tunnel_config().peer_id();
-            newTunnel["localUdpPort"] = request->l2tp_tunnel_config().local_udp_port();
-            newTunnel["peerUdpPort"] = request->l2tp_tunnel_config().peer_udp_port();
-            newTunnel["peerIpv6Addr"] = request->l2tp_tunnel_config().peer_ipv6_addr();
-            newTunnel["peerIpv6GwAddr"] = request->l2tp_tunnel_config().peer_ipv6_gw_addr();
-            newTunnel["peerIpv4Addr"] = request->l2tp_tunnel_config().peer_ipv4_addr();
-            newTunnel["peerIpv4GwAddr"] = request->l2tp_tunnel_config().peer_ipv4_gw_addr();
-            newTunnel["locIface"] = request->l2tp_tunnel_config().loc_iface();
-            newTunnel["ipType"] = DataUtilsStub::convertIpFamilyEnumToString(
-                request->l2tp_tunnel_config().ip_family_type().ip_family_type());
-
-            int sessionIdx = 0;
-            for (auto& session: request->l2tp_tunnel_config().session_config()) {
-                //adding sessionconfig
-                Json::Value newSession;
-                newSession["locId"] = session.loc_id();
-                newSession["peerId"] = session.peer_id();
-                newTunnel["sessionConfig"][sessionIdx] = newSession;
-                sessionIdx++;
+        do {
+            if (request->l2tp_tunnel_config().ip_family_type().ip_family_type()
+                == dataStub::IpFamilyType::IPV4) {
+                if (!DataUtilsStub::isValidIpv4Address(
+                    request->l2tp_tunnel_config().peer_ipv4_addr())) {
+                    LOG(ERROR, __FUNCTION__, " Invalid Ipv4 Addr Provided ");
+                    data.error = telux::common::ErrorCode::INTERNAL;
+                    break;
+                }
+                if (!DataUtilsStub::isValidIpv4Address(
+                    request->l2tp_tunnel_config().peer_ipv4_gw_addr())) {
+                    LOG(ERROR, __FUNCTION__, " Invalid Ipv4 Gateway Addr Provided ");
+                }
+            } else if (request->l2tp_tunnel_config().ip_family_type().ip_family_type()
+                == dataStub::IpFamilyType::IPV6) {
+                 if (!DataUtilsStub::isValidIpv6Address(
+                    request->l2tp_tunnel_config().peer_ipv6_addr())) {
+                    LOG(ERROR, __FUNCTION__, " Invalid Ipv6 Addr Provided ");
+                    data.error = telux::common::ErrorCode::INTERNAL;
+                    break;
+                }
+                if (!DataUtilsStub::isValidIpv6Address(
+                    request->l2tp_tunnel_config().peer_ipv6_gw_addr())) {
+                    LOG(ERROR, __FUNCTION__, " Invalid Ipv6 Gateway Addr Provided ");
+                }
+            } else {
+                data.error = telux::common::ErrorCode::INTERNAL;
+                LOG(ERROR, __FUNCTION__, " Invalid IP Type entered ");
+                break;
             }
 
-            data.stateRootObj[subsystem]["l2tpConfig"]["tunnelConfigs"][currentCount]
-                = newTunnel;
+            if (currentCount > MAX_TUNNEL) {
+                LOG(DEBUG, __FUNCTION__, " exceeding max tunnels supported");
+                data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+            } else {
+                LOG(DEBUG, __FUNCTION__, " adding tunnel ",
+                request->l2tp_tunnel_config().loc_id());
+                std::string protocol = DataUtilsStub::l2tpProtocolToString(
+                    request->l2tp_tunnel_config().l2tp_prot());
+                newTunnel["prot"] = protocol;
+                if (protocol == "UDP") {
+                    newTunnel["localUdpPort"] =
+                        request->l2tp_tunnel_config().local_udp_port();
+                    newTunnel["peerUdpPort"] =
+                        request->l2tp_tunnel_config().peer_udp_port();
+                }
+                newTunnel["locId"] = request->l2tp_tunnel_config().loc_id();
+                newTunnel["peerId"] = request->l2tp_tunnel_config().peer_id();
 
-            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
-        }
+                std::string ipFamily = DataUtilsStub::convertIpFamilyEnumToString(
+                    request->l2tp_tunnel_config().ip_family_type().ip_family_type());
+
+                if (ipFamily ==  "IPV4") {
+                    newTunnel["peerIpv4Addr"] =
+                        request->l2tp_tunnel_config().peer_ipv4_addr();
+                    newTunnel["peerIpv4GwAddr"] =
+                        request->l2tp_tunnel_config().peer_ipv4_gw_addr();
+                } else if (ipFamily ==  "IPV6") {
+                    newTunnel["peerIpv6Addr"] =
+                        request->l2tp_tunnel_config().peer_ipv6_addr();
+                    newTunnel["peerIpv6GwAddr"] =
+                        request->l2tp_tunnel_config().peer_ipv6_gw_addr();
+                }
+
+                newTunnel["locIface"] = request->l2tp_tunnel_config().loc_iface();
+                newTunnel["ipType"] = ipFamily;
+
+                int sessionIdx = 0;
+                for (auto& session: request->l2tp_tunnel_config().session_config()) {
+                    //adding sessionconfig
+                    Json::Value newSession;
+                    newSession["locId"] = session.loc_id();
+                    newSession["peerId"] = session.peer_id();
+                    newTunnel["sessionConfig"][sessionIdx] = newSession;
+                    sessionIdx++;
+                }
+
+                data.stateRootObj[subsystem]["l2tpConfig"]["tunnelConfigs"][currentCount]
+                    = newTunnel;
+
+                JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+            }
+        } while (0);
     }
 
     response->set_status(static_cast<commonStub::Status>(data.status));

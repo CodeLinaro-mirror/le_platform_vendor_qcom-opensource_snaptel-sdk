@@ -1,0 +1,206 @@
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <telux/common/DeviceConfig.hpp>
+
+#include "NatServerImpl.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+
+#define NAT_MANAGER_API_LOCAL_JSON "api/data/INatManagerLocal.json"
+#define NAT_MANAGER_STATE_JSON "system-state/data/INatManagerState.json"
+
+#define REMOTE 1
+
+NatServerImpl::NatServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+    taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
+}
+
+NatServerImpl::~NatServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+}
+
+grpc::Status NatServerImpl::InitService(ServerContext* context,
+    const dataStub::InitRequest* request, dataStub::GetServiceStatusReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootObj;
+    std::string filePath = NAT_MANAGER_API_LOCAL_JSON;
+    telux::common::ErrorCode error =
+        JsonParser::readFromJsonFile(rootObj, filePath);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
+    }
+
+    int cbDelay = rootObj["INatManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus =
+        rootObj["INatManager"]["IsSubsystemReady"].asString();
+    telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
+    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
+
+    response->set_service_status(static_cast<dataStub::ServiceStatus>(status));
+    response->set_delay(cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
+    const dataStub::StaticNatRequest* request,
+    dataStub::DefaultReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "addStaticNatEntry";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (request->static_nat_entry().operation_type() == REMOTE) {
+        data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        Json::Value newSnatEntry;
+
+        int entryIdx = -1;
+        int currentEntryCount =
+            data.stateRootObj[subsystem]["snatEntries"].size();
+        bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
+        if (!entryExists) {
+            newSnatEntry["profileId"] = request->static_nat_entry().profile_id();
+            newSnatEntry["slotId"] = request->static_nat_entry().slot_id();
+            newSnatEntry["addr"] = request->static_nat_entry().nat_config().address();
+            newSnatEntry["port"] = request->static_nat_entry().nat_config().port();
+            newSnatEntry["globalPort"] = request->static_nat_entry().nat_config().global_port();
+            newSnatEntry["proto"] = request->static_nat_entry().nat_config().ip_protocol();
+            data.stateRootObj[subsystem]["snatEntries"][currentEntryCount] =
+                newSnatEntry;
+
+            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+        } else {
+            data.error = telux::common::ErrorCode::NO_EFFECT;
+        }
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
+    const dataStub::StaticNatRequest* request,
+    dataStub::DefaultReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "removeStaticNatEntry";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (request->static_nat_entry().operation_type() == REMOTE) {
+        data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        int currentEntryCount =
+            data.stateRootObj[subsystem]["snatEntries"].size();
+
+        int entryIdx = -1;
+        bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
+        if (entryExists) {
+            int newCount = 0;
+            int index = 0;
+            Json::Value newRoot;
+            for (; index < currentEntryCount; index++) {
+                //skipping to add entry in new array for the matched index.
+                if (entryIdx == index ) {
+                    continue;
+                }
+                newRoot[subsystem]["snatEntries"][newCount]
+                    = data.stateRootObj[subsystem]["snatEntries"][index];
+                newCount++;
+            }
+            data.stateRootObj[subsystem]["snatEntries"]
+                = newRoot[subsystem]["snatEntries"];
+            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+        }
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
+    const dataStub::RequestStaticNatEntriesRequest* request,
+    dataStub::RequestStaticNatEntriesReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "requestStaticNatEntries";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (request->operation_type() == REMOTE) {
+        data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        int currentEntryCount =
+            data.stateRootObj[subsystem]["snatEntries"].size();
+        auto profile_id = request->profile_id();
+        auto slot_id = request->slot_id();
+
+        int index = 0;
+        for (; index < currentEntryCount; index++) {
+            Json::Value requestedNatEntry =
+                data.stateRootObj[subsystem]
+                ["snatEntries"][index];
+
+            if ((requestedNatEntry["profileId"] == profile_id) &&
+                (requestedNatEntry["slotId"] == slot_id)) {
+                dataStub::NatConfig *nat_config = response->add_nat_config();
+                nat_config->set_address(requestedNatEntry["addr"].asString());
+                nat_config->set_port(requestedNatEntry["port"].asInt());
+                nat_config->set_global_port(requestedNatEntry["globalPort"].asInt());
+                nat_config->set_ip_protocol(requestedNatEntry["proto"].asString());
+            }
+        }
+    }
+
+    response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
+    response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->mutable_reply()->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}

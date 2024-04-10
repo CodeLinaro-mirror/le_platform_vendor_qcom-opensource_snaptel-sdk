@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -230,7 +230,6 @@ public:
  * reports in milliseconds. The interval only controls the rate at which the PVT reports are
  * delivered to clients via @ref ILocationListener::onDetailedLocationUpdate.
  * The rate at which other report types are delivered are based on a platform configuration.
- *
  * E.g. If minInterval is 1000 milliseconds, reports will be provided with a
  * periodicity of 1 second or more depending on the number of applications
  * listening to location updates.
@@ -322,7 +321,6 @@ public:
  * reports in milliseconds. The interval only controls the rate at which the PVT reports are
  * delivered to clients via @ref ILocationListener::onDetailedEngineLocationUpdate.
  * The rate at which other report types are delivered are based on a platform configuration.
- *
  * E.g. If minInterval is 1000 milliseconds, reports will be provided with a
  * periodicity of 1 second or more depending on the number of applications
  * listening to location updates.

@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -79,6 +79,8 @@ typedef struct {
     bool airbag;        /**< Are airbags open in RV */
     uint64_t hv_timestamp_ms;   /**< Recent timestamp on bsm of the host, Useful for logging warnings*/
     int hv_msgcnt;     /**< Message count of the recent bsm of the host, Useful for logging warnings*/
+    uint64_t rv_timestamp_ms;   /**< Recent timestamp on bsm of the rv*/
+    int rv_msgcnt;     /**< Message count of the recent bsm of the rv*/
     int totalCnt;      /**< Total number of messsages with different msg cnts received by the host*/
     int lastTotalCnt;  /**< Used to calculate msg rate*/
     uint64_t lastTime; /**< Used to calculate msg rate*/
@@ -107,6 +109,8 @@ double time_to_crash(msg_contents *host, msg_contents *remote, double distFromRV
  *  @return void
  */
 void extrapolate(msg_contents *hv, msg_contents *rv);
+
+void updateRVMsgCount(bsm_value_t *remote_bsm, rv_specs *rvsp);
 
 /** @brief Extrapolates the RV coordinates and speed at its timestamp to the timestamp of the host.
  *  @param[in] Host pointer to msg_contents of the host. Contains all the information about the host.

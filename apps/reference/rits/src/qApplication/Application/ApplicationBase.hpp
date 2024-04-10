@@ -28,7 +28,7 @@
  */
 
 /*
- *Changes from Qualcomm Innovation Center are provided under the following license:
+ *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -86,6 +86,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <sys/resource.h>
 #include <telux/cv2x/prop/CongestionControlManager.hpp>
 #include <telux/cv2x/prop/V2xPropFactory.hpp>
 #include "v2x_msg.h"
@@ -115,9 +116,10 @@
 #define MAX_PADDING_LEN     1000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
 #define PP_BUFFER_MAX_SIZE 4096
-#define SHARED_BUFFER_MAX_SIZE 1024
+#define SHARED_BUFFER_MAX_SIZE 2048
 #define ASYNC_BATCH_SIZE 500
 #define VERIF_STAT_BATCH_SIZE 2500
+#define DEFAULT_PROCESS_PRIORITY -20
 
 #define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
                        "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
@@ -174,9 +176,13 @@ typedef struct {
     double distFromRV;
     uint32_t RVsInRange;
     uint64_t txInterval;
+    double startLatencyTime;
+    double endLatencyTime;
+    VerifStats* asyncVerifStat;
 } asyncCbData_t;
 
 struct Config{
+    int procPriority = DEFAULT_PROCESS_PRIORITY;
     bool isValid = false;
     int codecVerbosity = 0;
     int ldmVerbosity = 0;
@@ -261,6 +267,8 @@ struct Config{
     bool acceptAll = false;
     bool overrideVerifResult = false;
     int overrideVerifValue = -1;
+    bool fakeRVTempIds = false;
+    uint32_t totalFakeRVTempIds = 500;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;

@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -2119,7 +2119,7 @@ void LocationMenu::enableLocationSystemInfoLogs() {
   }
 }
 
-telux::common::Status LocationMenu::launchAsRecordingUtility() {
+telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engineType) {
     std::cout << "Launching location test app as a recording utility \n";
     std::shared_ptr<MyLocationListener> posListener = std::make_shared<MyLocationListener>();
     std::shared_ptr<ILocationManager> locationManager = nullptr;
@@ -2154,6 +2154,7 @@ telux::common::Status LocationMenu::launchAsRecordingUtility() {
     posListener->setNmeaInfoFlag(true);
     posListener->setMeasurementsInfoFlag(true);
     posListener->setDataInfoFlag(true);
+    posListener->setDetailedEngineLocReportFlag(true);
 
     posListener->setRecordingFlag(true);
     //Registering listener for fixes
@@ -2168,9 +2169,16 @@ telux::common::Status LocationMenu::launchAsRecordingUtility() {
 
     std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb =
         std::make_shared<MyLocationCommandCallback>("Detailed report request");
-    locationManager->startDetailedReports(
-        1000, std::bind(&MyLocationCommandCallback::commandResponse,
+    if (DEFAULT_UNKNOWN == engineType) {
+        locationManager->startDetailedReports(
+            1000, std::bind(&MyLocationCommandCallback::commandResponse,
             myLocCmdResponseCb, std::placeholders::_1), reportMask);
+    } else {
+        locationManager->startDetailedEngineReports(
+            1000, engineType,
+            std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb, std::placeholders::_1), reportMask);
+    }
 
     while(1) {
         //Infinite polling to keep retrieving position reports.
@@ -2193,7 +2201,36 @@ int main(int argc, char **argv) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
     if((argc > 1) && (strcmp(argv[1], "-r") == 0)) {
-        telux::common::Status status = locationMenu.launchAsRecordingUtility();
+
+        LocReqEngine engineType = DEFAULT_UNKNOWN;
+
+        if (argc > 2) {
+            // possible engine types: FUSED,SPE,PPE,VPE
+            std::stringstream ss{argv[2]};
+            std::string s;
+
+            while (getline(ss, s, ',')) {
+                if (0 == s.compare("FUSED")) {
+                    engineType |= LOC_REQ_ENGINE_FUSED_BIT;
+                } else if (0 == s.compare("SPE")) {
+                    engineType |= LOC_REQ_ENGINE_SPE_BIT;
+                } else if (0 == s.compare("PPE")) {
+                    engineType |= LOC_REQ_ENGINE_PPE_BIT;
+                } else if (0 == s.compare("VPE")) {
+                    engineType |= LOC_REQ_ENGINE_VPE_BIT;
+                } else {
+                    std::cout << "Invalid engine type: " << s << std::endl;
+                    std::cout << "FUSED,SPE,PPE,VPE are engine types supported." << std::endl;
+                    std::cout << "Please specify one or any comninations of the engine names."
+                              << std::endl;
+
+                    return -1;
+                }
+            }
+        }
+
+        std::cout << "engineType : " << engineType << std::endl;
+        telux::common::Status status = locationMenu.launchAsRecordingUtility(engineType);
         if(status != telux::common::Status::SUCCESS) {
             std::cout << "Exiting \n";
         }

@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -264,7 +264,7 @@ public:
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class IMultiSimListener : public common::IServiceStatusListener{
+class IMultiSimListener : public common::IServiceStatusListener {
 public:
 
    /**

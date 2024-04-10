@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -966,6 +966,10 @@ int ApplicationBase::loadConfiguration(char* file) {
             }
         }
         this->saveConfiguration(configs);
+        int nice = getpriority(PRIO_PROCESS, 0);
+        if(configuration.appVerbosity){
+            fprintf(stdout, "Current process priority value is %d\n", nice);
+        }
         return 0;
     }
 
@@ -975,6 +979,18 @@ int ApplicationBase::loadConfiguration(char* file) {
 
 
 void ApplicationBase::saveConfiguration(map<string, string> configs) {
+
+    // by default the ITS process priority should be set to highest (-20)
+    // however, for testing purposes, qits priority can be altered
+    if (configs.end() != configs.find("procPriority")) {
+        this->configuration.procPriority =
+            stoi(configs["procPriority"], nullptr, 10);
+    }
+    if(setpriority(PRIO_PROCESS, 0,
+            this->configuration.procPriority) < 0) {
+        fprintf(stderr, "Setting priority failed\n");
+    }
+
     if (configs.end() != configs.find("EnablePreRecorded")) {
         istringstream is(configs["EnablePreRecorded"]);
         is >> boolalpha >> this->configuration.enablePreRecorded;
@@ -1322,6 +1338,17 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("psidValue") != configs.end()) {
         configuration.psid = stoi(configs["psidValue"],0,16);
     }
+    if (configs.find("fakeRVTempIds") != configs.end()) {
+        if (configs["fakeRVTempIds"].find("true") != std::string::npos){
+            this->configuration.fakeRVTempIds = true;
+            if (configs.find("totalFakeRVTempIds") != configs.end()) {
+                this->configuration.totalFakeRVTempIds = stoi(configs["totalFakeRVTempIds"]);
+            }
+        }else{
+            this->configuration.fakeRVTempIds = false;
+        }
+    }
+
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
         if (configs["EnableSecurity"].find("true") != std::string::npos)

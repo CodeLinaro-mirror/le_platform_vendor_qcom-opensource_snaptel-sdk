@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -65,11 +65,6 @@
  * @file       Log.hpp
  * @brief      Log class provides APIs for logging messages at different
  *             log level like DEBUG, INFO, WARNING, ERROR and PERF.
- */
-/*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELUX_COMMON_LOG_HPP

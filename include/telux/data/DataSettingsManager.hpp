@@ -1,41 +1,5 @@
 /*
- *  Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -79,6 +43,7 @@
 
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/data/DataDefines.hpp>
 
 namespace telux {
@@ -399,6 +364,17 @@ public:
     virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
         requestWwanConnectivityConfigResponseCb callback) = 0;
 
+
+    /**
+     * Request device data usage monitoring status
+     *
+     * This function can be used to obtain the current status of device data usage monitoring.
+     *
+     * @returns    Returns true if data usage monitoring is enabled, else false.
+     *
+     */
+    virtual bool isDeviceDataUsageMonitoringEnabled() = 0;
+
     /**
      * Allows the client to set the MacSec state.
      *
@@ -500,7 +476,7 @@ public:
  * should be thread safe.
  *
  */
-class IDataSettingsListener {
+class IDataSettingsListener : public telux::common::ISDKListener {
  public:
     /**
      * This function is called when service status changes.
@@ -537,4 +513,4 @@ class IDataSettingsListener {
 }
 }
 
-#endif // TELUX_DATA_DATASETTINGSMANAGER_HPP 
+#endif // TELUX_DATA_DATASETTINGSMANAGER_HPP

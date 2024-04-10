@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -299,6 +299,7 @@ enum class EcbMode {
 enum class RadioSignalStrengthType {
    GSM_RSSI,     /**< GSM received signal strength indicator.*/
    WCDMA_RSSI,   /**< WCDMA received signal strength indicator.*/
+   LTE_RSSI,     /**< LTE received signal strength indicator.*/
    LTE_SNR,      /**< LTE signal-to-noise ratio.*/
    LTE_RSRQ,     /**< LTE reference signal received quality.*/
    LTE_RSRP,     /**< LTE reference signal received power.*/

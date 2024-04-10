@@ -62,49 +62,49 @@ class Alsa : public IAudioBackend,
     telux::common::ErrorCode init(std::shared_ptr<ISSREventListener> ssrEventListener) override;
     telux::common::ErrorCode deinit() override;
 
-    telux::common::ErrorCode getSupportedDevices(std::vector<DeviceType>& devices,
-            std::vector<DeviceDirection>& devicesDirection) override;
+    telux::common::ErrorCode getSupportedDevices(std::vector<DeviceType> &devices,
+            std::vector<DeviceDirection> &devicesDirection) override;
 
     telux::common::ErrorCode getSupportedStreamTypes(
-            std::vector<StreamType>& streamTypes) override;
+            std::vector<StreamType> &streamTypes) override;
 
-    telux::common::ErrorCode createStream(StreamHandle& streamHandle,
-        StreamParams streamParams, uint32_t& readBufferMinSize,
-        uint32_t& writeBufferMinSize) override;
+    telux::common::ErrorCode createStream(StreamHandle &streamHandle,
+        StreamParams streamParams, uint32_t &readBufferMinSize,
+        uint32_t &writeBufferMinSize) override;
 
-    telux::common::ErrorCode deleteStream(StreamHandle& streamHandle) override;
+    telux::common::ErrorCode deleteStream(StreamHandle &streamHandle) override;
 
     telux::common::ErrorCode start(StreamHandle streamHandle) override;
 
     telux::common::ErrorCode stop(StreamHandle streamHandle) override;
 
     telux::common::ErrorCode setDevice(StreamHandle streamHandle,
-        std::vector<DeviceType>& deviceTypes) override;
+        std::vector<DeviceType> &deviceTypes) override;
 
     telux::common::ErrorCode getDevice(StreamHandle streamHandle,
-        std::vector<DeviceType>& deviceTypes) override;
+        std::vector<DeviceType> &deviceTypes) override;
 
     telux::common::ErrorCode setVolume(StreamHandle streamHandle,
         StreamDirection direction, std::vector<ChannelVolume> channelsVolume) override;
 
     telux::common::ErrorCode getVolume(StreamHandle streamHandle,
-        int channelTypeMask, std::vector<ChannelVolume>& channelsVolume) override;
+        int channelTypeMask, std::vector<ChannelVolume> &channelsVolume) override;
 
     telux::common::ErrorCode setMuteState(StreamHandle streamHandle,
         StreamMute muteInfo, std::vector<ChannelVolume> channelsVolume,
         bool prevMuteState) override;
 
     telux::common::ErrorCode getMuteState(StreamHandle streamHandle,
-        StreamMute& muteInfo, StreamDirection direction) override;
+        StreamMute &muteInfo, StreamDirection direction) override;
 
-    telux::common::ErrorCode write(StreamHandle& streamHandle,
+    telux::common::ErrorCode write(StreamHandle &streamHandle,
        uint8_t *data, uint32_t writeLengthRequested,
         uint32_t offset, int64_t timeStamp, bool isLastBuffer,
-        int64_t& actualLengthWritten) override;
+        int64_t &actualLengthWritten) override;
 
-    telux::common::ErrorCode read(StreamHandle& streamHandle,
+    telux::common::ErrorCode read(StreamHandle &streamHandle,
         std::shared_ptr<std::vector<uint8_t>> data, uint32_t readLengthRequested,
-        int64_t& actualReadLength) override;
+        int64_t &actualReadLength) override;
 
     telux::common::ErrorCode drain(StreamHandle streamHandle) override;
 
@@ -120,22 +120,22 @@ class Alsa : public IAudioBackend,
 
     telux::common::ErrorCode deRegisterDTMFDetection(StreamHandle streamHandle) override;
 
-    telux::common::ErrorCode setupInTranscodeStream(StreamHandle& streamHandle,
+    telux::common::ErrorCode setupInTranscodeStream(StreamHandle &streamHandle,
         uint32_t streamId, TranscodingFormatInfo inInfo,
         std::shared_ptr<IStreamEventListener> streamEventListener,
         uint32_t& writeMinSize) override;
 
-    telux::common::ErrorCode setupOutTranscodeStream(StreamHandle& streamHandle,
+    telux::common::ErrorCode setupOutTranscodeStream(StreamHandle &streamHandle,
         uint32_t streamId, TranscodingFormatInfo outInfo,
         std::shared_ptr<IStreamEventListener> streamEventListener,
         uint32_t& readMinSize) override;
 
-    telux::common::ErrorCode startTone(StreamHandle& streamHandle, uint32_t sampleRate,
+    telux::common::ErrorCode startTone(StreamHandle &streamHandle, uint32_t sampleRate,
         uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) override;
 
-    telux::common::ErrorCode stopTone(StreamHandle streamHandle) override;
+    telux::common::ErrorCode stopTone(StreamHandle &streamHandle) override;
 
-    telux::common::ErrorCode getCalibrationStatus(CalibrationInitStatus& status) override;
+    telux::common::ErrorCode getCalibrationStatus(CalibrationInitStatus &status) override;
 
     /*** Overrides - IServerEventListener ***/
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
@@ -158,17 +158,16 @@ private:
     float InFreq1_;
     float RegFreq2_[FILTER_ORDER]={1,0};
     float InFreq2_;
+    std::string pcmDevice_;
+    std::string sndCardCtlDevice_;
+
     int loadMappingArray(std::string key, MappedValueType mappedValueType,
         uint32_t numOfValues, DeviceMappingTable& deviceTbl);
-
     int loadUserDeviceMapping(void);
-
     telux::common::ErrorCode mapStreamType(StreamType streamType, snd_pcm_stream_t& stream);
     telux::common::ErrorCode mapStreamChannelMask( uint32_t channelTypeMask, int& channels);
-
     telux::common::ErrorCode setBufferSize(StreamHandle streamHandle,
         size_t& inSize, size_t& outSize);
-
     telux::common::ErrorCode startLoopback(snd_pcm_t *captureHandle, snd_pcm_t *playHandle,
         int channels);
     telux::common::ErrorCode generateTone(StreamHandle streamHandle, uint32_t sampleRate,

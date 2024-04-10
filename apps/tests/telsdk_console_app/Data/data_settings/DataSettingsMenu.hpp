@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -77,6 +77,7 @@ class DataSettingsMenu : public ConsoleApp ,
     void requestMacSecState(std::vector<std::string> inputCommand);
     void switchBackHaul(std::vector<std::string> inputCommand);
     void restoreFactorySettings(std::vector<std::string> inputCommand);
+    void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 

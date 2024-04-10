@@ -45,6 +45,7 @@
 
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 
@@ -383,7 +384,7 @@ class IApInterfaceManager {
      virtual ~IApInterfaceManager(){};
 };
 
-class IApListener {
+class IApListener : public telux::common::ISDKListener {
 public:
     /**
      * This function is called when AP device status has changed

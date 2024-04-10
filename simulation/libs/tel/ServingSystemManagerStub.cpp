@@ -363,6 +363,29 @@ telux::common::Status ServingSystemManagerStub::setRatPreference(RatPreference r
     return status;
 }
 
+telux::common::Status ServingSystemManagerStub::getNetworkRejectInfo
+    (NetworkRejectInfo &rejectInfo) {
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::GetNetworkRejectInfoRequest request;
+    ::telStub::GetNetworkRejectInfoReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetNetworkRejectInfo(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    rejectInfo.rejectSrvInfo.domain =
+        static_cast<telux::tel::ServiceDomain>(response.reject_domain());
+    rejectInfo.rejectSrvInfo.rat = static_cast<telux::tel::RadioTechnology>(response.reject_rat());
+    rejectInfo.rejectCause = response.reject_cause();
+    rejectInfo.mcc = response.mcc();
+    rejectInfo.mnc = response.mnc();
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    return status;
+}
+
 void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(ERROR, __FUNCTION__ , "Not Supported");
 }

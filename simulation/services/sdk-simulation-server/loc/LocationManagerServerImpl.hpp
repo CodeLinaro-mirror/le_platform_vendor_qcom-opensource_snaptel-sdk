@@ -81,12 +81,16 @@ class LocationManagerServerImpl final : public locStub::LocationManagerService::
     void triggerCapabilitiesUpdateEvent();
     void handleSysInfoUpdateCurrent(std::string event);
     void handleSysInfoUpdateLeapSecond(std::string event);
+    void handleDisasterCrisisReport(std::string event);
     void triggerSysinfoUpdateEvent();
+    void triggerStreamingStoppedEvent();
+    void triggerResetWindowEvent();
     std::shared_ptr<FileBuffer> fileBuffer_ = nullptr;
     std::vector<std::string> requestBuffer_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     bool bufferingInitialized_ = false;
     bool stopStreamingData_ = false;
+    bool replayCsv_ = false;
     uint64_t previousTimestamp_ = 0;
     std::string lastLocInfo_ = "";
     telux::loc::LocCapability capabilityMask_ = 0;

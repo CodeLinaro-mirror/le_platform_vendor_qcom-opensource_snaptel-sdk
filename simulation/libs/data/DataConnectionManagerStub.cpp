@@ -754,7 +754,6 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
         DataCallEndReason endReason;
         endReason.type = EndReasonType::CE_CALL_MANAGER_DEFINED;
         endReason.cmCode = CallManagerReasonCode::CE_CLIENT_END;
-        call->setInterfaceName("");
         call->setTechPreference(TechPreference::TP_3GPP);
         call->setDataBearerTechnology(DataBearerTechnology::UNKNOWN);
         call->setOperationType(OperationType::DATA_LOCAL);
@@ -773,6 +772,7 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
 
     std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
 
+    call->setInterfaceName("");
     if ((ipFamilyType == IpFamilyType::IPV4) || (ipFamilyType == IpFamilyType::IPV4V6)) {
         call->setIpv4Addr(ipv4Addr);
         call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV4);

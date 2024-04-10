@@ -157,11 +157,13 @@ class AudioGrpcServiceImpl : public IAudioMsgDispatcher,
     void sendReadResponse(
             std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
             uint32_t streamId, std::shared_ptr<std::vector<uint8_t>> data,
-            uint32_t dataLength, uint32_t offset, int64_t timeStamp, bool isIncallStream) override;
+            uint32_t dataLength, uint32_t offset, int64_t timeStamp, bool isIncallStream,
+            bool isHpcmStream) override;
 
     void sendWriteResponse(
             std::shared_ptr<AudioRequest> audioReq, telux::common::ErrorCode ec,
-            uint32_t streamId, uint32_t dataLength, bool isIncallStream) override;
+            uint32_t streamId, uint32_t dataLength, bool isIncallStream,
+            bool isHpcmStream) override;
 
     void sendStartDtmfResponse(
             std::shared_ptr<AudioRequest> audioReq,

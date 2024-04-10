@@ -55,6 +55,10 @@ void LocationManagerServerImpl::init() {
     fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
     fileBuffer_->startBuffering();
     bufferingInitialized_ = true;
+    std::string replayCsvStr = configParser.getValue("sim.loc.location_report_replay");
+    if(replayCsvStr == "TRUE") {
+        replayCsv_ = true;
+    }
 }
 
 void LocationManagerServerImpl::startStreaming() {
@@ -99,10 +103,40 @@ void LocationManagerServerImpl::startStreaming() {
         } else {
             //EOF is reached and request buffer is empty.
             previousTimestamp_ = 0;
-            LOG(INFO, " Last batch streamed. Streaming stopped.");
-            return;
+            if(replayCsv_) {
+                LOG(INFO, " Last batch streamed. Replaying CSV.");
+                triggerResetWindowEvent();
+                //Restart buffering
+                fileBuffer_->startBuffering();
+            } else {
+                LOG(INFO, " Last batch streamed. Streaming stopped.");
+                triggerStreamingStoppedEvent();
+                return;
+            }
         }
     }
+}
+
+void LocationManagerServerImpl::triggerResetWindowEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::ResetWindowEvent resetWindowEvent;
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("LOC_REPORTS");
+    anyResponse.mutable_any()->PackFrom(resetWindowEvent);
+    //posting the event to EventService event queue
+    auto &locationReportService = LocationReportService::getInstance();
+    locationReportService.updateEventQueue(anyResponse);
+}
+
+void LocationManagerServerImpl::triggerStreamingStoppedEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::StreamingStoppedEvent streamingStoppedEvent;
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("LOC_REPORTS");
+    anyResponse.mutable_any()->PackFrom(streamingStoppedEvent);
+    //posting the event to EventService event queue
+    auto &locationReportService = LocationReportService::getInstance();
+    locationReportService.updateEventQueue(anyResponse);
 }
 
 LocationManagerServerImpl::~LocationManagerServerImpl() {
@@ -353,7 +387,49 @@ void LocationManagerServerImpl::handleEvent(std::string token, std::string event
         handleSysInfoUpdateCurrent(event);
     } else if (token == "sysinfo_update_leapsecond") {
         handleSysInfoUpdateLeapSecond(event);
+    } else if (token == "disaster_crisis_report") {
+        handleDisasterCrisisReport(event);
     }
+}
+
+void LocationManagerServerImpl::handleDisasterCrisisReport(std::string event) {
+    LOG(DEBUG, __FUNCTION__, " Path: ", event);
+
+    Json::Value rootNode;
+    telux::common::ErrorCode errorCode
+        = JsonParser::readFromJsonFile(rootNode, event);
+    if (errorCode == ErrorCode::SUCCESS) {
+        int dctype =  rootNode["disaster_crisis"][0].asInt();
+        uint32_t numValidBits =  rootNode["disaster_crisis"][1].asInt();
+        std::vector<uint8_t> data;
+        unsigned size = rootNode["disaster_crisis"].size() - 2;
+
+        for (unsigned i = 0; i < size; ++i) {
+            data.push_back(rootNode["disaster_crisis"][i + 2].asInt());
+            LOG(DEBUG, __FUNCTION__, " DC report Data: ", rootNode["disaster_crisis"][i + 2]);
+        }
+
+        ::locStub::GnssReportDCType type =
+              static_cast<::locStub::GnssReportDCType>(dctype);
+
+        auto f = std::async(std::launch::async,
+                            [this, type, numValidBits, data](){
+                                ::locStub::GnssDisasterCrisisReport report;
+                                ::eventService::EventResponse anyResponse;
+                                report.set_dc_report_type(type);
+                                report.set_num_valid_bits(numValidBits);
+                                report.mutable_dc_report_data()->Add(data.begin(), data.end());
+                                anyResponse.set_filter("loc_mgr");
+                                anyResponse.mutable_any()->PackFrom(report);
+                                auto& eventImpl = EventService::getInstance();
+                                eventImpl.updateEventQueue(anyResponse);
+                        }).share();
+        taskQ_.add(f);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to read JSON");
+        return;
+    }
+
 }
 
 void LocationManagerServerImpl::handleCapabilitiesUpdate(std::string event) {

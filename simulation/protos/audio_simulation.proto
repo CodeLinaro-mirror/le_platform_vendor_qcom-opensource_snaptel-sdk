@@ -200,6 +200,7 @@ message StreamConfig {
     EcnrMode ecnrMode = 7;
     // Represent voice path direction for in call audio.
     repeated Direction voicePaths = 8;
+    bool enableHpcm = 9;
 }
 
 // Used to pass the stream parameter for created stream.

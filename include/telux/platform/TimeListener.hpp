@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -46,6 +46,7 @@
 #define TELUX_PLATFORM_TIMELISTENER_HPP
 
 #include <stdint.h>
+#include <telux/common/SDKListener.hpp>
 
 namespace telux {
 
@@ -60,7 +61,7 @@ namespace platform {
  *        calls in it. The methods in this class can be invoked from multiple different threads.
  *        Client needs to make sure that the implementation is thread-safe.
  */
-class ITimeListener {
+class ITimeListener : public telux::common::ISDKListener {
  public:
 
     /**

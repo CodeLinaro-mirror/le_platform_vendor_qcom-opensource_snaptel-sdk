@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -132,6 +132,8 @@ private:
    void printEphSrc(telux::loc::GnssEphSource ephSrc);
    void printEphAct(telux::loc::GnssEphAction ephAct);
    void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
+
+   void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

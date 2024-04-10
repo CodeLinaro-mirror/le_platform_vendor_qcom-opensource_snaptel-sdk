@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -66,6 +66,7 @@
 #include <memory>
 #include <stdint.h>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -396,7 +397,7 @@ class IDiagLogManager {
  * in the queue waiting to be dispatched.
  *
  */
-class IDiagListener {
+class IDiagListener : public telux::common::ISDKListener {
  public:
     /**
      * Invoked when logs are available in callback method to when they are available.

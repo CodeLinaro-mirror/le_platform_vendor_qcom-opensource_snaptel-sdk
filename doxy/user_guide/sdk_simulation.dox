@@ -332,4 +332,5 @@ The details on how simulation of individual areas can be used and controlled are
 
 1. @subpage tel_simulation
 2. @subpage loc_simulation
+3. @subpage audio_simulation
 */

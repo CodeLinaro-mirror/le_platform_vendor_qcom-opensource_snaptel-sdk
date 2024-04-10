@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -74,6 +74,7 @@
 #define TELUX_COMMON_COMMONDEFINES_HPP
 
 #include <functional>
+#include "SDKListener.hpp"
 
 /**
  * Specifies the slot id where the Uicc card is inserted
@@ -110,6 +111,7 @@ enum class Status {
    NOSUCH,         /**< No such object */
    NOTSUPPORTED,   /**< Not supported on target platform */
    NOMEMORY,       /**< Not sufficient memory to process the request */
+   ACCESSDENIED    /**< Permission denied */
 };
 
 /**
@@ -554,7 +556,7 @@ using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>
 using InitResponseCb = std::function<void(telux::common::ServiceStatus status)>;
 
 
-class IServiceStatusListener {
+class IServiceStatusListener : virtual public telux::common::ISDKListener {
 public:
     /**
      * This function is called when service status changes.

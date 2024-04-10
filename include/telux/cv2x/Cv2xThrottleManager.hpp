@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -79,6 +79,7 @@
 #include <future>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -100,7 +101,7 @@ using setVerificationLoadCallback = std::function<void (telux::common::ErrorCode
  * @brief Listener class for getting filter rate update notification.
  *
  */
-class ICv2xThrottleManagerListener {
+class ICv2xThrottleManagerListener : public telux::common::ISDKListener {
 public:
    /**
     * This API is invoked to advise the client to adjust the incoming message filtering rate

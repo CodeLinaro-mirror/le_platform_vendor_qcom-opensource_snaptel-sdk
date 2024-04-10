@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -74,7 +74,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <atomic>
-
+#include <climits>
 
 class SaeApplication : public ApplicationBase {
 public:
@@ -130,6 +130,7 @@ public:
     static void postprocessing_cleanup();
     static void PostProcessingThread();
 private:
+    uint32_t fakeTmpId = 0;
     bool exit_ = false;
     uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     std::atomic<bool>  GlobalIpSessionActive{false};
@@ -139,7 +140,7 @@ private:
     std::condition_variable wraCv;
     std::chrono::time_point<std::chrono::high_resolution_clock> now;
     void wraThreadFunc(int routerLifetime);
-    bool initialized = false;   // used to initialize temp id
+    bool initialized = false;   // used to initialize temp id randomly
     unsigned int msgCount = 0;      // Ranges from 1 - 127 in cyclic fashion.
     unsigned int tempId = 0;        // 32 bit identifier
     string rsuGateway_;    // used to store the RSU gateway parsed from received wsa

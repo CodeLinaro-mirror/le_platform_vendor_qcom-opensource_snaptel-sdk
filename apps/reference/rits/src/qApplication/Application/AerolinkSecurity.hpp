@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *Changes from Qualcomm Innovation Center are provided under the following license:
+ *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -115,10 +115,10 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
         int VerifyMsg(const SecurityOpt opt);
-        int asyncVerify(
-            Kinematics hvKine, Kinematics rvKine,
-            MisbehaviorStats* misbehaviorStat, void* asyncCbData,
-            ValidateCallback callBackFunction);
+        int checkConsistencyandRelevancy(
+        Kinematics hvKine, Kinematics rvKine);
+        int asyncVerify(Kinematics rvKine,
+        MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;

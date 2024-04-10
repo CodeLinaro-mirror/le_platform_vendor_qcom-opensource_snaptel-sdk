@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -91,6 +91,7 @@
 #include <telux/data/net/SocksManager.hpp>
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
+#include <telux/data/ClientManager.hpp>
 
 namespace telux {
 namespace data {
@@ -288,6 +289,18 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr)
         = 0;
+
+    /**
+     * Get Client Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              ClientManager @ref telux::common::InitResponseCb.
+     *
+     * @returns instance of IClientManager
+     *
+     */
+    virtual std::shared_ptr<IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

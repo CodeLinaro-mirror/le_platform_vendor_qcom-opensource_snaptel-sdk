@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -72,6 +72,7 @@
 #ifndef TELUX_DATA_DATAPROFILELISTENER_HPP
 #define TELUX_DATA_DATAPROFILELISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include "telux/data/DataDefines.hpp"
 
@@ -88,7 +89,7 @@ namespace data {
  *        The methods in the listener can be invoked from multiple threads.
  *        It is client's responsibility to make sure the implementation is thread safe.
  */
-class IDataProfileListener {
+class IDataProfileListener : public telux::common::ISDKListener {
 public:
    /**
     *

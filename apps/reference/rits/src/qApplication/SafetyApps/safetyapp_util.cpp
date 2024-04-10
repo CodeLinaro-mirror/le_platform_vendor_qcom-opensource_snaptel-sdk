@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -472,24 +472,6 @@ double time_to_crash(msg_contents *host, msg_contents *remote, double distFromRV
     }
 }
 
-// Print the items in rv_specs
-void print_rvspecs(rv_specs *rv)
-{
-    printf("Is it out of Zone : %d\n", rv->out_of_zone);
-    printf("TTC : %f\n", rv->ttc);
-    printf("Distance from RV : %f\n", rv->distFromRV);
-    printf("Lane types : %d\n", rv->lt);
-    printf("Rapid Decl : %d\n", rv->rapid_decl);
-    printf("Stopped : %d\n", rv->stopped);
-    printf("msg cnt: %d\n" ,rv->hv_msgcnt);
-    printf("timestamp ms: %lu\n" ,rv->hv_timestamp_ms);
-    printf("last msg cnt: %d\n" ,rv->lastCnt);
-    printf("last timestamp ms: %lu\n" ,rv->lastTime);
-    printf("total rx cnt: %d\n" ,rv->totalCnt);
-    printf("last saved total rx cnt: %d\n" ,rv->lastTotalCnt);
-    printf("count difference (between last and current): %d\n" ,rv->cntDiff);
-    printf("estimated msg rate of this rv: %f\n", rv->msgRate);
-}
 
 /*******************************************************************************
  * return current time stamp in microseconds
@@ -555,6 +537,43 @@ void extrapolate(msg_contents *hv, msg_contents *rv)
 
 }
 
+// Print the items in rv_specs
+void print_rvspecs(rv_specs *rv)
+{
+    printf("Is it out of Zone : %d\n", rv->out_of_zone);
+    printf("TTC : %f\n", rv->ttc);
+    printf("Distance from RV : %f\n", rv->distFromRV);
+    printf("Lane types : %d\n", rv->lt);
+    printf("Rapid Decl : %d\n", rv->rapid_decl);
+    printf("Stopped : %d\n", rv->stopped);
+    printf("msg cnt: %d\n" ,rv->hv_msgcnt);
+    printf("timestamp ms: %lu\n" ,rv->hv_timestamp_ms);
+    printf("last msg cnt: %d\n" ,rv->lastCnt);
+    printf("last timestamp ms: %lu\n" ,rv->lastTime);
+    printf("total rx cnt: %d\n" ,rv->totalCnt);
+    printf("last saved total rx cnt: %d\n" ,rv->lastTotalCnt);
+    printf("count difference (between last and current): %d\n" ,rv->cntDiff);
+    printf("estimated msg rate of this rv: %f\n", rv->msgRate);
+}
+void updateRVMsgCount(bsm_value_t *remote_bsm, rv_specs *rvsp){
+    //std::cout << "Updating this rvsp with new msg count and time contents\n";
+    rvsp->lastCnt = rvsp->rv_msgcnt;
+    // first time seeing this L2 address, then save the timestamp for msg rate calculation
+    if(rvsp->lastTime == 0){
+        rvsp->lastTime = rvsp->rv_timestamp_ms;
+    }
+    if(remote_bsm->MsgCount < rvsp->lastCnt){ // assume it rolled over
+        rvsp->cntDiff = (remote_bsm->MsgCount + 128) - rvsp->lastCnt;
+    }else{
+        rvsp->cntDiff = remote_bsm->MsgCount - rvsp->lastCnt;
+    }
+    rvsp->totalCnt++;
+
+    rvsp->rv_msgcnt = remote_bsm->MsgCount;
+    // calculate msg / sec rate for this node here?
+    
+}
+
 /* Fill the rv-specs object to be used by the safety applications*/
 void fill_RV_specs(msg_contents *host, msg_contents *remote, rv_specs *rvsp)
 {
@@ -581,21 +600,9 @@ void fill_RV_specs(msg_contents *host, msg_contents *remote, rv_specs *rvsp)
         rvsp->airbag = true;
     else
         rvsp->airbag = false;
-    //std::cout << "Updating this rvsp with new msg count and time contents\n";
-    rvsp->lastCnt = rvsp->hv_msgcnt;
-    // first time seeing this L2 address, then save the timestamp for msg rate calculation
-    if(rvsp->lastTime == 0){
-        rvsp->lastTime = rvsp->hv_timestamp_ms;
-    }
-    if(host_bsm->MsgCount < rvsp->lastCnt){ // assume it rolled over
-        rvsp->cntDiff = (host_bsm->MsgCount + 128) - rvsp->lastCnt;
-    }else{
-        rvsp->cntDiff = host_bsm->MsgCount - rvsp->lastCnt;
-    }
-    rvsp->totalCnt++;
     rvsp->hv_timestamp_ms = host_bsm->timestamp_ms;
-    rvsp->hv_msgcnt = host_bsm->MsgCount;
-    // calculate msg / sec rate for this node here?
+    rvsp->hv_msgcnt = remote_bsm->MsgCount;
+    updateRVMsgCount(remote_bsm, rvsp);
 }
 
 /*

@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -444,6 +444,7 @@ private:
     std::mutex mutex_;
     std::mutex listenerMutex_;
     std::mutex energyMutex_;
+    std::mutex filterMutex_;
     std::vector<std::weak_ptr<ILocationListener>> listeners_;
     std::vector<std::weak_ptr<ILocationSystemInfoListener>> systemInfoListener_;
     uint32_t interval_ = 0;
@@ -459,6 +460,7 @@ private:
     std::mutex terrestrialPositionMutex_;
     std::condition_variable cvTerrestrialPosition_;
     std::unique_ptr<::locStub::LocationManagerService::Stub> stub_;
+    LocReqEngine engineType_;
 
     bool waitForInitialization();
     void initSync(telux::common::InitResponseCb callback);
@@ -472,6 +474,9 @@ private:
     void handleCapabilitiesUpdateEvent(::locStub::CapabilitiesUpdateEvent capabilitiesEvent);
     void invokeCapabilitiesUpdateEvent(uint32_t capabilityMask);
     void handleSysInfoUpdateEvent(::locStub::SysInfoUpdateEvent sysInfoEvent);
+    void handleStreamingStoppedEvent();
+    void handleResetWindowEvent();
+    void handleGnssDisasterCrisisReport(::locStub::GnssDisasterCrisisReport dcReport);
     void invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo);
     void parseRequest(::locStub::StartReportsEvent startEvent);
     void adjustTimeInterval(uint32_t &interval);

@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
@@ -553,8 +553,8 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
       Utils::validateInput(num);
       std::cout
          << "\nAvailable Signal Strength RAT Types are: \n"
-         " 0 - GSM_RSSI\n 1 - WCDMA_RSSI\n 2 - LTE_SNR\n 3 - LTE_RSRQ\n 4 - LTE_RSRP\n" <<
-         " 5 - NR5G_SNR\n 6 - NR5G_RSRP\n 7 - NR5G_RSRQ \n\n";
+         " 0 - GSM_RSSI\n 1 - WCDMA_RSSI\n 2 - LTE_RSSI\n 3 - LTE_SNR\n 4 - LTE_RSRQ\n" <<
+         " 5 - LTE_RSRP\n 6 - NR5G_SNR\n 7 - NR5G_RSRP\n 8 - NR5G_RSRQ \n\n";
       if (num > 0 && num <= (static_cast<int>(telux::tel::RadioSignalStrengthType::NR5G_RSRQ)+1)) {
                             // count is non-zero positive number i.e. enum last element+1
          for (int i = 0; i < num ; i++) {

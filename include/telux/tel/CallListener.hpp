@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -103,7 +103,7 @@ class ICall;
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  */
-class ICallListener : public common::IServiceStatusListener{
+class ICallListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when device receives an incoming/waiting call.

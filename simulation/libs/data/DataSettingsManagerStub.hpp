@@ -63,6 +63,8 @@ public:
     telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) override;
 
+    bool isDeviceDataUsageMonitoringEnabled() override;
+
     telux::common::Status registerListener(
         std::weak_ptr<IDataSettingsListener> listener) override;
 

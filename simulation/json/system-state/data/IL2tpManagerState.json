@@ -1,0 +1,39 @@
+{
+    "IL2tpManager": {
+        "l2tpConfig" : {
+            "enable" : false,
+            "enableMtu" : false,
+            "enableTcpMss" : false,
+            "mtuSize" : 1422,
+            "tunnelConfigs" : [
+                {
+                    "prot" : "UDP",
+                    "locId": 1,
+                    "peerId" : 1,
+                    "localUdpPort" : 5555,
+                    "peerUdpPort" : 6666,
+                    "peerIpv6Addr" : "",
+                    "peerIpv6GwAddr" : "",
+                    "peerIpv4Addr" : "192.168.76.1",
+                    "peerIpv4GwAddr" : "192.168.76.1",
+                    "locIface" : "rmnet_data0",
+                    "ipType" : "IPV4",
+                    "sessionConfig" : [
+                        {
+                            "locId" : 1,
+                            "peerId" : 1
+                        }
+                    ]
+                }
+            ]
+        },
+        "sessionToBackhaulBindings" : [
+            {
+                "locId" : 1,
+                "backhaul" : "WWAN",
+                "slotId" : 1,
+                "profileId" : 1
+            }
+        ]
+    }
+}

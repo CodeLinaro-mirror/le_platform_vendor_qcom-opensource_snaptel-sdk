@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -46,6 +46,7 @@
 #include <memory>
 #include <bitset>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -238,7 +239,7 @@ public:
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class IImsSettingsListener {
+class IImsSettingsListener : public telux::common::ISDKListener {
 public:
 
    /**

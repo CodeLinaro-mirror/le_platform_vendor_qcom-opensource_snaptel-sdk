@@ -10,7 +10,7 @@ extern "C" {
 }
 #include "libs/common/SimulationConfigParser.hpp"
 
-#define PCM_DEVICE "default"
+#define DEFAULT_DEVICE "default"
 
 /* #define DDEBUG 1 */
 
@@ -95,6 +95,8 @@ telux::common::ErrorCode Alsa::init(std::shared_ptr<ISSREventListener> ssrEventL
         /* Use default device mapping, if the user doesn't override it through
          * tel.conf or an error occurs while parsing tel.conf for mappings. */
          finalDevicesTable_ = Alsa::DEFAULT_DEVS_TABLE;
+         pcmDevice_ = DEFAULT_DEVICE;
+         sndCardCtlDevice_ = DEFAULT_DEVICE;
          LOG(INFO, __FUNCTION__, " default device mapping loaded");
     }
 
@@ -212,10 +214,10 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
     }
 
     if(StreamType::LOOPBACK == streamHandle.type){
-        ret = snd_pcm_open (&streamHandle.loopbackPlayHandle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK,
+        ret = snd_pcm_open (&streamHandle.loopbackPlayHandle, pcmDevice_.c_str(), SND_PCM_STREAM_PLAYBACK,
             0);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
@@ -227,10 +229,10 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
-        ret = snd_pcm_open (&streamHandle.loopbackCaptureHandle, PCM_DEVICE, SND_PCM_STREAM_CAPTURE,
+        ret = snd_pcm_open (&streamHandle.loopbackCaptureHandle, pcmDevice_.c_str(), SND_PCM_STREAM_CAPTURE,
             0);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+            LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
@@ -250,9 +252,9 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
         return ec;
     }
 
-    ret = snd_pcm_open(&streamHandle.pcmHandle, PCM_DEVICE, stream, 0);
+    ret = snd_pcm_open(&streamHandle.pcmHandle, pcmDevice_.c_str(), stream, 0);
     if (ret < 0) {
-        LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", PCM_DEVICE);
+        LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
@@ -431,9 +433,12 @@ telux::common::ErrorCode Alsa::startLoopback(snd_pcm_t *captureHandle, snd_pcm_t
         }
 
         actualLengthWritten = snd_pcm_writei (playHandle, buf, buf_frames);
-        if (actualLengthWritten == -EPIPE || actualLengthWritten == -ESTRPIPE) {
-            LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+        if (actualLengthWritten == -EPIPE) {
             snd_pcm_prepare(playHandle);
+            return telux::common::ErrorCode::SUCCESS;
+        }
+        if(actualLengthWritten == -ESTRPIPE) {
+            LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
     }
@@ -496,7 +501,7 @@ telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
         LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
     }
 
-    if ((err = snd_mixer_attach(h_mixer, "default")) < 0) {
+    if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
         LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
     }
 
@@ -605,7 +610,7 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
         LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
     }
 
-    if ((err = snd_mixer_attach(h_mixer, "default")) < 0) {
+    if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
         LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
     }
 
@@ -702,12 +707,19 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
 
     /* Returns the no of frames written successfully. */
     actualLengthWritten = snd_pcm_writei(streamHandle.pcmHandle, data, streamHandle.frames);
-    if (actualLengthWritten == -EPIPE || actualLengthWritten == -ESTRPIPE) {
-        LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+    if (actualLengthWritten == -EPIPE) {
         snd_pcm_prepare(streamHandle.pcmHandle);
+        free(data);
+        actualLengthWritten = 0;
+        return telux::common::ErrorCode::SUCCESS;
+    }
+
+    if(actualLengthWritten == -ESTRPIPE) {
+        LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
         free(data);
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
+
     free(data);
     LOG(DEBUG, __FUNCTION__,"written frames ", actualLengthWritten);
     /*
@@ -715,7 +727,7 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
      * will be lesser than streamHandle.frames * streamHandle.channels * 2. And this will result in
      * ambigous data being sent from server.
      */
-    actualLengthWritten = actualLengthWritten* streamHandle.channels * 2;
+    actualLengthWritten = writeLengthRequested;
 
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -807,14 +819,14 @@ float Alsa::generateSignal(float t1, float t2) {
     float ret = 2;
 
     InFreq1_ = 2*cos(t1)*RegFreq1_[0]-RegFreq1_[1];
-    RegFreq1_[1]=RegFreq1_[0];
-    RegFreq1_[0]=InFreq1_;
+    RegFreq1_[1] = RegFreq1_[0];
+    RegFreq1_[0] = InFreq1_;
 
     ret += sin(t1)*RegFreq1_[1];
 
     InFreq2_ = 2*cos(t2)*RegFreq2_[0]-RegFreq2_[1];
-    RegFreq2_[1]=RegFreq2_[0];
-    RegFreq2_[0]=InFreq2_;
+    RegFreq2_[1] = RegFreq2_[0];
+    RegFreq2_[0] = InFreq2_;
 
     ret += sin(t2)*RegFreq2_[1];
 
@@ -826,6 +838,7 @@ void Alsa::genTone(std::vector<uint16_t> toneFrequency, int channels, uint32_t s
 
     int noOfFreq = toneFrequency.size();
     float t, t1, t2;
+
     switch(noOfFreq) {
         case 1:
             t = 2*M_PI*toneFrequency[0]/(sampleRate*channels);
@@ -886,6 +899,10 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
 telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sampleRate,
         uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
 
+    if(runTone_) {
+        stopTone(streamHandle);
+    }
+
     runTone_ = true;
     streamHandle.streamStarted = true;
     std::thread toneThread(&Alsa::generateTone, this, streamHandle, sampleRate, gain,
@@ -899,7 +916,7 @@ telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sa
 /*
  * Stop playing tone.
  */
-telux::common::ErrorCode Alsa::stopTone(StreamHandle streamHandle) {
+telux::common::ErrorCode Alsa::stopTone(StreamHandle& streamHandle) {
     runTone_ = false;
     streamHandle.streamStarted = false;
     for(std::thread &th: toneThread_) {
@@ -908,10 +925,12 @@ telux::common::ErrorCode Alsa::stopTone(StreamHandle streamHandle) {
         }
     }
 
-    RegFreq1_[0]=1;
-    RegFreq1_[1]=0;
-    RegFreq2_[0]=1;
-    RegFreq2_[1]=0;
+    RegFreq1_[0] = 1;
+    RegFreq1_[1] = 0;
+    RegFreq2_[0] = 1;
+    RegFreq2_[1] = 0;
+    snd_pcm_prepare(streamHandle.pcmHandle);
+
     return telux::common::ErrorCode::SUCCESS;
 }
 
@@ -983,6 +1002,17 @@ int Alsa::loadUserDeviceMapping() {
     DeviceMappingTable deviceTbl{};
 
     if(config_){
+
+        pcmDevice_ = config_->getValue("PCM_DEVICE");
+        if (pcmDevice_.empty()) {
+            return -1;
+        }
+
+        sndCardCtlDevice_ = config_->getValue("SND_CARD_CTL_DEVICE");
+        if (sndCardCtlDevice_.empty()) {
+            return -1;
+        }
+
         std::string numOfDevices = config_->getValue("NUM_DEVICES");
         if (numOfDevices.empty()) {
             return -1;

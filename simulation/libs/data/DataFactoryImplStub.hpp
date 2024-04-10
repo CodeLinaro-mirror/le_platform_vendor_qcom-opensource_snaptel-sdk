@@ -75,10 +75,16 @@ class DataFactoryImplStub : public DataFactory,
         telux::data::OperationType,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
+    virtual std::shared_ptr<telux::data::IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
  private:
     DataFactoryImplStub();
     ~DataFactoryImplStub();
 
+    void initCompleteNotifier(
+        std::vector<telux::common::InitResponseCb> &initCbs,
+        telux::common::ServiceStatus status);
     void initCompleteNotifierWithSlotId(
         std::map<SlotId, std::vector<telux::common::InitResponseCb>> &initCbs,
         telux::common::ServiceStatus status, SlotId slotId);
@@ -93,12 +99,20 @@ class DataFactoryImplStub : public DataFactory,
     std::map<telux::data::OperationType, std::weak_ptr<IDataSettingsManager>>
         dataSettingsManagerMap_;
     std::map<SlotId, std::weak_ptr<IDataFilterManager>> dataFilterManagerMap_;
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::ISocksManager>>
+        socksManagerMap_;
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::INatManager>>
+        natManagerMap_;
+    std::weak_ptr<telux::data::net::IL2tpManager> l2tpManager_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;
     std::map<OperationType, std::vector<telux::common::InitResponseCb>> dataSettingsCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataFilterCallbacks_;
+    std::vector<telux::common::InitResponseCb> socksCallbacks_;
+    std::vector<telux::common::InitResponseCb> natCallbacks_;
+    std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
 };
 
 }  // namespace data

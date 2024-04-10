@@ -37,6 +37,10 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "getNetworkRejectInfo" :
+        {
+            "status" : "SUCCESS"
         }
     }
 }

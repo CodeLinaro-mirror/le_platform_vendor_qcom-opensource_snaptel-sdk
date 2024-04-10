@@ -33,6 +33,9 @@
 #include "data/DataSettingsServerImpl.hpp"
 #include "data/ServingSystemServerImpl.hpp"
 #include "data/DataFilterServerImpl.hpp"
+#include "data/net/SocksServerImpl.hpp"
+#include "data/net/NatServerImpl.hpp"
+#include "data/net/L2tpServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
@@ -121,6 +124,18 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataFilterServerImpl> dataFilterService =
         std::make_shared<DataFilterServerImpl>(dcmService);
     builder.RegisterService(dataFilterService.get());
+
+    std::shared_ptr<SocksServerImpl> socksService =
+        std::make_shared<SocksServerImpl>();
+    builder.RegisterService(socksService.get());
+
+    std::shared_ptr<NatServerImpl> natService =
+        std::make_shared<NatServerImpl>();
+    builder.RegisterService(natService.get());
+
+    std::shared_ptr<L2tpServerImpl> l2tpService =
+        std::make_shared<L2tpServerImpl>();
+    builder.RegisterService(l2tpService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

@@ -55,6 +55,9 @@ public:
     grpc::Status RequestRFBandInfo(ServerContext* context,
         const ::telStub::RequestRFBandInfoRequest* request,
         telStub::RequestRFBandInfoReply* response) override;
+    grpc::Status GetNetworkRejectInfo(ServerContext* context,
+        const ::telStub::GetNetworkRejectInfoRequest* request,
+        telStub::GetNetworkRejectInfoReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;

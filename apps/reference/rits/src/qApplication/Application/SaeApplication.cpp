@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -78,8 +78,6 @@
 #include "wsmp.h"
 
 // Each thread that is receiving and verifying will use this for logging purposes
-thread_local int verifStatIdx = 0;
-thread_local int misbehaviorStatIdx = 0;
 thread_local int verif_fails = 0;
 thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
@@ -95,7 +93,7 @@ thread_local int syncVerifFail = 0;
 thread_local int syncVerifSuccess = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
-static int async_index = SHARED_BUFFER_MAX_SIZE;
+static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
 static bool overridePsidCheck = false;
 static bool enableCongCtrl = false;
 static int secVerbosity = 0;
@@ -124,6 +122,7 @@ sem_t verificationSem;
 sem_t bufferClearedSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
+static VerifStats* asyncVerifStat;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
     ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
@@ -222,7 +221,6 @@ SaeApplication::~SaeApplication() {
     if(configuration.enableAsync){
         exitAsync = true;
         sem_post(&verificationSem);
-        sem_post(&bufferClearedSem);
     }
     {
         if(enableCsvLog_ && writeMutexCvSae && writeLogFinishSae){
@@ -327,8 +325,7 @@ void SaeApplication::printTxStats() {
 
 
 // fill data for logging related to received bsms
-//void SaeApplication::fillLoggingData(bsm_value_t* bsm, logData* logData){
-  void SaeApplication::fillLoggingData(bsm_value_t* bsm, bsm_data* bs){
+void SaeApplication::fillLoggingData(bsm_value_t* bsm, bsm_data* bs){
     bs->id = bsm->id;
     bs->timestamp_ms = bsm->timestamp_ms;
     bs->secMark_ms = bsm->secMark_ms;
@@ -379,13 +376,15 @@ void SaeApplication::basicFilterAndSafetyChecks(int l2SrcAddr, double distFromRV
         }
 
         fillBsm(reinterpret_cast<bsm_value_t *>(hostMc->j2735_msg));
-        std::shared_ptr<rv_specs> rvsp;
-        try {
-            rvsp = std::make_shared<rv_specs>();
-            rvsp->distFromRV = distFromRV;
-        } catch (std::bad_alloc & e) {
-            cerr << "Error: Create rv specs failed!" << endl;
-            return;
+        std::shared_ptr<rv_specs> rvsp = std::make_shared<rv_specs>(this->l2RvMap[l2SrcAddr]) ;
+        if(rvsp == nullptr){
+            try {
+                rvsp = std::make_shared<rv_specs>();
+                rvsp->distFromRV = distFromRV;
+            } catch (std::bad_alloc & e) {
+                cerr << "Error: Create rv specs failed!" << endl;
+                return;
+            }
         }
         fill_RV_specs(hostMc.get(), threadMc.get(), rvsp.get());
         if (appVerbosity > 5) {
@@ -539,11 +538,12 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             ret = 1;
             std::cerr << "Cannot decode and verify this signed packet\n";
 #endif
-        } else if (ret >= 0) { // This packet is an unsigned packet and decoded properly
+        } else if (ret > 1) { // This packet is an unsigned packet and decoded properly
             // here we need to check option for processing both unsigned/signed packets
             if (!configuration.acceptAll) {
                 if (appVerbosity > 3)
                     printf("Error in decoding unsigned packet - security enabled.\n");
+                decFail++;
                 ret = -1;
             } else {
                 if (appVerbosity > 3)
@@ -617,6 +617,11 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                             }
                         }
 
+                        if(configuration.fakeRVTempIds){
+                           fakeTmpId++;
+                           fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+                           bsm->id = fakeTmpId;
+                        }
                         // perform operations on the message if it is an unsigned bsm
                         basicFilterAndSafetyChecks(l2SrcAddr, distFromRV);
                         fillLoggingData(bsm, &writelog_data.bs);
@@ -626,11 +631,13 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             case 1:
                 if (appVerbosity > 3)
                     printf("Error in decoding packet. Expecting unsigned packet.\n");
+                decFail++;
                 ret = -1;
                 break;
             default:
                 if (appVerbosity > 3)
                     printf("Error in decoding unsigned packet\n");
+                decFail++;
                 ret = -1;
                 break;
         }
@@ -640,6 +647,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     {
         if (ret >= 0)
         {
+
             rxSuccess++;
             if (qMon)
             {
@@ -649,13 +657,18 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             totalRxSuccessPerSecond++;
             sem_post(&this->log_sem);
             if (MsgType == MessageType::BSM &&
-                (psid == PSID_BSM || configuration.overridePsidCheck)){
+                 (psid == PSID_BSM || configuration.overridePsidCheck)){
                 if(this->configuration.enableCongCtrl &&
                     this->congCtrlInitialized && !(this->configuration.enableAsync) )
                 {
                     /* If congestion control is enabled, we will pass the contents
                     of the decoded/verified BSM to the cong ctrl library */
                     bsm_value_t* rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
+                    if(configuration.fakeRVTempIds){
+                       fakeTmpId++;
+                       fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+                       rvBsm->id = fakeTmpId;
+                    }
                     unsigned int rvTmpId = rvBsm->id;
                     congestionControlManager->addCongestionControlData(
                         rvTmpId,rvBsm->Latitude/10000000.0,
@@ -793,11 +806,22 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
     }
     if(returnCode != WS_SUCCESS){
         cb_data->verifSuccess = false;
+        cb_data->AsyncState = VERIF_DONE;
+        asyncCallbackVerifFail++;
     }
     else
     {
         cb_data->verifSuccess = true;
         cb_data->AsyncState = VERIF_DONE;
+        gettimeofday(&currTime, NULL);
+        cb_data->endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+        if(cb_data->asyncVerifStat != nullptr ){
+            cb_data->asyncVerifStat->timestamp =
+                (cb_data->endLatencyTime)-(LogstartTime);
+            cb_data->asyncVerifStat->verifLatency =
+                (cb_data->endLatencyTime)-(cb_data->startLatencyTime);
+        }
+        asyncCallbackVerifSuccess++;
     }
     if(shared_index < PP_BUFFER_MAX_SIZE)
     {
@@ -805,8 +829,6 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         {
             begin_flag = false;
             start_index = shared_index;
-            async_index = SHARED_BUFFER_MAX_SIZE;
-            sem_post(&bufferClearedSem);
         }
         // this part may need to be protected
         PostProcessingCbData[shared_index] = cb_data->indexToData;
@@ -820,6 +842,7 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         shared_index = 0;
         begin_flag = true;
     }
+    // wake up post processing thread
     sem_post(&verificationSem);
 }
 #endif
@@ -899,10 +922,6 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
 {
     uint64_t monotonicTime = 0;
     uint8_t cbr = 0;
-    if(radioReceive){
-        monotonicTime = radioReceive->latestTxRxTimeMonotonic();
-        cbr = radioReceive->getCBRValue();
-    }
     bool congCtrlInitialized = false;
     if(congestionControlManager && enableCongCtrl){
         congCtrlInitialized = true;
@@ -910,71 +929,78 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
     thread::id thrId = std::this_thread::get_id();
     while(not exitAsync){
         sem_wait(&verificationSem);
+        if(exitAsync){
+            return;
+        }
         int i = 0 ;
         for(i = start_index; PostProcessingCbData[i]!=0;++i)
         {
-            if((asyncCbData[PostProcessingCbData[i]].verifSuccess) &&
-                    (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
-            {
-                asyncVerifSuccess++;
-                asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-                if(enableCongCtrl &&
-                    (congestionControlManager != NULL) &&
-                    asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM)
+            if(asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE){
+                if((asyncCbData[PostProcessingCbData[i]].verifSuccess))
                 {
-                    congestionControlManager->addCongestionControlData(
-                        asyncCbData[PostProcessingCbData[i]].asyncBs.id,
-                        (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
-                        (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
-                        asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees,
-                        asyncCbData[PostProcessingCbData[i]].asyncBs.Speed,
-                        asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
-                        asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
-                }
-                // log number of received packets per msg
-                if(qMon){
-                    if(overridePsidCheck){
-                        // we override the PSID and treat this packet as a BSM
-                        qMon->tData[thrId].rxBSMs++;
-                    }else{
-                        switch(asyncCbData[PostProcessingCbData[i]].psid){
-                            case PSID_BSM:
-                                qMon->tData[thrId].rxBSMs++;
-                                qMon->tData[thrId].rxSignedBSMs++;
-                                break;
-                            case PSID_SPAT:
-                                qMon->tData[thrId].rxSPATs++;
-                                qMon->tData[thrId].rxSignedSPATs++;
-                                break;
-                            case PSID_MAP:
-                                qMon->tData[thrId].rxMAPs++;
-                                qMon->tData[thrId].rxSignedMAPs++;
-                                break;
+                    asyncVerifSuccess++;
+                    asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
+                    if(enableCongCtrl &&
+                        (congestionControlManager != NULL) &&
+                        asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM)
+                    {
+                        congestionControlManager->addCongestionControlData(
+                            asyncCbData[PostProcessingCbData[i]].asyncBs.id,
+                            (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
+                            (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
+                            asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees,
+                            asyncCbData[PostProcessingCbData[i]].asyncBs.Speed,
+                            asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
+                            asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
+                    }
+                    // log number of received packets per msg
+                    if(qMon){
+                        if(overridePsidCheck){
+                            // we override the PSID and treat this packet as a BSM
+                            qMon->tData[thrId].rxBSMs++;
+                        }else{
+                            switch(asyncCbData[PostProcessingCbData[i]].psid){
+                                case PSID_BSM:
+                                    qMon->tData[thrId].rxBSMs++;
+                                    qMon->tData[thrId].rxSignedBSMs++;
+                                    break;
+                                case PSID_SPAT:
+                                    qMon->tData[thrId].rxSPATs++;
+                                    qMon->tData[thrId].rxSignedSPATs++;
+                                    break;
+                                case PSID_MAP:
+                                    qMon->tData[thrId].rxMAPs++;
+                                    qMon->tData[thrId].rxSignedMAPs++;
+                                    break;
+                            }
                         }
                     }
                 }
-            }
-            else if(!(asyncCbData[PostProcessingCbData[i]].verifSuccess) &&
-                      (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
-            {
-                asyncVerifFail++;
-                asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-            }
-            if (asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM ||
-                overridePsidCheck)
-            {
-                // write the log here for this tx now. using tx timestamp made before sendto
-                ApplicationBase::writeLog(asyncCbData[PostProcessingCbData[i]].msg_index,
-                    asyncCbData[PostProcessingCbData[i]].l2SrcAddr, false, TransmitType::SPS,
-                    asyncCbData[PostProcessingCbData[i]].verifSuccess,
-                    asyncCbData[PostProcessingCbData[i]].timestamp, PSID_BSM,
-                    monotonicTime, 0.0, 0, 0, cbr,
-                    &(asyncCbData[PostProcessingCbData[i]].asyncBs),
-                    asyncCbData[PostProcessingCbData[i]].distFromRV,
-                    asyncCbData[PostProcessingCbData[i]].RVsInRange,
-                    asyncCbData[PostProcessingCbData[i]].txInterval,
-                    enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
+                else if(!(asyncCbData[PostProcessingCbData[i]].verifSuccess))
+                {
+                    asyncVerifFail++;
+                    asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
+                }
+                if (asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM ||
+                    overridePsidCheck)
+                {
+                    if(radioReceive){
+                        monotonicTime = radioReceive->latestTxRxTimeMonotonic();
+                        cbr = radioReceive->getCBRValue();
+                    }
+                    // write the log here for this tx now. using tx timestamp made before sendto
+                    ApplicationBase::writeLog(asyncCbData[PostProcessingCbData[i]].msg_index,
+                        asyncCbData[PostProcessingCbData[i]].l2SrcAddr, false, TransmitType::SPS,
+                        asyncCbData[PostProcessingCbData[i]].verifSuccess,
+                        asyncCbData[PostProcessingCbData[i]].timestamp, PSID_BSM,
+                        monotonicTime, 0.0, 0, 0, cbr,
+                        &(asyncCbData[PostProcessingCbData[i]].asyncBs),
+                        asyncCbData[PostProcessingCbData[i]].distFromRV,
+                        asyncCbData[PostProcessingCbData[i]].RVsInRange,
+                        asyncCbData[PostProcessingCbData[i]].txInterval,
+                        enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
 
+                }
             }
         }
 
@@ -1027,7 +1053,7 @@ void SaeApplication::PostProcessingThread()
 // Afterward, fields needed for consistency, relevancy, misbehavior detection
 // and verification are extracted from the decoded payload and provided to Aerolink.
 // Then security checks and verification will occur.
-    int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
+int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         uint8_t index, uint64_t timestamp) {
     int ret = -1;
     std::thread::id tid = std::this_thread::get_id();
@@ -1130,17 +1156,20 @@ void SaeApplication::PostProcessingThread()
         }
     }
     // prepare verification statistics logging
-    if (configuration.enableVerifStatLog) {
-        if (thrVerifLatencies[tid].size() >= verifStatIdx[tid]) {
-            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-        } else {
-            verifStatIdx[tid] = 0;
-            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+   if (configuration.enableVerifStatLog) {
+        if(!configuration.enableAsync){
+            if (thrVerifLatencies[tid].size() >= verifStatIdx[tid]) {
+                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            } else {
+                verifStatIdx[tid] = 0;
+                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            }
+            verifStatIdx[tid]++;
+            verifStatIdx[tid]%=thrVerifLatencies[tid].size();
         }
-        verifStatIdx[tid]++;
-        verifStatIdx[tid]%=thrVerifLatencies[tid].size();
-    } else {
+    }else {
         sopt.verifStat = nullptr;
+        asyncVerifStat = nullptr;
     }
     // this will need to be measured in post processing thread
     if (configuration.enableMbdStatLog) {
@@ -1161,25 +1190,22 @@ void SaeApplication::PostProcessingThread()
     if(!(sopt.enableAsync))
     {
         ret = SecService->VerifyMsg(sopt);
-        syncVerifFail++;
     }
     else
     {
-        // if the async index is > 0, pick that index and proceed to verify
-        // else wait until there is one available and try again
-        if(async_index == 0)
-        {
-            std::unique_lock<std::mutex> lock(AsyncMtx);
-            //buffer full, reset the index
-            //async_index = SHARED_BUFFER_MAX_SIZE;
+        if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
+            async_index = SHARED_BUFFER_MAX_SIZE-1;
             begin_flag = true;
-            lock.unlock();
-           // sem_wait(&bufferClearedSem);
         }
-        while(async_index > 0)
+        if(async_index >= 0)
         {
             asyncCbData[async_index].indexToData = async_index;
             memcpy(&asyncCbData[async_index].asyncBs, &bs, sizeof(bsm_data));
+            if(configuration.fakeRVTempIds){
+               fakeTmpId++;
+               fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+               asyncCbData[async_index].asyncBs.id = fakeTmpId;
+            }
             asyncCbData[async_index].msg_index = index;
             asyncCbData[async_index].l2SrcAddr = l2SrcAddr;
             asyncCbData[async_index].timestamp = timestamp;
@@ -1193,23 +1219,44 @@ void SaeApplication::PostProcessingThread()
                 if(tmpSecService){
                     AerolinkSecurity* tmpAeroSecurity =
                         static_cast<AerolinkSecurity*>(tmpSecService);
-                    ret = tmpAeroSecurity->asyncVerify(
-                            sopt.hvKine, sopt.rvKine, sopt.misbehaviorStat,
-                            (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
-                    if (ret == -1){
-                        asyncVerifFail++;
+                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(sopt.hvKine, sopt.rvKine);
+                    if(ret && tmpAeroSecurity){
+                        asyncCbData[async_index].asyncVerifStat = nullptr;
+                        if(configuration.enableVerifStatLog){
+                            if(thrVerifLatencies.find(tid) == thrVerifLatencies.end()){
+                                std::vector<VerifStats> tmp;
+                                thrVerifLatencies.insert(std::pair<std::thread::id,
+                                std::vector<VerifStats>>(tid, tmp));
+                                for(int i = 0 ; i < configuration.verifStatsSize; i++){
+                                    VerifStats tmpVerifStat;
+                                    thrVerifLatencies[tid].push_back(tmpVerifStat);
+                                }
+                            }
+                            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]){
+                                asyncCbData[async_index].asyncVerifStat =
+                                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+                            }else{
+                                verifStatIdx[tid] = 0;
+                                asyncCbData[async_index].asyncVerifStat =
+                                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+                            }
+                            verifStatIdx[tid]++;
+                            verifStatIdx[tid]%=thrVerifLatencies[tid].size();
+                        }
+                        gettimeofday(&currTime, NULL);
+                        asyncCbData[async_index].startLatencyTime =
+                               (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+                        ret = tmpAeroSecurity->asyncVerify(
+                                sopt.rvKine, sopt.misbehaviorStat,
+                                (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
+                        if (ret == -1){
+                            asyncVerifFail++;
+                        }
                     }
-                }
-               std::unique_lock<std::mutex> lock(AsyncMtx);
+               }
                async_index--;
-               lock.unlock();
-               break;
-            }
-            else
-            {
-                std::unique_lock<std::mutex> lock(AsyncMtx);
+            }else{
                 async_index--;
-                lock.unlock();
             }
         }
 
@@ -1220,6 +1267,10 @@ void SaeApplication::PostProcessingThread()
         ret = configuration.overrideVerifValue;
     }
     if (ret == -1) {
+        if(!(configuration.enableAsync))
+        {
+            syncVerifSuccess++;
+        }
         if (qMon)
         {
             qMon->tData[tid].secFails++;

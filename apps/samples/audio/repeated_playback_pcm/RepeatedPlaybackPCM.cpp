@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,21 +33,23 @@
  */
 
 /*
- * Steps to play PCM audio repeatedly are:
+ * This sample apps demonstrates, how to configure audio streams for each file and
+ * how to define multiple PCM files to play repeatedly. The steps are as follows:
  *
  * 1. Get a AudioFactory instance.
- * 2. Get a IAudioPlayer instance from AudioFactory.
- * 3. Implement all listener methods from class IPlayListListener.
+ * 2. Get a IAudioPlayer instance from the AudioFactory.
+ * 3. Implement all listener methods from IPlayListListener class.
  * 4. Define parameters to configure audio stream.
- * 5. Define how given files should be played.
+ * 5. Define how a given file should be played.
  * 6. Start playing the files.
  * 7. When the use case is over, stop the playback.
  *
  * Usage:
  * # repeated_playback_pcm
  *
- * File /data/prompt1.pcm is played once and file /data/prompt2.pcm is
- * is played played indefinitely on the local speaker.
+ * File /data/prompt1.raw is played once and file /data/prompt2.raw is played indefinitely
+ * on the local speaker. Files are in raw format (no audio container) with 48k sampling rate
+ * and mono channel.
  */
 
 #include <errno.h>
@@ -86,29 +88,34 @@ int RepeatedPlaybackPCM::start(std::shared_ptr<RepeatedPlaybackPCM> statusListen
 
     bool waitResult = false;
     telux::common::ErrorCode ec;
-    telux::audio::StreamConfig sc{};
-    telux::audio::PlaybackFile pbFiles1{};
-    telux::audio::PlaybackFile pbFiles2{};
-    std::vector<telux::audio::PlaybackFile> filesToPlay;
+    telux::audio::PlaybackConfig pbCfg1{};
+    telux::audio::PlaybackConfig pbCfg2{};
+    std::vector<telux::audio::PlaybackConfig> pbConfigs;
 
     /* Step - 4 */
-    sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 48000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    pbCfg1.streamConfig.type = telux::audio::StreamType::PLAY;
+    pbCfg1.streamConfig.sampleRate = 48000;
+    pbCfg1.streamConfig.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    pbCfg1.streamConfig.channelTypeMask = telux::audio::ChannelType::LEFT;
+    pbCfg1.streamConfig.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+
+    pbCfg2.streamConfig.type = telux::audio::StreamType::PLAY;
+    pbCfg2.streamConfig.sampleRate = 48000;
+    pbCfg2.streamConfig.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    pbCfg2.streamConfig.channelTypeMask = telux::audio::ChannelType::LEFT;
+    pbCfg2.streamConfig.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
     /* Step - 5 */
     /* Play this file only once */
-    pbFiles1.absoluteFilePath = "/data/prompt1.pcm";
-    pbFiles1.repeatInfo.type = telux::audio::RepeatType::COUNT;
-    pbFiles1.repeatInfo.count = 1;
-    filesToPlay.push_back(pbFiles1);
+    pbCfg1.absoluteFilePath = "/data/prompt1.raw";
+    pbCfg1.repeatInfo.type = telux::audio::RepeatType::COUNT;
+    pbCfg1.repeatInfo.count = 1;
+    pbConfigs.push_back(pbCfg1);
 
     /* Play this file repeatedly */
-    pbFiles2.absoluteFilePath = "/data/prompt2.pcm";
-    pbFiles2.repeatInfo.type = telux::audio::RepeatType::INDEFINITELY;
-    filesToPlay.push_back(pbFiles2);
+    pbCfg2.absoluteFilePath = "/data/prompt2.raw";
+    pbCfg2.repeatInfo.type = telux::audio::RepeatType::INDEFINITELY;
+    pbConfigs.push_back(pbCfg2);
 
    {
     /* First acquire the lock then reset predicates */
@@ -118,7 +125,7 @@ int RepeatedPlaybackPCM::start(std::shared_ptr<RepeatedPlaybackPCM> statusListen
     errorOccurred_ = false;
 
     /* Step - 6 */
-    ec = audioPlayer_->startPlayback(sc, filesToPlay, statusListener);
+    ec = audioPlayer_->startPlayback(pbConfigs, statusListener);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "failed start, err " << static_cast<int>(ec) << std::endl;
         return -EIO;

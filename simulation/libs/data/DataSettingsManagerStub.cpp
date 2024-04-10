@@ -327,10 +327,13 @@ telux::common::Status DataSettingsManagerStub::setBandInterferenceConfig(bool en
     ClientContext context;
 
     request.set_enable(enable);
-    request.set_priority(static_cast<int>(config->priority));
-    request.set_wlan_wait_time_in_sec(config->wlanWaitTimeInSec);
-    request.set_n79_wait_time_in_sec(config->n79WaitTimeInSec);
-    request.set_operation_type(::dataStub::OperationType(oprType_));
+    if(enable) {
+        request.set_priority(static_cast<int>(config->priority));
+        request.set_wlan_wait_time_in_sec(config->wlanWaitTimeInSec);
+        request.set_n79_wait_time_in_sec(config->n79WaitTimeInSec);
+        request.set_operation_type(::dataStub::OperationType(oprType_));
+    }
+
     grpc::Status reqStatus = stub_->setBandInterferenceConfig(&context, request, &response);
 
     error = static_cast<telux::common::ErrorCode>(response.error());
@@ -545,6 +548,11 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     }
 
     return status;
+}
+
+bool DataSettingsManagerStub::isDeviceDataUsageMonitoringEnabled() {
+    LOG(ERROR, __FUNCTION__, " TBD");
+    return false;
 }
 
 telux::common::Status DataSettingsManagerStub::registerListener(

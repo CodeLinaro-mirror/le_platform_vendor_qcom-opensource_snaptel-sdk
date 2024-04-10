@@ -16,6 +16,9 @@ set(DATA_STUB_SOURCES
     DataFilterManagerStub.cpp
     DataHelper.cpp
     IpFilterImpl.cpp
+    net/SocksManagerStub.cpp
+    net/NatManagerStub.cpp
+    net/L2tpManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

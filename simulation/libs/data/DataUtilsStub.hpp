@@ -129,4 +129,95 @@ public:
         int res = inet_pton(AF_INET6, addr.c_str(), &(sa.sin6_addr));
         return res != 0;
     }
+
+    static std::string protocolToString(telux::data::IpProtocol proto) {
+        switch(proto) {
+            case 1:
+                return "ICMP";
+            case 2:
+                return "IGMP";
+            case 6:
+                return "TCP";
+            case 17:
+                return "UDP";
+            case 50:
+                return "ESP";
+            default: {
+                return "Unknown";
+            }
+        }
+    }
+
+    static uint8_t stringToProtocol(std::string proto) {
+        if (proto == "ICMP") {
+            return 1;
+        } else if (proto == "IGMP") {
+            return 2;
+        } else if (proto == "TCP") {
+            return 6;
+        } else if (proto == "UDP") {
+            return 17;
+        } else if (proto == "ESP") {
+            return 50;
+        }
+        return 0;
+    }
+
+    static std::string convertEnumToBackhaulPrefString(
+        ::dataStub::BackhaulPreference pref) {
+
+        switch (pref) {
+            case ::dataStub::BackhaulPreference::PREF_ETH:
+                return "ETH";
+            case ::dataStub::BackhaulPreference::PREF_USB:
+                return "USB";
+            case ::dataStub::BackhaulPreference::PREF_WLAN:
+                return "WLAN";
+            case ::dataStub::BackhaulPreference::PREF_WWAN:
+                return "WWAN";
+            case ::dataStub::BackhaulPreference::PREF_BLE:
+                return "BLE";
+            case ::dataStub::BackhaulPreference::INVALID:
+            default:
+                return "INVALID";
+        }
+        return "INVALID";
+    }
+
+    static ::dataStub::BackhaulPreference convertBackhaulPrefStringToEnum(
+        std::string backhaul) {
+        if (backhaul == "ETH") {
+            return ::dataStub::BackhaulPreference::PREF_ETH;
+        } else if (backhaul == "USB") {
+            return ::dataStub::BackhaulPreference::PREF_USB;
+        } else if (backhaul == "WLAN") {
+            return ::dataStub::BackhaulPreference::PREF_WLAN;
+        } else if (backhaul == "WWAN") {
+            return ::dataStub::BackhaulPreference::PREF_WWAN;
+        } else if (backhaul == "BLE") {
+            return ::dataStub::BackhaulPreference::PREF_BLE;
+        }
+
+        return ::dataStub::BackhaulPreference::INVALID;
+    }
+
+    static ::dataStub::L2tpProtocol stringToL2tpProtocol(std::string proto) {
+        if (proto == "IP") {
+            return ::dataStub::L2tpProtocol::IP;
+        } else if (proto == "UDP") {
+            return ::dataStub::L2tpProtocol::UDP;
+        }
+        return ::dataStub::L2tpProtocol::NONE;
+    }
+
+    static std::string l2tpProtocolToString(::dataStub::L2tpProtocol proto) {
+        switch (proto) {
+            case ::dataStub::L2tpProtocol::IP:
+                return "IP";
+            case ::dataStub::L2tpProtocol::UDP:
+                return "UDP";
+            default :
+                return "NONE";
+        }
+    }
 };

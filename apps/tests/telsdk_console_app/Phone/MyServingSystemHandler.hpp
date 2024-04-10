@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -123,6 +123,7 @@ public:
    void onDcStatusChanged(telux::tel::DcStatus dcStatus) override;
    void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;
    void onRFBandInfoChanged(telux::tel::RFBandInfo bandInfo) override;
+   void onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) override;
 };
 
 #endif  // MYSERVINGSYSTEMHANDLER_HPP

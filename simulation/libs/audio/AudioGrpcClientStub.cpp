@@ -483,6 +483,7 @@ telux::common::Status AudioGrpcClientStub::createStream(telux::audio::StreamConf
             static_cast<::audioStub::AudioFormat_Type>(streamConfig.format));
     req.mutable_streamconfig()->mutable_ecnrmode()->set_type(
             static_cast<::audioStub::EcnrMode_Type>(streamConfig.ecnrMode));
+    req.mutable_streamconfig()->set_enablehpcm(streamConfig.enableHpcm);
 
     for(auto dev : streamConfig.deviceTypes) {
         audioStub::DeviceType* deviceType = req.mutable_streamconfig()->add_devicetypes();
@@ -1362,17 +1363,26 @@ telux::common::Status AudioGrpcClientStub::write(uint32_t streamId, uint8_t *tra
 void AudioGrpcClientStub::onWrite(google::protobuf::Any any, int cmdId, ErrorCode ec,
         std::weak_ptr<telux::common::ICommandCallback> resultListener) {
 
+    AudioUserData *audioUserData;
     audioStub::writeResponse response;
     any.UnpackTo(&response);
 
-    auto sp = resultListener.lock();
     {
         std::lock_guard<std::mutex> lock(update_);
-        if (sp) {
-            auto cb = std::static_pointer_cast<telux::audio::IWriteCb>(sp);
-            cb->onWriteResult(ec, response.streamid(),
-                    response.datalength(), userDataMap_[cmdId]);
-        }
+        audioUserData = userDataMap_[cmdId];
+    }
+
+    auto sp = callbackMap_[cmdId].lock();
+
+    if (sp) {
+        auto cb = std::static_pointer_cast<telux::audio::IWriteCb>(sp);
+        cb->onWriteResult(ec, response.streamid(),
+                response.datalength(), audioUserData);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(update_);
+
         userDataMap_.erase(cmdId);
         callbackMap_.erase(cmdId);
     }

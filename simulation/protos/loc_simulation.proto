@@ -189,7 +189,7 @@ enum LocationValidityType {
     HAS_ELAPSED_REAL_TIME_UNC_BIT = 10;
     /** Location has valid elapsed gPTP time.*/
     HAS_GPTP_TIME_BIT = 12;
-    /** Location has valid elapsed gPTP time uncertainity.*/
+    /** Location has valid elapsed gPTP time uncertainty.*/
     HAS_GPTP_TIME_UNC_BIT = 13;
 }
 
@@ -236,7 +236,7 @@ message LocationInfoBase {
     uint64 elapsed_real_time = 13;
     uint64 elapsed_real_time_uncertainty = 14;
     uint64 elapsedGptpTime_ = 15;
-    uint64 elapsedGptpTimeUncertainity_ = 16;
+    uint64 elapsedGptpTimeUncertainty_ = 16;
 }
 
 message RegisterOnBasicLocationUpdateReply {

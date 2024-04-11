@@ -3,8 +3,6 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <algorithm>
-
 #include "DataHelper.hpp"
 #include "common/Logger.hpp"
 
@@ -51,15 +49,6 @@ bool DataHelper::isValidIpv6Address(const std::string &addr) {
     struct sockaddr_in6 sa;
     int res = inet_pton(AF_INET6, addr.c_str(), &(sa.sin6_addr));
     return res != 0;
-}
-
-bool DataHelper::isValidProtocol(const IpProtocol &protocol) {
-    std::vector<IpProtocol> protocolList { PROTO_ICMP, PROTO_ICMP6, PROTO_IGMP, PROTO_TCP,
-        PROTO_UDP, PROTO_ESP, PROTO_TCP_UDP };
-    if (std::find(protocolList.begin(), protocolList.end(), protocol) != protocolList.end()) {
-        return true;
-    }
-    return false;
 }
 
 int DataHelper::convertAddress(const std::string &inAddr, unsigned char *outAddr, int af) {

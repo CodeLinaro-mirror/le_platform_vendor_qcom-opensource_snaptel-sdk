@@ -442,6 +442,37 @@ struct CallBarringInfo {
 };
 
 /**
+ * Define SMS support over network for registered RAT.
+ */
+enum class SmsDomain {
+   UNKNOWN = -1,  /**< Unknown, when the information is not available */
+   NO_SMS,        /**< Can't receive SMS */
+   SMS_ON_IMS,    /**< SMS is supported over IMS network */
+   SMS_ON_3GPP,   /**< SMS is supported over 3GPP network */
+};
+
+/**
+ * Define SMS capability for registered RAT.
+ */
+struct SmsCapability {
+   RadioTechnology rat;  /**< Current serving RAT */
+   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network */
+};
+
+/**
+ * Defines LTE CS service capabilities.
+ */
+enum class LteCsCapability {
+   UNKNOWN = -1,        /**< Unknown, when the information is not available */
+   FULL_SERVICE,        /**< Full service on CS domain is available */
+   CSFB_NOT_PREFERRED,  /**< CSFB is not preferred */
+   SMS_ONLY,            /**< CS registation is for SMS only */
+   LIMITED,             /**< CS registation failed for max attach or tracking area updating(TAU)
+                             attempts */
+   BARRED,              /**< CS domain not available */
+};
+
+/**
  * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
  */
 using ServingSystemNotificationMask = std::bitset<32>;
@@ -692,6 +723,36 @@ public:
    virtual telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) = 0;
 
    /**
+    * Get the SMS capability over IMS/3GPP network for registered radio access technology (RAT).
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] smsCapability  SMS capability @ref SmsCapability
+    *
+    * @returns Status of getSmsCapabilityOverNetwork i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) = 0;
+
+   /**
+    * Get the circuit-switched(CS) service capabilities of the LTE network.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] lteCapability  LTE CS capability @ref LteCsCapability
+    *
+    * @returns Status of getLteCsCapability i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -873,6 +934,40 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual void onCallBarringInfoChanged(std::vector<CallBarringInfo> barringInfo) {
+   }
+
+   /**
+    * This function is called whenever the SMS capability over currently registered network changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] smsCapability       SMS capability @ref SmsCapability
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onSmsCapabilityChanged(SmsCapability smsCapability) {
+   }
+
+   /**
+    * This function is called whenever the CS service capabilities of the LTE network changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] lteCapability       LTE CS capability @ref LteCsCapability
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onLteCsCapabilityChanged(LteCsCapability lteCapability) {
    }
 
    /**

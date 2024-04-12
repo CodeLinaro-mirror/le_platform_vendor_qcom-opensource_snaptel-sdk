@@ -49,6 +49,11 @@
 #include "ServingSystemMenu.hpp"
 
 #define INVALID -1
+#define GSM_RAT 1
+#define WCDMA_RAT 2
+#define LTE_RAT 3
+#define NR_SA_RAT 4
+#define NR_NSA_RAT 5
 
 ServingSystemMenu::ServingSystemMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -173,16 +178,29 @@ bool ServingSystemMenu::init() {
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
              "12", "Get_LTE_CS_Capability", {},
              std::bind(&ServingSystemMenu::getLteCsCapability, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> requestRFBandCapabilityCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "13", "Request_RF_Band_Capability", {},
+             std::bind(&ServingSystemMenu::requestRFBandCapability, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> requestRFBandPrefCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "14", "Request_RF_Band_Preferences", {},
+             std::bind(&ServingSystemMenu::requestRFBandPref, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> setRFBandPrefCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "15", "Set_RF_Band_Preferences", {},
+             std::bind(&ServingSystemMenu::setRFBandPref, this, std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "13", "Select_sim_slot", {},
+             "16", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
              getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
              getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
              getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
-             getLteCsCapabilityCommand};
+             getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
+             setRFBandPrefCommand};
 
        if (servingSystemMgrs_.size() > 1) {
           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -454,6 +472,224 @@ void ServingSystemMenu::getLteCsCapability(std::vector<std::string> userInput) {
             << std::endl;
       } else {
          std::cout << "\n getLteCsCapability failed, status: " << static_cast<int>(status);
+      }
+   }
+}
+
+void ServingSystemMenu::requestRFBandCapability(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestRFBandCapability(
+         RFBandCapabilityResponseCallback::rfBandCapabilityResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nRequest RF band capability sent successfully\n";
+      } else {
+         std::cout << "\nRequest RF band capability failed \n";
+      }
+   }
+}
+
+void ServingSystemMenu::requestRFBandPref(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestRFBandPreferences(
+         RFBandPrefResponseCallback::rfBandPrefResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nRequest RF band preferences sent successfully\n";
+      } else {
+         std::cout << "\nRequest RF band preferences failed \n";
+      }
+   }
+}
+
+void ServingSystemMenu::setRFBandPref(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      std::string ratSelection = "";
+      char delimiter = '\n';
+      int ratType = 0;
+      std::vector<telux::tel::GsmRFBand> gsmBands;
+      std::vector<telux::tel::WcdmaRFBand> wcdmaBands;
+      std::vector<telux::tel::LteRFBand> lteBands;
+      std::vector<telux::tel::NrRFBand> saBands;
+      std::vector<telux::tel::NrRFBand> nsaBands;
+
+      std::cout <<"Available RATs for RF band preferences: \n"
+          << "(1 - GSM\n 2 - WCDMA\n 3 - LTE\n 4 - NR5G_SA\n 5 - NR5G_NSA\n q - exit \n) \n";
+      while(true) {
+         std::cout << "\nSelect the RAT mode: ";
+         std::getline(std::cin, ratSelection, delimiter);
+         if (ratSelection.empty()) {
+            std::cout << "RAT mode input is empty \n";
+            return;
+         }
+         if (ratSelection == "q") {
+            break;
+         }
+         try {
+             ratType = std::stoi(ratSelection);
+         } catch (const std::exception &e) {
+             std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+             return;
+         }
+
+         std::string bandSelection = "";
+         std::vector<int> options;
+         std::stringstream ss(bandSelection);
+         int opt = 0;
+         int i = INVALID;
+         switch (ratType){
+             case GSM_RAT:
+                 std::cout << "Enter GSM RF band preferences for RATs \n"
+                     << "(1 - GSM_450\n 2 - GSM_480\n 3 - GSM_750\n 4 - GSM_850\n"
+                     << " 5 - GSM_900_EXTENDED\n 6 - GSM_900_PRIMARY\n 7 - GSM_900_RAILWAYS\n"
+                     << " 8 - GSM_1800\n 9 - GSM_1900\n"
+                     << " For example: enter 1,3 to prefer GSM band 450 & band 750\n) \n";
+                 std::getline(std::cin, bandSelection, delimiter);
+                 if (bandSelection.empty()) {
+                    std::cout << " RF bands selection is empty \n";
+                    return;
+                 }
+                 ss << bandSelection;
+                 while(ss >> i) {
+                     options.push_back(i);
+                     if(ss.peek() == ',' || ss.peek() == ' ')
+                         ss.ignore();
+                 }
+                 for(auto &opt : options) {
+                     if(opt >= 1 && opt <= 9) {
+                         try {
+                             gsmBands.push_back(static_cast<telux::tel::GsmRFBand>(opt));
+                         } catch(const std::exception &e) {
+                             std::cout << "ERROR: invalid input, please enter numerical values "
+                                 << opt << std::endl;
+                             return;
+                         }
+                     } else {
+                         std::cout << "Preference of GSM should not be out of range \n";
+                         return;
+                     }
+                 }
+                 break;
+             case WCDMA_RAT:
+                 std::cout << "Enter WCDMA RF band preferences for RATs \n"
+                     << "(1 - WCDMA_2100\n 2 - WCDMA_PCS_1900\n 3 - WCDMA_DCS_1800\n"
+                     << " 4 - WCDMA_1700_US\n 5 - WCDMA_850\n 6 - WCDMA_800\n 7 - WCDMA_2600\n"
+                     << " 8 - WCDMA_900\n 9 - WCDMA_1700_JAPAN\n 10 - WCDMA_1500_JAPAN\n"
+                     << " 11 - WCDMA_850_JAPAN\n"
+                     << " For example: enter 1,3 to prefer WCDMA band 2100 & band DCS_1800\n) \n";
+                 std::getline(std::cin, bandSelection, delimiter);
+                 if (bandSelection.empty()) {
+                    std::cout << " RF bands selection is empty \n";
+                    return;
+                 }
+                 ss << bandSelection;
+                 while(ss >> i) {
+                     options.push_back(i);
+                     if(ss.peek() == ',' || ss.peek() == ' ')
+                         ss.ignore();
+                 }
+                 for(auto &opt : options) {
+                     if(opt >= 1 && opt <= 11) {
+                         try {
+                             wcdmaBands.push_back(static_cast<telux::tel::WcdmaRFBand>(opt));
+                         } catch(const std::exception &e) {
+                             std::cout << "ERROR: invalid input, please enter numerical values "
+                                 << opt << std::endl;
+                             return;
+                         }
+                     } else {
+                         std::cout << "Preference of WCDMA should not be out of range \n";
+                         return;
+                     }
+                 }
+                 break;
+             case LTE_RAT:
+                 std::cout << "Enter LTE RF band preferences for RATs \n"
+                     << "(For example: enter 1,3 to prefer LTE band 1 & band 3\n) \n";
+                 std::getline(std::cin, bandSelection, delimiter);
+                 if (bandSelection.empty()) {
+                    std::cout << " RF bands selection is empty \n";
+                    return;
+                 }
+                 ss << bandSelection;
+                 while(ss >> i) {
+                     options.push_back(i);
+                     if(ss.peek() == ',' || ss.peek() == ' ')
+                         ss.ignore();
+                 }
+                 for(auto &opt : options) {
+                     if(opt >= 1 && opt <= 256) {
+                         try {
+                             lteBands.push_back(static_cast<telux::tel::LteRFBand>(opt));
+                         } catch(const std::exception &e) {
+                             std::cout << "ERROR: invalid input, please enter numerical values "
+                                 << opt << std::endl;
+                             return;
+                         }
+                     } else {
+                         std::cout << "Preference of LTE should not be out of range \n";
+                         return;
+                     }
+                 }
+                 break;
+             case NR_SA_RAT:
+             case NR_NSA_RAT:
+                 std::cout << "Enter NR RF band preferences for RATs \n"
+                     << "(For example: enter 1,3 to prefer NR band 1 & band 3\n) \n";
+                 std::getline(std::cin, bandSelection, delimiter);
+                 if (bandSelection.empty()) {
+                    std::cout << " RF bands selection is empty \n";
+                    return;
+                 }
+                 ss << bandSelection;
+                 while(ss >> i) {
+                     options.push_back(i);
+                     if(ss.peek() == ',' || ss.peek() == ' ')
+                         ss.ignore();
+                 }
+                 for(auto &opt : options) {
+                     if(opt >= 1 && opt <= 261) {
+                         try {
+                             if (ratType == 4) {
+                                saBands.push_back(static_cast<telux::tel::NrRFBand>(opt));
+                             } else {
+                                nsaBands.push_back(static_cast<telux::tel::NrRFBand>(opt));
+                             }
+                         } catch(const std::exception &e) {
+                             std::cout << "ERROR: invalid input, please enter numerical values "
+                                 << opt << std::endl;
+                             return;
+                         }
+                     } else {
+                         std::cout << "Preference of NR should not be out of range \n";
+                         return;
+                     }
+                 }
+                 break;
+             default:
+                 std::cout << "Invalid configuration selection \n";
+                 return;
+         }
+      }
+      auto builder = std::make_shared<telux::tel::RFBandListBuilder>();
+      telux::common::ErrorCode errCode = telux::common::ErrorCode::UNKNOWN;
+      std::shared_ptr<telux::tel::IRFBandList> prefBands = builder->addGsmRFBands(gsmBands)
+                                        .addWcdmaRFBands(wcdmaBands)
+                                        .addLteRFBands(lteBands)
+                                        .addNrRFBands(telux::tel::NrType::SA, saBands)
+                                        .addNrRFBands(telux::tel::NrType::NSA, nsaBands)
+                                        .build(errCode);
+      if (errCode == telux::common::ErrorCode::SUCCESS) {
+          auto ret = servingSystemMgr->setRFBandPreferences(
+              prefBands, RFBandPrefResponseCallback::setRFBandPrefResponse);
+          if(ret == telux::common::Status::SUCCESS) {
+             std::cout << "\nSet RF band preferences sent successfully\n";
+          } else {
+             std::cout << "\nSet RF band preferences failed \n";
+          }
+      } else {
+        std::cout << "\nBuild RF band preferences failed \n";
       }
    }
 }

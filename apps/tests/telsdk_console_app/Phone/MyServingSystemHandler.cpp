@@ -562,6 +562,124 @@ std::string MyServingSystemHelper::RFBandWidthtoString(telux::tel::RFBandWidth b
     }
 }
 
+std::string MyServingSystemHelper::gsmRFBandtoString(telux::tel::GsmRFBand gsmBand) {
+   switch (gsmBand){
+      case telux::tel::GsmRFBand::GSM_INVALID       : return "GSM_INVALID" ;
+      case telux::tel::GsmRFBand::GSM_450           : return "GSM_450" ;
+      case telux::tel::GsmRFBand::GSM_480           : return "GSM_480" ;
+      case telux::tel::GsmRFBand::GSM_750           : return "GSM_750" ;
+      case telux::tel::GsmRFBand::GSM_850           : return "GSM_850" ;
+      case telux::tel::GsmRFBand::GSM_900_EXTENDED  : return "GSM_900_EXTENDED" ;
+      case telux::tel::GsmRFBand::GSM_900_PRIMARY   : return "GSM_900_PRIMARY" ;
+      case telux::tel::GsmRFBand::GSM_900_RAILWAYS  : return "GSM_900_RAILWAYS" ;
+      case telux::tel::GsmRFBand::GSM_1800          : return "GSM_1800" ;
+      case telux::tel::GsmRFBand::GSM_1900          : return "GSM_1900" ;
+      default: return "GSM RF Band UNAVAILABLE";
+    }
+}
+
+std::string MyServingSystemHelper::wcdmaRFBandtoString(telux::tel::WcdmaRFBand wcdmaBand) {
+   switch (wcdmaBand){
+      case telux::tel::WcdmaRFBand::WCDMA_INVALID       : return "WCDMA_INVALID" ;
+      case telux::tel::WcdmaRFBand::WCDMA_2100          : return "WCDMA_2100" ;
+      case telux::tel::WcdmaRFBand::WCDMA_PCS_1900      : return "WCDMA_PCS_1900" ;
+      case telux::tel::WcdmaRFBand::WCDMA_DCS_1800      : return "WCDMA_DCS_1800" ;
+      case telux::tel::WcdmaRFBand::WCDMA_1700_US       : return "WCDMA_1700_US" ;
+      case telux::tel::WcdmaRFBand::WCDMA_850           : return "WCDMA_850" ;
+      case telux::tel::WcdmaRFBand::WCDMA_800           : return "WCDMA_800" ;
+      case telux::tel::WcdmaRFBand::WCDMA_2600          : return "WCDMA_2600" ;
+      case telux::tel::WcdmaRFBand::WCDMA_900           : return "WCDMA_900" ;
+      case telux::tel::WcdmaRFBand::WCDMA_1700_JAPAN    : return "WCDMA_1700_JAPAN" ;
+      case telux::tel::WcdmaRFBand::WCDMA_1500_JAPAN    : return "WCDMA_1500_JAPAN" ;
+      case telux::tel::WcdmaRFBand::WCDMA_850_JAPAN     : return "WCDMA_850_JAPAN" ;
+      default: return "WCDMA RF Band UNAVAILABLE";
+    }
+}
+
+void MyServingSystemHelper::logRFBandList
+    (std::shared_ptr<telux::tel::IRFBandList> list, bool isPref) {
+    std::vector<telux::tel::GsmRFBand> gsmBands = list->getGsmBands();
+    if(!gsmBands.empty()) {
+        std::cout << "\n GSM bands are: " << std::endl;
+        for (auto gsmBand : gsmBands) {
+            std::cout << gsmRFBandtoString(gsmBand) << std::endl;
+        }
+    }
+    std::vector<telux::tel::WcdmaRFBand> wcdmaBands = list->getWcdmaBands();
+    if(!wcdmaBands.empty()) {
+        std::cout << "\n WCDMA bands are: " << std::endl;
+        for (auto wcdmaBand : wcdmaBands) {
+            std::cout << wcdmaRFBandtoString(wcdmaBand) << std::endl;
+        }
+    }
+    std::vector<telux::tel::LteRFBand> lteBands = list->getLteBands();
+    if(!lteBands.empty()) {
+        std::cout << "\n LTE bands are: " << std::endl;
+        for (auto lteBand : lteBands) {
+            std::cout << "E_UTRA_BAND_" << static_cast<int>(lteBand) << std::endl;
+        }
+    }
+    if (isPref) {
+        std::vector<telux::tel::NrRFBand> nrSaBands = list->getNrBands(telux::tel::NrType::SA);
+        if(!nrSaBands.empty()) {
+            std::cout << "\n NR SA bands are: " << std::endl;
+            for (auto nrSaBand : nrSaBands) {
+                std::cout << "NR5G_BAND_" << static_cast<int>(nrSaBand) << std::endl;
+            }
+        }
+        std::vector<telux::tel::NrRFBand> nrNsaBands =
+                    list->getNrBands(telux::tel::NrType::NSA);
+        if(!nrNsaBands.empty()) {
+            PRINT_CB << "\n NR NSA bands are: " << std::endl;
+            for (auto nrNsaBand : nrNsaBands) {
+                std::cout << "NR5G_BAND_" << static_cast<int>(nrNsaBand) << std::endl;
+            }
+        }
+    } else {
+        std::vector<telux::tel::NrRFBand> nrBands =
+                    list->getNrBands(telux::tel::NrType::COMBINED);
+        if(!nrBands.empty()) {
+            std::cout << "\n NR bands are: " << std::endl;
+            for (auto nrBand : nrBands) {
+                std::cout << "NR5G_BAND_" << static_cast<int>(nrBand) << std::endl;
+            }
+        }
+    }
+}
+
+void RFBandPrefResponseCallback::rfBandPrefResponse
+    (std::shared_ptr<telux::tel::IRFBandList> prefList,
+      telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "\n requestRFBandPref is successful.\n RF Band preferences: \n";
+      MyServingSystemHelper::logRFBandList(prefList, true);
+   } else {
+      PRINT_CB << "\n requestRFBandPref failed, ErrorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
+void RFBandPrefResponseCallback::setRFBandPrefResponse(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "setRFBandPref is successful" << std::endl;
+   } else {
+      PRINT_CB << "setRFBandPref Request failed, errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
+void RFBandCapabilityResponseCallback::rfBandCapabilityResponse
+    (std::shared_ptr<telux::tel::IRFBandList> capabilityList, telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "\n requestRFBandCapability is successful.\n RF Band Capability: \n";
+      MyServingSystemHelper::logRFBandList(capabilityList, false);
+   } else {
+      PRINT_CB << "\n requestRFBandCapability failed, ErrorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
 void MyServingSystemListener::onRFBandInfoChanged(telux::tel::RFBandInfo info) {
    PRINT_NOTIFICATION << " RF Band Info is changed. \n RF Band Info: \n";
    MyServingSystemHelper::logRFBandInfo(info);
@@ -603,4 +721,10 @@ void MyServingSystemListener::onLteCsCapabilityChanged(telux::tel::LteCsCapabili
    PRINT_NOTIFICATION << " LTE CS capability changed."
             << "\n LTE CS capability: "
             << MyServingSystemHelper::getLteCsCapability(lteCapability);
+}
+
+void MyServingSystemListener::onRFBandPreferenceChanged
+    (std::shared_ptr<telux::tel::IRFBandList> prefList) {
+   PRINT_NOTIFICATION << " RF Band Preference is changed. \n RF Band Preference: \n";
+   MyServingSystemHelper::logRFBandList(prefList, true);
 }

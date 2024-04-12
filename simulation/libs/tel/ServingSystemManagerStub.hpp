@@ -23,6 +23,34 @@
 namespace telux {
 namespace tel {
 
+class RFBandList : public IRFBandList {
+ public:
+    RFBandList();
+    ~RFBandList();
+
+    void setGsmBands(std::vector<GsmRFBand> bands) override;
+    void setWcdmaBands(std::vector<WcdmaRFBand> bands) override;
+    void setLteBands(std::vector<LteRFBand> bands) override;
+    void setNrBands(NrType type, std::vector<NrRFBand> bands) override;
+    std::vector<GsmRFBand> getGsmBands() override;
+    std::vector<WcdmaRFBand> getWcdmaBands() override;
+    std::vector<LteRFBand> getLteBands() override;
+    std::vector<NrRFBand> getNrBands(NrType type) override;
+    bool isGSMBandPresent(GsmRFBand band) override;
+    bool isWcdmaBandPresent(WcdmaRFBand band) override;
+    bool isLteBandPresent(LteRFBand band) override;
+    bool isNrBandPresent(NrType type, NrRFBand band) override;
+
+ private:
+    std::vector<GsmRFBand> gsmBands_;
+    std::vector<WcdmaRFBand> wcdmaBands_;
+    std::vector<LteRFBand> lteBands_;
+    std::vector<NrRFBand> saBands_;
+    std::vector<NrRFBand> nsaBands_;
+    std::vector<NrRFBand> nrBands_;
+    std::mutex mtx_;
+};
+
 class ServingSystemManagerStub : public IServingSystemManager,
                                  public IEventListener,
                                  public std::enable_shared_from_this<ServingSystemManagerStub> {
@@ -51,6 +79,10 @@ public:
     telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) override;
     telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) override;
     telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) override;
+    telux::common::Status requestRFBandPreferences(RFBandPrefCallback callback) override;
+    telux::common::Status setRFBandPreferences(std::shared_ptr<IRFBandList> prefList,
+        common::ResponseCallback callback = nullptr) override;
+    telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,

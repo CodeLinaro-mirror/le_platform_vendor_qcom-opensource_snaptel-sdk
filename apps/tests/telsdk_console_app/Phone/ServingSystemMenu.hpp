@@ -72,6 +72,10 @@ public:
    void getCallBarringInfo(std::vector<std::string> userInput);
    void getSmsCapability(std::vector<std::string> userInput);
    void getLteCsCapability(std::vector<std::string> userInput);
+   void requestRFBandCapability(std::vector<std::string> userInput);
+   void requestRFBandPref(std::vector<std::string> userInput);
+   void setRFBandPref(std::vector<std::string> userInput);
+
 
 private:
    // Member variable to keep the Listener object alive till application ends.

@@ -473,6 +473,385 @@ enum class LteCsCapability {
 };
 
 /**
+ * Defines GSM RF Bands.
+ */
+enum class GsmRFBand {
+   GSM_INVALID = -1,      /**<  Invalid GSM band */
+   GSM_450 = 1,           /**<  GSM 450 band */
+   GSM_480 = 2,           /**<  GSM 480 band */
+   GSM_750 = 3,           /**<  GSM 750 band */
+   GSM_850 = 4,           /**<  GSM 850 band */
+   GSM_900_EXTENDED = 5,  /**<  GSM 900 EXTENDED band */
+   GSM_900_PRIMARY = 6,   /**<  GSM 900 PRIMARY band */
+   GSM_900_RAILWAYS = 7,  /**<  GSM 900 RAILWAYS band */
+   GSM_1800 = 8,          /**<  GSM 1800 band */
+   GSM_1900 = 9           /**<  GSM 1900 band */
+};
+
+/**
+ * Defines WCDMA RF Bands.
+ */
+enum class WcdmaRFBand {
+   WCDMA_INVALID = -1,    /**<  Invalid WCDMA band */
+   WCDMA_2100 = 1,        /**<  WCDMA 2100 band */
+   WCDMA_PCS_1900 = 2,    /**<  WCDMA PCS 1900 band */
+   WCDMA_DCS_1800 = 3,    /**<  WCDMA DCS 1800 band */
+   WCDMA_1700_US = 4,     /**<  WCDMA 1700 US band */
+   WCDMA_850 = 5,         /**<  WCDMA 850 band */
+   WCDMA_800 = 6,         /**<  WCDMA 800 band */
+   WCDMA_2600 = 7,        /**<  WCDMA 2600 band */
+   WCDMA_900 = 8,         /**<  WCDMA 900 band */
+   WCDMA_1700_JAPAN = 9,  /**<  WCDMA 1700 JAPAN band */
+   WCDMA_1500_JAPAN = 10, /**<  WCDMA 1500 JAPAN band */
+   WCDMA_850_JAPAN = 11   /**<  WCDMA 850 JAPAN band */
+};
+
+/**
+ * Defines LTE RF Bands.
+ */
+enum class LteRFBand {
+   E_UTRA_BAND_INVALID = -1,  /**<  Invalid LTE band */
+   E_UTRA_BAND_1 = 1,         /**<  E-UTRA operating band 1 */
+   E_UTRA_BAND_2 = 2,         /**<  E-UTRA operating band 2 */
+   E_UTRA_BAND_3 = 3,         /**<  E-UTRA operating band 3 */
+   E_UTRA_BAND_4 = 4,         /**<  E-UTRA operating band 4 */
+   E_UTRA_BAND_5 = 5,         /**<  E-UTRA operating band 5 */
+   E_UTRA_BAND_6 = 6,         /**<  E-UTRA operating band 6 */
+   E_UTRA_BAND_7 = 7,         /**<  E-UTRA operating band 7 */
+   E_UTRA_BAND_8 = 8,         /**<  E-UTRA operating band 8 */
+   E_UTRA_BAND_9 = 9,         /**<  E-UTRA operating band 9 */
+   E_UTRA_BAND_10 = 10,       /**<  E-UTRA operating band 10 */
+   E_UTRA_BAND_11 = 11,       /**<  E-UTRA operating band 11 */
+   E_UTRA_BAND_12 = 12,       /**<  E-UTRA operating band 12 */
+   E_UTRA_BAND_13 = 13,       /**<  E-UTRA operating band 13 */
+   E_UTRA_BAND_14 = 14,       /**<  E-UTRA operating band 14 */
+   E_UTRA_BAND_17 = 17,       /**<  E-UTRA operating band 17 */
+   E_UTRA_BAND_18 = 18,       /**<  E-UTRA operating band 18 */
+   E_UTRA_BAND_19 = 19,       /**<  E-UTRA operating band 19 */
+   E_UTRA_BAND_20 = 20,       /**<  E-UTRA operating band 20 */
+   E_UTRA_BAND_21 = 21,       /**<  E-UTRA operating band 21 */
+   E_UTRA_BAND_23 = 23,       /**<  E-UTRA operating band 23 */
+   E_UTRA_BAND_24 = 24,       /**<  E-UTRA operating band 24 */
+   E_UTRA_BAND_25 = 25,       /**<  E-UTRA operating band 25 */
+   E_UTRA_BAND_26 = 26,       /**<  E-UTRA operating band 26 */
+   E_UTRA_BAND_27 = 27,       /**<  E-UTRA operating band 27 */
+   E_UTRA_BAND_28 = 28,       /**<  E-UTRA operating band 28 */
+   E_UTRA_BAND_29 = 29,       /**<  E-UTRA operating band 29 */
+   E_UTRA_BAND_30 = 30,       /**<  E-UTRA operating band 30 */
+   E_UTRA_BAND_31 = 31,       /**<  E-UTRA operating band 31 */
+   E_UTRA_BAND_32 = 32,       /**<  E-UTRA operating band 32 */
+   E_UTRA_BAND_33 = 33,       /**<  E-UTRA operating band 33 */
+   E_UTRA_BAND_34 = 34,       /**<  E-UTRA operating band 34 */
+   E_UTRA_BAND_35 = 35,       /**<  E-UTRA operating band 35 */
+   E_UTRA_BAND_36 = 36,       /**<  E-UTRA operating band 36 */
+   E_UTRA_BAND_37 = 37,       /**<  E-UTRA operating band 37 */
+   E_UTRA_BAND_38 = 38,       /**<  E-UTRA operating band 38 */
+   E_UTRA_BAND_39 = 39,       /**<  E-UTRA operating band 39 */
+   E_UTRA_BAND_40 = 40,       /**<  E-UTRA operating band 40 */
+   E_UTRA_BAND_41 = 41,       /**<  E-UTRA operating band 41 */
+   E_UTRA_BAND_42 = 42,       /**<  E-UTRA operating band 42 */
+   E_UTRA_BAND_43 = 43,       /**<  E-UTRA operating band 43 */
+   E_UTRA_BAND_44 = 44,       /**<  E-UTRA operating band 44 */
+   E_UTRA_BAND_46 = 46,       /**<  E-UTRA operating band 46 */
+   E_UTRA_BAND_47 = 47,       /**<  E-UTRA operating band 47 */
+   E_UTRA_BAND_48 = 48,       /**<  E-UTRA operating band 48 */
+   E_UTRA_BAND_49 = 49,       /**<  E-UTRA operating band 49 */
+   E_UTRA_BAND_53 = 53,       /**<  E-UTRA operating band 53 */
+   E_UTRA_BAND_60 = 60,       /**<  E-UTRA operating band 60 */
+   E_UTRA_BAND_66 = 66,       /**<  E-UTRA operating band 66 */
+   E_UTRA_BAND_67 = 67,       /**<  E-UTRA operating band 67 */
+   E_UTRA_BAND_68 = 68,       /**<  E-UTRA operating band 68 */
+   E_UTRA_BAND_70 = 70,       /**<  E-UTRA operating band 70 */
+   E_UTRA_BAND_71 = 71,       /**<  E-UTRA operating band 71 */
+   E_UTRA_BAND_85 = 85,       /**<  E-UTRA operating band 85 */
+   E_UTRA_BAND_106 = 106,     /**<  E-UTRA operating band 106 */
+   E_UTRA_BAND_125 = 125,     /**<  E-UTRA operating band 125 */
+   E_UTRA_BAND_126 = 126,     /**<  E-UTRA operating band 126 */
+   E_UTRA_BAND_127 = 127,     /**<  E-UTRA operating band 127 */
+   E_UTRA_BAND_250 = 250,     /**<  E-UTRA operating band 250 */
+   E_UTRA_BAND_252 = 252,     /**<  E-UTRA operating band 252 */
+   E_UTRA_BAND_253 = 253,     /**<  E-UTRA operating band 253 */
+   E_UTRA_BAND_255 = 255,     /**<  E-UTRA operating band 255 */
+   E_UTRA_BAND_256 = 256      /**<  E-UTRA operating band 256 */
+};
+
+/**
+ * Defines NR RF Bands, which are available for both SA and NSA modes.
+ */
+enum class NrRFBand {
+   NR5G_BAND_INVALID = -1,  /**<  Invalid NR5G band */
+   NR5G_BAND_1 = 1,         /**<  NR5G band 1 */
+   NR5G_BAND_2 = 2,         /**<  NR5G band 2 */
+   NR5G_BAND_3 = 3,         /**<  NR5G band 3 */
+   NR5G_BAND_5 = 5,         /**<  NR5G band 5 */
+   NR5G_BAND_7 = 7,         /**<  NR5G band 7 */
+   NR5G_BAND_8 = 8,         /**<  NR5G band 8 */
+   NR5G_BAND_12 = 12,       /**<  NR5G band 12 */
+   NR5G_BAND_13 = 13,       /**<  NR5G band 13 */
+   NR5G_BAND_14 = 14,       /**<  NR5G band 14 */
+   NR5G_BAND_18 = 18,       /**<  NR5G band 18 */
+   NR5G_BAND_20 = 20,       /**<  NR5G band 20 */
+   NR5G_BAND_25 = 25,       /**<  NR5G band 25 */
+   NR5G_BAND_26 = 26,       /**<  NR5G band 26 */
+   NR5G_BAND_28 = 28,       /**<  NR5G band 28 */
+   NR5G_BAND_29 = 29,       /**<  NR5G band 29 */
+   NR5G_BAND_30 = 30,       /**<  NR5G band 30 */
+   NR5G_BAND_34 = 34,       /**<  NR5G band 34 */
+   NR5G_BAND_38 = 38,       /**<  NR5G band 38 */
+   NR5G_BAND_39 = 39,       /**<  NR5G band 39 */
+   NR5G_BAND_40 = 40,       /**<  NR5G band 40 */
+   NR5G_BAND_41 = 41,       /**<  NR5G band 41 */
+   NR5G_BAND_46 = 46,       /**<  NR5G band 46 */
+   NR5G_BAND_47 = 47,       /**<  NR5G band 47 */
+   NR5G_BAND_48 = 48,       /**<  NR5G band 48 */
+   NR5G_BAND_50 = 50,       /**<  NR5G band 50 */
+   NR5G_BAND_51 = 51,       /**<  NR5G band 51 */
+   NR5G_BAND_53 = 53,       /**<  NR5G band 53 */
+   NR5G_BAND_65 = 65,       /**<  NR5G band 65 */
+   NR5G_BAND_66 = 66,       /**<  NR5G band 66 */
+   NR5G_BAND_67 = 67,       /**<  NR5G band 67 */
+   NR5G_BAND_68 = 68,       /**<  NR5G band 68 */
+   NR5G_BAND_70 = 70,       /**<  NR5G band 70 */
+   NR5G_BAND_71 = 71,       /**<  NR5G band 71 */
+   NR5G_BAND_74 = 74,       /**<  NR5G band 74 */
+   NR5G_BAND_75 = 75,       /**<  NR5G band 75 */
+   NR5G_BAND_76 = 76,       /**<  NR5G band 76 */
+   NR5G_BAND_77 = 77,       /**<  NR5G band 77 */
+   NR5G_BAND_78 = 78,       /**<  NR5G band 78 */
+   NR5G_BAND_79 = 79,       /**<  NR5G band 79 */
+   NR5G_BAND_80 = 80,       /**<  NR5G band 80 */
+   NR5G_BAND_81 = 81,       /**<  NR5G band 81 */
+   NR5G_BAND_82 = 82,       /**<  NR5G band 82 */
+   NR5G_BAND_83 = 83,       /**<  NR5G band 83 */
+   NR5G_BAND_84 = 84,       /**<  NR5G band 84 */
+   NR5G_BAND_85 = 85,       /**<  NR5G band 85 */
+   NR5G_BAND_86 = 86,       /**<  NR5G band 86 */
+   NR5G_BAND_89 = 89,       /**<  NR5G band 89 */
+   NR5G_BAND_91 = 91,       /**<  NR5G band 91 */
+   NR5G_BAND_92 = 92,       /**<  NR5G band 92 */
+   NR5G_BAND_93 = 93,       /**<  NR5G band 93 */
+   NR5G_BAND_94 = 94,       /**<  NR5G band 94 */
+   NR5G_BAND_95 = 95,       /**<  NR5G band 95 */
+   NR5G_BAND_96 = 96,       /**<  NR5G band 96 */
+   NR5G_BAND_97 = 97,       /**<  NR5G band 97 */
+   NR5G_BAND_98 = 98,       /**<  NR5G band 98 */
+   NR5G_BAND_99 = 99,       /**<  NR5G band 99 */
+   NR5G_BAND_102 = 102,     /**<  NR5G band 102 */
+   NR5G_BAND_104 = 104,     /**<  NR5G band 104 */
+   NR5G_BAND_105 = 105,     /**<  NR5G band 105 */
+   NR5G_BAND_106 = 106,     /**<  NR5G band 106 */
+   NR5G_BAND_257 = 257,     /**<  NR5G band 257 */
+   NR5G_BAND_258 = 258,     /**<  NR5G band 258 */
+   NR5G_BAND_259 = 259,     /**<  NR5G band 259 */
+   NR5G_BAND_260 = 260,     /**<  NR5G band 260 */
+   NR5G_BAND_261 = 261      /**<  NR5G band 261 */
+} ;
+
+/**
+ * Defines NR types.
+ */
+enum class NrType {
+   NSA = 0,    /**<  NSA type of NR5G only. */
+   SA,         /**<  SA type of NR5G only. */
+   COMBINED    /**<  NSA and SA type of NR5G */
+};
+
+/**
+ * @brief IRFBandList is used to retrieve or set the RF band preferences for all
+ * RATs, and retrieve the supported RF band capabilities of the device.
+ */
+class IRFBandList {
+    public:
+    /**
+     * @brief Set GSM RF bands
+     *
+     * @param [in] bands     List of GSM RF bands @ref telux::tel::GsmRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void setGsmBands(std::vector<GsmRFBand> bands) = 0;
+    /**
+     * @brief Set WCDMA RF bands
+     *
+     * @param [in] bands     List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void setWcdmaBands(std::vector<WcdmaRFBand> bands) = 0;
+    /**
+     * @brief Set LTE RF bands
+     *
+     * @param [in] bands     List of LTE RF bands @ref telux::tel::LteRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void setLteBands(std::vector<LteRFBand> bands) = 0;
+    /**
+     * @brief Set NR5G RF bands
+     *
+     * @param [in] type     NR5G type @ref telux::tel::NrType
+     * @param [in] bands    List of NR5G RF bands @ref telux::tel::NrRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void setNrBands(NrType type, std::vector<NrRFBand> bands) = 0;
+
+    /**
+     * @brief Check if specific GSM RF band is present
+     *
+     * @param [in] band    @ref telux::tel::GsmRFBand
+     */
+    virtual bool isGSMBandPresent(GsmRFBand band) = 0;
+    /**
+     * @brief Check if specific WCDMA RF band is present
+     *
+     * @param [in] band    @ref telux::tel::WcdmaRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual bool isWcdmaBandPresent(WcdmaRFBand band) = 0;
+    /**
+     * @brief Check if specific LTE RF band is present
+     *
+     * @param [in] band    @ref telux::tel::LteRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual bool isLteBandPresent(LteRFBand band) = 0;
+    /**
+     * @brief Check if specific NR5G RF band is present
+     *
+     * @param [in] type    NR5G type @ref telux::tel::NrType
+     * @param [in] band    @ref telux::tel::NrRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual bool isNrBandPresent(NrType type, NrRFBand band) = 0;
+
+    /**
+     * @brief Get GSM RF bands
+     *
+     * @return   List of GSM RF bands @ref telux::tel::GsmRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual std::vector<GsmRFBand> getGsmBands() = 0;
+    /**
+     * @brief Get WCDMA RF bands
+     *
+     * @return   List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual std::vector<WcdmaRFBand> getWcdmaBands() = 0;
+    /**
+     * @brief Get LTE RF bands
+     *
+     * @return   List of LTE RF bands @ref telux::tel::LteRFBand
+     */
+    virtual std::vector<LteRFBand> getLteBands() = 0;
+    /**
+     * @brief Retrieve NR5G RF bands based on @telux::tel::NrType. For example, use
+     * @ref telux::tel::NrType::COMBINED to retrieve the supported NR5G RF band capabilities
+     * of the device and @telux::tel::NrType::NSA to retrieve and set NSA RF band preferences.
+     *
+     * @param [in] type    NR5G type @ref telux::tel::NrType
+     * @return             List of NR5G RF bands @ref telux::tel::NrRFBand
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual std::vector<NrRFBand> getNrBands(NrType type) = 0;
+    /**
+     * Destructor for IRFBandList
+     */
+    virtual ~IRFBandList() {
+    }
+};
+
+/**
+ * @brief RFBandListBuilder is used to build @ref telux::tel::IRFBandList.
+ *
+ * Add the desired RF bands for different RATs. After configuring the desired bands,
+ * invoke the @ref telux::tel::RFBandListBuilder::build API to build @telux::tel::IRFBandList.
+ */
+class RFBandListBuilder {
+    public:
+    /**
+     * @brief Constructs a RFBandListBuilder.
+     */
+    RFBandListBuilder();
+
+    /**
+     * @brief Construct desired GSM RF bands.
+     *
+     * @param [in] bands   List of GSM RF bands @ref telux::tel::GsmRFBand
+     * @return             Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    RFBandListBuilder& addGsmRFBands(std::vector<GsmRFBand> bands);
+    /**
+     * @brief Construct desired WCDMA RF bands.
+     *
+     * @param [in] bands   List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
+     * @return             Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    RFBandListBuilder& addWcdmaRFBands(std::vector<WcdmaRFBand> bands);
+    /**
+     * @brief Construct desired LTE RF bands.
+     *
+     * @param [in] bands   List of LTE RF bands @ref telux::tel::LteRFBand
+     * @return             Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    RFBandListBuilder& addLteRFBands(std::vector<LteRFBand> bands);
+    /**
+     * @brief Construct desired bands based on NrType.
+     *
+     * @param [in] type    NR5G type @ref telux::tel::NrType
+     * @param [in] bands   List of NR5G RF bands @ref telux::tel::NrRFBand
+     * @return             Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    RFBandListBuilder& addNrRFBands(NrType type, std::vector<NrRFBand> bands);
+    /**
+     * @brief This API builds the RF band list. If API call is successful, it will return an
+     * instance of @ref telux::tel::IRFBandList and there is no error. Otherwise, it
+     * will return nullptr and the error code.
+     *
+     * @param[out] errorCode @ref telux::tel::ErrorCode indicating any possible failure
+     *                       reasons during construction.
+     *
+     * @return Shared pointer to the constructed RF band list.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    std::shared_ptr<IRFBandList> build(telux::common::ErrorCode &errorCode);
+
+    private:
+    std::shared_ptr<IRFBandList> rfBandList_;
+};
+
+/**
  * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
  */
 using ServingSystemNotificationMask = std::bitset<32>;
@@ -538,6 +917,40 @@ using NetworkTimeResponseCallback
  */
 using RFBandInfoCallback
    = std::function<void(RFBandInfo bandInfo, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to the requestRFBandPreferences API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] prefList     @ref telux::tel::IRFBandList instance
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using RFBandPrefCallback
+   = std::function<void(std::shared_ptr<IRFBandList> prefList, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to the requestRFBandCapability API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] capabilityList     @ref telux::tel::IRFBandList instance
+ * @param [in] error              Return code which indicates whether the operation
+ *                                succeeded or not @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using RFBandCapabilityCallback
+   = std::function<void(std::shared_ptr<IRFBandList> capabilityList,
+       telux::common::ErrorCode error)>;
+
 class IServingSystemManager {
 public:
    /**
@@ -591,8 +1004,8 @@ public:
    /**
     * Request for preferred radio access technology mode.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [in] callback  Callback function to get the response of request
     *                       preferred RAT mode.
@@ -625,8 +1038,8 @@ public:
    /**
     * Request for Service Domain Preference asynchronously.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [in] callback    Callback function to get the response of request
     *                         service domain preference.
@@ -641,8 +1054,8 @@ public:
    /**
     * Get the Serving system information. Supports only 3GPP RATs.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [out] sysInfo  Serving system information
     *                       @ref ServingSystemInfo
@@ -655,8 +1068,8 @@ public:
    /**
     * Request for Dual Connectivity status on 5G NR.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @returns @ref DcStatus
     */
@@ -665,8 +1078,8 @@ public:
    /**
     * Get network time information asynchronously.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [in] callback    Callback function to get the response of get
     *                         network time information request.
@@ -679,8 +1092,8 @@ public:
    /**
     * Get the information about the band that the device is currently using.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [in] callback    Callback function to get the response of get
     *                         RF band information request.
@@ -695,8 +1108,8 @@ public:
     * When a device is detached from the network due to registration rejection, the network
     * will return relevant information such as the reason for the rejection.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [out] rejectInfo  Network reject information @ref NetworkRejectInfo
     *
@@ -710,8 +1123,8 @@ public:
    /**
     * Gets the call barring information for the currently registered cell of a device.
     *
-    * On platforms with access control enabled, the caller needs to have the
-    * TELUX_TEL_SRV_SYSTEM_READ permission to successfully invoke this API.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [out] barringInfo  List of call barring information @ref CallBarringInfo
     *
@@ -725,8 +1138,8 @@ public:
    /**
     * Get the SMS capability over IMS/3GPP network for registered radio access technology (RAT).
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [out] smsCapability  SMS capability @ref SmsCapability
     *
@@ -740,8 +1153,8 @@ public:
    /**
     * Get the circuit-switched(CS) service capabilities of the LTE network.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
-    * permission to invoke this API successfully.
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
     *
     * @param [out] lteCapability  LTE CS capability @ref LteCsCapability
     *
@@ -751,6 +1164,58 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) = 0;
+
+   /**
+    * Request RF band preferences for all RATs.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
+    *
+    * @param [in] callback    Callback function to retrieve the response of get
+    *                         RF band preferences request.
+    *
+    * @returns Status of requestRFBandPreferences i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestRFBandPreferences(RFBandPrefCallback callback) = 0;
+
+   /**
+    * Set the preferred RF band capabilities for the device to acquire service.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+    * permission to invoke this API successfully.
+    *
+    * @param [in] prefList      Use RFBandListBuilder to build @ref telux::tel::IRFBandList
+    *                           instance.
+    * @param [in] callback      Optional callback function to get the response of
+    *                           set RF band preferences request.
+    *
+    * @returns  Status of setRFBandPreferences i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status setRFBandPreferences(std::shared_ptr<IRFBandList> prefList,
+           common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Request supported RF band capabilities for the device.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
+    *
+    * @param [in] callback    Callback function to retrieve the response of get
+    *                         RF band capability request.
+    *
+    * @returns Status of requestRFBandCapability i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback)
+       = 0;
 
    /**
     * Register a listener for specific updates from serving system.
@@ -968,6 +1433,20 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual void onLteCsCapabilityChanged(LteCsCapability lteCapability) {
+   }
+
+   /**
+    * This function is called whenever RF band preference changes.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification
+    *
+    * @param [in] prefList    @ref telux::tel::IRFBandList instance
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onRFBandPreferenceChanged(std::shared_ptr<IRFBandList> prefList) {
    }
 
    /**

@@ -39,6 +39,7 @@
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
+#include "therm/ThermalGrpcServerImpl.hpp"
 #include "event/EventService.hpp"
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
 #include "loc/LocationReportService.hpp"
@@ -155,6 +156,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<PhoneManagerServerImpl> phoneService =
         std::make_shared<PhoneManagerServerImpl>();
     builder.RegisterService(phoneService.get());
+
+    std::shared_ptr<ThermalGrpcServerImpl> thermalService =
+        std::make_shared<ThermalGrpcServerImpl>();
+    builder.RegisterService(thermalService.get());
 
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -340,6 +340,16 @@ telux::common::ServiceStatus CommonUtils::mapServiceStatus(std::string status) {
         return telux::common::ServiceStatus::SERVICE_AVAILABLE;
     } else {
         return telux::common::ServiceStatus::SERVICE_FAILED;
+    }
+}
+
+std::string CommonUtils::mapServiceString(telux::common::ServiceStatus srvStatus) {
+    if (srvStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        return "SERVICE_UNAVAILABLE";
+    } else if (srvStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        return "SERVICE_AVAILABLE";
+    } else {
+        return "SERVICE_FAILED";
     }
 }
 

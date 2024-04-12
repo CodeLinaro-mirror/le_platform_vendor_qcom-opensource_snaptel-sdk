@@ -21,7 +21,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_PLAYBACK_AMRWBPLUS} ${PLAYBACK_AMRWBPLUS_SOURCES})
-target_link_libraries(${TARGET_PLAYBACK_AMRWBPLUS} telux_audio)
+target_link_libraries(${TARGET_PLAYBACK_AMRWBPLUS} telux_audio pthread)
 
 # install to target
 install ( TARGETS ${TARGET_PLAYBACK_AMRWBPLUS}

@@ -21,7 +21,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_IN_CALL_RECORD_PCM} ${IN_CALL_RECORD_PCM_SOURCES})
-target_link_libraries(${TARGET_IN_CALL_RECORD_PCM} telux_audio)
+target_link_libraries(${TARGET_IN_CALL_RECORD_PCM} telux_audio pthread)
 
 # install to target
 install ( TARGETS ${TARGET_IN_CALL_RECORD_PCM}

@@ -244,6 +244,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
       std::cout << "valid protect vertical" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_DGNSS_STATION_ID)) {
+      std::cout << "valid dgnss station id" << std::endl;
+    }
 
 }
 
@@ -1155,6 +1158,18 @@ void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capa
   LocationUtils::displayCapabilities(capabilityMask);
 }
 
+void MyLocationListener::printDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
+    if(!dgnssStationIds.empty()) {
+        std::cout << "Dgnss Station IDs : ";
+        for(auto id: dgnssStationIds) {
+            std::cout << id << " ";
+        }
+        std::cout << std::endl;
+    } else {
+        std::cout << "No Dgnss Station Id is present\n";
+    }
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -1336,6 +1351,13 @@ void MyLocationListener::recordLocationInfo(
     recordStream << locationInfo->getNavigationSolution() << "," <<
     locationInfo->getElapsedGptpTime() << "," <<
     locationInfo->getElapsedGptpTimeUnc() << ",";
+
+    std::vector<uint16_t> dgnssStationIds = locationInfo->getDgnssStationIds();
+    recordStream << dgnssStationIds.size() << ",";
+    for (auto id : dgnssStationIds) {
+        recordStream << id << ",";
+    }
+
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
@@ -1465,6 +1487,7 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getProtectionLevelCrossTrack() << std::endl;
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
+   printDgnssStationIds(locationInfo->getDgnssStationIds());
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
@@ -1596,6 +1619,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
          locationInfo->getProtectionLevelCrossTrack() << std::endl;
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
+     printDgnssStationIds(locationInfo->getDgnssStationIds());
      std::cout << "*************************************************************" << std::endl;
 
      if(isRecordingEnabled_) {

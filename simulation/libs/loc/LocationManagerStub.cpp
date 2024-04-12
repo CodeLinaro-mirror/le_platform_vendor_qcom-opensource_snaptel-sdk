@@ -757,6 +757,14 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
     loc->setNavigationSolution(navSol);
     loc->setElapsedGptpTime(std::stoull(message[itr++]));
     loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
+    size_t dgnssStationIdsSize = std::stoi(message[itr++]);
+    std::vector<uint16_t> dgnssStationIds;
+    for(size_t i = 0; i < dgnssStationIdsSize; i++) {
+        auto msg = message[itr];
+        dgnssStationIds.push_back(msg.length() == 0 ? 0 : std::stoul(msg));
+        ++itr;
+    }
+    loc->setDgnssStationIds(dgnssStationIds);
 }
 
 void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,

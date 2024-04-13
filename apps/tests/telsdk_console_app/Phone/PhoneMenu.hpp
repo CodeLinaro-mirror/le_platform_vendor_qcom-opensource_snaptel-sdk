@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -74,6 +74,7 @@ private:
    void suppServicesMenu(std::vector<std::string> userInput);
    void resetWwan(std::vector<std::string> userInput);
    void configureSignalStrength(std::vector<std::string> userInput);
+   void configureSignalStrengthEx(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);

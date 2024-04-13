@@ -632,7 +632,9 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
             event.mutable_wcdma_signal_strength_info()->signal_strength(),
-            event.mutable_wcdma_signal_strength_info()->bit_error_rate());
+            event.mutable_wcdma_signal_strength_info()->bit_error_rate(),
+            event.mutable_wcdma_signal_strength_info()->ecio(),
+            event.mutable_wcdma_signal_strength_info()->rscp());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
             event.mutable_nr5g_signal_strength_info()->rsrp(),
@@ -710,7 +712,14 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                 int wcdmaBitErrorRate = event.mutable_cell_info_list(i)->
                     mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                     bit_error_rate();
-                WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate);
+                int wcdmaEcio = event.mutable_cell_info_list(i)->
+                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                    ecio();
+                int wcdmaRscp = event.mutable_cell_info_list(i)->
+                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                    rscp();
+                WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate,
+                    wcdmaEcio, wcdmaRscp);
                 WcdmaCellIdentity wcdmaCI(wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc,
                     wcdmaArfcn);
                 auto wcdmaCellInfo = std::make_shared<telux::tel::WcdmaCellInfo>

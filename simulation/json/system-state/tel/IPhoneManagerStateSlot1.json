@@ -85,7 +85,9 @@
                         "wcdmaSignalStrengthInfo" :
                         {
                             "signalStrength" : 2147483647,
-                            "bitErrorRate" : 2147483647
+                            "bitErrorRate" : 2147483647,
+                            "ecio" : 2147483647,
+                            "rscp" : 2147483647
                         }
                     },
                     "lteCellInfo" :
@@ -146,7 +148,10 @@
             "wcdmaSignalStrengthInfo" :
             {
                 "signalStrength" : 2147483647,
-                "bitErrorRate" : 2147483647
+                "bitErrorRate" : 2147483647,
+                "ecio" : 2147483647,
+                "rscp" : 2147483647
+
             },
             "lteSignalStrengthInfo" :
             {

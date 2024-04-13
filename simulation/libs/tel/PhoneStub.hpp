@@ -89,6 +89,9 @@ public:
     virtual telux::common::Status setECallOperatingMode(ECallMode eCallMode,
         telux::common::ResponseCallback callback);
     telux::common::Status requestOperatorInfo(OperatorInfoCallback callback);
+    telux::common::Status configureSignalStrength(
+        std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs = 0,
+        telux::common::ResponseCallback callback = nullptr);
 
 private:
     int phoneId_ = INVALID;

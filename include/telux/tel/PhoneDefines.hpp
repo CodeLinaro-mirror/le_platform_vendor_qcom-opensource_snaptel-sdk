@@ -50,6 +50,7 @@
 
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
+#define THRESHOLD_LIST_MAX 10
 
 namespace telux {
 
@@ -350,6 +351,7 @@ enum class EcbMode {
 
 /**
  * Defines the radio SignalStrength types for delta or threshold.
+ * @deprecated Use SignalStrengthMeasurementType with RadioTechnology.
  */
 enum class RadioSignalStrengthType {
    GSM_RSSI,     /**< GSM received signal strength indicator.*/
@@ -365,6 +367,7 @@ enum class RadioSignalStrengthType {
 
 /**
  * Defines the SignalStrength configuration parameters.
+ * @deprecated Use SignalStrengthConfigExType.
  */
 enum class SignalStrengthConfigType {
     DELTA = 1,       /**< Signal strength delta provided. */
@@ -372,7 +375,38 @@ enum class SignalStrengthConfigType {
 };
 
 /**
+ * Defines different configuration types to configure the signal strength notification. Each value
+ * represents a corresponding bit for the SignalStrengthConfigMask bitset.
+ */
+enum SignalStrengthConfigExType {
+    DELTA = 1,          /**< Signal strength delta provided. */
+    THRESHOLD = 2,      /**< Signal strength threshold list provided. */
+    HYSTERESIS_DB = 3,  /**< Signal strength hysteresis delta provided. */
+};
+
+/**
+ * 8-bit mask that denotes which signal strength config type is used for the signal strength
+ * configuration.
+ */
+using SignalStrengthConfigMask = std::bitset<8>;
+
+/**
+ * Defines different signal strength measurement types.
+ */
+enum class SignalStrengthMeasurementType {
+   RSSI,  /**< Received signal strength indicator. */
+   ECIO,  /**< Energy per chip to interference power ratio. */
+   SINR,  /**< Signal-to-interference-plus-noise ratio. */
+   IO,    /**< Interference power ratio. */
+   RSRQ,  /**< Reference signal received quality. */
+   RSRP,  /**< Reference signal received power. */
+   SNR,   /**< Signal-to-noise ratio. */
+   RSCP,  /**< Received signal code power. */
+};
+
+/**
  * Defines the SignalStrength threshold parameters.
+ * @deprecated Use the thresholdList field from SignalStrengthConfigData.
  */
 struct SignalStrengthThreshold {
    int32_t lowerRangeThreshold;     /**< Lower threshold for the selected
@@ -383,6 +417,7 @@ struct SignalStrengthThreshold {
 
 /**
  * Defines the SignalStrength notification configuration parameters and their corresponding values.
+ * @deprecated Use SignalStrengthConfigEx.
  */
 struct SignalStrengthConfig {
    SignalStrengthConfigType configType;     /**< Signal strength configuration type. */
@@ -405,6 +440,38 @@ struct PlmnInfo {
                                             and MNC.  */
    telux::common::BoolValue isHome;    /**< Represents whether the network is the home network,
                                             default state is STATE_UNKNOWN*/
+};
+
+/**
+ * Defines the signal strength configuration data parameters.
+ */
+struct SignalStrengthConfigData {
+   SignalStrengthMeasurementType sigMeasType;       /**< Signal strength measurement type. */
+   /** Signal strength data. */
+   union {
+      uint16_t delta;                               /**< Signal strength delta. */
+      struct {
+         std::array<int32_t, THRESHOLD_LIST_MAX> thresholdList;
+                                                    /**< Signal strength threshold list. */
+         uint16_t hysteresisDb = 0;                 /**< (Optional) Signal strength hysteresis
+                                                         delta; note hysteresis db is not
+                                                         mandatory but hystersis db requires that
+                                                         the threshold list is specified. */
+      };
+   };
+};
+
+/**
+ * Defines the signal strength notification configuration parameters.
+ */
+struct SignalStrengthConfigEx {
+   SignalStrengthConfigMask configTypeMask;             /**< Signal strength configuration mask.
+                                                             Both delta and threshold can't be sent
+                                                             in single request. Hysteresis db is
+                                                             applicable only when threshold is
+                                                             configured. */
+   RadioTechnology radioTech;                           /**< Radio technology. */
+   std::vector<SignalStrengthConfigData> sigConfigData; /** Signal strength data. */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

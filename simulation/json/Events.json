@@ -124,7 +124,7 @@
             "rat:     string, RAT type. RAT for retrieving Signal Strength information. valid values are GSM, LTE, WCDMA, NR5G.",
             "In case of RAT is GSM,   integer, p1->gsmSignalStrength, p2->gsmBitErrorRate.",
             "In case of RAT is LTE,   integer, p1->lteSignalStrength, p2->lteRsrp, p3->lteRsrq, p4->lteRssnr, p5->lteCqi, p6->timingAdvance.",
-            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate.",
+            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate, p3->ecio, p4->rscp.",
             "In case of RAT is NR5G,  integer, p1->rsrp, p2->rsrq, p3->rssnr.",
             "CDMA and TDSCDMA are deprecated.",
             "example: telsdk_event_injector -f tel_phone -e \"signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300\""
@@ -136,7 +136,7 @@
             "cellType:     integer, Cell type. Valid cellTypes are GSM-1, LTE-3, WCDMA-4, NR5G-6 (CDMA and TDSCDMA not supported)",
             "isRegistered: integer, Registered cell or not, Valid values are 1 or 0",
             "GSM cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->arfcn> <p6->bsic> <p7->gsmSignalStrength> <p8->gsmBitErrorRate>",
-            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate>",
+            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate> <p9->ecio> <p10->rscp>",
             "LTE cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->earfcn> <p7->lteSignalStrength> <p8->lteRsrp> <p9->lteRsrq> <p10->lteRssnr> <p11->lteCqi> <p12->timingAdvance>",
             "NR5G cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->arfcn> <p7->rsrp> <p8->rsrq> <p9->rssnr>",
             "example: telsdk_event_injector -f tel_phone -e \"cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300\""

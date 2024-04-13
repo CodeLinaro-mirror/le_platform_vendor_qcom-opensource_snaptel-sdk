@@ -219,6 +219,25 @@ void MyPhoneListener::onSignalStrengthChanged(
             PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
                  << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
         }
+
+        if(signalStrength->getWcdmaSignalStrength()->getEcio()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << signalStrength->getWcdmaSignalStrength()->getEcio() << std::endl;
+        }
+
+        if(signalStrength->getWcdmaSignalStrength()->getRscp()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "WCDMA Reference Signal Code Power(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "WCDMA Reference Signal Code Power(in dBm): "
+                << signalStrength->getWcdmaSignalStrength()->getRscp() << std::endl;
+        }
+
         PRINT_NOTIFICATION
             << "WCDMA Signal Level: "
             << MyPhoneHelper::signalLevelToString(

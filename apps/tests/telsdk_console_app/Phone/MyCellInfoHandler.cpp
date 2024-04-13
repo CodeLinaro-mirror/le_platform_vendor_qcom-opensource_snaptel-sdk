@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -264,6 +264,24 @@ void MyCellInfoCallback::cellInfoListResponse(
                PRINT_CB << "WCDMA Bit Error Rate: "
                     << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate() << std::endl;
             }
+            if (wcdmaCellInfo->getSignalStrengthInfo().getEcio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getEcio() << std::endl;
+            }
+
+            if (wcdmaCellInfo->getSignalStrengthInfo().getRscp()
+                 == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
+            }
+
             PRINT_CB
                << "WCDMA Signal Level: "
                << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())

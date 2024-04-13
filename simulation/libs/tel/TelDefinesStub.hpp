@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -53,11 +53,17 @@ const std::string  TEL_HTTP_FILTER = "tel_http";
 const std::string  TEL_IMS_SERVING_FILTER = "tel_ims_serv";
 const std::string  TEL_IMS_SETTINGS_FILTER = "tel_ims_setting";
 const std::string  TEL_MULTISIM_FILTER = "tel_multisim";
+const std::string  TEL_SERVING_SYSTEM = "tel_serv";
 const std::string  TEL_NETWORK_SELECTION_FILTER = "tel_network_select";
 const std::string  TEL_PHONE_FILTER = "tel_phone";
 const std::string  TEL_REMOTE_SIM_FILTER = "tel_remote";
 const std::string  TEL_SAP_CARD_FILTER = "tel_sap";
-const std::string  TEL_SERVING_SYSTEM_FILTER = "tel_serv";
+const std::string TEL_SERVING_SYSTEM_FILTER = "tel_serv";
+const std::string  TEL_SERVING_SYSTEM_SELECTION_PREF = "tel_serv_sel_pref";
+const std::string  TEL_SERVING_SYSTEM_INFO = "tel_serv_sys_info";
+const std::string  TEL_SERVING_SYSTEM_NETWORK_TIME = "tel_serv_network_time";
+const std::string  TEL_SERVING_SYSTEM_RF_BAND_INFO = "tel_serv_rf_band_info";
+const std::string  TEL_SERVING_SYSTEM_NETWORK_REJ_INFO = "tel_serv_network_reject_info";
 const std::string  TEL_SIM_PROFILE_FILTER = "tel_sim";
 const std::string  TEL_SMS_FILTER = "tel_sms";
 const std::string  TEL_SUBSCRIPTION_FILTER = "tel_sub";

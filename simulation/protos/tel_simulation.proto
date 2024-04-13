@@ -225,6 +225,50 @@ message GetCardStateRequest {
      int32 phone_id = 1;
  }
 
+ message SystemSelectionPreferenceEvent {
+     int32 phone_id = 1;
+     repeated RatPrefType rat_pref_types = 2;
+     ServiceDomainPreference.Pref service_domain_pref = 3;
+ }
+
+ message SystemInfoEvent {
+     int32 phone_id = 1;
+     RadioTechnology current_rat = 2;
+     ServiceDomainInfo.Domain current_domain = 3;
+     EndcAvailability.Status endc_availability = 4;
+     DcnrRestriction.Status dcnr_restriction = 5;
+ }
+
+ message NetworkTimeInfoEvent {
+     int32 phone_id = 1;
+     uint32 year = 2;
+     uint32 month = 3;
+     uint32 day = 4;
+     uint32 hour = 5;
+     uint32 minute = 6;
+     uint32 second = 7;
+     uint32 day_of_week = 8;
+     int32 time_zone = 9;
+     uint32 dst_adj = 10;
+     string nitz_time = 11;
+ }
+
+ message RFBandInfoEvent {
+     int32 phone_id = 1;
+     RFBand band = 2;
+     uint32 channel = 3;
+     RFBandWidth band_width = 4;
+ }
+
+ message NetworkRejectInfoEvent {
+     int32 phone_id = 1;
+     RadioTechnology reject_rat = 2;
+     ServiceDomainInfo.Domain reject_domain = 3;
+     uint32 reject_cause = 4;
+     string mcc = 5;
+     string mnc = 6;
+ }
+
  enum AppType {
      APPTYPE_UNKNOWN = 0;
      APPTYPE_SIM = 1;

@@ -70,7 +70,15 @@ private:
     void handleCallBarringUpdate(std::string eventParams);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
     void onEventUpdate(std::string event);
+    void handleSystemSelectionPreferenceChanged(std::string eventParams);
+    void handleSystemInfoUpdateEvent(std::string eventParams);
+    void handleNetworkTimeUpdateEvent(std::string eventParams);
+    void handleRfBandInfoUpdateEvent(std::string eventParams);
+    void handleNetworkRejectionUpdateEvent(std::string eventParams);
+    void triggerSystemSelectionPreferenceEvent(int slotId,
+        std::vector<uint8_t> ratPrefs, int domain);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+
 };
 
 #endif // SERVING_SYSTEM_MANAGER_SERVER_HPP

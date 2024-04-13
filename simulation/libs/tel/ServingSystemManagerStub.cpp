@@ -39,11 +39,14 @@ void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) 
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
     if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<IServingSystemListener>>();
+            std::make_shared<telux::common::ListenerManager<IServingSystemListener,
+                ServingSystemNotificationMask >>();
         if(!listenerMgr_) {
             LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
             cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
         }
+        // TODO: Add SSR related changes
+        LOG(DEBUG, __FUNCTION__, " ServingSystemManager is ready");
     }
     if(callback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
@@ -115,36 +118,240 @@ bool ServingSystemManagerStub::isSubsystemReady() {
 
 telux::common::Status ServingSystemManagerStub::registerListener(
     std::weak_ptr<IServingSystemListener> listener, ServingSystemNotificationMask mask) {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " mask - ", mask.to_string());
     telux::common::Status status = telux::common::Status::FAILED;
-    if (listenerMgr_) {
-        status = listenerMgr_->registerListener(listener);
-        std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER};
-        std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
-        listenerMgr_->getAvailableListeners(applisteners);
-        if (applisteners.size() == 1) {
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
-            clientEventManager.registerListener(shared_from_this(), filters);
-        } else {
-            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
-        }
+    if (!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+        return telux::common::Status::FAILED;
     }
+    do {
+        // Check if client is trying to register all optional and default indications. If so, reset
+        // the invalid bits in bitset. Invalid bits are those that doesn't represent any
+        // notification. This is done to avoid holding listener objects for those invalid bits.
+        if(mask == ALL_NOTIFICATIONS) {
+            mask.reset();
+            // Keep setting the bits for any new notifications here
+            mask.set(ServingSystemNotificationType::SYSTEM_INFO);
+            mask.set(ServingSystemNotificationType::RF_BAND_INFO);
+            mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+        }
+        // TODO: Update client mask for post SSR
+        // Register for default notifications
+        status = listenerMgr_->registerListener(listener);
+        // If no optional indications are chosen, return with registration status of default
+        // indications
+        if(mask.none()) {
+            break;
+        }
+        // Ignore status == telux::common::Status::ALREADY for default notifications, since app can
+        // call this function multiple times for registering a different indication each time.
+        if(status != telux::common::Status::SUCCESS && status != telux::common::Status::ALREADY) {
+            LOG(ERROR, __FUNCTION__, " Failed to register for default notifications, error: ",
+            static_cast<int>(status));
+            break;
+        }
+        // Register for default indications
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        status = clientEventManager.registerListener(shared_from_this(),
+                { TEL_SERVING_SYSTEM_SELECTION_PREF, TEL_SERVING_SYSTEM_NETWORK_TIME });
+        if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+            LOG(ERROR, __FUNCTION__, ":: Registering for default notifications failed");
+            return status;
+        }
+
+        ServingSystemNotificationMask firstReg = {};
+        // Register for chosen optional notifications
+        status = listenerMgr_->registerListener(listener, mask, firstReg);
+        if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to register for notification mask - ",
+            mask.to_string(), ", error: ", static_cast<int>(status));
+            break;
+        }
+        if(firstReg.test(ServingSystemNotificationType::SYSTEM_INFO)) {
+            status = clientEventManager.registerListener(shared_from_this(),
+                { telux::tel::TEL_SERVING_SYSTEM_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                    (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, ":: Registering system info change event failed");
+                return status;
+            }
+        }
+        if (firstReg.test(ServingSystemNotificationType::RF_BAND_INFO)) {
+             status = clientEventManager.registerListener(shared_from_this(),
+                { telux::tel::TEL_SERVING_SYSTEM_RF_BAND_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                    (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, ":: Registering rf band info event failed");
+                return status;
+            }
+        }
+        if (firstReg.test(ServingSystemNotificationType::NETWORK_REJ_INFO)) {
+             status = clientEventManager.registerListener(shared_from_this(),
+                { telux::tel::TEL_SERVING_SYSTEM_NETWORK_REJ_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                    (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, ":: Registering network reject info event failed");
+                return status;
+            }
+        }
+    } while(0);
     return status;
 }
 
 telux::common::Status ServingSystemManagerStub::deregisterListener(
     std::weak_ptr<IServingSystemListener> listener, ServingSystemNotificationMask mask) {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " mask - ", mask.to_string());
     telux::common::Status status = telux::common::Status::FAILED;
-    if (listenerMgr_) {
-        std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
-        status = listenerMgr_->deRegisterListener(listener);
-        listenerMgr_->getAvailableListeners(applisteners);
-        if (applisteners.size() == 0) {
-            std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
-            clientEventManager.deregisterListener(shared_from_this(), filters);
+    bool deregisteredMainListener = false;
+    if (!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+        return telux::common::Status::FAILED;
+    }
+    do {
+        // Empty mask is an invalid input for de-registration
+        if(mask.none()) {
+            LOG(ERROR, __FUNCTION__, " Empty mask");
+            status = telux::common::Status::INVALIDPARAM;
+            break;
         }
+        // De-register all optional and default indications
+        if(mask == ALL_NOTIFICATIONS) {
+            status = listenerMgr_->deRegisterListener(listener);
+            if(status != telux::common::Status::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " Failed to de-register for default notifications,error ",
+                    static_cast<int>(status));
+                break;
+            }
+            deregisteredMainListener = true;
+            // Reset all invalid bits in bitmask. Invalid bits are those that doesn't represent any
+            // notification. This is done because no invalid bits are set during registration.
+            mask.reset();
+            // Keep setting the bits for any new notifications here
+            mask.set(ServingSystemNotificationType::SYSTEM_INFO);
+            mask.set(ServingSystemNotificationType::RF_BAND_INFO);
+            mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+        }
+        // TODO: Update client mask for SSR
+        // De-register optional indications
+        ServingSystemNotificationMask lastReg;
+        status = listenerMgr_->deRegisterListener(listener, mask, lastReg);
+        if(deregisteredMainListener && status == telux::common::Status::NOSUCH) {
+            // If no optional indications were registered earlier, the app might have called this
+            // function just to de-register the default indications. So considering it as SUCCESS
+            return telux::common::Status::SUCCESS;
+        }
+        if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to de-register for notification mask - ",
+                mask.to_string(), ", error: ", static_cast<int>(status));
+            break;
+        }
+
+        // Deregister for default indications.
+        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+                status = clientEventManager.deregisterListener(shared_from_this(),
+                    { telux::tel::TEL_SERVING_SYSTEM_SELECTION_PREF,
+                      telux::tel::TEL_SERVING_SYSTEM_NETWORK_TIME });
+        if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, " DeRegistering default events failed");
+                return status;
+        }
+
+        if(lastReg.test(ServingSystemNotificationType::SYSTEM_INFO)) {
+            status = clientEventManager.deregisterListener(shared_from_this(),
+                        { telux::tel::TEL_SERVING_SYSTEM_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, " DeRegistering system info event failed");
+                return status;
+            }
+        }
+
+        if(lastReg.test(ServingSystemNotificationType::RF_BAND_INFO)) {
+            status = clientEventManager.deregisterListener(shared_from_this(),
+                        { telux::tel::TEL_SERVING_SYSTEM_RF_BAND_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, " DeRegistering rf band info event failed");
+                return status;
+            }
+        }
+
+        if(lastReg.test(ServingSystemNotificationType::NETWORK_REJ_INFO)) {
+            status = clientEventManager.deregisterListener(shared_from_this(),
+                        { telux::tel::TEL_SERVING_SYSTEM_NETWORK_REJ_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, " DeRegistering network reject info event failed");
+                return status;
+            }
+        }
+    } while(0);
+    return status;
+}
+
+telux::tel::DcStatus ServingSystemManagerStub::getDcStatus() {
+    LOG(DEBUG, __FUNCTION__);
+    DcStatus dcStatus = {EndcAvailability::UNKNOWN, DcnrRestriction::UNKNOWN};
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return dcStatus;
+    }
+    ::telStub::GetDcStatusRequest request;
+    ::telStub::GetDcStatusReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetDcStatus(&context, request, &response);
+    if (reqstatus.ok()) {
+        dcStatus.endcAvailability =
+        static_cast<telux::tel::EndcAvailability>(response.endc_availability());
+        dcStatus.dcnrRestriction =
+            static_cast<telux::tel::DcnrRestriction>(response.dcnr_restriction());
+        LOG(DEBUG, __FUNCTION__, "endcAvailability is ",
+            static_cast<int>(dcStatus.endcAvailability) , "dcnrRestriction is ",
+            static_cast<int>(dcStatus.dcnrRestriction));
+    }
+    return dcStatus;
+}
+
+telux::common::Status ServingSystemManagerStub::setRatPreference(RatPreference ratPref,
+    common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SetRATPreferenceRequest request;
+    ::telStub::SetRATPreferenceReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    int size = ratPref.size();
+    for (int j = 0; j < size ; j++)
+    {
+        if(ratPref.test(j)) {
+            request.add_rat_pref_types(static_cast<telStub::RatPrefType>(j));
+        }
+    }
+    grpc::Status reqstatus = stub_->SetRATPreference(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int cbDelay = static_cast<int>(response.delay());
+    if((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+    auto f = std::async(std::launch::async,
+        [this, cbDelay, error, callback]() {
+            if (callback) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }
+        }).share();
+    taskQ_->add(f);
     }
     return status;
 }
@@ -152,6 +359,10 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
 telux::common::Status
     ServingSystemManagerStub::requestRatPreference(RatPreferenceCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestRATPreferenceRequest request;
     ::telStub::RequestRATPreferenceReply response;
     ClientContext context;
@@ -186,6 +397,10 @@ telux::common::Status
 telux::common::Status ServingSystemManagerStub::setServiceDomainPreference(
     ServiceDomainPreference serviceDomain, common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::SetServiceDomainPreferenceRequest request;
     ::telStub::SetServiceDomainPreferenceReply response;
     ClientContext context;
@@ -217,6 +432,10 @@ telux::common::Status ServingSystemManagerStub::setServiceDomainPreference(
 telux::common::Status ServingSystemManagerStub::requestServiceDomainPreference(
     ServiceDomainPreferenceCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestServiceDomainPreferenceRequest request;
     ::telStub::RequestServiceDomainPreferenceReply response;
     ClientContext context;
@@ -248,6 +467,10 @@ telux::common::Status ServingSystemManagerStub::requestServiceDomainPreference(
 
 telux::common::Status ServingSystemManagerStub::getSystemInfo(ServingSystemInfo &sysInfo) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::GetSystemInfoRequest request;
     ::telStub::GetSystemInfoReply response;
     ClientContext context;
@@ -267,6 +490,10 @@ telux::common::Status ServingSystemManagerStub::getSystemInfo(ServingSystemInfo 
 telux::common::Status ServingSystemManagerStub::requestNetworkTime(
     NetworkTimeResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestNetworkTimeRequest request;
     ::telStub::RequestNetworkTimeReply response;
     ClientContext context;
@@ -307,6 +534,10 @@ telux::common::Status ServingSystemManagerStub::requestNetworkTime(
 
 telux::common::Status ServingSystemManagerStub::requestRFBandInfo(RFBandInfoCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestRFBandInfoRequest request;
     ::telStub::RequestRFBandInfoReply response;
     ClientContext context;
@@ -338,60 +569,13 @@ telux::common::Status ServingSystemManagerStub::requestRFBandInfo(RFBandInfoCall
     return status;
 }
 
-telux::tel::DcStatus ServingSystemManagerStub::getDcStatus() {
-    LOG(DEBUG, __FUNCTION__);
-    ::telStub::GetDcStatusRequest request;
-    ::telStub::GetDcStatusReply response;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-
-    grpc::Status reqstatus = stub_->GetDcStatus(&context, request, &response);
-    DcStatus status;
-    status.endcAvailability =
-        static_cast<telux::tel::EndcAvailability>(response.endc_availability());
-    status.dcnrRestriction = static_cast<telux::tel::DcnrRestriction>(response.dcnr_restriction());
-    return status;
-}
-
-telux::common::Status ServingSystemManagerStub::setRatPreference(RatPreference ratPref,
-    common::ResponseCallback callback) {
-    LOG(DEBUG, __FUNCTION__);
-    ::telStub::SetRATPreferenceRequest request;
-    ::telStub::SetRATPreferenceReply response;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-    int size = ratPref.size();
-    for (int j = 0; j < size ; j++)
-    {
-        if(ratPref.test(j)) {
-            request.add_rat_pref_types(static_cast<telStub::RatPrefType>(j));
-        }
-    }
-    grpc::Status reqstatus = stub_->SetRATPreference(&context, request, &response);
-    if (!reqstatus.ok()) {
-        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
-        return telux::common::Status::FAILED;
-    }
-    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int cbDelay = static_cast<int>(response.delay());
-    if((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
-    auto f = std::async(std::launch::async,
-        [this, cbDelay, error, callback]() {
-            if (callback) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(error);
-            }
-        }).share();
-    taskQ_->add(f);
-    }
-    return status;
-}
-
 telux::common::Status ServingSystemManagerStub::getNetworkRejectInfo
     (NetworkRejectInfo &rejectInfo) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::GetNetworkRejectInfoRequest request;
     ::telStub::GetNetworkRejectInfoReply response;
     ClientContext context;
@@ -415,6 +599,10 @@ telux::common::Status ServingSystemManagerStub::getNetworkRejectInfo
 telux::common::Status ServingSystemManagerStub::getCallBarringInfo
     (std::vector<CallBarringInfo> &barringInfo) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::GetCallBarringInfoRequest request;
     ::telStub::GetCallBarringInfoReply response;
     ClientContext context;
@@ -482,10 +670,196 @@ void ServingSystemManagerStub::handleCallBarringInfosChanged
 }
 
 void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
     if(event.Is<::telStub::CallBarringInfosEvent>()) {
         ::telStub::CallBarringInfosEvent callBarringInfosChangeEvent;
         event.UnpackTo(&callBarringInfosChangeEvent);
         handleCallBarringInfosChanged(callBarringInfosChangeEvent);
+    } else if (event.Is<::telStub::SystemSelectionPreferenceEvent>()) {
+        ::telStub::SystemSelectionPreferenceEvent systemSelectionPreferenceEvent;
+        event.UnpackTo(&systemSelectionPreferenceEvent);
+        handleSystemSelectionPreferenceChanged(systemSelectionPreferenceEvent);
+    } else if (event.Is<::telStub::SystemInfoEvent>()) {
+        ::telStub::SystemInfoEvent systemInfoEvent;
+        event.UnpackTo(&systemInfoEvent);
+        handleSystemInfoChanged(systemInfoEvent);
+    } else if (event.Is<::telStub::NetworkTimeInfoEvent>()) {
+        ::telStub::NetworkTimeInfoEvent networkTimeInfoEvent;
+        event.UnpackTo(&networkTimeInfoEvent);
+        handleNetworkTimeChange(networkTimeInfoEvent);
+    } else if (event.Is<::telStub::NetworkRejectInfoEvent>()) {
+        ::telStub::NetworkRejectInfoEvent networkRejectInfoEvent;
+        event.UnpackTo(&networkRejectInfoEvent);
+        handleNetworkRejection(networkRejectInfoEvent);
+    } else if (event.Is<::telStub::RFBandInfoEvent>()) {
+        ::telStub::RFBandInfoEvent rFBandInfoEvent;
+        event.UnpackTo(&rFBandInfoEvent);
+        handleRfBandInfoUpdateEvent(rFBandInfoEvent);
+    }
+}
+
+void ServingSystemManagerStub::handleRfBandInfoUpdateEvent(::telStub::RFBandInfoEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    RFBandInfo info;
+    info.band = static_cast<RFBand>(event.band());
+    info.channel = event.channel();
+    info.bandWidth = static_cast<RFBandWidth>(event.band_width());
+
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(
+        ServingSystemNotificationType::RF_BAND_INFO, applisteners);
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onRFBandInfoChanged(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    DcStatus dcStatus;
+    dcStatus.endcAvailability = static_cast<EndcAvailability>(event.endc_availability());
+    dcStatus.dcnrRestriction = static_cast<DcnrRestriction>(event.dcnr_restriction());
+
+    ServingSystemInfo info;
+    info.rat = static_cast<RadioTechnology>(event.current_rat());
+    info.domain = static_cast<ServiceDomain>(event.current_domain());
+
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(
+        ServingSystemNotificationType::SYSTEM_INFO, applisteners);
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onDcStatusChanged(dcStatus);
+            }
+        }
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onSystemInfoChanged(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ServingSystemManagerStub::handleSystemSelectionPreferenceChanged
+    (::telStub::SystemSelectionPreferenceEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    RatPreference preference;
+    for (auto &r : event.rat_pref_types()) {
+        preference.set(static_cast<int>(r));
+    }
+
+    ServiceDomainPreference domain =
+        static_cast<telux::tel::ServiceDomainPreference>(event.service_domain_pref());
+
+    LOG(DEBUG, __FUNCTION__, " ServiceDomainPreference is  ", static_cast<int>(domain));
+
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onRatPreferenceChanged(preference);
+            }
+        }
+
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onServiceDomainPreferenceChanged(domain);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+
+}
+
+void ServingSystemManagerStub::handleNetworkTimeChange(::telStub::NetworkTimeInfoEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        NetworkTimeInfo info;
+        info.year = event.year();
+        info.month = event.month();
+        info.day = event.day();
+        info.hour = event.hour();
+        info.minute = event.minute();
+        info.second = event.second();
+        info.dayOfWeek = event.day_of_week();
+        info.timeZone = event.time_zone();
+        info.dstAdj = event.dst_adj();
+        info.nitzTime = event.nitz_time();
+
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onNetworkTimeChanged(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ServingSystemManagerStub::handleNetworkRejection(::telStub::NetworkRejectInfoEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        NetworkRejectInfo rejectInfo;
+        listenerMgr_->getAvailableListeners(
+            ServingSystemNotificationType::NETWORK_REJ_INFO, applisteners);
+
+        rejectInfo.rejectSrvInfo.rat = static_cast<telux::tel::RadioTechnology>(event.reject_rat());
+        rejectInfo.rejectSrvInfo.domain =
+            static_cast<telux::tel::ServiceDomain>(event.reject_domain());
+        rejectInfo.rejectCause = event.reject_cause();
+        rejectInfo.mcc = event.mcc();
+        rejectInfo.mnc = event.mnc();
+
+        LOG(DEBUG, __FUNCTION__, " MCC is ", rejectInfo.mcc, ", MNC is ", rejectInfo.mnc);
+
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onNetworkRejection(rejectInfo);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 

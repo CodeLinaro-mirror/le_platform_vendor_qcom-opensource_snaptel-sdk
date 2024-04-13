@@ -8,7 +8,7 @@
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
-
+#include <telux/common/DeviceConfig.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 #define JSON_PATH1 "api/tel/IServingSystemManagerSlot1.json"
@@ -16,6 +16,11 @@
 #define JSON_PATH3 "system-state/tel/IServingSystemManagerStateSlot1.json"
 #define JSON_PATH4 "system-state/tel/IServingSystemManagerStateSlot2.json"
 #define MANAGER "IServingSystemManager"
+#define SYSTEM_SELECTION_PREFERENCE "systemSelectionPreferenceUpdate"
+#define SYSTEM_INFO "systemInfoUpdate"
+#define NETWORK_TIME "networkTimeUpdate"
+#define RF_BAND_INFO "rFBandInfoUpdate"
+#define NETWORK_REJECTION "networkRejectionUpdate"
 #define SLOT_1 1
 #define SLOT_2 2
 #define CALL_BARRING_UPDATE_EVENT "callBarringUpdate"
@@ -27,7 +32,7 @@ ServingManagerServerImpl::ServingManagerServerImpl() {
 
 ServingManagerServerImpl::~ServingManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
-    if (taskQ_) {
+    if(taskQ_) {
         taskQ_ = nullptr;
     }
 }
@@ -57,7 +62,7 @@ grpc::Status ServingManagerServerImpl::InitService(ServerContext* context,
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
     if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER};
+        std::vector<std::string> filters = { telux::tel::TEL_SERVING_SYSTEM };
         auto &serverEventManager = ServerEventManager::getInstance();
         serverEventManager.registerListener(shared_from_this(), filters);
     }
@@ -133,6 +138,7 @@ grpc::Status ServingManagerServerImpl::SetRATPreference(ServerContext* context,
     std::string subsystem = MANAGER;
     std::string method = "setRatPreference";
     JsonData data;
+    std::vector<uint8_t> ratPrefs;
     telux::common::ErrorCode error =
         CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
@@ -141,7 +147,6 @@ grpc::Status ServingManagerServerImpl::SetRATPreference(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
     if(data.status == telux::common::Status::SUCCESS) {
-        std::vector<uint8_t> ratPrefs;
         for (auto rat : request->rat_pref_types()) {
             ratPrefs.emplace_back(static_cast<uint8_t>(rat));
         }
@@ -155,10 +160,19 @@ grpc::Status ServingManagerServerImpl::SetRATPreference(ServerContext* context,
     } else {
         response->set_is_callback(false);
     }
+    int phoneId = request->phone_id();
+    auto f = std::async(std::launch::async, [this, phoneId, ratPrefs]() {
+            std::string stateJsonPath = (phoneId == SLOT_1 ) ?
+                "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+            int domain = stoi(CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "ServiceDomainPreference"}));
+            this->triggerSystemSelectionPreferenceEvent(phoneId, ratPrefs, domain);
+        }).share();
+    taskQ_->add(f);
+
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
-
     return grpc::Status::OK;
 }
 
@@ -218,6 +232,22 @@ grpc::Status ServingManagerServerImpl::SetServiceDomainPreference(ServerContext*
         data.stateRootObj[MANAGER]["ServiceDomainPreference"] = static_cast<int>(pref);
         JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
     }
+    int phoneId = request->phone_id();
+    int domain = static_cast<int>(request->service_domain_pref());
+    auto f = std::async(std::launch::async, [this, phoneId, domain]() {
+            std::string stateJsonPath = (phoneId == SLOT_1 ) ?
+                "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+            std::string rats = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "RATPreference"});
+            LOG(DEBUG, __FUNCTION__,"String is ", rats);
+            std::vector<int> raTdata = CommonUtils::convertStringToVector(rats);
+            std::vector<uint8_t> raTs;
+            for(int i : raTdata) {
+                raTs.push_back(static_cast<uint8_t>(i));
+            }
+            this->triggerSystemSelectionPreferenceEvent(phoneId, raTs, domain);
+        }).share();
+    taskQ_->add(f);
     //Create response
     if(data.cbDelay != -1) {
         response->set_is_callback(true);
@@ -231,35 +261,39 @@ grpc::Status ServingManagerServerImpl::SetServiceDomainPreference(ServerContext*
     return grpc::Status::OK;
 }
 
+void ServingManagerServerImpl::triggerSystemSelectionPreferenceEvent(int slotId,
+    std::vector<uint8_t> ratPrefs, int domain) {
+    ::telStub::SystemSelectionPreferenceEvent systemSelectionPreference;
+    ::eventService::EventResponse anyResponse;
+
+    systemSelectionPreference.set_phone_id(slotId);
+    for(auto &it : ratPrefs) {
+         systemSelectionPreference.add_rat_pref_types(static_cast<telStub::RatPrefType>(it));
+    }
+    systemSelectionPreference.set_service_domain_pref
+        (static_cast<telStub::ServiceDomainPreference_Pref>(domain));
+    anyResponse.set_filter("tel_serv_sel_pref");
+    anyResponse.mutable_any()->PackFrom(systemSelectionPreference);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+}
+
 grpc::Status ServingManagerServerImpl::GetDcStatus(ServerContext* context,
     const ::telStub::GetDcStatusRequest* request,
     telStub::GetDcStatusReply* response) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
-    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
-    std::string subsystem = MANAGER;
-    std::string method = "getDcStatus";
-    JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string stateJsonPath = (request->phone_id() == SLOT_1 ) ?
+        "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
 
-    if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
-        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
-    }
-    if(data.status == telux::common::Status::SUCCESS) {
-        telux::tel::DcStatus status;
-        status.endcAvailability =
-        static_cast<telux::tel::EndcAvailability>(data.stateRootObj[MANAGER]["DcStatus"]\
-            ["endcAvailability"].asInt());
-        status.dcnrRestriction =
-        static_cast<telux::tel::DcnrRestriction>(data.stateRootObj[MANAGER]["DcStatus"]\
-            ["dcnrRestriction"].asInt());
-        response->set_endc_availability(
-        static_cast<telStub::EndcAvailability_Status>(status.endcAvailability));
-        response->set_dcnr_restriction
-        (static_cast<telStub::DcnrRestriction_Status>(status.dcnrRestriction));
-    }
+    int endcAvailability = stoi(CommonUtils::readSystemDataValue(stateJsonPath, "0",
+            {"IServingSystemManager", "DcStatus", "endcAvailability"}));
+    int dcnrRestriction = stoi(CommonUtils::readSystemDataValue(stateJsonPath, "0",
+            {"IServingSystemManager", "DcStatus", "dcnrRestriction"}));
+    response->set_endc_availability(
+    static_cast<telStub::EndcAvailability_Status>(endcAvailability));
+    response->set_dcnr_restriction
+    (static_cast<telStub::DcnrRestriction_Status>(dcnrRestriction));
     return grpc::Status::OK;
 }
 
@@ -325,6 +359,7 @@ grpc::Status ServingManagerServerImpl::RequestNetworkTime(ServerContext* context
         info.set_year(result.year);
         info.set_month(result.month);
         info.set_day(result.day);
+        info.set_hour(result.hour);
         info.set_minute(result.minute);
         info.set_second(result.second);
         info.set_day_of_week(result.dayOfWeek);
@@ -546,19 +581,534 @@ void ServingManagerServerImpl::triggerChangeEvent(::eventService::EventResponse 
     eventImpl.updateEventQueue(anyResponse);
 }
 
+void ServingManagerServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__,"Token is ", token );
+    if ( SYSTEM_SELECTION_PREFERENCE == token) {
+        handleSystemSelectionPreferenceChanged(event);
+    } else if( SYSTEM_INFO == token) {
+        handleSystemInfoUpdateEvent(event);
+    } else if( NETWORK_TIME == token) {
+        handleNetworkTimeUpdateEvent(event);
+    } else if( RF_BAND_INFO == token) {
+        handleRfBandInfoUpdateEvent(event);
+    } else if( NETWORK_REJECTION == token) {
+        handleNetworkRejectionUpdateEvent(event);
+    } else if (CALL_BARRING_UPDATE_EVENT == token) {
+        handleCallBarringUpdate(event);
+    } else {
+        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+    }
+}
+
 void ServingManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
     if (message.filter() == telux::tel::TEL_SERVING_SYSTEM_FILTER) {
         onEventUpdate(message.event());
     }
 }
 
-void ServingManagerServerImpl::onEventUpdate(std::string event) {
-    LOG(DEBUG, __FUNCTION__," Event string is ", event );
-    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__," Token String is ", token );
-    if (CALL_BARRING_UPDATE_EVENT == token) {
-        handleCallBarringUpdate(event);
-    } else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+void ServingManagerServerImpl::handleNetworkRejectionUpdateEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    try {
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            slotId = std::stoi(token);
+        }
+        if((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId ,
+            " leftover string is: ", eventParams);
+        // Fetch rejectSrvInfoRat
+        int rejectSrvInfoRat;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " Rat is not passed ");
+            rejectSrvInfoRat = 0;
+        } else {
+            rejectSrvInfoRat = std::stoi(token);
+        }
+
+        // Fetch rejectSrvInfoDomain
+        int rejectSrvInfoDomain;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "Storage type not passed, assuming UNKNOWN");
+            rejectSrvInfoDomain = 0;
+        } else {
+            rejectSrvInfoDomain = std::stoi(token);
+        }
+        // Fetch rejectCause
+        int rejectCause;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " rejectCause not passed ");
+            rejectCause = 0;
+        } else {
+            rejectCause = std::stoi(token);
+        }
+
+        // Fetch mcc
+        std::string mcc;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " mcc type not passed ");
+            mcc = "";
+        } else {
+            mcc = token;
+        }
+
+        // Fetch mnc
+        std::string mnc;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " mnc type not passed ");
+            mnc = "";
+        } else {
+            mnc = token;
+        }
+
+    LOG(INFO, __FUNCTION__, " rejectSrvInfoRat is ", rejectSrvInfoRat, " rejectCause is ",
+        rejectCause, " rejectSrvInfoDomain is ", rejectSrvInfoDomain, " mcc is ", mcc,
+        " mnc is ", mnc);
+
+    std::string stateJsonPath = (slotId == SLOT_1 ) ?
+        "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+    CommonUtils::writeSystemDataValue<int>(stateJsonPath, rejectSrvInfoRat,
+            {"IServingSystemManager", "NetworkRejectInfo", "ServingSystemInfo" , "rat"});
+    CommonUtils::writeSystemDataValue<int>(stateJsonPath, rejectSrvInfoDomain,
+            {"IServingSystemManager", "NetworkRejectInfo", "ServingSystemInfo", "domain"});
+    CommonUtils::writeSystemDataValue<int>(stateJsonPath, rejectCause,
+            {"IServingSystemManager", "NetworkRejectInfo", "rejectCause"});
+    CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, mcc,
+            {"IServingSystemManager", "NetworkRejectInfo", "mcc"});
+    CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, mnc,
+            {"IServingSystemManager", "NetworkRejectInfo", "mnc"});
+
+
+    ::telStub::NetworkRejectInfoEvent networkRejectInfoEvent;
+    ::eventService::EventResponse anyResponse;
+
+    networkRejectInfoEvent.set_phone_id(slotId);
+    networkRejectInfoEvent.set_reject_rat
+        (static_cast<telStub::RadioTechnology>(rejectSrvInfoRat));
+    networkRejectInfoEvent.set_reject_domain
+        (static_cast<telStub::ServiceDomainInfo_Domain>(rejectSrvInfoDomain));
+    networkRejectInfoEvent.set_reject_cause(rejectCause);
+    networkRejectInfoEvent.set_mcc(mcc);
+    networkRejectInfoEvent.set_mnc(mnc);
+    anyResponse.set_filter("tel_serv_network_reject_info");
+    anyResponse.mutable_any()->PackFrom(networkRejectInfoEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+
+void ServingManagerServerImpl::handleRfBandInfoUpdateEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    try {
+        std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            slotId = std::stoi(token);
+        }
+        if((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId ,
+            " leftover string is: ", eventParams);
+        // Fetch band
+        int band;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " band not passed" );
+            band = 0;
+        } else {
+            band = std::stoi(token);
+        }
+        // Fetch channel
+        int channel;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " Channel type not passed");
+            channel = 0;
+        } else {
+            channel = std::stoi(token);
+        }
+
+        // Fetch bandWidth
+        int bandWidth;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " bandWidth not passed ");
+            bandWidth = 0;
+        } else {
+            bandWidth = std::stoi(token);
+        }
+
+        LOG(INFO, __FUNCTION__, " band is ", band, " channel is ", channel,
+            " bandWidth is ", bandWidth);
+
+        std::string stateJsonPath = (slotId == SLOT_1 ) ?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, band,
+                {"IServingSystemManager", "RFBandInfo", "rFBand"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, channel,
+                {"IServingSystemManager", "RFBandInfo", "channel"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, bandWidth,
+                {"IServingSystemManager", "RFBandInfo", "bandwidth"});
+
+        ::telStub::RFBandInfoEvent rFBandInfoEvent;
+        ::eventService::EventResponse anyResponse;
+
+        rFBandInfoEvent.set_phone_id(slotId);
+        rFBandInfoEvent.set_band(static_cast<telStub::RFBand>(band));
+        rFBandInfoEvent.set_channel(channel);
+        rFBandInfoEvent.set_band_width(static_cast<telStub::RFBandWidth>(bandWidth));
+        anyResponse.set_filter("tel_serv_rf_band_info");
+        anyResponse.mutable_any()->PackFrom(rFBandInfoEvent);
+        //posting the event to EventService event queue
+        auto& eventImpl = EventService::getInstance();
+        eventImpl.updateEventQueue(anyResponse);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+
+void ServingManagerServerImpl::handleSystemSelectionPreferenceChanged(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    try {
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            slotId = std::stoi(token);
+        }
+        if((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId ,
+            " leftover string is: ", eventParams);
+
+        // Fetch serviceDomainPreference
+        int domain;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " serviceDomainPreference not passed ");
+            domain = -1; // UNKNOWN
+        } else {
+            domain = std::stoi(token);
+        }
+        LOG(INFO, __FUNCTION__, "domain is ", domain);
+        std::vector<uint8_t> ratPrefs;
+        std::string ratPref;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        ratPref = token;
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " Rat preference not passed");
+            ratPref = "0"; // PREF_CDMA_1X
+        } else {
+            LOG(INFO, __FUNCTION__, " Rat is ", ratPref);
+        }
+        int lengthOfRatPreferenceInput = ratPref.size();
+        reverse(ratPref.begin(), ratPref.end());
+        int reverseRat = stoi(ratPref);
+        for(int i = 0; i < lengthOfRatPreferenceInput; i++ ) {
+
+            ratPrefs.emplace_back(static_cast<uint8_t>((reverseRat%10)));
+            reverseRat = reverseRat/10;
+        }
+        std::string value = CommonUtils::convertVectorToString(ratPrefs, false);
+
+        LOG(INFO, __FUNCTION__, "Rat data for json file  is ", value);
+
+        std::string stateJsonPath = (slotId == SLOT_1 ) ?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, value,
+                {"IServingSystemManager", "RATPreference"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, domain,
+                {"IServingSystemManager", "ServiceDomainPreference"});
+
+        triggerSystemSelectionPreferenceEvent(slotId, ratPrefs, domain);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+
+void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    try {
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            slotId = std::stoi(token);
+        }
+        if((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId
+            , " leftover string is: ", eventParams);
+        // Fetch currentServingRat
+        int currentServingRat;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " currentServingRat not passed ");
+            currentServingRat = 0; // PREF_CDMA_1X
+        } else {
+            currentServingRat = std::stoi(token);
+        }
+        // Fetch currentServingDomain
+        int currentServingDomain;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " currentServingDomain not passed");
+            currentServingDomain = -1;
+        } else {
+            currentServingDomain = std::stoi(token);
+        }
+
+        // Fetch endcAvailability
+        int endcAvailability;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " endcAvailability not passed");
+            endcAvailability = -1;
+        } else {
+            endcAvailability = std::stoi(token);
+        }
+
+        // Fetch dcnrRestriction
+        int dcnrRestriction;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " dcnrRestriction not passed");
+            dcnrRestriction = -1; // UNKNOWN
+        } else {
+            dcnrRestriction = std::stoi(token);
+
+        }
+
+        LOG(INFO, __FUNCTION__, " Rat is ", currentServingRat , " Domain is ", currentServingDomain
+        , " EndcAvailability is ", endcAvailability, " DcnrRestriction is ", dcnrRestriction);
+
+        std::string stateJsonPath = (slotId == SLOT_1 ) ?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, currentServingRat,
+                {"IServingSystemManager", "ServingSystemInfo", "rat"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, currentServingDomain,
+                {"IServingSystemManager", "ServingSystemInfo", "domain"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, endcAvailability,
+                {"IServingSystemManager", "DcStatus", "endcAvailability"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, dcnrRestriction,
+                {"IServingSystemManager", "DcStatus", "dcnrRestriction"});
+
+        ::telStub::SystemInfoEvent systemInfoEvent;
+        ::eventService::EventResponse anyResponse;
+
+        systemInfoEvent.set_phone_id(slotId);
+        systemInfoEvent.set_current_rat(static_cast<telStub::RadioTechnology>(currentServingRat));
+        systemInfoEvent.set_current_domain
+            (static_cast<telStub::ServiceDomainInfo_Domain>(currentServingDomain));
+        systemInfoEvent.set_endc_availability
+            (static_cast<telStub::EndcAvailability_Status>(endcAvailability));
+        systemInfoEvent.set_dcnr_restriction
+            (static_cast<telStub::DcnrRestriction_Status>(dcnrRestriction));
+        anyResponse.set_filter("tel_serv_sys_info");
+        anyResponse.mutable_any()->PackFrom(systemInfoEvent);
+        //posting the event to EventService event queue
+        auto& eventImpl = EventService::getInstance();
+        eventImpl.updateEventQueue(anyResponse);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+
+void ServingManagerServerImpl::handleNetworkTimeUpdateEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    try {
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            try {
+                slotId = std::stoi(token);
+            } catch(exception const & ex) {
+                LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            }
+        }
+        if((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId ,
+             " leftover string is: ", eventParams);
+        // Fetch year
+        int year;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " year not passed");
+            year = 0;
+        } else {
+            year = std::stoi(token);
+        }
+        // Fetch month
+        int month;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " month not passed");
+            month = 0;
+        } else {
+            month = std::stoi(token);
+        }
+        // Fetch day
+        int day;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " day not passed");
+            day = 0;
+        } else {
+            day = std::stoi(token);
+        }
+        // Fetch hour
+        int hour;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " hour not passed");
+            hour = 0;
+        } else {
+            hour = std::stoi(token);
+        }
+        // Fetch minute
+        int minute;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " minute not passed");
+            minute = 0;
+        } else {
+            minute = std::stoi(token);
+        }
+        // Fetch second
+        int second;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " second not passed");
+            second = 0;
+        } else {
+            second = std::stoi(token);
+        }
+        // Fetch dayOfWeek
+        int dayOfWeek;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " dayOfWeek not passed");
+            dayOfWeek = 0;
+        } else {
+            dayOfWeek = std::stoi(token);
+        }
+        // Fetch timeZone
+        int timeZone;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " timeZone not passed");
+            timeZone = 0;
+        } else {
+            timeZone = std::stoi(token);
+        }
+        // Fetch dstAdj
+        int dstAdj;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " dstAdj not passed");
+            dstAdj = 0;
+        } else {
+            dstAdj = std::stoi(token);
+        }
+
+        // Fetch nitzTime
+        std::string nitzTime;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " nitzTime not passed");
+            nitzTime = "";
+        } else {
+            nitzTime = token;
+        }
+
+        LOG(INFO, __FUNCTION__, " year is ", year , " month is ", month
+        , " day is ", day, " hour is ", hour, " minute is ", minute, " dayOfWeek is ", dayOfWeek,
+        " timeZone is ", timeZone, " dstAdj is ", dstAdj, " nitzTime is ", nitzTime,
+        " second is", second );
+
+        std::string stateJsonPath = (slotId == SLOT_1 ) ?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, year,
+                {"IServingSystemManager", "NetworkTimeInfo", "year"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, month,
+                {"IServingSystemManager", "NetworkTimeInfo", "month"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, day,
+                {"IServingSystemManager", "NetworkTimeInfo", "day"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, hour,
+                {"IServingSystemManager", "NetworkTimeInfo", "hour"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, minute,
+                {"IServingSystemManager", "NetworkTimeInfo", "minute"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, second,
+                {"IServingSystemManager", "NetworkTimeInfo", "second"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, dayOfWeek,
+                {"IServingSystemManager", "NetworkTimeInfo", "dayOfWeek"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, timeZone,
+                {"IServingSystemManager", "NetworkTimeInfo", "timeZone"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, dstAdj,
+                {"IServingSystemManager", "NetworkTimeInfo", "dstAdj"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, nitzTime,
+                {"IServingSystemManager", "NetworkTimeInfo", "nitzTime"});
+
+        ::telStub::NetworkTimeInfoEvent networkTimeInfoEvent;
+        ::eventService::EventResponse anyResponse;
+
+        networkTimeInfoEvent.set_phone_id(slotId);
+        networkTimeInfoEvent.set_year(year);
+        networkTimeInfoEvent.set_month(month);
+        networkTimeInfoEvent.set_day(day);
+        networkTimeInfoEvent.set_hour(hour);
+        networkTimeInfoEvent.set_minute(minute);
+        networkTimeInfoEvent.set_second(second);
+        networkTimeInfoEvent.set_day_of_week(dayOfWeek);
+        networkTimeInfoEvent.set_time_zone(timeZone);
+        networkTimeInfoEvent.set_dst_adj(dstAdj);
+        networkTimeInfoEvent.set_nitz_time(nitzTime);
+        anyResponse.set_filter("tel_serv_network_time");
+        anyResponse.mutable_any()->PackFrom(networkTimeInfoEvent);
+        //posting the event to EventService event queue
+        auto& eventImpl = EventService::getInstance();
+        eventImpl.updateEventQueue(anyResponse);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
     }
 }

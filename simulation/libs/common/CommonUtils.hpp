@@ -94,8 +94,6 @@ class CommonUtils {
     static std::string mapServiceString(telux::common::ServiceStatus srvStatus);
     static std::string readSystemDataValue(
         std::string subsystem, std::string defaultValue, std::vector<std::string> path);
-    static ErrorCode writeSystemDataValue(
-        std::string subsystem, std::string value, std::vector<std::string> path);
     static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex);
     static std::vector<int> convertStringToVector(std::string input);
     static std::string getGrpcPort();
@@ -122,6 +120,21 @@ class CommonUtils {
         JsonParser::writeToJsonFile(rootObj, filePath);
     }
 
+    template <typename T>
+    static ErrorCode writeSystemDataValue(
+        std::string subsystem, T value, std::vector<std::string> path) {
+        Json::Value root;
+        ErrorCode err = ErrorCode::GENERIC_FAILURE;
+        JsonParser::readFromJsonFile(root, "system-state/" + subsystem + ".json");
+        if (path.size() > 0) {
+            std::string attr = path.front();
+            path.erase(path.begin());
+            writeSystemDataValue(root[attr], value, path);
+            err = JsonParser::writeToJsonFile(root, "system-state/" + subsystem + ".json");
+        }
+        return err;
+    }
+
     static ErrorCode readJsonData(std::string apiJsonPath, std::string stateJsonPath,
         std::string subsystem, std::string method, JsonData& data);
 
@@ -129,8 +142,21 @@ class CommonUtils {
  private:
     static std::string readSystemDataValue(
         Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);
+    template <typename T>
     static void writeSystemDataValue(
-        Json::Value &node, std::string value, std::vector<std::string> &path);
+        Json::Value &node, T value, std::vector<std::string> &path) {
+        try {
+            std::string p = path.front();
+            path.erase(path.begin());
+            if (path.size() > 0) {
+                writeSystemDataValue(node[p], value, path);
+            } else {
+                node[p] = value;
+            }
+        } catch (std::exception &ex) {
+            LOG(DEBUG, ex.what());
+        }
+    }
 };
 
 }  // namespace common

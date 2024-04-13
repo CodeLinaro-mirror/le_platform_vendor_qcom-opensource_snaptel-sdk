@@ -102,6 +102,7 @@ public:
    static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
    static void populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
    static std::string backhaulToString(telux::data::BackhaulType backhaul);
+   static std::string emergencyAllowedTypeToString(telux::data::EmergencyCapability cap);
 };
 
 #endif  // DATAUTILS_HPP

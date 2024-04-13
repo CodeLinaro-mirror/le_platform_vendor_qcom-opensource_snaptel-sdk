@@ -133,11 +133,14 @@ void MyLocationCommandCallback::printLocationValidity(telux::loc::LocationInfoVa
    if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
       std::cout << "valid timestamp" << std::endl;
    }
+   if((validityMask & telux::loc::HAS_TIME_UNC_BIT)) {
+      std::cout << "valid time uncertainty" << std::endl;
+   }
    if((validityMask & telux::loc::HAS_GPTP_TIME_BIT)) {
       std::cout << "valid gPTP time" << std::endl;
    }
    if((validityMask & telux::loc::HAS_GPTP_TIME_UNC_BIT)) {
-      std::cout << "valid gPTP time uncertainity" << std::endl;
+      std::cout << "valid gPTP time uncertainty" << std::endl;
    }
 }
 
@@ -204,6 +207,7 @@ void MyLocationCommandCallback::onTerrestrialPositionInfo(
              << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
              << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
              << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+             << "Time Uncertainty: " << locationInfo->getTimeUncMs() << std::endl
              << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
              << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
 

@@ -36,6 +36,9 @@ class ICommunicator {
     virtual telux::common::Status registerForServiceStatusEvents(
         std::weak_ptr<telux::audio::IServiceStatusEventsCb> listener) = 0;
 
+    virtual telux::common::Status registerForPlayStreamEvents(
+        std::weak_ptr<telux::audio::IPlayStreamEventsCb> listener) = 0;
+
     virtual telux::common::Status getDevices(
         std::shared_ptr<telux::audio::IGetDevicesCb> resultListener, int cmdId) = 0;
 
@@ -50,6 +53,13 @@ class ICommunicator {
 
     virtual telux::common::Status deleteStream(uint32_t streamId,
         std::shared_ptr<telux::audio::IDeleteStreamCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status createTranscoder(telux::audio::FormatInfo inInfo,
+        telux::audio::FormatInfo outInfo,
+        std::shared_ptr<telux::audio::ITranscodeCreateCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status deleteTranscoder(uint32_t inStreamId, uint32_t outStreamId,
+        std::shared_ptr<telux::audio::ITranscodeDeleteCb> resultListener, int cmdId) = 0;
 
     virtual telux::common::Status startStream(uint32_t streamId,
         std::shared_ptr<telux::audio::IStartStreamCb> resultListener, int cmdId) = 0;
@@ -97,6 +107,12 @@ class ICommunicator {
 
     virtual telux::common::Status stopTone(uint32_t streamId,
         std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status flush(uint32_t streamId,
+        std::shared_ptr<telux::audio::IFlushCb> resultListener, int cmdId) = 0;
+
+    virtual telux::common::Status drain(uint32_t streamId,
+        std::shared_ptr<telux::audio::IDrainCb> resultListener, int cmdId) = 0;
 };
 
 }  // end of namespace audio

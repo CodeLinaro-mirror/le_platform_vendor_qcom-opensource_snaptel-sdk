@@ -6,6 +6,8 @@
 #ifndef DATAHELPER_HPP
 #define DATAHELPER_HPP
 
+#include <algorithm>
+
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 
@@ -25,7 +27,14 @@ class DataHelper {
     static std::string callEndReasonTypeToString(EndReasonType reasonType);
     static bool isValidIpv4Address(const std::string &addr);
     static bool isValidIpv6Address(const std::string &addr);
-    static bool isValidProtocol(const IpProtocol &protocol);
+    static bool isValidProtocol(const IpProtocol &protocol) {
+        std::vector<IpProtocol> protocolList { PROTO_ICMP, PROTO_ICMP6, PROTO_IGMP, PROTO_TCP,
+            PROTO_UDP, PROTO_ESP, PROTO_TCP_UDP };
+        if (std::find(protocolList.begin(), protocolList.end(), protocol) != protocolList.end()) {
+            return true;
+        }
+        return false;
+    }
 
     // Convert given string address into outAddress
     static int convertAddress(const std::string &inAddr, unsigned char *outAddr, int af);

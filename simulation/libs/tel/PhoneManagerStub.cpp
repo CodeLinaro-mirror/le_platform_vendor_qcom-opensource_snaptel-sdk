@@ -118,6 +118,12 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
                 cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
             }
         }
+
+        LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
+        bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+            true : false;
+        setSubsystemReady(isSubsystemReady);
+
         if (callback) {
             std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
             if (callback) {
@@ -131,6 +137,7 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
 
 PhoneManagerStub::~PhoneManagerStub() {
     LOG(DEBUG, __FUNCTION__);
+    setSubsystemReady(false);
     if (phoneStub_) {
         phoneStub_ = nullptr;
     }
@@ -146,6 +153,13 @@ PhoneManagerStub::~PhoneManagerStub() {
     phoneIds_.clear();
     phoneMap_.clear();
     phoneSlotIdsMap_.clear();
+}
+
+void PhoneManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(phoneManagerMutex_);
+    ready_ = status;
+    cv_.notify_all();
 }
 
 telux::common::ServiceStatus PhoneManagerStub::getServiceStatus() {
@@ -547,31 +561,24 @@ telux::common::Status PhoneManagerStub::resetWwan(telux::common::ResponseCallbac
 }
 
 bool PhoneManagerStub::isSubsystemReady() {
-   LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = phoneStub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
-    }
+    LOG(DEBUG, __FUNCTION__);
+    return ready_;
 }
 
 std::future<bool> PhoneManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    std::future<bool> readyFuture = std::async(std::launch::async,
-        [this]() {
-            while (!isSubsystemReady()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
-            }
-            return(isSubsystemReady());
-        });
-    return readyFuture;
+    auto future = std::async(
+        std::launch::async, [&] { return PhoneManagerStub::waitForInitialization(); });
+    return future;
+}
+
+bool PhoneManagerStub::waitForInitialization() {
+    LOG(INFO, __FUNCTION__);
+    std::unique_lock<std::mutex> lock(phoneManagerMutex_);
+    if (!isSubsystemReady()) {
+        cv_.wait(lock);
+    }
+    return isSubsystemReady();
 }
 
 void PhoneManagerStub::onEventUpdate(google::protobuf::Any event) {

@@ -84,13 +84,13 @@ class IReadCb : public telux::common::ICommandCallback {
 class IFlushCb : public telux::common::ICommandCallback {
  public:
     virtual void onFlushResult(telux::common::ErrorCode ec,
-                    uint32_t streamId, void *userData) = 0;
+                    uint32_t streamId, int cmdId) = 0;
 };
 
 class IDrainCb : public telux::common::ICommandCallback {
  public:
     virtual void onDrainResult(telux::common::ErrorCode ec,
-                    uint32_t streamId, void *userData) = 0;
+                    uint32_t streamId, int cmdId) = 0;
 };
 
 class ISetGetDeviceCb : public telux::common::ICommandCallback {
@@ -132,13 +132,13 @@ class IDTMFCb : public telux::common::ICommandCallback {
 class ITranscodeCreateCb : public telux::common::ICommandCallback {
  public:
     virtual void onCreateTranscoderResult(telux::common::ErrorCode ec,
-        CreatedTranscoderInfo transcoderInfo, void *userData) = 0;
+        CreatedTranscoderInfo transcoderInfo, int cmdId) = 0;
 };
 
 class ITranscodeDeleteCb : public telux::common::ICommandCallback {
  public:
     virtual void onDeleteTranscoderResult(telux::common::ErrorCode ec,
-        uint32_t inStreamId, uint32_t outStreamId, void *userData) = 0;
+        uint32_t inStreamId, uint32_t outStreamId, int cmdId) = 0;
 };
 
 class IIndicationCb : public telux::common::ICommandCallback {
@@ -164,9 +164,9 @@ class IVoiceStreamEventsCb {
 
 class IServiceStatusEventsCb {
  public:
-    virtual void onSSRUpdate(telux::common::ServiceStatus newStatus) = 0;
+    virtual void onQ6SSRUpdate(telux::common::ServiceStatus newStatus) = 0;
 
-    virtual void onServiceStatusUpdate(telux::common::ServiceStatus newStatus) = 0;
+    virtual void onTransportStatusUpdate(telux::common::ServiceStatus newStatus) = 0;
 };
 
 }  // end of namespace audio

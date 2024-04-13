@@ -131,7 +131,6 @@ private:
     void handleEcallEvent(::telStub::ECallInfoEvent event);
     void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);
-    void handleIncomingCall(::telStub::Call event);
     void handleHangup(::telStub::HangupCallEvent event);
     void invokeECallHlapTimerEventlisteners(int phoneId,
         ECallHlapTimerEvents timersStatus);
@@ -140,9 +139,42 @@ private:
     void invokeECallMsdTransmissionStatuslisteners(int phoneId,
         telux::common::ErrorCode errorCode );
     void logCallDetails(std::shared_ptr<ICall> info);
+    void findMatchingCall(int index, std::string remotePartyNumber, int phoneId, int cbDelay,
+        std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,
+        telux::common::ErrorCode error);
+    bool find(int phoneId, std::shared_ptr<CallStub> call, std::string remotePartyNumber);
+    void findAndRemoveMatchingCall(int phoneId, int index);
     std::unique_ptr<::telStub::DialerService::Stub> stub_;
     std::vector<std::shared_ptr<CallStub>> calls_;
+    std::vector<std::shared_ptr<CallStub>> droppedCalls_;
+    void notifyIncomingCall(std::shared_ptr<ICall> call);
+    void notifyCallInfoChange(std::shared_ptr<ICall> call);
+    void addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
+    void refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
+    void notifyAndRemoveDroppedCalls();
     void onEventUpdate(std::string event);
+    template <typename T>
+    T createRequest(int phoneId,
+        const std::string dialNumber, bool isMsdTransmitted, int inputApi) {
+        T request;
+        CallInfo callInfo;
+        callInfo.remotePartyNumber = dialNumber;
+        callInfo.callDirection = CallDirection::OUTGOING;
+        callInfo.callState = CallState::CALL_IDLE;
+        callInfo.transmitMsd = isMsdTransmitted;
+        auto call = std::make_shared<CallStub>(phoneId, callInfo);
+        {
+            std::lock_guard<std::mutex> lock(callManagerMutex_);
+            calls_.emplace_back(call);
+        }
+        request.set_phone_id(phoneId);
+        if (dialNumber != "") { // Regulatory eCall
+            request.set_remote_party_number(dialNumber);
+        }
+        request.set_is_msd_transmitted(isMsdTransmitted);
+        request.set_api(inputApi);
+        return request;
+    }
 };
 
 } // end of namespace tel

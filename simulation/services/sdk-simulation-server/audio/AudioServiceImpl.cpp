@@ -296,7 +296,9 @@ void AudioServiceImpl::getCalibrationStatus(std::shared_ptr<AudioRequest> audioR
  * 4. Associate this stream with the audio client.
  */
 telux::common::ErrorCode AudioServiceImpl::doCreateStream(
-        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config) {
+        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config,
+        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
+        StreamPurpose streamPurpose, CreatedTranscoderInfo *createdTranscoderInfo) {
 
     uint32_t streamId=0;
     uint32_t readMinSize=0, writeMinSize=0;
@@ -335,8 +337,21 @@ telux::common::ErrorCode AudioServiceImpl::doCreateStream(
     }
 
     /* Create playback/capture/voicecall/loopback/tone stream */
-    ec = stream->setupStream(config, streamId, readMinSize, writeMinSize);
-
+    switch (streamPurpose) {
+        case StreamPurpose::TRANSCODER_IN:
+            /* Create transcoder input stream */
+            createdTranscoderInfo->inStreamId = streamId;
+            ec = stream->setupInTranscodeStream(inInfo, createdTranscoderInfo);
+            break;
+        case StreamPurpose::TRANSCODER_OUT:
+            /* Create transcoder output stream */
+            createdTranscoderInfo->outStreamId = streamId;
+            ec = stream->setupOutTranscodeStream(outInfo, createdTranscoderInfo);
+            break;
+        default:
+            /* Create playback/capture/voicecall/loopback/tone stream */
+            ec = stream->setupStream(config, streamId, readMinSize, writeMinSize);
+    }
 
     if (ec != telux::common::ErrorCode::SUCCESS) {
         streamCache_->releaseStreamId(streamId);
@@ -356,6 +371,11 @@ telux::common::ErrorCode AudioServiceImpl::doCreateStream(
         " write max size ", MAX_BUFFER_SIZE);
 
 result:
+    if (streamPurpose != StreamPurpose::DEFAULT) {
+        /* When creating transcoder-stream, response will be sent by doCreateTranscoder() */
+        return ec;
+    }
+
     audioMsgDispatcher->sendCreateStreamResponse(audioReq, ec, streamId,
         config.streamConfig.type, readMinSize, writeMinSize);
 
@@ -365,8 +385,10 @@ result:
 void AudioServiceImpl::createStream(std::shared_ptr<AudioRequest> audioReq,
         StreamConfiguration config) {
 
+    TranscodingFormatInfo transcodeInfo{};
+
     serviceCommonTaskExecutor_->submitTask([=]{ doCreateStream(audioReq,
-        config); });
+        config, transcodeInfo, transcodeInfo, StreamPurpose::DEFAULT, nullptr); });
 }
 
 /*
@@ -425,15 +447,78 @@ void AudioServiceImpl::deleteStream(std::shared_ptr<AudioRequest> audioReq,
 }
 
 
+void AudioServiceImpl::doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq,
+        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
+
+    telux::common::ErrorCode ec;
+    StreamConfiguration config{};
+    CreatedTranscoderInfo createdTranscoderInfo{};
+    std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
+
+    config.streamConfig.type = StreamType::PLAY;
+    ec = doCreateStream(audioReq, config, inInfo, outInfo,
+            StreamPurpose::TRANSCODER_IN, &createdTranscoderInfo);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        goto result;
+    }
+
+    config.streamConfig.type = StreamType::CAPTURE;
+    ec = doCreateStream(audioReq, config, inInfo, outInfo,
+            StreamPurpose::TRANSCODER_OUT, &createdTranscoderInfo);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        doDeleteStream(audioReq, createdTranscoderInfo.inStreamId, false);
+    }
+
+result:
+    audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    audioMsgDispatcher->sendCreateTranscoderResponse(audioReq, ec, createdTranscoderInfo);
+}
+
 void AudioServiceImpl::createTranscoder(std::shared_ptr<AudioRequest> audioReq,
         TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
 
+    serviceCommonTaskExecutor_->submitTask([=]{ doCreateTranscoder(audioReq,
+        inInfo, outInfo); });
 }
 
+void AudioServiceImpl::doDeleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
+        uint32_t inStreamId, uint32_t outStreamId) {
+
+    telux::common::ErrorCode ec;
+    std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
+    telux::common::ErrorCode finalErrorCode = telux::common::ErrorCode::SUCCESS;
+
+    ec = doDeleteStream(audioReq, inStreamId, false);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        /* In case error happens, we still proceed further to minimize resource
+         * leak, but preserve original error code to make application aware that
+         * an error has occurred. */
+        finalErrorCode = ec;
+    }
+
+    ec = doDeleteStream(audioReq, outStreamId, false);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        finalErrorCode = ec;
+    }
+
+    audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
+    if (!audioMsgDispatcher) {
+        return;
+    }
+
+    audioMsgDispatcher->sendDeleteTranscoderResponse(audioReq, finalErrorCode,
+        inStreamId, outStreamId);
+}
 
 void AudioServiceImpl::deleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
         uint32_t inStreamId, uint32_t outStreamId) {
 
+    serviceCommonTaskExecutor_->submitTask([=]{ doDeleteTranscoder(audioReq,
+        inStreamId, outStreamId); });
 }
 
 void AudioServiceImpl::start(std::shared_ptr<AudioRequest> audioReq,
@@ -556,10 +641,22 @@ void AudioServiceImpl::stopTone(std::shared_ptr<AudioRequest> audioReq,
 
 void AudioServiceImpl::drain(std::shared_ptr<AudioRequest> audioReq,
         uint32_t streamId) {
+
+    std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
+    if (stream) {
+        stream->drain(audioReq, streamId);
+        return;
+    }
 }
 
 void AudioServiceImpl::flush(std::shared_ptr<AudioRequest> audioReq,
         uint32_t streamId) {
+
+    std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
+    if (stream) {
+        stream->flush(audioReq, streamId);
+        return;
+    }
 }
 
 void AudioServiceImpl::registerForIndication(std::shared_ptr<AudioRequest> audioReq,

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -159,6 +159,26 @@ class ISensorManager {
      */
     virtual telux::common::Status getSensorClient(
         std::shared_ptr<ISensorClient> &sensor, std::string name) = 0;
+
+    /**
+     * This API is called to set Euler angles, used for sensor rotation matrix.
+     *
+     * The sensor data should always be obtained w.r.t the vehicular frame. This API accepts the
+     * Euler angles which are used to compute the rotational matrix and provide the final rotated
+     * sensor data to the clients. It is advised to set the Euler angles by calling this API before
+     * activating any sensor clients.
+     *
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_SENSOR_PRIVILEGED_OPS
+     * permission to invoke this API successfully.
+     *
+     *  @param[in]   eulerAngleConfig - The Euler angle configuration.
+     *
+     * @returns status of Euler angle update request - @ref telux::common::Status
+     *
+     */
+    virtual telux::common::Status setEulerAngleConfig(
+        EulerAngleConfig eulerAngleConfig) = 0;
 
     /**
      * Destructor for ISensorManager

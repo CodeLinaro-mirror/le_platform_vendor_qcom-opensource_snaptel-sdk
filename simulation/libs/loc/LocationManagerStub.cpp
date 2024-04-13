@@ -351,6 +351,50 @@ telux::common::Status LocationManagerStub::startBasicReports(
     return status;
 }
 
+telux::common::Status LocationManagerStub::startBasicReports(
+    uint32_t interval, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    if (filter_ != nullptr) {
+        adjustTimeInterval(interval);
+    }
+    interval_ = interval;
+    //Register for Reports.
+    std::vector<std::string> filters = {"LOC_REPORTS"};
+    auto &locationReportListener = telux::common::LocationReportListener::getInstance();
+    locationReportListener.registerListener(myselfForReports_, filters);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->StartBasicReports(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == telux::common::Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
+        }).share();
+        taskQ_.add(f);
+        if (filter_ != nullptr) {
+            telux::common::Status rc = filter_->startReportFilter(interval, ReportType::FUSED);
+            if (rc != telux::common::Status::SUCCESS) {
+                LOG(WARNING, __FUNCTION__, " Starting basic report filter Failed");
+            }
+        }
+        sessionMask_ = telux::loc::BASIC;
+    }
+    return status;
+}
+
 telux::common::Status LocationManagerStub::stopReports(telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::string> filters = {"LOC_REPORTS"};
@@ -651,9 +695,9 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
         velocityEastNorthUp.push_back(std::stof(message[itr++]));
     }
     loc->setVelocityEastNorthUp(velocityEastNorthUp);
-    size_t enuVelocityUncertainitySize = std::stoi(message[itr++]);
+    size_t enuVelocityUncertaintySize = std::stoi(message[itr++]);
     std::vector<float> setVelocityEastNorthUpUnc;
-    for(size_t i = 0; i < enuVelocityUncertainitySize; i++) {
+    for(size_t i = 0; i < enuVelocityUncertaintySize; i++) {
         setVelocityEastNorthUpUnc.push_back(std::stof(message[itr++]));
     }
     loc->setVelocityUncertaintyEastNorthUp(setVelocityEastNorthUpUnc);
@@ -713,6 +757,14 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
     loc->setNavigationSolution(navSol);
     loc->setElapsedGptpTime(std::stoull(message[itr++]));
     loc->setElapsedGptpTimeUnc(std::stoull(message[itr++]));
+    size_t dgnssStationIdsSize = std::stoi(message[itr++]);
+    std::vector<uint16_t> dgnssStationIds;
+    for(size_t i = 0; i < dgnssStationIdsSize; i++) {
+        auto msg = message[itr];
+        dgnssStationIds.push_back(msg.length() == 0 ? 0 : std::stoul(msg));
+        ++itr;
+    }
+    loc->setDgnssStationIds(dgnssStationIds);
 }
 
 void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
@@ -732,6 +784,7 @@ void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> 
     loc->setLocationInfoValidity(locImpl->getLocationInfoValidity());
     loc->setElapsedRealTime(locImpl->getElapsedRealTime());
     loc->setElapsedRealTimeUncertainty(locImpl->getElapsedRealTimeUncertainty());
+    loc->setTimeUncMs(locImpl->getTimeUncMs());
     loc->setElapsedGptpTime(locImpl->getElapsedGptpTime());
     loc->setElapsedGptpTimeUnc(locImpl->getElapsedGptpTimeUnc());
 }

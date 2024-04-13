@@ -115,12 +115,38 @@ bool ServingSystemManagerStub::isSubsystemReady() {
 
 telux::common::Status ServingSystemManagerStub::registerListener(
     std::weak_ptr<IServingSystemListener> listener, ServingSystemNotificationMask mask) {
-    return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        status = listenerMgr_->registerListener(listener);
+        std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER};
+        std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 1) {
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.registerListener(shared_from_this(), filters);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
+        }
+    }
+    return status;
 }
 
 telux::common::Status ServingSystemManagerStub::deregisterListener(
     std::weak_ptr<IServingSystemListener> listener, ServingSystemNotificationMask mask) {
-     return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+        status = listenerMgr_->deRegisterListener(listener);
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 0) {
+            std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
+        }
+    }
+    return status;
 }
 
 telux::common::Status
@@ -386,7 +412,80 @@ telux::common::Status ServingSystemManagerStub::getNetworkRejectInfo
     return status;
 }
 
-void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
+telux::common::Status ServingSystemManagerStub::getCallBarringInfo
+    (std::vector<CallBarringInfo> &barringInfo) {
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::GetCallBarringInfoRequest request;
+    ::telStub::GetCallBarringInfoReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetCallBarringInfo(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    for (int i = 0; i < response.barring_infos_size(); i++) {
+        CallBarringInfo info;
+        info.rat = static_cast<telux::tel::RadioTechnology>(
+            response.barring_infos(i).rat());
+        info.domain = static_cast<telux::tel::ServiceDomain>(
+            response.barring_infos(i).domain());
+        info.callType = static_cast<telux::tel::CallsAllowedInCell>(
+            response.barring_infos(i).call_type());
+        barringInfo.emplace_back(info);
+    }
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    return status;
+}
+
+telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
+    (SmsCapability &smsCapability) {
     LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::SUCCESS;
+}
+
+
+telux::common::Status ServingSystemManagerStub::getLteCsCapability
+    (LteCsCapability &lteCapability) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::SUCCESS;
+}
+
+void ServingSystemManagerStub::handleCallBarringInfosChanged
+    (::telStub::CallBarringInfosEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    // update CallBarringInfos
+    std::vector<CallBarringInfo> infos = {};
+    for (int i = 0; i < event.barring_infos_size(); i++) {
+        CallBarringInfo info;
+        info.rat = static_cast<telux::tel::RadioTechnology>(
+            event.barring_infos(i).rat());
+        info.domain = static_cast<telux::tel::ServiceDomain>(
+            event.barring_infos(i).domain());
+        info.callType = static_cast<telux::tel::CallsAllowedInCell>(
+            event.barring_infos(i).call_type());
+        infos.emplace_back(info);
+    }
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onCallBarringInfoChanged(infos);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
+    if(event.Is<::telStub::CallBarringInfosEvent>()) {
+        ::telStub::CallBarringInfosEvent callBarringInfosChangeEvent;
+        event.UnpackTo(&callBarringInfosChangeEvent);
+        handleCallBarringInfosChanged(callBarringInfosChangeEvent);
+    }
 }
 

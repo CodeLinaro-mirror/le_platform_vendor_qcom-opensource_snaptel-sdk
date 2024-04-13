@@ -43,13 +43,11 @@ namespace common {
 
 class Event {
  public:
-    Event(uint32_t id)
-       : Event(id, "Event-" + std::to_string(id)) {
-    }
 
-    Event(uint32_t id, std::string name)
+    Event(uint32_t id, std::string name, int phoneId)
        : id_(id)
-       , name_(name) {
+       , name_(name)
+       , phoneId_(phoneId) {
     }
 
     virtual ~Event() {
@@ -57,6 +55,7 @@ class Event {
 
     const uint32_t id_;
     const std::string name_;
+    int phoneId_;
 };
 
 }  // namespace common

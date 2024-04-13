@@ -25,7 +25,7 @@ namespace tel {
 
 class ServingSystemManagerStub : public IServingSystemManager,
                                  public IEventListener,
-                                 public std::enable_shared_from_this<IServingSystemManager> {
+                                 public std::enable_shared_from_this<ServingSystemManagerStub> {
 public:
     ServingSystemManagerStub(int phoneId, telux::common::InitResponseCb callback);
     ~ServingSystemManagerStub();
@@ -48,6 +48,9 @@ public:
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
     telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
+    telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) override;
+    telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) override;
+    telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
@@ -62,6 +65,7 @@ private:
     std::shared_ptr<telux::common::ListenerManager<IServingSystemListener>> listenerMgr_;
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
+    void handleCallBarringInfosChanged (::telStub::CallBarringInfosEvent event);
 };
 
 } // end of namespace tel

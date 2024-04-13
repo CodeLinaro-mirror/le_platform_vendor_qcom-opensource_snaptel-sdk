@@ -417,6 +417,62 @@ enum ServingSystemNotificationType {
 };
 
 /**
+ * Defines allowed call types supported by the network cell
+ */
+enum class CallsAllowedInCell {
+   UNKNOWN = -1,   /**< Unknown calls allowed */
+   NORMAL_ONLY,    /**< Only normal calls allowed */
+   EMERGENCY_ONLY, /**< Only emergency calls allowed */
+   NO_CALLS,       /**< No calls allowed */
+   ALL_CALLS,      /**< All calls allowed */
+};
+
+/**
+ * Defines call barring information.
+ */
+struct CallBarringInfo {
+   RadioTechnology rat;  /**< Current serving RAT */
+   ServiceDomain domain; /**< Current service domain registered on the system for the
+                              serving RAT; valid values are CS_ONLY and PS_ONLY*/
+   CallsAllowedInCell callType; /**< Current allowed call type for the cell*/
+
+   bool operator==(const CallBarringInfo& cb) const {
+      return (cb.rat == rat) && (cb.domain == domain) && (cb.callType == callType);
+   }
+};
+
+/**
+ * Define SMS support over network for registered RAT.
+ */
+enum class SmsDomain {
+   UNKNOWN = -1,  /**< Unknown, when the information is not available */
+   NO_SMS,        /**< Can't receive SMS */
+   SMS_ON_IMS,    /**< SMS is supported over IMS network */
+   SMS_ON_3GPP,   /**< SMS is supported over 3GPP network */
+};
+
+/**
+ * Define SMS capability for registered RAT.
+ */
+struct SmsCapability {
+   RadioTechnology rat;  /**< Current serving RAT */
+   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network */
+};
+
+/**
+ * Defines LTE CS service capabilities.
+ */
+enum class LteCsCapability {
+   UNKNOWN = -1,        /**< Unknown, when the information is not available */
+   FULL_SERVICE,        /**< Full service on CS domain is available */
+   CSFB_NOT_PREFERRED,  /**< CSFB is not preferred */
+   SMS_ONLY,            /**< CS registation is for SMS only */
+   LIMITED,             /**< CS registation failed for max attach or tracking area updating(TAU)
+                             attempts */
+   BARRED,              /**< CS domain not available */
+};
+
+/**
  * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
  */
 using ServingSystemNotificationMask = std::bitset<32>;
@@ -652,6 +708,51 @@ public:
    virtual telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
 
    /**
+    * Gets the call barring information for the currently registered cell of a device.
+    *
+    * On platforms with access control enabled, the caller needs to have the
+    * TELUX_TEL_SRV_SYSTEM_READ permission to successfully invoke this API.
+    *
+    * @param [out] barringInfo  List of call barring information @ref CallBarringInfo
+    *
+    * @returns Status of getCallBarringInfo, i.e., success or a suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) = 0;
+
+   /**
+    * Get the SMS capability over IMS/3GPP network for registered radio access technology (RAT).
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] smsCapability  SMS capability @ref SmsCapability
+    *
+    * @returns Status of getSmsCapabilityOverNetwork i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) = 0;
+
+   /**
+    * Get the circuit-switched(CS) service capabilities of the LTE network.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] lteCapability  LTE CS capability @ref LteCsCapability
+    *
+    * @returns Status of getLteCsCapability i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -814,6 +915,59 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual void onNetworkRejection(NetworkRejectInfo rejectInfo) {
+   }
+
+   /**
+    * Notifies registered listeners whenever the call barring information for the currently
+    * registered cell of the device changes.
+    *
+    * To receive this notification, the client needs to register a listener using the
+    * @ref registerListener API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO
+    * bit in the bitmask.
+    *
+    * On platforms with access control enabled, the caller needs to have the
+    * TELUX_TEL_SRV_SYSTEM_READ permission to receive this notification.
+    *
+    * @param [in] barringInfo       List of call barring information @ref CallBarringInfo
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onCallBarringInfoChanged(std::vector<CallBarringInfo> barringInfo) {
+   }
+
+   /**
+    * This function is called whenever the SMS capability over currently registered network changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] smsCapability       SMS capability @ref SmsCapability
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onSmsCapabilityChanged(SmsCapability smsCapability) {
+   }
+
+   /**
+    * This function is called whenever the CS service capabilities of the LTE network changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] lteCapability       LTE CS capability @ref LteCsCapability
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onLteCsCapabilityChanged(LteCsCapability lteCapability) {
    }
 
    /**

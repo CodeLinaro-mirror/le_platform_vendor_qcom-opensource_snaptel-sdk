@@ -99,7 +99,6 @@
      rpc UpdateECallMsd(UpdateECallMsdRequest) returns (UpdateECallMsdResponse) {}
      rpc RequestECallHlapTimerStatus(RequestECallHlapTimerStatusRequest) returns
          (RequestECallHlapTimerStatusReply) {}
-     rpc GetInProgressCalls(google.protobuf.Empty) returns (GetInProgressCallsReply) {}
      rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
      rpc SetConfig(SetConfigRequest) returns (SetConfigReply) {}
      rpc GetConfig(google.protobuf.Empty) returns (GetConfigResponse) {}
@@ -118,6 +117,8 @@
      rpc Resume(ResumeRequest) returns (ResumeReply) {}
      rpc Swap(SwapRequest) returns (SwapReply) {}
      rpc Hold(HoldRequest) returns (HoldReply) {}
+     rpc RequestNetworkDeregistration(RequestNetworkDeregistrationRequest) returns
+         (RequestNetworkDeregistrationReply) {}
  }
 
  service ImsServingSystem {
@@ -146,6 +147,8 @@
      rpc RequestRFBandInfo (RequestRFBandInfoRequest) returns (RequestRFBandInfoReply) {}
      rpc GetNetworkRejectInfo (GetNetworkRejectInfoRequest) returns
          (GetNetworkRejectInfoReply) {}
+     rpc GetCallBarringInfo (GetCallBarringInfoRequest) returns
+         (GetCallBarringInfoReply) {}
  }
 
  service NetworkSelectionService {
@@ -215,10 +218,7 @@ message GetCardStateRequest {
  }
 
  message CallStateChangeEvent {
-    int32 call_index = 1;
-    string callstate = 2;
-    string remote_party_number = 3;
-    int32 phone_id = 4;
+    repeated Call calls = 1;
 }
 
  message MsdPullRequestEvent {
@@ -1057,10 +1057,6 @@ message UpdateECallMsdResponse {
     bool iscallback = 6;
  }
 
-  message GetInProgressCallsReply {
-     repeated Call calls = 1;
- }
-
  message EcallConfig {
     repeated EcallConfigType config_validity_mask = 1;   /**< Indicates the valid configuration
                             parameters in the structure. A bit set to 1 denotes that the
@@ -1199,6 +1195,7 @@ message UpdateECallMsdResponse {
      int32 phone_id = 1;
      string remote_party_number = 2;
      bool is_msd_transmitted = 3;
+     int32 api = 4;
  }
 
  message MakeCallReply {
@@ -1298,6 +1295,17 @@ message UpdateECallMsdResponse {
  }
 
  message HoldReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+ message RequestNetworkDeregistrationRequest {
+    int32 phone_id = 1;
+ }
+
+ message RequestNetworkDeregistrationReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
@@ -1475,6 +1483,32 @@ message UpdateECallMsdResponse {
      string mcc = 4;
      string mnc = 5;
      commonStub.Status status = 6;
+ }
+
+ message CallsAllowedInCell {
+     enum Type {
+         NORMAL_ONLY = 0;
+         EMERGENCY_ONLY = 1;
+         NO_CALLS = 2;
+         ALL_CALLS = 3;
+         UNKNOWN = -1;
+     }
+ }
+
+ message CallBarringInfo {
+     RadioTechnology rat = 1;
+     ServiceDomainInfo.Domain domain = 2;
+     CallsAllowedInCell.Type call_type = 3;
+ }
+
+ message GetCallBarringInfoReply {
+     repeated CallBarringInfo barring_infos = 1;
+     commonStub.Status status = 2;
+ }
+
+ message CallBarringInfosEvent {
+     repeated CallBarringInfo barring_infos = 1;
+     int32 phone_id = 2;
  }
 
  message RequestNetworkTimeRequest {
@@ -2400,5 +2434,9 @@ message ECallModeReason {
 }
 
 message GetNetworkRejectInfoRequest {
+    int32 phone_id = 1;
+}
+
+message GetCallBarringInfoRequest {
     int32 phone_id = 1;
 }

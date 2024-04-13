@@ -42,6 +42,10 @@
      rpc Read(AudioRequest) returns (commonStub.StatusMsg) {}
      rpc PlayTone(AudioRequest) returns (commonStub.StatusMsg) {}
      rpc StopTone(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc CreateTranscoder(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc DeleteTranscoder(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc Flush(AudioRequest) returns (commonStub.StatusMsg) {}
+     rpc Drain(AudioRequest) returns (commonStub.StatusMsg) {}
      /*
       * When a client connects to the server, the audio requests are sent using the above unary
       * rpc calls and the status of the request is returned in the response of the rpc call. If the
@@ -110,10 +114,52 @@ message AudioFormat {
     enum Type {
         DUMMY = 0;
         PCM_16BIT_SIGNED = 1;
+        /** Adaptive multirate narrow band format */
+        AMRNB = 2;
+        /** Adaptive multirate wide band format */
+        AMRWB = 3;
+        /** Extended adaptive multirate wide band format */
+        AMRWB_PLUS = 4;
         UNKNOWN = -1;
     }
     Type type = 1;
 }
+
+/**
+ * Representative of type of frame structure.
+ * Typical transport interface or file storage.
+ */
+message AmrwbpFrameFormat {
+    enum Type {
+        TRANSPORT_INTERFACE_FORMAT = 0;
+        FILE_STORAGE_FORMAT = 1;
+        UNKNOWN = -1; /**< Unknown format */
+    }
+    Type type = 1;
+};
+
+/**
+ *  Frame format codec specific parameters
+ */
+message AmrwbpParams {
+    uint32 bitWidth = 1; /**< Bitwidth of Stream, Typical Values <16/24>. */
+    AmrwbpFrameFormat frameFormat = 2;
+};
+
+/**
+ *  Represents information about the audio format.
+ */
+message FormatInfo {
+    uint32 inSampleRate = 1; /**< Sample Rate of audio, Typical Values <8k/16k/32k/48k> */
+    ChannelType inChannelType = 2; /**< parameter for configuration of channel type */
+    AudioFormat inAudioFormat = 3;  /**< Represents audio format */
+    AmrwbpParams inParams = 4; /**< Represents codec specific parameters, like Frame Format */
+    uint32 outSampleRate = 5; /**< Sample Rate of audio, Typical Values <8k/16k/32k/48k> */
+    ChannelType outChannelType = 6; /**< parameter for configuration of channel type */
+    AudioFormat outAudioFormat = 7;  /**< Represents audio format */
+    AmrwbpParams outParams = 8; /**< Represents codec specific parameters, like Frame Format */
+};
+
 
 // @ref: telux::audio::EcnrMode
 message EcnrMode {
@@ -213,6 +259,16 @@ message CreatedStreamInfo {
     uint32 writeMaxSize = 6;
 }
 
+// Used to pass the stream parameter for created stream.
+message CreatedTranscoderInfo {
+    uint32 inStreamId = 1;
+    uint32 outStreamId = 2;
+    uint32 readMinSize = 3;
+    uint32 readMaxSize = 4;
+    uint32 writeMinSize = 5;
+    uint32 writeMaxSize = 6;
+}
+
 /* Messages for audio requests. These are sent as part of any message in AudioRequest. */
 
 // Mapped to telux::audio::IAudioDevice
@@ -272,6 +328,11 @@ message DeleteStreamRequest {
 
 message DeleteStreamResponse {
     uint32 streamId = 1;
+}
+
+message DeleteTranscoder {
+    uint32 inStreamId = 1;
+    uint32 outStreamId = 2;
 }
 
 message SetMuteRequest {
@@ -369,6 +430,22 @@ message StopStreamResponse {
     uint32 streamId = 1;
 }
 
+message FlushRequest {
+    uint32 streamId = 1;
+}
+
+message FlushResponse {
+    uint32 streamId = 1;
+}
+
+message DrainRequest {
+    uint32 streamId = 1;
+}
+
+message DrainResponse {
+    uint32 streamId = 1;
+}
+
 message writeRequest {
     bytes buffer = 1;
     uint32 dataLength = 2;
@@ -410,6 +487,14 @@ message StopToneRequest {
 }
 
 message StopToneResponse {
+    uint32 streamId = 1;
+}
+
+message DrainEvent {
+    uint32 streamId = 1;
+}
+
+message WriteReadyEvent {
     uint32 streamId = 1;
 }
 

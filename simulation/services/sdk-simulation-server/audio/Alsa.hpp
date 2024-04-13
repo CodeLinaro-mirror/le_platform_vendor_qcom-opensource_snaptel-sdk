@@ -160,6 +160,10 @@ private:
     float InFreq2_;
     std::string pcmDevice_;
     std::string sndCardCtlDevice_;
+    uint32_t inTranscodeStreamId_ = INT_MAX;
+    uint32_t outTranscodeStreamId_ = INT_MAX;
+    int sendWriteReady;
+    int pipelineLen;
 
     int loadMappingArray(std::string key, MappedValueType mappedValueType,
         uint32_t numOfValues, DeviceMappingTable& deviceTbl);

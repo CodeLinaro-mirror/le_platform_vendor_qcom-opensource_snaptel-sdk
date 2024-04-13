@@ -68,8 +68,9 @@ class LocationInfoBase : public ILocationInfoBase {
     float headingUncertainty_ = NAN;
     uint64_t elapsedRealTime_ = 100;
     uint64_t elapsedRealTimeUncertainty_ = 3;
+    float timeUncMs_ = 0;
     uint64_t elapsedGptpTime_ = 100;
-    uint64_t elapsedGptpTimeUncertainity_ = 2;
+    uint64_t elapsedGptpTimeUncertainty_ = 2;
 
 public:
 /**
@@ -201,6 +202,14 @@ public:
     uint64_t getElapsedRealTimeUncertainty() override{return elapsedRealTimeUncertainty_;}
 
 /**
+ * Retrieves time uncertainty.
+ *
+ * return - Time uncertainty in milliseconds.
+ *
+ */
+    float getTimeUncMs() override { return timeUncMs_;}
+
+/**
  * Retrieves elapsed gPTP time.
  *    - Units: Nano-second
  *
@@ -216,7 +225,7 @@ public:
  * returns elapsed gPTP time uncertainty.
  *
  */
-    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainity_;}
+    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainty_;}
 
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
@@ -234,9 +243,10 @@ public:
     void setElapsedRealTimeUncertainty(uint64_t elapsedRealTimeUncertainty) {
         elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
     }
+    void setTimeUncMs(float val){ timeUncMs_ = val;}
     void setElapsedGptpTime(uint64_t elapsedGptpTime) {elapsedGptpTime_ = elapsedGptpTime;}
-    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainity) {
-        elapsedGptpTimeUncertainity_ = elapsedGptpTimeUncertainity;
+    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainty) {
+        elapsedGptpTimeUncertainty_ = elapsedGptpTimeUncertainty;
     }
 
 };
@@ -257,7 +267,7 @@ class LocationInfoEx : public ILocationInfoEx {
     uint64_t elapsedRealTime_ = 50;
     uint64_t elapsedRealTimeUncertainty_ = 5;
     uint64_t elapsedGptpTime_ = 100;
-    uint64_t elapsedGptpTimeUncertainity_ = 2;
+    uint64_t elapsedGptpTimeUncertainty_ = 2;
 
     uint32_t locationInfoExValidity_ = 0;
     float altitudeMeanSeaLevel_ = NAN;
@@ -301,6 +311,7 @@ class LocationInfoEx : public ILocationInfoEx {
     LLAInfo vrpLla_;
     std::vector<float> vrpVel_;
     uint32_t drSolutionStatus_ = 0;
+    std::vector<uint16_t> dgnssStationIds_;
 
 public:
 /**
@@ -447,12 +458,12 @@ public:
  * returns elapsed gPTP time uncertainty.
  *
  */
-    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainity_;}
+    uint64_t getElapsedGptpTimeUnc() override{return elapsedGptpTimeUncertainty_;}
 
 
 /**
  * Retrives the validity of the location info ex. It provides the validity of various information
- * like dop, reliabilities, uncertainities etc.
+ * like dop, reliabilities, uncertainties etc.
  *
  * returns Location ex validity mask
  */
@@ -660,7 +671,7 @@ public:
     SystemTime getGnssSystemTime() override { return gnssSystemTime_;}
 
 /**
- * Retrieves time uncertainity.
+ * Retrieves time uncertainty.
  *
  * return - Time uncertainty in milliseconds.
  *
@@ -831,6 +842,14 @@ public:
  */
   virtual DrSolutionStatus getSolutionStatus() { return drSolutionStatus_; }
 
+/** List of DGNSS station IDs providing corrections.
+ *  Range:
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - Other values reserved.
+ */
+  virtual std::vector<uint16_t> getDgnssStationIds() override { return dgnssStationIds_; }
+
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
     void setSpeed(float val) { speed_ = val;}
@@ -848,8 +867,8 @@ public:
         elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
     }
     void setElapsedGptpTime(uint64_t elapsedGptpTime) {elapsedGptpTime_ = elapsedGptpTime;}
-    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainity) {
-        elapsedGptpTimeUncertainity_ = elapsedGptpTimeUncertainity;
+    void setElapsedGptpTimeUnc(uint64_t elapsedGptpTimeUncertainty) {
+        elapsedGptpTimeUncertainty_ = elapsedGptpTimeUncertainty;
     }
 
     void setLocationInfoExValidity(uint64_t val) { locationInfoExValidity_ = val;}
@@ -923,6 +942,9 @@ public:
     }
     void setSolutionStatus(uint32_t drSolutionStatus) {
         drSolutionStatus_ = drSolutionStatus;
+    }
+    void setDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
+        dgnssStationIds_ = dgnssStationIds;
     }
 };
 

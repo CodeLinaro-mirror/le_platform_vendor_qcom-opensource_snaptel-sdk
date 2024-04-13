@@ -33,6 +33,12 @@ class Stream : public IStreamEventListener,
     telux::common::ErrorCode setupStream(StreamConfiguration config,
         uint32_t streamId, uint32_t& readMinSize, uint32_t& writeMinSize);
 
+    telux::common::ErrorCode setupInTranscodeStream(TranscodingFormatInfo inInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo);
+
+    telux::common::ErrorCode setupOutTranscodeStream(TranscodingFormatInfo outInfo,
+        CreatedTranscoderInfo *createdTranscoderInfo);
+
     telux::common::ErrorCode cleanupStream(std::vector<int>& voiceCallList);
 
     void start(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
@@ -74,13 +80,30 @@ class Stream : public IStreamEventListener,
 
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
 
+    void flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
+
+    void drain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
+
     /* IStreamEventListener overrides */
+
+    void onWriteReadyEvent(uint32_t streamId) override;
+
+    void onDrainDoneEvent(uint32_t streamId);
+
     void onDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
             uint32_t highFreq, StreamDirection streamDirection);
 
  private:
     bool isIncallStream = false;
     bool isHpcmStream = false;
+    /* No. of buffers in the pipeline to play. */
+    int pipelineLength = 0;
+    /* Keep track of buffers played. When this no. becomes a multiple of maxPipeLineLen, then send a
+       send a pipeline full notification to simulate the notifications for compressed playback. */
+    int sendPipelineFull = 0;
+    /* Max no. of bufffers after which pipeline full notification is sent. */
+    int maxPipeLineLen = 0;
+    bool isBtStream = false;
     std::shared_ptr<std::vector<uint8_t>> buffer_;
     StreamHandle streamHandle_;
     StreamParams streamParams_;

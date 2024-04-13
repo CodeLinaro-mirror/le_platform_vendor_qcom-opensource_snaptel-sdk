@@ -46,6 +46,8 @@
 #include "CallManagerServerImpl.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include "../../../libs/common/Event.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
 
 class CallManagerServerImpl;
 
@@ -61,13 +63,14 @@ class EcallStateMachine;
  *      MSD_PULL_REQUEST_FROM_PSAP
  *      PSAP_CALLBACK
  *      ON_TIMER_EXPIRY
+ *      ON_NETWORK_DEREGISTERATION_REQUEST
  * The state, apart from an ID and name has a boolean to indicate
  * the state of sub-system
  */
 class TelEvent : public telux::common::Event {
  public:
-    TelEvent(uint32_t id, std::string name)
-       : Event(id, name) {
+    TelEvent(uint32_t id, std::string name, int phoneId)
+       : Event(id, name, phoneId) {
     }
 };
 
@@ -290,6 +293,10 @@ class PSAPCallback : public telux::common::BaseState {
      * Method invoked by state-machine framework on exiting PSAPCallback
      */
     void onExit() override;
+    /**
+     * To fetch the Ecall Operating Mode
+     */
+    telux::tel::ECallMode getEcallOperatingMode(int phoneId);
 };
 
 /**
@@ -308,6 +315,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     bool isNGeCall_;
     int phoneId_;
     std::string remotePartyNumber_;
+    bool isCustomNumbereCall_;
  public:
     /**
      * Constructor for EcallStateMachine
@@ -315,7 +323,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
      */
     EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
         std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall, int phoneId
-        , std::string remotePartyNumber, bool updateInProgress);
+        , std::string remotePartyNumber, bool isCustomNumberEcall, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -344,11 +352,11 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
 
     enum EventID {
         NONE = EVENT_ID_INVALID,
-        HANGUP_REQUEST_FROM_USER,  // ID for Modem QCMAP events
-        HANGUP_REQUEST_FROM_PSAP,    // ID for SVM (TELE or FOTA) QCMAP events
-        MSD_PULL_REQUEST_FROM_PSAP,    // ID for EAP QCMAP events
-        PSAP_CALLBACK,         // ID for Modem events
-        ON_TIMER_EXPIRY
+        HANGUP_REQUEST_FROM_USER,
+        HANGUP_REQUEST_FROM_PSAP,
+        MSD_PULL_REQUEST_FROM_PSAP,
+        ON_TIMER_EXPIRY,
+        ON_NETWORK_DEREGISTRATION_REQUEST
     };
 
     uint32_t eventId_ = telux::tel::EcallStateMachine::EventID::NONE;
@@ -356,10 +364,12 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     /**
      * Utility method to create TelEvent
      * @param [in] id - The event ID identifying the sub-system
-     * @param [in] id - The state of the sub-system
+     * @param [in] timer - Provides the details for timer name for a timer expiry event.
+     * @param [in] phoneId - PhoneId of the event
      * @returns the TelEvent created from id and state
      */
-    std::shared_ptr<telux::common::Event> createTelEvent(EventID id, std::string timer);
+    std::shared_ptr<telux::common::Event> createTelEvent(EventID id, std::string timer,
+        int phoneId);
 
     /**
      * Utility method to fetch user input for statemachine
@@ -378,9 +388,13 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
 
     bool isEcallMSDUpdateInProgress();
 
+    bool isCustomNumberEcall();
+
     int getPhoneId();
 
     std::string getRemotePartyNumber();
+
+    bool updateInProgress_;
 
     enum StateID {
         STATE_IDLE = STATE_ID_INVALID,
@@ -392,8 +406,6 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
         STATE_CALL_CONVERSATION,
         STATE_PSAP_CALLBACK
     };
-
-    bool updateInProgress_;
 };
 
 }  // namespace tel

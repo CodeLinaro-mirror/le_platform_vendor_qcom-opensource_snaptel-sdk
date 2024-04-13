@@ -765,9 +765,11 @@ enum LocationValidityType {
     HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
     /** Location has valid elapsed real time uncertainty.*/
     HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10),
+    /** Location has valid time uncertainty.*/
+    HAS_TIME_UNC_BIT = (1<<11),
     /** Location has valid elapsed gPTP time.*/
     HAS_GPTP_TIME_BIT         = (1<<12),
-    /** Location has valid elapsed gPTP time uncertainity.*/
+    /** Location has valid elapsed gPTP time uncertainty.*/
     HAS_GPTP_TIME_UNC_BIT     = (1<<13)
 };
 
@@ -825,7 +827,11 @@ enum LocationInfoExValidityType {
   HAS_UP_VEL_UNC = (1ULL << 21),
   /** valid leap_seconds */
   HAS_LEAP_SECONDS = (1ULL << 22),
-  /** valid timeUncMs */
+  /** valid timeUncMs
+   *
+   * @deprecated
+   * Use @ref LocationValidityType::HAS_TIME_UNC_BIT to get the required information about
+   * validity of time uncertainty */
   HAS_TIME_UNC = (1ULL << 23),
   /** valid number of sv used */
   HAS_NUM_SV_USED_IN_POSITION = (1ULL << 24),
@@ -856,7 +862,9 @@ enum LocationInfoExValidityType {
   /** valid protect level vertical*/
   HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
   /** valid DR Solution status*/
-  HAS_SOLUTION_STATUS = (1ULL << 38)
+  HAS_SOLUTION_STATUS = (1ULL << 38),
+  /** valid dgnssStationId */
+  HAS_DGNSS_STATION_ID = (1ULL<<39)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -2626,6 +2634,16 @@ public:
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
 /**
+ * Retrieves time uncertainty.
+ * For PVT report from SPE engine, confidence level is at 99%.
+ * For PVT reports from other engines, confidence level is undefined.
+ *
+ * @return - Time uncertainty in milliseconds.
+ *
+ */
+  virtual float getTimeUncMs() = 0;
+
+/**
  * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
  * Used for time sync between different systems. Validity of this field is given by value of
  * @ref LocationValidityType::HAS_GPTP_TIME_BIT
@@ -2651,7 +2669,7 @@ public:
 /**
  * @brief ILocationInfoEx provides interface to get richer position related
  * information like latitude, longitude, altitude and other information like time stamp,
- * session status, dop, reliabilities, uncertainities etc.
+ * session status, dop, reliabilities, uncertainties etc.
  *
  */
 class ILocationInfoEx : public ILocationInfoBase {
@@ -2659,7 +2677,7 @@ public:
 
 /**
  * Retrives the validity of the location info ex. It provides the validity of various information
- * like dop, reliabilities, uncertainities etc.
+ * like dop, reliabilities, uncertainties etc.
  *
  * @returns Location ex validity mask
  */
@@ -2859,16 +2877,6 @@ public:
   virtual SystemTime getGnssSystemTime() = 0;
 
 /**
- * Retrieves time uncertainity.
- * For PVT report from SPE engine, confidence level is at 99%.
- * For PVT reports from other engines, confidence level is undefined.
- *
- * @return - Time uncertainty in milliseconds.
- *
- */
-  virtual float getTimeUncMs() = 0;
-
-/**
  * Retrieves leap seconds if available.
  *
  * @param [out] leapSeconds - leap seconds
@@ -3027,6 +3035,14 @@ public:
  *
  */
   virtual SbasCorrection getSbasCorrection() = 0;
+
+/** List of DGNSS station IDs providing corrections.
+ *  Range:
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - Other values reserved.
+ */
+  virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
 };
 

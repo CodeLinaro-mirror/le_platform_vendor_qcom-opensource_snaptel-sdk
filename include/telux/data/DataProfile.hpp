@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -90,7 +90,8 @@ public:
 
    DataProfile(int id, const std::string &name, const std::string &apn, const std::string &username,
                const std::string &password, IpFamilyType ipFamilyType, TechPreference techPref,
-               AuthProtocolType authType, ApnTypes apnTypes);
+               AuthProtocolType authType, ApnTypes apnTypes,
+               EmergencyCapability emergencyAllowed=EmergencyCapability::NOT_ALLOWED);
 
    /**
     * Get profile identifier.
@@ -165,6 +166,14 @@ public:
    ApnTypes getApnTypes();
 
    /**
+    * Get Emergency call capability.
+    *
+    * @returns EmergencyCapability @ref EmergencyCapability
+    *
+    */
+   EmergencyCapability getIsEmergencyAllowed();
+
+   /**
     * Get the text related informative representation of this object.
     *
     * @returns String containing informative string.
@@ -182,6 +191,7 @@ private:
    TechPreference techPref_;
    AuthProtocolType authType_;
    ApnTypes apnTypes_;
+   EmergencyCapability emergencyAllowed_;
 };
 
 /** @} */ /* end_addtogroup telematics_data */

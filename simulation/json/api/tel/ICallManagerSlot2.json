@@ -24,6 +24,26 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "makeTpsECallOverCSWithMsd" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "makeTpsECallOverIMS" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "makeTpsECallOverCSWithRawMsd" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "makeTpsECallOverCSWithoutMsd" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
         "updateECallMsd" :
         {
             "status" : "SUCCESS",
@@ -70,6 +90,11 @@
             "error" : "SUCCESS"
         },
         "requestEcallHlapTimer" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "requestNetworkDeregistration" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"

@@ -20,6 +20,10 @@ class IStreamEventListener {
  public:
     virtual void onDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
         uint32_t highFreq, StreamDirection streamDirection) = 0;
+
+    virtual void onDrainDoneEvent(uint32_t streamId) = 0;
+
+    virtual void onWriteReadyEvent(uint32_t streamId) = 0;
 };
 
 }  // end of namespace audio

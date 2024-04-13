@@ -86,6 +86,8 @@ public:
 
 private:
     int noOfSlots_;
+    bool ready_ = false;
+    std::condition_variable cv_;
     std::vector<int> phoneIds_;
     std::map<int, std::shared_ptr<PhoneStub>> phoneMap_;
     std::map<int, int> phoneSlotIdsMap_;
@@ -95,6 +97,8 @@ private:
     std::unique_ptr<::telStub::PhoneService::Stub> phoneStub_;
     std::unique_ptr<::telStub::CardService::Stub> cardStub_;
     void initSync(telux::common::InitResponseCb callback);
+    void setSubsystemReady(bool status);
+    bool waitForInitialization();
     void handleSignalStrengthChanged(::telStub::SignalStrengthChangeEvent event);
     void handleCellInfoListChanged(::telStub::CellInfoListEvent event);
     void handleVoiceServiceStateChanged(::telStub::VoiceServiceStateEvent event);

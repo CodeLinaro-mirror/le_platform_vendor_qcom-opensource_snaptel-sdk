@@ -76,6 +76,7 @@
 #include <sys/time.h>
 #include "asnbuf.h"
 #include "wsmp.h"
+#include "qUtils.hpp"
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verif_fails = 0;
@@ -123,6 +124,7 @@ sem_t bufferClearedSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
+static QUtils* utility;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
     ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
@@ -721,10 +723,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
 
         // check if valid msg contents pointer and if BSM for additional logging
-        if (threadMc){
-            if((psid == PSID_BSM || configuration.overridePsidCheck) &&
-                threadMc.get()->j2735_msg )
-            {
+        if (!isRxSim && threadMc){
+            if ((psid == PSID_BSM || configuration.overridePsidCheck) &&
+               threadMc.get()->j2735_msg && radioReceives.size() > index) {
                 uint64_t monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
                 uint8_t cbr = radioReceives[index].getCBRValue();
                 // write the log here for this tx now. using tx timestamp made before sendto
@@ -1738,6 +1739,10 @@ void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
  * Message count and id are randomized and incremented according to specification.
  */
 void SaeApplication::fillBsm(bsm_value_t *bsm) {
+
+    uint32_t randNumMsgId = 0;
+    uint32_t randNumMsgCount = 0;
+    int rng_ret = -1 ;
     bool idChangeEnabled = false;
     memset(bsm, 0, sizeof(bsm_value_t));
 
@@ -1763,11 +1768,19 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         sem_wait(&idChangeData.idSem);
     }
     // for synchronization between Application and Aerolink sides
-    // NOTE: real products should use a certified TRNG source and not
-    // rand() function for random number generation.
+    // Using the HW TME Random number Generator as the TRNG Source
+    auto app = static_cast<QUtils*>(utility);
+    rng_ret = app->hwTRNGInt(randNumMsgCount);
+    if(rng_ret){
+        printf("Failure in Randon Number Generation for Message Count \n");
+    }
+    rng_ret = app->hwTRNGInt(randNumMsgId);
+    if(rng_ret){
+        printf("Failure in Randon Number Generation for Message Id \n");
+    }
     if (!initialized) {
-        bsm->MsgCount = (rand() % 128);
-        bsm->id = rand();
+        bsm->MsgCount = (randNumMsgCount % 128);
+        bsm->id = randNumMsgId;
         initialized = true;
         if (appVerbosity > 1) {
             printf("Msg count: %d, id: %u\n", bsm->MsgCount, bsm->id);
@@ -1775,7 +1788,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
     else if (idChangeData.idChanged) {
         // randomize msg count
-        bsm->MsgCount = (rand() % 128);
+        bsm->MsgCount = (randNumMsgCount % 128);
         // update the temp id
         bsm->id = (uint32_t)idChangeData.tempId[0] << 24 |
         (uint32_t)idChangeData.tempId[1] << 16 |

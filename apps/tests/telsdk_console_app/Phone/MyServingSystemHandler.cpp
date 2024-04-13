@@ -192,6 +192,78 @@ std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain do
    return domainString;
 }
 
+std::string MyServingSystemHelper::getSmsDomain(telux::tel::SmsDomain domain) {
+   std::string domainString = " Unknown ";
+   switch(domain) {
+      case telux::tel::SmsDomain::NO_SMS:
+         domainString = " No SMS ";
+         break;
+      case telux::tel::SmsDomain::SMS_ON_IMS:
+         domainString = " SMS on IMS ";
+         break;
+      case telux::tel::SmsDomain::SMS_ON_3GPP:
+         domainString = " SMS on 3GPP ";
+         break;
+      case telux::tel::SmsDomain::UNKNOWN:
+         domainString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return domainString;
+}
+
+std::string MyServingSystemHelper::getLteCsCapability(telux::tel::LteCsCapability capability) {
+   std::string capabilityString = " Unknown ";
+   switch(capability) {
+      case telux::tel::LteCsCapability::FULL_SERVICE:
+         capabilityString = " Full Service ";
+         break;
+      case telux::tel::LteCsCapability::CSFB_NOT_PREFERRED:
+         capabilityString = " CSFB Not Preferred ";
+         break;
+      case telux::tel::LteCsCapability::SMS_ONLY:
+         capabilityString = " SMS Only ";
+         break;
+      case telux::tel::LteCsCapability::LIMITED:
+         capabilityString = " Limited ";
+         break;
+      case telux::tel::LteCsCapability::BARRED:
+         capabilityString = " Barred ";
+         break;
+      case telux::tel::LteCsCapability::UNKNOWN:
+         capabilityString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return capabilityString;
+}
+
+std::string MyServingSystemHelper::getCallBarringType(telux::tel::CallsAllowedInCell type) {
+   std::string typeString = " Unknown ";
+   switch(type) {
+      case telux::tel::CallsAllowedInCell::NORMAL_ONLY:
+         typeString = " Normal Only ";
+         break;
+      case telux::tel::CallsAllowedInCell::EMERGENCY_ONLY:
+         typeString = " Emergency Only ";
+         break;
+      case telux::tel::CallsAllowedInCell::NO_CALLS:
+         typeString = " No Calls ";
+         break;
+      case telux::tel::CallsAllowedInCell::ALL_CALLS:
+         typeString = " All Calls ";
+         break;
+      case telux::tel::CallsAllowedInCell::UNKNOWN:
+         typeString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return typeString;
+}
+
 std::string MyServingSystemHelper::getRadioTechnology(telux::tel::RadioTechnology radioTech) {
     return MyPhoneHelper::radioTechToString(radioTech);
 }
@@ -503,4 +575,32 @@ void MyServingSystemListener::onNetworkRejection(telux::tel::NetworkRejectInfo r
             << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
             << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
             << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc;
+}
+
+void MyServingSystemListener::onCallBarringInfoChanged
+   (std::vector<telux::tel::CallBarringInfo> barringInfo) {
+   PRINT_NOTIFICATION << " Call barring information changed." << std::endl;
+   for (int index = 0; index < barringInfo.size(); index++) {
+      PRINT_NOTIFICATION << " RAT: "
+         << MyServingSystemHelper::getRadioTechnology(barringInfo[index].rat)
+         << ", Service Domain: "
+         << MyServingSystemHelper::getServiceDomain(barringInfo[index].domain)
+         << ", Call type: "
+         << MyServingSystemHelper::getCallBarringType(barringInfo[index].callType)
+         << std::endl;
+   }
+}
+
+void MyServingSystemListener::onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) {
+   PRINT_NOTIFICATION << " SMS capability changed."
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(smsCapability.rat)
+            << "\n SMS Domain: "
+            << MyServingSystemHelper::getSmsDomain(smsCapability.domain);
+}
+
+void MyServingSystemListener::onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) {
+   PRINT_NOTIFICATION << " LTE CS capability changed."
+            << "\n LTE CS capability: "
+            << MyServingSystemHelper::getLteCsCapability(lteCapability);
 }

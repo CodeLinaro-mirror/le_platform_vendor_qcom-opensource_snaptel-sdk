@@ -320,23 +320,26 @@ void ApplicationBase::changeIdTimer(unsigned int interval)
 // then periodically call "idChange" and check return value and updates in idChangeData
 void ApplicationBase::changeIdentity(){
     //  pseudonym cert change
-    sem_wait(&idChangeData.idSem);
-    int ret = SecService->idChange();
-    if( ret < 0 ){
-        if(appVerbosity > 1)
-            fprintf(stderr,"Id Change Failure\n");
-    }
-    else{
-        if(appVerbosity > 1)
-            printf("Id Change Success\n");
-        // if not simulation, perform l2 src randomization
-        if (!this->isTxSim) { // radio
-            for(int index = 0 ; index < spsTransmits.size(); index++){
-                this->spsTransmits[index].updateSrcL2();
+    if(!exitApp)
+    {
+        sem_wait(&idChangeData.idSem);
+        int ret = SecService->idChange();
+        if( ret < 0 ){
+            if(appVerbosity > 1)
+                fprintf(stderr,"Id Change Failure\n");
+        }
+        else{
+            if(appVerbosity > 1)
+                printf("Id Change Success\n");
+            // if not simulation, perform l2 src randomization
+            if (!this->isTxSim) { // radio
+                for(int index = 0 ; index < spsTransmits.size(); index++){
+                    this->spsTransmits[index].updateSrcL2();
+                }
             }
         }
+        sem_post(&idChangeData.idSem);
     }
-    sem_post(&idChangeData.idSem);
 }
 
 void ApplicationBase::updateL2RvMap(uint32_t l2SrcId, rv_specs* rvSpec) {
@@ -626,14 +629,20 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 ApplicationBase::~ApplicationBase() {
-    std::cout << "ApplicationBase destructing" << std::endl;
+    if(appVerbosity){
+        std::cout << "ApplicationBase destructing" << std::endl;
+    }
     if (qMon) {
         delete qMon;
-        std::cout << "Closed qMon\n";
+        if(appVerbosity){
+            std::cout << "Closed qMon\n";
+        }
     }
     if (qMonConfig) {
         delete qMonConfig;
-        std::cout << "Closed qMonConfig\n";
+        if(appVerbosity){
+            std::cout << "Closed qMonConfig\n";
+        }
     }
     {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -2365,7 +2374,9 @@ void ApplicationBase::clearRadioInstance() {
 }
 
 void ApplicationBase::closeAllRadio() {
-    std::cout << "Attempting to close all flows\n";
+    if(appVerbosity){
+        std::cout << "Attempting to close all flows\n";
+    }
     exitApp = true;
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();

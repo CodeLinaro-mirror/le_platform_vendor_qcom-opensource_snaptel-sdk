@@ -18,9 +18,18 @@
 #define MANAGER "IServingSystemManager"
 #define SLOT_1 1
 #define SLOT_2 2
+#define CALL_BARRING_UPDATE_EVENT "callBarringUpdate"
 
 ServingManagerServerImpl::ServingManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
+    taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
+}
+
+ServingManagerServerImpl::~ServingManagerServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+    if (taskQ_) {
+        taskQ_ = nullptr;
+    }
 }
 
 grpc::Status ServingManagerServerImpl::CleanUpService(ServerContext* context,
@@ -413,6 +422,143 @@ grpc::Status ServingManagerServerImpl::GetNetworkRejectInfo(ServerContext* conte
     return grpc::Status::OK;
 }
 
+grpc::Status ServingManagerServerImpl::GetCallBarringInfo(ServerContext* context,
+    const ::telStub::GetCallBarringInfoRequest* request,
+    telStub::GetCallBarringInfoReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "getCallBarringInfo";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.status == telux::common::Status::SUCCESS) {
+        int count = data.stateRootObj[MANAGER] ["CallBarringInfo"]["infoList"].size();
+        for (int i = 0 ; i < count; i++) {
+            telStub::CallBarringInfo *result = response->add_barring_infos();
+            Json::Value requestedInfo =
+                data.stateRootObj[MANAGER] ["CallBarringInfo"]["infoList"][i];
+            int rat = requestedInfo["rat"].asInt();
+            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
+            int serviceDomain = requestedInfo["domain"].asInt();
+            result->set_domain
+                (static_cast<telStub::ServiceDomainInfo_Domain>(serviceDomain));
+            int callType = requestedInfo["callType"].asInt();
+            result->set_call_type
+                (static_cast<telStub::CallsAllowedInCell_Type>(callType));
+        }
+    }
+    //Create response
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+void ServingManagerServerImpl::handleCallBarringUpdate(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+
+    // Split the event string into parameters( for phoneId ,BarringInfo1 ,BarringInfo2 ...)
+    // based on delimeter as ","
+    std::stringstream ss(eventParams);
+    std::vector<string> params;
+    while (getline(ss, eventParams, ',')) {
+        params.emplace_back(eventParams);
+    }
+    for(std::string str:params) {
+        LOG(DEBUG, __FUNCTION__," Param: ", str);
+    }
+
+    ::telStub::CallBarringInfosEvent callBarringInfosEvent;
+    ::eventService::EventResponse anyResponse;
+    try {
+        // Read string to get slotId
+        std::string token = EventParserUtil::getNextToken(params[0], DEFAULT_DELIMITER);
+        int phoneId = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " PhoneId : ", phoneId);
+        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+            LOG(ERROR, " Invalid input for phone id");
+            return;
+        }
+
+        Json::Value rootObj;
+        std::string jsonfilename = (phoneId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+        if (error != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+            return;
+        }
+
+        rootObj[MANAGER] ["CallBarringInfo"]["infoList"].clear();
+        callBarringInfosEvent.set_phone_id(phoneId);
+        int jsonInfoCount = rootObj[MANAGER] ["CallBarringInfo"]["infoList"].size();
+        int newInfoCount = params.size() - 1;
+        LOG(DEBUG, " jsonInfoCount ", jsonInfoCount , " newInfoCount ", newInfoCount);
+
+        for (int i = 1; i <= newInfoCount; i++) {
+            LOG(DEBUG, " Parsing Params:" , params[i]);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int rat = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " Rat is: ", rat);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int domain = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " Domain is: ", domain);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int callType = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " CallType is: ", callType);
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["rat"] = rat;
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["domain"] = domain;
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["callType"] = callType;
+
+            telStub::CallBarringInfo *result = callBarringInfosEvent.add_barring_infos();
+            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
+            result->set_domain
+                (static_cast<telStub::ServiceDomainInfo_Domain>(domain));
+            result->set_call_type
+                (static_cast<telStub::CallsAllowedInCell_Type>(callType));
+        }
+
+        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+        anyResponse.set_filter(telux::tel::TEL_SERVING_SYSTEM_FILTER);
+        anyResponse.mutable_any()->PackFrom(callBarringInfosEvent);
+
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
+        return;
+    }
+
+    auto f = std::async(std::launch::async, [this, anyResponse]() {
+            this->triggerChangeEvent(anyResponse);
+    }).share();
+    taskQ_->add(f);
+}
+
+void ServingManagerServerImpl::triggerChangeEvent(::eventService::EventResponse anyResponse) {
+    LOG(DEBUG, __FUNCTION__);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+}
+
 void ServingManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
-    LOG(DEBUG, __FUNCTION__, "Not Supported");
+    if (message.filter() == telux::tel::TEL_SERVING_SYSTEM_FILTER) {
+        onEventUpdate(message.event());
+    }
+}
+
+void ServingManagerServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__," Event string is ", event );
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__," Token String is ", token );
+    if (CALL_BARRING_UPDATE_EVENT == token) {
+        handleCallBarringUpdate(event);
+    } else {
+        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+    }
 }

@@ -21,7 +21,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_HPCM_TX_MODIFY} ${HPCM_TX_MODIFY_SOURCES})
-target_link_libraries(${TARGET_HPCM_TX_MODIFY} telux_audio)
+target_link_libraries(${TARGET_HPCM_TX_MODIFY} telux_audio pthread)
 
 # install to target
 install ( TARGETS ${TARGET_HPCM_TX_MODIFY}

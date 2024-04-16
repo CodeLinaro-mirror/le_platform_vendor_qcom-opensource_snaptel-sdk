@@ -120,6 +120,9 @@
 #define ASYNC_BATCH_SIZE 500
 #define VERIF_STAT_BATCH_SIZE 2500
 #define DEFAULT_PROCESS_PRIORITY -20
+#define DECODE_SUCCESS 0
+#define DECODE_FAIL -1
+#define DECODE_SIGNED 1
 
 #define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
                        "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\

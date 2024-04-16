@@ -960,14 +960,13 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkRelevance
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
-int AerolinkSecurity::checkConsistencyandRelevancy(
-    Kinematics hvKine, Kinematics rvKine) {
+int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
-
+    //Kinematics hvKine, Kinematics rvKine
     // Get corresponding smp for this thread
     SecuredMessageParserC* smp;
     smp = getThrSmp(thrId);
@@ -980,14 +979,14 @@ int AerolinkSecurity::checkConsistencyandRelevancy(
     // set the generation location
     if(secVerbosity > 7){
         fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
-            hvKine.latitude, hvKine.longitude, hvKine.elevation);
+            opt.hvKine.latitude, opt.hvKine.longitude, opt.hvKine.elevation);
 
         fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
-            rvKine.latitude, rvKine.longitude, rvKine.elevation);
+            opt.rvKine.latitude, opt.rvKine.longitude, opt.rvKine.elevation);
     }
 
-    result = smp_setGenerationLocation(*smp, rvKine.latitude, rvKine.longitude,
-            rvKine.elevation);
+    result = smp_setGenerationLocation(*smp, opt.rvKine.latitude, opt.rvKine.longitude,
+            opt.rvKine.elevation);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -995,8 +994,11 @@ int AerolinkSecurity::checkConsistencyandRelevancy(
         return -1;
     }
 
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking relevance of signed message\n");
+    }
     // smp_checkRelevance
-    if(this->enableRelevance){
+    if(opt.enableRelevance){
         result = smp_checkRelevance(*smp);
         if (result != WS_SUCCESS)
         {
@@ -1010,7 +1012,7 @@ int AerolinkSecurity::checkConsistencyandRelevancy(
         fprintf(stdout, "Now checking consistency of signed message\n");
     }
     // smp_checkConsistency
-    if(this->enableConsistency){
+    if(opt.enableConsistency){
         result = smp_checkConsistency(*smp);
         if(result != WS_SUCCESS){
             if(secVerbosity > 4)

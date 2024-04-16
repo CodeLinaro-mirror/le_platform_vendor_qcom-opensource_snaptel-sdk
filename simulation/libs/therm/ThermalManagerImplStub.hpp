@@ -14,7 +14,7 @@
 #include "event-manager/ClientEventManager.hpp"
 #include "protos/proto-src/therm_simulation.grpc.pb.h"
 
-using therm::Thermal;
+using thermStub::Thermal;
 
 namespace telux {
 
@@ -64,8 +64,8 @@ class ThermalManagerImplStub : public IThermalManager,
     std::mutex mgrListenerMtx_;
     telux::common::AsyncTaskQueue<void> taskQ_;
 
-    TripType getTripType(::therm::TripPoint_TripType grpcTripType);
-    TripEvent getTripEvent(::therm::TripEvent grpcTripEvent);
+    TripType getTripType(thermStub::TripPoint_TripType grpcTripType);
+    TripEvent getTripEvent(thermStub::TripEvent grpcTripEvent);
 
     void onEventUpdate(google::protobuf::Any event);
 

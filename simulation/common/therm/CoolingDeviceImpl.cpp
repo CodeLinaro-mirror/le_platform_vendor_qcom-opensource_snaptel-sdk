@@ -5,14 +5,14 @@
 
 #include "common/Logger.hpp"
 
-#include "CoolingDevice.hpp"
+#include "CoolingDeviceImpl.hpp"
 
 #define INVALID -1
 
 namespace telux {
 namespace therm {
 
-CoolingDevice::CoolingDevice()
+CoolingDeviceImpl::CoolingDeviceImpl()
    : coolingDevInstance_(INVALID)
    , coolingDevType_("")
    , maxCoolingLevel_(INVALID)
@@ -20,23 +20,23 @@ CoolingDevice::CoolingDevice()
     LOG(INFO, __FUNCTION__);
 }
 
-int CoolingDevice::getId() const {
+int CoolingDeviceImpl::getId() const {
     return coolingDevInstance_;
 }
 
-std::string CoolingDevice::getDescription() const {
+std::string CoolingDeviceImpl::getDescription() const {
     return coolingDevType_;
 }
 
-int CoolingDevice::getMaxCoolingLevel() const {
+int CoolingDeviceImpl::getMaxCoolingLevel() const {
     return maxCoolingLevel_;
 }
 
-int CoolingDevice::getCurrentCoolingLevel() const {
+int CoolingDeviceImpl::getCurrentCoolingLevel() const {
     return currentCoolingLevel_;
 }
 
-std::string CoolingDevice::toString() {
+std::string CoolingDeviceImpl::toString() {
     std::stringstream ss;
     ss << " cdev Id: " << coolingDevInstance_ << ", cdev name: " << coolingDevType_
        << ", max cooling level: " << maxCoolingLevel_
@@ -44,19 +44,19 @@ std::string CoolingDevice::toString() {
     return ss.str();
 }
 
-void CoolingDevice::setId(int instance) {
+void CoolingDeviceImpl::setId(int instance) {
     coolingDevInstance_ = instance;
 }
 
-void CoolingDevice::setDescription(std::string type) {
+void CoolingDeviceImpl::setDescription(std::string type) {
     coolingDevType_ = type;
 }
 
-void CoolingDevice::setMaxCoolingLevel(int maxCoolingLevel) {
+void CoolingDeviceImpl::setMaxCoolingLevel(int maxCoolingLevel) {
     maxCoolingLevel_ = maxCoolingLevel;
 }
 
-void CoolingDevice::setCurrentCoolingLevel(int currentCoolingLevel) {
+void CoolingDeviceImpl::setCurrentCoolingLevel(int currentCoolingLevel) {
     currentCoolingLevel_ = currentCoolingLevel;
 }
 

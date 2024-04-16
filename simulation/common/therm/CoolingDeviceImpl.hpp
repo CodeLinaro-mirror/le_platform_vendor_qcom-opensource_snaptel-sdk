@@ -3,17 +3,17 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef COOLINGDEVICEINFOIMPL_HPP
-#define COOLINGDEVICEINFOIMPL_HPP
+#ifndef COOLINGDEVICEIMPL_HPP
+#define COOLINGDEVICEIMPL_HPP
 
 #include <telux/therm/ThermalManager.hpp>
 
 namespace telux {
 namespace therm {
 
-class CoolingDevice : public ICoolingDevice {
+class CoolingDeviceImpl : public ICoolingDevice {
  public:
-    CoolingDevice();
+    CoolingDeviceImpl();
     int getId() const override;
     std::string getDescription() const override;
     int getMaxCoolingLevel() const override;
@@ -34,4 +34,4 @@ class CoolingDevice : public ICoolingDevice {
 
 }  // end of namespace therm
 }  // end of namespace telux
-#endif  // COOLINGDEVICEINFOIMPL_HPP
+#endif  // COOLINGDEVICEIMPL_HPP

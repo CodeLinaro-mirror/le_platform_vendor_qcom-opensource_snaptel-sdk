@@ -12,8 +12,8 @@
 #include "../../libs/common/Logger.hpp"
 #include "../../../../include/telux/therm/ThermalManager.hpp"
 #include "../../../libs/common/CommonUtils.hpp"
-#include "../../../common/therm/ThermalZone.hpp"
-#include "../../../common/therm/CoolingDevice.hpp"
+#include "../../../common/therm/ThermalZoneImpl.hpp"
+#include "../../../common/therm/CoolingDeviceImpl.hpp"
 
 #define TREND_RAISING   1
 #define TREND_STABLE    0
@@ -39,20 +39,20 @@ class ThermalJsonImpl {
         telux::common::Status getCoolingDevices();
 
         telux::common::Status getThermalZones(
-                std::vector<std::shared_ptr<telux::therm::ThermalZone>> &tZones);
+                std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> &tZones);
         telux::common::Status getCoolingDevices(
-                std::vector<std::shared_ptr<telux::therm::CoolingDevice>> &cDevs);
+                std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> &cDevs);
 
         telux::common::Status getThermalZoneById(int tZoneId,
-                std::shared_ptr<telux::therm::ThermalZone> &tz);
+                std::shared_ptr<telux::therm::ThermalZoneImpl> &tz);
         telux::common::Status getCoolingDeviceById(int cDevId,
-                std::shared_ptr<telux::therm::CoolingDevice> &cDev);
+                std::shared_ptr<telux::therm::CoolingDeviceImpl> &cDev);
 
         std::map<int, int> getCoolingDeviceLevel(
                 int tZoneId, int tripId, int trend, int cDevId = -1);
 
-        std::vector<std::shared_ptr<telux::therm::ThermalZone>> tZoneList_;
-        std::vector<std::shared_ptr<telux::therm::CoolingDevice>> cDevList_;
+        std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> tZoneList_;
+        std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> cDevList_;
 
     private:
         telux::common::Status findId(std::string api, int id);

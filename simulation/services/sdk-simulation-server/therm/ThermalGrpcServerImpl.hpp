@@ -15,8 +15,8 @@
 #include <telux/therm/ThermalManager.hpp>
 #include "CommonUtils.hpp"
 
-#include "common/therm/ThermalZone.hpp"
-#include "common/therm/CoolingDevice.hpp"
+#include "common/therm/ThermalZoneImpl.hpp"
+#include "common/therm/CoolingDeviceImpl.hpp"
 #include "SimulationServer.hpp"
 #include "ThermalJsonImpl.hpp"
 #include "ThermalManagerServerImpl.hpp"
@@ -30,13 +30,12 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::ServerWriter;
 using grpc::Status;
-using therm::Thermal;
 
-using therm::Thermal;
+using thermStub::Thermal;
 using commonStub::ServiceStatus;
 using commonStub::GetServiceStatusReply;
 
-class ThermalGrpcServerImpl final : public therm::Thermal::Service,
+class ThermalGrpcServerImpl final : public thermStub::Thermal::Service,
                                     public ThermalManagerServerImpl {
     public:
 
@@ -53,29 +52,29 @@ class ThermalGrpcServerImpl final : public therm::Thermal::Service,
         commonStub::GetServiceStatusReply* response) override;
 
         grpc::Status GetThermalZones(ServerContext* context,
-            const ::therm::GetThermalZonesRequest* request,
-            ::therm::GetThermalZonesReply* response) override;
+            const ::thermStub::GetThermalZonesRequest* request,
+            ::thermStub::GetThermalZonesReply* response) override;
         grpc::Status GetCoolingDevices(ServerContext* context,
-            const ::therm::GetCoolingDevicesRequest* request,
-            ::therm::GetCoolingDevicesReply* response) override;
+            const ::thermStub::GetCoolingDevicesRequest* request,
+            ::thermStub::GetCoolingDevicesReply* response) override;
 
         grpc::Status GetThermalZoneById(ServerContext* context,
-            const ::therm::GetThermalZoneByIdRequest* request,
-            ::therm::GetThermalZoneByIdReply* response) override;
+            const ::thermStub::GetThermalZoneByIdRequest* request,
+            ::thermStub::GetThermalZoneByIdReply* response) override;
         grpc::Status GetCoolingDeviceById(ServerContext* context,
-            const ::therm::GetCoolingDeviceByIdRequest* request,
-            ::therm::GetCoolingDeviceByIdReply* response) override;
+            const ::thermStub::GetCoolingDeviceByIdRequest* request,
+            ::thermStub::GetCoolingDeviceByIdReply* response) override;
 
         grpc::Status RegisterOnCoolingDeviceLevelChange(ServerContext* context,
             const google::protobuf::Empty* request,
-            ServerWriter<::therm::RegisterOnCoolingDeviceLevelChangeReply>* response) override;
+            ServerWriter<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>* response) override;
         grpc::Status DeRegisterOnCoolingDeviceLevelChange(ServerContext* context,
             const ::commonStub::DeRegisterNotificationRequest* request,
             google::protobuf::Empty* response) override;
 
         grpc::Status RegisterOnTripEvent(ServerContext* context,
             const google::protobuf::Empty* request,
-            ServerWriter<::therm::RegisterOnTripEventReply>* response) override;
+            ServerWriter<::thermStub::RegisterOnTripEventReply>* response) override;
 
         grpc::Status DeRegisterOnTripEvent(ServerContext* context,
             const ::commonStub::DeRegisterNotificationRequest* request,
@@ -87,11 +86,11 @@ class ThermalGrpcServerImpl final : public therm::Thermal::Service,
         grpc::Status setResponse(telux::common::ServiceStatus srvStatus,
                 commonStub::GetServiceStatusReply* response);
 
-        ::therm::TripPoint_TripType getTripType(telux::therm::TripType tripType);
+        ::thermStub::TripPoint_TripType getTripType(telux::therm::TripType tripType);
 
         telux::common::Status sendTripUpdateEvent(std::shared_ptr<telux::therm::ITripPoint> &tp,
                 int tZoneId, int event);
-        telux::common::Status sendCdevUpdateEvent(std::shared_ptr<telux::therm::CoolingDevice> &cd,
+        telux::common::Status sendCdevUpdateEvent(std::shared_ptr<telux::therm::CoolingDeviceImpl> &cd,
                 unsigned int newState);
 
         telux::common::Status getNewCdevStateUpdate(int trend, int tZoneId, int tripId);
@@ -136,24 +135,24 @@ class ThermalGrpcServerImpl final : public therm::Thermal::Service,
             }
 
             grpc::Status registerTripEvent(
-                    ServerWriter<::therm::RegisterOnTripEventReply>* response);
+                    ServerWriter<::thermStub::RegisterOnTripEventReply>* response);
             grpc::Status deRegisterTripEvent(int clientId);
             grpc::Status registerCdevStateChangeEvent(
-                    ServerWriter<::therm::RegisterOnCoolingDeviceLevelChangeReply>* response);
+                    ServerWriter<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>* response);
             grpc::Status deRegisterCdevStateChangeEvent(int clientId);
 
     private:
 
-        std::shared_ptr<telux::therm::CoolingDevice> setCoolingDevice(int tZoneId, int tripId,
+        std::shared_ptr<telux::therm::CoolingDeviceImpl> setCoolingDevice(int tZoneId, int tripId,
                 int cDevId, int trend, int nextCdevState);
 
         std::shared_ptr<ThermalJsonImpl> jsonHelper_;
-        std::map<uint16_t, ServerWriter<therm::RegisterOnCoolingDeviceLevelChangeReply>*>
+        std::map<uint16_t, ServerWriter<thermStub::RegisterOnCoolingDeviceLevelChangeReply>*>
             onCoolingDeviceLevelChangeReplyWriters_;
         std::mutex onCoolingDeviceLevelChangeMutex_;
         std::condition_variable onCoolingDeviceLevelChangeCv_;
         static uint16_t OnCdevLevelChngNotifyCnt_;
-        std::map<uint16_t, ServerWriter<therm::RegisterOnTripEventReply>*>
+        std::map<uint16_t, ServerWriter<thermStub::RegisterOnTripEventReply>*>
             onTripEventReplyWriters_;
         std::mutex onTripEventMutex_;
         std::mutex setTempMutex_;

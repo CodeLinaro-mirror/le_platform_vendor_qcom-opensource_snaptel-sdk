@@ -279,6 +279,7 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
                     std::chrono::milliseconds(application->configuration.commandInterval -
                     application->configuration.tShiftInterval*commandIntervalCtr));
             }
+            commandIntervalCtr++;
             // if current interval is now equal to evaluation interval
             if(commandIntervalCtr ==
                     application->configuration.nCommandInterval_0 && !stateOn
@@ -292,7 +293,6 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
                 //reset the counter after we reach evaluation interval
                 commandIntervalCtr = 0;
             }
-            commandIntervalCtr++;
         }
     }).detach();
 }
@@ -1455,7 +1455,7 @@ int main(int argc, char** argv) {
     auto uid = getuid();
     if (uid == 0) {
         /*Change running as non-root user*/
-        std::unordered_set<int8_t> newUserCaps{CAP_NET_ADMIN};
+        std::unordered_set<int8_t> newUserCaps{CAP_NET_ADMIN, CAP_SYS_NICE};
         auto changeUser = Utils::changeUser("its", newUserCaps);
         if (telux::common::ErrorCode::SUCCESS != changeUser) {
             cerr << "change user failed " << Utils::getErrorCodeAsString(changeUser) << std::endl;

@@ -52,6 +52,20 @@
 #include "SuppServicesMenu.hpp"
 
 #define INVALID -1
+#define CONFIGURE_SIGNAL_STRENGTH_RAT_GSM 0
+#define CONFIGURE_SIGNAL_STRENGTH_RAT_WCDMA 1
+#define CONFIGURE_SIGNAL_STRENGTH_RAT_LTE 2
+#define CONFIGURE_SIGNAL_STRENGTH_RAT_NR5G 3
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSSI 0
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_ECIO 1
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSCP 2
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSSI 0
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSRP 1
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSRQ 2
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_SNR  3
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRP 0
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRQ 1
+#define CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_SNR 2
 
 PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -234,8 +248,13 @@ bool PhoneMenu::init() {
          "16", "Configure_Signal_Strength", {},
             std::bind(&PhoneMenu::configureSignalStrength, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureSignalStrengthExCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "17", "Configure_Signal_Strength_Ex", {},
+            std::bind(&PhoneMenu::configureSignalStrengthEx, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("17", "Select_sim_slot", {},
+      ConsoleAppCommand("18", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
@@ -254,7 +273,8 @@ bool PhoneMenu::init() {
          requestOperatorNameCommand,
          suppServicesMenuCommand,
          resetWwanCommand,
-         configureSignalStrengthCommand};
+         configureSignalStrengthCommand,
+         configureSignalStrengthExCommand};
 
    if (phones_.size() > 1) {
       commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -548,13 +568,13 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
       int upper_threshold;
       std::vector<telux::tel::SignalStrengthConfig> sigStrengthConfigList = {};
 
-      std::cout << "Enter the number of Signal type(s) to be configured : ";
-      std::cin >> num;
-      Utils::validateInput(num);
       std::cout
          << "\nAvailable Signal Strength RAT Types are: \n"
          " 0 - GSM_RSSI\n 1 - WCDMA_RSSI\n 2 - LTE_RSSI\n 3 - LTE_SNR\n 4 - LTE_RSRQ\n" <<
          " 5 - LTE_RSRP\n 6 - NR5G_SNR\n 7 - NR5G_RSRP\n 8 - NR5G_RSRQ \n\n";
+      std::cout << "Enter the number of Signal type(s) to be configured : ";
+      std::cin >> num;
+      Utils::validateInput(num);
       if (num > 0 && num <= (static_cast<int>(telux::tel::RadioSignalStrengthType::NR5G_RSRQ)+1)) {
                             // count is non-zero positive number i.e. enum last element+1
          for (int i = 0; i < num ; i++) {
@@ -630,6 +650,561 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
                     ? "Configure Signal Strength request is successful. \n"
                     : "Configure Signal Strength request failed, check the input provided.")
                 << '\n';
+   } else {
+      std::cout << "No phone found\n";
+   }
+}
+
+void PhoneMenu::configureSignalStrengthEx(std::vector<std::string> userInput) {
+   auto phone = phones_[slot_ - 1];
+   if (phone) {
+       char delimiter = '\n';
+       std::string numString = "";
+       int num = 0;
+       std::string radioTechString = "";
+       int radioTech = -1;
+       std::string configPreference = "";
+       std::string deltaString = "";
+       uint16_t delta = 0;
+       std::string thresholdString = "";
+       std::string sigMeasNumString = "";
+       int sigMeasNum = 0;
+       std::string sigMeasTypeString = "";
+       int sigMeasType = -1;
+       std::string hysDeltaString = "";
+       uint16_t hysDelta = 0;
+       std::string hysOptionString = "";
+       int hysOption = -1;
+       std::string hysTimerString = "";
+       uint16_t hysTimer = 0;
+
+       std::vector<telux::tel::SignalStrengthConfigEx> sigStrengthConfigList = {};
+
+       std::cout << "\nAvailable Signal Strength RAT are: \n"
+           " 0 - GSM\n 1 - WCDMA\n 2 - LTE\n 3 - NR5G\n\n";
+       std::cout << "Enter the number of Signal Strength Configs RAT(s) to be configured : ";
+       std::getline(std::cin, numString, delimiter);
+       try {
+           num = stoi(numString);
+       } catch (const std::exception &e) {
+           std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+               << std::endl;
+           return;
+       }
+       Utils::validateInput(num);
+       if (num > CONFIGURE_SIGNAL_STRENGTH_RAT_GSM && num <= CONFIGURE_SIGNAL_STRENGTH_RAT_NR5G+1)
+       {
+           for (int idx = 0; idx < num ; idx++) {
+               telux::tel::SignalStrengthConfigEx sigStrengthConfig = {};
+               telux::tel::SignalStrengthConfigMask configMask = {};
+               std::cout << "Enter RAT : ";
+               std::getline(std::cin, radioTechString, delimiter);
+               try {
+                   radioTech = stoi(radioTechString);
+               } catch (const std::exception &e) {
+                   std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                       << radioTech << std::endl;
+                   return;
+               }
+               Utils::validateInput(radioTech);
+               if (radioTech < CONFIGURE_SIGNAL_STRENGTH_RAT_GSM ||
+                   radioTech > CONFIGURE_SIGNAL_STRENGTH_RAT_NR5G) {
+                   std::cout << "Invalid input " << std::endl;
+                   return;
+               }
+               std::cout << "Available Signal Strength Configurations : \n"
+                   " 1 - Delta\n 2 - Threshold\n 3 - Hysteresis DB\n\n ";
+               std::cout << "Enter configuration preferences"
+                   "(For example: enter 2,3 to prefer threshold and hysteresis DB): ";
+               std::getline(std::cin, configPreference, delimiter);
+
+               if (configPreference.empty()) {
+                   std::cout << "Signal Strength configuration should not be empty \n";
+                   return;
+               }
+               std::vector<int> configOptions = {};
+               std::stringstream ss(configPreference);
+               int input = INVALID;
+               while (ss >> input) {
+                   configOptions.push_back(input);
+                   if(ss.peek() == ',' || ss.peek() == ' ')
+                       ss.ignore();
+               }
+
+               for (auto &opt : configOptions) {
+                   if (opt >= static_cast<int>(telux::tel::SignalStrengthConfigExType::DELTA) &&
+                       opt <= static_cast<int>
+                           (telux::tel::SignalStrengthConfigExType::HYSTERESIS_DB)) {
+                       try {
+                           configMask.set(opt);
+                       } catch(const std::exception &e) {
+                           std::cout << "ERROR: invalid input, please enter numerical value "
+                               << opt << std::endl;
+                           return;
+                       }
+                   } else {
+                       std::cout << "ConfigOptions should not be out of range" << std::endl;
+                       return;
+                   }
+               }
+               sigStrengthConfig.configTypeMask = configMask;
+               switch (radioTech) {
+                   case CONFIGURE_SIGNAL_STRENGTH_RAT_GSM:
+                   {
+                       sigStrengthConfig.radioTech = telux::tel::RadioTechnology::RADIO_TECH_GSM;
+                       telux::tel::SignalStrengthConfigData sigData = {};
+                       std::cout
+                           <<"\nAvailable Signal Strength Measurement Types are: \n"
+                           " 0 - RSSI\n";
+                       sigData.sigMeasType = telux::tel::SignalStrengthMeasurementType::RSSI;
+                       if (configMask.test(telux::tel::SignalStrengthConfigExType::DELTA)) {
+                           std::cout << "Enter delta : ";
+                           std::getline(std::cin, deltaString, delimiter);
+                           try {
+                               delta = stoi(deltaString);
+                           } catch (const std::exception &e) {
+                               std::cout
+                                   << "ERROR: invalid input, please enter a numerical value."
+                                   " INPUT: " << delta << std::endl;
+                               return;
+                           }
+                           Utils::validateInput(delta);
+                           if (delta <= 0) {
+                               std::cout << "Invalid input \n" << std::endl;
+                               return;
+                           }
+                           sigData.delta = delta;
+                       } else if(configMask.test
+                           (telux::tel::SignalStrengthConfigExType::THRESHOLD)) {
+                           std::vector<int32_t> thresholdList = {};
+                           std::cout << "Enter threshold list by comma separated :";
+                           std::getline(std::cin, thresholdString, delimiter);
+                           std::stringstream ss(thresholdString);
+                           int32_t value = INVALID;
+                           while(ss >> value) {
+                               thresholdList.push_back(value);
+                               if (ss.peek() == ',' || ss.peek() == ' ')
+                                   ss.ignore();
+                           }
+
+                           for (int thIdx = 0; thIdx < thresholdList.size(); thIdx++) {
+                               sigData.thresholdList[thIdx] = thresholdList[thIdx];
+                           }
+                       }
+                       if (configMask.test
+                           (telux::tel::SignalStrengthConfigExType::HYSTERESIS_DB)) {
+                           std::cout << "Enter hysteresis db: ";
+                           std::getline(std::cin, hysDeltaString, delimiter);
+                           try {
+                               hysDelta = stoi(hysDeltaString);
+                           } catch (const std::exception &e) {
+                               std::cout
+                                   << "ERROR: invalid input, please enter a numerical value."
+                                   " INPUT: " << hysDelta << std::endl;
+                               return;
+                           }
+                           Utils::validateInput(hysDelta);
+                           if (hysDelta < 0) {
+                               std::cout << "Invalid input \n" << std::endl;
+                               return;
+                           }
+                           sigData.hysteresisDb = hysDelta;
+                       }
+                       // add to list
+                       sigStrengthConfig.sigConfigData.emplace_back(sigData);
+                       sigStrengthConfigList.emplace_back(sigStrengthConfig);
+                       break;
+                   }
+                   case CONFIGURE_SIGNAL_STRENGTH_RAT_WCDMA:
+                   {
+                       sigStrengthConfig.radioTech = telux::tel::RadioTechnology::RADIO_TECH_UMTS;
+                       std::cout<<"\nAvailable Signal Strength Measurement Types are: \n"
+                           " 0 - RSSI\n 1 - ECIO\n 2 - RSCP\n";
+                       std::cout
+                           << "Enter the number of Signal Strength Measurement type(s)"
+                           " to be configured : ";
+                       std::getline(std::cin, sigMeasNumString, delimiter);
+                       try {
+                           sigMeasNum = stoi(sigMeasNumString);
+                       } catch (const std::exception &e) {
+                           std::cout << "ERROR: invalid input, please enter a numerical value."
+                               " INPUT: " << sigMeasNum << std::endl;
+                           return;
+                       }
+                       Utils::validateInput(sigMeasNum);
+                       if (sigMeasNum > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSSI &&
+                           sigMeasNum <= CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSCP+1) {
+                           for (int sigIdx = 0; sigIdx < sigMeasNum; sigIdx++) {
+                               telux::tel::SignalStrengthConfigData sigData = {};
+                               std::vector<int32_t> thresholdList = {};
+                               std::cout << "Enter signal measurement type : ";
+                               std::getline(std::cin, sigMeasTypeString, delimiter);
+                               try {
+                                   sigMeasType = stoi(sigMeasTypeString);
+                               } catch (const std::exception &e) {
+                                   std::cout
+                                       << "ERROR: invalid input, please enter a numerical value."
+                                       " INPUT: " << sigMeasType << std::endl;
+                                   return;
+                               }
+                               Utils::validateInput(sigMeasType);
+                               if (sigMeasType < CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSSI ||
+                                   sigMeasType > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSCP) {
+                                   std::cout << "Invalid input " << std::endl;
+                                   return;
+                               }
+                               switch(sigMeasType) {
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSSI:
+                                       sigData.sigMeasType =
+                                            telux::tel::SignalStrengthMeasurementType::RSSI;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_ECIO:
+                                       sigData.sigMeasType =
+                                            telux::tel::SignalStrengthMeasurementType::ECIO;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_WCDMA_RSCP:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::RSCP;
+                                       break;
+                                   default:
+                                       break;
+                               }
+                               if (configMask.test
+                                  (telux::tel::SignalStrengthConfigExType::DELTA)) {
+                                   std::cout << "Enter delta : ";
+                                   std::getline(std::cin, deltaString, delimiter);
+                                   try {
+                                       delta = stoi(deltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout
+                                           << "ERROR: invalid input, please enter a numerical"
+                                           " value. INPUT: " << delta << std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(delta);
+                                   if (delta <= 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.delta = delta;
+                               } else if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::THRESHOLD)) {
+                                   std::cout << "Enter threshold list by comma separated :";
+                                   std::getline(std::cin, thresholdString, delimiter);
+                                   std::stringstream ss(thresholdString);
+                                   int32_t value = INVALID;
+                                   while(ss >> value) {
+                                       thresholdList.push_back(value);
+                                       if (ss.peek() == ',' || ss.peek() == ' ')
+                                           ss.ignore();
+                                   }
+
+                                   for (int thIdx = 0; thIdx < thresholdList.size(); thIdx++) {
+                                       sigData.thresholdList[thIdx] = thresholdList[thIdx];
+                                   }
+                               }
+                               if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::HYSTERESIS_DB)) {
+                                   std::cout << "Enter hysteresis db: ";
+                                   std::getline(std::cin, hysDeltaString, delimiter);
+                                   try {
+                                       hysDelta = stoi(hysDeltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout << "ERROR: invalid input, please enter a"
+                                           " numerical value. INPUT: " << hysDelta << std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(hysDelta);
+                                   if (hysDelta < 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.hysteresisDb = hysDelta;
+                               }
+                               sigStrengthConfig.sigConfigData.emplace_back(sigData);
+                           }
+                       } else {
+                           std::cout << "Invalid input, check the total available signal"
+                               " strength measurement types." << std::endl;
+                           return;
+                       }
+                       // add to list
+                       sigStrengthConfigList.emplace_back(sigStrengthConfig);
+                       break;
+                   }
+                   case CONFIGURE_SIGNAL_STRENGTH_RAT_LTE:
+                   {
+                       sigStrengthConfig.radioTech = telux::tel::RadioTechnology::RADIO_TECH_LTE;
+                       std::cout<<"\nAvailable Signal Strength Measurement Types are: \n"
+                           " 0 - RSSI\n 1 - RSRP\n 2 - RSRQ\n 3 - SNR\n";
+                       std::cout
+                           << "Enter the number of Signal Strength Measurement type(s)"
+                           " to be configured : ";
+                       std::getline(std::cin, sigMeasNumString, delimiter);
+                       try {
+                           sigMeasNum = stoi(sigMeasNumString);
+                       } catch (const std::exception &e) {
+                           std::cout << "ERROR: invalid input, please enter a numerical value."
+                               " INPUT: " << sigMeasNum << std::endl;
+                           return;
+                       }
+                       Utils::validateInput(sigMeasNum);
+                       if (sigMeasNum > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSSI &&
+                           sigMeasNum <= CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_SNR+1) {
+                           for (int sigIdx = 0; sigIdx < sigMeasNum; sigIdx++) {
+                               telux::tel::SignalStrengthConfigData sigData = {};
+                               std::vector<int32_t> thresholdList = {};
+                               std::cout << "Enter signal measurement type : ";
+                               std::getline(std::cin, sigMeasTypeString, delimiter);
+                               try {
+                                   sigMeasType = stoi(sigMeasTypeString);
+                               } catch (const std::exception &e) {
+                                   std::cout << "ERROR: invalid input, please enter a numerical"
+                                       " value. INPUT: " << sigMeasType << std::endl;
+                                   return;
+                               }
+                               Utils::validateInput(sigMeasType);
+                               if (sigMeasType < CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSSI ||
+                                   sigMeasType > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_SNR) {
+                                   std::cout << "Invalid input " << std::endl;
+                                   return;
+                               }
+                               switch(sigMeasType) {
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSSI:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::RSSI;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSRP:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::RSRP;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_RSRQ:
+                                       sigData.sigMeasType =
+                                          telux::tel::SignalStrengthMeasurementType::RSRQ;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_LTE_SNR:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::SNR;
+                                       break;
+                                   default:
+                                       break;
+                               }
+                               if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::DELTA)) {
+                                   std::cout << "Enter delta : ";
+                                   std::getline(std::cin, deltaString, delimiter);
+                                   try {
+                                       delta = stoi(deltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout << "ERROR: invalid input, please enter a"
+                                           << " numerical value. INPUT: " << delta <<std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(delta);
+                                   if (delta <= 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.delta = delta;
+                               } else if(configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::THRESHOLD)) {
+                                   std::cout << "Enter threshold list by comma separated :";
+                                   std::getline(std::cin, thresholdString, delimiter);
+                                   std::stringstream ss(thresholdString);
+                                   int32_t value = INVALID;
+                                   while(ss >> value) {
+                                       thresholdList.push_back(value);
+                                       if (ss.peek() == ',' || ss.peek() == ' ')
+                                           ss.ignore();
+                                   }
+
+                                   for (int thIdx = 0; thIdx < thresholdList.size(); thIdx++) {
+                                       sigData.thresholdList[thIdx] = thresholdList[thIdx];
+                                   }
+                               }
+                               if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::HYSTERESIS_DB)) {
+                                   std::cout << "Enter hysteresis db: ";
+                                   std::getline(std::cin, hysDeltaString, delimiter);
+                                   try {
+                                       hysDelta = stoi(hysDeltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout << "ERROR: invalid input, please enter a"
+                                           " numerical value. INPUT: " << hysDelta << std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(hysDelta);
+                                   if (hysDelta < 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.hysteresisDb = hysDelta;
+                               }
+                               sigStrengthConfig.sigConfigData.emplace_back(sigData);
+                           }
+                       } else {
+                           std::cout << "Invalid input, check the total available signal"
+                               " strength measurement types." << std::endl;
+                           return;
+                       }
+                       // add to list
+                       sigStrengthConfigList.emplace_back(sigStrengthConfig);
+                       break;
+                   }
+                   case CONFIGURE_SIGNAL_STRENGTH_RAT_NR5G:
+                   {
+                       sigStrengthConfig.radioTech = telux::tel::RadioTechnology::RADIO_TECH_NR5G;
+                       std::cout<<"\nAvailable Signal Strength Measurement Types are: \n"
+                           " 0 - RSRP\n 1 - RSRQ\n 2 - SNR\n";
+                       std::cout
+                           << "Enter the number of Signal Strength Measurement type(s)"
+                           " to be configured : ";
+                       std::getline(std::cin, sigMeasNumString, delimiter);
+                       try {
+                           sigMeasNum = stoi(sigMeasNumString);
+                       } catch (const std::exception &e) {
+                           std::cout << "ERROR: invalid input, please enter a numerical value."
+                               " INPUT: " << sigMeasNum << std::endl;
+                           return;
+                       }
+                       Utils::validateInput(sigMeasNum);
+                       if (sigMeasNum > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRP &&
+                           sigMeasNum <= CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_SNR+1) {
+                           for (int sigIdx = 0; sigIdx < sigMeasNum; sigIdx++) {
+                               telux::tel::SignalStrengthConfigData sigData = {};
+                               std::vector<int32_t> thresholdList = {};
+                               std::cout << "Enter signal measurement type : ";
+                               std::getline(std::cin, sigMeasTypeString, delimiter);
+                               try {
+                                   sigMeasType = stoi(sigMeasTypeString);
+                               } catch (const std::exception &e) {
+                                   std::cout << "ERROR: invalid input, please enter a numerical"
+                                       " value. INPUT: " << sigMeasType << std::endl;
+                                   return;
+                               }
+                               Utils::validateInput(sigMeasType);
+                               if (sigMeasType < CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRP ||
+                                   sigMeasType > CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_SNR) {
+                                   std::cout << "Invalid input " << std::endl;
+                                   return;
+                               }
+                               switch(sigMeasType) {
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRP:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::RSRP;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_RSRQ:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::RSRQ;
+                                       break;
+                                   case CONFIGURE_SIGNAL_STRENGTH_SIG_MEAS_NR5G_SNR:
+                                       sigData.sigMeasType =
+                                           telux::tel::SignalStrengthMeasurementType::SNR;
+                                       break;
+                                   default:
+                                       break;
+                               }
+                               if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::DELTA)) {
+                                   std::cout << "Enter delta : ";
+                                   std::getline(std::cin, deltaString, delimiter);
+                                   try {
+                                       delta = stoi(deltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout << "ERROR: invalid input, please enter a"
+                                           " numerical value. INPUT: " << delta << std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(delta);
+                                   if (delta <= 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.delta = delta;
+                               } else if(configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::THRESHOLD)) {
+                                   std::cout << "Enter threshold list by comma separated :";
+                                   std::getline(std::cin, thresholdString, delimiter);
+                                   std::stringstream ss(thresholdString);
+                                   int32_t value = INVALID;
+                                   while(ss >> value) {
+                                       thresholdList.push_back(value);
+                                       if (ss.peek() == ',' || ss.peek() == ' ')
+                                           ss.ignore();
+                                   }
+
+                                   for (int thIdx = 0; thIdx < thresholdList.size(); thIdx++) {
+                                       sigData.thresholdList[thIdx] = thresholdList[thIdx];
+                                   }
+                               }
+                               if (configMask.test
+                                   (telux::tel::SignalStrengthConfigExType::HYSTERESIS_DB)) {
+                                   std::cout << "Enter hysteresis db: ";
+                                   std::getline(std::cin, hysDeltaString, delimiter);
+                                   try {
+                                       hysDelta = stoi(hysDeltaString);
+                                   } catch (const std::exception &e) {
+                                       std::cout << "ERROR: invalid input, please enter a"
+                                           " numerical value. INPUT: " << hysDelta << std::endl;
+                                       return;
+                                   }
+                                   Utils::validateInput(hysDelta);
+                                   if (hysDelta < 0) {
+                                       std::cout << "Invalid input \n" << std::endl;
+                                       return;
+                                   }
+                                   sigData.hysteresisDb = hysDelta;
+                               }
+                               sigStrengthConfig.sigConfigData.emplace_back(sigData);
+                           }
+                       } else {
+                           std::cout << "Invalid input, check the total available signal"
+                               " strength measurement types." << std::endl;
+                           return;
+                       }
+                       // add to list
+                       sigStrengthConfigList.emplace_back(sigStrengthConfig);
+                       break;
+                   }
+                   default:
+                       break;
+               }
+           }
+       } else {
+           std::cout << "Invalid input, check the total available RATs." << std::endl;
+           return;
+       }
+       // update hysteresis timer
+       std::cout << "Configuration for hysteresis timer (0-No, 1-Yes) : ";
+       std::getline(std::cin, hysOptionString, delimiter);
+       try {
+           hysOption = stoi(hysOptionString);
+       } catch (const std::exception &e) {
+           std::cout << "ERROR: invalid input, please enter a numerical value."
+               " INPUT: " << hysOption << std::endl;
+           return;
+       }
+       Utils::validateInput(hysOption, {1, 0});
+       if (hysOption == 1) {
+           std::cout << "Enter hysteresis timer(in milliseconds,"
+               "a value of 0 disables the hysteresis timer): ";
+           std::getline(std::cin, hysTimerString, delimiter);
+           try {
+               hysTimer = stoi(hysTimerString);
+           } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value."
+                   " INPUT: " << hysTimer << std::endl;
+               return;
+           }
+           Utils::validateInput(hysTimer);
+       }
+
+       telux::common::Status status = phone->configureSignalStrength(sigStrengthConfigList,
+           hysTimer, MyConfigureSignalStrengthCallback::configureSignalStrengthResponse);
+       std::cout << (status == telux::common::Status::SUCCESS
+           ? "Configure Signal Strength request is successful. \n"
+           : "Configure Signal Strength request failed, check the input provided.")
+           << '\n';
    } else {
       std::cout << "No phone found\n";
    }

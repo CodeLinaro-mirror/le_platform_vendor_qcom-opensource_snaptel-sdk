@@ -316,9 +316,9 @@ grpc::Status LocationManagerServerImpl::RequestEnergyConsumedInfo(ServerContext*
                 "0", {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"}));
 
         {
-            CommonUtils::writeSystemDataValue("loc/ILocationManager", "1",
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationManager", "1",
                 {"ILocationManager", "GnssEnergyConsumedInfo", "valid"});
-            CommonUtils::writeSystemDataValue("loc/ILocationManager",
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationManager",
                 std::to_string(energyConsumed + 100),
                     {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"});
         }
@@ -346,8 +346,8 @@ grpc::Status LocationManagerServerImpl::GetYearOfHw(ServerContext* context,
             "loc/ILocationManager", "0", {"ILocationManager", "yearOfHw"}));
         if (yearOfHw == 0) {
             yearOfHw = 2023;
-            CommonUtils::writeSystemDataValue("loc/ILocationManager", std::to_string(yearOfHw),
-                {"ILocationManager", "yearOfHw"});
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationManager",
+                std::to_string(yearOfHw), {"ILocationManager", "yearOfHw"});
         }
         response->set_year_of_hw(yearOfHw);
     }

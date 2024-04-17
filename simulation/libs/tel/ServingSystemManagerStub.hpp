@@ -66,6 +66,11 @@ private:
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
     void handleCallBarringInfosChanged (::telStub::CallBarringInfosEvent event);
+    void handleSystemInfoChanged(::telStub::SystemInfoEvent event);
+    void handleSystemSelectionPreferenceChanged(::telStub::SystemSelectionPreferenceEvent event);
+    void handleNetworkTimeChange(::telStub::NetworkTimeInfoEvent event);
+    void handleNetworkRejection(::telStub::NetworkRejectInfoEvent event);
+    void handleRfBandInfoUpdateEvent(::telStub::RFBandInfoEvent event);
 };
 
 } // end of namespace tel

@@ -30,6 +30,7 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 -Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription<br>
 -Phone: IPhoneManager, IPhone <br>
 -Call: ICallManager, ICallListener, ICall <br>
+-ServingSystem: IServingSystemManager, IServingSystemListener <br>
 
 <br>
 - - -
@@ -94,7 +95,7 @@ The table explains the configuration for API response parameters of <i>simulatio
 @subsection tel_Call Call
 
 Currently the simulation framework supports outgoing, incoming voice calls and regulatory ECalls.It provides the flexibility to configure ECall HLAP timer failures maintained by NAD device.
-Support for Non Regulatory eCalls, conference calls and network deregistration in eCall only configuration will be added in upcoming releases.
+Support for conference calls will be added in upcoming releases.
 
 Details of parameters that can be configured in the Simulation framework. <br>
 
@@ -173,6 +174,11 @@ Performing operations such as setting the operating mode (<i>telux::tel::IPhoneM
 
 Note: Some APIs, such as <i>telux::tel::PhoneManager::requestCellularCapabilityInfo</i> and <i>telux::tel::PhoneManager::requestOperatingMode</i>, provide device-specific information and are not specific to a particular subscription/slot. For these APIs, the JSON configuration is defined only in <i>simulation/json/api/tel/IPhoneManagerStateSlot1.json</i> pertaining to the first slot.
 
+@subsection tel_serving_system Serving system
+
+Currently, the simulation framework supports the APIs for <i>telux::tel::IServingSystemManager</i> using the canned response configured in the JSON file: <i>simulation/json/api/tel/IServingSystemSlot*.json</i>, and events are injected through the event-injector utility using the JSON file: <i>simulation/json/Events.json</i>. When using events related to the serving system, refer to <i>Events.json</i> and look for events under <i>tel_serv</i>.
+
+Performing operations such as setting the RAT mode preference or service domain preference (<i>telux::tel::IServingSystemManager::setRatPreference</i> API or <i>telux::tel::IServingSystemManager::setServiceDomainPreference</i> API) on the target can have system-level impact, which could alter the response of other APIs within the same class or different classes, such as getting signal strength notifications or change of current serving RAT etc. Currently, this behavior is not implemented, but it will be in future releases.
 <br>
 - - -
 @section tel_events Telephony event handling
@@ -330,6 +336,107 @@ telsdk_event_injector -f tel_call -e msdUpdateRequest 1
 \htmlonly
 <BR>
 \endhtmlonly
+
+@subsection event_8 Update RAT preference and service domain preference
+To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRatPreferenceChanged
+and telux::tel::IServingSystemListener::onServiceDomainPreferenceChanged <br>
+
+Command: <i>telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId: valid slotIds are 1 & 2 only<br>
+ - serviceDomainPreference: valid integer value is filled as per telux::tel::ServiceDomainPreference<br>
+ - ratPreferences: valid integer value is filled as per telux::tel::RatPrefType<br>
+example - ratPreferences input is 012 for RAT preference PREF_CDMA_1X , PREF_CDMA_EVDO and PREF_GSM<br>
+
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_9 Update current system information<br>
+To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onSystemInfoChanged
+and telux::tel::IServingSystemListener::onDcStatusChanged <br>
+
+Command: <i>telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId: valid slotIds are 1 & 2 only<br>
+ - currentServingRat: valid integer value is filled as per telux::tel::RadioTechnology <br>
+ - currentServingDomain: valid integer value is filled as per telux::tel::ServiceDomain <br>
+ - endcAvailability: valid integer value is filled as per telux::tel::endcAvailability <br>
+ - dcnrRestriction: valid integer value is filled as per telux::tel::dcnrRestriction <br>
+
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_10 Update network time information<br>
+To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onNetworkTimeChanged <br>
+
+Command: <i>telsdk_event_injector -f tel_serv -e networkTimeUpdate <slotId> <year> <month> <day> <hour> <minute> <second> <dayOfWeek> <timeZone> <dstAdj> <nitzTime></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId:    valid slotIds are 1 & 2 only<br>
+ - year:      valid integer value is filled as per telux::tel::NetworkTimeInfo <br>
+ - month:     valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - day:       valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - hour:      valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - minute:    valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - second:    valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - dayOfWeek: valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - timeZone:  valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - dstAdj:    valid integer value is filled as per telux::tel::NetworkTimeInfo<br>
+ - nitzTime:  valid string value is filled as per telux::tel::NetworkTimeInfo<br>
+
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_serv -e networkTimeUpdate 1 2004 08 01 06 11 23 8 3444 2024/01/12
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_11 Update RF band information<br>
+To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRFBandInfoChanged <br>
+
+Command: <i>telsdk_event_injector -f tel_serv -e rFBandInfoUpdate <slotId> <band> <channel> <bandWidth></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId:    valid slotIds are 1 & 2 only<br>
+ - band:      valid integer value is filled as per telux::tel::RFBand<br>
+ - channel:   valid integer value is filled as per telux::tel::RFBandInfo<br>
+ - bandWidth: valid integer value is filled as per telux::tel::RFBandWidth<br>
+
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_serv -e rFBandInfoUpdate 1 86 88 23
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_12 Trigger network registration rejection<br>
+To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onNetworkRejection <br>
+
+Command: <i>telsdk_event_injector -f tel_serv -e networkRejectionUpdate <slotId> <rejectSrvInfoRat> <rejectSrvInfoDomain> <rejectCause> <mcc> <mnc></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId:    valid slotIds are 1 & 2 only<br>
+ - rejectSrvInfoRat :    valid integer value is filled as per telux::tel::ServingSystemInfo<br>
+ - rejectSrvInfoDomain : valid integer value is filled as per telux::tel::ServingSystemInfo<br>
+ - rejectCause :         valid integer value is filled as per telux::tel::NetworkRejectInfo<br>
+ - mcc :                 valid string value is filled as per telux::tel::NetworkRejectInfo<br>
+ - mnc :                 valid string value is filled as per telux::tel::NetworkRejectInfo<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_serv -e networkRejectionUpdate 1 14 2 1 810 10
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
 <br>
 
 - - -
@@ -339,6 +446,5 @@ telsdk_event_injector -f tel_call -e msdUpdateRequest 1
 Currently, the simulation behavior for Telephony is as follows:-
 1. Support for encoding of text messages provided by the client for <i>telux::tel::ISmsManager::sendSms</i> will be added in future releases.
 2. Support for subsystem restart notifications provided using <i>telux::common::IServiceStatusListener::onServiceStatusChange</i> will be added in future releases.
-3. Support for Standard eCall usecases for T2 and T9 timer management will be added in future releases.</i>
 <br>
 */

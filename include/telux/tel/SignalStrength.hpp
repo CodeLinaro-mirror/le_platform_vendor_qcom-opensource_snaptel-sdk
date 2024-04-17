@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -385,6 +385,7 @@ private:
 class WcdmaSignalStrengthInfo {
 public:
    WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate);
+   WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate, int wcdmaEcio, int wcdmaRscp);
    /**
     * Get signal level in the range.
     *
@@ -423,9 +424,29 @@ public:
     */
    const int getBitErrorRate() const;
 
+   /**
+    * Gets the WCDMA energy per chip to interference power ratio in dB.
+    *
+    * @returns The WCDMA energy per chip to interference power ratio. The valid range is
+    * [-20, 0] and INVALID_SIGNAL_STRENGTH_VALUE, i.e., unavailable.
+    *
+    */
+   const int getEcio() const;
+
+   /**
+    * Gets the WCDMA received signal code power in dBm.
+    *
+    * @returns The WCDMA received signal code power. The valid range is [-120,-24] and
+    * INVALID_SIGNAL_STRENGTH_VALUE, i.e., unavailable.
+    *
+    */
+   const int getRscp() const;
+
 private:
    int signalStrength_;
    int bitErrorRate_;
+   int ecio_;
+   int rscp_;
 };
 
 /**

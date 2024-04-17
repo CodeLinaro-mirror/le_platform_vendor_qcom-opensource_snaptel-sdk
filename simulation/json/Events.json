@@ -124,7 +124,7 @@
             "rat:     string, RAT type. RAT for retrieving Signal Strength information. valid values are GSM, LTE, WCDMA, NR5G.",
             "In case of RAT is GSM,   integer, p1->gsmSignalStrength, p2->gsmBitErrorRate.",
             "In case of RAT is LTE,   integer, p1->lteSignalStrength, p2->lteRsrp, p3->lteRsrq, p4->lteRssnr, p5->lteCqi, p6->timingAdvance.",
-            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate.",
+            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate, p3->ecio, p4->rscp.",
             "In case of RAT is NR5G,  integer, p1->rsrp, p2->rsrq, p3->rssnr.",
             "CDMA and TDSCDMA are deprecated.",
             "example: telsdk_event_injector -f tel_phone -e \"signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300\""
@@ -136,7 +136,7 @@
             "cellType:     integer, Cell type. Valid cellTypes are GSM-1, LTE-3, WCDMA-4, NR5G-6 (CDMA and TDSCDMA not supported)",
             "isRegistered: integer, Registered cell or not, Valid values are 1 or 0",
             "GSM cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->arfcn> <p6->bsic> <p7->gsmSignalStrength> <p8->gsmBitErrorRate>",
-            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate>",
+            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate> <p9->ecio> <p10->rscp>",
             "LTE cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->earfcn> <p7->lteSignalStrength> <p8->lteRsrp> <p9->lteRsrq> <p10->lteRssnr> <p11->lteCqi> <p12->timingAdvance>",
             "NR5G cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->arfcn> <p7->rsrp> <p8->rsrq> <p9->rssnr>",
             "example: telsdk_event_injector -f tel_phone -e \"cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300\""
@@ -177,6 +177,51 @@
             "domain:       integer, Current service domain registered on system. Refer SDK documentation enum ServiceDomain. For example PS_ONLY = 2",
             "callType:     integer, Current call allowed type in cell. Refer SDK documentation enum CallsAllowedInCell. For example ALL_CALLS = 3",
             "example: telsdk_event_injector -f tel_serv -e \"callBarringUpdate 1 ,14 2 3\""
+        ],
+        "systemSelectionPreferenceUpdate":[
+            "telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ",
+            "slotId:        integer, valid slotIds are 1 & 2 only.",
+            "serviceDomainPreference: integer, valid serviceDomainPreference are UNKNOWN = -1, CS_ONLY = 0, PS_ONLY = 1, CS_PS = 2 Refer for more details telux::tel::ServiceDomainPreference",
+            "ratPreferences: integer, valid ratPreference are 0 - PREF_CDMA_1X , 1 - PREF_CDMA_EVDO, 2 - PREF_GSM, 3 - PREF_WCDMA, 4 - PREF_LTE, 5 -PREF_TDSCDMA, 6 - PREF_NR5G, 7 - PREF_NR5G_NSA, 8 - PREF_NR5G_SA  Refer for more details telux::tel::RatPrefType ",
+            "Example: telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012"
+        ],
+        "systemInfoUpdate":[
+            "telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction>",
+            "slotId:            integer, valid slotIds are 1 & 2 only." ,
+            "currentServingRat: integer, valid currentServingRat Refer for more details telux::tel::RadioTechnology ",
+            "currentServingDomain: integer, valid currentServingDomain Refer for more details telux::tel::ServiceDomain",
+            "endcAvailability:  integer, valid UNKNOWN = -1, AVAILABLE = 0, UNAVAILABLE = 1 Refer for more details telux::tel::endcAvailability" ,
+            "dcnrRestriction:   integer, valid UNKNOWN = -1, RESTRICTED = 0, UNRESTRICTED = 1 Refer for more details telux::tel::dcnrRestriction"
+        ],
+        "networkTimeUpdate":[
+            "telsdk_event_injector -f tel_serv -e networkTimeUpdate <slotId> <year> <month> <day> <hour> <minute> <second> <dayOfWeek> <timeZone> <dstAdj> <nitzTime>",
+            "slotId:    integer, valid slotIds are 1 & 2 only." ,
+            "year:      integer, valid year Refer for more details telux::tel::NetworkTimeInfo ",
+            "month:     integer, valid month Refer for more details telux::tel::NetworkTimeInfo",
+            "day:       integer, valid day Refer for more details telux::tel::NetworkTimeInfo ",
+            "hour:      integer, valid hour Refer for more details telux::tel::NetworkTimeInfo ",
+            "minute:    integer, valid minute Refer for more details telux::tel::NetworkTimeInfo ",
+            "second:    integer, valid second Refer for more details telux::tel::NetworkTimeInfo ",
+            "dayOfWeek: integer, valid dayOfWeek Refer for more details telux::tel::NetworkTimeInfo ",
+            "timeZone:  integer, valid timeZone Refer for more details telux::tel::NetworkTimeInfo ",
+            "dstAdj:    integer, valid dstAdj Refer for more details telux::tel::NetworkTimeInfo ",
+            "nitzTime:  string, valid nitzTime Refer for more details telux::tel::NetworkTimeInfo "
+        ],
+        "rFBandInfoUpdate":[
+            "telsdk_event_injector -f tel_serv -e rFBandInfoUpdate <slotId> <band> <channel> <bandWidth>",
+            "slotId:    integer, valid slotIds are 1 & 2 only." ,
+            "band:      integer, valid band Refer for more details telux::tel::RFBand" ,
+            "channel:   integer, valid channel Refer for more details telux::tel::RFBandInfo",
+            "bandWidth: integer, valid bandWidth Refer for more details telux::tel::RFBandWidth"
+        ],
+        "networkRejectionUpdate":[
+            "telsdk_event_injector -f tel_serv -e networkRejectionUpdate <slotId> <rejectSrvInfoRat> <rejectSrvInfoDomain> <rejectCause> <mcc> <mnc>",
+            "slotId:                integer, valid slotIds are 1 & 2 only." ,
+            "rejectSrvInfoRat :    integer, valid servingSystemInfo Refer for more details telux::tel::ServingSystemInfo ",
+            "rejectSrvInfoDomain : integer, valid servingSystemInfo Refer for more details telux::tel::ServingSystemInfo ",
+            "rejectCause :          integer, valid rejectCause Refer for more details telux::tel::NetworkRejectInfo ",
+            "mcc :                  string, valid mcc Refer for more details telux::tel::NetworkRejectInfo ",
+            "mnc :                  string, valid mnc Refer for more details telux::tel::NetworkRejectInfo "
         ]
     },
     "therm": {

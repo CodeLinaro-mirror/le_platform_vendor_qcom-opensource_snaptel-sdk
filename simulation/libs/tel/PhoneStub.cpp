@@ -302,7 +302,14 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                 int wcdmaBitErrorRate = response.mutable_cell_info_list(i)->
                     mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                     bit_error_rate();
-                WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate);
+                int wcdmaEcio = response.mutable_cell_info_list(i)->
+                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                    ecio();
+                int wcdmaRscp = response.mutable_cell_info_list(i)->
+                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                    rscp();
+                WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate,
+                    wcdmaEcio, wcdmaRscp);
                 WcdmaCellIdentity wcdmaCI(wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc,
                     wcdmaArfcn);
                 auto wcdmaCellInfo = std::make_shared<telux::tel::WcdmaCellInfo>
@@ -457,7 +464,9 @@ telux::common::Status PhoneStub::requestSignalStrength(
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
             response.mutable_wcdma_signal_strength_info()->signal_strength(),
-            response.mutable_wcdma_signal_strength_info()->bit_error_rate());
+            response.mutable_wcdma_signal_strength_info()->bit_error_rate(),
+            response.mutable_wcdma_signal_strength_info()->ecio(),
+            response.mutable_wcdma_signal_strength_info()->rscp());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
             response.mutable_nr5g_signal_strength_info()->rsrp(),
@@ -674,4 +683,10 @@ telux::common::Status PhoneStub::configureSignalStrength(
         taskQ_->add(fut);
     }
     return status;
+}
+
+telux::common::Status PhoneStub::configureSignalStrength(
+    std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs,
+    telux::common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
 }

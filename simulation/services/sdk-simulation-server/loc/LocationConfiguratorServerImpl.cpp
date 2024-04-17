@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -106,9 +106,9 @@ void LocationConfiguratorServerImpl::handleXtraUpdateEvent(std::string event){
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(validity),
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(validity),
                 {"ILocationConfigurator", "XtraParams", "xtraValidForHours"});
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",std::to_string(dataStatus),
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",std::to_string(dataStatus),
                 {"ILocationConfigurator","XtraParams", "xtraDataStatus"});
     auto f = std::async(std::launch::async, [this](){
         this->triggerXtraStatusEvent();
@@ -129,7 +129,7 @@ void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::str
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
-    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", enabledMask,
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", enabledMask,
         {"ILocationConfigurator", "GnssSignalType"});
     auto f = std::async(std::launch::async, [this](){
         this->triggerGnssConstellationUpdateEvent();
@@ -201,12 +201,12 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureCTUNC (ServerContext* cont
     uint32_t energyBudget = request->energy_budget();
     apiJsonReader("configureCTunc", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(enable),
             {"ILocationConfigurator", "CTunc", "enable"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(timeUncertainty), {"ILocationConfigurator", "CTunc", "timeUncertainty"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(energyBudget),
-            {"ILocationConfigurator", "CTunc", "energyBudget"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(energyBudget), {"ILocationConfigurator", "CTunc", "energyBudget"});
     }
     return grpc::Status::OK;
 }
@@ -217,8 +217,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigurePACE (ServerContext* conte
     bool enable = request->enable();
     apiJsonReader("configurePACE", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
-            {"ILocationConfigurator", "PACE", "enable"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(enable), {"ILocationConfigurator", "PACE", "enable"});
     }
     return grpc::Status::OK;
 }
@@ -237,35 +237,35 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureLeverArm (ServerContext* c
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         for(auto itr: request->lever_arm_config_info()) {
             if(itr.first == 1) {
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
                         {"ILocationConfigurator", "LeverArm", "GNSSTOVRPforwardOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
                         {"ILocationConfigurator", "LeverArm", "GNSSTOVRPsidewaysOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
                         {"ILocationConfigurator", "LeverArm", "GNSSTOVRPupOffset"});
             }
             if(itr.first == 2) {
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
                         {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSforwardOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
                         {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSsidewaysOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
                         {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSupOffset"});
             }
             if(itr.first == 3) {
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
                         {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSforwardOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
                         {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSsidewaysOffset"});
-                CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
                         {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSupOffset"});
             }
@@ -292,7 +292,7 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureConstellations (ServerCont
             blacklist.pop_back();
             blacklist.pop_back();
         }
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", blacklist,
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", blacklist,
             {"ILocationConfigurator", "configureConstellations", "Blacklist"});
     }
     return grpc::Status::OK;
@@ -305,8 +305,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureMinGpsWeek (ServerContext*
     uint16_t minGpsWeek = request->min_gps_week();
     apiJsonReader("configureMinGpsWeek", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(minGpsWeek),
-            {"ILocationConfigurator", "MinGpsWeek", "mingpsweek"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(minGpsWeek), {"ILocationConfigurator", "MinGpsWeek", "mingpsweek"});
     }
     return grpc::Status::OK;
 }
@@ -340,7 +340,7 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureMinSVElevation (ServerCont
     uint16_t minSVElevation = request->min_sv_elevation();
     apiJsonReader("configureMinSVElevation", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(minSVElevation),
                 {"ILocationConfigurator", "MinSvElevation", "minSVElevation"});
     }
@@ -377,9 +377,9 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureRobustLocation (ServerCont
     bool enableForE911 = request->enable_for_e911();
     apiJsonReader("configureRobustLocation", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(enable),
             {"ILocationConfigurator", "RobustLocation", "enable"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(enableForE911),
                 {"ILocationConfigurator", "RobustLocation", "enableForE911"});
     }
@@ -434,7 +434,7 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerConte
             secBandSet.pop_back();
             secBandSet.pop_back();
         }
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", secBandSet,
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", secBandSet,
             {"ILocationConfigurator", "SecondaryBand", "Set"});
     }
     return grpc::Status::OK;
@@ -470,7 +470,7 @@ grpc::Status LocationConfiguratorServerImpl::DeleteAidingData (ServerContext* co
     uint16_t aidingDataMask = request->aiding_data_mask();
     apiJsonReader("deleteAidingData", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(aidingDataMask),
                 {"ILocationConfigurator", "DeleteAidingData", "aidingDataMask"});
     }
@@ -482,31 +482,31 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureDR (ServerContext* context
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureDR", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().speed_factor())),
                 {"ILocationConfigurator", "configureDR", "speedFactor"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().speed_factor_unc())),
                 {"ILocationConfigurator", "configureDR", "speedFactorUnc"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().gyro_factor())),
                 {"ILocationConfigurator", "configureDR", "gyroFactor"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().gyro_factor_unc())),
                 {"ILocationConfigurator", "configureDR", "gyroFactorUnc"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().roll_offset())),
                 {"ILocationConfigurator", "configureDR", "rollOffset"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().yaw_offset())),
                 {"ILocationConfigurator", "configureDR", "yawOffset"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().pitch_offset())),
                 {"ILocationConfigurator", "configureDR", "pitchOffset"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().offset_unc())),
                 {"ILocationConfigurator", "configureDR", "offsetUnc"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->config().valid_mask())),
                 {"ILocationConfigurator", "configureDR", "validity"});
     }
@@ -521,10 +521,10 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureEngineState (ServerContext
     uint16_t engineState = request->engine_state();
     apiJsonReader("configureEngineState", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(engineType)),
                 {"ILocationConfigurator", "EngineState", "engineType"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(engineState)),
                 {"ILocationConfigurator", "EngineState", "engineState"});
     }
@@ -538,7 +538,7 @@ grpc::Status LocationConfiguratorServerImpl::ProvideConsentForTerrestrialPositio
     bool consent = request->user_consent();
     apiJsonReader("provideConsentForTerrestrialPositioning", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(consent),
                 {"ILocationConfigurator", "ConsentForTerrestrialPositioning", "Consent"});
     }
@@ -551,7 +551,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureNmeaTypes (ServerContext* 
     uint16_t nmeaType = request->nmea_type();
     apiJsonReader("configureNmeaTypes", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(nmeaType),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(nmeaType),
             {"ILocationConfigurator", "configureNmeaTypes", "sentenceConfig"});
     }
     return grpc::Status::OK;
@@ -570,12 +571,12 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureNmea(ServerContext* contex
     }
     apiJsonReader("configureNmea", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(nmeaType),
-            {"ILocationConfigurator", "configureNmea", "sentenceConfig"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(datumType),
-            {"ILocationConfigurator", "configureNmea", "datumType"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(engineType),
-            {"ILocationConfigurator", "configureNmea", "engineType"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(nmeaType), {"ILocationConfigurator", "configureNmea", "sentenceConfig"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(datumType), {"ILocationConfigurator", "configureNmea", "datumType"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(engineType), {"ILocationConfigurator", "configureNmea", "engineType"});
     }
     return grpc::Status::OK;
 }
@@ -588,9 +589,11 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureEngineIntegrityRisk (Serve
     uint16_t engineType = request->engine_type();
     apiJsonReader("configureEngineIntegrityRisk", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(engineType),
-                {"ILocationConfigurator", "configureEngineIntegrityRisk", "engineType"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(integRisk),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(engineType),
+            {"ILocationConfigurator", "configureEngineIntegrityRisk", "engineType"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(integRisk),
             {"ILocationConfigurator", "configureEngineIntegrityRisk", "integrityRisk"});
     }
     return grpc::Status::OK;
@@ -602,39 +605,39 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams (ServerContext*
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureXtraParams", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->enable())),
                 {"ILocationConfigurator", "XtraParams", "enable"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_interval_minute())),
                 {"ILocationConfigurator", "XtraParams", "downloadIntervalMinute"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_timeout_sec())),
                 {"ILocationConfigurator", "XtraParams", "downloadTimeoutSec"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_retry_interval_minute())),
                 {"ILocationConfigurator", "XtraParams", "downloadRetryIntervalMinute"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_retry_attempts())),
                 {"ILocationConfigurator", "XtraParams", "downloadRetryAttempts"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             request->ca_path(), {"ILocationConfigurator", "XtraParams", "caPath"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->integrity_download_enabled())),
                 {"ILocationConfigurator", "XtraParams", "isIntegrityDownloadEnabled"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->integrity_download_interval_minute())),
                 {"ILocationConfigurator", "XtraParams", "integrityDownloadIntervalMinute"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->daemon_debug_log_level())),
                 {"ILocationConfigurator", "XtraParams", "daemonDebugLogLevel"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", request->server_urls(),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->server_urls(),
             {"ILocationConfigurator", "XtraParams", "serverURLs"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", request->ntp_server_urls(),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->ntp_server_urls(),
             {"ILocationConfigurator", "XtraParams", "ntpServerURLs"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", request->nts_server_url(),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->nts_server_url(),
             {"ILocationConfigurator", "XtraParams", "ntsServerURL"});
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->diag_logging_enabled())),
                 {"ILocationConfigurator", "XtraParams", "diagLoggingEnabled"});
     }
@@ -687,7 +690,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureOsnma (ServerContext* cont
     apiJsonReader("configureOsnma", response);
     bool enable = request->enable();
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(enable),
             {"ILocationConfigurator", "configureOsnma", "enable"});
     }
     return grpc::Status::OK;

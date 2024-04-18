@@ -84,7 +84,7 @@ thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
-static int decFail = 0;
+thread_local int decFail = 0;
 thread_local int encFail = 0;
 thread_local int rxSuccess = 0;
 thread_local int txSuccess = 0;
@@ -276,7 +276,6 @@ std::string SAEgetCurrentTimestamp()
 }
 
 void SaeApplication::printRxStats() {
-    printf("Printing rx stats\n");
     if(configuration.enableAsync)
     {
         std::stringstream ss;
@@ -286,6 +285,7 @@ void SaeApplication::printRxStats() {
         printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
         if (configuration.enableSecurity){
+            printf("note: verification results may include consistency and relevancy checks\n");
             printf("Thread (%08x) verif fails is: %d\n", tid, asyncVerifFail);
             printf("Thread (%08x) verif success is: %d\n", tid, asyncVerifSuccess);
         }
@@ -298,9 +298,10 @@ void SaeApplication::printRxStats() {
         ss << std::this_thread::get_id();
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
-        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
         if (configuration.enableSecurity){
+            printf("note: verification results may include consistency and relevancy checks\n");
             printf("Thread (%08x) verif fails is: %d\n", tid, syncVerifFail);
             printf("Thread (%08x) verif success is: %d\n", tid, syncVerifSuccess);
         }
@@ -310,7 +311,6 @@ void SaeApplication::printRxStats() {
 }
 
 void SaeApplication::printTxStats() {
-    printf("Printing tx stats\n");
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
@@ -499,6 +499,12 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }
         }
         return -1;
+    }else{
+        rxSuccess++;
+        if (qMon)
+        {
+            qMon->tData[tid].totalRx++;
+        }
     }
     if(!isRxSim){
         l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
@@ -522,6 +528,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     // If the packet is unsigned, this will go through completely
     // Otherwise, it will return after processing IEEE 1609.2 header
     ret = decode_msg(threadMc.get());
+
     if(threadMc.get()->wsmp)
     {
         // check psid if wsmp header was decoded properly
@@ -531,16 +538,19 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     // Determine if we are expecting signed packet or not and process accordingly
     if (this->configuration.enableSecurity) {
         // check if the message is signed/encrypted IEEE1609.2 content.
-        if (ret == 1) { // message is secured, so additional steps will happen
+        if (ret == DECODE_SIGNED) { // message is secured, so additional steps will happen
             signedPacket = true;
 
 #ifdef AEROLINK
             ret = decodeAndVerify(threadMc.get(), l2SrcAddr, index, timestamp);
 #else
-            ret = 1;
-            std::cerr << "Cannot decode and verify this signed packet\n";
+            ret = DECODE_FAIL;
+            if(appVerbosity > 3){
+                printf("Cannot decode and verify this signed packet\n");
+            }
+            decFail++;
 #endif
-        } else if (ret > 1) { // This packet is an unsigned packet and decoded properly
+        } else if (ret == DECODE_SUCCESS) { // This packet is an unsigned packet and decoded properly
             // here we need to check option for processing both unsigned/signed packets
             if (!configuration.acceptAll) {
                 if (appVerbosity > 3)
@@ -570,15 +580,16 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         } else {
             if (appVerbosity > 3)
                 printf("Unexpected error in decoding packet\n");
-            ret = -1;
+            decFail++;
+            ret = DECODE_FAIL;
         }
     } else {
         // determine if unsigned packet decoded properly
         switch (ret) {
-            case 0:
+            case DECODE_SUCCESS:
                 if (appVerbosity > 3)
                     printf("Successful unsigned packet decode\n");
-                ret = 0;
+                ret = DECODE_SUCCESS;
                 wsmpp = (wsmp_data_t *)threadMc->wsmp;
                 if(wsmpp){
 #ifdef WITH_WSA
@@ -630,31 +641,26 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                     }
                 }
                 break;
-            case 1:
+            case DECODE_SIGNED:
                 if (appVerbosity > 3)
                     printf("Error in decoding packet. Expecting unsigned packet.\n");
                 decFail++;
-                ret = -1;
+                ret = DECODE_FAIL;
                 break;
+            case DECODE_FAIL:
             default:
                 if (appVerbosity > 3)
                     printf("Error in decoding unsigned packet\n");
                 decFail++;
-                ret = -1;
+                ret = DECODE_FAIL;
                 break;
         }
     }
     // synchronous post processing steps including logging and congestion control
     if(!(this->configuration.enableAsync))
     {
-        if (ret >= 0)
+        if (ret == DECODE_SUCCESS)
         {
-
-            rxSuccess++;
-            if (qMon)
-            {
-                qMon->tData[tid].totalRx++;
-            }
             sem_wait(&this->log_sem);
             totalRxSuccessPerSecond++;
             sem_post(&this->log_sem);
@@ -1056,7 +1062,7 @@ void SaeApplication::PostProcessingThread()
 // Then security checks and verification will occur.
 int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         uint8_t index, uint64_t timestamp) {
-    int ret = -1;
+    int ret = DECODE_FAIL;
     std::thread::id tid = std::this_thread::get_id();
     wsmp_data_t *wsmpp;
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
@@ -1078,14 +1084,14 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         (uint8_t*)mc->l3_payload,mc->l3_payload_len,
         payload, payloadLen,
         dot2HdrLen);
-    if (ret == -1) {
+    if (ret == DECODE_FAIL) {
         printf("Error in extracting security header from signed packet.\n");
         asyncVerifFail++;
         if (qMon)
         {
             qMon->tData[tid].secFails++;
         }
-        return -1;
+        return ret;
     }
 
     // ieee header is 3 bytes long typically
@@ -1105,7 +1111,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     if(MsgType != MessageType::WSA){
         ret = decode_as_j2735(mc);
         // here the secure header was extracted properly, packet decoded incorrectly
-        if (ret == -1) {
+        if (ret == DECODE_FAIL) {
             if (appVerbosity > 3)
                 printf("Error in decoding unsigned packet - security enabled.\n");
             decFail++;
@@ -1190,6 +1196,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     // Verify packet signature ; providing lat/lon from the rx message
     if(!(sopt.enableAsync))
     {
+        // returns nonzero value if success, otherwise -1
         ret = SecService->VerifyMsg(sopt);
     }
     else
@@ -1220,8 +1227,8 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                 if(tmpSecService){
                     AerolinkSecurity* tmpAeroSecurity =
                         static_cast<AerolinkSecurity*>(tmpSecService);
-                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(sopt.hvKine, sopt.rvKine);
-                    if(ret && tmpAeroSecurity){
+                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(sopt);
+                    if(ret != DECODE_FAIL && tmpAeroSecurity){
                         asyncCbData[async_index].asyncVerifStat = nullptr;
                         if(configuration.enableVerifStatLog){
                             if(thrVerifLatencies.find(tid) == thrVerifLatencies.end()){
@@ -1247,10 +1254,11 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         gettimeofday(&currTime, NULL);
                         asyncCbData[async_index].startLatencyTime =
                                (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+                        // returns nonzero value if success, otherwise -1
                         ret = tmpAeroSecurity->asyncVerify(
                                 sopt.rvKine, sopt.misbehaviorStat,
                                 (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
-                        if (ret == -1){
+                        if (ret == DECODE_FAIL){
                             asyncVerifFail++;
                         }
                     }
@@ -1267,10 +1275,12 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     if(configuration.overrideVerifResult){
         ret = configuration.overrideVerifValue;
     }
-    if (ret == -1) {
+    if (ret == DECODE_FAIL) {
         if(!(configuration.enableAsync))
         {
-            syncVerifSuccess++;
+            syncVerifFail++;
+        }else{
+            asyncVerifFail++;
         }
         if (qMon)
         {
@@ -1290,7 +1300,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                     hostMc = std::make_shared<msg_contents>();
                 } catch (std::bad_alloc & e) {
                     cerr << "Error: Create Host bsm failed!" << endl;
-                    return -1;
+                    return ret;
                 }
             }
             if (hostMc->abuf.head == NULL || hostMc->abuf.size == 0) {
@@ -1307,7 +1317,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                     rvsp = std::make_shared<rv_specs>();
                 } catch (std::bad_alloc & e) {
                     cerr << "Error: Create rv specs failed!" << endl;
-                    return -1;
+                    return ret;
                 }
             }else{
                 rvsp = std::make_shared<rv_specs>(l2RvMap.at(l2SrcAddr));

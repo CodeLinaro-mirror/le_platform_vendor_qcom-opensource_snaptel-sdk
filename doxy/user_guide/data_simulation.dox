@@ -34,6 +34,7 @@ The following managers are currently available in the simulation:
 6. SocksManager
 7. NatManager
 8. L2tpManager
+9. FirewallManager
 
 <br>
 - - -

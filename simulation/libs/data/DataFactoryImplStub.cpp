@@ -14,6 +14,9 @@
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/L2tpManagerStub.hpp"
+#include "net/FirewallManagerStub.hpp"
+#include "net/FirewallEntryImpl.hpp"
+#include "net/BridgeManagerStub.hpp"
 
 #include "common/Logger.hpp"
 
@@ -311,12 +314,39 @@ std::shared_ptr<telux::data::net::INatManager> DataFactoryImplStub::getNatManage
 
 std::shared_ptr<telux::data::net::IFirewallManager> DataFactoryImplStub::getFirewallManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    if (oprType == telux::data::OperationType::DATA_REMOTE) {
+        return nullptr;
+    }
+
+    std::function<std::shared_ptr<telux::data::net::IFirewallManager>(
+        telux::common::InitResponseCb)>
+        createAndInit = [oprType](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::IFirewallManager> {
+        std::shared_ptr<telux::data::net::FirewallManagerStub> manager
+            = std::make_shared<telux::data::net::FirewallManagerStub>(oprType);
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Firewall manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " for operationType = ", static_cast<int>(oprType), " , callback = ", &firewallCallbacks_);
+    auto manager
+        = getManager<telux::data::net::IFirewallManager>(type,
+            firewallManagerMap_[oprType], firewallCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::net::IFirewallEntry> DataFactoryImplStub::getNewFirewallEntry(
     IpProtocol proto, Direction direction, IpFamilyType ipFamilyType) {
-    return nullptr;
+    std::shared_ptr<IIpFilter> ipFilter = getNewIpFilter(proto);
+    if (!ipFilter) {
+        return nullptr;
+    }
+
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    return std::make_shared<net::FirewallEntryImpl>(ipFilter, direction, ipFamilyType);
 }
 
 std::shared_ptr<telux::data::net::IVlanManager> DataFactoryImplStub::getVlanManager(
@@ -353,7 +383,23 @@ std::shared_ptr<telux::data::net::ISocksManager> DataFactoryImplStub::getSocksMa
 
 std::shared_ptr<telux::data::net::IBridgeManager> DataFactoryImplStub::getBridgeManager(
     telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    std::function<std::shared_ptr<telux::data::net::IBridgeManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::IBridgeManager> {
+            std::shared_ptr<telux::data::net::BridgeManagerStub> manager
+                = std::make_shared<telux::data::net::BridgeManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("Bridge manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &bridgeCallbacks_);
+    auto manager
+        = getManager<telux::data::net::IBridgeManager>(type,
+            bridgeManager_, bridgeCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpManager(

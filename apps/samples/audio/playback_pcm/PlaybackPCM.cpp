@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,22 +33,23 @@
  */
 
 /*
- *  Steps to play PCM audio samples on a audio sink device are:
+ * Steps to play raw PCM audio samples on a audio sink device are:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a playback stream (IAudioPlayStream).
- *  5. Start writing audio samples on the playback stream.
- *  6. When the playback is over, delete the playback stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a playback stream (IAudioPlayStream).
+ * 5. Start writing audio samples on the playback stream.
+ * 6. When the playback is over, delete the playback stream.
  *
  * Usage:
- * # playback_pcm /data/musicfile.pcm
+ * # playback_pcm /data/musicfile.raw
  *
- * Contents of /data/musicfile.pcm file are played on the speaker.
+ * Contents of /data/musicfile.raw file are played on the speaker.
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -71,12 +72,8 @@ int PlaybackPCM::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -85,17 +82,13 @@ int PlaybackPCM::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -136,6 +129,7 @@ int PlaybackPCM::createPlayStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -148,7 +142,7 @@ int PlaybackPCM::deletePlayStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioPlayStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -164,29 +158,33 @@ int PlaybackPCM::deletePlayStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
 /*
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
-void PlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void PlaybackPCM::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
+    std::lock_guard<std::mutex> lock(playMutex_);
+
     if (error != telux::common::ErrorCode::SUCCESS) {
+        /* Error occurred during playback, terminate the playback thread */
         errorOccurred_ = true;
         std::cout << "write failed, err " << static_cast<int>(error) << std::endl;
     } else if (buffer->getDataSize() != bytesWritten) {
         /* Whole buffer can't be played successfully */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
-        fseek(fileToPlay_, offset, SEEK_CUR);
+        std::fseek(fileToPlay_, offset, SEEK_CUR);
     } else {
-        /* success, send next buffer to play */
+        /* Success, send the next buffer to play */
     }
 
-    freeBuffers_.push(buffer);
+    bufferPool_.push(buffer);
     cv_.notify_all();
 }
 
@@ -197,6 +195,7 @@ void PlaybackPCM::play() {
 
     uint32_t size = 0;
     uint32_t numBytes = 0;
+    bool waitResult = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -204,21 +203,21 @@ void PlaybackPCM::play() {
 
     errorOccurred_ = false;
 
-    fileToPlay_ = std::fopen(fileToPlayPath_, "r");
+    fileToPlay_ = std::fopen(fileToPlayPath_, "rb");
     if (!fileToPlay_) {
         std::cout << "can't open file " << fileToPlayPath_ << std::endl;
         return;
     }
 
-    /* Allocate two buffers */
-    for (int x = 0; x < 2; x++) {
+    for (int x = 0; x < BUFFER_POOL_SIZE; x++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get stream buffer" << std::endl;
-            fclose(fileToPlay_);
+            std::fclose(fileToPlay_);
+            bufferPool_ = {};
             return;
         }
-        freeBuffers_.push(streamBuffer);
+        bufferPool_.push(streamBuffer);
 
         size = streamBuffer->getMinSize();
         if (!size) {
@@ -228,21 +227,23 @@ void PlaybackPCM::play() {
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&PlaybackPCM::writeCompletion, this,
+    auto writeCb = std::bind(&PlaybackPCM::writeComplete, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
-    while(1) {
-        streamBuffer = freeBuffers_.front();
-        freeBuffers_.pop();
+    while (1) {
+        streamBuffer = bufferPool_.front();
+        bufferPool_.pop();
 
-        numBytes = fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
+        numBytes = std::fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
         if (numBytes == 0 && feof(fileToPlay_)) {
+            bufferPool_.push(streamBuffer);
             break;
         }
         if (numBytes != size && !feof(fileToPlay_)) {
             std::cout << "can't read required bytes, read " << numBytes << std::endl;
+            bufferPool_.push(streamBuffer);
             break;
         }
 
@@ -254,23 +255,32 @@ void PlaybackPCM::play() {
             break;
         }
 
-        if (freeBuffers_.empty()) {
-            cv_.wait(lock);
-        }
+        waitResult = false;
+        waitResult = cv_.wait_for(lock,
+            std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (!bufferPool_.empty() || errorOccurred_); });
 
+        if (!waitResult) {
+            std::cout << "timedout " << std::endl;
+            break;
+        }
         if (errorOccurred_) {
-            /* error occurred during playback, terminate the thread */
             break;
         }
     }
 
-    fclose(fileToPlay_);
+    /* Before closing the file, wait for all responses */
+    while (bufferPool_.size() != static_cast<uint32_t>(BUFFER_POOL_SIZE)) {
+        cv_.wait(lock);
+    }
+
+    std::fclose(fileToPlay_);
 
     if (errorOccurred_) {
-        std::cout << "playback finished with error" << std::endl;
-    } else {
-        std::cout << "playback finished" << std::endl;
+        std::cout << "playback terminated with error" << std::endl;
+        return;
     }
+    std::cout << "Playback finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -279,7 +289,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<PlaybackPCM> app;
 
     if (argc < 2) {
-        std::cout << "need audio file absolute path" << std::endl;
+        std::cout << "Need audio file's absolute path" << std::endl;
         return -EINVAL;
     }
 
@@ -310,5 +320,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

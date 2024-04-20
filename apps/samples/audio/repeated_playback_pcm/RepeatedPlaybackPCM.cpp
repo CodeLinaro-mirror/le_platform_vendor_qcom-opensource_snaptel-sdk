@@ -33,11 +33,11 @@
  */
 
 /*
- * This sample apps demonstrates, how to configure audio streams for each file and
- * how to define multiple PCM files to play repeatedly. The steps are as follows:
+ * This sample application demonstrates, how to configure audio streams for each file
+ * and define multiple PCM files to play repeatedly. The steps are as follows:
  *
- * 1. Get a AudioFactory instance.
- * 2. Get a IAudioPlayer instance from the AudioFactory.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioPlayer instance from the AudioFactory.
  * 3. Implement all listener methods from IPlayListListener class.
  * 4. Define parameters to configure audio stream.
  * 5. Define how a given file should be played.
@@ -53,6 +53,7 @@
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <iostream>
@@ -78,6 +79,7 @@ int RepeatedPlaybackPCM::init() {
         return -ENOMEM;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 

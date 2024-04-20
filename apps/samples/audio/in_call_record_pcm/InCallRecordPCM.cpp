@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,10 +33,10 @@
  */
 
 /*
- *  Steps to record audio samples during an active voice call are:
+ * Steps to record audio samples during an active voice call are:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
+ *  1. Get an AudioFactory instance.
+ *  2. Get an IAudioManager instance from AudioFactory.
  *  3. Wait for the audio service to become available.
  *  4. Create a voice call stream (IAudioVoiceStream).
  *  5. Start the voice call stream.
@@ -46,15 +46,16 @@
  *  9. Stop voice call stream.
  * 10. Delete voice call stream.
  *
- *  Usage:
- *  # in_call_record_pcm duration /data/incalloutout.pcm
+ * Usage:
+ * # in_call_record_pcm <duration> <absolute-file-path>
  *
- *  Audio data sent from the remote end is recorded for given duration (in seconds)
- *  and saved in /data/incalloutout.pcm file. Voice call must be active (answered)
- *  between local and far end.
+ * Audio data sent from the remote end is recorded for given <duration> (in seconds)
+ * and saved on <absolute-file-path> file. Voice call must be active (answered)
+ * between local and far end.
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -77,12 +78,8 @@ int InCallRecordPCM::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -91,17 +88,13 @@ int InCallRecordPCM::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -143,6 +136,7 @@ int InCallRecordPCM::createVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice call stream created" << std::endl;
     return 0;
 }
 
@@ -155,7 +149,7 @@ int InCallRecordPCM::deleteVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -171,6 +165,7 @@ int InCallRecordPCM::deleteVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice call stream deleted" << std::endl;
     return 0;
 }
 
@@ -198,6 +193,7 @@ int InCallRecordPCM::startVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice call stream started" << std::endl;
     return 0;
 }
 
@@ -225,6 +221,7 @@ int InCallRecordPCM::stopVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice call stream stopped" << std::endl;
     return 0;
 }
 
@@ -268,6 +265,7 @@ int InCallRecordPCM::createIncallRecordStream() {
         return -EIO;
     }
 
+    std::cout << "Capture stream created" << std::endl;
     return 0;
 }
 
@@ -280,7 +278,7 @@ int InCallRecordPCM::deleteIncallRecordStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -296,16 +294,19 @@ int InCallRecordPCM::deleteIncallRecordStream() {
         return -EIO;
     }
 
+    std::cout << "Capture stream deleted" << std::endl;
     return 0;
 }
 
 /*
  *  Gets called whenever audio samples are read from the capture stream.
  */
-void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void InCallRecordPCM::readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error) {
 
     uint32_t bytesRead, bytesWrittenToFile;
+
+    std::lock_guard<std::mutex> lock(captureMutex_);
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         errorOccurred_ = true;
@@ -319,7 +320,7 @@ void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer
         }
     }
 
-    freeBuffers_.push(buffer);
+    bufferPool_.push(buffer);
     cv_.notify_all();
 }
 
@@ -329,6 +330,7 @@ void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer
 void InCallRecordPCM::record() {
 
     uint32_t bytesToRead = 0;
+    bool waitResult = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -343,21 +345,22 @@ void InCallRecordPCM::record() {
         return;
     }
 
-    fileToSaveRecording_ = std::fopen(fileToSaveRecordingPath_, "w");
+    fileToSaveRecording_ = std::fopen(fileToSaveRecordingPath_, "wb");
     if (!fileToSaveRecording_) {
         std::cout << "can't open file " << fileToSaveRecordingPath_ << std::endl;
         return;
     }
 
-    for (int x = 0; x < 2; x++) {
+    for (int x = 0; x < BUFFER_POOL_SIZE; x++) {
         streamBuffer = audioCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get stream buffer" << std::endl;
-            fclose(fileToSaveRecording_);
+            std::fclose(fileToSaveRecording_);
+            bufferPool_ = {};
             return;
         }
 
-        freeBuffers_.push(streamBuffer);
+        bufferPool_.push(streamBuffer);
 
         bytesToRead = streamBuffer->getMinSize();
         if (!bytesToRead) {
@@ -367,25 +370,35 @@ void InCallRecordPCM::record() {
         streamBuffer->setDataSize(bytesToRead);
     }
 
-    auto readCb = std::bind(&InCallRecordPCM::readCompletion, this,
+    auto readCb = std::bind(&InCallRecordPCM::readComplete, this,
         std::placeholders::_1, std::placeholders::_2);
 
     std::cout << "recording started" << std::endl;
 
     auto startTime = std::chrono::steady_clock::now();
 
-    while(1) {
-        streamBuffer = freeBuffers_.front();
-        freeBuffers_.pop();
+    while (1) {
+        streamBuffer = bufferPool_.front();
+        bufferPool_.pop();
 
         status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
+            bufferPool_.push(streamBuffer);
             break;
         }
 
-        if (freeBuffers_.empty()) {
-            cv_.wait(lock);
+        waitResult = false;
+        waitResult = cv_.wait_for(lock,
+            std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (!bufferPool_.empty() || errorOccurred_); });
+
+        if (!waitResult) {
+            std::cout << "timedout " << std::endl;
+            break;
+        }
+        if (errorOccurred_) {
+            break;
         }
 
         auto currentTime = std::chrono::steady_clock::now();
@@ -394,24 +407,21 @@ void InCallRecordPCM::record() {
 
         if (diff >= recordingDurationMs_) {
             /* Let all initiated read complete, buffers saved to file */
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            break;
-        }
-
-        if (errorOccurred_) {
-            /* error occurred during recording, terminate the thread */
+            while (bufferPool_.size() != static_cast<uint32_t>(BUFFER_POOL_SIZE)) {
+                cv_.wait(lock);
+            }
             break;
         }
     }
 
-    fflush(fileToSaveRecording_);
-    fclose(fileToSaveRecording_);
+    std::fflush(fileToSaveRecording_);
+    std::fclose(fileToSaveRecording_);
 
     if (errorOccurred_) {
-        std::cout << "recording finished with error" << std::endl;
-    } else {
-        std::cout << "recording finished" << std::endl;
+        std::cout << "recording terminated with error" << std::endl;
+        return;
     }
+    std::cout << "Recording finished" << std::endl;
 }
 
 
@@ -421,7 +431,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<InCallRecordPCM> app;
 
     if (argc < 3) {
-        std::cout << "need recording time and file path" << std::endl;
+        std::cout << "Usage: in_call_record_pcm <duration> <absolute-file-path>" << std::endl;
         return -EINVAL;
     }
 
@@ -479,5 +489,6 @@ int main(int argc, char **argv) {
         return -EIO;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

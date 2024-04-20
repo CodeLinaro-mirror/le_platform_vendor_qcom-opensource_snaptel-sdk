@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,27 +33,29 @@
  */
 
 /*
- *  Steps to capture audio samples from an audio source are:
+ * Steps to capture audio samples from an audio source are:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a capture stream (IAudioCaptureStream).
- *  5. Start reading audio samples from capture stream.
- *  6. When required samples have been captured, delete the capture stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a capture stream (IAudioCaptureStream).
+ * 5. Start reading audio samples from capture stream.
+ * 6. When required samples have been captured, delete the capture stream.
  *
- *  Usage:
- *  # capture_pcm duration /data/captured.pcm
+ * Usage:
+ * # capture_pcm <duration> <absolute-file-path>
  *
- *  Audio samples are captured for the given duration (in seconds) and saved
- *  in /data/captured.pcm.
+ * Raw audio samples are captured for the given <duration> (in seconds) and saved
+ * on <absolute-file-path> file.
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <string>
 
 #include <telux/audio/AudioFactory.hpp>
 
@@ -72,12 +74,8 @@ int CapturePCM::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -86,17 +84,13 @@ int CapturePCM::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -137,6 +131,7 @@ int CapturePCM::createCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -149,7 +144,7 @@ int CapturePCM::deleteCaptureStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -165,30 +160,33 @@ int CapturePCM::deleteCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
 /*
  *  Gets called whenever audio samples are read from the capture stream.
  */
-void CapturePCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void CapturePCM::readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error) {
 
     uint32_t bytesRead, bytesWrittenToFile;
+
+    std::lock_guard<std::mutex> lock(captureMutex_);
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         errorOccurred_ = true;
         std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
     } else {
         bytesRead = buffer->getDataSize();
-        bytesWrittenToFile = fwrite(buffer->getRawBuffer(), 1, bytesRead, fileToSaveSamples_);
+        bytesWrittenToFile = std::fwrite(buffer->getRawBuffer(), 1, bytesRead, fileToSaveSamples_);
         if (bytesWrittenToFile != bytesRead) {
             std::cout << "can't write to file, " << "written "
             << bytesWrittenToFile << ", read " << bytesRead << std::endl;
         }
     }
 
-    freeBuffers_.push(buffer);
+    bufferPool_.push(buffer);
     cv_.notify_all();
 }
 
@@ -198,6 +196,7 @@ void CapturePCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buf
 void CapturePCM::capture() {
 
     uint32_t bytesToRead = 0;
+    bool waitResult = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -205,28 +204,22 @@ void CapturePCM::capture() {
 
     errorOccurred_ = false;
 
-    try {
-        captureDurationMs_ = (std::stoul(captureDuration_)) * 1000;
-    } catch (const std::exception& e) {
-        std::cout << "can't interpret time " << captureDuration_ << std::endl;
-        return;
-    }
-
-    fileToSaveSamples_ = std::fopen(fileToSaveSamplesPath_, "w");
+    fileToSaveSamples_ = std::fopen(fileToSaveSamplesPath_, "wb");
     if (!fileToSaveSamples_) {
         std::cout << "can't open file " << fileToSaveSamplesPath_ << std::endl;
         return;
     }
 
-    for (int x = 0; x < 2; x++) {
+    for (int x = 0; x < BUFFER_POOL_SIZE; x++) {
         streamBuffer = audioCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get stream buffer" << std::endl;
-            fclose(fileToSaveSamples_);
+            std::fclose(fileToSaveSamples_);
+            bufferPool_ = {};
             return;
         }
 
-        freeBuffers_.push(streamBuffer);
+        bufferPool_.push(streamBuffer);
 
         bytesToRead = streamBuffer->getMinSize();
         if (!bytesToRead) {
@@ -236,25 +229,35 @@ void CapturePCM::capture() {
         streamBuffer->setDataSize(bytesToRead);
     }
 
-    auto readCb = std::bind(&CapturePCM::readCompletion, this,
+    auto readCb = std::bind(&CapturePCM::readComplete, this,
         std::placeholders::_1, std::placeholders::_2);
 
     std::cout << "capture started" << std::endl;
 
     auto startTime = std::chrono::steady_clock::now();
 
-    while(1) {
-        streamBuffer = freeBuffers_.front();
-        freeBuffers_.pop();
+    while (1) {
+        streamBuffer = bufferPool_.front();
+        bufferPool_.pop();
 
         status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
-        if(status != telux::common::Status::SUCCESS) {
+        if (status != telux::common::Status::SUCCESS) {
             std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
+            bufferPool_.push(streamBuffer);
             break;
         }
 
-        if(freeBuffers_.empty()) {
-            cv_.wait(lock);
+        waitResult = false;
+        waitResult = cv_.wait_for(lock,
+            std::chrono::seconds(TIME_10_SECONDS),
+            [=] { return (!bufferPool_.empty() || errorOccurred_); });
+
+        if (!waitResult) {
+            std::cout << "timedout " << std::endl;
+            break;
+        }
+        if (errorOccurred_) {
+            break;
         }
 
         auto currentTime = std::chrono::steady_clock::now();
@@ -263,24 +266,21 @@ void CapturePCM::capture() {
 
         if (diff >= captureDurationMs_) {
             /* Let all initiated read complete, buffers saved to file */
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            break;
-        }
-
-        if (errorOccurred_) {
-            /* error occurred during capture, terminate the thread */
+            while (bufferPool_.size() != static_cast<uint32_t>(BUFFER_POOL_SIZE)) {
+                cv_.wait(lock);
+            }
             break;
         }
     }
 
-    fflush(fileToSaveSamples_);
-    fclose(fileToSaveSamples_);
+    std::fflush(fileToSaveSamples_);
+    std::fclose(fileToSaveSamples_);
 
     if (errorOccurred_) {
-        std::cout << "capture finished with error" << std::endl;
-    } else {
-        std::cout << "capture finished" << std::endl;
+        std::cout << "capture terminated with error" << std::endl;
+        return;
     }
+    std::cout << "Capture finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<CapturePCM> app;
 
     if (argc < 3) {
-        std::cout << "need reading time and file path" << std::endl;
+        std::cout << "Usage: capture_pcm <duration> <absolute-file-path>" << std::endl;
         return -EINVAL;
     }
 
@@ -305,7 +305,13 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    app->captureDuration_ = argv[1];
+    try {
+        app->captureDurationMs_ = std::stoul(argv[1]) * 1000;
+    } catch (const std::exception& e) {
+        std::cout << "can't interpret duration from " << argv[1] << std::endl;
+        return -ERANGE;
+    }
+
     app->fileToSaveSamplesPath_ = argv[2];
 
     ret = app->createCaptureStream();
@@ -321,5 +327,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

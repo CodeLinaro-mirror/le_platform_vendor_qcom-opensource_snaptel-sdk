@@ -38,7 +38,7 @@
 
 #include <telux/audio/AudioManager.hpp>
 
-class BTHFVoiceCall {
+class BTHF {
 
  public:
     int init();
@@ -59,7 +59,6 @@ class BTHFVoiceCall {
     void readCompleteCodec(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error);
-
     void writeCompleteCodec(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);
@@ -67,7 +66,6 @@ class BTHFVoiceCall {
     void readCompleteBluetooth(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error);
-
     void writeCompleteBluetooth(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);
@@ -82,7 +80,7 @@ class BTHFVoiceCall {
     std::condition_variable codecReadWaiterCv_;
 
  private:
-    const int32_t BUF_COUNT = 2;
+    const int32_t BUFFER_COUNT = 2;
     uint32_t btReadSize_;
     uint32_t codecReadSize_;
 

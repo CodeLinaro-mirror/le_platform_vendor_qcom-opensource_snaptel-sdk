@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,41 +33,53 @@
  */
 
 /*
- *  Steps to play audio samples on top of a voice call stream are:
- *  1. Get AudioFactory instance.
- *  2. Get IAudioManager instance from AudioFactory.
+ * Steps to receive audio on TX/RX path, modify it and write back to the TX/RX path
+ * are as follows:
+ *
+ *  1. Get an AudioFactory instance.
+ *  2. Get an IAudioManager instance from the AudioFactory.
  *  3. Wait for the audio service to become available.
- *  4. Create voice call stream (IAudioVoiceStream).
- *  5. Start voice call stream.
- *  6. Create a capture stream (IAudioCaptureStream).
- *  7. Create playback stream (IAudioPlayStream).
- *  8. Start reading audio samples from hpcm capture stream.
- *  9. Start writing audio samples on hpcm playback stream.
- *  10. When the recording/playback is complete, delete the capture and playback streams.
- *  11. Stop voice call stream.
- *  12. Delete voice stream.
+ *  4. Create a voice call stream.
+ *  5. Start a voice call stream.
+ *  6. Create a playback stream on TX path.
+ *  7. Create a capture stream on TX path.
+ *  8. Create a playback stream on RX path.
+ *  9. Create a capture stream on RX path.
+ * 10. Allocate buffers to send and receive audio samples.
+ * 11. Create a thread that will receive audio from TX path, modifies it and write back
+ *     to the TX path.
+ * 12. Create a thread that will receive audio from RX path, modifies it and write back
+ *     to the RX path.
+ * 13. When the use case is over, delete TX playback stream.
+ * 14. When the use case is over, delete TX capture stream.
+ * 15. When the use case is over, delete RX playback stream.
+ * 16. When the use case is over, delete RX capture stream.
+ * 17. Stop voice call stream.
+ * 18. Delete voice call stream.
  *
  * Usage:
- * # hpcm duration(in seconds) sample_rate(in kHz)
+ * # hpcm_tx_rx_modify
+ *
+ * A voice call is established, audio spoken on the local mic is heard on the remote end.
+ * Voice spoken on the remote end is header on the local speaker.
+ *
+ * For establishing cellular RF path for voice call, telephony APIs should be used.
  */
 
 #include <errno.h>
+
+#include <cstdio>
 #include <chrono>
 #include <thread>
-#include <future>
+#include <cstring>
 #include <iostream>
-#include <condition_variable>
 
 #include <telux/audio/AudioFactory.hpp>
 
 #include "Hpcm.hpp"
 
-Hpcm::Hpcm() {
-    exit_ = true;
-}
-
 /*
- * Initialize application and get audio service.
+ * Initialize application and get an audio service.
  */
 int Hpcm::init() {
 
@@ -79,12 +91,8 @@ int Hpcm::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -93,17 +101,13 @@ int Hpcm::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -122,7 +126,7 @@ int Hpcm::createVoiceStream() {
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.enableHpcm = true;
 
     status = audioManager_->createStream(sc, [&p, this] (
@@ -132,9 +136,7 @@ int Hpcm::createVoiceStream() {
             audioVoiceStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioVoiceStream>(audioStream);
         }
-
         p.set_value(result);
-
     });
 
     if (status != telux::common::Status::SUCCESS) {
@@ -148,6 +150,7 @@ int Hpcm::createVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice stream created" << std::endl;
     return 0;
 }
 
@@ -160,7 +163,7 @@ int Hpcm::deleteVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
             telux::common::ErrorCode result) {
             p.set_value(result);
     });
@@ -176,6 +179,7 @@ int Hpcm::deleteVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Voice stream deleted" << std::endl;
     return 0;
 }
 
@@ -203,7 +207,7 @@ int Hpcm::startVoiceStream() {
         return -EIO;
     }
 
-    exit_ = false;
+    std::cout << "Voice stream started" << std::endl;
     return 0;
 }
 
@@ -231,332 +235,627 @@ int Hpcm::stopVoiceStream() {
         return -EIO;
     }
 
-    exit_ = true;
-    captureCv_.notify_all();
-    bufferReadyCv_.notify_all();
+    std::cout << "Voice stream stopped" << std::endl;
     return 0;
 }
 
-/*
- * Step - 9, create a hpcm playback stream.
- */
-int Hpcm::createHpcmPlayStream() {
+int Hpcm::createTXPlayStream() {
 
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
-    telux::audio::StreamConfig sc{};
-    std::promise<telux::common::ErrorCode> p{};
 
     sc.type = telux::audio::StreamType::PLAY;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.sampleRate = sampleRate_;
+    sc.sampleRate = 8000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-    /* Direction::TX indicates voice uplink playback */
-    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
     sc.enableHpcm = true;
+    /* Direction::TX indicates voice uplink */
+    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode result) {
         if (result == telux::common::ErrorCode::SUCCESS) {
-            audioPlayStream_ = std::dynamic_pointer_cast<
+            txPlayStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioPlayStream>(audioStream);
         }
         p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't create hpcm playback stream, err " << static_cast<int>(status) << std::endl;
+        std::cout << "can't request create tx playback stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout<< "failed create hpcm playback stream,err " << static_cast<int>(ec) << std::endl;
+        std::cout << "failed create tx playback stream, err " <<
+            static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
+    std::cout << "TX playback stream created" << std::endl;
     return 0;
 }
 
-/*
- * Step - 6, create a HPCM record stream.
- */
-int Hpcm::createHpcmRecordStream() {
+int Hpcm::deleteTXPlayStream() {
 
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
-    telux::audio::StreamConfig sc{};
+
+    status = audioManager_->deleteStream(txPlayStream_, [&p, this] (
+            telux::common::ErrorCode result) {
+        p.set_value(result);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't request delete tx playback stream"  << std::endl;
+        return -EIO;
+    }
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete tx playback stream, err " <<
+            static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    std::cout << "TX playback stream deleted" << std::endl;
+    return 0;
+}
+
+int Hpcm::createTXCaptureStream() {
+
     std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
+    telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::CAPTURE;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.sampleRate = sampleRate_;
+    sc.sampleRate = 8000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-    /* Direction::TX indicates voice uplink capture */
-    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
     sc.enableHpcm = true;
+    /* Direction::TX indicates voice uplink */
+    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode result) {
         if (result == telux::common::ErrorCode::SUCCESS) {
-            audioCaptureStream_ = std::dynamic_pointer_cast<
+            txCaptureStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioCaptureStream>(audioStream);
         }
         p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't create capture stream, err " << static_cast<int>(status) << std::endl;
+        std::cout << "can't request create tx capture stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout<< "failed create hpcm capture stream, err " << static_cast<int>(ec) <<
-                    std::endl;
+        std::cout << "failed create tx capture stream, err " <<
+            static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
+    std::cout << "TX capture stream created" << std::endl;
     return 0;
 }
 
-/*
- *  Step - 10, delete hpcm playback stream.
- */
-int Hpcm::deleteHpcmPlayStream() {
+int Hpcm::deleteTXCaptureStream() {
 
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
-    std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_-> deleteStream(audioPlayStream_, [&p, this] (
+    status = audioManager_->deleteStream(txCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
-            p.set_value(result);
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't delete hpcm playback stream, err " << static_cast<int>(status)
-                  << std::endl;
+        std::cout << "can't request delete tx capture stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed delete hpcm playback stream, err " << static_cast<int>(ec)
-                  << std::endl;
+        std::cout << "failed delete tx capture stream, err " <<
+            static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
+    std::cout << "TX capture stream deleted" << std::endl;
     return 0;
 }
 
-/*
- *  Step - 9, delete hpcm capture stream.
- */
-int Hpcm::deleteHpcmRecordStream() {
+int Hpcm::createRXPlayStream() {
 
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
-    std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
+    sc.type = telux::audio::StreamType::PLAY;
+    sc.sampleRate = 8000;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    sc.enableHpcm = true;
+    /* Direction::RX indicates voice downlink */
+    sc.voicePaths.emplace_back(telux::audio::Direction::RX);
+
+    status = audioManager_->createStream(sc, [&p, this] (
+            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode result) {
-            p.set_value(result);
+        if (result == telux::common::ErrorCode::SUCCESS) {
+            rxPlayStream_ = std::dynamic_pointer_cast<
+                telux::audio::IAudioPlayStream>(audioStream);
+        }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't delete hpcm playback stream, err " << static_cast<int>(status)
-                  << std::endl;
+        std::cout << "can't request create rx playback stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout<< "failed delete hpcm capture stream, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "failed create rx playback stream, err " <<
+            static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
+    std::cout << "RX playback stream created" << std::endl;
     return 0;
 }
 
-/*
- *  Gets called whenever audio samples are read from the hpcm capture stream. The captured buffer is
- *  then passed to hpcm playback stream.
- */
-void Hpcm::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        telux::common::ErrorCode error) {
-    uint32_t bytesRead;
-    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer = audioPlayStream_->getStreamBuffer();
+int Hpcm::deleteRXPlayStream() {
 
-    if (error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
-        readErrorOccurred_ = true;
-    } else {
-        bytesRead = buffer->getDataSize();
-        streamBuffer->setDataSize(bytesRead);
-        std::cout << "bytes read: " << bytesRead << std::endl;
-        memcpy(streamBuffer->getRawBuffer(), buffer->getRawBuffer(), bytesRead);
-        freePlayBuffers_.push(streamBuffer);
-        bufferReadyCv_.notify_all();
+    std::promise<telux::common::ErrorCode> p{};
+    telux::common::Status status;
+    telux::common::ErrorCode ec;
+
+    status = audioManager_->deleteStream(rxPlayStream_, [&p, this] (
+            telux::common::ErrorCode result) {
+        p.set_value(result);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't request delete rx playback stream"  << std::endl;
+        return -EIO;
     }
-    buffer->reset();
-    freeCaptureBuffers_.push(buffer);
-    captureCv_.notify_all();
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete rx playback stream, err " <<
+            static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    std::cout << "RX playback stream deleted" << std::endl;
+    return 0;
 }
 
-/*
- *  Step - 7, read samples from the hpcm capture stream.
- */
-void Hpcm::record() {
+int Hpcm::createRXCaptureStream() {
 
-    uint32_t bytesToRead = 0;
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
+
+    sc.type = telux::audio::StreamType::CAPTURE;
+    sc.sampleRate = 8000;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
+    sc.enableHpcm = true;
+    /* Direction::RX indicates voice downlink */
+    sc.voicePaths.emplace_back(telux::audio::Direction::RX);
+
+    status = audioManager_->createStream(sc, [&p, this] (
+            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
+            rxCaptureStream_ = std::dynamic_pointer_cast<
+                telux::audio::IAudioCaptureStream>(audioStream);
+        }
+        p.set_value(result);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't request create rx capture stream"  << std::endl;
+        return -EIO;
+    }
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create rx capture stream, err " <<
+            static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    std::cout << "RX capture stream created" << std::endl;
+    return 0;
+}
+
+int Hpcm::deleteRXCaptureStream() {
+
+    std::promise<telux::common::ErrorCode> p{};
+    telux::common::Status status;
+    telux::common::ErrorCode ec;
+
+    status = audioManager_->deleteStream(rxCaptureStream_, [&p, this] (
+            telux::common::ErrorCode result) {
+        p.set_value(result);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't request delete rx capture stream"  << std::endl;
+        return -EIO;
+    }
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete rx capture stream, err " <<
+            static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    std::cout << "RX capture stream deleted" << std::endl;
+    return 0;
+}
+
+int Hpcm::allocateBuffers() {
+
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
-    std::unique_lock<std::mutex> lock(captureMutex_);
-    readErrorOccurred_ = false;
 
-    try {
-        recordingDurationMs_ = (std::stoul(recordingDuration_)) * 1000;
-    } catch (...) {
-        std::cout << "can't interpret time " << recordingDuration_ << std::endl;
-        return;
-    }
+    txReadSize_ = 0;
+    rxReadSize_ = 0;
 
-    for (int x = 0; x < 1; x++) {
-        streamBuffer = audioCaptureStream_->getStreamBuffer();
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
+        streamBuffer = txCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
-            std::cout << "can't get stream buffer" << std::endl;
-            return;
+            std::cout << "can't get tx capture stream buffer" << std::endl;
+            txReadBuffers_ = {};
+            return -ENOMEM;
         }
-        freeCaptureBuffers_.push(streamBuffer);
 
-        bytesToRead = streamBuffer->getMinSize();
-        if (!bytesToRead) {
-            bytesToRead =  streamBuffer->getMaxSize();
+        txReadSize_ = streamBuffer->getMinSize();
+        if (!txReadSize_) {
+            txReadSize_ =  streamBuffer->getMaxSize();
         }
-        streamBuffer->setDataSize(bytesToRead);
+
+        streamBuffer->setDataSize(txReadSize_);
+        txReadBuffers_.push(streamBuffer);
     }
 
-    auto readCb = std::bind(&Hpcm::readCompletion, this,
-        std::placeholders::_1, std::placeholders::_2);
-
-    std::cout << "HPCM recording started" << std::endl;
-
-    auto startTime = std::chrono::steady_clock::now();
-
-    while(1) {
-        streamBuffer = freeCaptureBuffers_.front();
-        if (!freeCaptureBuffers_.empty()) {
-            freeCaptureBuffers_.pop();
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
+        streamBuffer = txPlayStream_->getStreamBuffer();
+        if (!streamBuffer) {
+            std::cout << "can't get tx play stream buffer" << std::endl;
+            txReadBuffers_ = {};
+            txWriteBuffers_ = {};
+            return -ENOMEM;
         }
 
-        if (streamBuffer) {
-            status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
-                readErrorOccurred_ = true;
-                break;
-            }
-        }
-
-        if(freeCaptureBuffers_.empty()) {
-            captureCv_.wait(lock);
-        }
-
-        auto currentTime = std::chrono::steady_clock::now();
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-            currentTime - startTime).count();
-
-        if (diff >= recordingDurationMs_) {
-            /* Let all initiated read complete, buffers saved to file */
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            break;
-        }
-
-        if (readErrorOccurred_ || exit_) {
-            /* error occurred during recording, terminate the thread */
-            break;
-        }
+        streamBuffer->setDataSize(txReadSize_);
+        txWriteBuffers_.push(streamBuffer);
     }
 
-    exit_ = true;
-    if (readErrorOccurred_) {
-        std::cout << "recording finished with error" << std::endl;
-    } else {
-        std::cout << "recording finished" << std::endl;
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
+        streamBuffer = rxCaptureStream_->getStreamBuffer();
+        if (!streamBuffer) {
+            std::cout << "can't get rx capture stream buffer" << std::endl;
+            rxReadBuffers_ = {};
+            txReadBuffers_ = {};
+            txWriteBuffers_ = {};
+            return -ENOMEM;
+        }
+
+        rxReadSize_ = streamBuffer->getMinSize();
+        if (!rxReadSize_) {
+            rxReadSize_ =  streamBuffer->getMaxSize();
+        }
+
+        streamBuffer->setDataSize(rxReadSize_);
+        rxReadBuffers_.push(streamBuffer);
     }
-    /*If read operation returns with error then record thread will exit but play thread
-    will be waiting for buffer. To avoid that notify play thread to exit. */
-    bufferReadyCv_.notify_all();
+
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
+        streamBuffer = rxPlayStream_->getStreamBuffer();
+        if (!streamBuffer) {
+            std::cout << "can't get rx play stream buffer" << std::endl;
+            rxReadBuffers_ = {};
+            rxWriteBuffers_ = {};
+            txReadBuffers_ = {};
+            txWriteBuffers_ = {};
+            return -ENOMEM;
+        }
+
+        streamBuffer->setDataSize(rxReadSize_);
+        rxWriteBuffers_.push(streamBuffer);
+    }
+
+    return 0;
 }
 
-/*
- *  Gets called to confirm how many bytes were actually written to stream.
- */
-void Hpcm::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void Hpcm::writeCompleteTX(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
-    std::cout << "bytes played: " << bytesWritten << std::endl;
-    if (!buffer) { std::cout << "Invalid buffer" << std::endl;  return; }
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "write tx err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> txReadLock(txReadMutex_);
+            keepRunning_ = false;
+            txReadWaiterCv_.notify_all();
+        }
+    }
 
-    if ((error != telux::common::ErrorCode::SUCCESS) ||
-            (buffer->getDataSize() != bytesWritten)) {
-        std::cout << "error in writting" << std::endl;
-        writeErrorOccurred_ = true;
+    {
+        std::lock_guard<std::mutex> txReadLock(txReadMutex_);
+
+        txWriteBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++txWritePossible_;
+        }
+
+        txReadWaiterCv_.notify_all();
     }
 }
 
-/*
- *  Step - 8, This function waits for buffer to be read from hpcm capture stream and write samples
- *  on playback stream.
- */
-void Hpcm::play() {
+void Hpcm::readCompleteTX(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        telux::common::ErrorCode error) {
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "read tx err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> txReadLock(txReadMutex_);
+            keepRunning_ = false;
+            txReadWaiterCv_.notify_all();
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> txReadLock(txReadMutex_);
+
+        readyForTxWriteBuffers_.push(buffer);
+        txReadBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++txReadPossible_;
+            if (txReadDone_ < BUFFER_COUNT) {
+                ++txReadDone_;
+            }
+        }
+
+        txReadWaiterCv_.notify_all();
+    }
+}
+
+void Hpcm::readFromTXwriteOnTX() {
 
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
-    writeErrorOccurred_ = false;
+    std::shared_ptr<telux::audio::IStreamBuffer> tmpBufferPtr;
 
-    auto writeCb = std::bind(&Hpcm::writeCompletion, this,
+    auto txReadCompleteCb = std::bind(&Hpcm::readCompleteTX, this,
+        std::placeholders::_1, std::placeholders::_2);
+
+    auto txWriteCompleteCb = std::bind(&Hpcm::writeCompleteTX, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-    std::cout << "HPCM playback started" << std::endl;
+    std::unique_lock<std::mutex> txReadLock(txReadMutex_);
 
-    while(1) {
-        //waiting for hpcm read buffer to be ready
-        std::unique_lock<std::mutex> lck(bufferReadyMutex_);
-        bufferReadyCv_.wait(lck);
-        if(exit_ || readErrorOccurred_){
-            break;
-        }
+    txReadDone_ = 0;
+    txReadPossible_ = BUFFER_COUNT;
+    txWritePossible_ = BUFFER_COUNT;
 
-        streamBuffer = freePlayBuffers_.front();
-        if (!freePlayBuffers_.empty()) {
-            freePlayBuffers_.pop();
-        }
+    std::cout << "readFromTXwriteOnTX started" << std::endl;
 
-        if (streamBuffer) {
-            status = audioPlayStream_->write(streamBuffer, writeCb);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
-                writeErrorOccurred_ = true;
+    while (keepRunning_) {
+        if (txReadDone_ && txWritePossible_) {
+
+            tmpBufferPtr = readyForTxWriteBuffers_.front();
+            readyForTxWriteBuffers_.pop();
+
+            streamBuffer = txWriteBuffers_.front();
+            txWriteBuffers_.pop();
+
+            txReadDone_--;
+
+            /*
+             * In this example whatever audio samples are read we write them back without
+             * modification. If required, an application can modify it and then write back.
+             */
+            std::memcpy(streamBuffer->getRawBuffer(),
+                tmpBufferPtr->getRawBuffer(), txReadSize_);
+
+            status = txPlayStream_->write(streamBuffer, txWriteCompleteCb);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "tx write err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                rxReadWaiterCv_.notify_all();
                 break;
             }
+
+            txWritePossible_--;
+        }
+
+        if (txReadPossible_) {
+            streamBuffer = txReadBuffers_.front();
+            txReadBuffers_.pop();
+
+            status = txCaptureStream_->read(streamBuffer, txReadSize_, txReadCompleteCb);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "tx read err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                rxReadWaiterCv_.notify_all();
+                break;
+            }
+
+            txReadPossible_--;
+        }
+
+        txReadWaiterCv_.wait(txReadLock, [this] {
+            return ((txReadPossible_ ||
+                (txReadDone_ && txWritePossible_)) ? true : false);
+        });
+    }
+
+    while ((txReadBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT)) &&
+            (txWriteBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT))) {
+        txReadWaiterCv_.wait(txReadLock);
+    }
+
+    std::cout << "readFromTXwriteOnTX completed" << std::endl;
+}
+
+void Hpcm::writeCompleteRX(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error) {
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "write rx err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> rxReadLock(rxReadMutex_);
+            keepRunning_ = false;
+            rxReadWaiterCv_.notify_all();
         }
     }
 
-    if (writeErrorOccurred_) {
-        std::cout << "Playback finished with error" << std::endl;
-    } else if (readErrorOccurred_) {
-        std::cout << "Capture finished with error, unable to play " << std::endl;
-    } else {
-        std::cout << "Playback finished" << std::endl;
+    {
+        std::lock_guard<std::mutex> rxReadLock(rxReadMutex_);
+
+        rxWriteBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++rxWritePossible_;
+        }
+
+        rxReadWaiterCv_.notify_all();
     }
+}
+
+void Hpcm::readCompleteRX(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        telux::common::ErrorCode error) {
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "read rx err " << static_cast<int>(error) << std::endl;
+        {
+            std::lock_guard<std::mutex> rxReadLock(rxReadMutex_);
+            keepRunning_ = false;
+            rxReadWaiterCv_.notify_all();
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> rxReadLock(rxReadMutex_);
+
+        readyForRxWriteBuffers_.push(buffer);
+        rxReadBuffers_.push(buffer);
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            ++rxReadPossible_;
+            if (rxReadDone_ < BUFFER_COUNT) {
+                ++rxReadDone_;
+            }
+        }
+
+        rxReadWaiterCv_.notify_all();
+    }
+}
+
+void Hpcm::readFromRXwriteOnRX() {
+
+    telux::common::Status status;
+    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
+    std::shared_ptr<telux::audio::IStreamBuffer> tmpBufferPtr;
+
+    auto rxReadCompleteCb = std::bind(&Hpcm::readCompleteRX, this,
+        std::placeholders::_1, std::placeholders::_2);
+
+    auto rxWriteCompleteCb = std::bind(&Hpcm::writeCompleteRX, this,
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
+    std::unique_lock<std::mutex> rxReadLock(rxReadMutex_);
+
+    rxReadDone_ = 0;
+    rxReadPossible_ = BUFFER_COUNT;
+    rxWritePossible_ = BUFFER_COUNT;
+
+    std::cout << "readFromRXwriteOnRX started" << std::endl;
+
+    while (keepRunning_) {
+        if (rxReadDone_ && rxWritePossible_) {
+
+            tmpBufferPtr = readyForRxWriteBuffers_.front();
+            readyForRxWriteBuffers_.pop();
+
+            streamBuffer = rxWriteBuffers_.front();
+            rxWriteBuffers_.pop();
+
+            rxReadDone_--;
+
+            /*
+             * In this example whatever audio samples are read we write them back without
+             * modification. If required, an application can modify it and then write back.
+             */
+            std::memcpy(streamBuffer->getRawBuffer(),
+                tmpBufferPtr->getRawBuffer(), rxReadSize_);
+
+            status = rxPlayStream_->write(streamBuffer, rxWriteCompleteCb);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "rx write err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                txReadWaiterCv_.notify_all();
+                break;
+            }
+
+            rxWritePossible_--;
+        }
+
+        if (rxReadPossible_) {
+            streamBuffer = rxReadBuffers_.front();
+            rxReadBuffers_.pop();
+
+            status = rxCaptureStream_->read(
+                streamBuffer, rxReadSize_, rxReadCompleteCb);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "rx read err " << static_cast<int>(status) << std::endl;
+                keepRunning_ = false;
+                txReadWaiterCv_.notify_all();
+                break;
+            }
+
+            rxReadPossible_--;
+        }
+
+        rxReadWaiterCv_.wait(rxReadLock, [this] {
+            return ((rxReadPossible_ ||
+                (rxReadDone_ && rxWritePossible_)) ? true : false);
+        });
+    }
+
+    while ((rxReadBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT)) &&
+            (rxWriteBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT))) {
+        rxReadWaiterCv_.wait(rxReadLock);
+    }
+
+    std::cout << "readFromRXwriteOnRX completed" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -564,14 +863,9 @@ int main(int argc, char **argv) {
     int ret;
     std::shared_ptr<Hpcm> app;
 
-    if (argc < 3) {
-        std::cout << "Need time duration and sample rate to enable HPCM" << std::endl;
-        return -EINVAL;
-    }
-
     try {
         app = std::make_shared<Hpcm>();
-    } catch (...) {
+    } catch (const std::exception& e) {
         std::cout << "can't allocate Hpcm" << std::endl;
         return -ENOMEM;
     }
@@ -580,9 +874,6 @@ int main(int argc, char **argv) {
     if (ret < 0) {
         return ret;
     }
-
-    app->recordingDuration_ = argv[1];
-    app->sampleRate_ = atoi(argv[2]);
 
     ret = app->createVoiceStream();
     if (ret < 0) {
@@ -595,35 +886,87 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    ret = app->createHpcmRecordStream();
+    ret = app->createTXPlayStream();
     if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->createTXCaptureStream();
+    if (ret < 0) {
+        app->deleteTXPlayStream();
+        return ret;
+    }
+
+    ret = app->createRXPlayStream();
+    if (ret < 0) {
+        app->deleteTXPlayStream();
+        app->deleteTXCaptureStream();
+        return ret;
+    }
+
+    ret = app->createRXCaptureStream();
+    if (ret < 0) {
+        app->deleteTXPlayStream();
+        app->deleteTXCaptureStream();
+        app->deleteRXPlayStream();
+        return ret;
+    }
+
+    ret = app->allocateBuffers();
+    if (ret < 0) {
+        app->deleteRXPlayStream();
+        app->deleteRXCaptureStream();
+        app->deleteTXPlayStream();
+        app->deleteTXCaptureStream();
+        return ret;
+    }
+
+    std::thread txAudioModifier(&Hpcm::readFromRXwriteOnRX, &(*app));
+    std::thread rxAudioModifier(&Hpcm::readFromTXwriteOnTX, &(*app));
+
+    /* Run the use case for 5 minutes as an example */
+    std::this_thread::sleep_for(std::chrono::minutes(2));
+    app->keepRunning_ = false;
+    {
+        std::lock_guard<std::mutex> rxReadLock(app->rxReadMutex_);
+        app->rxReadWaiterCv_.notify_all();
+    }
+    {
+        std::lock_guard<std::mutex> txReadLock(app->txReadMutex_);
+        app->txReadWaiterCv_.notify_all();
+    }
+
+    txAudioModifier.join();
+    rxAudioModifier.join();
+
+    ret = app->deleteTXPlayStream();
+    if (ret < 0) {
+        app->deleteTXCaptureStream();
+        app->deleteRXPlayStream();
+        app->deleteRXCaptureStream();
         app->stopVoiceStream();
         app->deleteVoiceStream();
         return ret;
     }
 
-    ret = app->createHpcmPlayStream();
+    ret = app->deleteTXCaptureStream();
     if (ret < 0) {
-        app->deleteHpcmRecordStream();
+        app->deleteRXPlayStream();
+        app->deleteRXCaptureStream();
         app->stopVoiceStream();
         app->deleteVoiceStream();
         return ret;
     }
 
-    std::thread recordWorker(&Hpcm::record, &(*app));
-    std::thread playWorker(&Hpcm::play, &(*app));
-    recordWorker.join();
-    playWorker.join();
-
-    ret = app->deleteHpcmRecordStream();
+    ret = app->deleteRXPlayStream();
     if (ret < 0) {
-        app->deleteHpcmPlayStream();
+        app->deleteRXCaptureStream();
         app->stopVoiceStream();
         app->deleteVoiceStream();
         return ret;
     }
 
-    ret = app->deleteHpcmPlayStream();
+    ret = app->deleteRXCaptureStream();
     if (ret < 0) {
         app->stopVoiceStream();
         app->deleteVoiceStream();
@@ -641,5 +984,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

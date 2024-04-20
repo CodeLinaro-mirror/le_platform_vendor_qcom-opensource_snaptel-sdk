@@ -1,56 +1,29 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
  * Steps to play audio samples during an active voice call are:
  *
- *  1. Get an AudioFactory instance.
- *  2. Get an IAudioManager instance from the AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream).
- *  5. Start voice call stream.
- *  6. Create a playback stream (IAudioPlayStream).
- *  7. Start writing audio samples on the playback stream.
- *  8. When the playback is over, delete the playback stream.
- *  9. Stop voice call stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a voice call stream (IAudioVoiceStream).
+ * 5. Start voice call stream.
+ * 6. Create a playback stream (IAudioPlayStream).
+ * 7. Start writing audio samples on the playback stream.
+ * 8. When the playback is over, delete the playback stream.
+ * 9. Stop voice call stream.
  * 10. Delete voice call stream.
  *
  * Usage:
- * # in_call_playback_pcm /data/musicfile.raw
+ * # in_call_playback_amrwbp /data/audiofile.amrwbp
  *
- * Contents of /data/musicfile.raw file played on the device is heard on the far end.
+ * Contents of /data/audiofile.amrwbp file played on the device is heard on the far end.
  * Voice call must be active (answered) between local end and far end.
+ *
+ * Note: The AMR header should have been stripped from the audiofile.amrwbp file.
  */
 
 #include <errno.h>
@@ -62,12 +35,12 @@
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "InCallPlaybackPCM.hpp"
+#include "InCallPlaybackAMR.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int InCallPlaybackPCM::init() {
+int InCallPlaybackAMR::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -100,7 +73,7 @@ int InCallPlaybackPCM::init() {
 /*
  *  Step - 4, create a voice call stream.
  */
-int InCallPlaybackPCM::createVoiceStream() {
+int InCallPlaybackAMR::createVoiceStream() {
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -142,7 +115,7 @@ int InCallPlaybackPCM::createVoiceStream() {
 /*
  *  Step - 10, delete voice call stream.
  */
-int InCallPlaybackPCM::deleteVoiceStream() {
+int InCallPlaybackAMR::deleteVoiceStream() {
 
     telux::common::Status status;
     telux::common::ErrorCode ec;
@@ -171,7 +144,7 @@ int InCallPlaybackPCM::deleteVoiceStream() {
 /*
  *  Step - 5, start voice call stream.
  */
-int InCallPlaybackPCM::startVoiceStream() {
+int InCallPlaybackAMR::startVoiceStream() {
 
     telux::common::Status status;
     telux::common::ErrorCode ec;
@@ -199,7 +172,7 @@ int InCallPlaybackPCM::startVoiceStream() {
 /*
  * Step - 9, stop voice call stream.
  */
-int InCallPlaybackPCM::stopVoiceStream() {
+int InCallPlaybackAMR::stopVoiceStream() {
 
     telux::common::Status status;
     telux::common::ErrorCode ec;
@@ -228,20 +201,22 @@ int InCallPlaybackPCM::stopVoiceStream() {
  * Step - 6, create a incall-playback stream.
  * Audio device is not specified. Voice uplink is specified.
  */
-int InCallPlaybackPCM::createIncallPlayStream() {
+int InCallPlaybackAMR::createIncallPlayStream() {
 
-    telux::common::Status status;
     telux::common::ErrorCode ec;
+    telux::common::Status status;
     telux::audio::StreamConfig sc{};
+    telux::audio::AmrwbpParams amrParams{};
     std::promise<telux::common::ErrorCode> p{};
 
     sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 48000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.sampleRate = 16000;
+    sc.format = telux::audio::AudioFormat::AMRWB_PLUS;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
-    /* Direction::TX indicates voice uplink playback */
-    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
+    amrParams.frameFormat = telux::audio::AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
+    sc.formatParams = &amrParams;
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -254,13 +229,19 @@ int InCallPlaybackPCM::createIncallPlayStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't create playback stream, err " << static_cast<int>(status) << std::endl;
+        std::cout << "can't request create stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed create playback stream, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "failed create stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    status = audioPlayStream_->registerListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't register listener"  << std::endl;
         return -EIO;
     }
 
@@ -271,11 +252,17 @@ int InCallPlaybackPCM::createIncallPlayStream() {
 /*
  *  Step - 8, delete playback stream.
  */
-int InCallPlaybackPCM::deleteIncallPlayStream() {
+int InCallPlaybackAMR::deleteIncallPlayStream() {
 
     telux::common::Status status;
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
+
+    status = audioPlayStream_->deRegisterListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't deregister listener"  << std::endl;
+        return -EIO;
+    }
 
     status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
             telux::common::ErrorCode result) {
@@ -300,7 +287,7 @@ int InCallPlaybackPCM::deleteIncallPlayStream() {
 /*
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
-void InCallPlaybackPCM::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void InCallPlaybackAMR::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
@@ -311,34 +298,48 @@ void InCallPlaybackPCM::writeComplete(std::shared_ptr<telux::audio::IStreamBuffe
         errorOccurred_ = true;
         std::cout << "write failed, err " << static_cast<int>(error) << std::endl;
     } else if (buffer->getDataSize() != bytesWritten) {
-        /* Whole buffer can't be played successfully.
-         * It is an application owner's decision, what to do if an error occurs
-         * in writing; resend buffer for playback or terminate the playback.
-         * In this example we are resending. */
+        /* Application should wait for onReadyForWrite() invocation */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
         std::fseek(fileToPlay_, offset, SEEK_CUR);
+        frameworkReadyForNextWrite_ = false;
     } else {
         /* Success, send the next buffer to play */
     }
 
     bufferPool_.push(buffer);
-    cv_.notify_all();
+    writeWaitCv_.notify_all();
+}
+
+/*
+ *  Gets called to indicate, next buffer can be sent now for playback.
+ */
+void InCallPlaybackAMR::onReadyForWrite() {
+    std::lock_guard<std::mutex> lock(playMutex_);
+    frameworkReadyForNextWrite_ = true;
+    writeWaitCv_.notify_all();
+}
+
+void InCallPlaybackAMR::onPlayStopped() {
+    std::cout << "playback stopped" << std::endl;
+    playStopCv_.notify_all();
 }
 
 /*
  *  Step - 7, write samples on the playback stream.
  */
-void InCallPlaybackPCM::play() {
+void InCallPlaybackAMR::play() {
 
     uint32_t size = 0;
     uint32_t numBytes = 0;
-    bool waitResult = false;
+    telux::common::ErrorCode ec;
     telux::common::Status status;
+    std::promise<telux::common::ErrorCode> p{};
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
     std::unique_lock<std::mutex> lock(playMutex_);
 
     errorOccurred_ = false;
+    frameworkReadyForNextWrite_ = true;
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "rb");
     if (!fileToPlay_) {
@@ -364,51 +365,48 @@ void InCallPlaybackPCM::play() {
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&InCallPlaybackPCM::writeComplete, this,
+    auto writeCb = std::bind(&InCallPlaybackAMR::writeComplete, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
     while (1) {
-        streamBuffer = bufferPool_.front();
-        bufferPool_.pop();
+        if (frameworkReadyForNextWrite_ && !bufferPool_.empty()) {
 
-        numBytes = std::fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
-        if (numBytes == 0 && feof(fileToPlay_)) {
-            bufferPool_.push(streamBuffer);
-            break;
-        }
-        if (numBytes != size && !feof(fileToPlay_)) {
-            std::cout << "can't read required bytes, read " << numBytes << std::endl;
-            bufferPool_.push(streamBuffer);
-            break;
-        }
+            streamBuffer = bufferPool_.front();
+            bufferPool_.pop();
 
-        streamBuffer->setDataSize(numBytes);
+            numBytes = std::fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
+            if (numBytes == 0 && feof(fileToPlay_)) {
+                bufferPool_.push(streamBuffer);
+                break;
+            }
+            if (numBytes != size && !feof(fileToPlay_)) {
+                std::cout << "can't read required bytes, read " << numBytes << std::endl;
+                bufferPool_.push(streamBuffer);
+                break;
+            }
 
-        status = audioPlayStream_->write(streamBuffer, writeCb);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
-            break;
-        }
+            streamBuffer->setDataSize(numBytes);
 
-        waitResult = false;
-        waitResult = cv_.wait_for(lock,
-            std::chrono::seconds(TIME_10_SECONDS),
-            [=] { return (!bufferPool_.empty() || errorOccurred_); });
+            status = audioPlayStream_->write(streamBuffer, writeCb);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "can't write, err " << static_cast<int>(status) << std::endl;
+                bufferPool_.push(streamBuffer);
+                break;
+            }
 
-        if (!waitResult) {
-            std::cout << "timedout " << std::endl;
-            break;
-        }
-        if (errorOccurred_) {
-            break;
+            if (errorOccurred_) {
+                break;
+            }
+        } else {
+            writeWaitCv_.wait(lock);
         }
     }
 
     /* Before closing the file, wait for all responses */
     while (bufferPool_.size() != static_cast<uint32_t>(BUFFER_POOL_SIZE)) {
-        cv_.wait(lock);
+        writeWaitCv_.wait(lock);
     }
 
     std::fclose(fileToPlay_);
@@ -417,13 +415,35 @@ void InCallPlaybackPCM::play() {
         std::cout << "playback terminated with error" << std::endl;
         return;
     }
-    std::cout << "playback finished" << std::endl;
+
+    /* wait till the very last buffer is played */
+    {
+      std::unique_lock<std::mutex> stopLock(playStopMutex_);
+
+      status = audioPlayStream_->stopAudio(telux::audio::StopType::STOP_AFTER_PLAY,
+              [&p] (telux::common::ErrorCode error) {
+          p.set_value(error);
+      });
+
+      if (status == telux::common::Status::SUCCESS){
+            ec = p.get_future().get();
+            if (ec != telux::common::ErrorCode::SUCCESS) {
+                std::cout << "can't finish playback, err " << static_cast<int>(ec) << std::endl;
+                return;
+            }
+            playStopCv_.wait(stopLock);
+        } else {
+            std::cout << "can't stop playback" << std::endl;
+        }
+    }
+
+    std::cout << "Playback finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<InCallPlaybackPCM> app;
+    std::shared_ptr<InCallPlaybackAMR> app;
 
     if (argc < 2) {
         std::cout << "Need audio file's absolute path" << std::endl;
@@ -431,9 +451,9 @@ int main(int argc, char **argv) {
     }
 
     try {
-        app = std::make_shared<InCallPlaybackPCM>();
+        app = std::make_shared<InCallPlaybackAMR>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate InCallPlaybackPCM" << std::endl;
+        std::cout << "can't allocate InCallPlaybackAMR" << std::endl;
         return -ENOMEM;
     }
 
@@ -462,7 +482,7 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    std::thread playWorker(&InCallPlaybackPCM::play, &(*app));
+    std::thread playWorker(&InCallPlaybackAMR::play, &(*app));
     playWorker.join();
 
     ret = app->deleteIncallPlayStream();

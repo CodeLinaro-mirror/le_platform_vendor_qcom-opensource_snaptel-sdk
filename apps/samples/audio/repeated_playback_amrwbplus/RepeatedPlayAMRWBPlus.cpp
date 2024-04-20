@@ -33,11 +33,11 @@
  */
 
 /*
- * This sample apps demonstrates, how to configure audio streams for each file and
+ * This sample application demonstrates, how to configure audio streams for each file and
  * how to define multiple AMR-WB+ files to play repeatedly. The steps are as follows:
  *
- * 1. Get a AudioFactory instance.
- * 2. Get a IAudioPlayer instance from the AudioFactory.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioPlayer instance from the the AudioFactory.
  * 3. Implement all listener methods from IPlayListListener class.
  * 4. Define parameters to configure audio stream.
  * 5. Define how a given file should be played.
@@ -52,6 +52,7 @@
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <iostream>
@@ -76,7 +77,8 @@ int RepeatedPlayAMRWBPlus::init() {
         std::cout << "can't get IAudioPlayer" << std::endl;
         return -ENOMEM;
     }
-
+    
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -96,7 +98,6 @@ int RepeatedPlayAMRWBPlus::start(
     std::vector<telux::audio::PlaybackConfig> pbConfigs;
 
     /* Step - 4 */
-    amrParams1.bitWidth = 16;
     amrParams1.frameFormat = telux::audio::AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
     pbCfg1.streamConfig.formatParams = &amrParams1;
     pbCfg1.streamConfig.type = telux::audio::StreamType::PLAY;
@@ -105,7 +106,6 @@ int RepeatedPlayAMRWBPlus::start(
     pbCfg1.streamConfig.channelTypeMask = telux::audio::ChannelType::LEFT;
     pbCfg1.streamConfig.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
-    amrParams2.bitWidth = 16;
     amrParams2.frameFormat = telux::audio::AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
     pbCfg2.streamConfig.formatParams = &amrParams2;
     pbCfg2.streamConfig.type = telux::audio::StreamType::PLAY;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,25 +33,27 @@
  */
 
 /*
- *  Steps to create a voice call audio path and set volume are:
+ * Steps to create a voice call audio stream and set the volume are:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream).
- *  5. Start voice call stream.
- *  6. Set volume of the speaker.
- *  7. When the use-case is complete, stop voice call stream.
- *  8. Delete voice call stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a voice call stream (IAudioVoiceStream).
+ * 5. Start voice call stream.
+ * 6. Set volume of the playback stream.
+ * 7. When the use-case is complete, stop the voice call stream.
+ * 8. Delete voice call stream.
  *
  * Usage:
  * # voice_call_volume
  *
- * A voice call is established and volume of the speaker is set. For establishing
- * RF path for voice call, Telephony APIs should be used.
+ * A voice call is established and volume of the playback stream (local speaker) is set.
+ *
+ * For establishing cellular RF path for voice call, telephony APIs should be used.
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <iostream>
 #include <thread>
@@ -73,12 +75,8 @@ int VoiceCall::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -87,17 +85,13 @@ int VoiceCall::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -142,6 +136,7 @@ int VoiceCall::createVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -154,7 +149,7 @@ int VoiceCall::deleteVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -170,6 +165,7 @@ int VoiceCall::deleteVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
@@ -197,6 +193,7 @@ int VoiceCall::startVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream started" << std::endl;
     return 0;
 }
 
@@ -224,6 +221,7 @@ int VoiceCall::stopVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream stopped" << std::endl;
     return 0;
 }
 
@@ -262,6 +260,7 @@ int VoiceCall::setSpeakerVolume() {
         return -EIO;
     }
 
+    std::cout << "Volume set" << std::endl;
     return 0;
 }
 
@@ -300,9 +299,8 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    /* Application's business logic goes here.
-     * We are sleeping just as an example */
-    std::this_thread::sleep_for(std::chrono::minutes(2));
+    /* Application's business logic goes here. We are sleeping here just as an example */
+    std::this_thread::sleep_for(std::chrono::minutes(1));
 
     ret = app->stopVoiceStream();
     if (ret < 0) {
@@ -315,5 +313,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

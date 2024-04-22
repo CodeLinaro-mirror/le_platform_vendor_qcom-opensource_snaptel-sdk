@@ -85,11 +85,11 @@ grpc::Status ThermalGrpcServerImpl::GetServiceStatus(ServerContext* context,
 }
 
 grpc::Status ThermalGrpcServerImpl::GetThermalZones(ServerContext* context,
-        const ::therm::GetThermalZonesRequest* request,
-        ::therm::GetThermalZonesReply* response) {
+        const ::thermStub::GetThermalZonesRequest* request,
+        ::thermStub::GetThermalZonesReply* response) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::vector<std::shared_ptr<telux::therm::ThermalZone>> tZones;
+    std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> tZones;
 
 //    auto status = getThermalZones(response);
     auto status = jsonHelper_->getThermalZones(tZones);
@@ -102,14 +102,14 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZones(ServerContext* context,
     }
 
     for (auto tz : tZones) {
-        ::therm::ThermalZone &grpcTz = *response->add_thermal_zones();
+        ::thermStub::ThermalZone &grpcTz = *response->add_thermal_zones();
         grpcTz.set_id(tz->getId());
         grpcTz.set_type(tz->getDescription());
         grpcTz.set_current_temp(tz->getCurrentTemp());
         grpcTz.set_passive_temp(tz->getPassiveTemp());
         auto tps = tz->getTripPoints();
         for (auto tp : tps) {
-            ::therm::TripPoint *grpcTripPoint = grpcTz.add_trip_points();
+            ::thermStub::TripPoint *grpcTripPoint = grpcTz.add_trip_points();
             grpcTripPoint->set_trip_type(getTripType(tp->getType()));
             grpcTripPoint->set_threshold_temp(tp->getThresholdTemp());
             grpcTripPoint->set_hysteresis(tp->getHysteresis());
@@ -119,11 +119,11 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZones(ServerContext* context,
 
         auto cds = tz->getBoundCoolingDevices();
         for (auto cd : cds) {
-            ::therm::BoundCoolingDevice *grpcbCdev = grpcTz.add_bound_cooling_devices();
+            ::thermStub::BoundCoolingDevice *grpcbCdev = grpcTz.add_bound_cooling_devices();
             grpcbCdev->set_cooling_device_id(cd.coolingDeviceId);
             auto bTps = cd.bindingInfo;
             for (auto bTp : bTps) {
-                ::therm::TripPoint *grpcTripPoint = grpcbCdev->add_trip_points();
+                ::thermStub::TripPoint *grpcTripPoint = grpcbCdev->add_trip_points();
                 grpcTripPoint->set_trip_type(getTripType(bTp->getType()));
                 grpcTripPoint->set_threshold_temp(bTp->getThresholdTemp());
                 grpcTripPoint->set_hysteresis(bTp->getHysteresis());
@@ -137,11 +137,11 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZones(ServerContext* context,
 }
 
 grpc::Status ThermalGrpcServerImpl::GetCoolingDevices(ServerContext* context,
-        const ::therm::GetCoolingDevicesRequest* request,
-        ::therm::GetCoolingDevicesReply* response) {
+        const ::thermStub::GetCoolingDevicesRequest* request,
+        ::thermStub::GetCoolingDevicesReply* response) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::vector<std::shared_ptr<telux::therm::CoolingDevice>> cDevs;
+    std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> cDevs;
 
     auto status = jsonHelper_->getCoolingDevices(cDevs);
     if (status == telux::common::Status::NOTALLOWED) {
@@ -153,7 +153,7 @@ grpc::Status ThermalGrpcServerImpl::GetCoolingDevices(ServerContext* context,
     }
 
     for (auto cd : cDevs) {
-        ::therm::CoolingDevice &grpcCdev = *response->add_cooling_devices();
+        ::thermStub::CoolingDevice &grpcCdev = *response->add_cooling_devices();
         grpcCdev.set_id(cd->getId());
         grpcCdev.set_type(cd->getDescription());
         grpcCdev.set_max_cooling_state(cd->getMaxCoolingLevel());
@@ -164,11 +164,11 @@ grpc::Status ThermalGrpcServerImpl::GetCoolingDevices(ServerContext* context,
 }
 
 grpc::Status ThermalGrpcServerImpl::GetThermalZoneById(ServerContext* context,
-        const ::therm::GetThermalZoneByIdRequest* request,
-        ::therm::GetThermalZoneByIdReply* response) {
+        const ::thermStub::GetThermalZoneByIdRequest* request,
+        ::thermStub::GetThermalZoneByIdReply* response) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::shared_ptr<telux::therm::ThermalZone> tz;
+    std::shared_ptr<telux::therm::ThermalZoneImpl> tz;
     auto status = jsonHelper_->getThermalZoneById(request->id(), tz);
     if (status == telux::common::Status::NOTALLOWED) {
         // Response status is set as ERROR
@@ -179,14 +179,14 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZoneById(ServerContext* context,
     }
 
 
-    ::therm::ThermalZone grpcTz;
+    ::thermStub::ThermalZone grpcTz;
     grpcTz.set_id(tz->getId());
     grpcTz.set_type(tz->getDescription());
     grpcTz.set_current_temp(tz->getCurrentTemp());
     grpcTz.set_passive_temp(tz->getPassiveTemp());
     auto tps = tz->getTripPoints();
     for (auto tp : tps) {
-        ::therm::TripPoint *grpcTripPoint = grpcTz.add_trip_points();
+        ::thermStub::TripPoint *grpcTripPoint = grpcTz.add_trip_points();
         grpcTripPoint->set_trip_type(getTripType(tp->getType()));
         grpcTripPoint->set_threshold_temp(tp->getThresholdTemp());
         grpcTripPoint->set_hysteresis(tp->getHysteresis());
@@ -196,11 +196,11 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZoneById(ServerContext* context,
 
     auto cds = tz->getBoundCoolingDevices();
     for (auto cd : cds) {
-        ::therm::BoundCoolingDevice *grpcbCdev = grpcTz.add_bound_cooling_devices();
+        ::thermStub::BoundCoolingDevice *grpcbCdev = grpcTz.add_bound_cooling_devices();
         grpcbCdev->set_cooling_device_id(cd.coolingDeviceId);
         auto bTps = cd.bindingInfo;
         for (auto bTp : bTps) {
-            ::therm::TripPoint *grpcTripPoint = grpcbCdev->add_trip_points();
+            ::thermStub::TripPoint *grpcTripPoint = grpcbCdev->add_trip_points();
             grpcTripPoint->set_trip_type(getTripType(bTp->getType()));
             grpcTripPoint->set_threshold_temp(bTp->getThresholdTemp());
             grpcTripPoint->set_hysteresis(bTp->getHysteresis());
@@ -215,11 +215,11 @@ grpc::Status ThermalGrpcServerImpl::GetThermalZoneById(ServerContext* context,
 }
 
 grpc::Status ThermalGrpcServerImpl::GetCoolingDeviceById(ServerContext* context,
-        const ::therm::GetCoolingDeviceByIdRequest* request,
-        ::therm::GetCoolingDeviceByIdReply* response) {
+        const ::thermStub::GetCoolingDeviceByIdRequest* request,
+        ::thermStub::GetCoolingDeviceByIdReply* response) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::shared_ptr<telux::therm::CoolingDevice> cd;
+    std::shared_ptr<telux::therm::CoolingDeviceImpl> cd;
     auto status = jsonHelper_->getCoolingDeviceById(request->id(), cd);
 
     if (status == telux::common::Status::NOTALLOWED) {
@@ -231,7 +231,7 @@ grpc::Status ThermalGrpcServerImpl::GetCoolingDeviceById(ServerContext* context,
     }
 
 
-    ::therm::CoolingDevice grpcCdev;
+    ::thermStub::CoolingDevice grpcCdev;
     grpcCdev.set_id(cd->getId());
     grpcCdev.set_type(cd->getDescription());
     grpcCdev.set_max_cooling_state(cd->getMaxCoolingLevel());
@@ -245,7 +245,7 @@ grpc::Status ThermalGrpcServerImpl::GetCoolingDeviceById(ServerContext* context,
 grpc::Status ThermalGrpcServerImpl::RegisterOnCoolingDeviceLevelChange(
         ServerContext* context,
         const google::protobuf::Empty* request,
-        ServerWriter<::therm::RegisterOnCoolingDeviceLevelChangeReply>* response) {
+        ServerWriter<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>* response) {
     LOG(DEBUG, __FUNCTION__);
 
     auto status = registerCdevStateChangeEvent(response);
@@ -277,7 +277,7 @@ grpc::Status ThermalGrpcServerImpl::DeRegisterOnCoolingDeviceLevelChange(
 grpc::Status ThermalGrpcServerImpl::RegisterOnTripEvent(
         ServerContext* context,
         const google::protobuf::Empty* request,
-        ServerWriter<::therm::RegisterOnTripEventReply>* response) {
+        ServerWriter<::thermStub::RegisterOnTripEventReply>* response) {
     LOG(DEBUG, __FUNCTION__);
 
     auto status = registerTripEvent(response);
@@ -329,21 +329,21 @@ grpc::Status ThermalGrpcServerImpl::setResponse(telux::common::ServiceStatus srv
     return grpc::Status::OK;
 }
 
-::therm::TripPoint_TripType ThermalGrpcServerImpl::getTripType(telux::therm::TripType tripType) {
+::thermStub::TripPoint_TripType ThermalGrpcServerImpl::getTripType(telux::therm::TripType tripType) {
     if (tripType == telux::therm::TripType::CRITICAL) {
-        return ::therm::TripPoint_TripType_CRITICAL;
+        return ::thermStub::TripPoint_TripType_CRITICAL;
     } else if (tripType == telux::therm::TripType::HOT) {
-        return ::therm::TripPoint_TripType_HOT;
+        return ::thermStub::TripPoint_TripType_HOT;
     } else if (tripType == telux::therm::TripType::PASSIVE) {
-        return ::therm::TripPoint_TripType_PASSIVE;
+        return ::thermStub::TripPoint_TripType_PASSIVE;
     } else if (tripType == telux::therm::TripType::ACTIVE) {
-        return ::therm::TripPoint_TripType_ACTIVE;
+        return ::thermStub::TripPoint_TripType_ACTIVE;
     } else if (tripType == telux::therm::TripType::CONFIGURABLE_HIGH) {
-        return ::therm::TripPoint_TripType_CONFIGURABLE_HIGH;
+        return ::thermStub::TripPoint_TripType_CONFIGURABLE_HIGH;
     } else if (tripType == telux::therm::TripType::CONFIGURABLE_LOW) {
-        return ::therm::TripPoint_TripType_CONFIGURABLE_LOW;
+        return ::thermStub::TripPoint_TripType_CONFIGURABLE_LOW;
     } else {
-        return ::therm::TripPoint_TripType_UNKNOWN;
+        return ::thermStub::TripPoint_TripType_UNKNOWN;
     }
 }
 
@@ -353,17 +353,17 @@ telux::common::Status ThermalGrpcServerImpl::sendTripUpdateEvent(
     LOG(DEBUG, __FUNCTION__, ":: tZoneId: ", tZoneId, ", tripId: ", tp->getTripId(),
             " EVENT: ", ((event == CROSSED_OVER) ? "CROSSED_OVER" : "CROSSED_UNDER"));
 
-    therm::RegisterOnTripEventReply reply;
+    thermStub::RegisterOnTripEventReply reply;
     ::eventService::EventResponse anyResponse;
-    therm::TripPoint t_point;
+    thermStub::TripPoint t_point;
 
-    t_point.set_trip_type(static_cast<therm::TripPoint_TripType>(tp->getType()));
+    t_point.set_trip_type(static_cast<thermStub::TripPoint_TripType>(tp->getType()));
     t_point.set_threshold_temp(tp->getThresholdTemp());
     t_point.set_hysteresis(tp->getHysteresis());
     t_point.set_trip_id(tp->getTripId());
     t_point.set_tzone_id(tZoneId);
     *reply.mutable_trip_point() = t_point;
-    reply.set_trip_event(static_cast<therm::TripEvent>(event));
+    reply.set_trip_event(static_cast<thermStub::TripEvent>(event));
 
     anyResponse.set_filter(THERM_TRIP_FILTER);
     anyResponse.mutable_any()->PackFrom(reply);
@@ -372,13 +372,13 @@ telux::common::Status ThermalGrpcServerImpl::sendTripUpdateEvent(
 }
 
 telux::common::Status ThermalGrpcServerImpl::sendCdevUpdateEvent(
-        std::shared_ptr<telux::therm::CoolingDevice> &cd, unsigned int newState) {
+        std::shared_ptr<telux::therm::CoolingDeviceImpl> &cd, unsigned int newState) {
     LOG(DEBUG, __FUNCTION__, "\n\n ************** CDEV-UPDATE ************** " );
     LOG(DEBUG, __FUNCTION__, ":: cDevId: ", cd->getId(), ", newState: ", newState);
 
-    therm::RegisterOnCoolingDeviceLevelChangeReply reply;
+    thermStub::RegisterOnCoolingDeviceLevelChangeReply reply;
     ::eventService::EventResponse anyResponse;
-    therm::CoolingDevice device;
+    thermStub::CoolingDevice device;
 
     device.set_id(cd->getId());
     device.set_type(cd->getDescription());
@@ -495,7 +495,7 @@ telux::common::Status ThermalGrpcServerImpl::setThermalZone(int tZoneId, int new
 
     std::lock_guard<std::mutex> lk(setTempMutex_);
     auto itr = std::find_if(jsonHelper_->tZoneList_.begin(), jsonHelper_->tZoneList_.end(),
-            [tZoneId](std::shared_ptr<telux::therm::ThermalZone> tz)
+            [tZoneId](std::shared_ptr<telux::therm::ThermalZoneImpl> tz)
             { return (tz->getId() == tZoneId);
             });
     if (itr == jsonHelper_->tZoneList_.end()) {
@@ -546,9 +546,9 @@ telux::common::Status ThermalGrpcServerImpl::setThermalZone(int tZoneId, int new
 }
 
 grpc::Status ThermalGrpcServerImpl::registerTripEvent(
-        ServerWriter<::therm::RegisterOnTripEventReply>* response) {
+        ServerWriter<::thermStub::RegisterOnTripEventReply>* response) {
 
-    registerNotification<therm::RegisterOnTripEventReply>
+    registerNotification<thermStub::RegisterOnTripEventReply>
         (response, onTripEventReplyWriters_, onTripEventMutex_,
          onTripEventCv_,
          ThermalGrpcServerImpl::OnTripEvntNotifyCnt_);
@@ -558,7 +558,7 @@ grpc::Status ThermalGrpcServerImpl::registerTripEvent(
 
 grpc::Status ThermalGrpcServerImpl::deRegisterTripEvent(int clientId) {
 
-    auto status = deRegisterNotification<therm::RegisterOnTripEventReply>(
+    auto status = deRegisterNotification<thermStub::RegisterOnTripEventReply>(
             onTripEventReplyWriters_, onTripEventMutex_,
             onTripEventCv_, clientId);
 
@@ -566,9 +566,9 @@ grpc::Status ThermalGrpcServerImpl::deRegisterTripEvent(int clientId) {
 }
 
 grpc::Status ThermalGrpcServerImpl::registerCdevStateChangeEvent(
-        ServerWriter<::therm::RegisterOnCoolingDeviceLevelChangeReply>* response) {
+        ServerWriter<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>* response) {
 
-    registerNotification<therm::RegisterOnCoolingDeviceLevelChangeReply>
+    registerNotification<thermStub::RegisterOnCoolingDeviceLevelChangeReply>
         (response, onCoolingDeviceLevelChangeReplyWriters_,
          onCoolingDeviceLevelChangeMutex_, onCoolingDeviceLevelChangeCv_,
          ThermalGrpcServerImpl::OnCdevLevelChngNotifyCnt_);
@@ -578,14 +578,14 @@ grpc::Status ThermalGrpcServerImpl::registerCdevStateChangeEvent(
 
 grpc::Status ThermalGrpcServerImpl::deRegisterCdevStateChangeEvent(int clientId) {
 
-    auto status = deRegisterNotification<therm::RegisterOnCoolingDeviceLevelChangeReply>(
+    auto status = deRegisterNotification<thermStub::RegisterOnCoolingDeviceLevelChangeReply>(
             onCoolingDeviceLevelChangeReplyWriters_, onCoolingDeviceLevelChangeMutex_,
             onCoolingDeviceLevelChangeCv_, clientId);
 
     return status;
 }
 
-std::shared_ptr<telux::therm::CoolingDevice> ThermalGrpcServerImpl::setCoolingDevice(
+std::shared_ptr<telux::therm::CoolingDeviceImpl> ThermalGrpcServerImpl::setCoolingDevice(
         int tZoneId, int tripId, int cDevId, int trend, int nextCdevState) {
     LOG(DEBUG, __FUNCTION__, ":: setting cooling device: ", cDevId,
             " to state: ", nextCdevState);
@@ -593,12 +593,12 @@ std::shared_ptr<telux::therm::CoolingDevice> ThermalGrpcServerImpl::setCoolingDe
     std::lock_guard<std::mutex> lk(setCdevMutex_);
     auto itr = std::find_if(jsonHelper_->cDevList_.begin(),
             jsonHelper_->cDevList_.end(), [cDevId](
-                std::shared_ptr<telux::therm::CoolingDevice> cd)
+                std::shared_ptr<telux::therm::CoolingDeviceImpl> cd)
             { return (cd->getId() == cDevId);
             });
     if (itr == jsonHelper_->cDevList_.end()) {
         LOG(ERROR, __FUNCTION__, ":: cooling device: ", cDevId, " not found");
-        return std::make_shared<telux::therm::CoolingDevice>();
+        return std::make_shared<telux::therm::CoolingDeviceImpl>();
     }
 
     auto cd = (*itr);
@@ -611,7 +611,7 @@ std::shared_ptr<telux::therm::CoolingDevice> ThermalGrpcServerImpl::setCoolingDe
             LOG(DEBUG, __FUNCTION__,
                 ":: currLevel: ", currLevel, ", currState: ", currState);
             if ((currLevel != currState) || (currLevel == 0)) {
-                return std::make_shared<telux::therm::CoolingDevice>();
+                return std::make_shared<telux::therm::CoolingDeviceImpl>();
             }
         }
     }

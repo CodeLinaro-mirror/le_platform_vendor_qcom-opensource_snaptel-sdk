@@ -5,7 +5,7 @@
 
 syntax = "proto3";
 
-package therm;
+package thermStub;
 import "google/protobuf/empty.proto";
 import "common_simulation.proto";
 
@@ -39,7 +39,7 @@ service Thermal {
  * Messages Definition                                             *
  *******************************************************************/
 
-// Mapped to telux::therm::ThermalManager::TripType
+// Mapped to telux::thermStub::ThermalManager::TripType
 message TripPoint {
     enum TripType {
         UNKNOWN = 0;

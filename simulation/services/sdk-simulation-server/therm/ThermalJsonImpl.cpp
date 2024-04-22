@@ -72,7 +72,7 @@ telux::therm::TripType ThermalJsonImpl::getTripType(std::string tripType) {
 }
 
 telux::common::Status ThermalJsonImpl::getThermalZones(
-        std::vector<std::shared_ptr<telux::therm::ThermalZone>> &tZones) {
+        std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> &tZones) {
 
     auto error =
         JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
@@ -91,7 +91,7 @@ telux::common::Status ThermalJsonImpl::getThermalZones(
 }
 
 telux::common::Status ThermalJsonImpl::getCoolingDevices(
-        std::vector<std::shared_ptr<telux::therm::CoolingDevice>> &cDevs) {
+        std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> &cDevs) {
 
     auto error =
         JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
@@ -113,17 +113,17 @@ telux::common::Status ThermalJsonImpl::getThermalZones() {
 
     auto tzs = thermState_["thermalZones"];
     for (Json::Value tz : tzs) {
-        std::shared_ptr<telux::therm::ThermalZone> tZone =
-            std::make_shared<telux::therm::ThermalZone>();
+        std::shared_ptr<telux::therm::ThermalZoneImpl> tZone =
+            std::make_shared<telux::therm::ThermalZoneImpl>();
         tZone->setId(tz["id"].asInt());
         tZone->setDescription(tz["desc"].asString());
         tZone->setCurrentTemp(tz["temp"].asInt());
         tZone->setPassiveTemp(tz["passiveTemp"].asInt());
-        std::vector<std::shared_ptr<telux::therm::TripPoint>> tripInfo;
+        std::vector<std::shared_ptr<telux::therm::TripPointImpl>> tripInfo;
         auto tps = tz["tripPoints"];
         for (Json::Value tp : tps) {
-            std::shared_ptr<telux::therm::TripPoint> tripPoint =
-                std::make_shared<telux::therm::TripPoint>();
+            std::shared_ptr<telux::therm::TripPointImpl> tripPoint =
+                std::make_shared<telux::therm::TripPointImpl>();
             tripPoint->setType(getTripType(tp["type"].asString()));
             tripPoint->setThresholdTemp(tp["temp"].asInt());
             tripPoint->setHysteresis(tp["hyst"].asInt());
@@ -141,8 +141,8 @@ telux::common::Status ThermalJsonImpl::getThermalZones() {
             std::vector<std::shared_ptr<telux::therm::ITripPoint>> bindingInfo;
             auto bTps = cd["tripPoints"];
             for (auto bTp : bTps) {
-                std::shared_ptr<telux::therm::TripPoint> tripPoint =
-                    std::make_shared<telux::therm::TripPoint>();
+                std::shared_ptr<telux::therm::TripPointImpl> tripPoint =
+                    std::make_shared<telux::therm::TripPointImpl>();
                 tripPoint->setTZoneId(tZone->getId());
                 for(auto tp : tripInfo) {
                     if (tp->getTripId() == bTp["id"].asInt()) {
@@ -165,8 +165,8 @@ telux::common::Status ThermalJsonImpl::getCoolingDevices() {
 
     auto cds = thermState_["coolingDevices"];
     for (Json::Value cd : cds) {
-        std::shared_ptr<telux::therm::CoolingDevice> cDev
-            = std::make_shared<telux::therm::CoolingDevice>();
+        std::shared_ptr<telux::therm::CoolingDeviceImpl> cDev
+            = std::make_shared<telux::therm::CoolingDeviceImpl>();
         cDev->setId(cd["id"].asInt());
         cDev->setDescription(cd["desc"].asString());
         cDev->setMaxCoolingLevel(cd["maxCoolingLevel"].asInt());
@@ -177,7 +177,7 @@ telux::common::Status ThermalJsonImpl::getCoolingDevices() {
 }
 
 telux::common::Status ThermalJsonImpl::getThermalZoneById(int tZoneId,
-        std::shared_ptr<telux::therm::ThermalZone> &tz) {
+        std::shared_ptr<telux::therm::ThermalZoneImpl> &tz) {
 
     auto status = findId("getThermalZone", tZoneId);
     if (status != telux::common::Status::SUCCESS) {
@@ -185,7 +185,7 @@ telux::common::Status ThermalJsonImpl::getThermalZoneById(int tZoneId,
     }
 
     auto itr = std::find_if(tZoneList_.begin(), tZoneList_.end(), [tZoneId](
-                std::shared_ptr<telux::therm::ThermalZone> tz)
+                std::shared_ptr<telux::therm::ThermalZoneImpl> tz)
             { return (tz->getId() == tZoneId);
             });
     if (itr == tZoneList_.end()) {
@@ -198,7 +198,7 @@ telux::common::Status ThermalJsonImpl::getThermalZoneById(int tZoneId,
 
 
 telux::common::Status ThermalJsonImpl::getCoolingDeviceById(int cDevId,
-        std::shared_ptr<telux::therm::CoolingDevice> &cDev) {
+        std::shared_ptr<telux::therm::CoolingDeviceImpl> &cDev) {
 
     auto status = findId("getCoolingDevice", cDevId);
     if (status != telux::common::Status::SUCCESS) {
@@ -206,7 +206,7 @@ telux::common::Status ThermalJsonImpl::getCoolingDeviceById(int cDevId,
     }
 
     auto itr = std::find_if(cDevList_.begin(), cDevList_.end(), [cDevId](
-                std::shared_ptr<telux::therm::CoolingDevice> cd)
+                std::shared_ptr<telux::therm::CoolingDeviceImpl> cd)
             { return (cd->getId() == cDevId);
             });
     if (itr == cDevList_.end()) {

@@ -8,8 +8,8 @@
 
 #include "ThermalManagerImplStub.hpp"
 #include "JsonParser.hpp"
-#include "common/therm/ThermalZone.hpp"
-#include "common/therm/CoolingDevice.hpp"
+#include "common/therm/ThermalZoneImpl.hpp"
+#include "common/therm/CoolingDeviceImpl.hpp"
 
 #define DELAY 100
 #define DEFAULT_DELIMITER " "
@@ -150,9 +150,9 @@ void ThermalManagerImplStub::onEventUpdate(google::protobuf::Any event) {
     auto f = std::async(std::launch::deferred, [this, event]() {
             if (event.Is<commonStub::GetServiceStatusReply>()) {
                 handleSSREvent(event);
-            } else if (event.Is<::therm::RegisterOnTripEventReply>()) {
+            } else if (event.Is<::thermStub::RegisterOnTripEventReply>()) {
                 handleOnTripEvent(event);
-            } else if (event.Is<::therm::RegisterOnCoolingDeviceLevelChangeReply>()) {
+            } else if (event.Is<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>()) {
                 handleCdevStateChangeEvent(event);
             } else {
                 LOG(ERROR, __FUNCTION__, ":: Invalid event");
@@ -185,12 +185,12 @@ void ThermalManagerImplStub::handleSSREvent(google::protobuf::Any event) {
 
 void ThermalManagerImplStub::handleOnTripEvent(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
-    ::therm::RegisterOnTripEventReply tripRes;
+    ::thermStub::RegisterOnTripEventReply tripRes;
     event.UnpackTo(&tripRes);
 
-    std::shared_ptr<TripPoint> tripPoint = nullptr;
+    std::shared_ptr<TripPointImpl> tripPoint = nullptr;
     try {
-        tripPoint = std::make_shared<TripPoint>();
+        tripPoint = std::make_shared<TripPointImpl>();
     } catch(std::bad_alloc &e) {
         LOG(ERROR, __FUNCTION__, ":: Invalid instance");
         return;
@@ -221,12 +221,12 @@ void ThermalManagerImplStub::handleOnTripEvent(google::protobuf::Any event) {
 
 void ThermalManagerImplStub::handleCdevStateChangeEvent(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
-    ::therm::RegisterOnCoolingDeviceLevelChangeReply cdevRes;
+    thermStub::RegisterOnCoolingDeviceLevelChangeReply cdevRes;
     event.UnpackTo(&cdevRes);
 
-    std::shared_ptr<CoolingDevice> cDev = nullptr;
+    std::shared_ptr<CoolingDeviceImpl> cDev = nullptr;
     try {
-        cDev = std::make_shared<CoolingDevice>();
+        cDev = std::make_shared<CoolingDeviceImpl>();
     } catch(std::bad_alloc &e) {
         LOG(ERROR, __FUNCTION__, ":: Invalid instance");
         return;
@@ -407,32 +407,32 @@ Status ThermalManagerImplStub::deregisterListener(
     return Status::SUCCESS;
 }
 
-TripEvent ThermalManagerImplStub::getTripEvent(::therm::TripEvent grpcTripEvent) {
+TripEvent ThermalManagerImplStub::getTripEvent(thermStub::TripEvent grpcTripEvent) {
     switch (grpcTripEvent) {
-        case ::therm::TripEvent::CROSSED_UNDER:
+        case thermStub::TripEvent::CROSSED_UNDER:
             return TripEvent::CROSSED_UNDER;
-        case ::therm::TripEvent::CROSSED_OVER:
+        case thermStub::TripEvent::CROSSED_OVER:
             return TripEvent::CROSSED_OVER;
         default:
             return TripEvent::NONE;
     }
 }
 
-TripType ThermalManagerImplStub::getTripType(::therm::TripPoint_TripType grpcTripType) {
+TripType ThermalManagerImplStub::getTripType(thermStub::TripPoint_TripType grpcTripType) {
     switch (grpcTripType) {
-        case ::therm::TripPoint_TripType_UNKNOWN:
+        case thermStub::TripPoint_TripType_UNKNOWN:
             return TripType::UNKNOWN;
-        case ::therm::TripPoint_TripType_CRITICAL:
+        case thermStub::TripPoint_TripType_CRITICAL:
             return TripType::CRITICAL;
-        case ::therm::TripPoint_TripType_HOT:
+        case thermStub::TripPoint_TripType_HOT:
             return TripType::HOT;
-        case ::therm::TripPoint_TripType_PASSIVE:
+        case thermStub::TripPoint_TripType_PASSIVE:
             return TripType::PASSIVE;
-        case ::therm::TripPoint_TripType_ACTIVE:
+        case thermStub::TripPoint_TripType_ACTIVE:
             return TripType::ACTIVE;
-        case ::therm::TripPoint_TripType_CONFIGURABLE_HIGH:
+        case thermStub::TripPoint_TripType_CONFIGURABLE_HIGH:
             return TripType::CONFIGURABLE_HIGH;
-        case ::therm::TripPoint_TripType_CONFIGURABLE_LOW:
+        case thermStub::TripPoint_TripType_CONFIGURABLE_LOW:
             return TripType::CONFIGURABLE_LOW;
         default:
             return TripType::UNKNOWN;
@@ -442,8 +442,8 @@ TripType ThermalManagerImplStub::getTripType(::therm::TripPoint_TripType grpcTri
 
 std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZones() {
     std::vector<std::shared_ptr<IThermalZone>> tZones;
-    ::therm::GetThermalZonesRequest request;
-    ::therm::GetThermalZonesReply response;
+    thermStub::GetThermalZonesRequest request;
+    thermStub::GetThermalZonesReply response;
     ClientContext context;
 
     if (SimulationManagerStub::getServiceStatus() !=
@@ -452,7 +452,7 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
         return tZones;
     }
 
-    request.set_oper_type(::therm::ProcType::LOCAL_PROC);
+    request.set_oper_type(thermStub::ProcType::LOCAL_PROC);
 
     const grpc::Status status = stub_->GetThermalZones(&context, request, &response);
     if (!status.ok()) {
@@ -462,16 +462,16 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
     LOG(DEBUG, __FUNCTION__, ":: Received Thermal Zones: ", response.thermal_zones_size());
 
     auto grpcTzones = response.thermal_zones();
-    for(const ::therm::ThermalZone grpcTzone : grpcTzones) {
-        std::shared_ptr<ThermalZone> tZone = std::make_shared<ThermalZone>();
+    for(const thermStub::ThermalZone grpcTzone : grpcTzones) {
+        std::shared_ptr<ThermalZoneImpl> tZone = std::make_shared<ThermalZoneImpl>();
         tZone->setId(grpcTzone.id());
         tZone->setDescription(grpcTzone.type());
         tZone->setCurrentTemp(grpcTzone.current_temp());
         tZone->setPassiveTemp(grpcTzone.passive_temp());
-        std::vector<std::shared_ptr<TripPoint>> tripInfo;
+        std::vector<std::shared_ptr<TripPointImpl>> tripInfo;
         auto grpcTripPoints = grpcTzone.trip_points();
         for(auto grpcTripPoint : grpcTripPoints) {
-            std::shared_ptr<TripPoint> tripPoint = std::make_shared<TripPoint>();
+            std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
             tripPoint->setType(getTripType(grpcTripPoint.trip_type()));
             tripPoint->setThresholdTemp(grpcTripPoint.threshold_temp());
             tripPoint->setHysteresis(grpcTripPoint.hysteresis());
@@ -488,7 +488,7 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
             std::vector<std::shared_ptr<ITripPoint>> bindingInfo;
             auto grpcCdevTripPoints = grpcCdev.trip_points();
             for(auto grpcCdevTripPoint : grpcCdevTripPoints) {
-                std::shared_ptr<TripPoint> tripPoint = std::make_shared<TripPoint>();
+                std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
                 tripPoint->setType(getTripType(grpcCdevTripPoint.trip_type()));
                 tripPoint->setThresholdTemp(grpcCdevTripPoint.threshold_temp());
                 tripPoint->setHysteresis(grpcCdevTripPoint.hysteresis());
@@ -507,8 +507,8 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
 
 std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingDevices() {
     std::vector<std::shared_ptr<ICoolingDevice>> cdevs;
-    ::therm::GetCoolingDevicesRequest request;
-    ::therm::GetCoolingDevicesReply response;
+    thermStub::GetCoolingDevicesRequest request;
+    thermStub::GetCoolingDevicesReply response;
     ClientContext context;
 
     if (SimulationManagerStub::getServiceStatus() !=
@@ -517,15 +517,15 @@ std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingD
         return cdevs;
     }
 
-    request.set_oper_type(::therm::ProcType::LOCAL_PROC);
+    request.set_oper_type(thermStub::ProcType::LOCAL_PROC);
 
     const grpc::Status status = stub_->GetCoolingDevices(&context, request, &response);
     LOG(DEBUG, __FUNCTION__, ":: Received Cooling devices: ",
             response.cooling_devices_size());
 
     auto grpcCdevs = response.cooling_devices();
-    for(const ::therm::CoolingDevice grpcCdev : grpcCdevs) {
-        std::shared_ptr<CoolingDevice> cDev = std::make_shared<CoolingDevice>();
+    for(const thermStub::CoolingDevice grpcCdev : grpcCdevs) {
+        std::shared_ptr<CoolingDeviceImpl> cDev = std::make_shared<CoolingDeviceImpl>();
         cDev->setId(grpcCdev.id());
         cDev->setDescription(grpcCdev.type());
         cDev->setMaxCoolingLevel(grpcCdev.max_cooling_state());
@@ -536,11 +536,11 @@ std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingD
 }
 
 std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermalZoneId) {
-    ::therm::GetThermalZoneByIdRequest request;
-    ::therm::GetThermalZoneByIdReply response;
+    thermStub::GetThermalZoneByIdRequest request;
+    thermStub::GetThermalZoneByIdReply response;
     ClientContext context;
 
-    std::shared_ptr<ThermalZone> tZone = std::make_shared<ThermalZone>();
+    std::shared_ptr<ThermalZoneImpl> tZone = std::make_shared<ThermalZoneImpl>();
     if (SimulationManagerStub::getServiceStatus() !=
             ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
@@ -548,7 +548,7 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
     }
 
     request.set_id(thermalZoneId);
-    request.set_oper_type(::therm::ProcType::LOCAL_PROC);
+    request.set_oper_type(thermStub::ProcType::LOCAL_PROC);
 
     const grpc::Status status = stub_->GetThermalZoneById(&context, request, &response);
     if (!status.ok()) {
@@ -566,10 +566,10 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
     tZone->setDescription(grpcTz.type());
     tZone->setCurrentTemp(grpcTz.current_temp());
     tZone->setPassiveTemp(grpcTz.passive_temp());
-    std::vector<std::shared_ptr<TripPoint>> tripInfo;
+    std::vector<std::shared_ptr<TripPointImpl>> tripInfo;
     auto grpcTripPoints = grpcTz.trip_points();
     for(auto grpcTripPoint : grpcTripPoints) {
-        std::shared_ptr<TripPoint> tripPoint = std::make_shared<TripPoint>();
+        std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
         tripPoint->setType(getTripType(grpcTripPoint.trip_type()));
         tripPoint->setThresholdTemp(grpcTripPoint.threshold_temp());
         tripPoint->setHysteresis(grpcTripPoint.hysteresis());
@@ -586,7 +586,7 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
         std::vector<std::shared_ptr<ITripPoint>> bindingInfo;
         auto grpcCdevTripPoints = grpcCdev.trip_points();
         for(auto grpcCdevTripPoint : grpcCdevTripPoints) {
-            std::shared_ptr<TripPoint> tripPoint = std::make_shared<TripPoint>();
+            std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
             tripPoint->setType(getTripType(grpcCdevTripPoint.trip_type()));
             tripPoint->setThresholdTemp(grpcCdevTripPoint.threshold_temp());
             tripPoint->setHysteresis(grpcCdevTripPoint.hysteresis());
@@ -602,11 +602,11 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
 }
 
 std::shared_ptr<ICoolingDevice> ThermalManagerImplStub::getCoolingDevice(int coolingDeviceId) {
-    ::therm::GetCoolingDeviceByIdRequest request;
-    ::therm::GetCoolingDeviceByIdReply response;
+    thermStub::GetCoolingDeviceByIdRequest request;
+    thermStub::GetCoolingDeviceByIdReply response;
     ClientContext context;
 
-    std::shared_ptr<CoolingDevice> cDev = std::make_shared<CoolingDevice>();
+    std::shared_ptr<CoolingDeviceImpl> cDev = std::make_shared<CoolingDeviceImpl>();
     if (SimulationManagerStub::getServiceStatus() !=
             ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
@@ -614,7 +614,7 @@ std::shared_ptr<ICoolingDevice> ThermalManagerImplStub::getCoolingDevice(int coo
     }
 
     request.set_id(coolingDeviceId);
-    request.set_oper_type(::therm::ProcType::LOCAL_PROC);
+    request.set_oper_type(thermStub::ProcType::LOCAL_PROC);
 
     const grpc::Status status = stub_->GetCoolingDeviceById(&context, request, &response);
     if (!status.ok()) {

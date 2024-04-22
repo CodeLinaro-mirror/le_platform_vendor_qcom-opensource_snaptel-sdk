@@ -7,12 +7,12 @@
 
 #include "../common/Logger.hpp"
 
-#include "ThermalZone.hpp"
+#include "ThermalZoneImpl.hpp"
 
 namespace telux {
 namespace therm {
 
-TripPoint::TripPoint()
+TripPointImpl::TripPointImpl()
    : type_(TripType::UNKNOWN)
    , temp_(INVALID_THERMAL_TEMP)
    , hysteresis_(INVALID_THERMAL_TEMP)
@@ -21,27 +21,27 @@ TripPoint::TripPoint()
     LOG(INFO, __FUNCTION__);
 }
 
-TripType TripPoint::getType() const {
+TripType TripPointImpl::getType() const {
     return type_;
 }
 
-int TripPoint::getThresholdTemp() const {
+int TripPointImpl::getThresholdTemp() const {
     return temp_;
 }
 
-int TripPoint::getHysteresis() const {
+int TripPointImpl::getHysteresis() const {
     return hysteresis_;
 }
 
-int TripPoint::getTripId() const {
+int TripPointImpl::getTripId() const {
     return tripId_;
 }
 
-int TripPoint::getTZoneId() const {
+int TripPointImpl::getTZoneId() const {
     return tZoneId_;
 }
 
-bool TripPoint::operator==(const ITripPoint &rHs) const {
+bool TripPointImpl::operator==(const ITripPoint &rHs) const {
     if ((getType() == rHs.getType()) && (getThresholdTemp() == rHs.getThresholdTemp())
         && (getHysteresis() == rHs.getHysteresis())) {
         return true;
@@ -49,34 +49,34 @@ bool TripPoint::operator==(const ITripPoint &rHs) const {
     return false;
 }
 
-std::string TripPoint::toString() {
+std::string TripPointImpl::toString() {
     std::stringstream ss;
     ss << " Trip type: " << static_cast<int>(type_) << ", Trip temp: " << temp_
        << ", Hysteresis: " << hysteresis_ << ", Trip id: " << tripId_ << ", Tzone id: " << tZoneId_;
     return ss.str();
 }
 
-void TripPoint::setType(TripType type) {
+void TripPointImpl::setType(TripType type) {
     type_ = type;
 }
 
-void TripPoint::setThresholdTemp(int temp) {
+void TripPointImpl::setThresholdTemp(int temp) {
     temp_ = temp;
 }
 
-void TripPoint::setHysteresis(int hysteresis) {
+void TripPointImpl::setHysteresis(int hysteresis) {
     hysteresis_ = hysteresis;
 }
 
-void TripPoint::setTripId(int tripId) {
+void TripPointImpl::setTripId(int tripId) {
     tripId_ = tripId;
 }
 
-void TripPoint::setTZoneId(int tZoneId) {
+void TripPointImpl::setTZoneId(int tZoneId) {
     tZoneId_ = tZoneId;
 }
 
-ThermalZone::ThermalZone()
+ThermalZoneImpl::ThermalZoneImpl()
    : tzSensorInstance_(INVALID_VALUE)
    , thermalZoneType_("")
    , sensorTemp_(INVALID_THERMAL_TEMP)
@@ -84,32 +84,32 @@ ThermalZone::ThermalZone()
     LOG(DEBUG, __FUNCTION__);
 }
 
-int ThermalZone::getId() const {
+int ThermalZoneImpl::getId() const {
     return tzSensorInstance_;
 }
 
-std::string ThermalZone::getDescription() const {
+std::string ThermalZoneImpl::getDescription() const {
     return thermalZoneType_;
 }
 
-int ThermalZone::getCurrentTemp() const {
+int ThermalZoneImpl::getCurrentTemp() const {
     return sensorTemp_;
 }
 
-int ThermalZone::getPassiveTemp() const {
+int ThermalZoneImpl::getPassiveTemp() const {
     return passiveTemp_;
 }
 
-std::vector<std::shared_ptr<ITripPoint>> ThermalZone::getTripPoints() const {
+std::vector<std::shared_ptr<ITripPoint>> ThermalZoneImpl::getTripPoints() const {
     return tripInfo_;
 }
 
-std::string ThermalZone::toString() {
+std::string ThermalZoneImpl::toString() {
     std::stringstream ss;
     ss << " Tzone Id: " << tzSensorInstance_ << ", Tzone name: " << thermalZoneType_
        << ", Current temp: " << sensorTemp_ << ", Passive temp: " << passiveTemp_ << ",";
     for (auto trip : getTripPoints()) {
-        ss << std::static_pointer_cast<TripPoint>(trip)->toString();
+        ss << std::static_pointer_cast<TripPointImpl>(trip)->toString();
     }
 
     for (auto boundCdev : getBoundCoolingDevices()) {
@@ -123,33 +123,33 @@ std::string ThermalZone::toString() {
     return ss.str();
 }
 
-std::vector<BoundCoolingDevice> ThermalZone::getBoundCoolingDevices() const {
+std::vector<BoundCoolingDevice> ThermalZoneImpl::getBoundCoolingDevices() const {
     return boundCoolingDev_;
 }
 
-void ThermalZone::setId(int instance) {
+void ThermalZoneImpl::setId(int instance) {
     tzSensorInstance_ = instance;
 }
 
-void ThermalZone::setDescription(std::string type) {
+void ThermalZoneImpl::setDescription(std::string type) {
     thermalZoneType_ = type;
 }
 
-void ThermalZone::setCurrentTemp(int temp) {
+void ThermalZoneImpl::setCurrentTemp(int temp) {
     sensorTemp_ = temp;
 }
 
-void ThermalZone::setPassiveTemp(int passiveTemp) {
+void ThermalZoneImpl::setPassiveTemp(int passiveTemp) {
     passiveTemp_ = passiveTemp;
 }
 
-void ThermalZone::setTripPoints(std::vector<std::shared_ptr<TripPoint>> tripInfo) {
+void ThermalZoneImpl::setTripPoints(std::vector<std::shared_ptr<TripPointImpl>> tripInfo) {
     for (auto trip : tripInfo) {
         tripInfo_.emplace_back(trip);
     }
 }
 
-void ThermalZone::setBoundCoolingDevices(std::vector<BoundCoolingDevice> boundCoolingDev) {
+void ThermalZoneImpl::setBoundCoolingDevices(std::vector<BoundCoolingDevice> boundCoolingDev) {
     for (auto boundCdev : boundCoolingDev) {
         boundCoolingDev_.emplace_back(boundCdev);
     }

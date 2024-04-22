@@ -3,8 +3,8 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef THERMALZONEINFOIMPL_HPP
-#define THERMALZONEINFOIMPL_HPP
+#ifndef THERMALZONEIMPL_HPP
+#define THERMALZONEIMPL_HPP
 
 #include <telux/therm/ThermalManager.hpp>
 
@@ -14,9 +14,9 @@
 namespace telux {
 namespace therm {
 
-class TripPoint : public ITripPoint {
+class TripPointImpl : public ITripPoint {
  public:
-    TripPoint();
+    TripPointImpl();
     TripType getType() const override;
     int getThresholdTemp() const override;
     int getHysteresis() const override;
@@ -40,9 +40,9 @@ class TripPoint : public ITripPoint {
     int tZoneId_;
 };
 
-class ThermalZone : public IThermalZone {
+class ThermalZoneImpl : public IThermalZone {
  public:
-    ThermalZone();
+    ThermalZoneImpl();
     int getId() const override;
     std::string getDescription() const override;
     int getCurrentTemp() const override;
@@ -55,7 +55,7 @@ class ThermalZone : public IThermalZone {
     void setDescription(std::string type);
     void setCurrentTemp(int temp);
     void setPassiveTemp(int passiveTemp);
-    void setTripPoints(std::vector<std::shared_ptr<TripPoint>> tripInfo);
+    void setTripPoints(std::vector<std::shared_ptr<TripPointImpl>> tripInfo);
     void setBoundCoolingDevices(std::vector<BoundCoolingDevice> boundCoolingDev);
 
  private:
@@ -69,4 +69,4 @@ class ThermalZone : public IThermalZone {
 
 }  // end of namespace therm
 }  // end of namespace telux
-#endif  // THERMALZONEINFOIMPL_HPP
+#endif  // THERMALZONEIMPL_HPP

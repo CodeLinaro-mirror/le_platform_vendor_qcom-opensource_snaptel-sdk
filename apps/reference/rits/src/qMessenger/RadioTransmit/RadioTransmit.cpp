@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -374,6 +374,9 @@ uint32_t RadioTransmit::getSpsResSize(){
     return this->spsResSize;
 }
 
+shared_ptr<SpsFlowInfo> RadioTransmit::getSpsFlowInfo(){
+    return spsFlowInfo;
+}
 
 uint64_t RadioTransmit::latestTxRxTimeMonotonic() {
     return lastTxMonotonicTime_;

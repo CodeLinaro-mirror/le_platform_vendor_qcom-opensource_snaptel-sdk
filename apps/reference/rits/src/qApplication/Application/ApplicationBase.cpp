@@ -257,21 +257,21 @@ void updateSpsTransmitFlow(
     // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
     if(spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
         && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity){
-        // create a new sps flow with the rounded max ITT that congestionControl calculates
-        SpsFlowInfo spsInfo;
+        lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
+        // update the sps flow with the rounded max ITT that congestionControl calculates
+        shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
+        if(spsInfoSharedPtr == nullptr){
+            std::cerr << "Invalid sps info. Not updating. \n";
+            return;
+        }
+        SpsFlowInfo* spsInfo = spsInfoSharedPtr.get();
         // congestionControl rounds it already to valid values for sps periodicity
-        spsInfo.periodicityMs =
+        spsInfo->periodicityMs =
             (congestionControlUserData->congestionControlCalculations->maxITT);
-
-        // set sps priority to same value
-        spsInfo.priority = spsTransmit_->getSpsPriority();
-
-        // set sps size to same value
-        spsInfo.nbytesReserved = spsTransmit_->getSpsResSize();
 
         // catch future error here
         try{
-            uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
+            uint8_t ret = spsTransmit_->updateSpsFlow(*spsInfo);
             if(ret == static_cast<uint8_t>(Status::FAILED)){
                 std::cerr << "sps transmit flow update failed\n";
                 std::cerr << "Max itt was: " <<
@@ -281,7 +281,6 @@ void updateSpsTransmitFlow(
             std::cout << "Caught future error when updating sps flow\n";
             std::cout << "Error log is: " << e.what() << "\n";
         }
-        lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
     }
 }
 

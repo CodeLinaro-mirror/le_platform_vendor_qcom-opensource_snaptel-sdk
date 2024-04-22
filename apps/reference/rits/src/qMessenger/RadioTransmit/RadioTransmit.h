@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -179,8 +179,20 @@ public:
     * @return result value 0 on success and 1 on fail.
     */
     uint8_t updateSpsFlow(const SpsFlowInfo spsInfo);
-
+    /**
+    * Method that returns shared pointer to SpsFlowInfo struct for the Sps Flow.
+    * @return shared_ptr<SpsFlowInfo> containing SpsFlowInfo struct for Sps Flow.
+    */
+    shared_ptr<SpsFlowInfo> getSpsFlowInfo();
+    /**
+    * Method that returns priority of sps flow.
+    * @return Priority of sps flow.
+    */
     Priority getSpsPriority();
+    /**
+    * Method that returns current sps flow reservation size.
+    * @return result sps reservation size unsigned integer
+    */
     uint32_t getSpsResSize();
     /**
     * Method that closes flow.

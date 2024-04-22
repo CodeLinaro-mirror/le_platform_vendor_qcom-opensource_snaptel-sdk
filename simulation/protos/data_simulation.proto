@@ -114,12 +114,7 @@ service DataFilterManager {
   */
 
   service BridgeManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
-    rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc EnableBridge(EnableBridgeRequest) returns (google.protobuf.Empty) {}
-    rpc AddBridge(AddBridgeRequest) returns (google.protobuf.Empty) {}
-    rpc GetBridgeInfo(google.protobuf.Empty) returns (GetBridgeInfoReply) {}
-    rpc RemoveBridge(RemoveBridgeRequest) returns (google.protobuf.Empty) {}
+    rpc InitService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
 }
 
 /*
@@ -153,15 +148,15 @@ service DataFilterManager {
   */
 
   service FirewallManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc SetFirewall(SetFirewallRequest) returns (google.protobuf.Empty) {}
+    rpc SetFirewall(SetFirewallRequest) returns (DefaultReply) {}
     rpc RequestFirewallStatus(FirewallStatusRequest) returns (RequestFirewallStatusReply) {}
-    rpc AddFirewallEntry(AddFirewallEntryRequest) returns (google.protobuf.Empty) {}
+    rpc AddFirewallEntry(AddFirewallEntryRequest) returns (AddFirewallEntryReply) {}
     rpc RequestFirewallEntries(FirewallEntriesRequest) returns (RequestFirewallEntriesReply) {}
-    rpc RemoveFirewallEntry(RemoveFirewallEntryRequest) returns (google.protobuf.Empty) {}
-    rpc EnableDMZ(EnableDMZRequest) returns (google.protobuf.Empty) {}
-    rpc DisableDMZ(DisableDmzRequest) returns (google.protobuf.Empty) {}
+    rpc RemoveFirewallEntry(RemoveFirewallEntryRequest) returns (DefaultReply) {}
+    rpc EnableDMZ(EnableDMZRequest) returns (DefaultReply) {}
+    rpc DisableDMZ(DisableDmzRequest) returns (DefaultReply) {}
     rpc RequestDMZEntry(DMZEntryRequest) returns (RequestDMZEntryReply) {}
 }
 
@@ -860,19 +855,22 @@ message RequestStaticNatEntriesReply {
 
 message SetFirewallRequest {
     int32 profile_id = 1;
-    int32 fw_enable = 2;
-    int32 allow_packets = 3;
+    bool fw_enable = 2;
+    bool allow_packets = 3;
     int32 slot_id = 4;
+    BackhaulPreference backhaul_type = 5;
 }
 
 message FirewallStatusRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
+    BackhaulPreference backhaul_type = 5;
 }
 
 message RequestFirewallStatusReply {
     int32 fw_enable = 1;
     int32 allow_packets = 2;
+    DefaultReply reply = 3;
 }
 
 message Ipv4Params {
@@ -917,23 +915,32 @@ message Direction {
 message AddFirewallEntryRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    Direction fw_direction = 3;
-    string protocol = 4;
-    int32 ip_family_type = 5;
-    Ipv4Params ipv4_params = 6;
-    Ipv6Params ipv6_params = 7;
-    ProtocolParams protocol_params = 8;
+    BackhaulPreference backhaul_type = 3;
+    Direction fw_direction = 4;
+    string protocol = 5;
+    IpFamilyType ip_family_type = 6;
+    Ipv4Params ipv4_params = 7;
+    Ipv6Params ipv6_params = 8;
+    ProtocolParams protocol_params = 9;
+    bool is_hw_accelerated = 10;
+}
+
+message AddFirewallEntryReply {
+    int32 handle = 1;
+    DefaultReply reply = 2;
 }
 
 message FirewallEntriesRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
+    BackhaulPreference backhaul_type = 3;
+    bool is_hw_accelerated = 4;
 }
 
 message FirewallEntry {
     Direction fw_direction = 1;
     string protocol = 2;
-    string ip_family_type = 3;
+    IpFamilyType ip_family_type = 3;
     Ipv4Params ipv4_params = 4;
     Ipv6Params ipv6_params = 5;
     ProtocolParams protocol_params = 6;
@@ -942,6 +949,7 @@ message FirewallEntry {
 
 message RequestFirewallEntriesReply {
     repeated FirewallEntry firewall_entries = 1;
+    DefaultReply reply = 2;
 }
 
 message RemoveFirewallEntryRequest {
@@ -953,22 +961,26 @@ message RemoveFirewallEntryRequest {
 message EnableDMZRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    string ip_address = 3;
+    BackhaulPreference backhaul_type = 3;
+    string ip_address = 4;
 }
 
 message DisableDmzRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    IpFamilyType ip_family_type = 3;
+    BackhaulPreference backhaul_type = 3;
+    IpFamilyType ip_family_type = 4;
 }
 
 message DMZEntryRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
+    BackhaulPreference backhaul_type = 3;
 }
 
 message RequestDMZEntryReply {
     repeated string dmz_entries = 1;
+    DefaultReply reply = 2;
 }
 
 enum ServiceStatus {

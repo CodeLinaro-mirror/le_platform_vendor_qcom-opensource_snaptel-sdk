@@ -1,0 +1,7 @@
+{
+    "IBridgeManager": {
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400
+    }
+}

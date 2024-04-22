@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -280,29 +280,22 @@ public:
                         TcuActivityState state) = 0;
 
     /**
-     * Explicitly sets the modem state change.
+     * Explicitly enables/disables certain behavior in the modem peripheral subsystem (MPSS)
+     * to conserve power. For example, specific functionalities like LTE and 5G search or
+     * measurement are scaled down.
      *
-     * The platform could be configured to automatically manage the modem state when
-     * @ref setTcuActivityState is called. For example, when suspend is called, the implementation
-     * will also set the modem to suspend. In that case, this API need not be invoked after setting
-     * the TCU state.
+     * Applicable for the master client only.
      *
      * This API needs to be used cautiously, as it could affect WWAN functionalities.
-     *
-     * This API is meant for clients that have instantiated the ITcuActivityManager instance using
-     * @ref ClientType::MASTER
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
      * permission to invoke this API successfully.
      *
-     * @param [in] state    Activity state that the modem is intended to enter
-     *                      @ref TcuActivityState
-     *                      SUSPEND - Reduce/Throttle the modem activities
-     *                      RESUME  - Restore the activities that were throttled earlier
-     *                      Any other input is considered invalid.
+     * @param[in] state For @ref TcuActivityState::SUSPEND functionalities are throttled,
+     *                  for @ref TcuActivityState::RESUME functionalities are unthrottled.
      *
-     * @returns Status of setModemActivityState i.e. success or suitable status code.
-     *
+     * @returns @ref telux::common::Status::SUCCESS if the new state is set, otherwise,
+     *          an appropriate error code
      */
     virtual telux::common::Status setModemActivityState(TcuActivityState state) = 0;
 

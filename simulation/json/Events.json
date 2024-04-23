@@ -1,7 +1,7 @@
 {
     "json_update": {
         "modify":[
-            "telsdk_event_injector -f json_update -e modify <path> <subsystem> <api> <attribute> <val>",
+            "telsdk_event_injector -f json_update -e modify <path> <subsystem>.<api>.<attribute> <val>",
             "path:        path of the JSON to be updated.",
             "subsystem:   subsystem for which API behavior needs to be modified.",
             "api:         api for which a particular attribute has to be updated.",

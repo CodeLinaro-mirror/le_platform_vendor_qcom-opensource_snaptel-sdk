@@ -3,13 +3,17 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #include "ServerEventManager.hpp"
- #include "libs/common/Logger.hpp"
- #include "libs/common/CommonUtils.hpp"
+#include <algorithm>
+#include "JsonParser.hpp"
 
- #define UNSOLICITED_COMMON_EVENT "all"
- #define UPDATE_API_RESPONSE_EVENT "json_update"
- #define DELIMETER ' '
+#include "ServerEventManager.hpp"
+#include "libs/common/Logger.hpp"
+#include "libs/common/CommonUtils.hpp"
+
+#define UNSOLICITED_COMMON_EVENT "all"
+#define UPDATE_API_RESPONSE_EVENT "json_update"
+#define SPACE_DELIM ' '
+#define DOT_DELIM '.'
 
 ServerEventManager::ServerEventManager() {
     LOG(DEBUG, __FUNCTION__);
@@ -179,35 +183,70 @@ telux::common::Status ServerEventManager::deregisterListener(
 void ServerEventManager::updateApiResponse(std::string message) {
     LOG(DEBUG, __FUNCTION__, message);
     std::stringstream stream(message);
+    std::vector<std::string> attributeList;
 
     //skipping modify action, would be probably used
     //once we add more features to our json utility.
     std::string action = "";
-    std::getline(stream, action, DELIMETER);
+    std::getline(stream, action, SPACE_DELIM);
 
     //reading path
     std::string path = "";
-    std::getline(stream, path, DELIMETER);
+    std::getline(stream, path, SPACE_DELIM);
 
-    //reading subsystem
-    std::string subsystem = "";
-    std::getline(stream, subsystem, DELIMETER);
-
-    //reading api
-    std::string api = "";
-    std::getline(stream, api, DELIMETER);
-
-    //reading attribute
-    std::string attribute = "";
-    std::getline(stream, attribute, DELIMETER);
+    //reading attributes
+    std::string attributes = "";
+    std::getline(stream, attributes, SPACE_DELIM);
 
     //reading value
     std::string value = "";
-    std::getline(stream, value, DELIMETER);
+    std::getline(stream, value, SPACE_DELIM);
+    LOG(INFO, __FUNCTION__, " for attribute::", attributes, " value::", value);
 
-    if (attribute == "callbackDelay") {
-        CommonUtils::updateJsonValue(path, subsystem, api, attribute, std::stoi(value));
-    } else {
-        CommonUtils::updateJsonValue(path, subsystem, api, attribute, value);
+    /**
+     * preparing nested attribute list, we are able to handle update
+     * of multiple nested level of attributes.
+     * For ex:
+     * - ISmsManager.deleteMessage.error - is to update error value.
+     * - ISmsManager.sendSms.0.numberOfSegments - is to update numberOfSegments
+     *                                            at 0th index in sendSms array.
+    */
+    std::stringstream ss(attributes);
+    std::string currAttribute;
+    while (getline(ss, currAttribute, DOT_DELIM)) {
+        currAttribute.erase(remove_if(currAttribute.begin(), currAttribute.end(),
+            ::isspace), currAttribute.end());
+        attributeList.push_back(currAttribute);
     }
+
+    //updating the attribute value
+    Json::Value rootObj;
+    Json::Value *currObj;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, path);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        LOG(ERROR, __FUNCTION__, " filePath::", path);
+        return;
+    }
+    currObj = &rootObj;
+    for (const auto & key: attributeList) {
+        if (std::all_of(key.begin(), key.end(), ::isdigit)) {
+            //since for update of array we would be taking index value
+            currObj = &(*currObj)[std::stoi(key)];
+            continue;
+        }
+        currObj = &(*currObj)[key];
+    }
+
+    if((*currObj).isInt()) {
+        *currObj = std::stoi(value);
+    } else if ((*currObj).isBool()) {
+        *currObj = (value == "true")? true : false;
+    } else if ((*currObj).isString()) {
+        *currObj = value;
+    } else {
+        LOG(ERROR, __FUNCTION__, " invalid type");
+    }
+
+    JsonParser::writeToJsonFile(rootObj, path);
 }

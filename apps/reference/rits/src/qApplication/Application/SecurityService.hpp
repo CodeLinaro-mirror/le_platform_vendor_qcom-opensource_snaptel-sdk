@@ -96,6 +96,15 @@ struct MisbehaviorStats{
     double misbehaviorLatency = 0.0;
 };
 
+struct ResultLoggingStats{
+    int tid;
+    int asyncVerifSuccess;
+    double currTimeStamp;
+    double prevBatchTimeStamp;
+    double rate;
+    double dur;
+};
+
 struct Kinematics
 {
     signed int latitude;

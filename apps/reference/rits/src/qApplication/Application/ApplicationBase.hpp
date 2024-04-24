@@ -286,6 +286,10 @@ struct Config{
     bool enableVerifStatLog = false;
     uint32_t verifStatsSize = 10000;
     string verifStatLogFile = "/tmp/verif_stats.log";
+    /** Verification Results Parameters */
+    bool enableVerifResLog = false;
+    uint32_t verifResLogSize = 10000;
+    string verifResLogFile = "/tmp/verif_results.log";
     /** Signing Stats Parameters */
     bool enableSignStatLog = false;
     uint32_t signStatsSize = 10000;
@@ -451,9 +455,11 @@ public:
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
     std::map<std::thread::id, int> misbehaviorStatIdx;
+    std::map<std::thread::id, long int> resultLoggingIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
     std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
+    std::map<std::thread::id, std::vector<ResultLoggingStats>> thrResLoggingValues;
 
     virtual ~ApplicationBase();
 
@@ -550,6 +556,16 @@ public:
      * Write verification statistics to file
      */
     void writeVerifLogging();
+
+    /**
+    *   Sets up the verification results vector based on the exisitng threads
+    */
+    void initResultsLogging();
+
+    /**
+     * Write verification results to file
+     */
+    void writeResultsLogging();
 
     /**
     *   Sets up the signing statistics vector based on the exisitng threads

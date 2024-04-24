@@ -215,8 +215,8 @@ class IAudioPlayer {
     *
     * @param[in] volume Specifies the volume level to set
     *
-    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the given volume is
-    *          set, otherwise, an appropriate error code.
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the given volume is set,
+    *          otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode setVolume(StreamVolume volume) = 0;
 
@@ -225,7 +225,7 @@ class IAudioPlayer {
     *
     * @param[out] volume, Current volume
     *
-    * @returns ErrorCode @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved,
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved,
     *          otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;

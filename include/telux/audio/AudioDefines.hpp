@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -181,7 +181,7 @@ enum class StreamDirection {
  * @{ */
 
 /**
- *  Used for an in-call playback/capture and HPCM usecases. Represents
+ *  Used for an in-call playback/capture and HPCM use cases. Represents
  *  the direction of the audio data flow.
  */
 enum class Direction {
@@ -293,8 +293,7 @@ enum class AmrwbpFrameFormat {
     /** Unsupported */
     TRANSPORT_INTERFACE_FORMAT,
 
-    /** Specifies that the audio content from AMR* format file has been
-     *  parsed and only actual audio content is sent for playback */
+    /** Specifies that the AMR header has been stripped from the audio data sent */
     FILE_STORAGE_FORMAT,
 };
 
@@ -338,7 +337,7 @@ struct FormatParams {
  */
 struct AmrwbpParams : FormatParams {
 
-    /** Bit width of the stream (16 or 24) */
+    /** Bit width of the stream (for example 16 bit) */
     uint32_t bitWidth;
 
     /** Refer to @ref AmrwbpFrameFormat */
@@ -358,19 +357,23 @@ struct AmrwbpParams : FormatParams {
  *
  *  For playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
- *  For incall-playback and hpcm-playback:
+ *  For incall-playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
+ *  For hpcm-playback:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths, enableHpcm
  *
  *  For capture:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
- *  For incall-capture and hpcm-capture:
+ *  For incall-capture:
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
+ *  For hpcm-capture:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths, enableHpcm
  *
  *  For loopback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
  *
  *  For tone-generation:
- *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *      type, channelTypeMask, format, deviceTypes
  */
 struct StreamConfig {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,16 +33,16 @@
  */
 
 /*
- *  Steps to create a voice call stream for Bluetooth hands-free gateway (HFG) use-case are:
+ * Steps to create a voice call stream for Bluetooth hands-free gateway (HFG) use-case are:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream) with Bluetooth devices.
- *  5. Start the voice call stream.
- *  6. Let the voices be exchanged with far end of cellular connection.
- *  7. To terminate the voice call, first, stop the voice call stream.
- *  8. Delete the voice call stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a voice call stream (IAudioVoiceStream) with Bluetooth devices.
+ * 5. Start the voice call stream.
+ * 6. Let the voices be exchanged with far end of cellular connection.
+ * 7. To terminate the voice call, first, stop the voice call stream.
+ * 8. Delete the voice call stream.
  *
  * Usage:
  * # bt_hfg_voice_call
@@ -51,6 +51,7 @@
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -73,12 +74,8 @@ int BTHFGVoiceCall::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -87,17 +84,13 @@ int BTHFGVoiceCall::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -140,6 +133,7 @@ int BTHFGVoiceCall::createVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -152,7 +146,7 @@ int BTHFGVoiceCall::deleteVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -168,6 +162,7 @@ int BTHFGVoiceCall::deleteVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
@@ -195,6 +190,7 @@ int BTHFGVoiceCall::startVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream started" << std::endl;
     return 0;
 }
 
@@ -222,6 +218,7 @@ int BTHFGVoiceCall::stopVoiceStream() {
         return -EIO;
     }
 
+    std::cout << "Stream stopped" << std::endl;
     return 0;
 }
 
@@ -267,5 +264,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

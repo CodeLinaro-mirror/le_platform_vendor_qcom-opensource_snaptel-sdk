@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,22 +33,23 @@
  */
 
 /*
- *  Steps to create a tone stream and generate single tone on the
- *  speaker are as follows:
+ * Steps to create a tone stream and generate single tone on the local
+ * speaker are as follows:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a tone stream (IAudioToneGeneratorStream).
- *  5. Configure parameters for the tone and generate it.
- *  6. When the use-case is complete, stop the tone.
- *  7. Delete tone stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a tone stream (IAudioToneGeneratorStream).
+ * 5. Configure parameters for the tone and generate it.
+ * 6. When the use-case is complete, stop the tone.
+ * 7. Delete tone stream.
  *
  * Usage:
  * # generate_single_tone
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <iostream>
 #include <thread>
@@ -70,12 +71,8 @@ int GenerateSingleTone::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -84,17 +81,13 @@ int GenerateSingleTone::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -134,6 +127,7 @@ int GenerateSingleTone::createToneStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -146,7 +140,7 @@ int GenerateSingleTone::deleteToneStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioToneStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioToneStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -162,6 +156,7 @@ int GenerateSingleTone::deleteToneStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
@@ -194,7 +189,7 @@ int GenerateSingleTone::generateSingleTone() {
         return -EIO;
     }
 
-    std::cout << "tone playback started" << std::endl;
+    std::cout << "Tone generation started" << std::endl;
     return 0;
 }
 
@@ -222,6 +217,7 @@ int GenerateSingleTone::stopGeneratingTone() {
         return -EIO;
     }
 
+    std::cout << "Tone generation stopped" << std::endl;
     return 0;
 }
 
@@ -254,7 +250,7 @@ int main(int argc, char **argv) {
     }
 
     /* Application's business logic goes here. We are sleeping just as an example */
-    std::this_thread::sleep_for(std::chrono::milliseconds(14000));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     ret = app->stopGeneratingTone();
     if (ret < 0) {
@@ -267,5 +263,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

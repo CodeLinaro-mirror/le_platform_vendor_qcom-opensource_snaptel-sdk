@@ -1,29 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_HPCM_TX_MODIFY hpcm_tx_modify)
+set(TARGET_APP hpcm_tx_rx_modify)
 
-set(HPCM_TX_MODIFY_SOURCES
-    Hpcm.cpp
-)
-macro(SYSR_INCLUDE_DIR subdir)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
-endmacro()
+pkg_check_modules(TELUXAUDIO REQUIRED telux-audio)
 
-# add these sub-folders from /usr/include/<subdir>
-SYSR_INCLUDE_DIR(telux)
+set(APP_SOURCES Hpcm.cpp)
 
-include_directories(BEFORE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+add_executable(${TARGET_APP} ${APP_SOURCES})
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+target_include_directories(${TARGET_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable (${TARGET_HPCM_TX_MODIFY} ${HPCM_TX_MODIFY_SOURCES})
-target_link_libraries(${TARGET_HPCM_TX_MODIFY} telux_audio pthread)
+target_compile_options(${TARGET_APP} PRIVATE -std=c++11 -Wall -Werror)
 
-# install to target
-install ( TARGETS ${TARGET_HPCM_TX_MODIFY}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_link_libraries(${TARGET_APP} PRIVATE ${TELUXAUDIO_LIBRARIES} pthread)
+
+install(TARGETS ${TARGET_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

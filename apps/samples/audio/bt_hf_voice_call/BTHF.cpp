@@ -32,7 +32,33 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Steps to exchange audio with phone through Bluetooth hands-free (HF) are:
+ *
+ *  1. Get an AudioFactory instance.
+ *  2. Get an IAudioManager instance from the AudioFactory.
+ *  3. Wait for the audio service to become available.
+ *  4. Create a BT playback stream.
+ *  5. Create a BT capture stream.
+ *  6. Create a codec playback stream.
+ *  7. Create a codec capture stream.
+ *  8. Allocate buffers to send and receive audio samples.
+ *  9. Create a thread that will receive audio from BT and send it to audio codec.
+ * 10. Create a thread that will receive audio from codec and send it to BT.
+ * 11. When the use case is over, delete BT capture stream.
+ * 12. Delete codec capture stream.
+ * 13. Delete BT playback stream.
+ * 14. Delete codec playback stream.
+ *
+ * Usage:
+ * # bt_hf_audio
+ *
+ * Audio received from phone via Bluetooth is played on the BT speaker.
+ * Audio spoken in the BT mic, is sent to the phone via BT.
+ */
+
 #include <errno.h>
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -41,12 +67,12 @@
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "BTHFVoiceCall.hpp"
+#include "BTHF.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int BTHFVoiceCall::init() {
+int BTHF::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -56,12 +82,8 @@ int BTHFVoiceCall::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -70,21 +92,17 @@ int BTHFVoiceCall::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::createBTPlayStream() {
+int BTHF::createBTPlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -119,16 +137,17 @@ int BTHFVoiceCall::createBTPlayStream() {
         return -EIO;
     }
 
+    std::cout << "BT playback stream created" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::deleteBTPlayStream() {
+int BTHF::deleteBTPlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(btPlayStream_, [&p, this] (
+    status = audioManager_->deleteStream(btPlayStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -145,10 +164,11 @@ int BTHFVoiceCall::deleteBTPlayStream() {
         return -EIO;
     }
 
+    std::cout << "BT playback stream deleted" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::createBTCaptureStream() {
+int BTHF::createBTCaptureStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -183,16 +203,17 @@ int BTHFVoiceCall::createBTCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "BT capture stream created" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::deleteBTCaptureStream() {
+int BTHF::deleteBTCaptureStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(btCaptureStream_, [&p, this] (
+    status = audioManager_->deleteStream(btCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -209,10 +230,11 @@ int BTHFVoiceCall::deleteBTCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "BT capture stream deleted" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::createCodecPlayStream() {
+int BTHF::createCodecPlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -247,16 +269,17 @@ int BTHFVoiceCall::createCodecPlayStream() {
         return -EIO;
     }
 
+    std::cout << "Codec playback stream created" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::deleteCodecPlayStream() {
+int BTHF::deleteCodecPlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(codecPlayStream_, [&p, this] (
+    status = audioManager_->deleteStream(codecPlayStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -273,10 +296,11 @@ int BTHFVoiceCall::deleteCodecPlayStream() {
         return -EIO;
     }
 
+    std::cout << "Codec playback stream deleted" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::createCodecCaptureStream() {
+int BTHF::createCodecCaptureStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -311,16 +335,17 @@ int BTHFVoiceCall::createCodecCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "Codec capture stream created" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::deleteCodecCaptureStream() {
+int BTHF::deleteCodecCaptureStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(codecCaptureStream_, [&p, this] (
+    status = audioManager_->deleteStream(codecCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -337,20 +362,22 @@ int BTHFVoiceCall::deleteCodecCaptureStream() {
         return -EIO;
     }
 
+    std::cout << "Codec capture stream deleted" << std::endl;
     return 0;
 }
 
-int BTHFVoiceCall::allocateBuffers() {
+int BTHF::allocateBuffers() {
 
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
     btReadSize_ = 0;
     codecReadSize_ = 0;
 
-    for (int x = 0; x < BUF_COUNT; x++) {
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
         streamBuffer = btCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get bt capture stream buffer" << std::endl;
+            btReadBuffers_ = {};
             return -ENOMEM;
         }
 
@@ -363,10 +390,12 @@ int BTHFVoiceCall::allocateBuffers() {
         btReadBuffers_.push(streamBuffer);
     }
 
-    for (int x = 0; x < BUF_COUNT; x++) {
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
         streamBuffer = codecCaptureStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get codec capture stream buffer" << std::endl;
+            btReadBuffers_ = {};
+            codecReadBuffers_ = {};
             return -ENOMEM;
         }
 
@@ -379,10 +408,13 @@ int BTHFVoiceCall::allocateBuffers() {
         codecReadBuffers_.push(streamBuffer);
     }
 
-    for (int x = 0; x < BUF_COUNT; x++) {
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
         streamBuffer = btPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get bt play stream buffer" << std::endl;
+            btReadBuffers_ = {};
+            codecReadBuffers_ = {};
+            btWriteBuffers_ = {};
             return -ENOMEM;
         }
 
@@ -390,10 +422,14 @@ int BTHFVoiceCall::allocateBuffers() {
         btWriteBuffers_.push(streamBuffer);
     }
 
-    for (int x = 0; x < BUF_COUNT; x++) {
+    for (int32_t x = 0; x < BUFFER_COUNT; x++) {
         streamBuffer = codecPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
             std::cout << "can't get codec play stream buffer" << std::endl;
+            btReadBuffers_ = {};
+            codecReadBuffers_ = {};
+            btWriteBuffers_ = {};
+            codecWriteBuffers_ = {};
             return -ENOMEM;
         }
 
@@ -404,7 +440,7 @@ int BTHFVoiceCall::allocateBuffers() {
     return 0;
 }
 
-void BTHFVoiceCall::writeCompleteCodec(
+void BTHF::writeCompleteCodec(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
@@ -430,7 +466,7 @@ void BTHFVoiceCall::writeCompleteCodec(
     }
 }
 
-void BTHFVoiceCall::readCompleteBluetooth(
+void BTHF::readCompleteBluetooth(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error) {
 
@@ -451,7 +487,7 @@ void BTHFVoiceCall::readCompleteBluetooth(
 
         if (error == telux::common::ErrorCode::SUCCESS) {
             ++btReadPossible_;
-            if (btReadDone_ < BUF_COUNT) {
+            if (btReadDone_ < BUFFER_COUNT) {
                 ++btReadDone_;
             }
         }
@@ -460,27 +496,27 @@ void BTHFVoiceCall::readCompleteBluetooth(
     }
 }
 
-void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
+void BTHF::readFromBluetoothWriteOnCodec() {
 
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
     std::shared_ptr<telux::audio::IStreamBuffer> tmpBufferPtr;
 
-    auto btReadCompleteCb = std::bind(&BTHFVoiceCall::readCompleteBluetooth,
+    auto btReadCompleteCb = std::bind(&BTHF::readCompleteBluetooth,
             this, std::placeholders::_1, std::placeholders::_2);
 
-    auto codecWriteCompleteCb = std::bind(&BTHFVoiceCall::writeCompleteCodec,
+    auto codecWriteCompleteCb = std::bind(&BTHF::writeCompleteCodec,
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::unique_lock<std::mutex> btReadLock(btReadMutex_);
 
     btReadDone_ = 0;
-    btReadPossible_ = BUF_COUNT;
-    codecWritePossible_ = BUF_COUNT;
+    btReadPossible_ = BUFFER_COUNT;
+    codecWritePossible_ = BUFFER_COUNT;
 
     std::cout << "read from bt and write on codec started!" << std::endl;
 
-    while(keepRunning_) {
+    while (keepRunning_) {
         if (btReadDone_ && codecWritePossible_) {
 
             tmpBufferPtr = readyForCodecWriteBuffers_.front();
@@ -495,7 +531,7 @@ void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
                 tmpBufferPtr->getRawBuffer(), btReadSize_);
 
             status = codecPlayStream_->write(streamBuffer, codecWriteCompleteCb);
-            if(status != telux::common::Status::SUCCESS) {
+            if (status != telux::common::Status::SUCCESS) {
                 std::cout << "codec write err " << static_cast<int>(status) << std::endl;
                 keepRunning_ = false;
                 codecReadWaiterCv_.notify_all();
@@ -510,7 +546,7 @@ void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
             btReadBuffers_.pop();
 
             status = btCaptureStream_->read(streamBuffer, btReadSize_, btReadCompleteCb);
-            if(status != telux::common::Status::SUCCESS) {
+            if (status != telux::common::Status::SUCCESS) {
                 std::cout << "bt read err " << static_cast<int>(status) << std::endl;
                 keepRunning_ = false;
                 codecReadWaiterCv_.notify_all();
@@ -526,15 +562,15 @@ void BTHFVoiceCall::readFromBluetoothWriteOnCodec() {
         });
     }
 
-    while ((btReadBuffers_.size() != static_cast<uint32_t>(BUF_COUNT)) &&
-            (codecWriteBuffers_.size() != static_cast<uint32_t>(BUF_COUNT))) {
+    while ((btReadBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT)) &&
+            (codecWriteBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT))) {
         btReadWaiterCv_.wait(btReadLock);
     }
 
-    std::cout << "read from bt and write on codec completed!" << std::endl;
+    std::cout << "Read from bt and write on codec completed!" << std::endl;
 }
 
-void BTHFVoiceCall::writeCompleteBluetooth(
+void BTHF::writeCompleteBluetooth(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
@@ -560,7 +596,7 @@ void BTHFVoiceCall::writeCompleteBluetooth(
     }
 }
 
-void BTHFVoiceCall::readCompleteCodec(
+void BTHF::readCompleteCodec(
         std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error) {
 
@@ -581,7 +617,7 @@ void BTHFVoiceCall::readCompleteCodec(
 
         if (error == telux::common::ErrorCode::SUCCESS) {
             ++codecReadPossible_;
-            if (codecReadDone_ < BUF_COUNT) {
+            if (codecReadDone_ < BUFFER_COUNT) {
                 ++codecReadDone_;
             }
         }
@@ -590,27 +626,27 @@ void BTHFVoiceCall::readCompleteCodec(
     }
 }
 
-void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
+void BTHF::readFromCodecWriteOnBluetooth() {
 
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
     std::shared_ptr<telux::audio::IStreamBuffer> tmpBufferPtr;
 
-    auto codecReadCompleteCb = std::bind(&BTHFVoiceCall::readCompleteCodec,
+    auto codecReadCompleteCb = std::bind(&BTHF::readCompleteCodec,
             this, std::placeholders::_1, std::placeholders::_2);
 
-    auto btWriteCompleteCb = std::bind(&BTHFVoiceCall::writeCompleteBluetooth,
+    auto btWriteCompleteCb = std::bind(&BTHF::writeCompleteBluetooth,
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::unique_lock<std::mutex> codecReadLock(codecReadMutex_);
 
     codecReadDone_ = 0;
-    codecReadPossible_ = BUF_COUNT;
-    btWritePossible_ = BUF_COUNT;
+    codecReadPossible_ = BUFFER_COUNT;
+    btWritePossible_ = BUFFER_COUNT;
 
-    std::cout << "read from codec and write on bt started!" << std::endl;
+    std::cout << "read from codec and write on bt started" << std::endl;
 
-    while(keepRunning_) {
+    while (keepRunning_) {
         if (codecReadDone_ && btWritePossible_) {
 
             tmpBufferPtr = readyForBluetoothWriteBuffers_.front();
@@ -625,7 +661,7 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
                 tmpBufferPtr->getRawBuffer(), codecReadSize_);
 
             status = btPlayStream_->write(streamBuffer, btWriteCompleteCb);
-            if(status != telux::common::Status::SUCCESS) {
+            if (status != telux::common::Status::SUCCESS) {
                 std::cout << "bt write err " << static_cast<int>(status) << std::endl;
                 keepRunning_ = false;
                 btReadWaiterCv_.notify_all();
@@ -641,7 +677,7 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
 
             status = codecCaptureStream_->read(
                 streamBuffer, codecReadSize_, codecReadCompleteCb);
-            if(status != telux::common::Status::SUCCESS) {
+            if (status != telux::common::Status::SUCCESS) {
                 std::cout << "codec read err " << static_cast<int>(status) << std::endl;
                 keepRunning_ = false;
                 btReadWaiterCv_.notify_all();
@@ -657,23 +693,23 @@ void BTHFVoiceCall::readFromCodecWriteOnBluetooth() {
         });
     }
 
-    while ((codecReadBuffers_.size() != static_cast<uint32_t>(BUF_COUNT)) &&
-            (btWriteBuffers_.size() != static_cast<uint32_t>(BUF_COUNT))) {
+    while ((codecReadBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT)) &&
+            (btWriteBuffers_.size() != static_cast<uint32_t>(BUFFER_COUNT))) {
         codecReadWaiterCv_.wait(codecReadLock);
     }
 
-    std::cout << "read from codec and write on bt completed!" << std::endl;
+    std::cout << "Read from codec and write on bt completed" << std::endl;
 }
 
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<BTHFVoiceCall> app;
+    std::shared_ptr<BTHF> app;
 
     try {
-        app = std::make_shared<BTHFVoiceCall>();
+        app = std::make_shared<BTHF>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate BTHFVoiceCall" << std::endl;
+        std::cout << "can't allocate BTHF" << std::endl;
         return -ENOMEM;
     }
 
@@ -718,12 +754,12 @@ int main(int argc, char **argv) {
     }
 
     std::thread captureBluetooth(
-        &BTHFVoiceCall::readFromBluetoothWriteOnCodec, &(*app));
+        &BTHF::readFromBluetoothWriteOnCodec, &(*app));
     std::thread captureCodec(
-        &BTHFVoiceCall::readFromCodecWriteOnBluetooth, &(*app));
+        &BTHF::readFromCodecWriteOnBluetooth, &(*app));
 
     /* Run the use case for 5 minutes */
-    std::this_thread::sleep_for(std::chrono::minutes(1)); //TODO
+    std::this_thread::sleep_for(std::chrono::minutes(5));
     app->keepRunning_ = false;
     {
         std::lock_guard<std::mutex> btReadLock(app->btReadMutex_);
@@ -763,5 +799,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

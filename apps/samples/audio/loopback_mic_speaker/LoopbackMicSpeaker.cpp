@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -33,22 +33,25 @@
  */
 
 /*
- *  Steps to create a loopback stream and loopback the audio using
- *  mic and speaker are as follows:
+ * Steps to create a loopback stream and loopback the audio using
+ * mic and speaker are as follows:
  *
- *  1. Get a AudioFactory instance.
- *  2. Get a IAudioManager instance from AudioFactory.
- *  3. Wait for the audio service to become available.
- *  4. Create a loopback stream (IAudioLoopbackStream).
- *  5. Start the loopback.
- *  6. When the use-case is complete, stop the loopback.
- *  7. Delete the loopback stream.
+ * 1. Get an AudioFactory instance.
+ * 2. Get an IAudioManager instance from the AudioFactory.
+ * 3. Wait for the audio service to become available.
+ * 4. Create a loopback stream (IAudioLoopbackStream).
+ * 5. Start the loopback.
+ * 6. When the use-case is complete, stop the loopback.
+ * 7. Delete the loopback stream.
  *
  * Usage:
  * # loopback_mic_speaker
+ *
+ * Whatever we speak on the mic will be heard on the speaker.
  */
 
 #include <errno.h>
+
 #include <cstdio>
 #include <iostream>
 #include <thread>
@@ -70,12 +73,8 @@ int LoopbackMicSpeaker::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
-        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        } else {
-            p.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
-        }
+            [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
     });
 
     if (!audioManager_) {
@@ -84,17 +83,13 @@ int LoopbackMicSpeaker::init() {
     }
 
     /* Step - 3 */
-    serviceStatus = audioManager_->getServiceStatus();
+    serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "audio service not ready, waiting..." << std::endl;
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "audio service unavailable" << std::endl;
-            return -EIO;
-        }
-        std::cout << "audio service ready" << std::endl;
+        std::cout << "audio service unavailable" << std::endl;
+        return -EIO;
     }
 
+    std::cout << "Initialization finished" << std::endl;
     return 0;
 }
 
@@ -136,6 +131,7 @@ int LoopbackMicSpeaker::createLoopbackStream() {
         return -EIO;
     }
 
+    std::cout << "Stream created" << std::endl;
     return 0;
 }
 
@@ -148,7 +144,7 @@ int LoopbackMicSpeaker::deleteLoopbackStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioLoopbackStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioLoopbackStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
@@ -164,6 +160,7 @@ int LoopbackMicSpeaker::deleteLoopbackStream() {
         return -EIO;
     }
 
+    std::cout << "Stream deleted" << std::endl;
     return 0;
 }
 
@@ -191,7 +188,7 @@ int LoopbackMicSpeaker::startLoopback() {
         return -EIO;
     }
 
-    std::cout << "looping back audio from mic to speaker started" << std::endl;
+    std::cout << "Loopback started" << std::endl;
     return 0;
 }
 
@@ -219,6 +216,7 @@ int LoopbackMicSpeaker::stopLoopback() {
         return -EIO;
     }
 
+    std::cout << "Loopback stopped" << std::endl;
     return 0;
 }
 
@@ -251,7 +249,7 @@ int main(int argc, char **argv) {
     }
 
     /* Application's business logic goes here. We are sleeping just as an example */
-    std::this_thread::sleep_for(std::chrono::seconds(15));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     ret = app->stopLoopback();
     if (ret < 0) {
@@ -264,5 +262,6 @@ int main(int argc, char **argv) {
         return ret;
     }
 
+    std::cout << "Application exiting" << std::endl;
     return 0;
 }

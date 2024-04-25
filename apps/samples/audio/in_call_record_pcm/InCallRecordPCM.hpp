@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -48,13 +48,15 @@ class InCallRecordPCM {
     int createIncallRecordStream();
     int deleteIncallRecordStream();
     void record();
-    void readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+    void readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error);
 
     char *recordingDuration_;
     char *fileToSaveRecordingPath_;
 
  private:
+    const int32_t TIME_10_SECONDS = 10;
+    const int32_t BUFFER_POOL_SIZE = 2;
     bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioVoiceStream> audioVoiceStream_;
@@ -63,5 +65,5 @@ class InCallRecordPCM {
     FILE *fileToSaveRecording_;
     std::mutex captureMutex_;
     std::condition_variable cv_;
-    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> bufferPool_;
 };

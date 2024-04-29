@@ -250,11 +250,15 @@ typedef enum {
                                            mode just starts. UE needs sensing for 1 second before
                                            Tx can begin, Tx status will change to active after
                                            sensing is done. */
-    V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive when UE enters Low Power Mode. */
+    V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive due to unexpected operating mode. */
     V2X_RADIO_CAUSE_DISABLED,         /**< CV2X is inactive due to CV2X is disabled in the EFS. */
     V2X_RADIO_CAUSE_NO_GNSS,          /**< CV2X is inactive due to GNSS signal is not available
                                            when starting CV2X. */
     V2X_RADIO_CAUSE_INVALID_LICENSE,  /**< CV2X is inactive due to invalid license. */
+    V2X_RADIO_CAUSE_NOT_READY,        /**< CV2X is inactive due to low layer is not ready to
+                                           start CV2X. */
+    V2X_RADIO_CAUSE_NTN,              /**< CV2X is suspended due to NTN is in progress. */
+
     V2X_RADIO_CAUSE_NO_DATA_CALL,     /**< CV2X is inactive due to no cv2x data call. */
     V2X_RADIO_CAUSE_UNKNOWN,          /**< Invalid cause type only used internally. */
 } v2x_radio_cause_type_t;

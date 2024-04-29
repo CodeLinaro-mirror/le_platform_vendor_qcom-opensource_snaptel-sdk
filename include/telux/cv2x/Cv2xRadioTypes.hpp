@@ -139,11 +139,13 @@ enum class Cv2xCauseType {
     SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode
                             just starts. UE needs sensing for 1 second before Tx can begin,
                             Tx status will change to active after sensing is done. */
-    LPM,               /**< CV2X is inactive when UE enters Low Power Mode. */
+    LPM,               /**< CV2X is inactive due to unexpected operating mode. */
     DISABLED,          /**< CV2X is inactive due to CV2X is disabled in the EFS. */
     NO_GNSS,           /**< CV2X is inactive due to GNSS signal is not available when
                             starting CV2X. */
     INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
+    NOT_READY,         /**< CV2X is inactive due to low layer is not ready to start CV2X. */
+    NTN,               /**< CV2X is suspended due to NTN is in progress. */
 
     NO_DATA_CALL,      /**< CV2X is inactive due to no cv2x data call. */
     UNKNOWN,           /**< Invalid cause type only used internally. */

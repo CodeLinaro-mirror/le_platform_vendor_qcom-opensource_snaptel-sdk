@@ -138,6 +138,8 @@ static map<Cv2xCauseType, string> gCv2xCauseToString = {
     {Cv2xCauseType::DISABLED, "DISABLED"},
     {Cv2xCauseType::NO_GNSS, "NO_GNSS"},
     {Cv2xCauseType::INVALID_LICENSE, "INVALID_LICENSE"},
+    {Cv2xCauseType::NOT_READY, "NOT_READY"},
+    {Cv2xCauseType::NTN, "NTN"},
     {Cv2xCauseType::NO_DATA_CALL, "NO_DATA_CALL"},
     {Cv2xCauseType::UNKNOWN, "UNKNOWN"}
 };

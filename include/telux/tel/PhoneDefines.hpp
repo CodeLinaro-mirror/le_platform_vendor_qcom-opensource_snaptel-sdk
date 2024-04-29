@@ -41,6 +41,7 @@
 #ifndef TELUX_TEL_PHONEDEFINES_HPP
 #define TELUX_TEL_PHONEDEFINES_HPP
 
+#include <array>
 #include <memory>
 #include <string>
 #include <bitset>

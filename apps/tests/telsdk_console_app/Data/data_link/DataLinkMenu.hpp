@@ -34,6 +34,7 @@ public:
     void setPeerEthCapability(std::vector<std::string> inputCommand);
     void setLocalEthOperatingMode(std::vector<std::string> inputCommand);
     void setPeerModeChangeRequestStatus(std::vector<std::string> inputCommand);
+    void setEthDataLink(std::vector<std::string> inputCommand);
     void registerListener(std::vector<std::string> inputCommand);
     void deregisterListener(std::vector<std::string> inputCommand);
 

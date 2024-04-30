@@ -62,10 +62,14 @@ bool DataLinkMenu::init() {
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
             "set_local_eth_operating_mode", {},
             std::bind(&DataLinkMenu::setLocalEthOperatingMode, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setEthDataLink =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
+            "set_eth_datalink", {},
+            std::bind(&DataLinkMenu::setEthDataLink, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getEthCapability,
             setPeerEthCapability, setPeerModeChangeRequestStatus, registerListener,
-            deregisterListener, setLocalEthOperatingMode};
+            deregisterListener, setLocalEthOperatingMode, setEthDataLink};
         addCommands(commandsList);
     }
 
@@ -183,6 +187,32 @@ void DataLinkMenu::setPeerEthCapability(std::vector<std::string> inputCommand) {
         return;
     }
 
+}
+
+void DataLinkMenu::setEthDataLink(std::vector<std::string> inputCommand) {
+    int ethState;
+    std::cout << " Set Eth data link, Enter 1 - for UP  and 0 - DOWN" << std::endl;
+    std::cin >> ethState;
+    Utils::validateInput(ethState, {0, 1});
+    LinkState linkState;
+
+    if (ethState == 0) {
+        linkState = LinkState::DOWN;
+    } else if (ethState == 1) {
+        linkState = LinkState::UP;
+    } else {
+        std::cout << " Invalid input ..." << std::endl;
+        return;
+    }
+
+    telux::common::ErrorCode errCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    errCode = dataLinkManager_->setEthDataLinkState(linkState);
+
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << " *** ERROR - Failed to set Eth datalink" << std::endl;
+        return;
+    }
+    std::cout << " *** Set Eth datalink request sent" << std::endl;
 }
 
 void DataLinkMenu::setLocalEthOperatingMode(std::vector<std::string> inputCommand) {

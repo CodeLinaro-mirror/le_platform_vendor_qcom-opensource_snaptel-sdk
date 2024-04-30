@@ -132,6 +132,13 @@ enum class DataRestrictModeType {
     ENABLE,
 };
 
+/* Specifies the link state
+ */
+enum class LinkState {
+   UP   = 1,   /** link is UP   */
+   DOWN = 2,   /** link is DOWN */
+};
+
 /**
  * Defines the supported powersave filtering mode and autoexit for the packet data session.
  * @ref DataRestrictModeType

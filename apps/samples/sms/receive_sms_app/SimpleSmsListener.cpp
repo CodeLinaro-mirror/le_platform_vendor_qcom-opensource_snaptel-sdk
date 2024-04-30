@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,70 +62,125 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This application demonstrates how to receive a SMS messages. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a ISmsManager instance from the PhoneFactory.
+ * 3. Wait for the SMS service to become available.
+ * 4. Register listener that will receive incoming SMS message.
+ * 5. Wait for the incoming message.
+ * 6. Finally, deregister the listener.
+ *
+ * Usage:
+ * # ./receive_sms_app
+ */
 
+#include <errno.h>
+
+#include <chrono>
+#include <thread>
 #include <iostream>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
 
-#include <telux/tel/PhoneListener.hpp>
-#include <telux/tel/SmsManager.hpp>
+#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/SmsManager.hpp>
+#include <telux/tel/PhoneListener.hpp>
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+class SMSReceiver : public telux::tel::ISmsListener,
+                  public std::enable_shared_from_this<SMSReceiver> {
+ public:
+    int init() {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-using namespace telux::tel;
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
-// [1] Implement ISmsListener interface to receive incoming SMS
-class MySmsListener : public ISmsListener {
-public:
-   void onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> message) override;
+        /* Step - 2 */
+        smsManager_ = phoneFactory.getSmsManager(DEFAULT_SLOT_ID,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!smsManager_) {
+            std::cout << "Can't get ISMSManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "SMS service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = smsManager_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener" << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    /* Step - 6 */
+    int deinit() {
+        telux::common::Status status;
+
+        status = smsManager_->removeListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    void onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
+        std::cout << "onIncomingSms()" << std::endl;
+        std::cout << "Phone ID: " << phoneId << std::endl;
+        std::cout << "Msg: " << smsMsg->toString() << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::tel::ISmsManager> smsManager_;
 };
 
-void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> smsMsg) {
-   PRINT_NOTIFICATION << "MySmsListener::onIncomingSms from PhoneId : " << phoneId << std::endl;
-   PRINT_NOTIFICATION << "smsReceived: " << smsMsg->toString() << std::endl;
-}
+int main(int argc, char *argv[]) {
 
-/**
- * Main routine
- */
-int main(int argc, char ** argv) {
+    int ret;
+    std::shared_ptr<SMSReceiver> app;
 
-    //Instantiate initialization status callback
-    std::promise<telux::common::ServiceStatus> initCallbackPromise;
-    auto initCb = [&](telux::common::ServiceStatus status) {
-      initCallbackPromise.set_value(status);
-    };
-    // [1] Get the PhoneFactory and SMS Manager instance for appropriate phoneId.
-    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    auto smsManager = phoneFactory.getSmsManager(DEFAULT_SLOT_ID, initCb);
-    if(!smsManager) {
-       std::cout << "Failed to get SMS Manager instance" << std::endl;
-       return 1;
+    try {
+        app = std::make_shared<SMSReceiver>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate SMSReceiver" << std::endl;
+        return -ENOMEM;
     }
 
-    // [2] Wait for SMS subsystem to be ready
-    std::cout << "Waiting for SMS Manager to be ready" << std::endl;
-    telux::common::ServiceStatus subSystemsStatus = initCallbackPromise.get_future().get();
-    if(subSystemsStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-      std::cout << " *** ERROR - SMS Manager initialization failed" << std::endl;
-      return 1;
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
-   // [3] Instantiate global ISmsListener
-   auto mySmsListener = std::make_shared<MySmsListener>();
+    /* Step - 5 */
+    /* Wait for the incoming SMS message, application specific logic goes here */
+    /* This wait is just an example */
+    std::this_thread::sleep_for(std::chrono::minutes(1));
 
-   // [4] Register of for incoming SMS messages
-   if(smsManager) {
-      smsManager->registerListener(mySmsListener);
-   }
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [5] wait for the onIncomingSms()
-   std::cout << " *** wait for the onIncomingSms() *** " << std::endl;
-   std::cout << "Press enter to exit" << std::endl;
-   std::string input;
-   std::getline(std::cin, input);
-   std::cout << " Exiting application... " << std::endl;
-   return 0;
+    std::cout << "Receive sms app exiting" << std::endl;
+    return 0;
 }

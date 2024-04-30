@@ -215,6 +215,12 @@ service DataFilterManager {
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
   }
 
+  service DataLinkManager {
+    rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+    rpc SetEthDataLinkState(SetEthDatalinkStateRequest) returns (SetEthDatalinkStateReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+  }
+
   service QoSManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
   }
@@ -239,6 +245,15 @@ message UsageRecommendation {
         NOT_RECOMMENDED = 2;
     }
     Recommendation recommendation = 1;
+}
+
+message LinkStateEnum {
+    enum LinkState {
+        DUMMY = 0;
+        UP = 1;
+        DOWN = 2;
+    }
+    LinkState link_state = 1;
 }
 
 message GetDualDataUsageRecommendationReply {
@@ -1326,3 +1341,14 @@ message APNThrottleInfo{
     string mnc = 7;
 }
 
+message SetEthDatalinkStateRequest {
+    LinkStateEnum eth_datalink_state = 1;
+}
+
+message SetEthDatalinkStateReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message OnEthDataLinkStateChangeReply {
+    LinkStateEnum eth_datalink_state = 1;
+}

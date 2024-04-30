@@ -1593,6 +1593,19 @@ Call flow to set data stall parameters
 
 5. On success, the application sets data stall parameters for a specific slot ID.
 
+Call flow to set Ethernet data link state
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/set_eth_datalink_state.png
+
+1. Application requests a data factory for the data link manager object.
+2. Data factory returns a shared pointer to the data link manager object to the application.
+3. When the subsystem is ready, application registers as listener to receive notifications for Ethernet data link state changes.
+3. Application brings up the Ethernet data link state.
+4. The change in Ethernet data link state (UP) is notified to the application.
+5. Application brings down the ethernet data link state.
+6. The change in Ethernet data link state (DOWN) is notified to the application.
+
 C-V2X
 -----
 

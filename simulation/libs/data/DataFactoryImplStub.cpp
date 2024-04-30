@@ -14,6 +14,7 @@
 #include "DualDataManagerStub.hpp"
 #include "DataControlManagerStub.hpp"
 #include "KeepAliveManagerStub.hpp"
+#include "DataLinkManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/VlanManagerStub.hpp"
@@ -493,6 +494,28 @@ std::shared_ptr<telux::data::IKeepAliveManager> DataFactoryImplStub::getKeepAliv
     return manager;
 }
 
+std::shared_ptr<telux::data::IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
+    telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IDataLinkManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IDataLinkManager> {
+            std::shared_ptr<telux::data::DataLinkManagerStub> manager
+                = std::make_shared<telux::data::DataLinkManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("DataLink manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ",
+            &dataLinkCallbacks_);
+    auto manager
+        = getManager<telux::data::IDataLinkManager>(type,
+            dataLinkManager_, dataLinkCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
 std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpManager(
     telux::common::InitResponseCb clientCallback) {
     std::function<std::shared_ptr<telux::data::net::IL2tpManager>(
@@ -581,11 +604,6 @@ std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataS
         }
         return settingsMgrImpl;
     }
-}
-
-std::shared_ptr<IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
-    telux::common::InitResponseCb clientCallback) {
-    return nullptr;
 }
 
 void DataFactoryImplStub::initCompleteNotifierWithSlotId(

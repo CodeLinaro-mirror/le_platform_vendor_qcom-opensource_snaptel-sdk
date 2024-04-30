@@ -18,6 +18,7 @@ set(DATA_STUB_SOURCES
     IpFilterImpl.cpp
     DualDataManagerStub.cpp
     DataControlManagerStub.cpp
+    DataLinkManagerStub.cpp
     TrafficFilterImpl.cpp
     KeepAliveManagerStub.cpp
     net/SocksManagerStub.cpp

@@ -40,6 +40,7 @@
 #include "data/DataFilterServerImpl.hpp"
 #include "data/DualDataServerImpl.hpp"
 #include "data/DataControlServerImpl.hpp"
+#include "data/DataLinkServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
@@ -194,6 +195,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataControlServerImpl> dataControlService =
         std::make_shared<DataControlServerImpl>();
     builder.RegisterService(dataControlService.get());
+
+    std::shared_ptr<DataLinkServerImpl> dataLinkService =
+        std::make_shared<DataLinkServerImpl>();
+    builder.RegisterService(dataLinkService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

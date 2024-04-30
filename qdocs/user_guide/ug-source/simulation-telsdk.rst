@@ -1634,6 +1634,7 @@ The following managers are currently available in the simulation:
 11. VlanManager
 12. DualDataManager
 13. DataControlManager
+14. DataLinkManager
 
 
 Data APIs Response handling

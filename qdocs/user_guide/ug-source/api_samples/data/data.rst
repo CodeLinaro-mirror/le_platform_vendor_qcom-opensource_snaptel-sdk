@@ -30,6 +30,7 @@ Data
    on_demand_pdn_connectivity
    enable_ip_passthrough
    set_data_stall_params
+   set_eth_datalink_state
 
 
 ..

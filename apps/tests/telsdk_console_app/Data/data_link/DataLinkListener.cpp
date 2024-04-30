@@ -38,6 +38,12 @@ void DataLinkListener::onServiceStatusChange(
         " ** Data Link onServiceStatusChange **\n" << stat << std::endl;
 }
 
+void DataLinkListener::onEthDataLinkStateChange(telux::data::LinkState linkState) {
+    PRINT_NOTIFICATION <<
+        " ** Data Link State Change to  **\n" << (linkState == telux::data::LinkState::UP ? "UP"
+                : "DOWN") << std::endl;
+}
+
 std::string DataLinkListener::ethModeTypeToString(telux::data::EthModeType ethModeType) {
     std::string mode ="";
     switch(ethModeType) {

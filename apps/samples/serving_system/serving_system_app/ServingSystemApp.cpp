@@ -26,98 +26,142 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <iostream>
-#include <memory>
-
-#include <telux/tel/ServingSystemManager.hpp>
-#include <telux/tel/PhoneFactory.hpp>
-
-#define DEFAULT_SLOT_ID 1
-
-#define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
-
-/**
- * @file: ServingSystemApp.cpp
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * @brief: Simple application to get service domain preference
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-class ServiceDomainResponseCallback {
-public:
-   static void serviceDomainResponse(telux::tel::ServiceDomainPreference preference,
-                                     telux::common::ErrorCode error);
+/*
+ * This application demonstrates how to get domain preferences. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a IServingSystemManager instance from the PhoneFactory.
+ * 3. Wait for the serving system service to become available.
+ * 4. Request service domain preference.
+ * 5. Receive the service domain preferences.
+ *
+ * Usage:
+ * # ./serving_system_app
+ */
 
-private:
-   static std::string getServiceDomain(telux::tel::ServiceDomainPreference preference);
+#include <errno.h>
+
+#include <chrono>
+#include <thread>
+#include <iostream>
+#include <memory>
+#include <string>
+
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/ServingSystemManager.hpp>
+
+class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+
+        /* Step - 2 */
+        auto servingSystemMgr_ = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!servingSystemMgr_) {
+            std::cout << "Can't get IServingSystemManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Serving system service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int getServingSystemInfo() {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(&ServingSystemInfo::serviceDomainResponse,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 4 */
+        status = servingSystemMgr_->requestServiceDomainPreference(responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't request preference, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    /* Step - 5 */
+    void serviceDomainResponse(telux::tel::ServiceDomainPreference preference,
+        telux::common::ErrorCode errorCode) {
+
+        if (errorCode != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to get preference" << std::endl;
+            return;
+        }
+
+        std::cout << "Preference: " << getServiceDomain(preference) << std::endl;
+    }
+
+ private:
+    std::string getServiceDomain(telux::tel::ServiceDomainPreference preference) {
+        switch(preference) {
+            case telux::tel::ServiceDomainPreference::CS_ONLY:
+                return " Circuit Switched(CS) only";
+            case telux::tel::ServiceDomainPreference::PS_ONLY:
+                return " Packet Switched(PS) only";
+            case telux::tel::ServiceDomainPreference::CS_PS:
+                return " Circuit Switched and Packet Switched ";
+            default:
+                return " Unknown";
+        }
+    }
+
+    std::shared_ptr<telux::tel::IServingSystemManager> servingSystemMgr_;
 };
 
-void ServiceDomainResponseCallback::serviceDomainResponse(
-   telux::tel::ServiceDomainPreference preference, telux::common::ErrorCode error) {
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "\nService domain preference:  " << getServiceDomain(preference) << std::endl;
-   } else {
-      PRINT_CB << "\n requestServiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
-               << std::endl;
-   }
-}
-
-std::string
-   ServiceDomainResponseCallback::getServiceDomain(telux::tel::ServiceDomainPreference preference) {
-   std::string prefString = " Unknown";
-   switch(preference) {
-      case telux::tel::ServiceDomainPreference::CS_ONLY:
-         prefString = " Circuit Switched(CS) only";
-         break;
-      case telux::tel::ServiceDomainPreference::PS_ONLY:
-         prefString = " Packet Switched(PS) only";
-         break;
-      case telux::tel::ServiceDomainPreference::CS_PS:
-         prefString = " Circuit Switched and Packet Switched ";
-         break;
-      default:
-         break;
-   }
-   return prefString;
-}
-
 int main(int argc, char *argv[]) {
-   // [1] Get phone factory and serving system manager instances
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto servingSystemMgr = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID);
 
-   // [2] Check if serving subsystem is ready
-   bool subSystemStatus = false;
+    int ret;
+    std::shared_ptr<ServingSystemInfo> app;
 
-   if(servingSystemMgr) {
-      subSystemStatus = servingSystemMgr->isSubsystemReady();
-   }
+    try {
+        app = std::make_shared<ServingSystemInfo>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate ServingSystemInfo" << std::endl;
+        return -ENOMEM;
+    }
 
-   // [2.1] If serving subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "serving subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      if(servingSystemMgr) {
-         std::future<bool> f = servingSystemMgr->onSubsystemReady();
-         // If we want to wait unconditionally for serving subsystem to be ready
-         subSystemStatus = f.get();
-      }
-   }
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [3] Exit the application, if SDK is unable to initialize serving subsystem
-   if(subSystemStatus) {
-      std::cout << " *** serving subsystem is ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize serving subsystem *** " << std::endl;
-      return 1;
-   }
+    ret = app->getServingSystemInfo();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [5] Get service domain prefernece
-   servingSystemMgr->requestServiceDomainPreference(
-      ServiceDomainResponseCallback::serviceDomainResponse);
+    /* Wait for the response for serving system info, application specific logic goes here */
+    /* This wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(30));
 
-   // [6] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit \n\n";
-   std::cin.ignore();
-   return 0;
+    std::cout << "\nServing system app exiting" << std::endl;
+    return 0;
 }

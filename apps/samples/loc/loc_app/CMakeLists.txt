@@ -1,22 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_LOC_APP loc_app)
 
-set(LOC_APP_SOURCES
-    SampleLocationApp.cpp
-)
+pkg_check_modules(TELUXLOC REQUIRED telux-loc)
 
-include_directories(BEFORE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+set(LOC_APP_SOURCES SampleLocationApp.cpp)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+add_executable(${TARGET_LOC_APP} ${LOC_APP_SOURCES})
 
-add_executable (${TARGET_LOC_APP} ${LOC_APP_SOURCES})
-target_link_libraries(${TARGET_LOC_APP} telux_loc)
+target_include_directories(${TARGET_LOC_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# install to target
-install ( TARGETS ${TARGET_LOC_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_compile_options(${TARGET_LOC_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_LOC_APP} PRIVATE ${TELUXLOC_LIBRARIES})
+
+install(TARGETS ${TARGET_LOC_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

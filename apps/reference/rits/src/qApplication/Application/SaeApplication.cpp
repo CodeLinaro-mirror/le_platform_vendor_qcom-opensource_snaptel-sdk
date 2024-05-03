@@ -86,10 +86,9 @@ thread_local int rxFail = 0;
 thread_local int txFail = 0;
 thread_local int encFail = 0;
 thread_local int txSuccess = 0;
-thread_local int signFail = 0;
-thread_local int signSuccess = 0;
 thread_local int syncVerifFail = 0;
 thread_local int syncVerifSuccess = 0;
+thread_local int totalSimLossPkts = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
@@ -501,11 +500,30 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
         return -1;
     }else{
+        if(configuration.RVTransmitLossSimulation){
+            if((rxFail+rxSuccess) % 50 == 0){
+                std::cout << "Lost " << totalSimLossPkts << " packets out of " << (rxFail+rxSuccess) <<
+                    " pkts \n";
+                std::cout << "Should be about " << configuration.RVTransmitLossSimulation <<"\n";
+            }
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            srand(ts.tv_sec * 1000000000LL + ts.tv_nsec);
+            if(rand()%100 <= configuration.RVTransmitLossSimulation){
+                totalSimLossPkts++;
+                rxFail++;
+                if (qMon){
+                    qMon->tData[tid].rxFails++;
+                }
+                return -1;
+            }
+        }
         rxSuccess++;
         if (qMon)
         {
             qMon->tData[tid].totalRx++;
         }
+
     }
     if(!isRxSim){
         l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
@@ -1425,7 +1443,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                 }
                 async_index--;
             }else{
-                async_index--;
+               async_index--;
             }
         }
 

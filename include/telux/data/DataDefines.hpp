@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -750,12 +750,17 @@ using IpProtocol = uint8_t;
  * Peripheral Interface type
  */
 enum class InterfaceType {
-    UNKNOWN = 0, /**< UNKNOWN interface */
-    WLAN = 1,    /**< Wireless Local Area Network (WLAN) */
-    ETH = 2,     /**< Ethernet (ETH)*/
-    ECM = 3,     /**< Ethernet Control Model (ECM) */
-    RNDIS = 4,   /**< Remote Network Driver Interface Specification (RNDIS) */
-    MHI = 5,     /**< Modem Host Interface (MHI) */
+    UNKNOWN = 0,        /**< UNKNOWN interface */
+    WLAN = 1,           /**< Wireless local area network station (WLAN STA) */
+    ETH = 2,            /**< Ethernet (ETH)*/
+    ECM = 3,            /**< Ethernet control model (ECM) */
+    RNDIS = 4,          /**< Remote network driver interface specification (RNDIS) */
+    MHI = 5,            /**< Modem host interface (MHI) */
+    ETH2 = 6,           /**< Ethernet network interface card (ETH NIC2) */
+    AP_PRIMARY = 7,     /**< Primary WLAN access point */
+    AP_SECONDARY = 8,   /**< Secondary WLAN access point */
+    AP_TERTIARY = 9,    /**< Tertiary WLAN access point */
+    AP_QUATERNARY = 10, /**< Quaternary WLAN access point */
 };
 
 /**

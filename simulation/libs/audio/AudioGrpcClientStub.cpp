@@ -102,7 +102,7 @@ bool AudioGrpcClientStub::waitForInitialization() {
     audioStub::AudioClientConnect request{};
     commonStub::GetServiceStatusReply response{};
     ClientContext context{};
-    telux::common::ServiceStatus cbStatus;
+    telux::common::ServiceStatus cbStatus = common::ServiceStatus::SERVICE_UNAVAILABLE;
     int cbDelay;
     grpc::Status reqStatus;
 
@@ -115,6 +115,7 @@ bool AudioGrpcClientStub::waitForInitialization() {
 
     serviceReady_ = static_cast<telux::common::ServiceStatus>(response.service_status());
     cbDelay = static_cast<int>(response.delay());
+    cbStatus = static_cast<common::ServiceStatus>(response.service_status());
     LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
 
     if (cbDelay != SKIP_CALLBACK) {

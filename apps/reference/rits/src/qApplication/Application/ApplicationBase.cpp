@@ -677,6 +677,12 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
     // monitor mvm load and l2 src addresses
     // cacMgrListr
     telux::common::ErrorCode ec = caControlMgr->getCapacity(currCapacity);
+
+    if(ec != telux::common::ErrorCode::SUCCESS){
+        std::cerr << "Error attempting to get mvm capacity \n";
+        return;
+    }
+
     rv_specs* rvsp;
     uint32_t filteringTime = 0; // util is less than the threshold
     L2FilterInfo rvSrc = {0};
@@ -716,8 +722,8 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
                     (configuration.mvmUtilThreshold *  currCapacity.nist256) << "\n";
                 std::cout << " Threshold for flood attack single " <<
                     configuration.floodAttackThreshSingle << " \n";
-                std::cout << " Threshold for mvm utilization to be attack is " <<
-                    (configuration.mvmUtilThreshold *  currCapacity.nist256)  << "\n";
+                std::cout << " Threshold for mvm util to be attack is " <<
+                    (configuration.mvmUtilThreshold)  << "\n";
             }
 
             // calculate the rate every 1000 ms?
@@ -745,7 +751,7 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
                 }else{ // >= 1
                     filteringTime = 75; // ms
                 }
-                /* std::cout << "There is a flooding attack happening\n"; */
+
                 // add this l2 address to the list of addr to filter
                 // somehow need to identify portion from a single vehicle is a high value.
                 // via the l2 address
@@ -754,9 +760,13 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
                 rvSrc.durationMs = filteringTime;
                 if(configuration.floodDetectVerbosity > 1){
                     std::cout << "Detected flooding attack\n";
+                    std::cout << "Current utilization is: " << currUtil << "\n";
                     std::cout << "Adding " << rvSrc.srcL2Id << " to rv list to filter\n";
                     std::cout << "Filtering time should be " << rvSrc.durationMs << "\n";
+                    std::cout << " (100.0 * currUtil) " << (100.0 * currUtil) << "\n";
                     std::cout << " Calculated filter time is " << filteringTime << "\n";
+                    std::cout << "new utilization should be around: " <<
+                        (((100.0 - filteringTime)/100.0)) << "\n";
                 }
                 rvListToFilter->push_back(rvSrc);
             }else{
@@ -775,8 +785,6 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
     if(rvListToFilter->size()){
         // move to state 1 - flooding attack happening
         stateOn = true;
-        // filter the l2 addresses based on calculated filtering time
-        radioReceives[0].setL2Filters(*rvListToFilter);
     }else{
         stateOn = false;
     }
@@ -994,9 +1002,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.procPriority =
             stoi(configs["procPriority"], nullptr, 10);
     }
+    if(this->configuration.procPriority < MIN_NICE ||
+        this->configuration.procPriority > MAX_NICE){
+        this->configuration.procPriority = DEFAULT_PROCESS_PRIORITY;
+    }
     if(setpriority(PRIO_PROCESS, 0,
             this->configuration.procPriority) < 0) {
-        fprintf(stderr, "Setting priority failed\n");
+        fprintf(stderr, "Setting priority to %d failed\n",
+            this->configuration.procPriority);
+        int nice = getpriority(PRIO_PROCESS, 0);
+        fprintf(stderr, "Current priority of process will be: %d\n", nice);
     }
 
     if (configs.end() != configs.find("EnablePreRecorded")) {
@@ -1587,6 +1602,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         }
         if(configs.find("commandInterval") != configs.end()) {
             this->configuration.commandInterval = stoi(configs["commandInterval"]);
+        }
+        if(configs.find("tShiftInterval") != configs.end()) {
+            this->configuration.tShiftInterval = stoi(configs["tShiftInterval"]);
         }
         if(configs.find("nCommandInterval_0") != configs.end()) {
             this->configuration.nCommandInterval_0 = stoi(configs["nCommandInterval_0"]);

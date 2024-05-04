@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -269,6 +269,26 @@ int RadioReceive::setL2Filters(std::vector<L2FilterInfo> filterList){
         return 0;
     }
     cerr << "Failed to setL2Filters" << endl;
+    return -1;
+}
+
+int RadioReceive::removeL2Filters(std::vector<uint32_t> filterList){
+    promise<ErrorCode> p;
+    auto cv2xRadioMgr = this->getCv2xRadioManager();
+    if (nullptr == cv2xRadioMgr) {
+        return -1;
+    }
+    cv2xRadioMgr->removeL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    if(rVerbosity) {
+        std::cout << "Removing l2 filters\n";
+    }
+    if (ErrorCode::SUCCESS == p.get_future().get()) {
+        if(rVerbosity) {
+            std::cout << "success to setL2Filters" << std::endl ;
+        }
+        return 0;
+    }
+    cerr << "Failed to removeL2Filters" << endl;
     return -1;
 }
 

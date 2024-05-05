@@ -105,6 +105,8 @@ private:
     void handleOperatingModeChanged(::telStub::OperatingModeEvent event);
     void handleECallOperatingModeChanged(::telStub::ECallModeInfoChangeEvent event);
     void handleOperatorInfoChanged(::telStub::OperatorInfoEvent event);
+    void handleVoiceRadioTechChanged(::telStub::VoiceRadioTechnologyChangeEvent event);
+    void handleServiceStateChanged(::telStub::ServiceStateChangeEvent event);
     void onEventUpdate(std::string event);
     void updateRadioState(OperatingMode optMode);
 };

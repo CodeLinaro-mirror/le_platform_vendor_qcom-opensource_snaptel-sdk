@@ -62,7 +62,8 @@ grpc::Status ServingManagerServerImpl::InitService(ServerContext* context,
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
     if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::vector<std::string> filters = { telux::tel::TEL_SERVING_SYSTEM };
+        std::vector<std::string> filters = {telux::tel::TEL_SERVING_SYSTEM_FILTER,
+            MODEM_FILTER};
         auto &serverEventManager = ServerEventManager::getInstance();
         serverEventManager.registerListener(shared_from_this(), filters);
     }
@@ -1110,5 +1111,11 @@ void ServingManagerServerImpl::handleNetworkTimeUpdateEvent(std::string eventPar
         eventImpl.updateEventQueue(anyResponse);
     } catch(exception const & ex) {
         LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+void ServingManagerServerImpl::onServerEvent(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::telStub::OperatingModeEvent>()) {
+        LOG(DEBUG, __FUNCTION__, "Received Operating Mode Change Event");
     }
 }

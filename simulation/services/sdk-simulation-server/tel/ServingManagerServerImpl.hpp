@@ -65,6 +65,7 @@ public:
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
+    void onServerEvent(google::protobuf::Any event) override;
 
 private:
     void handleCallBarringUpdate(std::string eventParams);

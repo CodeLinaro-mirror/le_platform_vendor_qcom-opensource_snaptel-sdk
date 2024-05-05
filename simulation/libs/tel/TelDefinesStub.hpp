@@ -42,6 +42,8 @@
 #ifndef TEL_STUB_DEFINES_HPP
 #define TEL_STUB_DEFINES_HPP
 
+#include <string>
+
 namespace telux {
 namespace tel {
 

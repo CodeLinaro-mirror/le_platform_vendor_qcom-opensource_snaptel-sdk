@@ -320,7 +320,7 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
         return telux::common::Status::FAILED;
     }
 
-    for (auto &tech : response.voice_service_techs()) {
+    for (auto &tech : response.capability_info().voice_service_techs()) {
         VoiceServiceTechnology voiceServiceTechnology = static_cast<VoiceServiceTechnology>(tech);
         switch(voiceServiceTechnology) {
             case VoiceServiceTechnology::VOICE_TECH_GW_CSFB:
@@ -341,14 +341,15 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
         }
     }
 
-    cellularCapabilityInfo.simCount = response.sim_count();
-    cellularCapabilityInfo.maxActiveSims = response.max_active_sims();
+    cellularCapabilityInfo.simCount = response.capability_info().sim_count();
+    cellularCapabilityInfo.maxActiveSims = response.capability_info().max_active_sims();
     std::vector<SimRatCapability> simRatCapList;
-    LOG(DEBUG, __FUNCTION__, " SIM RAT capabilities : ", response.sim_rat_capabilities_size());
-    for (int i = 0; i < response.sim_rat_capabilities_size(); i++) {
+    LOG(DEBUG, __FUNCTION__, " SIM RAT capabilities : ",
+        response.capability_info().sim_rat_capabilities_size());
+    for (int i = 0; i < response.capability_info().sim_rat_capabilities_size(); i++) {
         SimRatCapability simRatCap;
-        simRatCap.slotId = response.mutable_sim_rat_capabilities(i)->slot_id();
-        for (auto &rat : response.mutable_sim_rat_capabilities(i)->capabilities()) {
+        simRatCap.slotId = response.capability_info().sim_rat_capabilities(i).phone_id();
+        for (auto &rat : response.capability_info().sim_rat_capabilities(i).capabilities()) {
             RATCapability ratCap = static_cast<RATCapability>(rat);
             LOG(DEBUG, __FUNCTION__, " RAT Capability : ", static_cast<int>(ratCap));
             switch (ratCap) {
@@ -389,13 +390,15 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
     }
 
     std::vector<SimRatCapability> deviceRatCapList;
-    LOG(DEBUG, __FUNCTION__, " Device RAT Capabilities : ", response.device_rat_capability_size());
-    for (int i = 0; i < response.device_rat_capability_size(); i++) {
+    LOG(DEBUG, __FUNCTION__, " Device RAT Capabilities : ",
+        response.capability_info().device_rat_capability_size());
+    for (int i = 0; i < response.capability_info().device_rat_capability_size(); i++) {
         SimRatCapability deviceRatCap;
-        deviceRatCap.slotId = response.mutable_device_rat_capability(i)->slot_id();
+        deviceRatCap.slotId =
+            response.capability_info().device_rat_capability(i).phone_id();
         LOG(DEBUG, __FUNCTION__, " capabilities size:",
-            response.mutable_device_rat_capability(i)->capabilities_size());
-        for (auto &rat : response.mutable_device_rat_capability(i)->capabilities()) {
+            response.capability_info().device_rat_capability(i).capabilities_size());
+        for (auto &rat : response.capability_info().device_rat_capability(i).capabilities()) {
             RATCapability ratCap = static_cast<RATCapability>(rat);
             LOG(DEBUG, __FUNCTION__, " RAT Capability : ", static_cast<int>(ratCap));
             switch (ratCap) {
@@ -607,10 +610,58 @@ void PhoneManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::OperatorInfoEvent opertorInfoChangeEvent;
         event.UnpackTo(&opertorInfoChangeEvent);
         handleOperatorInfoChanged(opertorInfoChangeEvent);
+    } else if(event.Is<::telStub::VoiceRadioTechnologyChangeEvent>()) {
+        ::telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent;
+        event.UnpackTo(&voiceRadioTechnologyChangeEvent);
+        handleVoiceRadioTechChanged(voiceRadioTechnologyChangeEvent);
+    } else if(event.Is<::telStub::ServiceStateChangeEvent>()) {
+        ::telStub::ServiceStateChangeEvent serviceStateChangeEvent;
+        event.UnpackTo(&serviceStateChangeEvent);
+        handleServiceStateChanged(serviceStateChangeEvent);
     } else {
         LOG(DEBUG, __FUNCTION__, "No handling required for other events");
     }
 }
+
+void PhoneManagerStub::handleVoiceRadioTechChanged(
+    ::telStub::VoiceRadioTechnologyChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    telux::tel::RadioTechnology rat =
+        static_cast<telux::tel::RadioTechnology>(event.radio_technology());
+    std::vector<std::weak_ptr<IPhoneListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onVoiceRadioTechnologyChanged(phoneId, rat);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void PhoneManagerStub::handleServiceStateChanged(::telStub::ServiceStateChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    telux::tel::ServiceState serviceState =
+        static_cast<telux::tel::ServiceState>(event.service_state());
+    std::vector<std::weak_ptr<IPhoneListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onServiceStateChanged(phoneId, serviceState);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
 
 void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
@@ -618,28 +669,34 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
     std::shared_ptr<SignalStrength> signalStrengthNotify = nullptr;
     std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength =
          std::make_shared<GsmSignalStrengthInfo>(
-             event.mutable_gsm_signal_strength_info()->gsm_signal_strength(),
-             event.mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
-             INVALID_SIGNAL_STRENGTH_VALUE);
+             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                gsm_signal_strength(),
+             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                gsm_bit_error_rate(), INVALID_SIGNAL_STRENGTH_VALUE);
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
         = std::make_shared<LteSignalStrengthInfo>(
-            event.mutable_lte_signal_strength_info()->lte_signal_strength(),
-            event.mutable_lte_signal_strength_info()->lte_rsrp(),
-            event.mutable_lte_signal_strength_info()->lte_rsrq(),
-            event.mutable_lte_signal_strength_info()->lte_rssnr(),
-            event.mutable_lte_signal_strength_info()->lte_cqi(),
-            event.mutable_lte_signal_strength_info()->timing_advance());
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
+                lte_signal_strength(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrp(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrq(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_cqi(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
+                timing_advance());
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
-            event.mutable_wcdma_signal_strength_info()->signal_strength(),
-            event.mutable_wcdma_signal_strength_info()->bit_error_rate(),
-            event.mutable_wcdma_signal_strength_info()->ecio(),
-            event.mutable_wcdma_signal_strength_info()->rscp());
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+                signal_strength(), event.mutable_signal_strength()->
+                    mutable_wcdma_signal_strength_info()->bit_error_rate(),
+                event.mutable_signal_strength()->
+                    mutable_wcdma_signal_strength_info()->ecio(),
+                event.mutable_signal_strength()->
+                    mutable_wcdma_signal_strength_info()->rscp());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
-            event.mutable_nr5g_signal_strength_info()->rsrp(),
-            event.mutable_nr5g_signal_strength_info()->rsrq(),
-            event.mutable_nr5g_signal_strength_info()->rssnr());
+            event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
+            event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrq(),
+            event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rssnr());
     signalStrengthNotify
         = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
             nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
@@ -811,11 +868,14 @@ void PhoneManagerStub::handleVoiceServiceStateChanged(::telStub::VoiceServiceSta
     int phoneId = event.phone_id();
     std::shared_ptr<VoiceServiceInfo> vocSrvInfo = nullptr;
     VoiceServiceState voiceServiceState =
-        static_cast<telux::tel::VoiceServiceState>(event.voice_service_state());
+        static_cast<telux::tel::VoiceServiceState>(
+            event.voice_service_state_info().voice_service_state());
     VoiceServiceDenialCause denialCause =
-        static_cast<telux::tel::VoiceServiceDenialCause>(event.voice_service_denial_cause());
+        static_cast<telux::tel::VoiceServiceDenialCause>(
+            event.voice_service_state_info().voice_service_denial_cause());
     RadioTechnology radioTech =
-        static_cast<telux::tel::RadioTechnology>(event.radio_technology());
+        static_cast<telux::tel::RadioTechnology>(
+            event.voice_service_state_info().radio_technology());
     vocSrvInfo = std::make_shared<VoiceServiceInfo>(voiceServiceState, denialCause, radioTech);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {

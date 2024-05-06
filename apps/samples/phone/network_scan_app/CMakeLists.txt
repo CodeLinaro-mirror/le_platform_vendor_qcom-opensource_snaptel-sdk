@@ -1,18 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_NETWORK_SCAN_APP network_scan_app)
+set(TARGET_TEL_APP network_scan_app)
 
-set(NETWORK_SCAN_SOURCES
-    NetworkApp.cpp
-)
+pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+set(TEL_APP_SOURCES NetworkApp.cpp)
 
-add_executable (${TARGET_NETWORK_SCAN_APP} ${NETWORK_SCAN_SOURCES})
-target_link_libraries(${TARGET_NETWORK_SCAN_APP} telux_tel)
+add_executable(${TARGET_TEL_APP} ${TEL_APP_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_NETWORK_SCAN_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      )
+target_include_directories(${TARGET_TEL_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(${TARGET_TEL_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_TEL_APP} PRIVATE ${TELUXTEL_LIBRARIES})
+
+install(TARGETS ${TARGET_TEL_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -27,141 +27,213 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include <memory>
-
-#include <telux/tel/NetworkSelectionManager.hpp>
-#include <telux/tel/PhoneFactory.hpp>
-
-#define DEFAULT_SLOT_ID 1
-#define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
-
-/**
- * @file: NetworkApp.cpp
- *
- * @brief: Sample application to perform network scan
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-void logInUseStatus(telux::tel::InUseStatus status) {
-   switch(status) {
-      case telux::tel::InUseStatus::UNKNOWN:
-         std::cout << "In-use status: UNKNOWN, ";
-         break;
-      case telux::tel::InUseStatus::CURRENT_SERVING:
-         std::cout << "In-use status: CURRENT_SERVING, ";
-         break;
-      case telux::tel::InUseStatus::AVAILABLE:
-         std::cout << "In-use status: AVAILABLE, ";
-         break;
-      default:
-         break;
-   }
-}
+/*
+ * This application demonstrates how to perform the network scan and
+ * get a list of available networks. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a INetworkSelectionManager instance from the PhoneFactory.
+ * 3. Wait for the network selection service to become available.
+ * 4. Trigger a network scan.
+ * 5. Wait for the scan to complete.
+ * 6. Receive result of the network scan.
+ *
+ * Usage:
+ * # ./network_scan_app
+ */
 
-void logRoamingStatus(telux::tel::RoamingStatus status) {
-   switch(status) {
-      case telux::tel::RoamingStatus::UNKNOWN:
-         std::cout << "Roaming status: UNKNOWN, ";
-         break;
-      case telux::tel::RoamingStatus::HOME:
-         std::cout << "Roaming status: HOME, ";
-         break;
-      case telux::tel::RoamingStatus::ROAM:
-         std::cout << "Roaming status: ROAM, ";
-         break;
-      default:
-         break;
-   }
-}
+#include <errno.h>
 
-void logForbiddenStatus(telux::tel::ForbiddenStatus status) {
-   switch(status) {
-      case telux::tel::ForbiddenStatus::UNKNOWN:
-         std::cout << "Forbidden status: UNKNOWN, ";
-         break;
-      case telux::tel::ForbiddenStatus::FORBIDDEN:
-         std::cout << "Forbidden status: FORBIDDEN, ";
-         break;
-      case telux::tel::ForbiddenStatus::NOT_FORBIDDEN:
-         std::cout << "Forbidden status: NOT_FORBIDDEN, ";
-         break;
-      default:
-         break;
-   }
-}
+#include <iostream>
+#include <memory>
+#include <cstdlib>
+#include <future>
+#include <chrono>
+#include <thread>
 
-void logPreferredStatus(telux::tel::PreferredStatus status) {
-   switch(status) {
-      case telux::tel::PreferredStatus::UNKNOWN:
-         std::cout << "Preferred status: UNKNOWN" << std::endl;
-         break;
-      case telux::tel::PreferredStatus::PREFERRED:
-         std::cout << "Preferred status: PREFERRED" << std::endl;
-         break;
-      case telux::tel::PreferredStatus::NOT_PREFERRED:
-         std::cout << "Preferred status: NOT_PREFERRED" << std::endl;
-         break;
-      default:
-         break;
-   }
-}
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/NetworkSelectionManager.hpp>
 
-void responseCallback(
-   std::vector<telux::tel::OperatorInfo> operatorInfos, telux::common::ErrorCode error) {
-   std::cout << std::endl;
-   PRINT_CB << "\n************ Received network scan response ************" << std::endl;
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      std::cout << "Operator info size: " << operatorInfos.size() << std::endl;
+class Utils {
+ public:
+    void printOperatorName(telux::tel::OperatorInfo operatorInfo) {
+        std::cout << "Operator name: " << operatorInfo.getName() <<
+            "\nMcc: " << operatorInfo.getMcc() <<
+            "\nMnc: " << operatorInfo.getMnc() << std::endl;
+    }
 
-      for(auto it : operatorInfos) {
-         std::cout << "Operator name: " << it.getName() << "\nMcc: " << it.getMcc()
-                   << "\nMnc: " << it.getMnc() << std::endl;
-         logInUseStatus(it.getStatus().inUse);
-         logRoamingStatus(it.getStatus().roaming);
-         std::cout << std::endl;
-         logForbiddenStatus(it.getStatus().forbidden);
-         logPreferredStatus(it.getStatus().preferred);
-         std::cout << std::endl;
-      }
-      std::cout << "\n*********************************************************\n";
-   } else {
-      PRINT_CB << "Network scan failed, ErrorCode : " << static_cast<int>(error) << std::endl;
-   }
-}
+    void printInUseStatus(telux::tel::InUseStatus status) {
+        switch(status) {
+            case telux::tel::InUseStatus::UNKNOWN:
+                std::cout << "In-use status: UNKNOWN, ";
+                break;
+            case telux::tel::InUseStatus::CURRENT_SERVING:
+                std::cout << "In-use status: CURRENT_SERVING, ";
+                break;
+            case telux::tel::InUseStatus::AVAILABLE:
+                std::cout << "In-use status: AVAILABLE, ";
+                break;
+            default:
+                break;
+       }
+    }
 
-int main(int argc, char **argv) {
-   // [1] Get phone factory and network selection manager instances
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   std::shared_ptr<telux::tel::INetworkSelectionManager> networkMgr
-      = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID);
+    void printRoamingStatus(telux::tel::RoamingStatus status) {
+        switch(status) {
+            case telux::tel::RoamingStatus::UNKNOWN:
+                std::cout << "Roaming status: UNKNOWN, ";
+                break;
+            case telux::tel::RoamingStatus::HOME:
+                std::cout << "Roaming status: HOME, ";
+                break;
+            case telux::tel::RoamingStatus::ROAM:
+                std::cout << "Roaming status: ROAM, ";
+                break;
+            default:
+                break;
+       }
+    }
 
-   // [2] Check if network selection subsystem is ready
-   bool subSystemStatus = networkMgr->isSubsystemReady();
+    void printForbiddenStatus(telux::tel::ForbiddenStatus status) {
+        switch(status) {
+            case telux::tel::ForbiddenStatus::UNKNOWN:
+                std::cout << "Forbidden status: UNKNOWN, ";
+                break;
+            case telux::tel::ForbiddenStatus::FORBIDDEN:
+                std::cout << "Forbidden status: FORBIDDEN, ";
+                break;
+            case telux::tel::ForbiddenStatus::NOT_FORBIDDEN:
+                std::cout << "Forbidden status: NOT_FORBIDDEN, ";
+                break;
+            default:
+                break;
+       }
+    }
 
-   // [2.1] If network selection subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\n Network selection subsystem is not ready, please wait" << std::endl;
-      std::future<bool> f = networkMgr->onSubsystemReady();
-      // If we want to wait unconditionally for network selection subsystem to be ready
-      subSystemStatus = f.get();
-   }
+    void printPreferredStatus(telux::tel::PreferredStatus status) {
+        switch(status) {
+            case telux::tel::PreferredStatus::UNKNOWN:
+                std::cout << "Preferred status: UNKNOWN" << std::endl;
+                break;
+            case telux::tel::PreferredStatus::PREFERRED:
+                std::cout << "Preferred status: PREFERRED" << std::endl;
+                break;
+            case telux::tel::PreferredStatus::NOT_PREFERRED:
+                std::cout << "Preferred status: NOT_PREFERRED" << std::endl;
+                break;
+            default:
+                break;
+       }
+    }
+};
 
-   // [3] Exit the application, if SDK is unable to initialize network selection subsystem
-   if(subSystemStatus) {
-      std::cout << "\n *** Network selection subsystem is ready *** " << std::endl;
-   } else {
-      std::cout << "\n *** ERROR - Unable to initialize network selection subsystem *** "
-                << std::endl;
-      return 1;
-   }
+class NetworkScanner : public std::enable_shared_from_this<NetworkScanner> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-   std::cout << "\n Scanning network... Please wait. \n";
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
-   // [4] Perform network scan
-   networkMgr->performNetworkScan(responseCallback);
+        /* Step - 2 */
+        networkMgr_ = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-   // [5] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit \n";
-   std::cin.ignore();
-   return 0;
+        if (!networkMgr_) {
+            std::cout << "Can't get INetworkSelectionManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Network selection service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int scanNetwork() {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(&NetworkScanner::networkScanResultReceiver,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 4 */
+        status = networkMgr_->performNetworkScan(responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't scan, err " << static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Scan initiated" << std::endl;
+        return 0;
+    }
+
+    /* Step - 6 */
+    void networkScanResultReceiver(
+        std::vector<telux::tel::OperatorInfo> operatorsInfo,
+        telux::common::ErrorCode error) {
+
+        std::cout << "networkScanResultReceiver()" << std::endl;
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to scan, err " << static_cast<int>(error) << std::endl;
+            return;
+        }
+
+        for (auto opInfo : operatorsInfo) {
+            utils_->printOperatorName(opInfo);
+            utils_->printInUseStatus(opInfo.getStatus().inUse);
+            utils_->printRoamingStatus(opInfo.getStatus().roaming);
+            utils_->printForbiddenStatus(opInfo.getStatus().forbidden);
+            utils_->printPreferredStatus(opInfo.getStatus().preferred);
+        }
+    }
+
+ private:
+    std::shared_ptr<Utils> utils_;
+    std::shared_ptr<telux::tel::INetworkSelectionManager> networkMgr_;
+};
+
+int main(int argc, char *argv[]) {
+
+    int ret;
+    std::shared_ptr<NetworkScanner> app;
+
+    try {
+        app = std::make_shared<NetworkScanner>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate NetworkScanner" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->scanNetwork();
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* Step - 5 */
+    /* Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::minutes(3));
+
+    std::cout << "\nNetwork scanner app exiting" << std::endl;
+    return 0;
 }

@@ -26,157 +26,194 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * This application demonstrates how to make an ecall. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a ICallManager instance from the PhoneFactory.
+ * 3. Wait for the call manager service to become available.
+ * 4. Trigger an ecall.
+ * 5. Receive status of the ecall in callback.
+ * 6. Wait while the call is in progress.
+ * 7. Finally, when the use case is over, hangup the call.
+ *
+ * Usage:
+ * # ./make_ecall_app
  */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
+#include <cstdlib>
+#include <future>
+#include <chrono>
+#include <thread>
 
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/CallManager.hpp>
 
-using namespace telux::tel;
-using namespace telux::common;
+class ECaller : public telux::tel::IMakeCallCallback,
+                public std::enable_shared_from_this<ECaller> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-// Define macros to populate eCallMsdData
-#define MSD_VERSION 2
-#define MESSAGE_IDENTIFIER 60
-#define AUTOMATIC_ACTIVATION 1
-#define TEST_CALL 0
-#define POSITION_CAN_BE_TRUSTED 1
-#define VEHICLE_TYPE 0
-#define ISO_WMI "ECA"
-#define ISO_VDS "LLEXAM"
-#define ISO_VIS_MODEL_YEAR "P"
-#define ISO_VIS_SEQ_PLANT "LE02013"
-#define GASOLINE_TANK_PRESENT 1
-#define DIESEL_TANK_PRESENT 0
-#define COMPRESSED_NATURALGAS 0
-#define LIQUID_PROPANE_GAS 0
-#define ELECTRIC_ENERGY_STORAGE 0
-#define HYDROGEN_STORAGE 0
-#define OTHER_STORAGE 0
-#define TIMESTAMP 1367878452
-#define VEHICLE_POSITION_LATITUDE 123
-#define VEHICLE_POSITION_LONGITUDE 1234
-#define VEHICLE_DIRECTION 4
-#define RECENT_LOCATION_N1_PRESENT 1
-#define RECENT_N1_LATITUDE_DELTA -1
-#define RECENT_N1_LONGITUDE_DELTA -10
-#define RECENT_LOCATION_N2_PRESENT 1
-#define RECENT_N2_LATITUDE_DELTA -1
-#define RECENT_N2_LONGITUDE_DELTA -30
-#define NUMBER_OF_PASSENGERS_PRESENT 1
-#define NUMBER_OF_PASSENGERS 2
-#define VIN "ECALLEXAMPLE02013"
-#define OPTIONAL_ADDITIONAL_DATA_PRESENT 1
-#define OID_DATA "1.2.3"
-#define OAD_DATA "0123456789ABCDEF"
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
-std::shared_ptr<ICall> dialedCall = nullptr;
+        /* Step - 2 */
+        callMgr_ = phoneFactory.getCallManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-// ##### 6.1. implement IMakeCallCallback interface to receive response for the dial request -
-// optional
-class DialCallback : public IMakeCallCallback {
-public:
-    void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-       std::cout << "DialCallback::makeCallResponse" << std::endl;
-       std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
-       if(call) {
-          std::cout << "makeCallResponse::onCallInfoChange: "
-                    << " Call Index: " << (int)call->getCallIndex()
-                    << " Call Direction: " << (int)call->getCallDirection()
-                    << " Phone Number: " << call->getRemotePartyNumber() << std::endl;
-          dialedCall = call;
-       }
+        if (!callMgr_) {
+            std::cout << "Can't get ICallManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Call manager service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
     }
+
+    int triggerECall() {
+        telux::common::Status status;
+        int emergencyCategory = 64;
+        int eCallVariant = 1;
+        int phoneId = DEFAULT_PHONE_ID;
+        /* Populate eCallMsdData with valid information */
+        telux::tel::ECallMsdData eCallMsdData{};
+        eCallMsdData.optionals.recentVehicleLocationN1Present = true;
+        eCallMsdData.optionals.recentVehicleLocationN2Present = true;
+        eCallMsdData.optionals.numberOfPassengersPresent = 1;
+        eCallMsdData.messageIdentifier = 60;
+        eCallMsdData.control.automaticActivation = true;
+        eCallMsdData.control.testCall = false;
+        eCallMsdData.control.positionCanBeTrusted = true;
+        eCallMsdData.control.vehicleType = telux::tel::ECallVehicleType::PASSENGER_VEHICLE_CLASS_M1;
+        eCallMsdData.vehicleIdentificationNumber.isowmi = "ECA";
+        eCallMsdData.vehicleIdentificationNumber.isovds = "LLEXAM";
+        eCallMsdData.vehicleIdentificationNumber.isovisModelyear = "P";
+        eCallMsdData.vehicleIdentificationNumber.isovisSeqPlant = "LE02013";
+        eCallMsdData.vehiclePropulsionStorage.gasolineTankPresent = true;
+        eCallMsdData.vehiclePropulsionStorage.dieselTankPresent = true;
+        eCallMsdData.vehiclePropulsionStorage.compressedNaturalGas = false;
+        eCallMsdData.vehiclePropulsionStorage.liquidPropaneGas = false;
+        eCallMsdData.vehiclePropulsionStorage.electricEnergyStorage = false;
+        eCallMsdData.vehiclePropulsionStorage.hydrogenStorage = false;
+        eCallMsdData.vehiclePropulsionStorage.otherStorage = false;
+        eCallMsdData.timestamp = 1367878452;
+        eCallMsdData.vehicleLocation.positionLatitude = 123;
+        eCallMsdData.vehicleLocation.positionLongitude = 1234;
+        eCallMsdData.vehicleDirection = 4;
+        eCallMsdData.optionals.optionalDataPresent = true;
+        eCallMsdData.recentVehicleLocationN1.latitudeDelta = -1;
+        eCallMsdData.recentVehicleLocationN1.longitudeDelta = -10;
+        eCallMsdData.recentVehicleLocationN2.latitudeDelta = -1;
+        eCallMsdData.recentVehicleLocationN2.longitudeDelta = -30;
+        eCallMsdData.numberOfPassengers = 2;
+        eCallMsdData.optionalPdu.oid = "1.2.3";
+        std::string oadData("0123456789ABCDEF");
+        std::vector<uint8_t> data(oadData.begin(), oadData.end());
+        eCallMsdData.optionalPdu.data = data;
+
+        /* Step - 4 */
+        status = callMgr_->makeECall(phoneId,
+            eCallMsdData, emergencyCategory, eCallVariant, shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't call, err " << static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Call initiated" << std::endl;
+        return 0;
+    }
+
+    int terminateCall() {
+        telux::common::Status status;
+
+        /* Step - 7 */
+        status = dialedCall_->hangup();
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Failed to hangup, err " << static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Call termination initiated" << std::endl;
+        return 0;
+    }
+
+    /* Step - 5 */
+    void makeCallResponse(telux::common::ErrorCode ec,
+            std::shared_ptr<telux::tel::ICall> call) override {
+        std::cout << "makeCallResponse()" << std::endl;
+
+        if (ec != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to call, err " << static_cast<int>(ec) << std::endl;
+            return;
+        }
+
+        dialedCall_ = call;
+
+        std::cout << "Index " << call->getCallIndex() <<
+            " direction " << static_cast<int>(call->getCallDirection()) <<
+            " number " << call->getRemotePartyNumber() << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::tel::ICall> dialedCall_;
+    std::shared_ptr<telux::tel::ICallManager> callMgr_;
 };
 
-/**
- * Main routine
- */
-int main(int, char **) {
+int main(int argc, char *argv[]) {
 
-   // ### 1. Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
-   auto callManager = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
-            cbProm.set_value(status);});
-   if(callManager == nullptr) {
-      std::cout << " *** ERROR - Unable to get Call Manager instance" << std::endl;
-      return 1;
-   }
+    int ret;
+    std::shared_ptr<ECaller> app;
 
-   // ### 2. Wait for the Call Manager subsystem to be ready.
-   telux::common::ServiceStatus status = cbProm.get_future().get();
-   if(status == SERVICE_AVAILABLE) {
-      std::cout << "Call Manager subsystem is ready" << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
-      return 1;
-   }
+    try {
+        app = std::make_shared<ECaller>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate ECaller" << std::endl;
+        return -ENOMEM;
+    }
 
-   // ### 3. Instantiate dial callback instance - this is optional
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // ### 4. Create details required to make emergency call(eCall) like eCallMsdData,
-   // emergencyCategory and eCallVariant
-   int emergencyCategory = 64;
-   ECallMsdData eCallMsdData;
-   int eCallVariant = 1;
-   int phoneId = DEFAULT_PHONE_ID;
-   // Populate eCallMsdData with valid information
-   eCallMsdData.optionals.recentVehicleLocationN1Present = RECENT_LOCATION_N1_PRESENT;
-   eCallMsdData.optionals.recentVehicleLocationN2Present = RECENT_LOCATION_N2_PRESENT;
-   eCallMsdData.optionals.numberOfPassengersPresent = NUMBER_OF_PASSENGERS_PRESENT;
-   eCallMsdData.messageIdentifier = MESSAGE_IDENTIFIER;
-   eCallMsdData.control.automaticActivation = AUTOMATIC_ACTIVATION;
-   eCallMsdData.control.testCall = TEST_CALL;
-   eCallMsdData.control.positionCanBeTrusted = POSITION_CAN_BE_TRUSTED;
-   eCallMsdData.control.vehicleType = static_cast<ECallVehicleType>(VEHICLE_TYPE);
-   eCallMsdData.vehicleIdentificationNumber.isowmi = ISO_WMI;
-   eCallMsdData.vehicleIdentificationNumber.isovds = ISO_VDS;
-   eCallMsdData.vehicleIdentificationNumber.isovisModelyear = ISO_VIS_MODEL_YEAR;
-   eCallMsdData.vehicleIdentificationNumber.isovisSeqPlant = ISO_VIS_SEQ_PLANT;
-   eCallMsdData.vehiclePropulsionStorage.gasolineTankPresent = GASOLINE_TANK_PRESENT;
-   eCallMsdData.vehiclePropulsionStorage.dieselTankPresent = DIESEL_TANK_PRESENT;
-   eCallMsdData.vehiclePropulsionStorage.compressedNaturalGas = COMPRESSED_NATURALGAS;
-   eCallMsdData.vehiclePropulsionStorage.liquidPropaneGas = LIQUID_PROPANE_GAS;
-   eCallMsdData.vehiclePropulsionStorage.electricEnergyStorage = ELECTRIC_ENERGY_STORAGE;
-   eCallMsdData.vehiclePropulsionStorage.hydrogenStorage = HYDROGEN_STORAGE;
-   eCallMsdData.vehiclePropulsionStorage.otherStorage = OTHER_STORAGE;
-   eCallMsdData.timestamp = TIMESTAMP;
-   eCallMsdData.vehicleLocation.positionLatitude = VEHICLE_POSITION_LATITUDE;
-   eCallMsdData.vehicleLocation.positionLongitude = VEHICLE_POSITION_LONGITUDE;
-   eCallMsdData.vehicleDirection = VEHICLE_DIRECTION;
-   eCallMsdData.optionals.optionalDataPresent = OPTIONAL_ADDITIONAL_DATA_PRESENT;
-   eCallMsdData.recentVehicleLocationN1.latitudeDelta = RECENT_N1_LATITUDE_DELTA;
-   eCallMsdData.recentVehicleLocationN1.longitudeDelta = RECENT_N1_LONGITUDE_DELTA;
-   eCallMsdData.recentVehicleLocationN2.latitudeDelta = RECENT_N2_LATITUDE_DELTA;
-   eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
-   eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
-   eCallMsdData.optionalPdu.oid = OID_DATA;
-   std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
-   msdData_.optionalPdu.data = data;
+    ret = app->triggerECall();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // ### 5. Send an eCall request
-   auto makeCallStatus
-      = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
-   std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+    /* Step - 6 */
+    /* Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::minutes(3));
 
-   // ### 6. Wait for the call state to become active and hang-up the call after conversation
-   sleep(10);
-   if(dialedCall) {
-      dialedCall->hangup();
-   }
+    ret = app->terminateCall();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // ### 7. Exit logic is specific to an application
-   std::cout << "Press enter to exit" << std::endl;
-   std::string input;
-   std::getline(std::cin, input);
-   std::cout << "Exiting application..." << std::endl;
-   return 0;
+    std::cout << "\nEcall app exiting" << std::endl;
+    return 0;
 }

@@ -26,85 +26,160 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * This application demonstrates how to make a call. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a ICallManager instance from the PhoneFactory.
+ * 3. Wait for the call manager service to become available.
+ * 4. Trigger a call.
+ * 5. Receive status of the call in callback.
+ * 6. Wait while the call is in progress.
+ * 7. Finally, when the use case is over, hangup the call.
+ *
+ * Usage:
+ * # ./make_call_app
  */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
+#include <cstdlib>
+#include <future>
+#include <chrono>
+#include <thread>
 
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/CallManager.hpp>
 
-#include "ConfigParser.hpp"
+class CallMaker : public telux::tel::IMakeCallCallback,
+                public std::enable_shared_from_this<CallMaker> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-#define DEFAULT_PHONE_NUMBER "+18583562961"
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
-using namespace telux::tel;
-using namespace telux::common;
-std::shared_ptr<ICall> dialedCall = nullptr;
+        /* Step - 2 */
+        callMgr_ = phoneFactory.getCallManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-// ##### 5.1 Implement IMakeCallCallback interface to receive response for the dial request
-// - optional
-class DialCallback : public IMakeCallCallback {
-public:
-    void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-       std::cout << "DialCallback::makeCallResponse" << std::endl;
-       std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
-       if(call) {
-          std::cout << "makeCallResponse RemotePartyNumber : " << call->getRemotePartyNumber()
-                    << std::endl;
-          std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex() << std::endl;
-          dialedCall = call;
-       }
+        if (!callMgr_) {
+            std::cout << "Can't get ICallManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Call manager service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
     }
+
+    int triggerCall() {
+        telux::common::Status status;
+        int phoneId = DEFAULT_PHONE_ID;
+        std::string phoneNumber = "+1xxxxxxxxxx";
+
+        /* Step - 4 */
+        status = callMgr_->makeCall(phoneId, phoneNumber, shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't call, err " << static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Call initiated" << std::endl;
+        return 0;
+    }
+
+    int terminateCall() {
+        telux::common::Status status;
+
+        /* Step - 7 */
+        status = dialedCall_->hangup();
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Failed to hangup, err " << static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Call termination initiated" << std::endl;
+        return 0;
+    }
+
+    /* Step - 5 */
+    void makeCallResponse(telux::common::ErrorCode ec,
+            std::shared_ptr<telux::tel::ICall> call) override {
+        std::cout << "makeCallResponse()" << std::endl;
+
+        if (ec != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to call, err " << static_cast<int>(ec) << std::endl;
+            return;
+        }
+
+        dialedCall_ = call;
+
+        std::cout << "Index " << call->getCallIndex() <<
+            " direction " << static_cast<int>(call->getCallDirection()) <<
+            " number " << call->getRemotePartyNumber() << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::tel::ICall> dialedCall_;
+    std::shared_ptr<telux::tel::ICallManager> callMgr_;
 };
 
-/**
- * Main routine
- */
 int main(int argc, char *argv[]) {
 
-   // ### 1. Get the PhoneFactory and CallManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
-   auto callManager = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
-            cbProm.set_value(status);});
-   if(callManager == nullptr) {
-      std::cout << " *** ERROR - Unable to get Call Manager instance" << std::endl;
-      return 1;
-   }
+    int ret;
+    std::shared_ptr<CallMaker> app;
 
-   // ### 2. Wait for the Call Manager subsystem to be ready.
-   telux::common::ServiceStatus status = cbProm.get_future().get();
-   if(status == SERVICE_AVAILABLE) {
-      std::cout << "Call Manager subsystem is ready" << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
-      return 1;
-   }
+    try {
+        app = std::make_shared<CallMaker>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate CallMaker" << std::endl;
+        return -ENOMEM;
+    }
 
-   // ### 3. Instantiate dial callback instance - this is optional
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // ### 4. Send a dial request
-   int phoneId = 1;
-   std::string phoneNumber = DEFAULT_PHONE_NUMBER;
-   auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
-   std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
+    ret = app->triggerCall();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // ### 5. Wait for the call state to become active and hang-up the call after conversation
-   sleep(10);
-   if(dialedCall) {
-      dialedCall->hangup();
-   }
+    /* Step - 6 */
+    /* Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::minutes(1));
 
-   // ### 6. Exit logic is specific to an application
-   std::cout << "Press enter to exit" << std::endl;
-   std::string input;
-   std::getline(std::cin, input);
-   std::cout << "Exiting application..." << std::endl;
-   return 0;
+    ret = app->terminateCall();
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* Wait for receiving all asynchronous responses */
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    std::cout << "\nMake call app exiting" << std::endl;
+    return 0;
 }

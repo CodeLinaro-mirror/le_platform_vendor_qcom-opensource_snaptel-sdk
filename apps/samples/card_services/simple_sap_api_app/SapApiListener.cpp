@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,229 +62,278 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/**
- * Sample program to demonstrate SAP Card Services APIs like get slot ids, getApplications,
- * get ATR, transmit APDU and listeners
+/*
+ * This application demonstrates how to use SAP card services APIs like
+ * getting slot ids, applications, ATR and transmit APDU. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a ISapCardManager instance from the PhoneFactory.
+ * 3. Wait for the SAP service to become available.
+ * 4. Open SAP connection.
+ * 5. Wait for connection to get open.
+ * 6. Request ATR.
+ * 7. Wait for request ATR response.
+ * 8. Transmit APDU.
+ * 9. Wait for APDU getting transmitted.
+ * 10. Close SAP connection.
+ * 11. Wait for SAP connection to get closed.
+ *
+ * Usage:
+ * # ./simple_sap_api_app
  */
 
+#include <errno.h>
+
 #include <chrono>
-#include <condition_variable>
+#include <thread>
 #include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
-#include <vector>
+#include <mutex>
+#include <condition_variable>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/CardDefines.hpp>
-#include <telux/tel/SapCardManager.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/SapCardManager.hpp>
 
-#define DEFAULT_TIMEOUT_IN_SECONDS 5
-
-// Sample SAP APDU to open Master File
-// APDU Command - 00 A4 00 04 02 3F 00
-const uint8_t CLA = 0;
-const uint8_t INSTRUCTION = 164;
-const uint8_t P1 = 0;
-const uint8_t P2 = 4;
-const uint8_t LC = 2;
-const std::vector<uint8_t> DATA = {63, 0};
-
-using namespace telux::tel;
-using namespace telux::common;
-
-// [1] Define sap enum for events
+/* SAP events */
 enum SapEvent {
-   OPEN_SAP_CONNECTION = 1,  /**<  SAP Open connection*/
-   CLOSE_SAP_CONNECTION = 2, /**<  SAP disconnection*/
-   SAP_GET_ATR = 3,          /**<  SAP Answer To Reset*/
-   SAP_TRANSMIT_APDU = 4,    /**<  Transmit of APDU in SAP mode*/
+   OPEN_SAP_CONNECTION = 1,  /* SAP Open connection */
+   CLOSE_SAP_CONNECTION = 2, /* SAP disconnection */
+   SAP_GET_ATR = 3,          /* SAP Answer To Reset */
+   SAP_TRANSMIT_APDU = 4     /* Transmit of APDU in SAP mode */
 };
 
-// condition variable to wait for an sap events like open connection, close connection,
-// request ATR and transmit APDU
-std::condition_variable eventCV;
+class SAPListener : public telux::tel::ISapCardCommandCallback,
+                    public telux::tel::IAtrResponseCallback,
+                    public telux::common::ICommandResponseCallback,
+                    public std::enable_shared_from_this<SAPListener> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-// variable to store the expected sap event
-SapEvent eventExpected;
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
-// Protects expected sap events to avoid access from different threads
-std::mutex eventMutex;
+        /* Step - 2 */
+        sapCardMgr_ = phoneFactory.getSapCardManager(DEFAULT_SLOT_ID,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-// Error code received as part of notification
-ErrorCode sapErrorCode;
+        if (!sapCardMgr_) {
+            std::cout << "Can't get ISapCardManager" << std::endl;
+            return -ENOMEM;
+        }
 
-// [4.1] - Implementation of ICommandResponseCallback interface for receiving notifications on sap
-// events like open connection and close connection
-class MySapCommandResponseCallback : public ICommandResponseCallback {
-public:
-   void commandResponse(ErrorCode error);
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "SAP service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int sapOpenConnection() {
+        telux::common::Status status;
+
+        /* Step - 4 */
+        status = sapCardMgr_->openConnection(
+            telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA, shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't open SAP connection, status " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForSapEvent(SapEvent::OPEN_SAP_CONNECTION) ||
+            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+            std::cout << "Failed to open SAP connection" << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Opened SAP connection\n" << std::endl;
+        return 0;
+    }
+
+    int sapCloseConnection() {
+        telux::common::Status status;
+
+        /* Step - 10 */
+        status = sapCardMgr_->closeConnection(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't close SAP connection, status " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForSapEvent(SapEvent::CLOSE_SAP_CONNECTION) ||
+            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+            std::cout << "Failed to close SAP connection" << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Closed SAP connection\n" << std::endl;
+        return 0;
+    }
+
+    int requestATR() {
+        telux::common::Status status;
+
+        /* Step - 6 */
+        status = sapCardMgr_->requestAtr(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't request ATR, status " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForSapEvent(SapEvent::SAP_GET_ATR) ||
+            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+            std::cout << "Failed to request ATR" << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "ATR requested\n" << std::endl;
+        return 0;
+    }
+
+    int transmitAPDU() {
+        telux::common::Status status;
+
+        /* Sample SAP APDU to open master file */
+        /* APDU Command - 00 A4 00 04 02 3F 00 */
+        const uint8_t CLA = 0;
+        const uint8_t INSTRUCTION = 164;
+        const uint8_t P1 = 0;
+        const uint8_t P2 = 4;
+        const uint8_t LC = 2;
+        const std::vector<uint8_t> DATA = {63, 0};
+
+        /* Step - 8 */
+        status = sapCardMgr_->transmitApdu(
+            CLA, INSTRUCTION, P1, P2, LC, DATA, 0, shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't transmit APDU, status " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForSapEvent(SapEvent::SAP_TRANSMIT_APDU) ||
+            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+            std::cout << "Failed to transmit APDU" << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "APDU transmitted\n" << std::endl;
+        return 0;
+    }
+
+    bool waitForSapEvent(SapEvent sapEvent) {
+        int const DEFAULT_TIMEOUT_SECONDS = 5;
+        std::unique_lock<std::mutex> lock(eventMutex_);
+
+        auto cvStatus = eventCV_.wait_for(lock,
+            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (cvStatus == std::cv_status::timeout) {
+            std::cout << "Timedout" << std::endl;
+            errorCode_ = telux::common::ErrorCode::TIMEOUT_ERROR;
+            return false;
+        }
+
+        return true;
+    }
+
+    /* Step - 5,11 */
+    void commandResponse(telux::common::ErrorCode error) override {
+        std::lock_guard<std::mutex> lock(eventMutex_);
+        std::cout << "commandResponse()" << std::endl;
+        std::cout << "Error: " << static_cast<int>(error) << std::endl;
+        errorCode_ = error;
+        eventCV_.notify_one();
+    }
+
+    /* Step - 7 */
+    void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) override {
+        std::lock_guard<std::mutex> lock(eventMutex_);
+        std::cout << "atrResponse()" << std::endl;
+        std::cout << "Error: " << static_cast<int>(error) << std::endl;
+
+        if(eventExpected_ == SapEvent::SAP_GET_ATR) {
+            std::cout << "\tATR.data:";
+            for(int val : responseAtr) {
+                std::cout << " " << val;
+            }
+        }
+
+        errorCode_ = error;
+        eventCV_.notify_one();
+    }
+
+    /* Step - 9 */
+    void onResponse(telux::tel::IccResult result, telux::common::ErrorCode error) override {
+        std::lock_guard<std::mutex> lock(eventMutex_);
+        std::cout << "onResponse()" << std::endl;
+        std::cout << "Error: " << static_cast<int>(error) << std::endl;
+        std::cout << "ICC result: " << result.toString() << std::endl;
+        errorCode_ = error;
+        eventCV_.notify_one();
+    }
+
+ private:
+    std::mutex eventMutex_;
+    std::condition_variable eventCV_;
+    SapEvent eventExpected_;
+    telux::common::ErrorCode errorCode_;
+    std::shared_ptr<telux::tel::ISapCardManager> sapCardMgr_;
 };
 
-void MySapCommandResponseCallback::commandResponse(ErrorCode error) {
-   std::cout << "commandResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
-   sapErrorCode = error;
-   if(eventExpected == (int)SapEvent::OPEN_SAP_CONNECTION) {
-      std::cout << "Sap Event OPEN_SAP_CONNECTION found with code :" << int(error) << std::endl;
-      eventCV.notify_one();
-   } else if(eventExpected == (int)SapEvent::CLOSE_SAP_CONNECTION) {
-      std::cout << "Sap Event CLOSE_SAP_CONNECTION found with code :" << int(error) << std::endl;
-      eventCV.notify_one();
-   }
-}
+int main(int argc, char *argv[]) {
 
-// [4.2] - Implementation of IAtrResponseCallback interface for receiving notification on sap
-// event like request answer to reset(ATR)
-class MyAtrResponseCallback : public IAtrResponseCallback {
-public:
-   void atrResponse(std::vector<int> responseAtr, ErrorCode error);
-};
+    int ret;
+    std::shared_ptr<SAPListener> app;
 
-void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode error) {
-   std::cout << "atrResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
-   sapErrorCode = error;
-   std::cout << "\tATR.data:";
-   if(eventExpected == (int)SapEvent::SAP_GET_ATR) {
-      for(int val : responseAtr) {
-         std::cout << " " << val;
-      }
-      std::cout << "Event SAP_GET_ATR found with code :" << int(sapErrorCode) << std::endl;
-      eventCV.notify_one();
-   }
-}
+    try {
+        app = std::make_shared<SAPListener>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate SAPListener" << std::endl;
+        return -ENOMEM;
+    }
 
-// [4.3] - Implementation of ISapCardCommandCallback interface for receiving notification
-// on sap event like transmit apdu.
-class MySapTransmitApduResponseCallback : public ISapCardCommandCallback {
-public:
-   void onResponse(IccResult result, ErrorCode error);
-};
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
-   std::cout << "transmitApduResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
-   sapErrorCode = error;
-   std::cout << "transmitApduResponse " << result.toString() << std::endl;
-   if(eventExpected == (int)SapEvent::SAP_TRANSMIT_APDU) {
-      std::cout << "Transmit Apdu SAP_TRANSMIT_APDU Event Found with code :" << int(sapErrorCode)
-                << std::endl;
-      eventCV.notify_one();
-   }
-}
+    ret = app->sapOpenConnection();
+    if (ret < 0) {
+        return ret;
+    }
 
-// We are making a synchronized SAP requests. So added wait logic using std::condition_variable
-bool waitForSapEvent(SapEvent sapEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS) {
-   std::unique_lock<std::mutex> lock(eventMutex);
-   eventExpected = sapEvent;
-   auto cvStatus = eventCV.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS));
-   if(cvStatus == std::cv_status::timeout) {
-      std::cout << "Event: " << (int)sapEvent << "not found with in " << DEFAULT_TIMEOUT_IN_SECONDS
-                << "second(s)";
-   }
-   eventExpected = (SapEvent)0;  // reset message id to avoid further notifications
-   if(cvStatus != std::cv_status::timeout) {
-      if(sapEvent == SapEvent::OPEN_SAP_CONNECTION || sapEvent == SapEvent::CLOSE_SAP_CONNECTION
-         || sapEvent == SapEvent::SAP_GET_ATR || sapEvent == SapEvent::SAP_TRANSMIT_APDU) {
+    ret = app->requestATR();
+    if (ret < 0) {
+        app->sapCloseConnection();
+        return ret;
+    }
 
-         if(sapErrorCode == ErrorCode::SUCCESS)
-            return true;
-      }
-   } else {
-      std::cout << "Unable to get the events, so timing out" << std::endl;
-      return false;
-   }
-   return false;
-}
+    ret = app->transmitAPDU();
+    if (ret < 0) {
+        app->sapCloseConnection();
+        return ret;
+    }
 
-// Main routine performs operations required to transmit Sap Apdu
-int main(int argc, char ** argv) {
-   // [1] Get the PhoneFactory and PhoneManager instances.
-   std::promise<ServiceStatus> prom;
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager([&](ServiceStatus status) {
-      prom.set_value(status);
-   });
-   if (!phoneManager) {
-      std::cout << "ERROR - Failed to get Phone Manager \n";
-      return 1;
-   }
-   // [2] Get the telephony subsystem initialization.
-   ServiceStatus phoneMgrStatus = phoneManager->getServiceStatus();
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   if (phoneMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
-      startTime = std::chrono::system_clock::now();
-      std::cout << "Phone Manager subsystem is not ready, Please wait \n";
-   }
-   phoneMgrStatus = prom.get_future().get();
-   if (phoneMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      return 1;
-   }
+    ret = app->sapCloseConnection();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [3] Get default Sap Card Manager instance
-   std::promise<telux::common::ServiceStatus> sap_prom;
-   auto sapCardMgr = phoneFactory.getSapCardManager(
-      DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
-      sap_prom.set_value(status);
-   });
-   if (!sapCardMgr) {
-      std::cout << "ERROR - Failed to get SapCardManager instance \n";
-      return 1;
-   }
-   telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr->getServiceStatus();
-   if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-      std::cout << "SapCardManager subsystem is not ready , Please wait" << std::endl;
-   }
-   sapCardMgrStatus = sap_prom.get_future().get();
-   if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-      std::cout << "SapCardManager subsystem is ready" << std::endl;
-   } else {
-      std::cout << "ERROR - Unable to initialize SapCardManager subsystem" << std::endl;
-      return 1;
-   }
-
-   // [4] Instantiate ICommandResponseCallback, IAtrResponseCallback and
-   // ISapCardCommandCallback
-   auto mySapCmdResponseCb = std::make_shared<MySapCommandResponseCallback>();
-   auto myAtrCb = std::make_shared<MyAtrResponseCallback>();
-   auto myTransmitApduResponseCb = std::make_shared<MySapTransmitApduResponseCallback>();
-
-   // [5] Open Sap connection and wait for request to complete
-   sapCardMgr->openConnection(SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA, mySapCmdResponseCb);
-   std::cout << "Opening SAP connection to Transmit the APDU..." << std::endl;
-   if(!waitForSapEvent(SapEvent::OPEN_SAP_CONNECTION)) {
-      std::cout << "Opening SAP connection failed " << std::endl;
-      exit(1);
-   }
-
-   // [6] request sap ATR and wait for complete
-   sapCardMgr->requestAtr(myAtrCb);
-   if(!waitForSapEvent(SapEvent::SAP_GET_ATR)) {
-     std::cout << "get SAP ATR  failed " << std::endl;
-     exit(1);
-   }
-
-   // [7] send sap apdu and wait for the request to complete
-   std::cout << "Transmit Sap APDU request made..." << std::endl;
-   sapCardMgr->transmitApdu(CLA, INSTRUCTION, P1, P2, LC, DATA, 0, myTransmitApduResponseCb);
-   if(!waitForSapEvent(SapEvent::SAP_TRANSMIT_APDU)) {
-      std::cout << "Transmit Sap APDU failed " << std::endl;
-      exit(1);
-   }
-
-   // [8] close sap connection and wait for the request to complete
-   sapCardMgr->closeConnection(mySapCmdResponseCb);
-   if(waitForSapEvent(SapEvent::CLOSE_SAP_CONNECTION)) {
-      std::cout << "Close Sap Successful..." << std::endl;
-   }
-
-   return 0;
+    std::cout << "\nSAP app exiting" << std::endl;
+    return 0;
 }

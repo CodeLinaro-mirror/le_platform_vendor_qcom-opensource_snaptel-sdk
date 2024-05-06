@@ -29,92 +29,171 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ * This application demonstrates how to get the default subscription and listen to
+ * the subscription changes. The steps are as follows:
+ *
+ *  1. Get a PhoneFactory instance.
+ *  2. Get a ISubscriptionManager instance from PhoneFactory.
+ *  3. Wait for the subscription service to become available.
+ *  4. Register the listener which will receive updates whenever subscription changes.
+ *  5. Get default subscription.
+ *  6. Finally, when the use case is over, deregister the listener.
+ *
+ * Usage:
+ * # ./subscription_app
+ */
+
+#include <errno.h>
+
 #include <iostream>
-#include <string>
 #include <memory>
+#include <cstdlib>
+#include <future>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/tel/SubscriptionManager.hpp>
 
-class MySubscriptionListener : public telux::tel::ISubscriptionListener {
-public:
-   void onSubscriptionInfoChanged(std::shared_ptr<telux::tel::ISubscription> subscription) override {
-      if(subscription) {
-         std::cout << "\n**onSubscriptionInfoChanged -- Subscription Details**" << std::endl;
-         std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
-         std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-         std::cout << " IccId : " << subscription->getIccId() << std::endl;
-         std::cout << " Mcc : " << subscription->getMcc() << std::endl;
-         std::cout << " Mnc : " << subscription->getMnc() << std::endl;
-         std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
-         std::cout << " Imsi: " << subscription->getImsi() << std::endl;
-      } else {
-         std::cout << " \n Subscription is empty" << std::endl;
-      }
-   }
+class SubscriptionInfo : public telux::tel::ISubscriptionListener,
+                         public std::enable_shared_from_this<SubscriptionInfo> {
+ public:
+    int init() {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+
+        /* Step - 2 */
+        subscriptionMgr_ = phoneFactory.getSubscriptionManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!subscriptionMgr_) {
+            std::cout << "Can't get ISubscriptionManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Subscription service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = subscriptionMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 6 */
+        status = subscriptionMgr_->removeListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int getDefaultSubscription() {
+        telux::common::Status status;
+        std::shared_ptr<telux::tel::ISubscription> subscription;
+
+        /* Step - 5 */
+        subscription = subscriptionMgr_->getSubscription(DEFAULT_SLOT_ID, &status);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't get current subscription, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!subscription) {
+            std::cout << "Empty subscription" << std::endl;
+            return 0;
+        }
+
+        std::cout << "\nSubscription details:" << std::endl;
+        std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
+        std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
+        std::cout << " IccId : " << subscription->getIccId() << std::endl;
+        std::cout << " Mcc : " << subscription->getMcc() << std::endl;
+        std::cout << " Mnc : " << subscription->getMnc() << std::endl;
+        std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
+        std::cout << " Imsi : " << subscription->getImsi() << std::endl;
+
+        return 0;
+    }
+
+    void onSubscriptionInfoChanged(
+        std::shared_ptr<telux::tel::ISubscription> newSubscription) override {
+
+        std::cout << "onSubscriptionInfoChanged()" << std::endl;
+        if (!newSubscription) {
+            std::cout << "Empty subscription" << std::endl;
+            return 0;
+        }
+
+        std::cout << " CarrierName : " << newSubscription->getCarrierName() << std::endl;
+        std::cout << " PhoneNumber : " << newSubscription->getPhoneNumber() << std::endl;
+        std::cout << " IccId : " << newSubscription->getIccId() << std::endl;
+        std::cout << " Mcc : " << newSubscription->getMcc() << std::endl;
+        std::cout << " Mnc : " << newSubscription->getMnc() << std::endl;
+        std::cout << " SlotId : " << newSubscription->getSlotId() << std::endl;
+        std::cout << " Imsi : " << newSubscription->getImsi() << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::tel::ISubscriptionManager> subscriptionMgr_;
 };
 
-/**
- * Main routine
- */
 int main(int argc, char *argv[]) {
 
-   // [1] Get the PhoneFactory and SubscriptionManager instances.
-   std::promise<telux::common::ServiceStatus> subscriptionMgrprom;
-   auto subscriptionMgr_ = telux::tel::PhoneFactory::getInstance().getSubscriptionManager(
-                         [&](telux::common::ServiceStatus status) {
-       subscriptionMgrprom.set_value(status);
-   });
-   if (!subscriptionMgr_) {
-       std::cout << "ERROR - Failed to get SubscriptionManager instance \n";
-       return 1;
-   }
+    int ret;
+    std::shared_ptr<SubscriptionInfo> app;
 
-   // [2] Check if telephony subsystem is ready
-   telux::common::ServiceStatus subscriptionMgrStatus = subscriptionMgr_->getServiceStatus();
+    try {
+        app = std::make_shared<SubscriptionInfo>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate SubscriptionInfo" << std::endl;
+        return -ENOMEM;
+    }
 
-   // [2.1] If telephony subsystem is not ready, wait for it to be ready
-   if (subscriptionMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "SubscriptionManager subsystem is not ready, Please wait \n";
-   }
-   if (subscriptionMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "SubscriptionManager subsystem is ready \n";
-   }
-   // SDK is unable to initialize telephony subsystems
-   else {
-       std::cout << "ERROR - Unable to initialize SubscriptionManager subsystem \n";
-       return 1;
-   }
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [3] Register listener with Subscription Manager for the notification
-   auto mySubscriptionListener = std::make_shared<MySubscriptionListener>();
-   subscriptionMgr_->registerListener(mySubscriptionListener);
+    ret = app->getDefaultSubscription();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
 
-   // [4] Get the default subscription instance
-   std::shared_ptr<telux::tel::ISubscription> subscription = subscriptionMgr_->getSubscription();
-   if(subscription) {
-       std::cout << "**Subscription Details**" << std::endl;
-       std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
-       std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-       std::cout << " IccId : " << subscription->getIccId() << std::endl;
-       std::cout << " Mcc : " << subscription->getMcc() << std::endl;
-       std::cout << " Mnc : " << subscription->getMnc() << std::endl;
-       std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
-       std::cout << " Imsi : " << subscription->getImsi() << std::endl;
-   } else {
-      std::cout << "Subscription is empty" << std::endl;
-   }
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-
-   // [5] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
-
-   // [6] Cleanup
-   subscriptionMgr_->removeListener(mySubscriptionListener);
-   return 0;
+    std::cout << "\nSubscription app exiting" << std::endl;
+    return 0;
 }

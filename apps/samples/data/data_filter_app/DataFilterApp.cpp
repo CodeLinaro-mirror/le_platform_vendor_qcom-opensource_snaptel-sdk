@@ -26,11 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -63,187 +62,305 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This application demonstrates how to get make a data call and install filter.
+ * The steps are as follows:
+ *
+ *  1. Get a DataFactory instance.
+ *  2. Get a IDataConnectionManager instance from DataFactory.
+ *  3. Wait for the data connection service to become available.
+ *  4. Register listener that will receive updates whenever a new data call
+ *    is established.
+ *  5. Get a IDataFilterManager instance from DataFactory.
+ *  6. Wait for the filter service to become available.
+ *  7. Register listener that will receive powersave filtering mode notifications.
+ *  8. Get IIpFilter instance based on the IP protocol.
+ *  9. Bring up a data call connection based on specified profile identifier,
+ *     IP family type, and operation type (local/remote).
+ * 10. Disable the auto exit feature enable data filter mode.
+ * 11. Set the UDP header info.
+ * 12. Add a filter rule for all the active data calls.
+ * 13. Finally, deregister all listeners when the use case is over.
+ *
+ * Usage:
+ * # ./data_filter_app <profile-id> <ip-address> <port>
+ *
+ * Example - ./data_filter_app 1 158.2.3.4 8000
+ *
+ * This start a data call with profile ID as 1, installs filter for Incoming
+ * packet matching IP 158.2.3.4 and port 8000.
+ */
+
+#include <errno.h>
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
 
+#include <telux/common/CommonDefines.hpp>
+#include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
-#define PROTO_TCP 6
-#define PROTO_UDP 17
-/**
- * @file: DataFilterApp.cpp
- *
- * @brief: Simple application to start the data call on the given profile id
- */
+#include <telux/data/DataConnectionManager.hpp>
+#include <telux/data/DataFilterManager.hpp>
 
-// Response callback for start or stop dataCall
-void responseCallback(const std::shared_ptr<telux::data::IDataCall> &dataCall,
-                      telux::common::ErrorCode errorCode) {
-   std::cout << "startCallResponse: errorCode: " << static_cast<int>(errorCode) << std::endl;
-}
+class DataFilter : public telux::data::IDataConnectionListener,
+                   public telux::data::IDataFilterListener,
+                   public std::enable_shared_from_this<DataFilter> {
+ public:
+    int init() {
+        const int PROTO_UDP = 17;
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> pConnection{};
+        std::promise<telux::common::ServiceStatus> pFilter{};
 
-// Response callback for data filter API
-void filterResponseCallback(telux::common::ErrorCode errorCode) {
-   std::cout << "Data Filter Callback errorCode: " << static_cast<int>(errorCode) << std::endl;
-}
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-// Implementation of IDataConnectionListener
-class DataConnectionListener : public telux::data::IDataConnectionListener {
-public:
-   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
-      std::cout << "\n onDataCallInfoChanged";
-      logDataCallDetails(dataCall);
-   }
+        /* Step - 2 */
+        dataConMgr_ = dataFactory.getDataConnectionManager(
+                DEFAULT_SLOT_ID,
+                [&pConnection](telux::common::ServiceStatus status) {
+            pConnection.set_value(status);
+        });
 
-private:
-   void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-      std::cout << " ** DataCall Details **\n";
-      std::cout << " SlotID: " << dataCall->getSlotId() << std::endl;
-      std::cout << " ProfileID: " << dataCall->getProfileId() << std::endl;
-      std::cout << " interfaceName: " << dataCall->getInterfaceName() << std::endl;
-      std::cout << " DataCallStatus: " << (int)dataCall->getDataCallStatus() << std::endl;
-      std::cout
-         << " DataCallEndReason: Type = " << static_cast<int>(dataCall->getDataCallEndReason().type)
-         << std::endl;
-      std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
-      for(auto &it : ipAddrList) {
-         std::cout << "\n ifAddress: " << it.ifAddress
-                   << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                   << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
-      }
-      std::cout << " IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
-      std::cout << " TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';
-   }
-};
+        if (!dataConMgr_) {
+            std::cout << "Can't get IDataConnectionManager" << std::endl;
+            return -ENOMEM;
+        }
 
-// Implementation of IDataFilterListener
-class DataFilterListener : public telux::data::IDataFilterListener {
-public:
-   void onDataRestrictModeChange(telux::data::DataRestrictMode mode) override {
-      std::cout << "\n onDataRestrictModeChange";
-      logDataFilterModeDetails(mode);
-   }
+        /* Step - 3 */
+        serviceStatus = pConnection.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Data connection service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
 
-private:
-   void logDataFilterModeDetails(const telux::data::DataRestrictMode mode) {
-      std::cout << " ** DataRestrictMode Details **\n";
-      if (mode.filterMode == telux::data::DataRestrictModeType::ENABLE) {
-         std::cout << "\n Data Filter Mode : Enable\n" << std::endl;
-      } else if (mode.filterMode == telux::data::DataRestrictModeType::DISABLE) {
-         std::cout << "\n Data Filter Mode : Disable\n" << std::endl;
-      } else {
-         std::cout << " ERROR: Invalid Data Filter mode notified" << std::endl;
-      }
-   }
+        /* Step - 4 */
+        status = dataConMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener for connection, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 5 */
+        dataFilterMgr_ = dataFactory.getDataFilterManager(
+                DEFAULT_SLOT_ID,
+                [&pFilter](telux::common::ServiceStatus status) {
+            pFilter.set_value(status);
+        });
+
+        if (!dataFilterMgr_) {
+            std::cout << "Can't get IDataFilterManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 6 */
+        serviceStatus = pFilter.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Data filter service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 7 */
+        status = dataFilterMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener for filter, err " <<
+                static_cast<int>(status) << std::endl;
+            dataConMgr_->deregisterListener(shared_from_this());
+            return -EIO;
+        }
+
+        /* Step - 8 */
+        dataFilter_ = dataFactory.getNewIpFilter(PROTO_UDP);
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 13 */
+        status = dataConMgr_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister connection listener, err " <<
+                static_cast<int>(status) << std::endl;
+            dataFilterMgr_->deregisterListener(shared_from_this());
+            return -EIO;
+        }
+
+        status = dataFilterMgr_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister filter listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int triggerDataCall(int profileId) {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(&DataFilter::onDataCallResponseAvailable,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 9 */
+        status = dataConMgr_->startDataCall(
+            profileId, telux::data::IpFamilyType::IPV4, responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't make call, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "\nData call start request placed" << std::endl;
+        return 0;
+    }
+
+    int applyRestriction(std::string ipAddress, int port) {
+        telux::common::Status status;
+        telux::data::PortInfo srcPort{};
+        telux::data::UdpInfo udpInfo{};
+        telux::data::IPv4Info ipv4Info{};
+        telux::data::DataRestrictMode enableMode{};
+        std::shared_ptr<telux::data::IUdpFilter> udpFilter;
+
+        /* Step - 10 */
+        enableMode.filterMode = telux::data::DataRestrictModeType::ENABLE;
+        enableMode.filterAutoExit = telux::data::DataRestrictModeType::DISABLE;
+        auto restrictionResponseCb = std::bind(
+            &DataFilter::restrictionResponseReceiver, this, std::placeholders::_1);
+
+        status = dataFilterMgr_->setDataRestrictMode(
+            enableMode,restrictionResponseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't set restrict mode, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 11 */
+        ipv4Info.srcAddr = ipAddress;
+        dataFilter_->setIPv4Info(ipv4Info);
+
+        srcPort.port = port;
+        srcPort.range = 0;
+        udpInfo.src = srcPort;
+        udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter_);
+        udpFilter->setUdpInfo(udpInfo);
+
+        /* Step - 12 */
+        status = dataFilterMgr_->addDataRestrictFilter(
+            dataFilter_, restrictionResponseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't add restriction filter, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    /* Receives response of the startDataCall() request */
+    void onDataCallResponseAvailable(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall,
+        telux::common::ErrorCode ec) {
+        std::cout << "\nonDataCallResponseAvailable(), err " << static_cast<int>(ec) << std::endl;
+    }
+
+    /* Receives response of the setDataRestrictMode() and addDataRestrictFilter() request */
+    void restrictionResponseReceiver(telux::common::ErrorCode ec) {
+        std::cout << "\nrestrictionResponseReceiver(), err " << static_cast<int>(ec) << std::endl;
+    }
+
+    void onDataCallInfoChanged(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+            std::cout << "onDataCallInfoChanged()" << std::endl;
+        std::list<telux::data::IpAddrInfo> ipAddrList;
+
+        std::cout << "Data call details" << std::endl;
+        std::cout << "Slot ID " << dataCall->getSlotId() << std::endl;
+        std::cout << "Profile ID " << dataCall->getProfileId() << std::endl;
+        std::cout << "Interface name " << dataCall->getInterfaceName() << std::endl;
+        std::cout << "Call status " <<
+            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
+        std::cout << "Call end reason " <<
+            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+
+        ipAddrList = dataCall->getIpAddressInfo();
+        for (auto &addr : ipAddrList) {
+            std::cout << "\n ifAddress: " << addr.ifAddress <<
+            "\n primaryDnsAddress: " << addr.primaryDnsAddress <<
+            "\n secondaryDnsAddress: " << addr.secondaryDnsAddress << std::endl;
+        }
+
+        std::cout << "IP family type " <<
+            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
+        std::cout << "Tech preference " <<
+            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::data::IIpFilter> dataFilter_;
+    std::shared_ptr<telux::data::IDataConnectionManager> dataConMgr_;
+    std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
 };
 
 int main(int argc, char *argv[]) {
-   // [1] Get the DataFactory
-   auto &dataFactory = telux::data::DataFactory::getInstance();
-   // [1.1] Get data connection manager object
-   auto dataConnMgr = dataFactory.getDataConnectionManager();
-   // [1.2] Get data filter manager object
-   auto dataFilterMgr = dataFactory.getDataFilterManager();
 
-   // [2] Check if data connection subsystem is ready
-   bool dataConnectionSubSystemStatus = dataConnMgr->isSubsystemReady();
+    int ret;
+    std::shared_ptr<DataFilter> app;
 
-   // [2.1] If data connection subsystem is not ready, wait for it to be ready
-   if(!dataConnectionSubSystemStatus) {
-      std::cout << "DATA connection subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = dataConnMgr->onSubsystemReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      dataConnectionSubSystemStatus = f.get();
-   }
+    int port;
+    int profileId;
+    std::string ipAddress;
 
-   // [2.2] Exit the application, if SDK is unable to initialize data subsystems
-   if(dataConnectionSubSystemStatus) {
-      std::cout << " *** DATA connection subsystem is Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize data subsystem *** " << std::endl;
-      return 1;
-   }
+    if (argc != 4) {
+        std::cout << "Usage: ./data_filter_app <profile-id> <ip-address> <port>" << std::endl;
+        return -EINVAL;
+    }
 
-   // [3] Check if data filter subsystem is ready
-   bool dataFilterSubSystemStatus = dataFilterMgr->isReady();
+    profileId = std::atoi(argv[1]);
+    ipAddress = std::string(argv[2]);
+    port = std::atoi(argv[3]);
 
-   // [3.1] If data filter subsystem is not ready, wait for it to be ready
-   if(!dataFilterSubSystemStatus) {
-      std::cout << "DATA filter subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = dataFilterMgr->onReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      dataFilterSubSystemStatus = f.get();
-   }
+    try {
+        app = std::make_shared<DataFilter>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate DataFilter" << std::endl;
+        return -ENOMEM;
+    }
 
-   // [3.2] Exit the application, if SDK is unable to initialize data subsystems
-   if(dataFilterSubSystemStatus) {
-      std::cout << " *** DATA filter subsystem is Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize data subsystem *** " << std::endl;
-      return 1;
-   }
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [4] Register for Data connection listener
-   std::shared_ptr<telux::data::IDataConnectionListener> dataConnectionListener
-      = std::make_shared<DataConnectionListener>();
-   dataConnMgr->registerListener(dataConnectionListener);
+    ret = app->triggerDataCall(profileId);
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [5] Register for Data filter listener
-   std::shared_ptr<telux::data::IDataFilterListener> dataFilterListener
-      = std::make_shared<DataFilterListener>();
-   dataFilterMgr->registerListener(dataFilterListener);
+    ret = app->applyRestriction(ipAddress, port);
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [6] Start data call on the mentioned profile id, enable data filter mode and install an UDP
-   // filter on give IP:Port combination.
-   if(argc == 4) {
-      int profileId = std::atoi(argv[1]);
-      telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
-      dataConnMgr->startDataCall(profileId, ipFamilyType, responseCallback);
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-      telux::data::DataRestrictMode enableMode;
-      enableMode.filterAutoExit = telux::data::DataRestrictModeType::DISABLE;
-      enableMode.filterMode = telux::data::DataRestrictModeType::ENABLE;
-      dataFilterMgr->setDataRestrictMode(enableMode, filterResponseCallback, profileId, ipFamilyType);
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-      std::string ipAddr = std::string(argv[2]);
-      int port = std::atoi(argv[3]);
-      telux::data::IPv4Info ipv4Info_ = {};
-      ipv4Info_.srcAddr = ipAddr;
-
-      telux::data::PortInfo srcPort;
-      srcPort.port = port;
-      srcPort.range = 0;
-      telux::data::UdpInfo udpInfo_ = {};
-      udpInfo_.src = srcPort;
-
-      // create a filter of UDP type, and set source IP and port.
-      std::shared_ptr<telux::data::IIpFilter> dataFilter = dataFactory.getNewIpFilter(PROTO_UDP);
-      dataFilter->setIPv4Info(ipv4Info_);
-
-      auto udpRestrictFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter);
-      udpRestrictFilter->setUdpInfo(udpInfo_);
-
-      dataFilterMgr->addDataRestrictFilter(dataFilter, filterResponseCallback,
-                                           profileId, ipFamilyType);
-
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./data_filter_app <profieId> <IP> <Port>\n";
-      std::cout << "\n\t ./data_filter_app 1  158.2.3.4 8000  --> to start the data call on \
-      profile Id 1 and install filter for Incoming packet matching IP 158.2.3.4 and port 8000 \n";
-   }
-
-   // [7] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
-
-   // [8] Cleanup
-   dataConnMgr->deregisterListener(dataConnectionListener);
-   dataFilterMgr->deregisterListener(dataFilterListener);
-   dataConnMgr = nullptr;
-   dataFilterMgr = nullptr;
-   return 0;
+    std::cout << "\nData filter app exiting" << std::endl;
+    return 0;
 }

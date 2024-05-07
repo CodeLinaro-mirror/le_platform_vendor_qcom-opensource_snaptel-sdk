@@ -1,21 +1,22 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_DATA_APP fwl_entry_sample_app)
 
-set(SOURCES
+pkg_check_modules(TELUXDATA REQUIRED telux-data)
+
+set(DATA_APP_SOURCES
     DataFwlEntryApp.cpp
     ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
 )
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+add_executable(${TARGET_DATA_APP} ${DATA_APP_SOURCES})
 
-add_executable (${TARGET_DATA_APP} ${SOURCES})
-target_include_directories(${TARGET_DATA_APP} BEFORE PUBLIC
-                           "${telematics-apps_SOURCE_DIR}/common" )
-target_link_libraries(${TARGET_DATA_APP} telux_data)
+target_include_directories(${TARGET_DATA_APP} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${telematics-apps_SOURCE_DIR}/common)
 
-# install to target
-install ( TARGETS ${TARGET_DATA_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_compile_options(${TARGET_DATA_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_DATA_APP} PRIVATE ${TELUXDATA_LIBRARIES})
+
+install(TARGETS ${TARGET_DATA_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -26,151 +26,220 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
+ * This application demonstrates how to get current serving network status and listen
+ * to the network status status change notifications. The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a IServingSystemManager instance from DataFactory.
+ * 3. Wait for the serving system service to become available.
+ * 4. Register a listener which will be invoked when service status changes.
+ * 5. Define slot ID to use.
+ * 6. Get the current serving network status.
+ * 7. Finally, when the use case is over, deregister the listener.
+ *
+ * Usage:
+ * # ./data_service_status_app <slot-id>
+ *
+ * Example - ./data_service_status_app 1
+ *
+ * <slot id> : 1 for default slot, 2 for second slot
+ */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
 
+#include <telux/common/CommonDefines.hpp>
+#include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/ServingSystemManager.hpp>
 
-/**
- * @file: DataServiceStatusApp.cpp
- *
- * @brief: Simple application to request service status and listens to service status change
-           notifications
- */
+class ServingNetworkStatus : public telux::data::IServingSystemListener,
+                             public std::enable_shared_from_this<ServingNetworkStatus> {
+ public:
+    int init(SlotId slotId) {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-//Function to log all Service Status Details
-void logServiceStatusDetails(const telux::data::ServiceStatus& status) {
-   std::cout << " ** Service Status Details **\n";
-   if(status.serviceState == telux::data::DataServiceState::OUT_OF_SERVICE) {
-      std::cout << "Current Status is Out Of Service" << std::endl;
-   } else {
-      std::cout << "Current Status is In Service" << std::endl;
-      std::cout << "Preferred Rat is " ;
-      switch (status.networkRat) {
-         case telux::data::NetworkRat::CDMA_1X:
-               std::cout << "CDMA 1X" << std::endl;
-               break;
-         case telux::data::NetworkRat::CDMA_EVDO:
-               std::cout << "CDMA EVDO" << std::endl;
-               break;
-         case telux::data::NetworkRat::GSM:
-              std::cout << "GSM" << std::endl;
-               break;
-         case telux::data::NetworkRat::WCDMA:
-               std::cout << "WCDMA" << std::endl;
-               break;
-         case telux::data::NetworkRat::LTE:
-               std::cout << "LTE" << std::endl;
-               break;
-         case telux::data::NetworkRat::TDSCDMA:
-               std::cout << "TDSCDMA" << std::endl;
-               break;
-         case telux::data::NetworkRat::NR5G:
-               std::cout << "NR5G" << std::endl;
-               break;
-         default:
-               std::cout << "UNKNOWN" << std::endl;
-               break;
-      }
-   }
-}
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-// Implementation of IServingSystemListener
-class ServingSystemListener : public telux::data::IServingSystemListener {
-public:
-   ServingSystemListener(SlotId slotId) : slotId_(slotId) {}
-   friend void logServiceStatusDetails(const telux::data::ServiceStatus& status);
-   void onServiceStateChanged(telux::data::ServiceStatus status) override {
-      std::cout << "\n onServiceStateChanged on SlotId: " << static_cast<int>(slotId_);
-      logServiceStatusDetails(status);
-   }
+        /* Step - 2 */
+        dataServingSystemMgr_ = dataFactory.getServingSystemManager(
+                slotId, [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-private:
-   SlotId slotId_;
+        if (!dataServingSystemMgr_) {
+            std::cout << "Can't get IServingSystemManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Serving system service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = dataServingSystemMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 7 */
+        status = dataServingSystemMgr_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int getServingNetworkStatus() {
+        telux::common::Status status;
+
+        auto respCb = std::bind(&ServingNetworkStatus::onNetworkStatusAvailable,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 6 */
+        status = dataServingSystemMgr_->requestServiceStatus(respCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't request roaming status, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Service status requested" << std::endl;
+        return 0;
+    }
+
+    /* Called as a response to requestServiceStatus() request */
+    void onNetworkStatusAvailable(telux::data::ServiceStatus serviceStatus,
+            telux::common::ErrorCode error) {
+        std::cout << "\nonNetworkStatusAvailable()" << std::endl;
+
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to get servie status, err" <<
+                static_cast<int>(error) << std::endl;
+            return;
+        }
+
+        printDetails(serviceStatus);
+    }
+
+    /* Called whenever service status changes */
+    void onServiceStateChanged(telux::data::ServiceStatus serviceStatus) override {
+        std::cout << "onServiceStateChanged()" << std::endl;
+        printDetails(serviceStatus);
+    }
+
+ private:
+    void printDetails(telux::data::ServiceStatus &serviceStatus) {
+        if (serviceStatus.serviceState == telux::data::DataServiceState::OUT_OF_SERVICE) {
+            std::cout << "Currently out of service" << std::endl;
+            return;
+        }
+
+        std::cout << "Current network: ";
+        switch (serviceStatus.networkRat) {
+            case telux::data::NetworkRat::CDMA_1X:
+                std::cout << "CDMA 1X" << std::endl;
+                break;
+            case telux::data::NetworkRat::CDMA_EVDO:
+                std::cout << "CDMA EVDO" << std::endl;
+                break;
+            case telux::data::NetworkRat::GSM:
+                std::cout << "GSM" << std::endl;
+                break;
+            case telux::data::NetworkRat::WCDMA:
+                std::cout << "WCDMA" << std::endl;
+                break;
+            case telux::data::NetworkRat::LTE:
+                std::cout << "LTE" << std::endl;
+                break;
+            case telux::data::NetworkRat::TDSCDMA:
+                std::cout << "TDSCDMA" << std::endl;
+                break;
+            case telux::data::NetworkRat::NR5G:
+                std::cout << "NR5G" << std::endl;
+                break;
+            default:
+                std::cout << "UNKNOWN" << std::endl;
+                break;
+        }
+    }
+
+    std::shared_ptr<telux::data::IServingSystemManager> dataServingSystemMgr_;
 };
 
 int main(int argc, char *argv[]) {
-   std::mutex mtx_;
-   std::condition_variable cv_;
-   bool subSystemStatusUpdated = false;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-   std::shared_ptr<telux::data::IServingSystemManager> dataServingSystemMgr = nullptr;
-   std::shared_ptr<telux::data::IServingSystemListener> dataListener = nullptr;
 
-   if (argc == 2) {
-      SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
+    int ret;
+    std::shared_ptr<ServingNetworkStatus> app;
 
-      dataListener = std::make_shared<ServingSystemListener>(slotId);
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         subSystemStatus = status;
-         subSystemStatusUpdated = true;
-         cv_.notify_all();
-      };
+    SlotId slotId;
 
-      // [2] Get the DataFactory and data Serving System Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx_);
-         dataServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
-         if (dataServingSystemMgr) {
-            // [3] Check if data serving system manager is ready
-            std::cout << "\n\nInitializing Data Serving System manager subsystem on slot " <<
-                  slotId << ", Please wait ..." << std::endl;
-            cv_.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataServingSystemMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** DATA Serving System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize data Serving System *** " << std::endl;
-         }
-      } while (1);
+    if (argc != 2) {
+        std::cout << "Usage: ./data_service_status_app <slot-id>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Register for Serving System listener
-      dataServingSystemMgr->registerListener(dataListener);
+    /* Step - 5 */
+    slotId = static_cast<SlotId>(std::atoi(argv[1]));
 
-      // [5] Get current Service Status
-      // Callback
-      auto respCb = [&slotId](
-                     telux::data::ServiceStatus serviceStatus, telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                     << "requestServiceStatus Response on slotid " << static_cast<int>(slotId);
-         if(error == telux::common::ErrorCode::SUCCESS) {
-            std::cout << " is successful" << std::endl;
-            logServiceStatusDetails(serviceStatus);
-         }
-         else {
-            std::cout << " failed"
-                      << ". ErrorCode: " << static_cast<int>(error) << std::endl;
-         }
-      };
-      dataServingSystemMgr->requestServiceStatus(respCb);
+    try {
+        app = std::make_shared<ServingNetworkStatus>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate ServingNetworkStatus" << std::endl;
+        return -ENOMEM;
+    }
 
-      // [6] Wait for request response and notifications
+    ret = app->init(slotId);
+    if (ret < 0) {
+        return ret;
+    }
 
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./data_service_status_app <slotId>\n";
-      std::cout << "\n\t\t slot id        Slot id to get service status on";
-      std::cout << "\n\t ./data_service_status_app 1   --> Get service status on slotId 1\n";
-   }
+    ret = app->getServingNetworkStatus();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
 
-   // [7] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [8] Cleanup
-   if (dataServingSystemMgr) {
-      dataServingSystemMgr->deregisterListener(dataListener);
-      dataServingSystemMgr = nullptr;
-   }
-   return 0;
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "\nData service status app exiting" << std::endl;
+    return 0;
 }

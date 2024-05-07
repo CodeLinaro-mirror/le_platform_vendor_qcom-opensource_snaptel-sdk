@@ -26,19 +26,31 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
-Steps to setup L2TP:
+Steps to setup Socks Proxy:
 1. Run vlan_sample_app/telsdk_console_app to create vlan.
-2. From shell, open file " /etc/data/l2tp_cfg.xml" for editing and set DeviceModeCfg to 1
-   <DeviceModeCfg>1</DeviceModeCfg>
-3. Update VLAN mode at IPA
+2. Update VLAN mode at IPA
    echo vlan:eth > /etc/data/ipa_config.txt
-4. Modify /etc/data/ipa/IPACM_cfg.xml to update the device mode to L2TP
-   <IPACML2TP>
-      <IPACML2TPEnabled>1</IPACML2TPEnabled> -> This should be set to 1.
-   </IPACML2TP>
+3. Modify /etc/data/ipa/IPACM_cfg.xml to the following:
    <IPACMMPDN>
       <IPACMMPDNEnabled>0</IPACMMPDNEnabled> -> This should be set to 0.
    </IPACMMPDN>
-5. Reboot
-
+4. From shell, open file " /etc/data/l2tp_cfg.xml" for editing and set DeviceModeCfg to 2
+   <DeviceModeCfg>2</DeviceModeCfg>
+5. From shell, open file "/etc/data/qti_socksv5_auth.xml" for editing and set authentication method.
+    <SOCKSV5_AUTH_METHOD_CFG>
+            <SOCKSV5_AUTH_METHOD>USERNAME_PASSWORD</SOCKSV5_AUTH_METHOD>
+    </SOCKSV5_AUTH_METHOD_CFG>
+6. From shell, open file "/etc/data/qti_socksv5_conf.xml" to set LAN configuration.
+   Lan configuration is <vlan if>0.<vlan id>
+   For instance, if vlan in step 1 was created on ETH interface with Vlan id 8, LAN config will be
+    <LAN_CFG>
+            <LAN_IFACE>eth0.8</LAN_IFACE>
+    </LAN_CFG>
+7. Reboot

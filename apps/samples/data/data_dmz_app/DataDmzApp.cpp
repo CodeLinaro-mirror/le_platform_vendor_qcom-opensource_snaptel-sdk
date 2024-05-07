@@ -26,99 +26,192 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
+ * This application demonstrates how to enable demilitarized zone (DMZ).
+ * The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a IFirewallManager instance from DataFactory.
+ * 3. Wait for the firewall service to become available.
+ * 4. Define parameters, modem's profile ID, slot ID, IPv4 address and local/remote system.
+ * 5. Enable DMZ with parameters from step 4.
+ * 6. Receive asynchronous response of the DMZ enable request.
+ * 7. When the use case is over, disable the DMZ.
+ * 8. Receive asynchronous response of the DMZ disable request.
+ *
+ * Usage:
+ * # ./dmz_sample_app <operation-type> <slot-id> <profile-id> <ip-address>
+ *
+ * Example - ./dmz_sample_app 0 1 5 192.168.225.22
+ */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/FirewallManager.hpp>
 
+class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
+ public:
+    int init(telux::data::OperationType operationType) {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-/**
- * @file: DataDmzApp.cpp
- *
- * @brief: Simple application to creat DMZ
- *         ./dmz_sample_app <operation type> <profile id> <ip address>
- */
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+
+        /* Step - 2 */
+        dataFwMgr_ = dataFactory.getFirewallManager(operationType,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!dataFwMgr_) {
+            std::cout << "Can't get IFirewallManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Firewall service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int enableDMZ(telux::data::net::DmzConfig config) {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(
+            &DMZEnabler::enableDMZResponseCb, this, std::placeholders::_1);
+
+        /* Step - 5 */
+        status = dataFwMgr_->enableDmz(config, responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't enable DMZ, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "\nRequested DMZ enablement" << std::endl;
+        return 0;
+    }
+
+    int disableDMZ(telux::data::BackhaulInfo bhInfo, telux::data::IpFamilyType ipType) {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(
+            &DMZEnabler::disableDMZResponseCb, this, std::placeholders::_1);
+
+        /* Step - 7 */
+        status = dataFwMgr_->disableDmz(bhInfo, ipType, responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't disable DMZ, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "\nRequested DMZ disablement" << std::endl;
+        return 0;
+    }
+
+    /* Step - 6 */
+    /* Receives response of the enableDmz() request */
+    void enableDMZResponseCb(telux::common::ErrorCode error) {
+        std::cout << "\nenableDMZResponseCb()" << std::endl;
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to enable DMZ, err " <<
+                static_cast<int>(error) << std::endl;
+        }
+        std::cout << "DMZ enabled" << std::endl;
+    }
+
+    /* Step - 8 */
+    /* Receives response of the disableDmz() request */
+    void disableDMZResponseCb(telux::common::ErrorCode error) {
+        std::cout << "\ndisableDMZResponseCb()" << std::endl;
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to disable DMZ, err " <<
+                static_cast<int>(error) << std::endl;
+        }
+        std::cout << "DMZ disabled" << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr_;
+};
 
 int main(int argc, char *argv[]) {
-   std::promise<int> promise;
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   if(argc == 5) {
-      telux::data::OperationType opType = static_cast<telux::data::OperationType>
-          (std::atoi(argv[1]));
-      SlotId slotId = static_cast<SlotId>(std::atoi(argv[2]));
-      int profileId = std::atoi(argv[3]);
-      std::string ipAddr = static_cast<std::string>(argv[4]);
+    int ret;
+    std::shared_ptr<DMZEnabler> app;
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    std::string ipAddress;
+    telux::data::OperationType operationType;
+    telux::data::BackhaulInfo bhInfo = {};
 
-      // [2] Get the DataFactory and Firewall Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
-         if (dataFwMgr) {
-            // [3] Check if Firewall manager is ready
-            std::cout <<
-                  "\n\nInitializing Firewall Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataFwMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize Firewall subsystem *** " << std::endl;
-         }
-      } while(1);
+    if (argc != 5) {
+        std::cout <<
+            "Usage: ./dmz_sample_app <operation-type> <slot-id> <profile-id> <ip-address>"
+            << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Instantiate add DMZ callback instance - this is optional
-      auto respCb = [&](telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                   << "addDmz Response"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed");
-         promise.set_value(1);
-      };
+    /* Step - 4 */
+    operationType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    bhInfo.slotId = static_cast<SlotId>(std::atoi(argv[2]));
+    bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+    bhInfo.profileId = std::atoi(argv[3]);
+    ipAddress = static_cast<std::string>(argv[4]);
 
-      // [5] Add DMZ entry
-      std::future<int> future = promise.get_future();
-      dataFwMgr->enableDmz(profileId, ipAddr, respCb, slotId);
+    try {
+        app = std::make_shared<DMZEnabler>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate DMZEnabler" << std::endl;
+        return -ENOMEM;
+    }
 
-      // [6] Wait for callback - this is optional
-      int tmp = future.get();
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./dmz_sample_app <operation type> <slotId> <profileId> <ip address>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
-      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
-      std::cout << "\n\t\t profile id     modem profile id to enable dmz on";
-      std::cout << "\n\t\t ip address (IPv4 or IPv6 format)";
-      std::cout << std::endl;
-      std::cout << "\n\t ./dmz_sample_app 0 1 5 192.168.225.22 --> to enable local DMZ on specified";
-      std::cout << "\n\t                  I                        IPv4 address\n";
-   }
+    ret = app->init(operationType);
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [7] Cleaning up and exit the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+    telux::data::net::DmzConfig config;
+    config.bhInfo = bhInfo;
+    config.ipAddr = ipAddress;
+    ret = app->enableDMZ(config);
+    if (ret < 0) {
+        return ret;
+    }
 
-   return 0;
+    /* Wait for receiving asynchronous response.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    ret = app->disableDMZ(bhInfo, telux::data::IpFamilyType::IPV4);
+    if (ret < 0) {
+        return ret;
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "\nDMZ enable/disable app exiting" << std::endl;
+    return 0;
 }

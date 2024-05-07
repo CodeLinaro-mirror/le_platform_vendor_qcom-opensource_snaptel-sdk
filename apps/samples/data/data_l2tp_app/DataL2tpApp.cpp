@@ -26,174 +26,272 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
+ * This application demonstrates how to enable/disable L2TP un-managed tunnels
+ * and add new tunnel. The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a IL2tpManager instance from DataFactory.
+ * 3. Wait for the L2TP service to become available.
+ * 4. Enable L2TP for unmanaged Tunnel State.
+ * 5. Set L2TP Configuration for one tunnel.
+ *
+ * Usage:
+ * # ./l2tp_sample_app <configuration-file>
+ *
+ * Example: ./l2tp_sample_app /etc/DataL2tpApp.conf
+ *
+ * Please follow instructions in Readme file placed in same folder as this app to
+ * setup L2TP mode and associated VLAN before running this application.
+ */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
+#include <mutex>
+#include <condition_variable>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/L2tpManager.hpp>
+
 #include "ConfigParser.hpp"
 
+/* Utility class to parse <configuration-file> and populate parameters */
+class Utils {
+ public:
+    Utils(std::string configFile) {
+        configParser_ = std::make_shared<ConfigParser>(configFile);
+    };
 
-/**
- * @file: DataL2tpApp.cpp
- *
- * @brief: Simple application to enable/disable L2TP un-managed tunnels and add new tunnel
- *         ./l2tp_sample_app <configuration file>
- * @note: Please follow instructions in readme.txt file located in same folder as this app
- *        to setup L2TP mode and associated VLAN before running this app.
- */
+    bool getL2TPEnable() {
+        int val = std::atoi(configParser_->getValue(std::string("L2TP_ENABLE")).c_str());
+        return ((val == 0) ? false : true);
+    }
 
-#define OPERATION_SUCCESS 1
+    bool getMSSEnable() {
+        int val = std::atoi(configParser_->getValue(std::string("TCP_MSS_ENABLE")).c_str());
+        return ((val == 0) ? false : true);
+    }
+
+    bool getMTUEnable() {
+        int val = std::atoi(configParser_->getValue(std::string("MTU_SIZE_ENABLE")).c_str());
+        return ((val == 0) ? false : true);
+    }
+
+    int getMtuSize() {
+        return std::atoi(configParser_->getValue(std::string("MTU_SIZE_BYTES")).c_str());
+    }
+
+    void populateTunnelConfig(telux::data::net::L2tpTunnelConfig l2tpTunnelConfig) {
+        l2tpTunnelConfig.locIface = configParser_->getValue(std::string("HW_IF_NAME"));
+        l2tpTunnelConfig.prot = static_cast<telux::data::net::L2tpProtocol>(std::atoi(
+            configParser_->getValue(std::string("ENCAP_PROTOCOL")).c_str()));
+        l2tpTunnelConfig.locId = std::atoi(
+            configParser_->getValue(std::string("LOCAL_TUNNEL_ID")).c_str());
+        l2tpTunnelConfig.peerId = std::atoi(
+            configParser_->getValue(std::string("PEER_TUNNEL_ID")).c_str());
+        l2tpTunnelConfig.localUdpPort = std::atoi(
+            configParser_->getValue(std::string("LOCAL_UDP_PORT")).c_str());
+        l2tpTunnelConfig.peerUdpPort = std::atoi(
+            configParser_->getValue(std::string("PEER_UDP_PORT")).c_str());
+        l2tpTunnelConfig.ipType =  static_cast<telux::data::IpFamilyType>(std::atoi(
+            configParser_->getValue(std::string("PEER_IP_FAMILY")).c_str()));
+        l2tpTunnelConfig.peerIpv6Addr =  configParser_->getValue(std::string("PEER_IP_ADDRESS"));
+    }
+
+ private:
+    std::shared_ptr<ConfigParser> configParser_;
+};
+
+class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
+ public:
+    DataL2TP(std::shared_ptr<Utils> utils) {
+        utils_ = utils;
+    }
+
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+
+        /* Step - 2 */
+        dataL2TPMgr_  = dataFactory.getL2tpManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!dataL2TPMgr_) {
+            std::cout << "Can't get IL2tpManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "L2TP service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int setL2TPConfiguration() {
+        int mtuSize;
+        bool enableL2tp;
+        bool enableMss;
+        bool enableMtu;
+        telux::common::Status status;
+
+        enableL2tp = utils_->getL2TPEnable();
+        enableMss = utils_->getMSSEnable();
+        enableMtu = utils_->getMTUEnable();
+        mtuSize = utils_->getMtuSize();
+
+        auto responseCb = std::bind(
+            &DataL2TP::onConfigResponseAvailable, this, std::placeholders::_1);
+
+        /* Step - 4 */
+        status = dataL2TPMgr_->setConfig(
+            enableL2tp, enableMss, enableMtu, responseCb, mtuSize);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't set config, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForResponse()) {
+            std::cout << "Failed to set config, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Configuration set" << std::endl;
+        return 0;
+    }
+
+    int configureAndAddTunnel() {
+        telux::common::Status status;
+        telux::data::net::L2tpTunnelConfig l2tpTunnelConfig{};
+        telux::data::net::L2tpSessionConfig l2tpSessionConfig{};
+
+        utils_->populateTunnelConfig(l2tpTunnelConfig);
+
+        l2tpSessionConfig.locId = 1;
+        l2tpSessionConfig.peerId = 1;
+        l2tpTunnelConfig.sessionConfig.emplace_back(l2tpSessionConfig);
+
+        auto responseCb = std::bind(
+            &DataL2TP::onAddTunnelResponseAvailable, this, std::placeholders::_1);
+
+        /* Step - 5 */
+        status = dataL2TPMgr_->addTunnel(l2tpTunnelConfig, responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't add tunnel, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForResponse()) {
+            std::cout << "Failed to add tunnel, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Tunnel added" << std::endl;
+        return 0;
+    }
+
+    bool waitForResponse() {
+        int const DEFAULT_TIMEOUT_SECONDS = 5;
+        std::unique_lock<std::mutex> lock(updateMutex_);
+
+        auto cvStatus = updateCV_.wait_for(lock,
+            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (cvStatus == std::cv_status::timeout) {
+            std::cout << "Timedout" << std::endl;
+            errorCode_ = telux::common::ErrorCode::TIMEOUT_ERROR;
+            return false;
+        }
+
+        return true;
+    }
+
+    /* Receives response of the setConfig() request */
+    void onConfigResponseAvailable(telux::common::ErrorCode error) {
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonConfigResponseAvailable()" << std::endl;
+        errorCode_ = error;
+        updateCV_.notify_one();
+    }
+
+    /* Receives response of the addTunnel() request */
+    void onAddTunnelResponseAvailable(telux::common::ErrorCode error) {
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonAddTunnelResponseAvailable()" << std::endl;
+        errorCode_ = error;
+        updateCV_.notify_one();
+    }
+
+ private:
+    std::mutex updateMutex_;
+    std::condition_variable updateCV_;
+    telux::common::ErrorCode errorCode_;
+    std::shared_ptr<Utils> utils_;
+    std::shared_ptr<telux::data::net::IL2tpManager> dataL2TPMgr_;
+};
 
 int main(int argc, char *argv[]) {
-   std::promise<int> promise;
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::net::IL2tpManager> dataL2tpMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   if(argc == 2) {
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    int ret;
+    std::shared_ptr<DataL2TP> app;
 
-      // [2] Get the DataFactory and L2tp Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataL2tpMgr  = dataFactory.getL2tpManager(initCb);
-         if (dataL2tpMgr) {
-            // [3] Check if L2TP manager is ready
-            std::cout <<
-                  "\n\nInitializing L2tp Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataL2tpMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** L2tp Sub System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize L2tp subsystem *** " << std::endl;
-         }
-      } while(1);
+    std::shared_ptr<Utils> utils;
 
-      std::string configFile = argv[1];
-      std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
-      bool setConfigPass = false;
-      bool enable = false;
-      int param = std::atoi(configParser->getValue(std::string("L2TP_ENABLE")).c_str());
-      if (param) {
-         enable = true;
-      }
-      bool enableMss = false;
-      param = std::atoi(configParser->getValue(std::string("TCP_MSS_ENABLE")).c_str());
-      if (param) {
-         enableMss = true;
-      }
-      bool enableMtu = false;
-      param = std::atoi(configParser->getValue(std::string("MTU_SIZE_ENABLE")).c_str());
-      if (param) {
-         enableMtu = true;
-      }
-      int mtuSize = std::atoi(configParser->getValue(std::string("MTU_SIZE_BYTES")).c_str());
+    if (argc != 2) {
+        std::cout << "Usage: ./l2tp_sample_app <configuration-file>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Instantiate setConfig callback instance - this is optional
-      auto setConfigCb = [&](telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                   << "setConfig Response"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                   << ". ErrorCode: " << static_cast<int>(error) << "\n";
-         if (error == telux::common::ErrorCode::SUCCESS) {setConfigPass = true;}
-         promise.set_value(OPERATION_SUCCESS);
-      };
+    try {
+        utils = std::make_shared<Utils>(argv[1]);
+        app = std::make_shared<DataL2TP>(utils);
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate Utils/DataL2TP" << std::endl;
+        return -ENOMEM;
+    }
 
-      std::future<int> future = promise.get_future();
-      // [5] Set L2TP Configuration
-      dataL2tpMgr->setConfig(enable, enableMss, enableMtu, setConfigCb, mtuSize);
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
 
-      // [6] Wait for setConfig callback - this is optional
-      int ret = future.get();
+    ret = app->setL2TPConfiguration();
+    if (ret < 0) {
+        return ret;
+    }
 
-      // [7] Configure L2TP Tunnel
-      if (setConfigPass) {
-         std::cout << "L2TP Set Configuration succeeded ... Adding Tunnel" << std::endl;
-         telux::data::net::L2tpTunnelConfig l2tpTunnelConfig;
-         l2tpTunnelConfig.locIface = configParser->getValue(std::string("HW_IF_NAME"));
-         l2tpTunnelConfig.prot = static_cast<telux::data::net::L2tpProtocol>(
-            std::atoi(configParser->getValue(std::string("ENCAP_PROTOCOL")).c_str()));
-         l2tpTunnelConfig.locId =
-             std::atoi(configParser->getValue(std::string("LOCAL_TUNNEL_ID")).c_str());
-         l2tpTunnelConfig.peerId =
-             std::atoi(configParser->getValue(std::string("PEER_TUNNEL_ID")).c_str());
-         l2tpTunnelConfig.localUdpPort =
-             std::atoi(configParser->getValue(std::string("LOCAL_UDP_PORT")).c_str());
-         l2tpTunnelConfig.peerUdpPort =
-             std::atoi(configParser->getValue(std::string("PEER_UDP_PORT")).c_str());
-         l2tpTunnelConfig.ipType =  static_cast<telux::data::IpFamilyType>(
-             std::atoi(configParser->getValue(std::string("PEER_IP_FAMILY")).c_str()));
-         l2tpTunnelConfig.peerIpv6Addr =  configParser->getValue(std::string("PEER_IP_ADDRESS"));
-         telux::data::net::L2tpSessionConfig l2tpSessionConfig;
-         l2tpSessionConfig.locId = 1;
-         l2tpSessionConfig.peerId = 1;
-         l2tpTunnelConfig.sessionConfig.emplace_back(l2tpSessionConfig);
+    ret = app->configureAndAddTunnel();
+    if (ret < 0) {
+        return ret;
+    }
 
-         promise = std::promise<int>();
-         // [8] Instantiate addTunnel callback instance - this is optional
-         auto addTunnelCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
-            std::cout << std::endl << std::endl;
-            std::cout << "CALLBACK: "
-                     << "addTunnel Response"
-                     << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                     << ". ErrorCode: " << static_cast<int>(error) << "\n";
-            if (error == telux::common::ErrorCode::SUCCESS) {setConfigPass = true;}
-            promise.set_value(OPERATION_SUCCESS);
-         };
-
-         // [9] addTunnel to L2TP
-         std::future<int> future = promise.get_future();
-         dataL2tpMgr->addTunnel(l2tpTunnelConfig, addTunnelCb);
-
-         // [10] Wait for addTunnel callback - this is optional
-         ret = future.get();
-      }
-      else {
-         std::cout << "L2TP Set Configuration failed ..." << std::endl;
-      }
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./l2tp_sample_app <configuration file>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t Configuration File Parameters";
-      std::cout << "\n\t\t L2TP_ENABLE        (0-DISABLE, 1-ENABLE)";
-      std::cout << "\n\t\t TCP_MSS_ENABLE     (0-DISABLE, 1-ENABLE)";
-      std::cout << "\n\t\t MTU_SIZE_ENABLE    (0-DISABLE, 1-ENABLE)";
-      std::cout << "\n\t\t MTU_SIZE_BYTE      MTU size in bytes, if MTU size is enabled";
-      std::cout << "\n\t\t HW_IF_NAME         eth0.x where x is Vlan Id";
-      std::cout << "\n\t\t ENCAP_PROTOCOL     (0-IP, 1-UDP)";
-      std::cout << "\n\t\t PEER_IP_FAMILY     (4-IPv4, 6-IPv6)";
-      std::cout << "\n\t\t PEER_IP_ADDRESS    ip address in ipv4 or ipv6 format based on ip family";
-      std::cout << "\n\t\t LOCAL_TUNNEL_ID    Local Tunnel Id";
-      std::cout << "\n\t\t PEER_TUNNEL_ID     Peer Tunnel Id";
-      std::cout << "\n\t\t LOCAL_UDP_PORT     Local UDP port if UDP encapsulation protocol is used";
-      std::cout << "\n\t\t PEER_UDP_PORT      Peer UDP port if UDP encapsulation protocol is used";
-      std::cout << std::endl;
-      std::cout << "\n\t ./l2tp_sample_app DataL2tpApp.conf";
-   }
-
-   // [7] Cleaning up and exit the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
-
-   return 0;
+    std::cout << "\nL2TP tunnel app exiting" << std::endl;
+    return 0;
 }

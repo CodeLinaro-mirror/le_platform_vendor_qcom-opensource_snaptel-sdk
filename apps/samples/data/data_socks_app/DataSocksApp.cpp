@@ -26,102 +26,153 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
+/*
+ * This application demonstrates how to enable/disable Socks proxy service.
+ * The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a ISocksManager instance from DataFactory.
+ * 3. Wait for the Socks service to become available.
+ * 4. Define whether to enable/disable Socks proxy service on local/remote system.
+ * 5. Finally, enable/disable the Socks proxy service.
+ *
+ * Usage:
+ * # ./socks_sample_app <operation-type> <enable>
+ *
+ * Example - ./socks_sample_app 1 1
+ *
+ * Please follow instructions in Readme file located in same folder as this app
+ * to setup Socks Proxy before running this app.
+ */
+
+#include <errno.h>
+
+#include <chrono>
+#include <thread>
 #include <iostream>
 #include <memory>
-#include <cstdlib>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/SocksManager.hpp>
 
+class SocksEnabler : public std::enable_shared_from_this<SocksEnabler> {
+ public:
+    int init(telux::data::OperationType opType) {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-/**
- * @file: DataSocksApp.cpp
- *
- * @brief: Simple application to enable Socks Proxy
- *         ./socks_sample_app <operation> <enable/disable>
- * @note: Please follow instructions in readme.txt file located in same folder as this app
- *        to setup Socks Proxy before running this app.
- */
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-std::promise<int> promise;
+        /* Step - 2 */
+        dataSocksMgr_ = dataFactory.getSocksManager(
+                opType, [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
+        if (!dataSocksMgr_) {
+            std::cout << "Can't get ISocksManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Socks service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int enableSocks(bool enable) {
+        telux::common::Status status;
+
+        auto respCb = std::bind(
+            &SocksEnabler::onSocksStatusAvailable, this, std::placeholders::_1);
+
+        /* Step - 5 */
+        enable_ = enable;
+        status = dataSocksMgr_->enableSocks(enable, respCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't enable/disable Socks, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Requested Socks enablement" << std::endl;
+        return 0;
+    }
+
+    /* Called as a response to enableSocks() request */
+    void onSocksStatusAvailable(telux::common::ErrorCode error) {
+        std::cout << "onSocksStatusAvailable()" << std::endl;
+        bool state;
+
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to enable/disable Socks, err" <<
+                static_cast<int>(error) << std::endl;
+            return;
+        }
+
+        state = enable_ ? "enabled" : "disabled";
+        std::cout << "Socks " << state << " successfully" << std::endl;
+    }
+
+ private:
+    bool enable_;
+    std::shared_ptr<telux::data::net::ISocksManager> dataSocksMgr_;
+};
 
 int main(int argc, char *argv[]) {
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::net::ISocksManager> dataSocksMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   if(argc == 3) {
-      telux::data::OperationType opType = static_cast<telux::data::OperationType>
-          (std::atoi(argv[1]));
-      bool enable = false;
-      if(std::atoi(argv[2])) {
-         enable = true;
-      }
+    int ret;
+    std::shared_ptr<SocksEnabler> app;
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    bool enable;
+    telux::data::OperationType opType;
 
-      // [2] Get the DataFactory and Socks Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataSocksMgr  = dataFactory.getSocksManager(opType, initCb);
-         if (dataSocksMgr) {
-            // [3] Check if Socks manager is ready
-            std::cout <<
-                  "\n\nInitializing Socks Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataSocksMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** Socks SubSystem is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize Socks subsystem *** " << std::endl;
-         }
-      } while (1);
+    if (argc != 3) {
+        std::cout << "Usage: ./socks_sample_app <operation-type> <enable>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Instantiate enable Socks callback instance - this is optional
-      auto respCb = [](telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                   << "enableSocks Response"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                   << ". ErrorCode: " << static_cast<int>(error) << "\n";
-         promise.set_value(1);
-      };
+    /* Step - 4 */
+    opType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    enable = std::atoi(argv[2]);
 
-      std::future<int> future = promise.get_future();
-      // [5] enable Socks
-      dataSocksMgr->enableSocks(enable, respCb);
+    try {
+        app = std::make_shared<SocksEnabler>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate SocksEnabler" << std::endl;
+        return -ENOMEM;
+    }
 
-      // [6] Wait for enable Socks callback - this is optional
-      int tmp = future.get();
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./socks_sample_app <operation type> <enable>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
-      std::cout << "\n\t\t enable (1-enable, 0-disable)";
-      std::cout << std::endl;
-      std::cout << "\n\t ./socks_sample_app 1 1 ->enable Socks on remote host";
-   }
+    ret = app->init(opType);
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [7] Cleaning up and exit the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+    ret = app->enableSocks(enable);
+    if (ret < 0) {
+        return ret;
+    }
 
-   return 0;
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "\nSocks app exiting" << std::endl;
+    return 0;
 }

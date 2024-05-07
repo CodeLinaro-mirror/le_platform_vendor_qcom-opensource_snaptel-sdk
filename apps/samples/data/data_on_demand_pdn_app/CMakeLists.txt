@@ -1,22 +1,20 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_DATA_ON_DEMAND_PDN_APP data_on_demand_pdn_app)
+set(TARGET_DATA_APP data_on_demand_pdn_app)
 
-set(SOURCES
-    DataOnDemandPdnApp.cpp
-)
+pkg_check_modules(TELUXDATA REQUIRED telux-data)
 
-# Glib for strlcpy and strlcat
+# Required for strlcpy
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-add_compile_options(${GLIB_CFLAGS})
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(DATA_APP_SOURCES DataOnDemandPdnApp.cpp)
 
-add_executable (${TARGET_DATA_ON_DEMAND_PDN_APP} ${SOURCES})
-target_link_libraries(${TARGET_DATA_ON_DEMAND_PDN_APP} ${GLIB_LIBRARIES} telux_data)
+add_executable(${TARGET_DATA_APP} ${DATA_APP_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_DATA_ON_DEMAND_PDN_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_include_directories(${TARGET_DATA_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(${TARGET_DATA_APP} PRIVATE ${GLIB_CFLAGS} -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_DATA_APP} PRIVATE ${GLIB_LIBRARIES} ${TELUXDATA_LIBRARIES})
+
+install(TARGETS ${TARGET_DATA_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -1,18 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_DATA_APP fwl_enable_sample_app)
 
-set(SOURCES
-    DataFwlEnblApp.cpp
-)
+pkg_check_modules(TELUXDATA REQUIRED telux-data)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(DATA_APP_SOURCES DataFwlEnblApp.cpp)
 
-add_executable (${TARGET_DATA_APP} ${SOURCES})
-target_link_libraries(${TARGET_DATA_APP} telux_data)
+add_executable(${TARGET_DATA_APP} ${DATA_APP_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_DATA_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_include_directories(${TARGET_DATA_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(${TARGET_DATA_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_DATA_APP} PRIVATE ${TELUXDATA_LIBRARIES})
+
+install(TARGETS ${TARGET_DATA_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

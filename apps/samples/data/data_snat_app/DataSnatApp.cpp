@@ -26,113 +26,164 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
+/*
+ * This application demonstrates how to create a static NAT. The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a INatManager instance from DataFactory.
+ * 3. Wait for the NAT service to become available.
+ * 4. Define parameters for the adding NAT.
+ * 5. Create NAT with given parameters.
+ *
+ * Usage:
+ * # ./snat_sample_app <operation-type> <profile-id> <ip-address> \
+ *      <local-ip-port> <global-ip-port> <protocol>
+ *
+ * Example - ./snat_sample_app 1 5 192.168.225.22 500 500 6
+ */
+
+#include <errno.h>
+
+#include <chrono>
+#include <thread>
 #include <iostream>
 #include <memory>
-#include <cstdlib>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/NatManager.hpp>
 
+class NATCreator : public std::enable_shared_from_this<NATCreator> {
+ public:
+    int init(telux::data::OperationType opType) {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-/**
- * @file: DataSnatApp.cpp
- *
- * @brief: Simple application to creat Static NAT
- *         ./snat_sample_app <operation type> <profile id> <ip address> <private port>
- *                           <global port> <protocol>
- */
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-std::promise<int> promise;
+        /* Step - 2 */
+        dataSnatMgr_ = dataFactory.getNatManager(
+                opType, [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!dataSnatMgr_) {
+            std::cout << "Can't get INatManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "NAT service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int addNATEntry(int profileId, std::string ipAddress, int localIpPort,
+            int globalIpPort, int proto) {
+
+        telux::common::Status status;
+        telux::data::net::NatConfig natConfig{};
+
+        natConfig.addr = ipAddress;
+        natConfig.port = static_cast<uint16_t>(localIpPort);
+        natConfig.globalPort = static_cast<uint16_t>(globalIpPort);
+        natConfig.proto = static_cast<uint8_t>(proto);
+
+        auto respCb = std::bind(
+            &NATCreator::onAddNATStatusAvailable, this, std::placeholders::_1);
+
+        /* Step - 5 */
+        status = dataSnatMgr_->addStaticNatEntry(profileId, natConfig, respCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't request add nat, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Requested NAT addition" << std::endl;
+        return 0;
+    }
+
+    /* Called as a response to addStaticNatEntry() request */
+    void onAddNATStatusAvailable(telux::common::ErrorCode error) {
+        std::cout << "onAddNATStatusAvailable()" << std::endl;
+
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to add nat, err" <<
+                static_cast<int>(error) << std::endl;
+            return;
+        }
+
+        std::cout << "NAT added successfully" << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::data::net::INatManager> dataSnatMgr_;
+};
 
 int main(int argc, char *argv[]) {
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::net::INatManager> dataSnatMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   if(argc == 8) {
-      telux::data::OperationType opType = static_cast<telux::data::OperationType>
-          (std::atoi(argv[1]));
-      SlotId slotId = static_cast<SlotId>(std::atoi(argv[2]));
-      int profileId = std::atoi(argv[3]);
-      std::string ipAddr = static_cast<std::string>(argv[4]);
-      int localIpPort = std::atoi(argv[5]);
-      int globalIpPort = std::atoi(argv[6]);
-      int proto = std::atoi(argv[7]);
+    int ret;
+    std::shared_ptr<NATCreator> app;
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    int profileId;
+    int localIpPort;
+    int globalIpPort;
+    int proto;
+    std::string ipAddress;
+    telux::data::OperationType opType;
 
-      // [2] Get the DataFactory and Nat Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataSnatMgr  = dataFactory.getNatManager(opType, initCb);
-         if (dataSnatMgr) {
-            // [3] Check if Nat manager is ready
-            std::cout <<
-                  "\n\nInitializing Nat Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataSnatMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** Nat SubSystem is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize Nat subsystem *** " << std::endl;
-         }
-      } while(1);
+    if (argc != 7) {
+        std::cout << "Usage: ./snat_sample_app <operation-type> <profile-id> " <<
+        "<ip-address> <local-ip-port> <global-ip-port> <protocol>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Instantiate create static NAT callback instance - this is optional
-      auto respCb = [](telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                   << "addStaticNatEntry"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed");
-         promise.set_value(1);
-      };
+    /* Step - 4 */
+    opType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    profileId = std::atoi(argv[2]);
+    ipAddress = static_cast<std::string>(argv[3]);
+    localIpPort = std::atoi(argv[4]);
+    globalIpPort = std::atoi(argv[5]);
+    /* 1-ICMP, 2-IGMP, 6-TCP, 17-UDP, 50-ESP */
+    proto = std::atoi(argv[6]);
 
-      // [5] Create Static NAT entry
-      struct telux::data::net::NatConfig natConfig;
-      natConfig.addr = ipAddr;
-      natConfig.port = (uint16_t)localIpPort;
-      natConfig.globalPort = (uint16_t)globalIpPort;
-      natConfig.proto = (uint8_t)proto;
-      std::future<int> future = promise.get_future();
-      dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
+    try {
+        app = std::make_shared<NATCreator>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate NATCreator" << std::endl;
+        return -ENOMEM;
+    }
 
-      // [6] Wait for callback - this is optional
-      int tmp = future.get();
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./snat_sample_app <operation type> <slotid> <profileid> <ip address> "
-                   "\n\t                   <private port> <global port> <protocol>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
-      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
-      std::cout << "\n\t\t profile id     modem profile id to add static entry on ";
-      std::cout << "\n\t\t ip address (IPv4 or IPv6 format)";
-      std::cout << "\n\t\t protocol (1-ICMP, 2-IGMP, 6-TCP, 17-UDP, 50-ESP)";
-      std::cout << std::endl;
-      std::cout << "\n\t ./snat_sample_app 1 1 5 192.168.225.22 500 500 6 --> to add Static NAT"
-                   "\n\t                   entry on slot 1 profile id 5 for specified IPv4 address"
-                   "\n\t                   over TCP protocol and map local port 500 to global port";
-                   "\n\t                   500\n";
-   }
+    ret = app->init(opType);
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [7] Cleaning up and exit the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+    ret = app->addNATEntry(profileId, ipAddress, localIpPort, globalIpPort, proto);
+    if (ret < 0) {
+        return ret;
+    }
 
-   return 0;
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "\nNAT create app exiting" << std::endl;
+    return 0;
 }

@@ -26,131 +26,182 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
+ * This application demonstrates how to request data profiles. The steps are as follows:
+ *
+ *  1. Get a DataFactory instance.
+ *  2. Get a IDataProfileManager instance from DataFactory.
+ *  3. Wait for the data service to become available.
+ *  4. Request data profile List.
+ *
+ * Usage:
+ * # ./data_profile_app <slot-id>
+ *
+ * Example: ./data_profile_app 1
+ */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
+#include <cstdlib>
+#include <future>
 #include <iomanip>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataProfile.hpp>
 #include <telux/data/DataProfileManager.hpp>
 
-// 3. Implement ICommandCallback interface to know status of requestProfileList
-class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
-   // 5. Receive responses for requestProfileList request
-   void onProfileListResponse(const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
-                              telux::common::ErrorCode error) {
-      static std::vector<std::shared_ptr<telux::data::DataProfile>> profiles_;
+class ProfileListGetter : public telux::data::IDataProfileListCallback,
+                          public std::enable_shared_from_this<ProfileListGetter> {
+ public:
+    int init(SlotId slotId) {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-      profiles_.clear();
-      profiles_ = profiles;
-      std::cout << std::endl << std::endl;
-      std::cout << " ** onProfileListResponse **" << std::endl;
-      std::cout << std::setw(2)
-                << "+-----------------------------------------------------------------+"
-                << std::endl;
-      std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
-                << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
-                << std::setw(10) << " IP Type |" << std::endl;
-      std::cout << std::setw(2)
-                << "+-----------------------------------------------------------------+"
-                << std::endl;
-      for(auto it : profiles) {
-         std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
-                   << std::setw(11) << techPreferenceToString(it->getTechPreference())
-                   << std::setw(15) << it->getApn() << std::setw(17) << it->getName()
-                   << std::setw(10) << ipFamilyTypeToString(it->getIpFamilyType()) << std::endl;
-      }
-      std::cout << "ErrorCode:" << (int)error << std::endl;
-      std::cout << std::endl << std::endl;
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+
+        /* Step - 2 */
+        dataProfileMgr_ = dataFactory.getDataProfileManager(slotId,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!dataProfileMgr_) {
+            std::cout << "Can't get IDataProfileManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Profile service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int requestProfiles() {
+        telux::common::Status status;
+
+        /* Step - 4 */
+        status = dataProfileMgr_->requestProfileList(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't requets profiles, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Profiles requested" << std::endl;
+        return 0;
+    }
+
+    /* Receives response of the startDataCall() request */
+    void onProfileListResponse(
+        const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+        telux::common::ErrorCode error) override {
+
+        std::cout << "\nonProfileListResponse()" << std::endl;
+
+        if (error != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to get profiles, err " <<
+                static_cast<int>(error) << std::endl;
+        }
+
+        std::cout << std::setw(2)
+        << "+-----------------------------------------------------------------+"
+        << std::endl;
+        std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
+        << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
+        << std::setw(10) << " IP Type |" << std::endl;
+        std::cout << std::setw(2)
+        << "+-----------------------------------------------------------------+"
+        << std::endl;
+        for(auto it : profiles) {
+            std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
+            << std::setw(11) << techPreferenceToString(it->getTechPreference())
+            << std::setw(15) << it->getApn() << std::setw(17) << it->getName()
+            << std::setw(10) << ipFamilyTypeToString(it->getIpFamilyType()) << std::endl;
+        }
    }
 
-   std::string techPreferenceToString(telux::data::TechPreference techPref) {
-      switch(techPref) {
-         case telux::data::TechPreference::TP_3GPP:
-            return "3gpp";
-         case telux::data::TechPreference::TP_3GPP2:
-            return "3gpp2";
-         case telux::data::TechPreference::TP_ANY:
-         default:
-            return "Any";
-      }
-   }
+ private:
+    std::string techPreferenceToString(telux::data::TechPreference techPref) {
+        switch(techPref) {
+            case telux::data::TechPreference::TP_3GPP:
+                return "3gpp";
+            case telux::data::TechPreference::TP_3GPP2:
+                return "3gpp2";
+            case telux::data::TechPreference::TP_ANY:
+            default:
+                return "Any";
+        }
+    }
 
-   std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
-      switch(ipType) {
-         case telux::data::IpFamilyType::IPV4:
-            return "IPv4";
-         case telux::data::IpFamilyType::IPV6:
-            return "IPv6";
-         case telux::data::IpFamilyType::IPV4V6:
-            return "IPv4v6";
-         case telux::data::IpFamilyType::UNKNOWN:
-         default:
-            return "NA";
-      }
-   }
+    std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
+        switch(ipType) {
+            case telux::data::IpFamilyType::IPV4:
+                return "IPv4";
+            case telux::data::IpFamilyType::IPV6:
+                return "IPv6";
+            case telux::data::IpFamilyType::IPV4V6:
+                return "IPv4v6";
+            case telux::data::IpFamilyType::UNKNOWN:
+            default:
+                return "NA";
+        }
+    }
+
+    std::shared_ptr<telux::data::IDataProfileManager> dataProfileMgr_;
 };
 
 int main(int argc, char *argv[]) {
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::IDataProfileManager> dataProfileMgr = nullptr;
-   std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   if(argc == 2) {
-      SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
+    int ret;
+    std::shared_ptr<ProfileListGetter> app;
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    SlotId slotId;
 
-      // [2] Get the DataFactory and DataProfileManager instances
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataProfileMgr = dataFactory.getDataProfileManager(slotId, initCb);
-         if (dataProfileMgr) {
-            // [3] Check if data profile manager is ready
-            std::cout <<
-                  "\n\nInitializing Data Profile Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataProfileMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** Data Profile Sub System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize Data Profile subsystem *** " << std::endl;
-         }
-      } while(1);
+    if (argc != 2) {
+        std::cout << "Usage: ./data_profile_app <slot-id>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [4] Instantiate requestProfileList callback
-      myDataProfileListCb = std::make_shared<MyDataProfilesCallback>();
-      // [5] Send a requestProfileList along with required callback function
-      if(dataProfileMgr) {
-         dataProfileMgr->requestProfileList(myDataProfileListCb);
-      }
-   }
-   else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./data_profile_app <slotId>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t slot id        Slot id on which profile list to be retrieved";
-      std::cout << std::endl;
-      std::cout << "\n\t ./data_profile_app 1  --> to retrieve profile list on Slot 1\n";
+    slotId = static_cast<SlotId>(std::atoi(argv[1]));
 
-   }
-   // [6] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit \n\n";
-   std::cin.ignore();
-   return 0;
+    try {
+        app = std::make_shared<ProfileListGetter>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate ProfileListGetter" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init(slotId);
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->requestProfiles();
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    std::cout << "\nData profile app exiting" << std::endl;
+    return 0;
 }

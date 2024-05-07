@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,236 +32,343 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This application demonstrates how to bring up data calls on requested profile
+ * and slot, resolve DNS using dig and communicate with remote host after binding
+ * to an interface. The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a IDataConnectionManager instance from DataFactory.
+ * 3. Wait for the data connection service to become available.
+ * 4. Register a listener which is invoked when there is change in data connection.
+ * 5. Start a data call.
+ * 6. Obtain the remote IP address.
+ * 7. Connect to the remote host.
+ * 8. Finally, when the use case is over deregister the listener.
+ *
+ * Usage:
+ * # ./data_on_demand_pdn_app <slot-id> <profile-id> <operation-type> <domain> <port-number>
+ *
+ * Example: ./data_on_demand_pdn_app 1 2 0 www.example.com 80
+ */
+
+#include <errno.h>
+
+#include <string.h>
+#include <unistd.h>
+#include <glib.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <cstdlib>
-#include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <algorithm>
-#include <errno.h>
-#include <net/if.h>
-#include <glib.h>
+#include <future>
+#include <mutex>
+#include <condition_variable>
 
+#include <telux/common/CommonDefines.hpp>
+#include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/DataConnectionManager.hpp>
 
-/**
- * @file: DataOnDemandPdnApp.cpp
- *
- * @brief: Sample application to demonstrate
- * - Bringing up data calls on requested profile and slot
- * - DNS resolution using dig
- * - Data communication with remote host after binding to an interface
- */
+class OnDemandPDN : public telux::data::IDataConnectionListener,
+                    public std::enable_shared_from_this<OnDemandPDN> {
+ public:
+    int init(SlotId slotId) {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-#define SIZE_IP_ADDR_BUF 40
-#define RESPONSE_BUF 4096
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-int connect(std::string ipAddress, std::string outBoundIf, std::string portNumber) {
-    std::cout << "Connecting to " << ipAddress << " on port " << portNumber << " via " << outBoundIf
-              << std::endl;
-    int sockfd = 0;
-    sockaddr_in serverIpAddress;
-    serverIpAddress.sin_family = AF_INET;
-    serverIpAddress.sin_port = htons(stoi(portNumber));
+        /* Step - 2 */
+        dataConMgr_  = dataFactory.getDataConnectionManager(slotId,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-    if (inet_pton(AF_INET, ipAddress.c_str(), &serverIpAddress.sin_addr) <= 0) {
-        std::cerr << "Cannot parse IP address" << std::endl;
-        return -1;
+        if (!dataConMgr_) {
+            std::cout << "Can't get IDataConnectionManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Data service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = dataConMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
     }
-    // Create the socket
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cerr << "Socket creation failed" << std::endl;
-        return -1;
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 8 */
+        status = dataConMgr_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
     }
 
-    // Bind the socket to the interface
-    ifreq ifr;
-    g_strlcpy(ifr.ifr_name, outBoundIf.c_str(), outBoundIf.length());
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
-        std::cerr << "Socket bind failed with " << strerror(errno) << std::endl;
-        close(sockfd);
-        return -1;
+
+    int triggerDataCall(int profileId, telux::data::OperationType opType) {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(&OnDemandPDN::onDataCallResponseAvailable,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 5 */
+        status = dataConMgr_->startDataCall(
+            profileId, telux::data::IpFamilyType::IPV4, responseCb, opType);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't make call, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForResponse()) {
+            std::cout << "Failed to start data call, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Data call initiated" << std::endl;
+        return 0;
     }
 
-    // Connect to the remote host
-    if (connect(sockfd, (sockaddr *)&serverIpAddress, sizeof(serverIpAddress)) < 0) {
-        std::cerr << "Connect failed: " << strerror(errno) << std::endl;
-        close(sockfd);
-        return -1;
-    }
-    return sockfd;
-}
+    /* Step - 6 */
+    int resolveDNS(std::string domain, std::string &remoteIPAddress) {
+        const int SIZE_IP_ADDR_BUF = 40;
+        FILE *stream;
+        std::string command;
+        std::string remoteIp;
+        sockaddr_in sockAddress{};
+        std::string dnsAddress;
+        char address[SIZE_IP_ADDR_BUF] = {0};
 
-std::string resolve(std::string domain, std::string dnsAddress) {
-    std::cout << "Resolving " << domain << " using DNS server at " << dnsAddress << std::endl;
-    FILE *cmd;
-    std::string ipAddress;
-    char cipAddress[SIZE_IP_ADDR_BUF] = {0};
+        dnsAddress = dataCall_->getIpv4Info().addr.primaryDnsAddress;
 
-    // Use the provided DNS address to request dig for name resolution
-    std::string command = "/usr/bin/dig @" + dnsAddress + " " + domain + " +short";
-    std::cout << "Command: " << command << std::endl;
-    cmd = popen(command.c_str(), "r");
-    if (cmd) {
-        sockaddr_in address;
-        // Get all the answers from the DNS server
-        while (NULL != fgets(cipAddress, SIZE_IP_ADDR_BUF, cmd)) {
-            cipAddress[strlen(cipAddress) - 1] = '\0';
+        /* Use the provided DNS address to request dig for name resolution */
+        command = "/usr/bin/dig @" + dnsAddress + " " + domain + " +short";
 
-            // If the received answer is verified as a valid IP address, return the address
-            if (inet_pton(AF_INET, cipAddress, &address.sin_addr) == 1) {
-                ipAddress = cipAddress;
-                std::cout << ipAddress;
-                ipAddress.erase(
-                    std::remove(ipAddress.begin(), ipAddress.end(), '\n'), ipAddress.end());
+        stream = popen(command.c_str(), "r");
+        if (!stream) {
+            std::cout << "Can't create process, err " << errno << std::endl;
+            return -errno;
+        }
+
+        /* Get all the answers from the DNS server */
+        while (fgets(address, SIZE_IP_ADDR_BUF, stream) != NULL) {
+            address[strlen(address) - 1] = '\0';
+
+            /* If the received answer is verified as a valid IP address, return the address */
+            if (inet_pton(AF_INET, address, &sockAddress.sin_addr) == 1) {
+                remoteIPAddress = address;
+                std::cout << remoteIPAddress;
+                remoteIPAddress.erase(std::remove(remoteIPAddress.begin(),
+                    remoteIPAddress.end(), '\n'), remoteIPAddress.end());
                 break;
             }
         }
-    }
-    std::cout << "\n\n";  // Declutters output from dig
-    return ipAddress;
-}
 
-class DataConnectionListener : public telux::data::IDataConnectionListener {
- public:
-    DataConnectionListener(std::promise<std::shared_ptr<telux::data::IDataCall>> p) {
-        p_ = std::move(p);
+        std::cout << "\nResolved " << domain <<
+            " using DNS server at " << dnsAddress << std::endl;
+        return 0;
     }
-    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
-        std::cout << "\n onDataCallInfoChanged";
-        logDataCallDetails(dataCall);
-        if (dataCall->getDataCallStatus() == telux::data::DataCallStatus::NET_CONNECTED) {
-            p_.set_value(dataCall);
+
+    /* Step - 7 */
+    int connectToHost(std::string remoteIPAddress, std::string portNumber) {
+        int ret;
+        ifreq ifr;
+        int sockfd = 0;
+        std::string outBoundIf;
+        sockaddr_in serverIpAddress{};
+
+        serverIpAddress.sin_family = AF_INET;
+        serverIpAddress.sin_port = htons(stoi(portNumber));
+
+        /* Convert IP address from text to binary */
+        ret = inet_pton(AF_INET, remoteIPAddress.c_str(), &serverIpAddress.sin_addr);
+        if (ret <= 0) {
+            std::cout << "Can't connect" << std::endl;
+            return (ret == 0 ? -EFAULT : -errno);
         }
+
+        /* Create a socket */
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            std::cout << "Can't create socket" << std::endl;
+            return -errno;
+        }
+
+        /* Bind the socket to the interface */
+        outBoundIf = dataCall_->getInterfaceName();
+        g_strlcpy(ifr.ifr_name, outBoundIf.c_str(), outBoundIf.length());
+
+        /* Configure socket */
+        ret = setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
+        if (ret < 0) {
+            std::cout << "Can't create socket" << std::endl;
+            return -errno;
+        }
+
+        /* Connect to the remote host */
+        ret = connect(sockfd, (sockaddr *)&serverIpAddress, sizeof(serverIpAddress));
+        if (ret < 0) {
+            std::cout << "Can't connect" << std::endl;
+            return -errno;
+        }
+
+        std::cout << "Connected to host" << std::endl;
+        return 0;
+    }
+
+    bool waitForResponse() {
+        int const DEFAULT_TIMEOUT_SECONDS = 5;
+        std::unique_lock<std::mutex> lock(updateMutex_);
+
+        auto cvStatus = updateCV_.wait_for(lock,
+            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (cvStatus == std::cv_status::timeout) {
+            std::cout << "Timedout" << std::endl;
+            errorCode_ = telux::common::ErrorCode::TIMEOUT_ERROR;
+            return false;
+        }
+
+        return true;
+    }
+
+    /* Receives response of the startDataCall() request */
+    void onDataCallResponseAvailable(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall,
+        telux::common::ErrorCode error) {
+
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonDataCallResponseAvailable(), err " <<
+            static_cast<int>(error) << std::endl;
+        errorCode_ = error;
+        dataCall_ = dataCall;
+        updateCV_.notify_one();
+    }
+
+    /* Receives data call information whenever there is a change */
+    void onDataCallInfoChanged(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+
+        std::cout << "\nonDataCallInfoChanged()" << std::endl;
+        std::list<telux::data::IpAddrInfo> ipAddrList;
+
+        std::cout << "Data call details:" << std::endl;
+        std::cout << " Slot ID: " << dataCall->getSlotId() << std::endl;
+        std::cout << " Profile ID: " << dataCall->getProfileId() << std::endl;
+        std::cout << " Interface name: " << dataCall->getInterfaceName() << std::endl;
+
+        std::cout << " Data call status: " <<
+            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
+        std::cout << " Data call end reason, type : " <<
+            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+
+        ipAddrList = dataCall->getIpAddressInfo();
+        for(auto &it : ipAddrList) {
+            std::cout << "\n ifAddress: " << it.ifAddress
+                << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << std::endl;
+        }
+
+        std::cout << " IP family type: " <<
+            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
+        std::cout << " Tech preference: " <<
+            static_cast<int>(dataCall->getTechPreference()) << std::endl;
     }
 
  private:
-    void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-        std::cout << " ** DataCall Details **\n";
-        std::cout << " SlotID: " << dataCall->getSlotId() << std::endl;
-        std::cout << " ProfileID: " << dataCall->getProfileId() << std::endl;
-        std::cout << " interfaceName: " << dataCall->getInterfaceName() << std::endl;
-        std::cout << " DataCallStatus: " << (int)dataCall->getDataCallStatus() << std::endl;
-        std::cout << " DataCallEndReason: Type = "
-                  << static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
-        std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
-        for (auto &it : ipAddrList) {
-            std::cout << "\n ifAddress: " << it.ifAddress
-                      << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
-        }
-        std::cout << " IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
-        std::cout << " TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';
-    }
-    std::promise<std::shared_ptr<telux::data::IDataCall>> p_;
+    std::mutex updateMutex_;
+    std::condition_variable updateCV_;
+    telux::common::ErrorCode errorCode_;
+    std::shared_ptr<telux::data::IDataCall> dataCall_;
+    std::shared_ptr<telux::data::IDataConnectionManager> dataConMgr_;
 };
 
 int main(int argc, char *argv[]) {
-    std::shared_ptr<telux::data::IDataConnectionManager> dataConnMgr = nullptr;
-    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-    std::promise<std::shared_ptr<telux::data::IDataCall>> dataCallPromise;
-    std::future<std::shared_ptr<telux::data::IDataCall>> dataCallFuture
-        = dataCallPromise.get_future();
+    int ret;
+    std::shared_ptr<OnDemandPDN> app;
 
-    std::shared_ptr<telux::data::IDataConnectionListener> dataListener
-        = std::make_shared<DataConnectionListener>(std::move(dataCallPromise));
+    SlotId slotId;
+    int profileId;
+    telux::data::OperationType opType;
+    std::string domain;
+    std::string portNumber;
+    std::string remoteIPAddress("");
 
     if (argc != 6) {
-        std::cerr << "\n Invalid argument!!! \n\n";
-        std::cerr << "\n Sample command is: \n";
-        std::cerr << "\n\t " << argv[0] << " <slotId> <profieId> <operationType> <domain> <port>\n";
-        std::cerr << "\n\t\t slot id        Slot id that contains modem profile";
-        std::cerr << "\n\t\t profile id     modem profile id to start data call on";
-        std::cerr << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
-        std::cerr << "\n\t\t domain: The remote host to connect to";
-        std::cerr << "\n\t\t port: The port on remote host to connect to";
-        std::cerr << "\n\t ./data_app 1 2 0 www.example.com  --> start data call on slotId 1 and "
-                     "profile Id 2 on local and connect to www.example.com on port 80\n";
-        exit(1);
+        std::cout << "./data_on_demand_pdn_app <slot-id> " <<
+            "<profile-id> <operation-type> <domain> <port-number>" << std::endl;
+        return -EINVAL;
     }
 
-    SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
-    int profileId = std::atoi(argv[2]);
-    telux::data::OperationType opType = static_cast<telux::data::OperationType>(std::atoi(argv[3]));
-    std::string domain = argv[4];
-    std::string portNumber = argv[5];
+    slotId = static_cast<SlotId>(std::atoi(argv[1]));
+    profileId = std::atoi(argv[2]);
+    opType = static_cast<telux::data::OperationType>(std::atoi(argv[3]));
+    domain = argv[4];
+    portNumber = argv[5];
 
-    // [1] Get Data Connection Manager and wait for service availability
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    {
-        std::promise<telux::common::ServiceStatus> p;
-        dataConnMgr = dataFactory.getDataConnectionManager(
-            slotId, [&](telux::common::ServiceStatus status) { p.set_value(status); });
-        if (dataConnMgr) {
-            std::cout << "\n\nInitializing Data connection manager subsystem on slot " << slotId
-                      << ", Please wait ..." << std::endl;
-            subSystemStatus = p.get_future().get();
-        }
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data sub-system is ready" << std::endl;
-        } else {
-            std::cerr << "Unable to initialize data subsystem. Exiting..." << std::endl;
-            exit(1);
-        }
+    try {
+        app = std::make_shared<OnDemandPDN>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate OnDemandPDN" << std::endl;
+        return -ENOMEM;
     }
 
-    // [2] Register listener
-    dataConnMgr->registerListener(dataListener);
-
-    // [3] Start data call on the mentioned slot Id and profile id and operation type
-    {
-        std::promise<telux::common::ErrorCode> p;
-        telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
-        dataConnMgr->startDataCall(
-            profileId, ipFamilyType,
-            [&](const std::shared_ptr<telux::data::IDataCall> &dataCall,
-                telux::common::ErrorCode errorCode) {
-                std::cout << "startCallResponse: errorCode: " << static_cast<int>(errorCode)
-                          << std::endl;
-                p.set_value(errorCode);
-            },
-            opType);
-        telux::common::ErrorCode errorCode = p.get_future().get();
-        if (errorCode != telux::common::ErrorCode::SUCCESS) {
-            std::cerr << "Failed to start data call. Exiting..." << std::endl;
-            exit(1);
-        }
+    ret = app->init(slotId);
+    if (ret < 0) {
+        return ret;
     }
 
-    // [4] Wait for the data call to get connected
-    std::shared_ptr<telux::data::IDataCall> dataCall = dataCallFuture.get();
-    if (dataCall == nullptr) {
-        std::cerr << "Could not get data call object. Exiting..." << std::endl;
-        exit(1);
+    ret = app->triggerDataCall(profileId, opType);
+    if (ret < 0) {
+        app->deinit();
+        return ret;
     }
 
-    // [5] Resolve the remote host using the DNS address provided by the data call
-    std::string remoteIp = resolve(domain, dataCall->getIpv4Info().addr.primaryDnsAddress);
-    if (remoteIp == "") {
-        std::cerr << "Could not resolve " << domain << ". Exiting..." << std::endl;
-        exit(1);
+    ret = app->resolveDNS(domain, remoteIPAddress);
+    if (ret < 0) {
+        app->deinit();
+        return ret;
     }
-    std::cout << "Resolved " << domain << " to " << remoteIp << std::endl;
 
-    // [6] Connect to the remote host
-    int sockfd = connect(remoteIp, dataCall->getInterfaceName(), portNumber);
-    if (sockfd < 0) {
-        std::cerr << "Could not connect to " << domain << ". Exiting..." << std::endl;
-        exit(1);
+    ret = app->connectToHost(remoteIPAddress, portNumber);
+    if (ret < 0) {
+        app->deinit();
+        return ret;
     }
-    std::cout << "Connected to " << domain << std::endl;
 
-    std::cout << "Press any key to exit" << std::endl;
-    std::cin.ignore();
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-    // [7] Clean-up
-    std::cout << "Cleaning up" << std::endl;
-    close(sockfd);
-    dataConnMgr->deregisterListener(dataListener);
-    dataConnMgr = nullptr;
-
+    std::cout << "\nOn-demand PDN app exiting" << std::endl;
     return 0;
 }

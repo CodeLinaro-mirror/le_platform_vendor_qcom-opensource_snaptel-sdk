@@ -26,216 +26,299 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
+ * This application demonstrates how to set a firewall rule.
+ * The steps are as follows:
+ *
+ * 1. Get a DataFactory instance.
+ * 2. Get a IFirewallManager instance from DataFactory.
+ * 3. Wait for the firewall service to become available.
+ * 4. Get Firewall entry based on IP protocol and set respective filter (i.e. TCP or UDP).
+ * 5. Get IProtocol filter type.
+ * 6. Set the IPv4 or IPv6 header info based on the IP family type.
+ * 7. Set TCP or UDP header info based on the IP protocol.
+ * 8. Finally, add the firewall rule.
+ *
+ * Usage:
+ * # ./fwl_entry_sample_app <configuration-file>
+ *
+ * Example: ./fwl_entry_sample_app /etc/DataFwlEntryApp.conf
+ *
+ * This application assumes firewall has been enabled by running data_fwl_enable_app.
+ */
+
+#include <errno.h>
 
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/FirewallManager.hpp>
+
 #include "ConfigParser.hpp"
 
+/* Utility class to parse <configuration-file> and populate parameters */
+class Utils {
+ public:
+    Utils(std::string configFile) {
+        configParser_ = std::make_shared<ConfigParser>(configFile);
+    };
 
-/**
- * @file: DataFwlEntryApp.cpp
- *
- * @brief: Simple application to add Firewall Entry. This application assumes firewall is enabled
- *         by running data_fwl_enable_app
- *         ./fwl_entry_sample_app <configuration file>
- */
+    telux::data::OperationType getOperationType() {
+        return static_cast<telux::data::OperationType>(
+            std::atoi(configParser_->getValue(std::string("OPERATION_TYPE")).c_str()));
+    }
 
-int main(int argc, char *argv[]) {
-   std::promise<int> promise;
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    telux::data::Direction getDirection() {
+        return static_cast<telux::data::Direction>(
+            std::atoi(configParser_->getValue(std::string("DIRECTION")).c_str()));
+    }
 
-   if(argc == 2) {
-      std::string configFile = argv[1];
-      std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
+    int getProfileId() {
+        return std::atoi(configParser_->getValue(std::string("PROFILE_ID")).c_str());
+    }
 
-      telux::data::OperationType opType = static_cast<telux::data::OperationType>
-          (std::atoi(configParser->getValue(std::string("OPERATION_TYPE")).c_str()));
-      SlotId slotId = static_cast<SlotId>
-          (std::atoi(configParser->getValue(std::string("SLOT_ID")).c_str()));
-      bool fwEnable = false;
-      int profileId = std::atoi(configParser->getValue(std::string("PROFILE_ID")).c_str());
-      telux::data::Direction fwDir = static_cast<telux::data::Direction>(
-          std::atoi(configParser->getValue(std::string("DIRECTION")).c_str()));
-      telux::data::IpProtocol proto;
-      std::string prtocol = configParser->getValue(std::string("PROTOCOL"));
-      if (!prtocol.compare("TCP")) {
-         proto = 6;
-      }
-      else if (!prtocol.compare("UDP")) {
-         proto = 17;
-      }
-      else
-      {
-         std::cout <<"Error: Unrecognized Protocol used .. exiting app" <<std::endl;
-         return 1;
-      }
-      telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(
-          std::atoi(configParser->getValue(std::string("IP_FAMILY")).c_str()));
-       std::string srcAddr = configParser->getValue(std::string("SOURCE_ADDR"));
-       std::string destAddr = configParser->getValue(std::string("DEST_ADDR"));
-       int protSrcPort = std::atoi(configParser->getValue(
-          std::string("PROTOCOL_SRC_PORT")).c_str());
-       int protSrcRange = std::atoi(configParser->getValue(
-          std::string("PROTOCOL_SRC_RANGE")).c_str());
-       int protDestPort = std::atoi(configParser->getValue(
-          std::string("PROTOCOL_DEST_PORT")).c_str());
-       int protDestRange = std::atoi(configParser->getValue(
-          std::string("PROTOCOL_DEST_RANGE")).c_str());
+    SlotId getSlotId() {
+        return static_cast<SlotId>(
+            std::atoi(configParser_->getValue(std::string("SLOT_ID")).c_str()));
+    }
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    telux::data::IpFamilyType getIPFamilyType() {
+        return static_cast<telux::data::IpFamilyType>(
+            std::atoi(configParser_->getValue(std::string("IP_FAMILY")).c_str()));
+    }
 
-      // [2] Get the DataFactory and Firewall Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
-         if (dataFwMgr) {
-            // [3] Check if Firewall manager is ready
-            std::cout <<
-                  "\n\nInitializing Firewall Manager subsystem Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataFwMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize Firewall subsystem *** " << std::endl;
-         }
-      } while(1);
+    int getProtocol() {
+        std::string prtocol;
+        prtocol = configParser_->getValue(std::string("PROTOCOL"));
+        if (!prtocol.compare("TCP")) {
+            return 6;
+        } else if (!prtocol.compare("UDP")) {
+            return 17;
+        } else {
+            return -EINVAL;
+        }
+    }
 
-      // [4] Get firewall Entry instance
-      std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry
-         = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
+    void populateIPv4Info(telux::data::IPv4Info &v4Info, int proto) {
+        v4Info.nextProtoId = proto;
+        v4Info.srcAddr = configParser_->getValue(std::string("SOURCE_ADDR"));
+        v4Info.destAddr= configParser_->getValue(std::string("DEST_ADDR"));
+        v4Info.srcSubnetMask = configParser_->getValue(std::string("IPV4_SRC_SUBNET_MASK"));
+        v4Info.destSubnetMask = configParser_->getValue(std::string("IPV4_DEST_SUBNET_MASK"));
+        v4Info.value = static_cast<uint8_t>(
+            std::atoi(configParser_->getValue(std::string("IPV4_SERVICE_TYPE")).c_str()));
+        v4Info.mask = static_cast<uint8_t>(
+            std::atoi(configParser_->getValue(std::string("IPV4_SERVICE_TYPE_MASK")).c_str()));
+    }
 
-      // [5] Get pointer to Ip Filter
-      std::shared_ptr<telux::data::IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
+    void populateIPv6Info(telux::data::IPv6Info &v6Info, int proto) {
+        v6Info.nextProtoId = proto;
+        v6Info.srcAddr = configParser_->getValue(std::string("SOURCE_ADDR"));
+        v6Info.destAddr= configParser_->getValue(std::string("DEST_ADDR"));
+        v6Info.val = static_cast<uint8_t>(
+            std::atoi(configParser_->getValue(std::string("IPV6_TRAFFIC_CLASS")).c_str()));
+        v6Info.mask = static_cast<uint8_t>(
+            std::atoi(configParser_->getValue(std::string("IPV6_TRAFFIC_CLASS_MASK")).c_str()));
+        v6Info.flowLabel = static_cast<uint32_t>(
+            std::atoi(configParser_->getValue(std::string("IPV6_FLOW_LABEL")).c_str()));
+    }
 
-      // [6] Populate Ip Filter based on Ip Family type
-      switch (ipFamType) {
-         case telux::data::IpFamilyType::IPV4: {
-               telux::data::IPv4Info info;
-               info.srcAddr = srcAddr;
-               info.destAddr = destAddr;
-               info.srcSubnetMask = configParser->getValue(std::string("IPV4_SRC_SUBNET_MASK"));
-               info.destSubnetMask = configParser->getValue(std::string("IPV4_DEST_SUBNET_MASK"));
-               info.value = (uint8_t)std::atoi(
-                  configParser->getValue(std::string("IPV4_SERVICE_TYPE")).c_str());
-               info.mask = (uint8_t)std::atoi(
-                  configParser->getValue(std::string("IPV4_SERVICE_TYPE_MASK")).c_str());
-               info.nextProtoId = proto;
-               ipFilter->setIPv4Info(info);
-         } break;
-         case telux::data::IpFamilyType::IPV6: {
-               telux::data::IPv6Info info;
-               info.srcAddr = srcAddr;
-               info.destAddr = destAddr;
-               info.nextProtoId = proto;
-               info.val = (uint8_t)std::atoi(
-                  configParser->getValue(std::string("IPV6_TRAFFIC_CLASS")).c_str());
-               info.mask = (uint8_t)std::atoi(
-                  configParser->getValue(std::string("IPV6_TRAFFIC_CLASS_MASK")).c_str());
-               info.flowLabel = (uint32_t)std::atoi(
-                  configParser->getValue(std::string("IPV6_FLOW_LABEL")).c_str());
-               ipFilter->setIPv6Info(info);
-         } break;
-         default: {
-            std::cout <<"Error: Unrecognized Ip Family used .. exiting app" <<std::endl;
-            return 1;
-         } break;
-      }
+    void populateProtocolInfo(uint16_t srcPort,
+        uint16_t srcRange, uint16_t destPort, uint16_t destRange) {
+        srcPort = std::atoi(
+            configParser_->getValue(std::string("PROTOCOL_SRC_PORT")).c_str());
+        srcRange = std::atoi(
+            configParser_->getValue(std::string("PROTOCOL_SRC_RANGE")).c_str());
+        destPort = std::atoi(
+            configParser_->getValue(std::string("PROTOCOL_DEST_PORT")).c_str());
+        destRange = std::atoi(
+            configParser_->getValue(std::string("PROTOCOL_DEST_RANGE")).c_str());
+    }
 
-      // [7] Populate Protocol information
-      switch (proto) {
-         case 6: {   // TCP
-            telux::data::TcpInfo tcpInfo;
-            tcpInfo.src.port = (uint16_t)protSrcPort;
-            tcpInfo.src.range = (uint16_t)protSrcRange;
-            tcpInfo.dest.port = (uint16_t)protDestPort;
-            tcpInfo.dest.range = (uint16_t)protDestRange;
+ private:
+    std::shared_ptr<ConfigParser> configParser_;
+};
+
+class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCreator> {
+ public:
+    FirewallEntryCreator(std::shared_ptr<Utils> utils) {
+        utils_ = utils;
+    }
+
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+
+        /* Step - 2 */
+        dataFwMgr_ = dataFactory.getFirewallManager(utils_->getOperationType(),
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!dataFwMgr_) {
+            std::cout << "Can't get IFirewallManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Firewall service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int addEntry() {
+        int proto;
+        telux::common::Status status;
+        telux::data::IPv4Info v4Info{};
+        telux::data::IPv6Info v6Info{};
+        telux::data::TcpInfo tcpInfo{};
+        telux::data::UdpInfo udpInfo{};
+        telux::data::Direction direction;
+        telux::data::IpFamilyType ipFamilyType;
+        std::shared_ptr<telux::data::IIpFilter> ipFilter;
+        std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry;
+
+        proto = utils_->getProtocol();
+        direction = utils_->getDirection();
+        ipFamilyType = utils_->getIPFamilyType();
+
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+
+        /* Step - 4 */
+        fwEntry = dataFactory.getNewFirewallEntry(proto, direction, ipFamilyType);
+        if (!fwEntry) {
+            std::cout << "Can't get new firewall entry" << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 5 */
+        ipFilter = fwEntry->getIProtocolFilter();
+        if (!ipFilter) {
+            std::cout << "Can't get filter" << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 6 */
+        if (ipFamilyType == telux::data::IpFamilyType::IPV4) {
+            utils_->populateIPv4Info(v4Info, proto);
+            ipFilter->setIPv4Info(v4Info);
+        } else if (ipFamilyType == telux::data::IpFamilyType::IPV6) {
+            utils_->populateIPv6Info(v6Info, proto);
+            ipFilter->setIPv6Info(v6Info);
+        } else {
+            std::cout << "Invalid family type " <<
+                static_cast<int>(ipFamilyType) << std::endl;
+            return -EINVAL;
+        }
+
+        /* Step - 7 */
+        if (proto == 6) {
+            utils_->populateProtocolInfo(
+                tcpInfo.src.port, tcpInfo.src.range, tcpInfo.dest.port, tcpInfo.dest.range);
             auto tcpFilter = std::dynamic_pointer_cast<telux::data::ITcpFilter>(ipFilter);
             if(tcpFilter) {
                 tcpFilter->setTcpInfo(tcpInfo);
             }
-         } break;
-         case 17: {  //UDP
-            telux::data::UdpInfo info;
-            info.src.port = (uint16_t)protSrcPort;
-            info.src.range = (uint16_t)protSrcRange;
-            info.dest.port = (uint16_t)protDestPort;
-            info.dest.range = (uint16_t)protDestRange;
+        } else {
+            utils_->populateProtocolInfo(
+                udpInfo.src.port, udpInfo.src.range, udpInfo.dest.port, udpInfo.dest.range);
             auto udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(ipFilter);
             if(udpFilter) {
-                udpFilter->setUdpInfo(info);
+                udpFilter->setUdpInfo(udpInfo);
             }
-         } break;
-         default: {
-         } break;
-      }
+        }
 
-      // [8] Instantiate add firewall entry callback instance - this is optional
-      auto respCb = [&](telux::common::ErrorCode error) {
-         std::cout << std::endl << std::endl;
-         std::cout << "CALLBACK: "
-                  << "addFirewallEntry Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error) << std::endl;
-                  promise.set_value(1);
-      };
+        telux::data::BackhaulInfo bhInfo = {};
+        telux::data::net::FirewallEntryInfo entryInfo = {};
 
-      std::future<int> future = promise.get_future();
-      dataFwMgr->addFirewallEntry(profileId, fwEntry, respCb, slotId);
+        bhInfo.slotId = utils_->getSlotId();
+        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+        bhInfo.profileId = utils_->getProfileId();
 
-      // [9] Wait for callback - this is optional
-      int tmp = future.get();
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./fwl_entry_sample_app <configuration file>";
-      std::cout << std::endl;
-      std::cout << "\n\t\t Configuration File Parameters";
-      std::cout << "\n\t\t OPERATION_TYPE  (0-LOCAL, 1-REMOTE)";
-      std::cout << "\n\t\t SLOT_ID         Slot id that contains modem profile";
-      std::cout << "\n\t\t PROFILE_ID      modem profile id to add firewall entry on";
-      std::cout << "\n\t\t DIRECTION       (1-Uplink, 2-Downlink)";
-      std::cout << "\n\t\t PROTOCOL        (TCP, UDP)";
-      std::cout << "\n\t\t IP_FAMILY       (4-IPv4, 6-IPv6)";
-      std::cout << "\n\t\t SOURCE_ADDR     ip address in ipv4 or ipv6 format based on ip family";
-      std::cout << "\n\t\t DEST_ADDR       ip address in ipv4 or ipv6 format based on ip family";
-      std::cout << "\n\t\t IPV4_SRC_SUBNET_MASK    For Ipv4 Only";
-      std::cout << "\n\t\t IPV4_DEST_SUBNET_MASK   For Ipv4 Only";
-      std::cout << "\n\t\t IPV4_SERVICE_TYPE       For Ipv4 Only";
-      std::cout << "\n\t\t IPV4_SERVICE_TYPE_MASK  For Ipv4 Only";
-      std::cout << "\n\t\t IPV6_TRAFFIC_CLASS      For Ipv6 Only";
-      std::cout << "\n\t\t IPV6_TRAFFIC_CLASS_MASK For Ipv6 Only";
-      std::cout << "\n\t\t IPV6_FLOW_LABEL         For Ipv6 Only";
-      std::cout << "\n\t\t PROTOCOL_SRC_PORT       Source port number";
-      std::cout << "\n\t\t PROTOCOL_SRC_RANGE      Source port range";
-      std::cout << "\n\t\t PROTOCOL_DEST_PORT      Destination port number";
-      std::cout << "\n\t\t PROTOCOL_DEST_RANGE     Destination port range";
-      std::cout << std::endl;
-      std::cout << "\n\t   ./fwl_entry_sample_app DataFwlEntryApp.conf";
-   }
+        entryInfo.bhInfo = bhInfo;
+        entryInfo.fwEntry = fwEntry;
 
-   // [7] Cleaning up and exit the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+        auto respCb = std::bind(
+            &FirewallEntryCreator::fwEntryResponse, this, std::placeholders::_1,
+            std::placeholders::_2);
 
-   return 0;
+        /* Step - 8 */
+        status = dataFwMgr_->addFirewallEntry(entryInfo, respCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't add entry, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    /* Receives response of the addFirewallEntry() request */
+    void fwEntryResponse(const uint32_t handle, telux::common::ErrorCode error) {
+        std::cout << "\nfwEntryResponse(), err " << static_cast<int>(error) << std::endl;
+        std::cout << "\nfwEntryResponse(), handle " << handle << std::endl;
+    }
+
+ private:
+    std::shared_ptr<Utils> utils_;
+    std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr_;
+};
+
+int main(int argc, char *argv[]) {
+
+    int ret;
+    std::shared_ptr<FirewallEntryCreator> app;
+
+    std::shared_ptr<Utils> utils;
+
+    if (argc != 2) {
+        std::cout << "Usage: ./fwl_entry_sample_app <config-file>" << std::endl;
+        return -EINVAL;
+    }
+
+    try {
+        utils = std::make_shared<Utils>(argv[1]);
+        app = std::make_shared<FirewallEntryCreator>(utils);
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate Utils/FirewallEntryCreator" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->addEntry();
+    if (ret < 0) {
+        return ret;
+    }
+
+    /* Wait for receiving all asynchronous responses.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "\nFirewall entry creator app exiting" << std::endl;
+    return 0;
 }

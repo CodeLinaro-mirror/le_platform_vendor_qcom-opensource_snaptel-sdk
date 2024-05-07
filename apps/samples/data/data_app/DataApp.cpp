@@ -29,8 +29,8 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -63,123 +63,190 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This application demonstrates how to make a data call. The steps are as follows:
+ *
+ *  1. Get a DataFactory instance.
+ *  2. Get a IDataConnectionManager instance from DataFactory.
+ *  3. Wait for the data service to become available.
+ *  4. Register a listener which will receive updates whenever status of the call is changed.
+ *  5. Define parameters for the call and place the data call.
+ *  6. Finally, when the use case is over, deregister the listener.
+ *
+ * Usage:
+ * # ./data_app 1 1 0
+ */
+
+#include <errno.h>
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <future>
+#include <list>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/DataConnectionManager.hpp>
 
-/**
- * @file: DataApp.cpp
- *
- * @brief: Simple application to start the data call on the given profile id
- */
+class DataConnection : public telux::data::IDataConnectionListener,
+                       public std::enable_shared_from_this<DataConnection> {
+ public:
+    int init(SlotId slotId) {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-// Response callback for start or stop dataCall
-void responseCallback(const std::shared_ptr<telux::data::IDataCall> &dataCall,
-                      telux::common::ErrorCode errorCode) {
-   std::cout << "startCallResponse: errorCode: " << static_cast<int>(errorCode) << std::endl;
-}
+        /* Step - 1 */
+        auto &dataFactory = telux::data::DataFactory::getInstance();
 
-// Implementation of IDataConnectionListener
-class DataConnectionListener : public telux::data::IDataConnectionListener {
-public:
-   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
-      std::cout << "\n onDataCallInfoChanged";
-      logDataCallDetails(dataCall);
-   }
+        /* Step - 2 */
+        dataConMgr_ = dataFactory.getDataConnectionManager(slotId,
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
 
-private:
-   void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-      std::cout << " ** DataCall Details **\n";
-      std::cout << " SlotID: " << dataCall->getSlotId() << std::endl;
-      std::cout << " ProfileID: " << dataCall->getProfileId() << std::endl;
-      std::cout << " interfaceName: " << dataCall->getInterfaceName() << std::endl;
-      std::cout << " DataCallStatus: " << (int)dataCall->getDataCallStatus() << std::endl;
-      std::cout
-         << " DataCallEndReason: Type = " << static_cast<int>(dataCall->getDataCallEndReason().type)
-         << std::endl;
-      std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
-      for(auto &it : ipAddrList) {
-         std::cout << "\n ifAddress: " << it.ifAddress
-                   << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                   << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
-      }
-      std::cout << " IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
-      std::cout << " TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';
-   }
+        if (!dataConMgr_) {
+            std::cout << "Can't get IDataConnectionManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Data service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = dataConMgr_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 6 */
+        status = dataConMgr_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int makeDataCall(int profileId, telux::data::OperationType opType) {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(&DataConnection::responseCallback,
+            this, std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 5 */
+        status = dataConMgr_->startDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
+            responseCb, opType);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't start data call, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "\nData call initiated" << std::endl;
+        return 0;
+    }
+
+    /* Receives response of the startDataCall() request */
+    void responseCallback(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall,
+        telux::common::ErrorCode error) {
+        std::cout << "\nresponseCallback(), err " << static_cast<int>(error) << std::endl;
+    }
+
+    /* Receives data call information whenever there is a change */
+    void onDataCallInfoChanged(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+
+        std::cout << "\nonDataCallInfoChanged()" << std::endl;
+        std::list<telux::data::IpAddrInfo> ipAddrList;
+
+        std::cout << "Data call details:" << std::endl;
+        std::cout << " Slot ID: " << dataCall->getSlotId() << std::endl;
+        std::cout << " Profile ID: " << dataCall->getProfileId() << std::endl;
+        std::cout << " Interface name: " << dataCall->getInterfaceName() << std::endl;
+
+        std::cout << " Data call status: " <<
+            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
+        std::cout << " Data call end reason, type : " <<
+            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+
+        ipAddrList = dataCall->getIpAddressInfo();
+        for(auto &it : ipAddrList) {
+            std::cout << "\n ifAddress: " << it.ifAddress
+                << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << std::endl;
+        }
+
+        std::cout << " IP family type: " <<
+            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
+        std::cout << " Tech preference: " <<
+            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+    }
+
+ private:
+    std::shared_ptr<telux::data::IDataConnectionManager> dataConMgr_;
 };
 
 int main(int argc, char *argv[]) {
-   bool subSystemStatusUpdated = false;
-   std::condition_variable initCv;
-   std::mutex mtx;
-   std::shared_ptr<telux::data::IDataConnectionManager> dataConnMgr = nullptr;
-   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   std::shared_ptr<telux::data::IDataConnectionListener> dataListener
-      = std::make_shared<DataConnectionListener>();
+    int ret;
+    std::shared_ptr<DataConnection> app;
 
-   if (argc == 4) {
-      SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
-      int profileId = std::atoi(argv[2]);
-      telux::data::OperationType opType = static_cast<telux::data::OperationType>
-          (std::atoi(argv[3]));
+    if (argc != 4) {
+        std::cout << "Usage: ./data_app <slot_id> <profile-id> <opType>" << std::endl;
+        return -EINVAL;
+    }
 
-      // [1] Instantiate initialization callback - this is optional
-      auto initCb = [&](telux::common::ServiceStatus status) {
-         std::lock_guard<std::mutex> lock(mtx);
-         subSystemStatusUpdated = true;
-         initCv.notify_all();
-      };
+    SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
+    int profileId = std::atoi(argv[2]);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>
+        (std::atoi(argv[3]));
 
-      // [2] Get the DataFactory and data Connection Manager instance
-      auto &dataFactory = telux::data::DataFactory::getInstance();
-      do {
-         subSystemStatusUpdated = false;
-         std::unique_lock<std::mutex> lck(mtx);
-         dataConnMgr = dataFactory.getDataConnectionManager(slotId, initCb);
-         if (dataConnMgr) {
-            // [3] Check if data connection manager is ready
-            std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
-                  slotId << ", Please wait ..." << std::endl;
-            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-            subSystemStatus = dataConnMgr->getServiceStatus();
-         }
-         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << " *** DATA Sub System is Ready *** " << std::endl;
-            break;
-         }
-         else {
-            std::cout << " *** Unable to initialize data subsystem *** " << std::endl;
-         }
-      } while (1);
+    try {
+        app = std::make_shared<DataConnection>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate DataConnection" << std::endl;
+        return -ENOMEM;
+    }
 
-      // [4] Register for Data listener
-      dataConnMgr->registerListener(dataListener);
+    ret = app->init(slotId);
+    if (ret < 0) {
+        return ret;
+    }
 
-      // [5] Start data call on the mentioned slot Id and profile id and operation type
-      telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4V6;
-      dataConnMgr->startDataCall(profileId, ipFamilyType, responseCallback, opType);
+    ret = app->makeDataCall(profileId, opType);
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
 
-   } else {
-      std::cout << "\n Invalid argument!!! \n\n";
-      std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./data_app <slotId> <profieId> <operationType>\n";
-      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
-      std::cout << "\n\t\t profile id     modem profile id to start data call on";
-      std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
-      std::cout << "\n\t ./data_app 1 1 1  --> start data call on slotId 1 and profile Id 1 on remote\n";
-   }
+    /* Wait for receiving all asynchronous responses before exiting the application.
+     * Application specific logic goes here, this wait is just an example */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
-   // [6] Exit logic for the application
-   std::cout << "\n\nPress ENTER to exit!!! \n\n";
-   std::cin.ignore();
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
-   // [7] Cleanup
-   if (dataConnMgr) {
-      dataConnMgr->deregisterListener(dataListener);
-      dataConnMgr = nullptr;
-   }
-   return 0;
+    std::cout << "\nData connection app exiting" << std::endl;
+    return 0;
 }

@@ -4,7 +4,7 @@
    #  SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
-     
+
 =======================
 Simulation with TelSDK
 =======================
@@ -338,7 +338,14 @@ TelSDK simulation framework supports logging. User configurable logger settings 
 |                  |                                                                 |
 +------------------+-----------------------------------------------------------------+
 
+----------------------
+Environment specifications
+----------------------
+Current release has been tested with the combination below.
 
+* Ubuntu 18.04
+* gcc version 7.5.0
+* ldd version 2.27
 
 ----------------------------------------
 Simulation under different technologies

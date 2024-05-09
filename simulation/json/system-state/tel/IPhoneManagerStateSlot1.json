@@ -196,6 +196,16 @@
                "configType"      : 1,
                "delta"           : 50
            }
-        ]
+        ],
+
+        "serviceStateInfo" :
+        {
+            "serviceState" : 1
+        },
+
+        "voiceRatInfo" :
+        {
+            "rat" : 14
+        }
     }
 }

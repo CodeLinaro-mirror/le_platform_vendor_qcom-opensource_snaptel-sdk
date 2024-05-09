@@ -248,7 +248,7 @@ Refer below for configuring different cells with their respective attributes in 
 - **GSM cell info:**
  - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-ARFCN> <p6-BSIC> <p7-Signal Strength> <p8-Bit Error Rate>
 - **WCDMA cell info:**
- - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-PSC> <p6-UARFCN> <p7-Signal Strength> <p8-Bit Error Rate>
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-PSC> <p6-UARFCN> <p7-Signal Strength> <p8-Bit Error Rate> <p9-ECIO> <p10-RSCP>
 - **LTE cell info:**
  - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-CI> <p4-PCI> <p5-TAC> <p6-EARFCN> <p7-Signal Strength> <p8-RSRP> <p9-RSRQ> <p10-RSSNR> <p11-CQI> <p12-Timing Advance>
 - **NR5G cell info:**
@@ -258,7 +258,7 @@ Please note that CDMA and TDSCDMA are deprecated.<br>
 
 <b>Sample input:</b>
 \code{.sh}
-telsdk_event_injector -f tel_phone -e "cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300"
+telsdk_event_injector -f tel_phone -e "cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3 -10 -54,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300"
 \endcode
 \htmlonly
 <BR>
@@ -291,6 +291,8 @@ Refer below for configuring different RAT signal strength with their respective 
 - **WCDMA:** Use the following parameters:
  - p1 - Signal Strength
  - p2 - Bit Error Rate
+ - p3 - ECIO
+ - p4 - RSCP
 
 - **NR5G:** Use the following parameters:
  - p1 - RSRP
@@ -301,7 +303,7 @@ Please note that CDMA and TDSCDMA are deprecated.<br>
 
 <b>Sample input:</b>
 \code{.sh}
-telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300"
+telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 -10 -54,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300"
 \endcode
 \htmlonly
 <BR>

@@ -10,6 +10,9 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/ServingManagerServerImpl.cpp
     tel/NetworkSelectionManagerServerImpl.cpp
     tel/PhoneManagerServerImpl.cpp
+    tel/OperatingModeTransitionManager.cpp
+    tel/TelUtil.cpp
+
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

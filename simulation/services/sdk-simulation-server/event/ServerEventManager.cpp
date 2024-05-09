@@ -100,12 +100,14 @@ void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
             }
             ++it;
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " No filter for registered listeners");
     }
 }
 
 telux::common::Status ServerEventManager::registerListener(
     std::weak_ptr<IServerEventListener> listener, std::string filter) {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " filter:", filter);
     std::lock_guard<std::mutex> listenerLock(listenerMutex_);
     auto spt = listener.lock();
     if (spt != nullptr) {

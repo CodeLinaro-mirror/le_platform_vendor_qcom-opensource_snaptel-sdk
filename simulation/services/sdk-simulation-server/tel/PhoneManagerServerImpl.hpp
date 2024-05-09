@@ -14,14 +14,12 @@
 
 #include <memory>
 #include <string>
-
 #include <telux/common/CommonDefines.hpp>
-#include "libs/common/JsonParser.hpp"
-#include "libs/common/CommonUtils.hpp"
+#include "event/ServerEventManager.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "protos/proto-src/tel_simulation.grpc.pb.h"
 #include "event/EventService.hpp"
-#include "event/ServerEventManager.hpp"
+#include "common/ModemManagerImpl.hpp"
 
 using grpc::ServerContext;
 
@@ -31,7 +29,7 @@ class PhoneManagerServerImpl final : public telStub::PhoneService::Service,
  public:
     PhoneManagerServerImpl();
     ~PhoneManagerServerImpl();
-    grpc::Status GetServiceStatus(ServerContext* context, 
+    grpc::Status GetServiceStatus(ServerContext* context,
         const google::protobuf::Empty *request,
         commonStub::GetServiceStatusReply* response) override;
     grpc::Status IsSubsystemReady(ServerContext* context,
@@ -61,13 +59,13 @@ class PhoneManagerServerImpl final : public telStub::PhoneService::Service,
         telStub::SetRadioPowerReply* response) override;
     grpc::Status RequestCellInfoList(ServerContext* context,
         const telStub::RequestCellInfoListRequest* request,
-        telStub::RequestCellInfoListResponse* response) override;
+        telStub::RequestCellInfoListReply* response) override;
     grpc::Status SetCellInfoListRate(ServerContext* context,
         const telStub::SetCellInfoListRateRequest* request,
         telStub::SetCellInfoListRateReply* response) override;
     grpc::Status GetSignalStrength(ServerContext* context,
         const telStub::GetSignalStrengthRequest* request,
-        telStub::GetSignalStrengthResponse* response) override;
+        telStub::GetSignalStrengthReply* response) override;
     grpc::Status SetECallOperatingMode(ServerContext* context,
         const telStub::SetECallOperatingModeRequest* request,
         telStub::SetECallOperatingModeReply* response) override;
@@ -88,28 +86,17 @@ private:
     //Read only API JSON Data
     telux::common::ServiceStatus readSubsystemStatus(int slotId);
     telux::common::ServiceStatus readSubsystemStatus(int slotId, int &cbDelay);
-    //Read both API and System State JSON Data
-    telux::common::ErrorCode readJsonData(int slotId, std::string method, JsonData &data);
-    telux::common::ErrorCode readJsonData(int slotId, std::string method,
-        JsonData &data, std::string &stateJsonPath);
     void onEventUpdate(std::string event);
     void handleSignalStrengthChanged(std::string eventParams);
     void handleCellInfoChanged(std::string eventParams);
     void handleVoiceServiceStateChanged(std::string eventParams);
-    void notifyAndUpdateVoiceServiceState(int phoneId, int voiceServiceState,
-        int voiceServiceDenialCause, int radioTech); 
     void handleOperatingModeChanged(std::string eventParams);
     void notifyAndUpdateOperatingMode(int operatingMode);
     void handleECallOperatingModeChanged(std::string eventParams);
-    void notifyAndUpdateEcallMode(int phoneId, int ecallMode, int ecallModeReason);
     void handleOperatorInfoChanged(std::string eventParams);
-    void triggerOperatorModeChange(int phoneId, ::telStub::PlmnInfo info);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
-    telStub::VoiceServiceTechnology convertVoiceTechStringToEnum(std::string voiceTech);
-    telStub::RATCapability convertRATCapStringToEnum(std::string radioCap);
-    void updateJsonForDefaultValues(int phoneId, bool resetVoiceState);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    std::shared_ptr<telux::common::ModemManagerImpl> modemMgr_;
 };
-
 
 #endif // TELUX_TEL_PHONEMANAGERSERVERIMPL_HPP

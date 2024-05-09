@@ -12,8 +12,9 @@
 #include <vector>
 #include <unordered_map>
 #include <telux/common/CommonDefines.hpp>
-
 #include "protos/proto-src/event_simulation.grpc.pb.h"
+
+#define MODEM_FILTER "modem_filter"
 
 class IServerEventListener {
 public:

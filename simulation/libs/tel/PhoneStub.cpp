@@ -177,10 +177,12 @@ telux::common::Status
     }
     std::shared_ptr<VoiceServiceInfo> vocSrvInfo = nullptr;
     VoiceServiceState voiceServiceState =
-        static_cast<VoiceServiceState>(response.voice_service_state());
+        static_cast<VoiceServiceState>(response.voice_service_state_info().voice_service_state());
     VoiceServiceDenialCause denialCause =
-        static_cast<VoiceServiceDenialCause>(response.voice_service_denial_cause());
-    RadioTechnology radioTech = static_cast<RadioTechnology> (response.radio_technology());
+        static_cast<VoiceServiceDenialCause>(
+            response.voice_service_state_info().voice_service_denial_cause());
+    RadioTechnology radioTech = static_cast<RadioTechnology> (
+        response.voice_service_state_info().radio_technology());
     vocSrvInfo = std::make_shared<VoiceServiceInfo>(voiceServiceState, denialCause, radioTech);
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
@@ -241,7 +243,7 @@ telux::common::Status PhoneStub::setRadioPower(
 telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback callback) {
     LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
     ::telStub::RequestCellInfoListRequest request;
-    ::telStub::RequestCellInfoListResponse response;
+    ::telStub::RequestCellInfoListReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -438,7 +440,7 @@ telux::common::Status PhoneStub::requestSignalStrength(
     std::shared_ptr<telux::tel::ISignalStrengthCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
     ::telStub::GetSignalStrengthRequest request;
-    ::telStub::GetSignalStrengthResponse response;
+    ::telStub::GetSignalStrengthReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -450,28 +452,34 @@ telux::common::Status PhoneStub::requestSignalStrength(
     std::shared_ptr<SignalStrength> signalStrengthNotify = nullptr;
     std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength =
          std::make_shared<GsmSignalStrengthInfo>(
-             response.mutable_gsm_signal_strength_info()->gsm_signal_strength(),
-             response.mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
+             response.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                gsm_signal_strength(),
+             response.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                gsm_bit_error_rate(),
              INVALID_SIGNAL_STRENGTH_VALUE);
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
         = std::make_shared<LteSignalStrengthInfo>(
-            response.mutable_lte_signal_strength_info()->lte_signal_strength(),
-            response.mutable_lte_signal_strength_info()->lte_rsrp(),
-            response.mutable_lte_signal_strength_info()->lte_rsrq(),
-            response.mutable_lte_signal_strength_info()->lte_rssnr(),
-            response.mutable_lte_signal_strength_info()->lte_cqi(),
-            response.mutable_lte_signal_strength_info()->timing_advance());
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->
+                lte_signal_strength(),
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrp(),
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrq(),
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_cqi(),
+            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->
+                timing_advance());
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
-            response.mutable_wcdma_signal_strength_info()->signal_strength(),
-            response.mutable_wcdma_signal_strength_info()->bit_error_rate(),
-            response.mutable_wcdma_signal_strength_info()->ecio(),
-            response.mutable_wcdma_signal_strength_info()->rscp());
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+                signal_strength(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+                bit_error_rate(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->ecio(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rscp());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
-            response.mutable_nr5g_signal_strength_info()->rsrp(),
-            response.mutable_nr5g_signal_strength_info()->rsrq(),
-            response.mutable_nr5g_signal_strength_info()->rssnr());
+            response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
+            response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrq(),
+            response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rssnr());
     signalStrengthNotify
         = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
             nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
@@ -506,7 +514,6 @@ telux::common::Status PhoneStub::setECallOperatingMode(ECallMode eCallMode,
     grpc::Status reqstatus = stub_->SetECallOperatingMode(&context, request, &response);
     if (!reqstatus.ok()) {
         LOG(DEBUG, __FUNCTION__, " failed on phoneId ", phoneId_);
-        return telux::common::Status::FAILED;
     }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
@@ -639,7 +646,7 @@ telux::common::Status PhoneStub::configureSignalStrength(
         return telux::common::Status::INVALIDPARAM;
     }
 
-    request.set_slot_id(phoneId_);
+    request.set_phone_id(phoneId_);
     for (size_t i = 0; i < signalStrengthConfig.size(); i++) {
         telStub::ConfigureSignalStrength *sigConfig = request.add_config();
         sigConfig->set_config_type(static_cast<telStub::SignalStrengthConfigType>

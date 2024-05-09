@@ -591,7 +591,13 @@ enum GnssSignalType {
   /** Gnss signal is of NAVIC L5 RF Band. */
   NAVIC_L5 = (1<<20),
   /** Gnss signal is of BEIDOU B2A_Q RF Band. */
-  BEIDOU_B2AQ = (1<<21)
+  BEIDOU_B2AQ = (1<<21),
+  /** Gnss signal is of BEIDOU B2B_I RF Band. */
+  BEIDOU_B2BI = (1<<22),
+  /** Gnss signal is of BEIDOU B2B_Q RF Band. */
+  BEIDOU_B2BQ = (1<<23),
+  /** Gnss signal is of NAVIC L1 RF Band. */
+  NAVIC_L1 = (1<<24)
 };
 
 /*Bit mask containing bits from GnssSignalType */
@@ -913,8 +919,14 @@ enum GnssDataSignalTypes {
   GNSS_DATA_SIGNAL_TYPE_NAVIC_L5 = 18,
   /** BEIDOU B2A_Q RF Band.*/
   GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_Q = 19,
+  /** BEIDOU B2BI RF Band.*/
+  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BI = 20,
+  /** BEIDOU B2BQ RF Band. */
+  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BQ = 21,
+  /** NAVIC L1 RF Band. */
+  GNSS_DATA_SIGNAL_TYPE_NAVIC_L1 = 22,
   /**< Maximum number of signal types.*/
-  GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 20
+  GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 23
 };
 
 /** Specify valid mask of data fields in GnssData.*/

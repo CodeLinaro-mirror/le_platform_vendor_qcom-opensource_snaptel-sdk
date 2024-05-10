@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -200,10 +200,16 @@ bool ECallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ee", "Exit_ECBM", {},
          std::bind(&ECallMenu::exitEcbm, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("gee",
+         "Get_Encoded_Euro_NCAP_Optional_Additional_Data_Content", {},
+         std::bind(&ECallMenu::getEncodedOptionalAdditionalDataContent, this,
+         std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
          hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
-         enableAudioCommand, requestEcbmCommand, exitEcbmCommand};
+         enableAudioCommand, requestEcbmCommand, exitEcbmCommand, getEncodedOADContentCommand};
 
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
@@ -340,12 +346,31 @@ void ECallMenu::hangup(std::vector<std::string> inputCommand) {
    }
 }
 
+void ECallMenu::updateOptionalAdditionalDataContent(MsdSettings &msdSettings) {
+    std::vector<uint8_t> encodedOptionalAdditionalDataContent;
+    auto eCallEuroNcapOAD =
+        msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
+    if (callManager_) {
+        telux::common::Status status =
+            callManager_->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+                encodedOptionalAdditionalDataContent);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Encoding optional additional data content is failed" << std::endl;
+        }
+        msdSettings.setOptionalAdditionalDataContent(encodedOptionalAdditionalDataContent);
+    } else {
+        std::cout << "ERROR: Call Manager is NULL so couldn't get encoded optional additional"
+            " data content " << std::endl;
+    }
+}
+
 void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
    telux::tel::ECallCategory emergencyCategory
       = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
    telux::tel::ECallVariant eCallVariant = telux::tel::ECallVariant::ECALL_EMERGENCY;
 
    MsdSettings msdSettings;
+   updateOptionalAdditionalDataContent(msdSettings);
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
       static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
@@ -396,6 +421,7 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
    }
 
    MsdSettings msdSettings;
+   updateOptionalAdditionalDataContent(msdSettings);
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
       static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
@@ -435,6 +461,7 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
    }
 
    MsdSettings msdSettings;
+   updateOptionalAdditionalDataContent(msdSettings);
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
       static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
@@ -459,6 +486,7 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
  */
 void ECallMenu::updateECallMSD(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
+   updateOptionalAdditionalDataContent(msdSettings);
    auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
    if (callManager_) {
       auto ret = callManager_->updateECallMsd(phoneId_, eCallMsdData, updateMsdCommandCallback_);
@@ -775,6 +803,31 @@ void ECallMenu::exitEcbm(std::vector<std::string> userInput) {
         } else {
             std::cout << "ERROR - Failed to request for ECBM exit,"
                       << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
+}
+
+void ECallMenu::getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput) {
+    MsdSettings msdSettings;
+    auto eCallEuroNcapOAD =
+        msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
+    std::vector<uint8_t> encodedOptionalAdditionalDataContent;
+    if (callManager_) {
+        Status status = callManager_->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+            encodedOptionalAdditionalDataContent);
+        if (status == Status::SUCCESS) {
+            std::cout << "Request for encoding ecall msd optional additional data content is"
+                " successful \n";
+            std::string encodedString(encodedOptionalAdditionalDataContent.begin(),
+                encodedOptionalAdditionalDataContent.end());
+            std::cout << "Encoded optional additional data content: " << encodedString
+                << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to encode ecall msd optional additional data content,"
+                      << " Status:" << static_cast<int>(status) << "\n";
             Utils::printStatus(status);
         }
     } else {

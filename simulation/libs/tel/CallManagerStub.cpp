@@ -1486,4 +1486,9 @@ telux::common::Status CallManagerStub::getECallConfig(EcallConfig &config) {
     return status;
 }
 
+telux::common::Status CallManagerStub::encodeEuroNcapOptionalAdditionalData(
+    telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
 

@@ -119,6 +119,9 @@ public:
         ECallHlapTimerCallback callback) override;
     telux::common::Status setECallConfig(EcallConfig config) override;
     telux::common::Status getECallConfig(EcallConfig &config) override;
+    telux::common::Status encodeEuroNcapOptionalAdditionalData(
+        telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData,
+        std::vector<uint8_t> &data) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

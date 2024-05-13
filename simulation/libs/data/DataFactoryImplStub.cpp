@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -129,6 +129,11 @@ std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataS
 
 std::shared_ptr<IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
     telux::common::InitResponseCb clientCallback) {
+    return nullptr;
+}
+
+std::shared_ptr<telux::data::net::IQoSManager> DataFactoryImplStub::getQoSManager(
+        telux::common::InitResponseCb clientCallback = nullptr) {
     return nullptr;
 }
 

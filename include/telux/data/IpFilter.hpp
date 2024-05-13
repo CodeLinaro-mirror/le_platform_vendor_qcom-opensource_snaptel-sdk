@@ -86,7 +86,6 @@ namespace data {
  * @{ */
 
 using TypeOfService = uint8_t;
-using TrafficClass = uint8_t;
 using FlowLabel = uint32_t;
 
 /**

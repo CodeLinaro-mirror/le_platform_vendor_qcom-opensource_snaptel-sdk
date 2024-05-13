@@ -85,6 +85,7 @@
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
 #include <telux/data/DataLinkManager.hpp>
+#include <telux/data/ClientManager.hpp>
 
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
@@ -92,7 +93,7 @@
 #include <telux/data/net/SocksManager.hpp>
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
-#include <telux/data/ClientManager.hpp>
+#include <telux/data/net/QoSManager.hpp>
 
 namespace telux {
 namespace data {
@@ -315,7 +316,17 @@ class DataFactory {
      */
     virtual std::shared_ptr<IClientManager> getClientManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
-
+    /**
+     * Get QoS Manager
+     *
+     *  @param [in] clientCallback   Optional callback to get the initialization status of
+     *                               IQoSManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IQoSManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 #ifndef TELUX_DOXY_SKIP
  protected:
     DataFactory();

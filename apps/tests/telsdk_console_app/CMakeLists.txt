@@ -88,6 +88,7 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/data_link/DataLinkListener.cpp
    Data/client/ClientMenu.cpp
    Data/client/ClientListener.cpp
+   Data/qos/QoSManagementMenu.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

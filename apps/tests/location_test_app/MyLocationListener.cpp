@@ -406,6 +406,15 @@ void MyLocationListener::printGnssSignalType(telux::loc::GnssSignal signalTypeMa
    if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AQ) {
      std::cout << "Beidou B2AQ signal is present" << std::endl;
    }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2BI) {
+     std::cout << "Beidou B2BI signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2BQ) {
+     std::cout << "Beidou B2BQ signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::NAVIC_L1) {
+     std::cout << "Navic L1 signal is present" << std::endl;
+   }
    if (signalTypeMask == telux::loc::UNKNOWN_SIGNAL_MASK) {
      std::cout << " No signal present" << std::endl;
    }
@@ -728,6 +737,9 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
          break;
       case telux::loc::GnssConstellationType::QZSS:
          std::cout << "Constellation type: QZSS" << std::endl;
+         break;
+      case telux::loc::GnssConstellationType::NAVIC:
+         std::cout << "Constellation type: NAVIC" << std::endl;
          break;
       default:
          std::cout << "Constellation type: UNKNOWN" << std::endl;

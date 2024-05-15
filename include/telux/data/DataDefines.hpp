@@ -356,6 +356,11 @@ enum class InterfaceType {
     MHI = 5,        /**< Modem Host Interface (MHI)                              */
     VMTAP0 = 6,     /**< Represents Virtio interface available in a VM           */
     VMTAP1 = 7,     /**< Represents Virtio interface available in a VM           */
+    ETH2 = 8,       /**< Ethernet network interface card (ETH NIC2)              */
+    AP_PRIMARY = 9,       /**< Primary WLAN access point                         */
+    AP_SECONDARY = 10,    /**< Secondary WLAN access point                       */
+    AP_TERTIARY = 11,     /**< Tertiary WLAN access point                        */
+    AP_QUATERNARY = 12,   /**< Quaternary WLAN access point                      */
 };
 
 /**

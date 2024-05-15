@@ -276,7 +276,8 @@ ErrorCode CommonUtils::readJsonData(std::string apiJsonPath, std::string stateJs
     CommonUtils::getValues(data.apiRootObj, subsystem, method, data.status,
         data.error, data.cbDelay );
 
-    if (data.status == telux::common::Status::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS ||
+        data.error == telux::common::ErrorCode::SUCCESS) {
         err =
             JsonParser::readFromJsonFile(data.stateRootObj, stateJsonPath);
         if (err != ErrorCode::SUCCESS) {

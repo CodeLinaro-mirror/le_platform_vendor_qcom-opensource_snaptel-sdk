@@ -115,6 +115,8 @@ service DataFilterManager {
 
   service BridgeManager {
     rpc InitService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc SetInterfaceBridge(SetInterfaceBridgeRequest) returns (DefaultReply) {}
+    rpc GetInterfaceBridge(GetInterfaceBridgeRequest) returns (GetInterfaceBridgeReply) {}
 }
 
 /*
@@ -292,6 +294,13 @@ enum InterfaceType {
     ECM = 3;
     RNDIS = 4;
     MHI = 5;
+    ETH2 = 6;
+    AP_PRIMARY = 7;
+    AP_SECONDARY = 8;
+    AP_TERTIARY = 9;
+    AP_QUATERNARY = 10;
+    VMTAP0 = 11;
+    VMTAP1 = 12;
 }
 
 message DataRestrictMode {
@@ -1096,4 +1105,18 @@ message switchBackHaulRequest {
 message EnableSocksRequest {
     bool enable = 1;
     OperationType operation_type = 2;
+}
+
+message SetInterfaceBridgeRequest {
+    InterfaceType interface_type = 1;
+    int32 bridge_id = 2;
+}
+
+message GetInterfaceBridgeRequest {
+    InterfaceType interface_type = 1;
+}
+
+message GetInterfaceBridgeReply {
+    int32 bridge_id = 1;
+    DefaultReply reply = 2;
 }

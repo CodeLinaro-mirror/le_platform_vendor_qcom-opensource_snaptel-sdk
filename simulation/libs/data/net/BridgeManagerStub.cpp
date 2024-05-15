@@ -171,6 +171,65 @@ void BridgeManagerStub::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
+telux::common::ErrorCode BridgeManagerStub::setInterfaceBridge(InterfaceType ifaceType,
+    uint32_t bridgeId) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " bridge manager not ready");
+        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+    }
+
+    if (ifaceType < InterfaceType::AP_PRIMARY ||
+        ifaceType > InterfaceType::AP_QUATERNARY) {
+        return telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    ::dataStub::SetInterfaceBridgeRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_interface_type(::dataStub::InterfaceType(ifaceType));
+    request.set_bridge_id(bridgeId);
+    grpc::Status reqStatus = stub_->SetInterfaceBridge(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+
+    return error;
+}
+
+telux::common::ErrorCode BridgeManagerStub::getInterfaceBridge(InterfaceType ifaceType,
+    uint32_t& bridgeId) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " bridge manager not ready");
+        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+    }
+
+    if (ifaceType < InterfaceType::AP_PRIMARY ||
+        ifaceType > InterfaceType::AP_QUATERNARY) {
+        return telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    ::dataStub::GetInterfaceBridgeRequest request;
+    ::dataStub::GetInterfaceBridgeReply response;
+    ClientContext context;
+
+    request.set_interface_type(::dataStub::InterfaceType(ifaceType));
+    grpc::Status reqStatus = stub_->GetInterfaceBridge(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(response.mutable_reply()->error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        bridgeId = response.bridge_id();
+    }
+
+    return error;
+}
+
 telux::common::Status BridgeManagerStub::enableBridge(bool enable,
     telux::common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;

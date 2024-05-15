@@ -45,6 +45,12 @@ public:
     telux::common::Status removeBridge( std::string ifaceName,
         telux::common::ResponseCallback callback = nullptr) override;
 
+    telux::common::ErrorCode setInterfaceBridge(InterfaceType ifaceType,
+        uint32_t bridgeId) override;
+
+    telux::common::ErrorCode getInterfaceBridge(InterfaceType ifaceType,
+        uint32_t& bridgeId) override;
+
 private:
     std::mutex mtx_;
     std::mutex initMtx_;

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_POWER_APP tcuactivity_slave)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXPOWER REQUIRED telux-power)
 
 set(POWER_APP_SOURCES TcuActivitySlave.cpp)

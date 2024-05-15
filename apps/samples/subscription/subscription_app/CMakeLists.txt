@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_SUBSCRIPTION_APP subscription_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(SUBSCRIPTION_APP_SOURCES SubscriptionApp.cpp)

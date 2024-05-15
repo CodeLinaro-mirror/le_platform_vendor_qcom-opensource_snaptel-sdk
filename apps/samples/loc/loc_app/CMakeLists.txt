@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_LOC_APP loc_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXLOC REQUIRED telux-loc)
 
 set(LOC_APP_SOURCES SampleLocationApp.cpp)

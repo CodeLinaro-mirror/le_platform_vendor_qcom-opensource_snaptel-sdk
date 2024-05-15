@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,10 +81,12 @@ class HpcmMenu : public ConsoleApp,
     void getUserSlotIdInput(SlotId &slotId);
 
     SlotId slotId_;
-    std::atomic<bool> ready_;
+    std::atomic<bool> hpcmReady_;
     std::atomic<bool> exitHpcm_;
     bool readErrorOccurred_;
     bool writeErrorOccurred_;
+    bool exitPlayThread_;
+    bool exitRecordThread_;
     std::mutex mutex_;
     std::mutex captureMutex_;
     std::mutex bufferReadyMutex_;

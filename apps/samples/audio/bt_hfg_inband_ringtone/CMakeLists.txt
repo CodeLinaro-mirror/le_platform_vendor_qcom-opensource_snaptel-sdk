@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_APP bt_hfg_inband_ringtone)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXAUDIO REQUIRED telux-audio)
 
 set(APP_SOURCES BTHFGRingtone.cpp)

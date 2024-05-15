@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_APP voice_call_volume)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXAUDIO REQUIRED telux-audio)
 
 set(APP_SOURCES VoiceCall.cpp)

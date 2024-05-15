@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_WLAN_APP wlan_config_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXWLAN REQUIRED telux-wlan)
 
 set(WLAN_CONF_APP_SOURCES WlanConfigApp.cpp)

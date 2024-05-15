@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_CARD_APP simple_sap_api_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(CARD_APP_SOURCES SapApiListener.cpp)

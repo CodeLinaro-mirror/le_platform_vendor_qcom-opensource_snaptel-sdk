@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_TEL_APP make_call_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(TEL_APP_SOURCES

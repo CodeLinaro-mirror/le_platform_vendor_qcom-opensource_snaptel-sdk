@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_DATA_APP l2tp_sample_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXDATA REQUIRED telux-data)
 
 set(DATA_APP_SOURCES

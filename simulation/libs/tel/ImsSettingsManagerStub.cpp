@@ -418,6 +418,6 @@ void ImsSettingsManagerStub::onEventUpdate(google::protobuf::Any event) {
         event.UnpackTo(&imsSipUserAgentChangeEvent);
         handleImsSipUserAgentChange(imsSipUserAgentChangeEvent);
     } else {
-        LOG(DEBUG, __FUNCTION__, "No handling required for other events");
+        LOG(DEBUG, __FUNCTION__, " No handling required for other events");
     }
 }

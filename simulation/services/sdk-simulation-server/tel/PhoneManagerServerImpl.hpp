@@ -78,6 +78,9 @@ class PhoneManagerServerImpl final : public telStub::PhoneService::Service,
     grpc::Status ConfigureSignalStrength(ServerContext* context,
         const telStub::ConfigureSignalStrengthRequest* request,
         telStub::ConfigureSignalStrengthReply* response) override;
+    grpc::Status ConfigureSignalStrengthEx(ServerContext* context,
+        const telStub::ConfigureSignalStrengthExRequest* request,
+        telStub::ConfigureSignalStrengthExReply* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message);
 
 private:

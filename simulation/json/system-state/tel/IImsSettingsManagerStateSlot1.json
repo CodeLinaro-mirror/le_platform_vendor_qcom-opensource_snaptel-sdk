@@ -3,7 +3,7 @@
     {
         "ImsServiceConfigInfo" :
         {
-            "imsServiceEnabled" : false, /* Refer telux::tel:: ImsServiceConfig::imsServiceEnabled
+            "imsServiceEnabled" : false, /* Refer telux::tel::ImsServiceConfig::imsServiceEnabled
                                             for more details. */
             "voImsEnabled" : false,      /* Refer telux::tel::ImsServiceConfig::voImsEnabled for
                                             more details. */

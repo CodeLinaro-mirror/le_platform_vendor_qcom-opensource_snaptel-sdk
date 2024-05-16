@@ -99,9 +99,12 @@ public:
     static telux::common::ErrorCode writeConfigureSignalStrengthToJsonFileAndReply(int phoneId,
         std::vector<telStub::ConfigureSignalStrength> configs,
         telStub::ConfigureSignalStrengthReply* response);
+    static telux::common::ErrorCode writeConfigureSignalStrengthExToJsonFileAndReply(int phoneId,
+        std::vector<telStub::ConfigureSignalStrengthEx> signalStrengthConfigEx,
+        telStub::ConfigureSignalStrengthExReply* response, uint16_t hysTimer);
 
     static telux::common::ErrorCode writeSignalStrengthToJsonFile(std::vector<std::string> params,
-        int &phoneId);
+        int &phoneId, bool &notify);
     static telux::common::ErrorCode writeCellInfoListToJsonFile(std::vector<std::string> params,
         int &phoneId);
     static telux::common::ErrorCode writeVoiceServiceStateToJsonFile(std::string params,
@@ -125,6 +128,9 @@ public:
         telStub::ServiceState serviceState);
     static telStub::VoiceRadioTechnologyChangeEvent createVoiceRadioTechnologyChangeEvent(
         int phoneId, telStub::RadioTechnology rat);
+    static int checkSignalStrengthCriteriaAndNotify(int phoneId, int rat, int sigMeasType,
+        int oldValue, int newValue);
+
     //Utilities
     static telStub::RATCapability convertRATCapStringToEnum(std::string radioCap);
     static telStub::VoiceServiceTechnology convertVoiceTechStringToEnum(std::string voiceTech);

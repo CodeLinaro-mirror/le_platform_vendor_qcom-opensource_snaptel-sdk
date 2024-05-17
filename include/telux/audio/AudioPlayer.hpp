@@ -111,7 +111,8 @@ class IPlayListListener {
 
     /**
      * Invoked whenever playback is stopped as a response to explicitly calling
-     * @ref IAudioPlayer::stopPlayback() or when playback is stopped due to an error.
+     * @ref IAudioPlayer::stopPlayback() or when playback is stopped due to an error
+     * for example audio can not be played or volume/mute can not be set.
      *
      * This API will not be invoked if all the files in the playback list are
      * successfully played to completion. In such a scenario, @ref onPlaybackFinished
@@ -125,7 +126,7 @@ class IPlayListListener {
      * @param[in] error Appropriate error code @ref telux::common::ErrorCode
      *
      * @param[in] file File which was getting played when this error occurred.
-     *            It can be empty if error occurred before opening any file.
+     *            It can be empty if an error occurred before opening any file.
      */
     virtual void onError(telux::common::ErrorCode error, std::string file) { }
 
@@ -229,6 +230,26 @@ class IAudioPlayer {
     *          otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;
+
+   /**
+    * Mutes or unmutes the audio.
+    *
+    * @param[in] enable True to mute the audio, false to unmute the audio
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the playback is muted/unmuted
+    *          as specified otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode setMute(bool enable) = 0;
+
+   /**
+    * Retrieves the current mute state of the audio stream.
+    *
+    * @param[out] enable True if the audio is muted currently otherwise false
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the mute state is
+    *          retrieved, otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode getMute(bool &enable) = 0;
 
     /**
      * Destructor of the IAudioPlayer.

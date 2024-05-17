@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -210,6 +210,8 @@ telux::common::Status DataProfileManagerStub::createProfile(
         set_auth_type((::dataStub::AuthProtocolType::AuthProto)profileParams.authType);
     request.mutable_ip_family_type()->
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
+    request.set_emergency_capability(
+        (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
 
     grpc::Status reqStatus = stub_->CreateProfile(&context, request, &response);
 
@@ -315,6 +317,8 @@ telux::common::Status DataProfileManagerStub::modifyProfile(uint8_t profileId,
         set_auth_type((::dataStub::AuthProtocolType::AuthProto)profileParams.authType);
     request.mutable_ip_family_type()->
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
+    request.set_emergency_capability(
+        (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
 
     grpc::Status reqStatus = stub_->ModifyProfile(&context, request, &response);
 
@@ -391,9 +395,12 @@ telux::common::Status DataProfileManagerStub::requestProfile(uint8_t profileId,
         AuthProtocolType authType =
             static_cast<telux::data::AuthProtocolType>(
             response.profile().auth_type().auth_type());
+        EmergencyCapability emergencyAllowed =
+            static_cast<telux::data::EmergencyCapability>(
+            response.profile().emergency_capability());
 
         queryProfile = std::make_shared<DataProfile>(profileId, name, apn, username,
-            password, ipFamily, techPref, authType, apnTypes);
+            password, ipFamily, techPref, authType, apnTypes, emergencyAllowed);
 
         LOG(DEBUG, __FUNCTION__, " requestProfile successful profileId:",
                 profileId);
@@ -454,9 +461,13 @@ telux::common::Status DataProfileManagerStub::requestProfileList(
             AuthProtocolType authType =
                 static_cast<telux::data::AuthProtocolType>(
                 response.mutable_profiles(idx)->auth_type().auth_type());
+            EmergencyCapability emergencyAllowed =
+                static_cast<telux::data::EmergencyCapability>(
+                response.mutable_profiles(idx)->emergency_capability());
 
             auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn,
-                username, password, ipFamily, techPref, authType, apnTypes);
+                username, password, ipFamily, techPref, authType, apnTypes,
+                emergencyAllowed);
             LOG(DEBUG, __FUNCTION__, " requestProfileList successful profileId:",
                 profileId);
             requestedProfiles.push_back(queryProfile);
@@ -498,6 +509,8 @@ telux::common::Status DataProfileManagerStub::queryProfile(const ProfileParams &
         set_auth_type((::dataStub::AuthProtocolType::AuthProto)profileParams.authType);
     request.mutable_ip_family_type()->
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
+    request.set_emergency_capability(
+        (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
 
     grpc::Status reqStatus = stub_->QueryProfile(&context, request, &response);
 
@@ -530,9 +543,13 @@ telux::common::Status DataProfileManagerStub::queryProfile(const ProfileParams &
             AuthProtocolType authType =
                 static_cast<telux::data::AuthProtocolType>(
                 response.mutable_profiles(idx)->auth_type().auth_type());
+            EmergencyCapability emergencyAllowed =
+                static_cast<telux::data::EmergencyCapability>(
+                response.mutable_profiles(idx)->emergency_capability());
 
             auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn,
-                username, password, ipFamily, techPref, authType, apnTypes);
+                username, password, ipFamily, techPref, authType, apnTypes,
+                emergencyAllowed);
             queriedProfiles.push_back(queryProfile);
         }
 

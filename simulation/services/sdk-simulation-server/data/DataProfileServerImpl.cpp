@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -110,6 +110,14 @@ grpc::Status DataProfileServerImpl::CreateProfile(ServerContext* context,
         newProfile["authProtocolType"] =
             DataUtilsStub::convertAuthProtocolEnumToString(
             request->auth_type().auth_type());
+        dataStub::EmergencyCapability emergencyAllowed =
+            request->emergency_capability();
+        if (emergencyAllowed ==
+            dataStub::EmergencyCapability::UNSPECIFIED) {
+            emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
+        }
+        newProfile["emergencyAllowed"] =
+            ((int)emergencyAllowed);
         data.stateRootObj[subsystem]["requestProfileList"]
             ["profiles"][currentProfileCount] = newProfile;
 
@@ -241,6 +249,15 @@ grpc::Status DataProfileServerImpl::ModifyProfile(ServerContext* context,
                 DataUtilsStub::convertAuthProtocolEnumToString(
                 request->auth_type().auth_type());
 
+            dataStub::EmergencyCapability emergencyAllowed =
+                request->emergency_capability();
+            if (emergencyAllowed ==
+                dataStub::EmergencyCapability::UNSPECIFIED) {
+                    emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
+            }
+            updatedProfile["emergencyAllowed"] =
+                ((int)emergencyAllowed);
+
             Json::Value newRoot;
             for (auto idx = 0; idx < currentProfileCount; idx++) {
                 if (idx == profileIndex) {
@@ -340,6 +357,9 @@ grpc::Status DataProfileServerImpl::RequestProfileById(ServerContext* context,
             response->mutable_profile()->mutable_auth_type()->
                 set_auth_type(DataUtilsStub::convertAuthProtocolStringToEnum(
                 requestedProfile["authProtocolType"].asString()));
+            response->mutable_profile()->set_emergency_capability(
+                (dataStub::EmergencyCapability)
+                requestedProfile["emergencyAllowed"].asInt());
         } else {
             LOG(DEBUG, __FUNCTION__, " profile not found ");
             error = telux::common::ErrorCode::EXTENDED_INTERNAL;
@@ -400,6 +420,8 @@ grpc::Status DataProfileServerImpl::RequestProfileList(ServerContext* context,
             authType.set_auth_type(DataUtilsStub::convertAuthProtocolStringToEnum(
                 requestedProfile["authProtocolType"].asString()));
             *profile->mutable_auth_type() = authType;
+            profile->set_emergency_capability((dataStub::EmergencyCapability)
+                requestedProfile["emergencyAllowed"].asInt());
         }
     }
 
@@ -442,6 +464,8 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
     std::string authType =
         DataUtilsStub::convertAuthProtocolEnumToString(
         request->auth_type().auth_type());
+    dataStub::EmergencyCapability emergencyAllowed =
+        request->emergency_capability();
 
     if (data.status == telux::common::Status::SUCCESS) {
         int currentProfileCount =
@@ -488,6 +512,14 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
                     (!authType.empty()) ) {
                 continue;
             }
+
+            if (emergencyAllowed ==
+                dataStub::EmergencyCapability::UNSPECIFIED) {
+                    emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
+            }
+            if ((requestedProfile["emergencyAllowed"].asInt() != emergencyAllowed)) {
+                continue;
+            }
             dataStub::Profile *profile = response->add_profiles();
 
             profile->set_profile_id(requestedProfile["profileId"].asInt());
@@ -507,6 +539,8 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
             dataStub::AuthProtocolType authType;
             authType.set_auth_type(DataUtilsStub::convertAuthProtocolStringToEnum(
                 requestedProfile["authProtocolType"].asString()));
+            profile->set_emergency_capability((dataStub::EmergencyCapability)
+                requestedProfile["emergencyAllowed"].asInt());
             *profile->mutable_auth_type() = authType;
         }
     }

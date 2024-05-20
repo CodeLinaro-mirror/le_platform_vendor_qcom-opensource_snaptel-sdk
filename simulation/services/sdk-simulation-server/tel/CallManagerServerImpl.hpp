@@ -60,13 +60,13 @@ namespace tel {
 }  // namespace tel
 }  // namespace telux
 
-#define INVALID -1
+#define CALL_INDEX_INVALID -1
 
 using namespace telux::tel;
 
 struct CallInfo {
    CallState callState;
-   int index = INVALID;
+   int index = CALL_INDEX_INVALID;
    CallDirection callDirection = CallDirection::NONE;
    std::string remotePartyNumber = "";
    telux::tel::CallEndCause callEndCause = telux::tel::CallEndCause::NORMAL;

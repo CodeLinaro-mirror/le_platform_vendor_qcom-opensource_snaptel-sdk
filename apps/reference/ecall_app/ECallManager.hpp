@@ -146,6 +146,15 @@ public:
      */
     telux::common::Status getEncodedOptionalAdditionalDataContent();
 
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload();
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;

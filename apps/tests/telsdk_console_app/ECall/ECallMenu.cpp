@@ -28,12 +28,12 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <iomanip>
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -145,13 +145,19 @@ void ECallMenu::init() {
          std::bind(&ECallMenu::getEncodedOptionalAdditionalDataContent, this,
          std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("gem",
+         "Get_ECall_MSD_Payload", {}, std::bind(&ECallMenu::getECallMsdPayload, this,
+         std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectPhoneId = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("i", "Select_Phone_Id", {},
                         std::bind(&ECallMenu::selectPhoneId, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
          hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
-         requestEcbmCommand, exitEcbmCommand, getEncodedOADContentCommand};
+         requestEcbmCommand, exitEcbmCommand, getEncodedOADContentCommand,
+         getECallMsdPayloadCommand};
 
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
@@ -841,6 +847,31 @@ void ECallMenu::exitEcbm(std::vector<std::string> userInput) {
             std::cout << "ERROR - Failed to request for ECBM exit,"
                       << "Status:" << static_cast<int>(status) << "\n";
             Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
+}
+
+void ECallMenu::getECallMsdPayload(std::vector<std::string> userInput) {
+    MsdSettings msdSettings;
+    updateOptionalAdditionalDataContent(msdSettings);
+    auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
+    std::vector<uint8_t> msdPdu = {};
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    if (callManager) {
+        telux::common::ErrorCode errCode = callManager->encodeECallMsd(eCallMsdData, msdPdu);
+        if (errCode == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Request for retrieving encoded eCall MSD payload is successful \n";
+            std::stringstream ss;
+            for (auto i : msdPdu) {
+                ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+            }
+            std::cout << "Encoded eCall MSD payload is : " << ss.str() << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to retrieve encoded eCall MSD payload,"
+                << " Error:" << static_cast<int>(errCode) << "\n";
         }
     } else {
         std::cout << "ERROR - CallManager is null \n";

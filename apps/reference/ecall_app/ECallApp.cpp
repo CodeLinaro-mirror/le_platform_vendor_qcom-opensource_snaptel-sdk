@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -123,25 +93,25 @@ void ECallApp::init() {
     std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("5", "Get_InProgress_Calls", {}, std::bind(&ECallApp::getCalls, this)));
 
-    std::shared_ptr<ConsoleAppCommand> hlapTimerStatusCommand = std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("6", "Get_ECall_HLAP_Timers_Status", {},
-                          std::bind(&ECallApp::requestECallHlapTimerStatus, this)));
-
     std::shared_ptr<ConsoleAppCommand> getEcallConfigCommand = std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("7", "Get_ECall_Config", {}, std::bind(&ECallApp::getECallConfig, this)));
+        ConsoleAppCommand("6", "Get_ECall_Config", {}, std::bind(&ECallApp::getECallConfig, this)));
 
     std::shared_ptr<ConsoleAppCommand> setEcallConfigCommand = std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("8", "Set_ECall_Config", {}, std::bind(&ECallApp::setECallConfig, this)));
+        ConsoleAppCommand("7", "Set_ECall_Config", {}, std::bind(&ECallApp::setECallConfig, this)));
 
     std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand =
         std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("9", "Get_Encoded_Optional_Additional_Data_Content", {},
+        ConsoleAppCommand("8", "Get_Encoded_Optional_Additional_Data_Content", {},
         std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent, this)));
+
+    std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Get_ECall_Msd_Payload", {},
+        std::bind(&ECallApp::getECallMsdPayload, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
-        hlapTimerStatusCommand, getEcallConfigCommand, setEcallConfigCommand,
-        getEncodedOADContentCommand};
+        getEcallConfigCommand, setEcallConfigCommand, getEncodedOADContentCommand,
+        getECallMsdPayloadCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -480,6 +450,19 @@ void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get encoded optional additional data content"
             << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getECallMsdPayload() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallMsdPayload();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall MSD payload" << std::endl;
         return;
     }
 }

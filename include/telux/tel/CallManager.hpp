@@ -636,12 +636,28 @@ public:
    virtual telux::common::Status getECallConfig(EcallConfig &config) = 0;
 
    /**
+    * Gets encoded bytes of eCall MSD according to EN 15722:2015 (MSD version 2) and
+    * EN 15722:2020 (MSD version 3).
+    *
+    * @param [in] eCallMsdData   eCall MSD data. @ref telux::tel::ECallMsdData
+    * @param [out] data          Encoded bytes of eCall MSD.
+    *
+    * @returns error code for encodeECallMsd i.e. success or suitable error code.
+    * Below are possible error codes.
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode encodeECallMsd(telux::tel::ECallMsdData eCallMsdData,
+       std::vector<uint8_t> &data) = 0;
+
+   /**
     * Gets encoded bytes of optional additional data content as per the Euro NCAP Technical
     * Bulletin TB 040. Client needs to pass this vector of bytes to the data field of the
     * ECallOptionalPdu. @ref telux::tel::ECallOptionalPdu::data
-    *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-    * permission to invoke this API successfully.
     *
     * @param [in] optionalEuroNcapData   ECall optional additional data as per Euro NCAP
     *                                    Technical Bulletin TB 040.

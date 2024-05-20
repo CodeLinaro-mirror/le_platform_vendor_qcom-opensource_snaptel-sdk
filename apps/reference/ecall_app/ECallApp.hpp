@@ -162,6 +162,11 @@ private:
     int getPhoneId();
 
     /**
+     * Gets encoded eCall MSD payload.
+     */
+    void getECallMsdPayload();
+
+    /**
      * Function to get eCall category from the user-interface
      */
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);

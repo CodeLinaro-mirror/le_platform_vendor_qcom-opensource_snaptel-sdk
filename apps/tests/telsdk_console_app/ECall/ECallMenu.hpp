@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef ECALLMENU_HPP
@@ -161,6 +160,9 @@ private:
 
    /* To get the encoded optional additional data content for Euro NCAP */
    void getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput);
+
+   /* To retrieve the encoded eCall MSD payload */
+   void getECallMsdPayload(std::vector<std::string> userInput);
 
    /* Updates static optional additional data content to main MSD. */
    void updateOptionalAdditionalDataContent(MsdSettings &msdSettings);

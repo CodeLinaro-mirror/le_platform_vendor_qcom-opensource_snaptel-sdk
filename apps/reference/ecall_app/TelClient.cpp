@@ -40,6 +40,7 @@
  *          It manages the telephony subsystem using Telematics-SDK APIs.
  */
 
+#include <iomanip>
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -664,4 +665,26 @@ telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
         TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
     }
     return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
+    std::vector<uint8_t> &msdPdu) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get encoded eCall"
+            << " MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    auto errCode = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
+    std::vector<uint8_t> msdPayload = msdPdu;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded eCall MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    } else {
+        std::stringstream ss;
+        for (auto i : msdPdu) {
+            ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+        }
+        TelClientUtils::printECallMsdPayload(ss.str());
+    }
+    return telux::common::ErrorCode::SUCCESS;
 }

@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
@@ -237,6 +238,15 @@ class ECallManager : public LocationListener,
      *
      */
     telux::common::Status getEncodedOptionalAdditionalDataContent();
+
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload();
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;

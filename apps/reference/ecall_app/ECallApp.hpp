@@ -63,6 +63,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #ifndef ECALLAPP_HPP
 #define ECALLAPP_HPP
 
@@ -165,6 +166,11 @@ class ECallApp : public ConsoleApp {
      * Set various configuration parameters related to eCall
      */
     void setECallConfig();
+
+    /**
+     * Gets encoded eCall MSD payload.
+     */
+    void getECallMsdPayload();
 
     /**
      * Function to get eCall category from the user-interface

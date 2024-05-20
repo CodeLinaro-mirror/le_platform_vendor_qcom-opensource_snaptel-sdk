@@ -370,3 +370,13 @@ void TelClientUtils::printEncodedOptionalAdditionalDataContent(std::string encod
             << std::endl;
     }
 }
+
+void TelClientUtils::printECallMsdPayload(std::string encodedPdu) {
+    if (!encodedPdu.empty()) {
+        std::cout << CLIENT_NAME << " Encoded eCall MSD payload: " << encodedPdu
+            << std::endl;
+    } else {
+        std::cout << CLIENT_NAME << " Encoded eCall MSD payload is empty"
+            << std::endl;
+    }
+}

@@ -1496,17 +1496,15 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             this->configuration.signStatLogFile = configs["signStatLogFile"];
         }
 
-        if(configuration.enableSignStatLog){
+        if((configuration.enableSignStatLog) && (configuration.appVerbosity > 1)){
             std::cout << "Signing statistic logging is ON" << std::endl;
             std::cout << "Statistics for last " << configuration.signStatsSize <<
                 " signs will be reported by each thread" << std::endl;
             std::cout << "Upon closure, statistics will be dumped to logfile: " <<
                 configuration.signStatLogFile << std::endl;
-        } else{
-            std::cout << "Signing statistic logging is off" << std::endl;
         }
 
-        /* Verification-related statistics */
+        /* Verification Latency-related statistics */
         if(configs.find("enableVerifStatLog") != configs.end()){
            istringstream is8(configs["enableVerifStatLog"]);
            is8 >> boolalpha >> configuration.enableVerifStatLog;
@@ -1521,14 +1519,36 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             this->configuration.verifStatLogFile = configs["verifStatLogFile"];
         }
 
-        if(configuration.enableVerifStatLog){
+        if((configuration.enableVerifStatLog) && (configuration.appVerbosity > 1)){
             std::cout << "Verification statistic logging is ON" << std::endl;
             std::cout << "Statistics for last " << configuration.verifStatsSize <<
                 " verifications will be reported by each thread" << std::endl;
             std::cout << "Upon closure, statistics will be dumped to logfile: " <<
                 configuration.verifStatLogFile << std::endl;
-        } else{
-            std::cout << "Verification statistic logging is off" << std::endl;
+        }
+
+        /* Verification Results-related statistics */
+        if(configs.find("enableVerifResLog") != configs.end()){
+           istringstream is8(configs["enableVerifResLog"]);
+           is8 >> boolalpha >> configuration.enableVerifResLog;
+        }
+
+        if(configs.find("verifResLogSize") != configs.end()){
+            this->configuration.verifResLogSize =
+                (uint32_t)stoi(configs["verifResLogSize"]);
+        }
+
+        if(configs.find("verifResLogFile") != configs.end()){
+            this->configuration.verifResLogFile = configs["verifResLogFile"];
+        }
+
+        if((configuration.enableVerifResLog) && (configuration.appVerbosity > 1)){
+            std::cout << "Verification Results logging is ON" << std::endl;
+            std::cout << "Verification Results will not be logged on Console" << std::endl;
+            std::cout << "Results for last " << configuration.verifResLogSize <<
+                " verifications will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                configuration.verifResLogFile << std::endl;
         }
 
         /** Pseudonym/ID Change */
@@ -2450,6 +2470,56 @@ void ApplicationBase::writeVerifLogging() {
         if (it->timestamp != 0.0 && it->verifLatency != 0.0) {
             file << it->timestamp << ", " <<
                         it->verifLatency << std::endl;
+        }
+    }
+    file.close();
+    sem_post(&this->log_sem);
+}
+
+bool compareByVHz(const ResultLoggingStats &a, const ResultLoggingStats &b)
+{
+    return a.asyncVerifSuccess < b.asyncVerifSuccess;
+}
+/**
+ * Instantiate and initialize any variables associated with
+ * verification results and statistics logging
+ */
+void ApplicationBase::initResultsLogging() {
+    std::vector<ResultLoggingStats> stats;
+    sem_wait(&this->log_sem);
+    for(int i = 0 ; i < configuration.verifResLogSize; i++)
+        stats.push_back(ResultLoggingStats());
+    thrResLoggingValues[std::this_thread::get_id()] = stats;
+    if(remove(configuration.verifResLogFile.c_str()) != 0){
+        if(appVerbosity > 4)
+            cerr << "Error deleting log file" << endl;
+    }
+    sem_post(&this->log_sem);
+}
+
+/**
+ * Function to print out - verification results and statistics
+ * gathered from security side
+ */
+void ApplicationBase::writeResultsLogging() {
+    ofstream file;
+    sem_wait(&this->log_sem);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    file.open(configuration.verifResLogFile.c_str(),
+                std::ofstream::out | std::ofstream::app);
+    std::vector<ResultLoggingStats> stats;
+    if (auto itr = thrResLoggingValues.find(std::this_thread::get_id());
+            itr != thrResLoggingValues.end()){
+        stats = itr->second;
+    }
+    std::sort(stats.begin(), stats.end(), compareByVHz);
+    file<<"ThreadID,"<<"TotalSuccessfulVerifs,"<<"BatchVerifRate (kVhz),"
+        <<"BatchTimeStep (ms)"<<std::endl;
+    for (auto it = stats.begin(); it != stats.end(); ++it) {
+        if (it->currTimeStamp != 0.0 && it->asyncVerifSuccess != 0.0) {
+            file  <<std::hex << it->tid << std::dec << ", " <<it->asyncVerifSuccess
+                << ", " << it->rate << " , " << it->dur <<std::endl;
         }
     }
     file.close();

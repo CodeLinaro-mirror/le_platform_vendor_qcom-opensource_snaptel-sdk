@@ -376,6 +376,9 @@ void receive(MessageType msgType, int index) {
         printf("Thread (%08x) closing\n", tid);
     }
 
+    if(application->configuration.enableVerifResLog){
+        application->writeResultsLogging();
+    }
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -411,6 +414,9 @@ void ldmRx(void) {
     if (nullptr == application) {
         cerr << "application is nullptr" << endl;
         return;
+    }
+    if(application->configuration.enableVerifResLog){
+        application->initResultsLogging();
     }
     if(application->configuration.enableVerifStatLog){
         application->initVerifLogging();

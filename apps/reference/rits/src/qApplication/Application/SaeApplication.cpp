@@ -125,6 +125,8 @@ bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
 static QUtils* utility;
+static ResultLoggingStats* asyncLogStat ;
+static bool resFileLogging = false;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
     ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
@@ -139,6 +141,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bo
     MsgType = msgType;
     writeMutexCvSae = &writeMutexCv;
     writeLogFinishSae = &writeLogFinish;
+    resFileLogging = configuration.enableVerifResLog;
     if(configuration.enableAsync){
         overridePsidCheck = configuration.overridePsidCheck;
         enableCongCtrl = configuration.enableCongCtrl;
@@ -187,6 +190,7 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
     MsgType = msgType;
     writeMutexCvSae = &writeMutexCv;
     writeLogFinishSae = &writeLogFinish;
+    resFileLogging = configuration.enableVerifResLog;
     if(configuration.enableAsync){
         overridePsidCheck = configuration.overridePsidCheck;
         enableCongCtrl = configuration.enableCongCtrl;
@@ -895,21 +899,29 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
             std::stringstream ss;
             ss << thrId;
             int tid = (int)std::stoul(ss.str());
-            // logging for batch verif stats
-            fprintf(stdout, "ThreadID: 0x%08x; ", tid);
-            fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", asyncVerifSuccess);
-            fprintf(stdout, "BatchVerifRate: %fk VHz; ", rate);
-            fprintf(stdout, "BatchTimeStep: %fms;\n", dur);
-            fprintf(stdout, "MinBatchTime: %fms; ", minBatchTime);
-            fprintf(stdout, "MaxBatchTime: %fms; ", maxBatchTime);
-            fprintf(stdout, "AvgBatchTime: %fms;\n", avgBatchTime);
-
-            // logging for individual verif stats - includes ITS overhead
-            if(secVerbosity > 1){
-                fprintf(stdout, "CurrTime: %fms; ", currTimeStamp);
-                fprintf(stdout, "PrevBatchTime: %fms;\n", prevBatchTimeStamp);
+            if (resFileLogging){
+                asyncLogStat->tid = tid;
+                asyncLogStat->asyncVerifSuccess = asyncVerifSuccess;
+                asyncLogStat->currTimeStamp = currTimeStamp;
+                asyncLogStat->rate = rate;
+                asyncLogStat->dur = dur;
             }
-            fprintf(stdout, "\n");
+            else{
+                // logging for batch verif stats
+                fprintf(stdout, "ThreadID: 0x%08x; ", tid);
+                fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", asyncVerifSuccess);
+                fprintf(stdout, "BatchVerifRate: %fk VHz; ", rate);
+                fprintf(stdout, "BatchTimeStep: %fms;\n", dur);
+                fprintf(stdout, "MinBatchTime: %fms; ", minBatchTime);
+                fprintf(stdout, "MaxBatchTime: %fms; ", maxBatchTime);
+                fprintf(stdout, "AvgBatchTime: %fms;\n", avgBatchTime);
+                // logging for individual verif stats - includes ITS overhead
+                if(secVerbosity > 1){
+                    fprintf(stdout, "CurrTime: %fms; ", currTimeStamp);
+                    fprintf(stdout, "PrevBatchTime: %fms;\n", prevBatchTimeStamp);
+                }
+                fprintf(stdout, "\n");
+            }
             prevVerifSuccess = asyncVerifSuccess;
             // get latest time stamp because print statements cause delay
             gettimeofday(&currTime, NULL);
@@ -1192,6 +1204,32 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
     } else {
         sopt.misbehaviorStat = nullptr;
+    }
+    if(configuration.enableVerifResLog){
+        if(thrResLoggingValues.find(tid) == thrResLoggingValues.end()){
+            std::vector<ResultLoggingStats> tmp_test;
+            thrResLoggingValues.insert(std::pair<std::thread::id,
+            std::vector<ResultLoggingStats>>(tid, tmp_test));
+            for(int i = 0 ; i < configuration.verifResLogSize; i++){
+                    ResultLoggingStats tmpVerifResStat;
+                    thrResLoggingValues[tid].push_back(tmpVerifResStat);
+            }
+        }
+    }
+    // this will need to be measured in post processing thread
+    if (configuration.enableVerifResLog) {
+        if (thrResLoggingValues[tid].size() >= resultLoggingIdx[tid]) {
+            asyncLogStat =
+                &thrResLoggingValues[tid].at(resultLoggingIdx[tid]);
+        } else {
+            resultLoggingIdx[tid] = 0;
+            asyncLogStat =
+                &thrResLoggingValues[tid].at(resultLoggingIdx[tid]);
+        }
+        resultLoggingIdx[tid]++;
+        resultLoggingIdx[tid]%=thrResLoggingValues[tid].size();
+    } else {
+        asyncLogStat = nullptr;
     }
     // Verify packet signature ; providing lat/lon from the rx message
     if(!(sopt.enableAsync))

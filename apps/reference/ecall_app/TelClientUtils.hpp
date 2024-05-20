@@ -109,6 +109,11 @@ public:
      */
     static void printEncodedOptionalAdditionalDataContent(std::string encodedString);
 
+    /*
+     * Prints the encoded eCall MSD payload.
+     */
+    static void printECallMsdPayload(std::string encodedPdu);
+
     TelClientUtils();
     ~TelClientUtils();
 };

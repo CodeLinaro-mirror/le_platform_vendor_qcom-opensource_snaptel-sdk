@@ -281,6 +281,18 @@ public:
         optionalAdditionalDataContent, std::vector<uint8_t> &data);
 
     /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @param [in] eCallMsd    ECall MSD.
+     * @param [out] msdPdu     Encoded vector of bytes.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload(ECallMsdData eCallMsd,
+        std::vector<uint8_t> &msdPdu);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.

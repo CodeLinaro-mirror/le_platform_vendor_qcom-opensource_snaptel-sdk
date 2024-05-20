@@ -154,10 +154,15 @@ void ECallApp::init() {
         ConsoleAppCommand("12", "Get_Encoded_Optional_Additional_Data_Content", {},
         std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Get_ECall_Msd_Payload", {},
+        std::bind(&ECallApp::getECallMsdPayload, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
         hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand,
-        getEcallConfigCommand, setEcallConfigCommand, getEncodedOADContentCommand};
+        getEcallConfigCommand, setEcallConfigCommand, getEncodedOADContentCommand,
+        getECallMsdPayloadCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -624,6 +629,19 @@ void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get encoded optional additional data content"
             << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getECallMsdPayload() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallMsdPayload();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall MSD payload" << std::endl;
         return;
     }
 }

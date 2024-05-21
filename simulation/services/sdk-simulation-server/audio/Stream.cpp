@@ -502,11 +502,10 @@ void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
         return;
     }
 
-    volume.volume =  channelsVolume;
-    volume.dir = direction;
-    streamParams_.streamVols = volume;
-
     switch (streamHandle_.type) {
+        /* For voice call, canned responses are supported. Hence for setVolume,
+           the values are stored in streamParams_.streamVols structure and the function
+           returns SUCCESS.*/
         case StreamType::VOICE_CALL:
             if (!streamHandle_.streamStarted) {
                 ec = telux::common::ErrorCode::INVALID_STATE;
@@ -519,19 +518,15 @@ void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
                 LOG(ERROR, __FUNCTION__, " out-of-range volume value");
                 goto result;
             }
-            if (direction == StreamDirection::TX) {
-                LOG(ERROR, __FUNCTION__, " invalid direction for volume on voice call");
-                ec = telux::common::ErrorCode::INVALID_ARG;
-                goto result;
-            }
 
-            if ((channelsVolume.size() > 1) &&
-                (channelsVolume.at(0).vol != channelsVolume.at(1).vol)) {
-                ec = telux::common::ErrorCode::INVALID_ARG;
-                LOG(ERROR, __FUNCTION__, " mismatched left & right values");
-                goto result;
-            }
+            volume.volume =  channelsVolume;
+            volume.dir = direction;
+            streamParams_.streamVols = volume;
             break;
+        /* For playback and capture, ALSA respone is supported. Hence, the volume is set at the ALSA
+           layer. If playback and capture streams are incall, BT or HPCM use case streams, in that
+           case values are stored in streamParams_.streamVols structure and the function
+           returns SUCCESS.*/
         case StreamType::PLAY:
         case StreamType::CAPTURE:
             if ((channelsVolume.size() > 1) &&
@@ -546,6 +541,11 @@ void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
                 LOG(ERROR, __FUNCTION__, " out-of-range volume value");
                 goto result;
             }
+
+            volume.volume =  channelsVolume;
+            volume.dir = direction;
+            streamParams_.streamVols = volume;
+
             if(!isIncallStream && !isBtStream && !isHpcmStream) {
                 ec = audioBackend_->setVolume(streamHandle_, direction, channelsVolume);
                 if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -584,19 +584,20 @@ void Stream::doGetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
     }
 
     switch (streamHandle_.type) {
+        /* For voice call, canned responses are supported. Hence for getVolume,
+           the values are stored in streamParams_.streamVols structure are returned. */
         case StreamType::VOICE_CALL:
             if (!streamHandle_.streamStarted) {
                 ec = telux::common::ErrorCode::INVALID_STATE;
                 LOG(ERROR, __FUNCTION__, " stream not started");
                 goto result;
             }
-            if (direction == StreamDirection::TX) {
-                LOG(ERROR, __FUNCTION__, " invalid direction for volume on voice call");
-                ec = telux::common::ErrorCode::INVALID_ARGUMENTS;
-                goto result;
-            }
+
             channelsVolume = streamParams_.streamVols.volume;
             break;
+        /* For playback and capture, ALSA respone is supported. Hence, the volume set at the ALSA
+           layer is returned. If playback and capture streams are incall, BT or HPCM use case
+           streams, in that case values stored in streamParams_.streamVols structure is returned. */
         case StreamType::PLAY:
         case StreamType::CAPTURE:
             if(!isIncallStream && !isBtStream && !isHpcmStream) {

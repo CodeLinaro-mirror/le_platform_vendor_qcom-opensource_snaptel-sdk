@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -377,36 +377,6 @@ public:
    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
-    * Send SMS to the destination address. When registered on IMS the SMS will be attempted over
-    * IMS. If sending SMS over IMS fails, an automatic retry would be attempted to send the message
-    * over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not support National
-    * language shift tables.
-    *
-    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
-    * to invoke this API successfully.
-    *
-    * @param [in] message           Message text to be sent
-    * @param [in] receiverAddress   Receiver or destination address
-    * @param [in] sentCallback      Optional callback pointer to get the response
-    *                               of send SMS request.
-    * @param [in] deliveryCallback  Optional callback pointer to get message
-    *                               delivery status
-    *
-    * @deprecated Use API ISmsManager::sendSms(const std::string &message,
-         const std::string &receiverAddress, bool deliveryReportNeeded = true,
-         SmsResponseCb callback = nullptr, std::string smscAddr = "")
-    *
-    * @returns Status of sendSms i.e. success or suitable error code.
-    *
-    */
-   virtual telux::common::Status
-      sendSms(const std::string &message, const std::string &receiverAddress,
-              std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback = nullptr,
-              std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
-      = 0;
-
-
-   /**
     * Send single or multipart SMS to the destination address. When registered on IMS the SMS will
     * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted to
     * send the message over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not
@@ -431,7 +401,7 @@ public:
     *
     */
    virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
-      bool deliveryReportNeeded = true, SmsResponseCb sentCallback = nullptr,
+      bool deliveryReportNeeded, SmsResponseCb sentCallback = nullptr,
       std::string smscAddr = "") = 0;
 
    /**
@@ -637,6 +607,35 @@ public:
     * @returns Status of removeListener i.e. success or suitable error code.
     */
    virtual telux::common::Status removeListener(std::weak_ptr<ISmsListener> listener) = 0;
+
+   /**
+    * Send SMS to the destination address. When registered on IMS the SMS will be attempted over
+    * IMS. If sending SMS over IMS fails, an automatic retry would be attempted to send the message
+    * over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not support National
+    * language shift tables.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
+    * to invoke this API successfully.
+    *
+    * @param [in] message           Message text to be sent
+    * @param [in] receiverAddress   Receiver or destination address
+    * @param [in] sentCallback      Optional callback pointer to get the response
+    *                               of send SMS request.
+    * @param [in] deliveryCallback  Optional callback pointer to get message
+    *                               delivery status
+    *
+    * @deprecated Use API ISmsManager::sendSms(const std::string &message,
+         const std::string &receiverAddress, bool deliveryReportNeeded = true,
+         SmsResponseCb callback = nullptr, std::string smscAddr = "")
+    *
+    * @returns Status of sendSms i.e. success or suitable error code.
+    *
+    */
+   virtual telux::common::Status
+      sendSms(const std::string &message, const std::string &receiverAddress,
+              std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback = nullptr,
+              std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
+      = 0;
 
    virtual ~ISmsManager(){};
 };

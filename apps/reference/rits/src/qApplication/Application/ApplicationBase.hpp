@@ -589,7 +589,7 @@ public:
 
     void printRxStats();
     void printTxStats();
-    int setup(MessageType msgType);
+    int setup(MessageType msgType, bool reSetup = false);
     void setupLdm();
     virtual bool pendingTillEmergency();
     virtual bool pendingTillNoEmergency();

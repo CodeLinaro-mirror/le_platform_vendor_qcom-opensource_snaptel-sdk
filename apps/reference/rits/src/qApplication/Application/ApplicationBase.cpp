@@ -639,9 +639,11 @@ ApplicationBase::~ApplicationBase() {
     }
     if (qMonConfig) {
         delete qMonConfig;
-        if(appVerbosity){
-            std::cout << "Closed qMonConfig\n";
-        }
+        std::cout << "Closed qMonConfig\n";
+    }
+    if (ldm) {
+        delete ldm;
+        ldm = nullptr;
     }
     {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -2005,7 +2007,7 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
     return (ret * 100);
 }
 
-int ApplicationBase::setup(MessageType msgType) {
+int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     uint8_t i = 0;
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
@@ -2048,9 +2050,14 @@ int ApplicationBase::setup(MessageType msgType) {
             this->spsTransmits[i].
                 set_radio_verbosity(this->configuration.codecVerbosity);
         }
-        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        this->spsContents.push_back(mc);
+
+        // use previous content if re-setup
+        if (false == reSetup) {
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+            this->spsContents.push_back(mc);
+        }
+
         i += 1;
     }
     i = 0;
@@ -2083,9 +2090,12 @@ int ApplicationBase::setup(MessageType msgType) {
                 set_radio_verbosity(this->configuration.codecVerbosity);
         }
 
-        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        this->receivedContents.push_back(mc);
+        // use previous content if re-setup
+        if (false == reSetup) {
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+            this->receivedContents.push_back(mc);
+        }
         i += 1;
     }
     i = 0;
@@ -2109,14 +2119,17 @@ int ApplicationBase::setup(MessageType msgType) {
                 set_radio_verbosity(this->configuration.codecVerbosity);
         }
 
-        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        this->eventContents.push_back(mc);
+        // use previous content if re-setup
+        if (false == reSetup) {
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+            this->eventContents.push_back(mc);
+        }
         i += 1;
     }
 
     // setup ldm
-    if(this->configuration.ldmSize and this->radioReceives.size() > 0){
+    if(this->configuration.ldmSize and this->radioReceives.size() > 0 and !this->ldm){
         this->ldm = new Ldm(this->configuration.ldmSize, this->radioReceives[0].getCv2xRadio());
     }
     return 0;

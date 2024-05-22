@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -135,9 +135,17 @@ bool BridgeMenu::init() {
         std::shared_ptr<ConsoleAppCommand> removeBridge
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Bridge", {},
                 std::bind(&BridgeMenu::removeBridge, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setInterfaceBridge
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5",
+                "Set_Interface_Bridge", {}, std::bind(&BridgeMenu::setInterfaceBridge,
+                this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getInterfaceBridge
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Get_Interface_Bridge",
+                {}, std::bind(&BridgeMenu::getInterfaceBridge,
+                this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableBridge, addBridge,
-            getBridgeInfo, removeBridge};
+            getBridgeInfo, removeBridge, setInterfaceBridge, getInterfaceBridge};
 
         addCommands(commandsList);
     }
@@ -250,4 +258,76 @@ void BridgeMenu::removeBridge(std::vector<std::string> inputCommand) {
 
     retStat = bridgeMgr_->removeBridge(ifaceName, respCb);
     Utils::printStatus(retStat);
+}
+
+void BridgeMenu::setInterfaceBridge(std::vector<std::string> userInput) {
+    std::cout << "Set Interface Bridge\n";
+    uint32_t bridgeId = 0;
+
+    int ifaceType;
+    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI,\n"
+              << "6-VMTAP0, 7-VMTAP1, 8-ETH2, 9-AP_PRIMARY,\n"
+              << "10-AP_SECONDARY, 11-AP_TERTIARY, 12-AP_QUATERNARY) :\n";
+    std::cin >> ifaceType;
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI),
+        static_cast<int>(telux::data::InterfaceType::ETH2),
+        static_cast<int>(telux::data::InterfaceType::VMTAP0),
+        static_cast<int>(telux::data::InterfaceType::VMTAP1),
+        static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
+        static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
+        static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
+        static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
+    telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
+    std::cout << std::endl;
+
+    std::cout << "Enter BridgeId: ";
+    std::cin >> bridgeId;
+    Utils::validateInput(bridgeId);
+    std::cout << std::endl;
+
+    telux::common::ErrorCode retCode = bridgeMgr_->setInterfaceBridge(
+        static_cast<telux::data::InterfaceType>(infType), bridgeId);
+    std::cout << "\nsetInterfaceBridge Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void BridgeMenu::getInterfaceBridge(std::vector<std::string> userInput) {
+    std::cout << "Get Interface BridgeId \n";
+    uint32_t bridgeId = 0;
+
+    int ifaceType;
+    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI,\n"
+              << "6-VMTAP0, 7-VMTAP1, 8-ETH2, 9-AP_PRIMARY,\n"
+              << "10-AP_SECONDARY, 11-AP_TERTIARY, 12-AP_QUATERNARY) :\n";
+    std::cin >> ifaceType;
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI),
+        static_cast<int>(telux::data::InterfaceType::VMTAP0),
+        static_cast<int>(telux::data::InterfaceType::VMTAP1),
+        static_cast<int>(telux::data::InterfaceType::ETH2),
+        static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
+        static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
+        static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
+        static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
+    telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
+    std::cout << std::endl;
+
+    telux::common::ErrorCode retCode = bridgeMgr_->getInterfaceBridge(
+        static_cast<telux::data::InterfaceType>(ifaceType), bridgeId);
+    std::cout << "\ngetInterfaceBridge Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if (retCode == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Bridge Id: " << bridgeId << std::endl;
+    }
 }

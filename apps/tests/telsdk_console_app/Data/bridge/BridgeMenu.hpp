@@ -26,6 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * This is a Bridge Manager Sample Application using Telematics SDK.
@@ -67,6 +71,9 @@ class BridgeMenu : public ConsoleApp ,
 
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
+
+    void setInterfaceBridge(std::vector<std::string> inputCommand);
+    void getInterfaceBridge(std::vector<std::string> inputCommand);
 
     BridgeMenu(std::string appName, std::string cursor);
     ~BridgeMenu();

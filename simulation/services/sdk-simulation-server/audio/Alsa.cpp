@@ -635,7 +635,17 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
             for(auto channel : channels) {
                 snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
                 snd_mixer_selem_get_playback_volume(elem, channel, &vol);
-                tmp.channelType = static_cast<ChannelType>(channel);
+                switch(channel) {
+                    case SND_MIXER_SCHN_FRONT_LEFT:
+                        tmp.channelType = ChannelType::LEFT;
+                        break;
+                    case SND_MIXER_SCHN_FRONT_RIGHT:
+                        tmp.channelType = ChannelType::RIGHT;
+                        break;
+                    default:
+                        LOG(ERROR, __FUNCTION__, " invalid channel type ", channel);
+                        return telux::common::ErrorCode::INVALID_ARGUMENTS;
+                }
                 tmp.vol = std::ceil((float)vol/max*10.0)/10.0;
                 channelsVolume.emplace_back(tmp);
             }
@@ -652,7 +662,17 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
             for(auto channel : channels) {
                 snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
                 snd_mixer_selem_get_capture_volume(elem, channel, &vol);
-                tmp.channelType = static_cast<ChannelType>(channel);
+                switch(channel) {
+                    case SND_MIXER_SCHN_FRONT_LEFT:
+                        tmp.channelType = ChannelType::LEFT;
+                        break;
+                    case SND_MIXER_SCHN_FRONT_RIGHT:
+                        tmp.channelType = ChannelType::RIGHT;
+                        break;
+                    default:
+                        LOG(ERROR, __FUNCTION__, " invalid channel type ", channel);
+                        return telux::common::ErrorCode::INVALID_ARGUMENTS;
+                }
                 tmp.vol = std::ceil((float)vol/max*10.0)/10.0;
                 channelsVolume.emplace_back(tmp);
             }

@@ -105,6 +105,8 @@ using std::make_shared;
 
 #define IP_ADDR_RETRY_INTERVAL_MS (100) // interval for re-getting V2X IP address
 #define IP_ADDR_RETRY_TIMES (2) // maximum retries for getting V2X IP address
+#define SETUP_RETRY_INTERVAL_MS (500) // interval for re-setup CV2X radio
+#define SETUP_RETRY_TIMES (10) // maximum retries for setup CV2X radio
 
 // Global variables
 shared_ptr<ApplicationBase> application = nullptr;
@@ -297,6 +299,31 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
     }).detach();
 }
 
+int reSetupRadio(MessageType msgType) {
+    if (!application) {
+        return -1;
+    }
+
+    application->clearRadioInstance();
+    for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
+        if (0 == application->setup(msgType, true)) {
+            return 0;
+        }
+        if (application->configuration.driverVerbosity) {
+            cout << "radio setup fail, retry later!" << endl;
+        }
+        std::unique_lock<std::mutex> lck(gTerminateMtx);
+        if (gTerminateCv.wait_for(lck,
+                std::chrono::milliseconds(SETUP_RETRY_INTERVAL_MS),
+                []{return (stopThread == true);})) {
+            break;
+        }
+    }
+
+    cerr << "re-setup radio failed!" << endl;
+    return -1;
+}
+
 /**
  * receiving thread function.
  *
@@ -332,9 +359,7 @@ void receive(MessageType msgType, int index) {
                     break;
                 }
                 if (restartFlow) {
-                    application->clearRadioInstance();
-                    // if setup fail, stop threads and exit
-                    if (application->setup(msgType)) {
+                    if (reSetupRadio(msgType)) {
                         sem_post(&cnt_sem);
                         break;
                     }
@@ -719,9 +744,7 @@ void transmit(MessageType msgType) {
                         break;
                     }
                     if (restartFlow) {
-                        application->clearRadioInstance();
-                        // if setup fail, stop threads and exit
-                        if (application->setup(msgType)) {
+                        if (reSetupRadio(msgType)) {
                             break;
                         }
 

@@ -240,5 +240,20 @@
             "telsdk_event_injector -f power_mgr -e machine_availability <availability>",
             "availability: valid values - UNAVAILABLE/AVAILABLE. Event to notify client via @ref ITcuActivityListener::onMachineUpdate, if the machine is available or not"
         ]
+    },
+    "tel_ims_settings": {
+        "imsServiceConfigsUpdate":[
+            "telsdk_event_injector -f tel_ims_setting -e imsServiceConfigsUpdate <slotId> <imsServiceEnabled> <voImsEnabled> <smsEnabled> <rttEnabled>",
+            "slotId:                integer, valid slotIds are 1 & 2 only." ,
+            "imsServiceEnabled:     integer, default value is 0, valid imsServiceEnabled Refer for more details telux::tel::ImsServiceConfig",
+            "voImsEnabled:          integer, default value is 0, valid voImsEnabled Refer for more details telux::tel::ImsServiceConfig",
+            "smsEnabled:            integer, default value is 0, valid smsEnabled Refer for more details telux::tel::ImsServiceConfig",
+            "rttEnabled:            integer, default value is 0, valid rttEnabled Refer for more details telux::tel::ImsServiceConfig"
+        ],
+        "imsSipUserAgentUpdate":[
+            "telsdk_event_injector -f tel_ims_setting -e imsSipUserAgentUpdate <slotId> <sipUserAgent>",
+            "slotId:                integer, valid slotIds are 1 & 2 only." ,
+            "sipUserAgent:          string, valid sip user agent"
+        ]
     }
 }

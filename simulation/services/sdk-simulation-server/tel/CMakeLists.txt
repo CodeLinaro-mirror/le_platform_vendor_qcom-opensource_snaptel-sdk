@@ -7,6 +7,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/CallManagerServerImpl.cpp
     tel/EcallStateMachine.cpp
     tel/ImsServingManagerServerImpl.cpp
+    tel/ImsSettingsManagerServerImpl.cpp
     tel/ServingManagerServerImpl.cpp
     tel/NetworkSelectionManagerServerImpl.cpp
     tel/PhoneManagerServerImpl.cpp

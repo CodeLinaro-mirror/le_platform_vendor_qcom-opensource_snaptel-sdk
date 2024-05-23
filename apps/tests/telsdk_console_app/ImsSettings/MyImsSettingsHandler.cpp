@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -101,7 +101,11 @@ void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(SlotId slotId,
                  << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
     } else {
         //SipUserAgent configuration
-        PRINT_CB << "sipUserAgent is " << sipUserAgent << "\n";
+        if (!sipUserAgent.empty()) {
+            PRINT_CB << "sipUserAgent is " << sipUserAgent << "\n";
+        } else {
+            PRINT_CB << "sipUserAgent is empty\n";
+        }
     }
 }
 

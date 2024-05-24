@@ -41,6 +41,7 @@ set (COMMON_STUB_SOURCES
     TaskQueue.cpp
     TaskThread.cpp
     TaskDispatcher.cpp
+    EnvUtils.cpp
     ../../common/therm/ThermalZoneImpl.cpp
     ../../common/therm/CoolingDeviceImpl.cpp
 )

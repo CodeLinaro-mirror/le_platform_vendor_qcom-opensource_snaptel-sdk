@@ -46,6 +46,7 @@
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
 #include "loc/LocationReportService.hpp"
 #include "audio/AudioGrpcServiceImpl.hpp"
+#include "power/PowerManagerServiceImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -193,6 +194,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
         std::make_shared<NetworkSelectionManagerServerImpl>();
     builder.RegisterService(NetworkSelectionSystemService.get());
+
+    std::shared_ptr<PowerManagerServiceImpl> powerService =
+        std::make_shared<PowerManagerServiceImpl>();
+    builder.RegisterService(powerService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

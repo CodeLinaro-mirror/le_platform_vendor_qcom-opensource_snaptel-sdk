@@ -340,7 +340,29 @@ telsdk_event_injector -f tel_call -e msdUpdateRequest 1
 <BR>
 \endhtmlonly
 
-@subsection event_8 Update RAT preference and service domain preference
+
+@subsection event_8 Trigger an modification request to change the call from a normal voice call to
+a real time text (RTT) call.
+To simulate ICallManager event - telux::tel::ICallListener::onModifyCallRequest<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_call -e modifyCallRequest 1 1
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_9 Trigger an event to send RTT message from a remote party
+To simulate ICallManager event - telux::tel::ICallListener::onRttMessage<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_call -e rttMessageRequest 1 GoodDay
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_10 Update RAT preference and service domain preference
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRatPreferenceChanged
 and telux::tel::IServingSystemListener::onServiceDomainPreferenceChanged <br>
 
@@ -359,7 +381,7 @@ telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012
 <BR>
 \endhtmlonly
 
-@subsection event_9 Update current system information<br>
+@subsection event_11 Update current system information<br>
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onSystemInfoChanged
 and telux::tel::IServingSystemListener::onDcStatusChanged <br>
 
@@ -379,7 +401,7 @@ telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1
 <BR>
 \endhtmlonly
 
-@subsection event_10 Update network time information<br>
+@subsection event_12 Update network time information<br>
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onNetworkTimeChanged <br>
 
 Command: <i>telsdk_event_injector -f tel_serv -e networkTimeUpdate <slotId> <year> <month> <day> <hour> <minute> <second> <dayOfWeek> <timeZone> <dstAdj> <nitzTime></i> <br>
@@ -404,7 +426,7 @@ telsdk_event_injector -f tel_serv -e networkTimeUpdate 1 2004 08 01 06 11 23 8 3
 <BR>
 \endhtmlonly
 
-@subsection event_11 Update RF band information<br>
+@subsection event_13 Update RF band information<br>
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRFBandInfoChanged <br>
 
 Command: <i>telsdk_event_injector -f tel_serv -e rFBandInfoUpdate <slotId> <band> <channel> <bandWidth></i> <br>
@@ -422,7 +444,7 @@ telsdk_event_injector -f tel_serv -e rFBandInfoUpdate 1 86 88 23
 <BR>
 \endhtmlonly
 
-@subsection event_12 Trigger network registration rejection<br>
+@subsection event_14 Trigger network registration rejection<br>
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onNetworkRejection <br>
 
 Command: <i>telsdk_event_injector -f tel_serv -e networkRejectionUpdate <slotId> <rejectSrvInfoRat> <rejectSrvInfoDomain> <rejectCause> <mcc> <mnc></i> <br>
@@ -441,7 +463,7 @@ telsdk_event_injector -f tel_serv -e networkRejectionUpdate 1 14 2 1 810 10
 <BR>
 \endhtmlonly
 
-@subsection event_13 Trigger IMS service configuration<br>
+@subsection event_15 Trigger IMS service configuration<br>
 To simulate IImsSettingsManager event - telux::tel::IImsSettingsListener::onImsServiceConfigsChange <br>
 
 Command: <i>telsdk_event_injector -f tel_ims_setting -e imsServiceConfigsUpdate <slotId> <imsServiceEnabled> <voImsEnabled> <smsEnabled> <rttEnabled></i> <br>
@@ -459,7 +481,7 @@ telsdk_event_injector -f tel_ims_setting -e imsServiceConfigsUpdate 1 1 1 1 0
 <BR>
 \endhtmlonly
 
-@subsection event_14 Trigger IMS sip user agent<br>
+@subsection event_16 Trigger IMS sip user agent<br>
 To simulate IImsSettingsManager event - telux::tel::IImsSettingsListener::onImsSipUserAgentChange <br>
 Command: <i>telsdk_event_injector -f tel_ims_setting -e imsSipUserAgentUpdate <slotId> <sipUserAgent></i> <br>
 - slotId:                valid slotIds are 1 & 2 only<br>

@@ -76,6 +76,9 @@ struct CallInfo {
    bool isMsdTransmitted = false;
    bool isMpty = false;
    bool isTpseCallOverIms = false;
+   RttMode mode = RttMode::DISABLED;
+   RttMode localRttCapability = RttMode::DISABLED;
+   RttMode peerRttCapability  = RttMode::DISABLED;
 };
 
 
@@ -138,6 +141,11 @@ public:
     grpc::Status RequestNetworkDeregistration(ServerContext* context,
         const telStub::RequestNetworkDeregistrationRequest* request,
         telStub::RequestNetworkDeregistrationReply* response);
+    grpc::Status ModifyOrRespondToModifyCall(ServerContext* context,
+        const telStub::ModifyOrRespondToModifyCallRequest* request,
+        telStub::ModifyOrRespondToModifyCallReply* response);
+    grpc::Status SendRtt(ServerContext* context,
+        const telStub::SendRttRequest* request, telStub::SendRttReply* response);
     void startTimer(std::string timer);
     void msdTransmissionStatus(std::string msdtransmision );
     void changeCallState(int phoneId, std::string callstate, std::string remotepartyNumber);
@@ -164,13 +172,18 @@ private:
     void handleMsdUpdateRequest(std::string eventParams);
     void handleHangupRequest(std::string eventParams);
     void handleIncomingCallRequest(std::string eventParams);
+    void handleModifyCallRequest(std::string eventParams);
+    void handleRttMessageRequest(std::string eventParams);
     telux::common::Status handleStateMachine(int phoneId);
     void startTimers(std::string timer);
     void triggerTimerExpiry(std::string timer, int phoneId);
-    void triggerCallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
+    void triggerECallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
+    void triggerCallInfoChangeEvent(std::shared_ptr<CallInfo> call);
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(int phoneId, std::string action, std::string remotepartyNumber);
     void triggerCallListAfterCallEnd();
+    void triggerModifyCallRequestEvent(int phoneId, int callIndex);
+    void triggerRttMessageEvent(int phoneId, std::string message);
     bool findAndRemoveMatchingCall(int callIndex);
     void updateEcallHlapTimer(std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();
@@ -184,13 +197,16 @@ private:
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
     void logCallDetails(std::shared_ptr<CallInfo> call);
     std::shared_ptr<CallInfo> findCallAndUpdateCallState(std::string remotePartyNumber,
-        CallState callState);
+        CallState callState, int phoneId);
+    std::shared_ptr<CallInfo> findCallAndUpdateRttMode( std::string remotePartyNumber,
+        RttMode mode, int phoneId);
     bool findMatchingCall(CallInfo callToCompare);
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
-    bool find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber, CallState action);
+    bool find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber, int phoneId);
     void onEventUpdate(std::string event);
     void handleCallMachine();
     void changeCallStateofActiveCalls(CallInfo info);
+    void changeRttModeOfCall(RttMode mode, std::string remotepartyNumber, int phoneId);
     void resumeBackgroundCalls(int phoneId);
     void hangupWaitingOrBackgroundCalls(int phoneId);
     void resumeCall(int phoneId, int callIndex);
@@ -205,25 +221,33 @@ private:
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
         callInfo.isMultiPartyCall = true;
-        int makeEcallApiType = static_cast<int>(request->api());
-        if((makeEcallApiType == makeECallWithMsd) || (makeEcallApiType == makeECallWithRawMsd) ||
-            (makeEcallApiType == makeECallWithoutMsd)) {
+        CallApi makeCallApiType = static_cast<CallApi>(request->api());
+        if((makeCallApiType == CallApi::makeECallWithMsd) ||
+            (makeCallApiType == CallApi::makeECallWithRawMsd) ||
+            (makeCallApiType == CallApi::makeECallWithoutMsd)) {
             callInfo.isRegulatoryeCall = true;
         } else {
             callInfo.isRegulatoryeCall = false;
         }
-        if(makeEcallApiType == makeTpsECallOverIMS) {
+        if(makeCallApiType == makeTpsECallOverIMS) {
             callInfo.isTpseCallOverIms = true;
         } else {
             callInfo.isTpseCallOverIms = false;
         }
-        if(request->remote_party_number() == "")
-        {
+        if(request->remote_party_number() == "") {
             // No input will be passed from client for regulatory eCall
             callInfo.remotePartyNumber = getRemotePartyNumber(request->phone_id());
         } else {
             // Normal Voice call and custom number eCall
             callInfo.remotePartyNumber = request->remote_party_number();
+        }
+        if(makeCallApiType == CallApi::makeRttVoiceCall) {
+            callInfo.mode = RttMode::FULL;
+            // Local and peer capability is assumed to be available during a RTT call.
+            // TODO: During intermanager implementation, we can consider local capability of the
+            // simulation framework dependent on IMS Settings.
+            callInfo.localRttCapability = RttMode::FULL;
+            callInfo.peerRttCapability = RttMode::FULL;
         }
         callInfo.isMsdTransmitted = request->is_msd_transmitted();
         callInfo_ = callInfo;

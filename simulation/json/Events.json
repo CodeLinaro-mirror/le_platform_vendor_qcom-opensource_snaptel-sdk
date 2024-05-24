@@ -106,14 +106,25 @@
             "slotId:       valid slotIds are 1 & 2 only."
         ],
         "incomingCall":[
-            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber>",
+            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber> <rttMode>",
             "slotId:           valid slotIds are 1 & 2 only.",
-            "phonenumber:      valid phonenumber "
+            "phonenumber:      valid phonenumber ",
+            "rttMode:          valid rttMode are 0 - DISABLED and 1 - FULL only"
         ],
         "hangupCall":[
             "telsdk_event_injector -f tel_call -e hangupCall <slotId> <callId>",
             "slotId:           valid slotIds are 1 & 2 only." ,
             "callId:           valid callId"
+        ],
+        "modifyCallRequest" : [
+            "telsdk_event_injector -f tel_call -e modifyCallRequest <slotId> <callId>",
+            "slotId:           valid slotIds are 1 & 2 only." ,
+            "callId:           valid callId"
+        ],
+        "rttMessageRequest" : [
+            "telsdk_event_injector -f tel_call -e rttMessageRequest <slotId> <message>",
+            "slotId:           valid slotIds are 1 & 2 only." ,
+            "message:          valid message"
         ]
     },
     "tel_phone": {

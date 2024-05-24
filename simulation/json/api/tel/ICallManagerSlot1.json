@@ -11,6 +11,11 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "makeRttCall" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
         "makeECallWithMsd" :
         {
             "status" : "SUCCESS",
@@ -135,6 +140,21 @@
             "error" : "SUCCESS"
         },
         "hangup" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "modify" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "respondToModifyRequest" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "sendRtt" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"

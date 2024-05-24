@@ -82,9 +82,11 @@ extern "C" {
 
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
+   std::string rttMode = getRttModeString(call->getRttMode());
    PRINT_NOTIFICATION << getCurrentTime() << std::endl;
-   std::cout <<  getCallStateString(call->getCallState())
-             << " on slot Id: " << call->getPhoneId() << std::endl;
+   PRINT_NOTIFICATION <<  getCallStateString(call->getCallState())
+                      << (rttMode == "FULL" ? " real time text call":" normal voice call")
+                      << " on slot Id: " << call->getPhoneId() << std::endl;
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
 }
@@ -96,10 +98,10 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
                       << ", Call Direction: " << (int)call->getCallDirection()
                       << ", Phone Number: " << call->getRemotePartyNumber()
                       << ", Slot Id: " << call->getPhoneId()
-                      << ", RTT mode of the call " << getRttModeString(call->getRttMode())
-                      << ", Local capability of call "
+                      << ", RTT mode of the call: " << getRttModeString(call->getRttMode())
+                      << ", Local capability of call: "
                       << getRttModeString(call->getLocalRttCapability())
-                      << ", Peer capability of call "
+                      << ", Peer capability of call: "
                       << getRttModeString(call->getPeerRttCapability())
                       << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
@@ -190,12 +192,12 @@ std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
 std::string MyCallListener::getRttModeString(telux::tel::RttMode mode) {
    switch(mode) {
       case telux::tel::RttMode::DISABLED:
-         return std::string("RTT mode DISABLED");
+         return std::string("DISABLED");
       case telux::tel::RttMode::FULL:
-         return std::string("RTT mode FULL");
+         return std::string("FULL");
       case telux::tel::RttMode::UNKNOWN:
       default:
-         return std::string("unknown");
+         return std::string("UNKNOWN");
    }
 }
 

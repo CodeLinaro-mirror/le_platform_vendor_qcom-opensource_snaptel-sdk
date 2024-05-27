@@ -653,8 +653,7 @@ public:
     *
     * @returns Status of getNetworkRejectInfo i.e. success or suitable error code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
+    * @deprecated This API will not be supported in future releases.
     */
    virtual telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) = 0;
 

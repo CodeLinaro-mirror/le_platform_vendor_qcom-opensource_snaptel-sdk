@@ -39,6 +39,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <thread>
 
 #include <telux/loc/LocationFactory.hpp>
 #include <telux/common/Version.hpp>

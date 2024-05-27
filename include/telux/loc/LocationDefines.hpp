@@ -940,6 +940,18 @@ enum GnssDataValidityType {
 /** Specifies GnssDataValidityType mask */
 using GnssDataValidity = uint32_t;
 
+/** Indicate RF Automatic Gain Control Status */
+enum AgcStatus {
+  /** AGC status is unknown */
+  UNKNOWN = 0,
+  /** Not saturated */
+  NO_SATURATION = 1,
+  /** Front end gain is at maximum saturation */
+  FRONT_END_GAIN_MAXIMUM_SATURATION = 2,
+  /** Front end gain is at minimum saturation */
+  FRONT_END_GAIN_MINIMUM_SATURATION = 3
+};
+
 /** Specify the additional GNSS data that can be provided during a tracking
  *  session, currently jammer and automatic gain control data are available.*/
 struct GnssData {
@@ -953,6 +965,12 @@ struct GnssData {
    *  in GnssDataSignalTypes.
    */
   double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
+  /** RF Automatic gain control status for L1 band. */
+  AgcStatus     agcStatusL1;
+  /** RF Automatic gain control status for L2 band. */
+  AgcStatus     agcStatusL2;
+  /** RF Automatic gain control status for L5 band. */
+  AgcStatus     agcStatusL5;
 };
 
 /** Specify the sensor calibration status in @ref ILocationInfoEx.*/
@@ -1427,6 +1445,12 @@ struct GnssMeasurements {
     std::vector<GnssMeasurementsData> measurements;
     /** Indicates the frequency for GNSS measurements generated at NHz or not.*/
     bool isNHz;
+    /** RF Automatic gain control status for L1 band. */
+    AgcStatus     agcStatusL1;
+    /** RF Automatic gain control status for L2 band. */
+    AgcStatus     agcStatusL2;
+    /** RF Automatic gain control status for L5 band. */
+    AgcStatus     agcStatusL5;
 };
 
 /**

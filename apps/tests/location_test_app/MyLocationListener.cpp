@@ -1733,6 +1733,15 @@ void MyLocationListener::onGnssSignalInfo(
       }
       std::cout << std::endl;
    }
+   std::cout << "AGC L1 Status: " << gnssDatainfo->getGnssData().agcStatusL1
+             << std::endl;
+   recordStream << gnssDatainfo->getGnssData().agcStatusL1 << ",";
+   std::cout << "AGC L2 Status: " << gnssDatainfo->getGnssData().agcStatusL2
+             << std::endl;
+   recordStream << gnssDatainfo->getGnssData().agcStatusL2 << ",";
+   std::cout << "AGC L5 Status: " << gnssDatainfo->getGnssData().agcStatusL5
+             << std::endl;
+   recordStream << gnssDatainfo->getGnssData().agcStatusL5 << ",";
    std::cout << "*************************************************************" << std::endl;
    if (isRecordingEnabled_) {
        DETAILED_RECORDING << DATA << "," << recordStream.str() << std::endl;
@@ -1880,9 +1889,18 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
    }
    std::cout << "NHz measurements indicator: " << std::boolalpha << measurementInfo.isNHz
              << std::endl;
+   std::cout << "AGC L1 Status: " << measurementInfo.agcStatusL1
+             << std::endl;
+   std::cout << "AGC L2 Status: " << measurementInfo.agcStatusL2
+             << std::endl;
+   std::cout << "AGC L5 Status: " << measurementInfo.agcStatusL5
+             << std::endl;
    std::cout << "*************************************************************" << std::endl;
 
    recordStream << static_cast<int>(measurementInfo.isNHz) << ",";
+   recordStream << measurementInfo.agcStatusL1 << ",";
+   recordStream << measurementInfo.agcStatusL2 << ",";
+   recordStream << measurementInfo.agcStatusL5 << ",";
 
    if (isRecordingEnabled_) {
        DETAILED_RECORDING << recordStream.str() << std::endl;

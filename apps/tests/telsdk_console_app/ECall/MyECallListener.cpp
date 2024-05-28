@@ -109,6 +109,23 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
    }
 }
 
+// Notify CallManager subsystem restart to user
+void MyECallListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " Call onServiceStatusChange" << stat << "\n";
+}
+
 std::string MyECallListener::callDirectionToString(telux::tel::CallDirection cd) {
    switch(cd) {
       case telux::tel::CallDirection::INCOMING:

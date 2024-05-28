@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <iostream>
@@ -156,4 +156,21 @@ void MyCardListener::onCardInfoChanged(int slotId) {
        PRINT_NOTIFICATION <<
            " Card Manager subsystem is not ready, failed to notify card state change" << std::endl;
    }
+}
+
+// Notify CardManager subsystem status
+void MyCardListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " Card onServiceStatusChange" << stat << "\n";
 }

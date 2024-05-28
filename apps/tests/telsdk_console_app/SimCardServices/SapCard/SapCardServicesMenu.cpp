@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -79,6 +79,9 @@ SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor
 }
 
 SapCardServicesMenu::~SapCardServicesMenu() {
+   for (auto index = 0; index < sapManagers_.size(); index++) {
+       sapManagers_[index]->removeListener(sapCardListener_);
+   }
    mySapCmdResponseCb_ = nullptr;
    myTransmitApduResponseCb_ = nullptr;
    mySapCardReaderCb_ = nullptr;
@@ -140,6 +143,12 @@ bool SapCardServicesMenu::init() {
                return false;
             }
             sapManagers_.emplace_back(sapCardMgr);
+            // registering listener
+            sapCardListener_ = std::make_shared<MySapCardListener>();
+            status = sapCardMgr->registerListener(sapCardListener_);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "Unable to register listener" << std::endl;
+            }
          }
       }
    } else {

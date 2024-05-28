@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -79,6 +79,16 @@ void CardListener::onCardInfoChanged(int slotId)
         CardControl::getInstance().connectAfterCardInsertion();
     } else {
         LOGD("Card state = %d.\n", static_cast<int>(cardState));
+    }
+}
+
+void CardListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
+        LOGD("Received Service Unavailable notification.\n");
+    } else if (status == ServiceStatus::SERVICE_AVAILABLE) {
+        LOGD("Received Service Available notification.\n");
+    } else {
+        LOGD("Received unknown service status notification.\n");
     }
 }
 

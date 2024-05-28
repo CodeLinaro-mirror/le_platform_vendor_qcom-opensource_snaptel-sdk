@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -314,4 +314,21 @@ void MyNetworkSelectionListener::onSelectionModeChanged(telux::tel::NetworkModeI
    if (info.mode == NetworkSelectionMode::MANUAL) {
       PRINT_NOTIFICATION << "MCC is: " << info.mcc << ", MNC is: " << info.mnc << std::endl;
    }
+}
+
+// Notify NetworkSelectionManager subsystem status
+void MyNetworkSelectionListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " Network Selection onServiceStatusChange" << stat << "\n";
 }

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -110,6 +110,7 @@ public:
 
 class MyNetworkSelectionListener : public telux::tel::INetworkSelectionListener {
 public:
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onSelectionModeChanged(telux::tel::NetworkModeInfo info) override;
    void onNetworkScanResults(telux::tel::NetworkScanStatus scanStatus,
       std::vector<telux::tel::OperatorInfo> operatorInfos) override;

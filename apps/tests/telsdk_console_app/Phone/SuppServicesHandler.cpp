@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -132,4 +132,21 @@ void GetSuppSvcResponseCallback::getOirStatusResp(SuppServicesStatus suppSvcStat
             << static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error)
             << "Failure Cause : " << static_cast<int>(failureCause) << std::endl;
     }
+}
+
+// Notify SuppServicesManager subsystem status
+void MySuppServicesListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " SuppServices onServiceStatusChange" << stat << "\n";
 }

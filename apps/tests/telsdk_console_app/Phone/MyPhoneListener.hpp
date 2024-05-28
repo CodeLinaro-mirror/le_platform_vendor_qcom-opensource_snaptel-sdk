@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,6 +76,7 @@
 
 class MyPhoneListener : public telux::tel::IPhoneListener {
 public:
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onServiceStateChanged(int phoneId, telux::tel::ServiceState state) override;
    void onSignalStrengthChanged(
       int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) override;

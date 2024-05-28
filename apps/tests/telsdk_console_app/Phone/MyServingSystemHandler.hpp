@@ -137,6 +137,7 @@ public:
 
 class MyServingSystemListener : public telux::tel::IServingSystemListener {
 public:
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onRatPreferenceChanged(telux::tel::RatPreference preference) override;
    void onServiceDomainPreferenceChanged(telux::tel::ServiceDomainPreference preference) override;
    void onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) override;

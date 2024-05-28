@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -75,4 +75,9 @@ public:
         telux::common::ErrorCode error);
 };
 
+
+class MySuppServicesListener : public telux::tel::ISuppServicesListener {
+public:
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+};
 #endif // TELUX_TEL_SUPP_SERVICES_HANDLER_HPP

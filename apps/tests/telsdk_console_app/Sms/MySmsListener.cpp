@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -145,6 +145,23 @@ void MySmsListener::onMemoryFull(int phoneId, telux::tel::StorageType type) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << "Received memory full indication from phone ID " << phoneId <<
        "  for Storage Type: " << SmsStorageCallback::convertStorageTypeToString(type) << "\n";
+}
+
+// Notify SmsManager subsystem status
+void MySmsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " Sms onServiceStatusChange" << stat << "\n";
 }
 
 // Implementation of My SMS callback

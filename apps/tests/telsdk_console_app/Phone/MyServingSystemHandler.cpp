@@ -728,3 +728,20 @@ void MyServingSystemListener::onRFBandPreferenceChanged
    PRINT_NOTIFICATION << " RF Band Preference is changed. \n RF Band Preference: \n";
    MyServingSystemHelper::logRFBandList(prefList, true);
 }
+
+// Notify ServingSystemManager subsystem status
+void MyServingSystemListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " ServingSystem onServiceStatusChange" << stat << "\n";
+}

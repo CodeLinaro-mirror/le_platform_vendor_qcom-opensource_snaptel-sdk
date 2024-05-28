@@ -78,6 +78,7 @@ public:
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
    void onRingbackTone(bool isAlerting, int phoneId) override;
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
    std::string getCallStateString(telux::tel::CallState cs);
    std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);

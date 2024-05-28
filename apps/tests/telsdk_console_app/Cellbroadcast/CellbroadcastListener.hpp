@@ -26,7 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #ifndef CELLBROADCASTLISTENER_HPP
 #define CELLBROADCASTLISTENER_HPP
 
@@ -41,6 +46,7 @@ class CellbroadcastListener : public telux::tel::ICellBroadcastListener {
         const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
     void onMessageFilterChange(SlotId slotId,
         std::vector<telux::tel::CellBroadcastFilter> filters) override;
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
 private:
     std::string geograhicalScopeToString(telux::tel::GeographicalScope scope);

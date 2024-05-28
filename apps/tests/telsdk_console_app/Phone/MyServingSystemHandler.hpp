@@ -101,6 +101,20 @@ public:
    static void servingSystemResponse(telux::common::ErrorCode error);
 };
 
+class RFBandPrefResponseCallback {
+public:
+   static void rfBandPrefResponse(std::shared_ptr<telux::tel::IRFBandList> prefList,
+      telux::common::ErrorCode error);
+   static void setRFBandPrefResponse(telux::common::ErrorCode error);
+};
+
+class RFBandCapabilityResponseCallback {
+public:
+   static void rfBandCapabilityResponse(
+       std::shared_ptr<telux::tel::IRFBandList> capabilityList,
+       telux::common::ErrorCode error);
+};
+
 class MyServingSystemHelper {
 public:
    static std::string getRatPreference(telux::tel::RatPreference preference);
@@ -116,6 +130,9 @@ public:
    static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
    static std::string getSmsDomain(telux::tel::SmsDomain domain);
    static std::string getLteCsCapability(telux::tel::LteCsCapability capability);
+   static std::string gsmRFBandtoString(telux::tel::GsmRFBand gsmBand);
+   static std::string wcdmaRFBandtoString(telux::tel::WcdmaRFBand wcdmaBand);
+   static void logRFBandList(std::shared_ptr<telux::tel::IRFBandList> list, bool isPref);
 };
 
 class MyServingSystemListener : public telux::tel::IServingSystemListener {
@@ -130,6 +147,7 @@ public:
    void onCallBarringInfoChanged(std::vector<telux::tel::CallBarringInfo> barringInfo) override;
    void onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) override;
    void onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) override;
+   void onRFBandPreferenceChanged(std::shared_ptr<telux::tel::IRFBandList> capabilityList) override;
 };
 
 #endif  // MYSERVINGSYSTEMHANDLER_HPP

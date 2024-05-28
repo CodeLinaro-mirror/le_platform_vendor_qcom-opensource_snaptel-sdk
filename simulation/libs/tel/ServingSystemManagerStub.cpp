@@ -630,15 +630,34 @@ telux::common::Status ServingSystemManagerStub::getCallBarringInfo
 telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
     (SmsCapability &smsCapability) {
     LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::SUCCESS;
+    return telux::common::Status::NOTSUPPORTED;
 }
 
 
 telux::common::Status ServingSystemManagerStub::getLteCsCapability
     (LteCsCapability &lteCapability) {
     LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::SUCCESS;
+    return telux::common::Status::NOTSUPPORTED;
 }
+
+telux::common::Status ServingSystemManagerStub::requestRFBandPreferences
+    (RFBandPrefCallback callback) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status ServingSystemManagerStub::setRFBandPreferences
+    (std::shared_ptr<IRFBandList> prefList, common::ResponseCallback callback) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status ServingSystemManagerStub::requestRFBandCapability
+    (RFBandCapabilityCallback callback) {
+    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    return telux::common::Status::NOTSUPPORTED;
+}
+
 
 void ServingSystemManagerStub::handleCallBarringInfosChanged
     (::telStub::CallBarringInfosEvent event) {
@@ -860,6 +879,172 @@ void ServingSystemManagerStub::handleNetworkRejection(::telStub::NetworkRejectIn
         }
     } else {
         LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+RFBandList::RFBandList() {
+}
+
+RFBandList::~RFBandList() {
+}
+
+std::vector<GsmRFBand> RFBandList::getGsmBands() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return gsmBands_;
+}
+
+std::vector<WcdmaRFBand> RFBandList::getWcdmaBands() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return wcdmaBands_;
+}
+
+std::vector<LteRFBand> RFBandList::getLteBands() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return lteBands_;
+}
+
+std::vector<NrRFBand> RFBandList::getNrBands(NrType type) {
+    std::vector<NrRFBand> nrBands;
+    std::lock_guard<std::mutex> lock(mtx_);
+    switch (type) {
+        case NrType::NSA:
+            nrBands.assign(nsaBands_.begin(), nsaBands_.end());
+            break;
+        case NrType::SA:
+            nrBands.assign(saBands_.begin(), saBands_.end());
+            break;
+        case NrType::COMBINED:
+            nrBands.assign(nrBands_.begin(), nrBands_.end());
+            break;
+    }
+    return nrBands;
+}
+
+void RFBandList::setGsmBands(std::vector<GsmRFBand> bands) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    gsmBands_.assign(bands.begin(), bands.end());
+}
+
+void RFBandList::setWcdmaBands(std::vector<WcdmaRFBand> bands) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    wcdmaBands_.assign(bands.begin(), bands.end());
+}
+
+void RFBandList::setLteBands(std::vector<LteRFBand> bands) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    lteBands_.assign(bands.begin(), bands.end());
+}
+
+void RFBandList::setNrBands(NrType type, std::vector<NrRFBand> bands) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    switch (type) {
+        case NrType::NSA:
+            nsaBands_.assign(bands.begin(), bands.end());
+            break;
+        case NrType::SA:
+            saBands_.assign(bands.begin(), bands.end());
+            break;
+        case NrType::COMBINED:
+            nrBands_.assign(bands.begin(), bands.end());
+            break;
+    }
+}
+
+bool RFBandList::isGSMBandPresent(GsmRFBand band) {
+    bool result = false;
+    std::lock_guard<std::mutex> lock(mtx_);
+    for (auto gsmBand : gsmBands_) {
+        if (gsmBand == band) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool RFBandList::isWcdmaBandPresent(WcdmaRFBand band) {
+    bool result = false;
+    std::lock_guard<std::mutex> lock(mtx_);
+    for (auto wcdmaBand : wcdmaBands_) {
+        if (wcdmaBand == band) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool RFBandList::isLteBandPresent(LteRFBand band) {
+    bool result = false;
+    std::lock_guard<std::mutex> lock(mtx_);
+    for (auto lteBand : lteBands_) {
+        if (lteBand == band) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool RFBandList::isNrBandPresent(NrType type, NrRFBand band) {
+    bool result = false;
+    std::vector<NrRFBand> bands;
+    std::lock_guard<std::mutex> lock(mtx_);
+    switch (type) {
+        case NrType::NSA:
+            bands.assign(nsaBands_.begin(), nsaBands_.end());
+            break;
+        case NrType::SA:
+            bands.assign(saBands_.begin(), saBands_.end());
+            break;
+        case NrType::COMBINED:
+            bands.assign(nrBands_.begin(), nrBands_.end());
+            break;
+    }
+    for (auto nrBand : bands) {
+        if (nrBand == band) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+RFBandListBuilder::RFBandListBuilder() {
+    rfBandList_ = std::make_shared<RFBandList>();
+}
+
+RFBandListBuilder &RFBandListBuilder::addGsmRFBands(std::vector<GsmRFBand> bands) {
+    if (rfBandList_) {
+        rfBandList_->setGsmBands(bands);
+    }
+    return *this;
+}
+
+RFBandListBuilder &RFBandListBuilder::addWcdmaRFBands(std::vector<WcdmaRFBand> bands) {
+    if (rfBandList_) {
+        rfBandList_->setWcdmaBands(bands);
+    }
+    return *this;
+}
+
+RFBandListBuilder &RFBandListBuilder::addLteRFBands(std::vector<LteRFBand> bands) {
+    if (rfBandList_) {
+        rfBandList_->setLteBands(bands);
+    }
+    return *this;
+}
+
+RFBandListBuilder &RFBandListBuilder::addNrRFBands(NrType type, std::vector<NrRFBand> bands) {
+    if (rfBandList_) {
+        rfBandList_->setNrBands(type, bands);
+    }
+    return *this;
+}
+
+std::shared_ptr<IRFBandList> RFBandListBuilder::build(telux::common::ErrorCode &errCode) {
+    if (rfBandList_) {
+        errCode = telux::common::ErrorCode::SUCCESS;
+        return rfBandList_;
+    } else {
+        errCode = telux::common::ErrorCode::MISSING_ARGUMENTS;
+        return nullptr;
     }
 }
 

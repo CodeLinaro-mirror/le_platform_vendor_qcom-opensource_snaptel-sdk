@@ -142,6 +142,10 @@ public:
                 return "UDP";
             case 50:
                 return "ESP";
+            case 58:
+                return "ICMP6";
+            case 253:
+                return "PROTO_TCP_UDP";
             default: {
                 return "Unknown";
             }
@@ -159,6 +163,10 @@ public:
             return 17;
         } else if (proto == "ESP") {
             return 50;
+        } else if (proto == "ICMP6") {
+            return 58;
+        } else if (proto == "PROTO_TCP_UDP") {
+            return 253;
         }
         return 0;
     }

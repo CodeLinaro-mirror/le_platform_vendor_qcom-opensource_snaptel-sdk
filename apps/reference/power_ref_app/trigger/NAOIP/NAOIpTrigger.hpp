@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -100,8 +100,10 @@ private:
     std::thread server_;        /** server thread accepting new clients */
 
     void startServer();
+    void startTCPSever();
+    void startUDPSever();
     void stopServer();
-    void listenNewTriggerClient(int triggerSocket);
+    void listenNewTriggerClient(int triggerSocket, bool closeSocket);
     void cleanOldDisconnectedClientThreads();
     bool validateTrigger(char* buffer, int length, TcuActivityState& tcuActivityState, std::string& machineName);
     bool loadConfig();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -204,7 +204,7 @@ bool NAOIpTrigger::validateTrigger(char *buffer, int length,
     return false;
 }
 
-void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
+void NAOIpTrigger::listenNewTriggerClient(int triggerSocket, bool closeSocket) {
     LOG(DEBUG, __FUNCTION__);
     char buffer[BUFFER_SIZE] = {0};
     try{
@@ -224,13 +224,16 @@ void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
             }
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
         } while (true);
-        if (shutdown(triggerSocket, SHUT_RDWR) == -1) {
-            std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
-            LOG(ERROR, __FUNCTION__, logTmp);
-        }
-        if (close(triggerSocket) == -1) {
-            std::string logTmp = "close failed errno = " + string(strerror(errno));
-            LOG(ERROR, __FUNCTION__, logTmp);
+
+        if (closeSocket) {
+            if (shutdown(triggerSocket, SHUT_RDWR) == -1) {
+                std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
+                LOG(ERROR, __FUNCTION__, logTmp);
+            }
+            if (close(triggerSocket) == -1) {
+                std::string logTmp = "close failed errno = " + string(strerror(errno));
+                LOG(ERROR, __FUNCTION__, logTmp);
+            }
         }
     } catch(const std::exception& e) {
         LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
@@ -240,6 +243,26 @@ void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
 }
 
 void NAOIpTrigger::startServer() {
+    LOG(DEBUG, __FUNCTION__);
+
+    string configFilterFile =
+        ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "NAOIP_FILTER_CONFIG_FILE");
+    if (configFilterFile.empty()) {
+        configFilterFile = DEFAULT_DATA_CONFIG_FILE_NAME;
+    }
+
+    DataConfigParser dataConfParser("communication", configFilterFile);
+
+    if (dataConfParser.getValue(dataConfParser.getFilters()[0], "TRANSPORT_PROTOCOL") == "UDP") {
+        startUDPSever();
+    } else {
+        startTCPSever();
+    }
+
+    LOG(DEBUG, __FUNCTION__, " exit");
+}
+
+void NAOIpTrigger::startTCPSever() {
     LOG(DEBUG, __FUNCTION__);
     struct sockaddr_in address = {0};
     int opt = 1;
@@ -303,7 +326,7 @@ void NAOIpTrigger::startServer() {
                         newClient.socketFd = clientSocket;
                         newClient.runningOnThread = std::thread(
                             [this, clientSocket, &clientDisconnectedPromise]{
-                                listenNewTriggerClient(clientSocket);
+                                listenNewTriggerClient(clientSocket, true);
 
                                 clientDisconnectedPromise.set_value();
                             }
@@ -326,6 +349,51 @@ void NAOIpTrigger::startServer() {
         stopServer();
     }
     LOG(DEBUG, __FUNCTION__, " exit");
+}
+
+void NAOIpTrigger::startUDPSever() {
+    LOG(DEBUG, __FUNCTION__);
+
+    int ret;
+    int port = DEFAULT_PORT;
+    std::string portString;
+    struct sockaddr_in serverAddr;
+
+    {
+        std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
+        if (isServerRunning_) {
+            LOG(ERROR, __FUNCTION__, " server already running ");
+            return;
+        }
+        isServerRunning_ = true;
+
+        ret = socket(AF_INET, SOCK_DGRAM, 0);
+        if (ret < 0) {
+            LOG(ERROR, __FUNCTION__, " can't create socket, lnx err ", errno);
+            stopServer();
+        }
+
+        serverSocket_ = ret;
+
+        memset(&serverAddr, 0, sizeof(serverAddr));
+
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+        portString = config_->getValue("NAOIP_TRIGGER", "NAOIP_FILTER_SERVER_PORT");
+        if (portString != "") {
+            port = std::stoi(portString);
+        }
+        serverAddr.sin_port = htons(port);
+
+        ret = bind(serverSocket_, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+        if (ret < 0) {
+            LOG(ERROR, __FUNCTION__, " can't bind socket, lnx err ", errno);
+            stopServer();
+        }
+    }
+
+    listenNewTriggerClient(serverSocket_, false);
 }
 
 void NAOIpTrigger::cleanOldDisconnectedClientThreads() {

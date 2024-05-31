@@ -26,7 +26,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-# Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+# Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 [Unit]
@@ -40,7 +40,8 @@ Group=locclient
 Type=simple
 ExecStartPre=+/bin/chown locclient:locclient /var/run/chrony.sock
 ExecStart=/usr/bin/chrony-sock -s
-Restart=always
+Restart=on-failure
+SuccessExitStatus=SIGKILL
 SupplementaryGroups=system diag radio
 CapabilityBoundingSet=CAP_SYS_TIME
 AmbientCapabilities=CAP_SYS_TIME

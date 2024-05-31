@@ -1226,6 +1226,9 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
                 gnssData.agc[i] = stod(message[rowItr + 2]);
                 rowItr = rowItr + 3;
             }
+            gnssData.agcStatusL1 = static_cast<AgcStatus>(stoi(message[rowItr++]));
+            gnssData.agcStatusL2 = static_cast<AgcStatus>(stoi(message[rowItr++]));
+            gnssData.agcStatusL5 = static_cast<AgcStatus>(stoi(message[rowItr++]));
             if (gSI != nullptr) {
                 gSI->setGnssData(gnssData);
             } else {
@@ -1297,7 +1300,10 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
                 data.fullInterSignalBiasUncertainty = std::stod(message[rowItr++]);
                 gnssMeas.measurements.push_back(data);
             }
-            gnssMeas.isNHz = std::stoi(message[rowItr]);
+            gnssMeas.isNHz = std::stoi(message[rowItr++]);
+            gnssMeas.agcStatusL1 = static_cast<AgcStatus>(std::stoi(message[rowItr++]));
+            gnssMeas.agcStatusL2 = static_cast<AgcStatus>(std::stoi(message[rowItr++]));
+            gnssMeas.agcStatusL5 = static_cast<AgcStatus>(std::stoi(message[rowItr++]));
             //Send data to clients.
             for (auto iter = listeners_.begin(); iter != listeners_.end();) {
                 auto spt = (*iter).lock();

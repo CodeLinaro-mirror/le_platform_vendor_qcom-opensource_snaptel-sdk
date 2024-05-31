@@ -37,6 +37,7 @@ add_subdirectory(loc)
 add_subdirectory(sensor)
 add_subdirectory(audio)
 add_subdirectory(therm)
+add_subdirectory(power)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common

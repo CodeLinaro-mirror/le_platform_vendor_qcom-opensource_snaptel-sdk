@@ -234,5 +234,11 @@
             "tZoneId:     thermal zone id.",
             "temp:        temperature in millidegree Celsius."
         ]
+    },
+    "power_mgr": {
+        "machine_availability":[
+            "telsdk_event_injector -f power_mgr -e machine_availability <availability>",
+            "availability: valid values - UNAVAILABLE/AVAILABLE. Event to notify client via @ref ITcuActivityListener::onMachineUpdate, if the machine is available or not"
+        ]
     }
 }

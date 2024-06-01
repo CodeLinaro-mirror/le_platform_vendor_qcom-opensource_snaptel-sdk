@@ -1,17 +1,18 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_CA_LOAD_LISTENER ca_load_cap_listener)
+set(TARGET_APP ca_load_cap_listener)
 
-include(FindPkgConfig)
-pkg_check_modules(LIB_TELUXSEC REQUIRED telux-sec)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TELUXSEC REQUIRED telux-sec)
 
-set(SOURCES CALoadCapacityListener.cpp)
+set(APP_SOURCES CALoadCapacityListener.cpp)
 
-add_executable(${TARGET_CA_LOAD_LISTENER} ${SOURCES})
+add_executable(${TARGET_APP} ${APP_SOURCES})
 
-target_compile_options(${TARGET_CA_LOAD_LISTENER} PRIVATE -std=c++11 -Wall -Werror)
+target_include_directories(${TARGET_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${TARGET_CA_LOAD_LISTENER} ${LIB_TELUXSEC_LIBRARIES})
+target_compile_options(${TARGET_APP} PRIVATE -std=c++11 -Wall -Werror)
 
-install(TARGETS ${TARGET_CA_LOAD_LISTENER}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${TARGET_APP} PRIVATE ${TELUXSEC_LIBRARIES})
+
+install(TARGETS ${TARGET_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -38,13 +38,19 @@
 #include <memory>
 #include <iomanip>
 #include <cstdint>
+#include <chrono>
 
 #include <telux/loc/LocationDefines.hpp>
 #include "LocationUtils.hpp"
 #include "MyLocationListener.hpp"
 
+using namespace telux::loc;
+
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
-#define DETAILED_RECORDING std::cout << "###DTL: "
+#define DETAILED_RECORDING \
+    std::cout << "###" \
+              << (std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000 \
+              << ","
 
 void MyLocationListener::printSbasCorrectionEx(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
@@ -79,6 +85,42 @@ void MyLocationListener::printSbasCorrectionEx(
    if(correction[(telux::loc::SbasCorrectionType)
        telux::loc::SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_]) {
       std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
+}
+
+void MyLocationListener::printNavigationSolutionEx(
+   std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+   telux::loc::NavigationSolution solution = locationInfo->getNavigationSolution();
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_IONO]) {
+      std::cout << "SBAS ionospheric correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_FAST]) {
+      std::cout << "SBAS fast correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_SOLUTION_LONG]) {
+      std::cout << "SBAS long correction is used" << std::endl;
+   }
+
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_SBAS_INTEGRITY]) {
+      std::cout << "SBAS integrity information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_DGNSS_SOLUTION]) {
+      std::cout << "DGNSS information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_RTK_SOLUTION]) {
+      std::cout << "RTK information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_PPP_SOLUTION]) {
+      std::cout << "PPP information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)telux::loc::NAV_RTK_FIXED_SOLUTION]) {
+      std::cout << "RTK fixed information is used" << std::endl;
+   }
+   if(solution[(telux::loc::NavigationSolutionType)
+      telux::loc::NAV_ONLY_SBAS_CORRECTED_SV_USED]) {
+      std::cout << "Only SBAS corrected SV information is used" << std::endl;
    }
 }
 
@@ -202,6 +244,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
       std::cout << "valid protect vertical" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_DGNSS_STATION_ID)) {
+      std::cout << "valid dgnss station id" << std::endl;
+    }
 
 }
 
@@ -239,6 +284,15 @@ void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity 
    }
    if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_UNC_BIT)) {
       std::cout << "valid elapsed real time uncertainty" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_TIME_UNC_BIT)) {
+      std::cout << "valid timeUncMs" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_BIT)) {
+      std::cout << "valid elapsed gPTP time" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_UNC_BIT)) {
+      std::cout << "valid elapsed gPTP time uncertainty" << std::endl;
    }
 }
 
@@ -896,6 +950,18 @@ void MyLocationListener::printMeasurementsClockValidity(
   if(flags & telux::loc::HW_CLOCK_DISCONTINUITY_COUNT_BIT) {
     std::cout << " Valid hw clock discontinuity count" << std::endl;
   }
+  if(flags & telux::loc::ELAPSED_REAL_TIME_BIT) {
+    std::cout << " Valid elapsed real time" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_REAL_TIME_UNC_BIT) {
+    std::cout << " Valid elapsed real time uncertainity" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_GPTP_TIME_BIT) {
+    std::cout << " Valid elapsed gPTP time" << std::endl;
+  }
+  if(flags & telux::loc::ELAPSED_GPTP_TIME_UNC_BIT) {
+    std::cout << " Valid elapsed gPTP time uncertainity" << std::endl;
+  }
 }
 
 void MyLocationListener::printMeasurementsDataValidity(
@@ -1092,6 +1158,18 @@ void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capa
   LocationUtils::displayCapabilities(capabilityMask);
 }
 
+void MyLocationListener::printDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
+    if(!dgnssStationIds.empty()) {
+        std::cout << "Dgnss Station IDs : ";
+        for(auto id: dgnssStationIds) {
+            std::cout << id << " ";
+        }
+        std::cout << std::endl;
+    } else {
+        std::cout << "No Dgnss Station Id is present\n";
+    }
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -1122,9 +1200,165 @@ void MyLocationListener::onBasicLocationUpdate(
              << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
              << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
              << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
-             << std::endl;
+             << std::endl
+             << "Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
+             << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+             << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
+}
+
+void MyLocationListener::recordLocationInfo(
+    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
+    //Recording Data.
+    std::ostringstream recordStream;
+    recordStream << LOCATION << ",";
+
+    telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
+    telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
+    telux::loc::GnssSystem system = sysTime.gnssSystemTimeSrc;
+
+    uint8_t leapSeconds = 0;
+    locationInfo->getLeapSeconds(leapSeconds);
+    std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
+    std::vector<uint16_t> SVIds;
+    locationInfo->getSVIds(SVIds);
+    std::vector<float> velocityEastNorthUp;
+    std::vector<float> velocityUncertaintyEastNorthUp;
+    locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp);
+    locationInfo->getVelocityEastNorthUp(velocityEastNorthUp);
+    recordStream << locationInfo->getTimeStamp() << "," <<
+    static_cast<int>(locationInfo->getLocOutputEngType()) << "," <<
+    locationInfo->getTechMask() << "," <<
+    locationInfo->getLatitude() << "," << locationInfo->getLongitude() << "," <<
+    locationInfo->getAltitude() << "," << locationInfo->getHeading() << "," <<
+    locationInfo->getSpeed() << "," << locationInfo->getHeadingUncertainty() << "," <<
+    locationInfo->getSpeedUncertainty() << "," << locationInfo->getHorizontalUncertainty() <<
+    "," << locationInfo->getVerticalUncertainty() << "," <<
+    locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
+    << locationInfo->getElapsedRealTimeUncertainty() << "," <<
+    locationInfo->getLocationInfoExValidity() << "," <<
+    locationInfo->getAltitudeMeanSeaLevel() << "," <<
+    locationInfo->getPositionDop() << "," <<
+    locationInfo->getHorizontalDop() << "," <<
+    locationInfo->getVerticalDop() << "," <<
+    locationInfo->getGeometricDop() << "," <<
+    locationInfo->getTimeDop() << "," <<
+    locationInfo->getMagneticDeviation() << "," <<
+    static_cast<int>(locationInfo->getHorizontalReliability()) << "," <<
+    static_cast<int>(locationInfo->getVerticalReliability()) << "," <<
+    locationInfo->getHorizontalUncertaintySemiMajor() << "," <<
+    locationInfo->getHorizontalUncertaintySemiMinor() << "," <<
+    locationInfo->getHorizontalUncertaintyAzimuth() << "," <<
+    locationInfo->getEastStandardDeviation() << "," <<
+    locationInfo->getNorthStandardDeviation() << "," <<
+    locationInfo->getNumSvUsed() << "," <<
+    locationInfo->getSvUsedInPosition().gps << "," <<
+    locationInfo->getSvUsedInPosition().glo << "," <<
+    locationInfo->getSvUsedInPosition().gal << "," <<
+    locationInfo->getSvUsedInPosition().bds << "," <<
+    locationInfo->getSvUsedInPosition().qzss << "," <<
+    locationInfo->getSvUsedInPosition().navic << "," <<
+    locationInfo->getSbasCorrection() << "," <<
+    locationInfo->getPositionTechnology() << "," <<
+    locationInfo->getBodyFrameData().latAccel << "," <<
+    locationInfo->getBodyFrameData().longAccel << "," <<
+    locationInfo->getBodyFrameData().vertAccel << "," <<
+    locationInfo->getBodyFrameData().yawRate << "," <<
+    locationInfo->getBodyFrameData().pitch << "," <<
+    locationInfo->getBodyFrameData().latAccelUnc << "," <<
+    locationInfo->getBodyFrameData().longAccelUnc << "," <<
+    locationInfo->getBodyFrameData().vertAccelUnc << "," <<
+    locationInfo->getBodyFrameData().yawRateUnc << "," <<
+    locationInfo->getBodyFrameData().pitchUnc << "," <<
+    locationInfo->getBodyFrameData().pitchRate << "," <<
+    locationInfo->getBodyFrameData().pitchRateUnc << "," <<
+    locationInfo->getBodyFrameData().roll << "," <<
+    locationInfo->getBodyFrameData().rollUnc << "," <<
+    locationInfo->getBodyFrameData().rollRate << "," <<
+    locationInfo->getBodyFrameData().rollRateUnc << "," <<
+    locationInfo->getBodyFrameData().yaw << "," <<
+    locationInfo->getBodyFrameData().yawUnc << "," <<
+    locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
+    locationInfo->getTimeUncMs() << ",";
+    recordStream << static_cast<int>(leapSeconds) << "," <<
+    unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
+    locationInfo->getCalibrationStatus() << "," <<
+    locationInfo->getConformityIndex() << "," <<
+    locationInfo->getVRPBasedLLA().latitude << "," <<
+    locationInfo->getVRPBasedLLA().longitude << "," <<
+    locationInfo->getVRPBasedLLA().altitude << "," <<
+    enuVelocityVRPBased[0] << "," <<
+    enuVelocityVRPBased[1] << "," <<
+    enuVelocityVRPBased[2] << "," <<
+    static_cast<int>(locationInfo->getAltitudeType()) << "," <<
+    static_cast<int>(locationInfo->getReportStatus()) << "," <<
+    locationInfo->getIntegrityRiskUsed() << "," <<
+    locationInfo->getProtectionLevelAlongTrack() << "," <<
+    locationInfo->getProtectionLevelCrossTrack() << "," <<
+    locationInfo->getProtectionLevelVertical() << "," <<
+    locationInfo->getSolutionStatus() << ",";
+
+    auto measInfo = locationInfo->getmeasUsageInfo();
+    recordStream << measInfo.size() << ",";
+
+    for (unsigned i = 0; i < measInfo.size(); ++i ) {
+        recordStream << measInfo[i].gnssSignalType << ","
+                     << static_cast<int>(measInfo[i].gnssConstellation)
+                     << "," << measInfo[i].gnssSvId << ",";
+    }
+
+    recordStream << velocityEastNorthUp.size() << ",";
+    for (auto vel : velocityEastNorthUp) {
+        recordStream << vel << ",";
+    }
+
+    recordStream << velocityUncertaintyEastNorthUp.size() << ",";
+    for (auto velUncert : velocityUncertaintyEastNorthUp) {
+        recordStream << velUncert << ",";
+    }
+
+    recordStream << SVIds.size() << ",";
+    for (auto id : SVIds) {
+        recordStream << id << ",";
+    }
+    recordStream << static_cast<int>(system) << ",";
+    if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS ||
+        system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+        telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;
+        recordStream << timeInfo.validityMask << "," <<
+                        timeInfo.numClockResets << "," <<
+                        timeInfo.refFCount << "," <<
+                        timeInfo.systemClkTimeUncMs << "," <<
+                        timeInfo.systemClkTimeBias << "," <<
+                        timeInfo.systemMsec << "," <<
+                        timeInfo.systemWeek << ",";
+    } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        telux::loc::GlonassTimeInfo info = sysTimeInfo.glo;
+        recordStream << info.validityMask << ","
+                     << info.gloDays << ","
+                     << info.gloMsec << ","
+                     << info.gloClkTimeBias << ","
+                     << info.gloClkTimeUncMs << ","
+                     << info.refFCount << ","
+                     << info.numClockResets << ","
+                     << info.gloFourYear << ",";
+    } // GNSS_LOC_SV_SYSTEM_SBAS, no timeInfo
+
+    recordStream << locationInfo->getNavigationSolution() << "," <<
+    locationInfo->getElapsedGptpTime() << "," <<
+    locationInfo->getElapsedGptpTimeUnc() << ",";
+
+    std::vector<uint16_t> dgnssStationIds = locationInfo->getDgnssStationIds();
+    recordStream << dgnssStationIds.size() << ",";
+    for (auto id : dgnssStationIds) {
+        recordStream << id << ",";
+    }
+
+    DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
 void MyLocationListener::onDetailedLocationUpdate(
@@ -1169,6 +1403,9 @@ void MyLocationListener::onDetailedLocationUpdate(
       << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
       << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
       << std::endl
+      << "Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
+      << "elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+      << "elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
       << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
       << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
       << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
@@ -1190,6 +1427,7 @@ void MyLocationListener::onDetailedLocationUpdate(
       }
    }
    printSbasCorrectionEx(locationInfo);
+   printNavigationSolutionEx(locationInfo);
    printLocationPositionTech(locationInfo);
    printLocationPositionDynamics(locationInfo);
    printGnssMeasurementInfo(locationInfo);
@@ -1249,94 +1487,10 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getProtectionLevelCrossTrack() << std::endl;
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
+   printDgnssStationIds(locationInfo->getDgnssStationIds());
    std::cout << "*************************************************************" << std::endl;
-   //Recording Data.
-   std::ostringstream recordStream;
-   if(isDetailedReportsRecordingEnabled_) {
-        telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
-        telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
-        telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;
-        uint8_t leapSeconds = 0;
-        locationInfo->getLeapSeconds(leapSeconds);
-        std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
-
-        recordStream << locationInfo->getTimeStamp() << "," << locationInfo->getTechMask() << "," <<
-        locationInfo->getLatitude() << "," << locationInfo->getLongitude() << "," <<
-        locationInfo->getAltitude() << "," << locationInfo->getHeading() << "," <<
-        locationInfo->getSpeed() << "," << locationInfo->getHeadingUncertainty() << "," <<
-        locationInfo->getSpeedUncertainty() << "," << locationInfo->getHorizontalUncertainty() <<
-        "," << locationInfo->getVerticalUncertainty() << "," <<
-        locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
-        << locationInfo->getElapsedRealTimeUncertainty() << "," <<
-        locationInfo->getLocationInfoExValidity() << "," <<
-        locationInfo->getAltitudeMeanSeaLevel() << "," <<
-        locationInfo->getPositionDop() << "," <<
-        locationInfo->getHorizontalDop() << "," <<
-        locationInfo->getVerticalDop() << "," <<
-        locationInfo->getGeometricDop() << "," <<
-        locationInfo->getTimeDop() << "," <<
-        locationInfo->getMagneticDeviation() << "," <<
-        static_cast<int>(locationInfo->getHorizontalReliability()) << "," <<
-        static_cast<int>(locationInfo->getVerticalReliability()) << "," <<
-        locationInfo->getHorizontalUncertaintySemiMajor() << "," <<
-        locationInfo->getHorizontalUncertaintySemiMinor() << "," <<
-        locationInfo->getHorizontalUncertaintyAzimuth() << "," <<
-        locationInfo->getEastStandardDeviation() << "," <<
-        locationInfo->getNorthStandardDeviation() << "," <<
-        locationInfo->getNumSvUsed() << "," <<
-        locationInfo->getSvUsedInPosition().gps << "," <<
-        locationInfo->getSvUsedInPosition().glo << "," <<
-        locationInfo->getSvUsedInPosition().gal << "," <<
-        locationInfo->getSvUsedInPosition().bds << "," <<
-        locationInfo->getSvUsedInPosition().qzss << "," <<
-        locationInfo->getSvUsedInPosition().navic << "," <<
-        locationInfo->getSbasCorrection() << "," <<
-        locationInfo->getPositionTechnology() << "," <<
-        locationInfo->getBodyFrameData().latAccel << "," <<
-        locationInfo->getBodyFrameData().longAccel << "," <<
-        locationInfo->getBodyFrameData().vertAccel << "," <<
-        locationInfo->getBodyFrameData().yawRate << "," <<
-        locationInfo->getBodyFrameData().pitch << "," <<
-        locationInfo->getBodyFrameData().latAccelUnc << "," <<
-        locationInfo->getBodyFrameData().longAccelUnc << "," <<
-        locationInfo->getBodyFrameData().vertAccelUnc << "," <<
-        locationInfo->getBodyFrameData().yawRateUnc << "," <<
-        locationInfo->getBodyFrameData().pitchUnc << "," <<
-        locationInfo->getBodyFrameData().pitchRate << "," <<
-        locationInfo->getBodyFrameData().pitchRateUnc << "," <<
-        locationInfo->getBodyFrameData().roll << "," <<
-        locationInfo->getBodyFrameData().rollUnc << "," <<
-        locationInfo->getBodyFrameData().rollRate << "," <<
-        locationInfo->getBodyFrameData().rollRateUnc << "," <<
-        locationInfo->getBodyFrameData().yaw << "," <<
-        locationInfo->getBodyFrameData().yawUnc << "," <<
-        locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
-        locationInfo->getTimeUncMs() << "," <<
-        timeInfo.numClockResets << "," <<
-        timeInfo.refFCount << "," <<
-        timeInfo.systemClkTimeUncMs << "," <<
-        timeInfo.systemClkTimeBias << "," <<
-        timeInfo.systemMsec << "," <<
-        timeInfo.systemWeek << "," <<
-        static_cast<int>(leapSeconds) << "," <<
-        unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
-        locationInfo->getCalibrationStatus() << "," <<
-        locationInfo->getConformityIndex() << "," <<
-        locationInfo->getVRPBasedLLA().latitude << "," <<
-        locationInfo->getVRPBasedLLA().longitude << "," <<
-        locationInfo->getVRPBasedLLA().altitude << "," <<
-        enuVelocityVRPBased[0] << "," <<
-        enuVelocityVRPBased[1] << "," <<
-        enuVelocityVRPBased[2] << "," <<
-        static_cast<int>(locationInfo->getAltitudeType()) << "," <<
-        locationInfo->getIntegrityRiskUsed() << "," <<
-        locationInfo->getProtectionLevelAlongTrack() << "," <<
-        locationInfo->getProtectionLevelCrossTrack() << "," <<
-        locationInfo->getProtectionLevelVertical() << "," <<
-        static_cast<int>(locationInfo->getLocOutputEngType()) << "," <<
-        locationInfo->getLocOutputEngMask() << "," <<
-        locationInfo->getSolutionStatus();
-        DETAILED_RECORDING << recordStream.str() << std::endl;
+   if(isRecordingEnabled_) {
+       recordLocationInfo(locationInfo);
    }
 }
 
@@ -1386,6 +1540,9 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
         << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
         << std::endl
+        << ", Time uncertainty: " << locationInfo->getTimeUncMs() << std::endl
+        << ", elapsed gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+        << ", elapsed gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl
         << "HorizontalUncertainty\nSemiMajor: " <<
             locationInfo->getHorizontalUncertaintySemiMajor()
         << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
@@ -1407,6 +1564,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
       }
      }
      printSbasCorrectionEx(locationInfo);
+     printNavigationSolutionEx(locationInfo);
      printLocationPositionTech(locationInfo);
      printLocationPositionDynamics(locationInfo);
      printGnssMeasurementInfo(locationInfo);
@@ -1461,7 +1619,12 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
          locationInfo->getProtectionLevelCrossTrack() << std::endl;
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
+     printDgnssStationIds(locationInfo->getDgnssStationIds());
      std::cout << "*************************************************************" << std::endl;
+
+     if(isRecordingEnabled_) {
+         recordLocationInfo(locationInfo);
+     }
     }
 }
 
@@ -1488,6 +1651,30 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
                 << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
+
+   if (isRecordingEnabled_) {
+       //Recording Data.
+       std::ostringstream recordStream;
+       //Format: type, SV number, each SV info
+       recordStream << SATELLITE_VEHICLE << ",";
+       for (auto svInfo : gnssSVInfo->getSVInfoList()) {
+           recordStream << svInfo->getId() << ","
+                        << static_cast<int>(svInfo->getConstellation()) << ","
+                        << static_cast<int>(svInfo->getHasEphemeris()) << ","
+                        << static_cast<int>(svInfo->getHasAlmanac()) << ","
+                        << static_cast<int>(svInfo->getHasFix()) << ","
+                        << svInfo->getElevation() << ","
+                        << svInfo->getAzimuth() << ","
+                        << svInfo->getSnr() << ","
+                        << std::setprecision(15) << std::showpoint
+                        << svInfo->getCarrierFrequency() << ","
+                        << svInfo->getSignalType() << ","
+                        << svInfo->getGlonassFcn() << ","
+                        << svInfo->getBasebandCnr() << ",";
+       }
+
+       DETAILED_RECORDING << recordStream.str() << std::endl;
+   }
 }
 
 void MyLocationListener::onGnssSignalInfo(
@@ -1499,18 +1686,26 @@ void MyLocationListener::onGnssSignalInfo(
    std::cout << std::endl;
    PRINT_NOTIFICATION << "\n**************** Gnss Signal Information ***************" << std::endl;
    std::cout << "<<< onGnssDataCb\n" << std::endl;
+
+   //Recording Data.
+   std::ostringstream recordStream;
+
    for(int sig = 0; sig < static_cast<int>(
                              telux::loc::GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES);
        sig++) {
       std::cout << "Signal Type : " << sig << std::endl;
+
+      recordStream << gnssDatainfo->getGnssData().gnssDataMask[sig] << ",";
       if(telux::loc::GnssDataValidityType::HAS_JAMMER
          == ((gnssDatainfo->getGnssData().gnssDataMask[sig])
              & (telux::loc::GnssDataValidityType::HAS_JAMMER))) {
          std::cout << " gnssDataMask: " << gnssDatainfo->getGnssData().gnssDataMask[sig]
                    << std::endl;
          std::cout << " jammerInd: " << gnssDatainfo->getGnssData().jammerInd[sig] << std::endl;
+         recordStream << gnssDatainfo->getGnssData().jammerInd[sig] << ",";
       } else {
          std::cout << "JAMMER Ind Not Present  " << std::endl;
+         recordStream << 0 << ",";
       }
       if(telux::loc::GnssDataValidityType::HAS_AGC
          == ((gnssDatainfo->getGnssData().gnssDataMask[sig])
@@ -1519,12 +1714,17 @@ void MyLocationListener::onGnssSignalInfo(
                    << std::endl;
          std::cout << " agc: " << gnssDatainfo->getGnssData().agc[sig]
                    << std::endl;
+         recordStream << gnssDatainfo->getGnssData().agc[sig] << ",";
       } else {
          std::cout << "AGC Not Present  " << std::endl;
+         recordStream << 0 << ",";
       }
       std::cout << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
+   if (isRecordingEnabled_) {
+       DETAILED_RECORDING << DATA << "," << recordStream.str() << std::endl;
+   }
 }
 
 void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {
@@ -1536,6 +1736,15 @@ void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &n
    std::cout << "<<< onGnssNmeaCb\n" << std::endl;
    std::cout << " Timestamp : " << timestamp << std::endl;
    std::cout << " Nmea String : " << nmea << std::endl;
+
+   //Recording Data.
+   std::ostringstream recordStream;
+   //Format: type, timestamp, nmea
+   recordStream << NMEA << "," << timestamp << "," << nmea;
+
+   if (isRecordingEnabled_) {
+       DETAILED_RECORDING << recordStream.str() << std::endl;
+   }
 }
 
 void MyLocationListener::onEngineNmeaInfo(telux::loc::LocationAggregationType engineType,
@@ -1558,7 +1767,13 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
    PRINT_NOTIFICATION << "\n**************** Gnss Measurements Information ***************"
        << std::endl;
    std::cout << "<<< onGnssMeasurementsCb\n" << std::endl;
+
+   //Recording Data.
+   std::ostringstream recordStream;
+   //Format: type, timestamp, nmea
+   recordStream << MEASUREMENT << ",";
    printMeasurementsClockValidity(measurementInfo.clock.valid);
+   recordStream << measurementInfo.clock.valid << ",";
    std::cout
       << " Leap second, in unit of seconds " << measurementInfo.clock.leapSecond << std::endl
       << " Time, in unit of ns " << measurementInfo.clock.timeNs << std::endl
@@ -1569,18 +1784,41 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
       << " Clock drift " << measurementInfo.clock.driftNsps << std::endl
       << " Clock drift uncertainty " << measurementInfo.clock.driftUncertaintyNsps << std::endl
       << " HW clock discontinuity count " << measurementInfo.clock.hwClockDiscontinuityCount
-      << std::endl;
+      << std::endl
+      << " elapsed real time " << measurementInfo.clock.elapsedRealTime << std::endl
+      << " elapsed real time uncertainty " << measurementInfo.clock.elapsedRealTimeUnc << std::endl
+      << " elapsed gPTP time " << measurementInfo.clock.elapsedgPTPTime << std::endl
+      << " elapsed gPTP time uncertainty " << measurementInfo.clock.elapsedgPTPTimeUnc << std::endl;
+   recordStream << measurementInfo.clock.leapSecond << ","
+                << measurementInfo.clock.timeNs << ","
+                << measurementInfo.clock.timeUncertaintyNs << ","
+                << measurementInfo.clock.fullBiasNs << ","
+                << measurementInfo.clock.biasNs << ","
+                << measurementInfo.clock.biasUncertaintyNs << ","
+                << measurementInfo.clock.driftNsps << ","
+                << measurementInfo.clock.driftUncertaintyNsps << ","
+                << measurementInfo.clock.hwClockDiscontinuityCount << ","
+                << measurementInfo.clock.elapsedRealTime << ","
+                << measurementInfo.clock.elapsedRealTimeUnc << ","
+                << measurementInfo.clock.elapsedgPTPTime << ","
+                << measurementInfo.clock.elapsedgPTPTimeUnc << ",";
 
    for( auto &measData : measurementInfo.measurements) {
      std::cout << "\n*************** Measurement Data ******************* " << std::endl;
      printMeasurementsDataValidity(measData.valid);
+     recordStream << measData.valid << ",";
      std::cout << " Specify satellite vehicle ID number " << measData.svId << std::endl;
+     recordStream << measData.svId << ",";
      printConstellationType(measData.svType);
+     recordStream << static_cast<int>(measData.svType) << ",";
      std::cout << " Time offset when the measurement was taken, in ns " << measData.timeOffsetNs
          << std::endl;
+     recordStream << measData.timeOffsetNs << ",";
      printMeasurementState(measData.stateMask);
+     recordStream << measData.stateMask << ",";
      std::cout << " Received GNSS time of the week in nanoseconds " << measData.receivedSvTimeNs
          << std::endl;
+     recordStream << measData.receivedSvTimeNs << ",";
      std::cout << " Sub-nanoseconds of GNSS time of the week " << measData.receivedSvTimeSubNs
          << std::endl
                << " Satellite time, in ns " << measData.receivedSvTimeUncertaintyNs << std::endl
@@ -1590,7 +1828,13 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
          << std::endl
                << " Uncorrected pseudorange rate uncertainty " <<
          measData.pseudorangeRateUncertaintyMps << std::endl;
+     recordStream << measData.receivedSvTimeSubNs << ","
+                  << measData.receivedSvTimeUncertaintyNs << ","
+                  << measData.carrierToNoiseDbHz << ","
+                  << measData.pseudorangeRateMps << ","
+                  << measData.pseudorangeRateUncertaintyMps << ",";
      printMeasurementAdrState(measData.adrStateMask);
+     recordStream << measData.adrStateMask << ",";
      std::cout << " Accumulated delta range " << measData.adrMeters << std::endl
                << " Accumulated delta range uncertainty " << measData.adrUncertaintyMeters
          << std::endl
@@ -1601,22 +1845,36 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
                << " The RF carrier phase " << measData.carrierPhase <<std::endl
                << " RF carrier phase uncertainty " << measData.carrierPhaseUncertainty
          <<std::endl;
+     recordStream << measData.adrMeters << "," << measData.adrUncertaintyMeters << ","
+                  << measData.carrierFrequencyHz << "," << measData.carrierCycles << ","
+                  << measData.carrierPhase << "," << measData.carrierPhaseUncertainty << ",";
      printMeasurementsMultipathIndicator(measData.multipathIndicator);
+     recordStream << measData.multipathIndicator << ",";
      std::cout << " Signal to noise ratio " << measData.signalToNoiseRatioDb << std::endl
                << " Automatic gain control level " << measData.agcLevelDb << std::endl;
+     recordStream << measData.signalToNoiseRatioDb << "," << measData.agcLevelDb << ",";
      printGnssSignalType(measData.gnssSignalType);
+     recordStream << measData.gnssSignalType << ",";
      std::cout << " Carrier-to-noise ratio of the signal measured at baseband : "
                << measData.basebandCarrierToNoise << std::endl;
+     recordStream << measData.basebandCarrierToNoise <<  ",";
      std::cout << " Full inter-signal bias : " << measData.fullInterSignalBias
                << std::endl;
+     recordStream <<  measData.fullInterSignalBias <<  ",";
      std::cout << " Uncertainty associated with the full inter-signal bias : "
                << measData.fullInterSignalBiasUncertainty << std::endl;
-
+     recordStream << measData.fullInterSignalBiasUncertainty <<  ",";
      std::cout << "\n********************** " << std::endl;
    }
    std::cout << "NHz measurements indicator: " << std::boolalpha << measurementInfo.isNHz
              << std::endl;
    std::cout << "*************************************************************" << std::endl;
+
+   recordStream << static_cast<int>(measurementInfo.isNHz) << ",";
+
+   if (isRecordingEnabled_) {
+       DETAILED_RECORDING << recordStream.str() << std::endl;
+   }
 }
 
 void MyLocationListener::onGnssDisasterCrisisInfo(
@@ -1633,6 +1891,185 @@ void MyLocationListener::onGnssDisasterCrisisInfo(
         char hex_string[16];
         snprintf(hex_string, 16, "%x", itr);
         std::cout << "0x" << hex_string << "\n";
+    }
+    std::cout << "\n";
+}
+
+void MyLocationListener::printEphSrc(telux::loc::GnssEphSource ephSrc) {
+    switch(ephSrc) {
+        case telux::loc::EPH_SRC_OTA : std::cout << "OTA"; break;
+        default: std::cout << "Unknown"; break;
+    }
+}
+
+void MyLocationListener::printEphAct(telux::loc::GnssEphAction ephAct) {
+    switch(ephAct) {
+        case telux::loc::EPH_ACTION_UPDATE: std::cout << "Update"; break;
+        case telux::loc::EPH_ACTION_DELETE: std::cout << "Delete"; break;
+        default: std::cout << "Unknown"; break;
+    }
+}
+
+void MyLocationListener::printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData) {
+    std::cout   << "Common Data";
+    std::cout   << "\nSVID       : " << commonData.gnssSvId;
+    std::cout   << "\nephSource    : "; printEphSrc(commonData.ephSource);
+    std::cout   << "\naction       : "; printEphAct(commonData.action);
+    std::cout   << "\nIODE         : " << commonData.IODE
+                << "\naSqrt        : " << commonData.aSqrt
+                << "\ndeltaN       : " << commonData.deltaN
+                << "\nm0           : " << commonData.m0
+                << "\neccentricity : " << commonData.eccentricity
+                << "\nomega0       : " << commonData.omega0
+                << "\ni0           : " << commonData.i0
+                << "\nomega        : " << commonData.omega
+                << "\nomegaDot     : " << commonData.omegaDot
+                << "\niDot         : " << commonData.iDot
+                << "\ncUc          : " << commonData.cUc
+                << "\ncUs          : " << commonData.cUs
+                << "\ncRc          : " << commonData.cRc
+                << "\ncRs          : " << commonData.cRs
+                << "\ncIc          : " << commonData.cIc
+                << "\ncIs          : " << commonData.cIs
+                << "\ntoe          : " << commonData.toe
+                << "\ntoc          : " << commonData.toc
+                << "\naf0          : " << commonData.af0
+                << "\naf1          : " << commonData.af1
+                << "\naf2          : " << commonData.af2;
+}
+
+void MyLocationListener::printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData) {
+    printGnssEphemerisCommonData(ephData.commonData);
+    std::cout   << "\nSignal Health   : " << static_cast<unsigned>(ephData.signalHealth)
+                << "\nURAI            : " << static_cast<unsigned>(ephData.URAI)
+                << "\ncodeL2          : " << static_cast<unsigned>(ephData.codeL2)
+                << "\ndataFlagL2P     : " << static_cast<unsigned>(ephData.dataFlagL2P)
+                << "\ntgd             : " << ephData.tgd
+                << "\nfitInterval     : " << static_cast<unsigned>(ephData.fitInterval)
+                << "\nIODC            : " << ephData.IODC << "\n";
+}
+
+void MyLocationListener::onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) {
+    if(!isEphemerisInfoFlagEnabled_) {
+        return;
+    }
+    PRINT_NOTIFICATION << "\n************ Gnss Ephemeris Information *************" << "\n";
+    std::cout << "Is System time valid - " << ephemerisInfo.isSystemTimeValid << "\n";
+    std::cout << "Gnss system time info - \n";
+    telux::loc::TimeInfo timeInfo = ephemerisInfo.timeInfo;
+    std::cout << "Validity mask: " << timeInfo.validityMask;
+    std::cout << " System time week: " << timeInfo.systemWeek;
+    std::cout << " System time week ms: " << timeInfo.systemMsec;
+    std::cout << " System clk time: " << timeInfo.systemClkTimeBias;
+    std::cout << " System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs;
+    std::cout << " System reference valid: " << timeInfo.refFCount;
+    std::cout << " System num clock reset valid: " << timeInfo.numClockResets << "\n";
+    telux::loc::GnssSystem system = ephemerisInfo.constellationType;
+    std::cout << "Constellation type: ";
+    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
+        std::cout << "GPS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.gpsEphemerisData.size(); i++) {
+            printGpsQzssEphData(ephemerisInfo.gpsEphemerisData[i]);
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+        std::cout << "GALILEO satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.galEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.galEphemerisData[i].commonData);
+            switch(ephemerisInfo.galEphemerisData[i].dataSourceSignal) {
+                case telux::loc::GAL_SIG_SRC_E1B : std::cout << "\nGal signal source: E1B"; break;
+                case telux::loc::GAL_SIG_SRC_E5A : std::cout << "\nGal signal source: E5A"; break;
+                case telux::loc::GAL_SIG_SRC_E5B : std::cout << "\nGal signal source: E5B"; break;
+                default: std::cout << "\nGal signal source: Unknown"; break;
+            }
+            std::cout << "\nsisIndex    : "
+                      << static_cast<unsigned>(ephemerisInfo.galEphemerisData[i].sisIndex)
+                      << "\nbgdE1E5a    : " << ephemerisInfo.galEphemerisData[i].bgdE1E5a
+                      << "\nbgdE1E5b    : " << ephemerisInfo.galEphemerisData[i].bgdE1E5b
+                      << "\nsvHealth    : "
+                      << static_cast<unsigned>(ephemerisInfo.galEphemerisData[i].svHealth) << "\n";
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        std::cout << "GLONASS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.gloEphemerisData.size(); i++) {
+            std::cout   << "\ngnssSvId      : " << ephemerisInfo.gloEphemerisData[i].gnssSvId;
+            std::cout   << "\nephSource     : ";
+            printEphSrc(ephemerisInfo.gloEphemerisData[i].ephSource);
+            std::cout   << "\naction        : ";
+            printEphAct(ephemerisInfo.gloEphemerisData[i].action);
+            std::cout   << "\nbnHealth      : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].bnHealth)
+                        << "\nlnHealth      : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].lnHealth)
+                        << "\ntb            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].tb)
+                        << "\nft            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].ft)
+                        << "\ngloM          : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].gloM)
+                        << "\nenAge         : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].enAge)
+                        << "\ngloFrequency  : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].gloFrequency)
+                        << "\np1            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].p1)
+                        << "\np2            : "
+                        << static_cast<unsigned>(ephemerisInfo.gloEphemerisData[i].p2)
+                        << "\ndeltaTau      : " << ephemerisInfo.gloEphemerisData[i].deltaTau
+                        << "\ntauN          : " << ephemerisInfo.gloEphemerisData[i].tauN
+                        << "\ngamma         : " << ephemerisInfo.gloEphemerisData[i].gamma
+                        << "\ntoe           : " << ephemerisInfo.gloEphemerisData[i].toe
+                        << "\nnt            : " << ephemerisInfo.gloEphemerisData[i].nt;
+            std::cout   << "\nGlo position: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].position[k] << " ";
+            }
+            std::cout   << "\nGlo velocity: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].velocity[k] << " ";
+            }
+            std::cout   << "\nGlo acceleration: ";
+            for(size_t k = 0 ; k < 3; k++) {
+                std::cout << ephemerisInfo.gloEphemerisData[i].acceleration[k] << " ";
+            }
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
+        std::cout << "BDS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.bdsEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.bdsEphemerisData[i].commonData);
+            std::cout   << "\nsvHealth    : "
+                        << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].svHealth)
+                        << "\nAODC        : "
+                        << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].AODC)
+                        << "\ntgd1        : " << ephemerisInfo.bdsEphemerisData[i].tgd1
+                        << "\ntgd2        : " << ephemerisInfo.bdsEphemerisData[i].tgd2
+                        << "\nURAI        : " << ephemerisInfo.bdsEphemerisData[i].URAI << "\n";
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+        std::cout << "QZSS satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.qzssEphemerisData.size(); i++) {
+            printGpsQzssEphData(ephemerisInfo.qzssEphemerisData[i].qzssEphData);
+        }
+    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+        std::cout << "NAVIC satellite" << "\n";
+        for(size_t i = 0; i < ephemerisInfo.navicEphemerisData.size(); i++) {
+            printGnssEphemerisCommonData(ephemerisInfo.navicEphemerisData[i].commonData);
+            std::cout   << "\nweekNum               : "
+                        << ephemerisInfo.navicEphemerisData[i].weekNum
+                        << "\niodec                 : "
+                        << ephemerisInfo.navicEphemerisData[i].iodec
+                        << "\nl5Health              : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].l5Health)
+                        << "\nsHealth               : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].sHealth)
+                        << "\ninclinationAngleRad   : "
+                        << ephemerisInfo.navicEphemerisData[i].inclinationAngleRad
+                        << "\nurai                  : "
+                        << static_cast<unsigned>(ephemerisInfo.navicEphemerisData[i].urai)
+                        << "\ntgd                   : "
+                        << ephemerisInfo.navicEphemerisData[i].tgd << "\n";
+        }
+    } else {
+        std::cout << "UNKNOWN satellite" << "\n";
     }
     std::cout << "\n";
 }
@@ -1713,6 +2150,10 @@ void MyLocationListener::setDisasterCrisisInfoFlag(bool enable) {
     isDisasterCrisisInfoFlagEnabled_ = enable;
 }
 
+void MyLocationListener::setEphemerisInfoFlag(bool enable) {
+    isEphemerisInfoFlagEnabled_ = enable;
+}
+
 void MyLocationListener::setLocSystemInfoFlag(bool enable) {
    isLocSysInfoFlagEnabled_ = enable;
 }
@@ -1729,6 +2170,6 @@ void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal g
     LocationUtils::printGnssSignalType(gnssSignalMask);
 }
 
-void MyLocationListener::setDetailedLocationRecordingFlag(bool enable) {
-   isDetailedReportsRecordingEnabled_ = enable;
+void MyLocationListener::setRecordingFlag(bool enable) {
+   isRecordingEnabled_ = enable;
 }

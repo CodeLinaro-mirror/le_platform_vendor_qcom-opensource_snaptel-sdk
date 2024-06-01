@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -103,7 +103,7 @@ class ICall;
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  */
-class ICallListener : public common::IServiceStatusListener{
+class ICallListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when device receives an incoming/waiting call.
@@ -230,6 +230,23 @@ public:
    virtual void onEcbmChange(telux::tel::EcbMode mode) {
    }
 
+   /**
+    * When the network doesn't play an in-band ringback tone for an alerting call, an application
+    * can play the ringback tone locally based on this notification. This function is called when
+    * the ringback tone needs to be started or stopped.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to receive this notification.
+    *
+    * @param [in] isAlerting - true to start playing ringback tone, false to stop playing ringback
+    * tone.
+    * @param [in] phoneId - Unique Id of phone on which local ringback tone need to be triggered.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual void onRingbackTone(bool isAlerting, int phoneId) {
+   }
 
    virtual ~ICallListener() {
    }

@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -174,16 +174,6 @@ using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
 
 
 /**
- * This function is called with the response to @ref ICv2xRadioManager::updateConfiguration
- *
- * @param [in] error     - SUCCESS if configuration was updated successfully
- *                       - SUCCESS
- *                       - GENERIC_FAILURE
- */
-using UpdateConfigurationCallback =
-    std::function<void (telux::common::ErrorCode error)>;
-
-/**
  * This function is called as a response to @ref ICv2xRadioManager::getCv2xSlssRxInfo
  *
  * @param [out] info     - Cv2x SLSS Rx Information
@@ -306,23 +296,6 @@ public:
      *        deregistered.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<ICv2xListener> listener) = 0;
-
-    /**
-     * Updates CV2X configuration.
-     * Requires CV2X TX/RX radio status be Inactive. If CV2X radio status is
-     * Active or Suspended, call @ref stopCv2x before updateConfiguration.
-     *
-     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
-     * permission to successfully invoke this API.
-     *
-     * @param [in] configFilePath - Path to config file.
-     * @param [in] cb             - Callback that is invoked when the send is complete.
-     *                              This may be null.
-     *
-     * @deprecated Use ICv2xConfig instead
-     */
-    virtual telux::common::Status updateConfiguration(const std::string & configFilePath,
-                                                      UpdateConfigurationCallback cb) = 0;
 
     /**
      * Set RF peak cv2x transmit power.

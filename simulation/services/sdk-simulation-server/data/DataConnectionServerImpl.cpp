@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -19,6 +19,9 @@
 #define DATA_CONNECTION_API_SLOT1_JSON "api/data/IDataConnectionManagerSlot1.json"
 #define DATA_CONNECTION_API_SLOT2_JSON "api/data/IDataConnectionManagerSlot2.json"
 #define DATA_CONNECTION_STATE_JSON "system-state/data/IDataConnectionManagerState.json"
+#define DATA_SETTINGS_API_LOCAL_JSON "api/data/IDataSettingsManagerLocal.json"
+#define DATA_SETTINGS_STATE_JSON "system-state/data/IDataSettingsManagerState.json"
+
 #define SLOT_2 2
 #define DELIMITER ','
 
@@ -209,13 +212,16 @@ void DataConnectionServerImpl::getInactiveInterfaces() {
     std::shared_ptr<SimulationConfigParser> config =
         std::make_shared<SimulationConfigParser>();
 
-    std::stringstream iss(config->getValue("DATA_INTERFACE_NAME"));
+    std::stringstream iss(config->getValue("sim.data.physical_interface_name"));
     std::string parsedVal;
     std::vector<std::string> ifaces;
     inactiveNwIfaces_.clear();
     while (getline(iss, parsedVal, DELIMITER)) {
-        if (activeNwIfaces_.find(parsedVal) == activeNwIfaces_.end()) {
-            inactiveNwIfaces_.insert( parsedVal );
+        if (std::find(activeNwIfaces_.begin(), activeNwIfaces_.end(), parsedVal) ==
+            activeNwIfaces_.end()) {
+            parsedVal.erase(remove_if(parsedVal.begin(), parsedVal.end(),
+                ::isspace), parsedVal.end());
+            inactiveNwIfaces_.push_back( parsedVal );
         }
     }
 }
@@ -235,7 +241,8 @@ bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
     //traversing thru all the available interfaces
     for (ifaddr = ifaceAddresses; ifaddr != NULL; ifaddr=ifaddr->ifa_next) {
         if ((ifaddr->ifa_addr != NULL) &&
-        (ifaddr->ifa_addr->sa_family == AF_INET)) {
+            (ifaddr->ifa_addr->sa_family == AF_INET)) {
+
             std::string ifName(ifaddr->ifa_name);
             //if type is v4 & iface name matches with user provided name
             if (ifaceName == ifName) {
@@ -250,27 +257,34 @@ bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
                 ipAddress = ipAddrStr;
 
                 //fetching gw address
-                struct sockaddr_in* gwAddr =
-                    (struct sockaddr_in*)ifaddr->ifa_dstaddr;
                 char gwAddrStr[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &gwAddr->sin_addr,
-                    gwAddrStr, INET_ADDRSTRLEN);
-                gatewayAddress = gwAddrStr;
-                ifaceFound = true;
+                std::string command = "route -n | grep 'UG[ \t]' | awk '{print $2}'";
+                FILE* fp = popen(command.c_str(), "r");
+
+                if(fgets(gwAddrStr, INET_ADDRSTRLEN, fp) != NULL) {
+                    gatewayAddress = gwAddrStr;
+                    if(gatewayAddress.back() == '\n') {
+                        gatewayAddress.pop_back();
+                    }
+                }
+                pclose(fp);
 
                 //fetching dns address
                 struct __res_state addr;
                 res_ninit(&addr);
-                auto dnsPrimaryAddr = addr.nsaddr_list[0].sin_addr.s_addr;
-                auto dnsSecondaryAddr = addr.nsaddr_list[1].sin_addr.s_addr;
-                char dnsPrimaryAddrStr[INET_ADDRSTRLEN];
-                char dnsSecondaryAddrStr[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &dnsPrimaryAddr,
-                    dnsPrimaryAddrStr, INET_ADDRSTRLEN);
-                inet_ntop(AF_INET, &dnsSecondaryAddr,
-                    dnsSecondaryAddrStr, INET_ADDRSTRLEN);
-                dnsPrimaryAddress = dnsPrimaryAddrStr;
-                dnsSecondaryAddress = dnsSecondaryAddrStr;
+                char addressStr[INET_ADDRSTRLEN];
+                for (auto idx=0; idx < addr.nscount; idx++) {
+                    if (addr.nsaddr_list[idx].sin_family == AF_INET) {
+                        inet_ntop(AF_INET, &addr.nsaddr_list[idx].sin_addr.s_addr,
+                        addressStr, INET_ADDRSTRLEN);
+                        if (dnsPrimaryAddress.size() == 0) {
+                            dnsPrimaryAddress = addressStr;
+                        } else if (dnsSecondaryAddress.size() == 0) {
+                            dnsSecondaryAddress = addressStr;
+                        }
+                    }
+                }
+                ifaceFound = true;
             }
         }
     }
@@ -279,7 +293,8 @@ bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
 }
 
 bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
-    std::string &ipAddress, std::string &gatewayAddress) {
+    std::string &ipAddress, std::string &gatewayAddress,
+    std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress) {
     LOG(DEBUG, __FUNCTION__);
     bool ifaceFound = false;
     struct ifaddrs *ifaceAddresses;
@@ -301,18 +316,60 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
                 //fetching ip address
                 struct sockaddr_in6* ipAddr =
                     (struct sockaddr_in6*)ifaddr->ifa_addr;
+
+                //if it is link local address not global unicast
+                //address then we skip
+                if (IN6_IS_ADDR_LINKLOCAL(&ipAddr->sin6_addr)) {
+                    if (ifaddr->ifa_next != NULL) {
+                        ifaddr = ifaddr->ifa_next;
+                    }
+                    continue;
+                }
                 char ipAddrStr[INET6_ADDRSTRLEN];
                 inet_ntop(AF_INET6, &ipAddr->sin6_addr,
                     ipAddrStr, INET6_ADDRSTRLEN);
                 ipAddress = ipAddrStr;
 
                 //fetching gw address
-                // struct sockaddr_in6* gwAddr =
-                //     (struct sockaddr_in6*)ifaddr->ifa_dstaddr;
-                // char gwAddrStr[INET6_ADDRSTRLEN];
-                // inet_ntop(AF_INET6, &gwAddr->sin6_addr,
-                //     gwAddrStr, INET6_ADDRSTRLEN);
-                // gatewayAddress = gwAddrStr;
+                char gwAddrStr[INET6_ADDRSTRLEN];
+                std::string command =
+                    "ip -6 route | grep 'default[ \t]' | awk '{print $3}'";
+                FILE* fp = popen(command.c_str(), "r");
+
+                if(fgets(gwAddrStr, INET6_ADDRSTRLEN, fp) != NULL) {
+                    gatewayAddress = gwAddrStr;
+                    if(gatewayAddress.back() == '\n') {
+                        gatewayAddress.pop_back();
+                    }
+                }
+                pclose(fp);
+
+                //fetching dns address
+                std::ifstream ifs("/etc/resolv.conf");
+                std::string line;
+                if(!ifs.is_open()) {
+                    LOG(DEBUG, __FUNCTION__, " failed to open file /etc/resolv.conf");
+                    continue;
+                }
+
+                if(ifs.good()) {
+                    while(std::getline(ifs, line)) {
+                        if((line.size() != 0) && (line.substr(0,11) == "nameserver ")) {
+                            //entries in "/etc/resolv.conf" are usually nameserver <dns_address>,
+                            //so taking the <dns_address> into addrStr.
+                            std::string addrStr = line.substr(11);
+                            if (DataUtilsStub::isValidIpv6Address(addrStr)) {
+                                if (dnsPrimaryAddress.size() == 0) {
+                                    dnsPrimaryAddress = addrStr;
+                                } else if (dnsSecondaryAddress.size() == 0) {
+                                    dnsSecondaryAddress = addrStr;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 ifaceFound = true;
             }
         }
@@ -322,21 +379,25 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
 }
 
 void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slotId,
-    std::string ipFamilyType) {
+    std::string ipFamilyType, unsigned int client_id) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lck(mtx_);
     bool dataCallExist = true;
 
     //Reading ifaces from .conf file
     getInactiveInterfaces();
+
     std::shared_ptr<DataCallParams> call;
-    if (slotId == SLOT_ID_1) {
-        call = dataCallsSlot1_[profileId];
-    } else {
-        call = dataCallsSlot2_[profileId];
+    if ((slotId == SLOT_ID_1) &&
+        (dataCallsSlot1_.find(profileId) != dataCallsSlot1_.end())) {
+        call = dataCallsSlot1_.at(profileId);
+    } else if ((slotId == SLOT_ID_2) &&
+        (dataCallsSlot2_.find(profileId) != dataCallsSlot2_.end())) {
+        call = dataCallsSlot2_.at(profileId);
     }
 
     if (!call) {
+        LOG(DEBUG, __FUNCTION__, " call not found, creating call instance");
         //creating cached datacall object if it doesn't already exist
         call = std::make_shared<DataCallParams>();
         {
@@ -347,6 +408,7 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         }
         call->slotId = slotId;
         call->ipFamilyType = ipFamilyType;
+        call->ownersId.insert(client_id);
         dataCallExist = false;
     }
 
@@ -356,7 +418,7 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6)) {
             getIpv4Address(call->ifaceName, call->v4IpAddress, call->v4GwAddress,
-                call->dnsPrimaryAddress, call->dnsSecondaryAddress);
+                call->v4dnsPrimaryAddress, call->v4dnsSecondaryAddress);
     }
 
     //getting IpFamily V6 details
@@ -364,7 +426,8 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV6) ||
         ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6)) {
-            getIpv6Address(call->ifaceName, call->v6IpAddress, call->v4GwAddress);
+            getIpv6Address(call->ifaceName, call->v6IpAddress, call->v6GwAddress,
+                call->v6dnsPrimaryAddress, call->v6dnsSecondaryAddress);
     }
 
     bool ipv4Supported = (call->v4IpAddress.length() == 0)? false : true;
@@ -379,10 +442,12 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     startDataCallEvent.set_iface_name(call->ifaceName);
     startDataCallEvent.set_ipv4_address(call->v4IpAddress);
     startDataCallEvent.set_gwv4_address(call->v4GwAddress);
-    startDataCallEvent.set_dns_primary_address(call->dnsPrimaryAddress);
-    startDataCallEvent.set_dns_secondary_address(call->dnsSecondaryAddress);
+    startDataCallEvent.set_v4dns_primary_address(call->v4dnsPrimaryAddress);
+    startDataCallEvent.set_v4dns_secondary_address(call->v4dnsSecondaryAddress);
     startDataCallEvent.set_ipv6_address(call->v6IpAddress);
     startDataCallEvent.set_gwv6_address(call->v6GwAddress);
+    startDataCallEvent.set_v6dns_primary_address(call->v6dnsPrimaryAddress);
+    startDataCallEvent.set_v6dns_secondary_address(call->v6dnsSecondaryAddress);
 
     anyResponse.set_filter("data_connection");
     anyResponse.mutable_any()->PackFrom(startDataCallEvent);
@@ -392,8 +457,10 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
 
     //keeping local copy of data call params in server
     if ((!dataCallExist) && (ipv4Supported || ipv6Supported)) {
-        inactiveNwIfaces_.erase(call->ifaceName);
-        activeNwIfaces_.insert(call->ifaceName);
+        LOG(DEBUG, __FUNCTION__, " caching data call params in server for ", call->ifaceName);
+        inactiveNwIfaces_.erase(
+            std::find(inactiveNwIfaces_.begin(), inactiveNwIfaces_.end(), call->ifaceName));
+        activeNwIfaces_.push_back(call->ifaceName);
 
         if (slotId == SLOT_ID_1) {
             dataCallsSlot1_[profileId] = call;
@@ -401,6 +468,33 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
             dataCallsSlot2_[profileId] = call;
         }
     }
+}
+
+bool DataConnectionServerImpl::isWwanConnectivityAllowed(int slotId) {
+    LOG(DEBUG, __FUNCTION__);
+    bool isAllowed = true;
+
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "requestWwanConnectivityConfig";
+    std::string stateMethod = "requestWwanConnectivityConfig";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return false;
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        int slotIdx = (slotId == SLOT_2) ? 1 : 0;
+        isAllowed = data.stateRootObj[subsystem][stateMethod]["isAllowed"][slotIdx].asBool();
+    }
+
+    return isAllowed;
 }
 
 grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
@@ -420,45 +514,58 @@ grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    response->set_status(static_cast<commonStub::Status>(data.status));
-    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
-    response->set_delay(data.cbDelay);
-
-    int profileId = request->profile_id();
     int slotId = request->slot_id();
-    bool ipFamilyMismatch = false;
-    std::string ipFamilyType = DataUtilsStub::convertIpFamilyEnumToString(
-                request->ip_family_type().ip_family_type());
-    std::shared_ptr<DataCallParams> dataCall;
-
-    if (slotId == SLOT_ID_1) {
-        dataCall = dataCallsSlot1_[profileId];
-    } else {
-        dataCall = dataCallsSlot2_[profileId];
+    if (!isWwanConnectivityAllowed(slotId)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
-    //updating the datacall status, of locally stored datacall in server.
-    if (dataCall) {
-        auto currentFamily = dataCall->ipFamilyType;
-        if (ipFamilyType != currentFamily) {
-            dataCall->ipFamilyType =
-                DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6);
-            //to cover IpFamilyType mismatch usecases For ex: user starts v4 datacall first
-            // & later starts v6 datacall for same profile.
-            ipFamilyMismatch = true;
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+
+        int profileId = request->profile_id();
+        bool ipFamilyMismatch = false;
+        std::string ipFamilyType = DataUtilsStub::convertIpFamilyEnumToString(
+                    request->ip_family_type().ip_family_type());
+        std::shared_ptr<DataCallParams> dataCall;
+        unsigned int client_id = request->client_id();
+
+        if ((slotId == SLOT_ID_1) &&
+            (dataCallsSlot1_.find(profileId) != dataCallsSlot1_.end())) {
+            dataCall = dataCallsSlot1_.at(profileId);
+        } else if ((slotId == SLOT_ID_2) &&
+            (dataCallsSlot2_.find(profileId) != dataCallsSlot2_.end())) {
+            dataCall = dataCallsSlot2_.at(profileId);
+        }
+
+        //updating the datacall status, of locally stored datacall in server.
+        if (dataCall) {
+            LOG(DEBUG, __FUNCTION__, " datacall already exist");
+            auto currentFamily = dataCall->ipFamilyType;
+            if (ipFamilyType != currentFamily) {
+                dataCall->ipFamilyType =
+                    DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6);
+                //to cover IpFamilyType mismatch usecases For ex: user starts v4 datacall first
+                // & later starts v6 datacall for same profile.
+                ipFamilyMismatch = true;
+            }
+            dataCall->ownersId.insert(client_id);
+        }
+
+        //If datacall doesn't exist or there is an IPFamily mismatch
+        //trigger the start datacall event with new IPFamilyType.
+        if ((!dataCall) || (ipFamilyMismatch)) {
+            auto f = std::async(std::launch::deferred,
+                    [this, profileId, slotId, ipFamilyType, data, client_id]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
+                    this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType, client_id);
+                }).share();
+            taskQ_->add(f);
         }
     }
 
-    //If datacall doesn't exist or there is an IPFamily mismatch
-    //trigger the start datacall event with new IPFamilyType.
-    if ((!dataCall) || (ipFamilyMismatch)) {
-        auto f = std::async(std::launch::deferred,
-                [this, profileId, slotId, ipFamilyType, data]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType);
-            }).share();
-        taskQ_->add(f);
-    }
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
 
     return grpc::Status::OK;
 }
@@ -481,8 +588,37 @@ void DataConnectionServerImpl::triggerStopDataCallEvent(int profileId, int slotI
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 
-    inactiveNwIfaces_.insert(ifaceName);
-    activeNwIfaces_.erase(ifaceName);
+    LOG(DEBUG, __FUNCTION__, " for::", ifaceName);
+    inactiveNwIfaces_.push_back(ifaceName);
+    auto itr = std::find(activeNwIfaces_.begin(), activeNwIfaces_.end(), ifaceName);
+    if (itr != activeNwIfaces_.end()) {
+        activeNwIfaces_.erase(itr);
+    }
+
+    //To handle the use cases which are impacted if no datacall exists, we are letting
+    //other managers know that all the active calls have been teared down.
+    //For ex: DataFilterManager DataRestrictMode shall be diabled if no active datacall.
+    bool triggerNotification = false;
+    if (slotId == SLOT_ID_1) {
+        if (dataCallsSlot1_.size() == 0) {
+            triggerNotification = true;
+        }
+    } else {
+        if (dataCallsSlot2_.size() == 0) {
+            triggerNotification = true;
+        }
+    }
+
+    if (triggerNotification) {
+        ::dataStub::NoActiveDataCall dataCallNotification;
+        ::eventService::ServerEvent anyResponse;
+
+        dataCallNotification.set_slot_id(slotId);
+        anyResponse.set_filter("data_connection_server");
+        anyResponse.mutable_any()->PackFrom(dataCallNotification);
+        auto& serverEventManager = ServerEventManager::getInstance();
+        serverEventManager.sendServerEvent(anyResponse);
+    }
 }
 
 grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
@@ -504,39 +640,56 @@ grpc::Status DataConnectionServerImpl::StopDatacall(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+
+        int profileId = request->profile_id();
+        int slotId = request->slot_id();
+        unsigned int client_id = request->client_id();
+        std::shared_ptr<DataCallParams> dataCall;
+
+        if ((slotId == SLOT_ID_1) &&
+            (dataCallsSlot1_.find(profileId) != dataCallsSlot1_.end())) {
+            dataCall = dataCallsSlot1_.at(profileId);
+        } else if ((slotId == SLOT_ID_2) &&
+            (dataCallsSlot2_.find(profileId) != dataCallsSlot2_.end())) {
+            dataCall = dataCallsSlot2_.at(profileId);
+        }
+
+        if (dataCall) {
+            LOG(DEBUG, __FUNCTION__, " datacall ref_count::",
+                dataCall->ownersId.size());
+            dataCall->ownersId.erase(client_id);
+            if (dataCall->ownersId.size() != 0) {
+                //To handle datacall ownership usecase, triggerStopDataCallEvent only if
+                //last owner triggers stopDataCall.
+                response->set_error(commonStub::ErrorCode::DEVICE_IN_USE);
+                return grpc::Status::OK;
+            }
+
+            //removing cached datacall object
+            auto currentFamily = dataCall->ipFamilyType;
+            if (ipFamilyType == currentFamily) {
+                if (slotId == SLOT_ID_1) {
+                    dataCallsSlot1_.erase(profileId);
+                } else {
+                    dataCallsSlot2_.erase(profileId);
+                }
+            }
+
+            std::string ifaceName = dataCall->ifaceName;
+            auto f = std::async(std::launch::async, [this, profileId, slotId,
+                ipFamilyType, ifaceName, data]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
+                    this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType, ifaceName);
+                }).share();
+            taskQ_->add(f);
+        }
+    }
+
     response->set_status(static_cast<commonStub::Status>(data.status));
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
-
-    int profileId = request->profile_id();
-    int slotId = request->slot_id();
-    std::shared_ptr<DataCallParams> dataCall;
-
-    if (slotId == SLOT_ID_1) {
-        dataCall = dataCallsSlot1_[profileId];
-    } else {
-        dataCall = dataCallsSlot2_[profileId];
-    }
-
-    if (dataCall) {
-        //removing cached datacall object
-        auto currentFamily = dataCall->ipFamilyType;
-        if (ipFamilyType == currentFamily) {
-            if (slotId == SLOT_ID_1) {
-                dataCallsSlot1_.erase(profileId);
-            } else {
-                dataCallsSlot2_.erase(profileId);
-            }
-        }
-
-        std::string ifaceName = dataCall->ifaceName;
-        auto f = std::async(std::launch::async, [this, profileId, slotId,
-            ipFamilyType, ifaceName, data]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                this->triggerStopDataCallEvent(profileId, slotId, ipFamilyType, ifaceName);
-            }).share();
-        taskQ_->add(f);
-    }
 
     return grpc::Status::OK;
 }
@@ -565,12 +718,103 @@ grpc::Status DataConnectionServerImpl::RequestDatacallList(ServerContext* contex
     return grpc::Status::OK;
 }
 
+void DataConnectionServerImpl::stopActiveDataCalls(SlotId slotId) {
+    if (slotId == SLOT_ID_1) {
+        clearCachedDataCall(dataCallsSlot1_, true);
+    } else if (slotId == SLOT_ID_2) {
+        clearCachedDataCall(dataCallsSlot2_, true);
+    }
+}
+
+void DataConnectionServerImpl::clearCachedDataCall(
+    std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap, bool stopAllCalls,
+    const unsigned int& client_id) {
+    LOG(DEBUG, __FUNCTION__);
+
+    for (auto itr = dataCallsMap.begin(); itr != dataCallsMap.end();) {
+        uint32_t profileId = itr->first;
+        std::shared_ptr<DataCallParams> callObj = itr->second;
+        auto &owners = callObj->ownersId;
+
+        if (stopAllCalls) {
+            this->triggerStopDataCallEvent(profileId, callObj->slotId,
+                callObj->ipFamilyType, callObj->ifaceName);
+            ++itr;
+        } else {
+            if (owners.find(client_id) != owners.end()) {
+                owners.erase(client_id);
+
+                //To handle datacall ownership usecase, triggerStopDataCallEvent only if
+                //last owner exits.
+                if (owners.size() == 0) {
+                    this->triggerStopDataCallEvent(profileId, callObj->slotId,
+                        callObj->ipFamilyType, callObj->ifaceName);
+                    itr = dataCallsMap.erase(itr);
+                    continue;
+                }
+                ++itr;
+            } else {
+                ++itr;
+            }
+        }
+    }
+
+    if (stopAllCalls) {
+        dataCallsMap.clear();
+    }
+}
+
 grpc::Status DataConnectionServerImpl::CleanUpService(ServerContext* context,
-    const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) {
+    const ::dataStub::ClientInfo* request, ::google::protobuf::Empty* response) {
 
     LOG(DEBUG, __FUNCTION__, " clearing cached datacalls from server");
-    dataCallsSlot1_.clear();
-    dataCallsSlot2_.clear();
-    activeNwIfaces_.clear();
+    unsigned int client_id = request->client_id();
+    clearCachedDataCall(dataCallsSlot1_, false, client_id);
+    clearCachedDataCall(dataCallsSlot2_, false, client_id);
+
     return grpc::Status::OK;
+}
+
+grpc::Status DataConnectionServerImpl::requestConnectedDataCallLists(ServerContext* context,
+    const dataStub::CachedDataCallsRequest* request, dataStub::CachedDataCalls* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int slotId = request->slot_id();
+    std::map<int, std::shared_ptr<DataCallParams>> dataCalls;
+
+    if (slotId == SLOT_ID_1) {
+        dataCalls = dataCallsSlot1_;
+    } else {
+        dataCalls = dataCallsSlot2_;
+    }
+
+    for (const auto &itr: dataCalls) {
+        uint32_t profileId = itr.first;
+        const auto &callObj = itr.second;
+        dataStub::StartDataCallEvent *call = response->add_datacalls();
+        call->set_profile_id(profileId);
+        call->set_iface_name(callObj->ifaceName);
+        call->set_ip_family_type(callObj->ipFamilyType);
+        call->set_ipv4_address(callObj->v4IpAddress);
+        call->set_gwv4_address(callObj->v4GwAddress);
+        call->set_v4dns_primary_address(callObj->v4dnsPrimaryAddress);
+        call->set_v4dns_secondary_address(callObj->v4dnsSecondaryAddress);
+        call->set_ipv6_address(callObj->v6IpAddress);
+        call->set_gwv6_address(callObj->v6GwAddress);
+        call->set_v6dns_primary_address(callObj->v6dnsPrimaryAddress);
+        call->set_v6dns_secondary_address(callObj->v6dnsSecondaryAddress);
+    }
+
+    return grpc::Status::OK;
+}
+
+bool DataConnectionServerImpl::isAnyDataCallActive(SlotId slotId) {
+    bool callActive = false;
+    if (slotId == SLOT_ID_1) {
+        callActive = (dataCallsSlot1_.size() == 0)? false : true;
+    } else if (slotId == SLOT_ID_2) {
+        callActive = (dataCallsSlot2_.size() == 0)? false : true;
+    }
+
+    return callActive;
 }

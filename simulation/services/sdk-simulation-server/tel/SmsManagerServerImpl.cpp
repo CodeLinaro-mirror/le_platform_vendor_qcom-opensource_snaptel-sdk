@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -33,10 +33,11 @@
 */
 
 #include "SmsManagerServerImpl.hpp"
-#include "libs/tel/SmsMessageHelper.hpp"
+#include "libs/tel/Helper.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include "event/EventService.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 #define JSON_PATH1 "system-state/tel/ISmsManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ISmsManagerStateSlot2.json"
@@ -492,9 +493,6 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
                     status = telux::common::Status::NOTSUPPORTED;
                 }
             }
-            if ((indexstodelete.size() == 0) && (delAtIndex)) {
-                status = telux::common::Status::FAILED;
-            }
             if(delAtIndex) {
                 error = deletedSmsatIndex(phoneId, indexstodelete);
             }
@@ -912,13 +910,14 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
 }
 
 void SmsManagerServerImpl::onEventUpdate(std::string event) {
-    std::string token;
     LOG(DEBUG, __FUNCTION__,"String is ", event );
-    if ( INCOMING_SMS_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__,"Token is ", token );
+    if ( INCOMING_SMS_EVENT == token) {
         handleIncomingSms(event);
-    } else if( MEMORY_FULL_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
+    } else if( MEMORY_FULL_EVENT == token) {
         handleMemoryFullEvent(event);
-    }else {
+    } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
 }
@@ -930,17 +929,30 @@ void SmsManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent messag
 }
 
 void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
-    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
     int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if(token == "") {
         LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
         slotId = 1;
+    } else {
+        try {
+            slotId = std::stoi(token);
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
     }
+    if(slotId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId);
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
     // Fetch storage type
     std::string input;
     token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    input =  token;
     if(token == "") {
         LOG(INFO, __FUNCTION__, "Storage type not passed, assuming UNKNOWN");
         input = "UNKNOWN";
@@ -967,10 +979,10 @@ int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
     int nextIndex;
     bool flag = false;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    /* If sms message of index 1 is not present return index 1
+    /* If sms message of index 0 is not present return index 0
      * as it's the first missing element of database.
      */
-    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 1) {
+    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 0) {
         int size = getSMSStorage(phoneId);
         for (int i = 0; i < size - 1; i++) {
             currentIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
@@ -983,14 +995,14 @@ int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
             }
         }
         if(flag != true) {
-            LOG(DEBUG, __FUNCTION__, "Return Current index is ", size + 1);
-            return size + 1;
+            LOG(DEBUG, __FUNCTION__, "Return Current index is ", size);
+            return size;
         } else {
             LOG(DEBUG, __FUNCTION__, "Current index is ", currentIndex + 1 );
             return currentIndex + 1;
         }
     } else {
-        return 1;
+        return 0;
     }
 }
 
@@ -1022,6 +1034,12 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
             phoneId = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
         }
     }
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
@@ -1214,11 +1232,11 @@ void SmsManagerServerImpl::sortDatabase(int phoneId, Json::Value newSms, int ind
     if(index > currentSMSCount - 1) {
         return;
     } else {
-        for (int i = currentSMSCount - 1; i > index - 1 ; --i ) {
+        for (int i = currentSMSCount - 1; i > index ; --i ) {
            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i] =
             rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i - 1];
         }
-        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index - 1] = newSms;
+        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index] = newSms;
     }
     JsonParser::writeToJsonFile(rootObj, jsonfilename);
     jsonObjSystemStateSlot_[phoneId] = rootObj;

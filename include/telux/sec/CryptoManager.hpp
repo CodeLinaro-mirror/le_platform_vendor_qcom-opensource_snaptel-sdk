@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -75,8 +75,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode generateKey(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -95,8 +93,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode importKey(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -116,8 +112,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode exportKey(
                     telux::sec::KeyFormat keyFmt,
@@ -139,8 +133,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode upgradeKey(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -160,8 +152,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode signData(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -183,8 +173,6 @@ class ICryptoManager {
     * @returns @ref telux::common::ErrorCode::SUCCESS if verification
                is passed otherwise telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode verifyData(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -207,8 +195,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode encryptData(
                     std::shared_ptr<ICryptoParam> cryptoParam,
@@ -229,8 +215,6 @@ class ICryptoManager {
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-                  to change and could break backwards compatibility.
     */
    virtual telux::common::ErrorCode decryptData(
                     std::shared_ptr<ICryptoParam> cryptoParam,

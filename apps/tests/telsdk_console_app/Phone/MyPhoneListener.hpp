@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -87,6 +87,7 @@ public:
    void onCellInfoListChanged(
       int phoneId, std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) override;
    void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) override;
+   void onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) override;
    std::string getCurrentTime();
 
    ~MyPhoneListener() {
@@ -138,9 +139,9 @@ public:
                                              telux::common::ErrorCode error);
 };
 
-class MyOperatorNameCallback {
+class MyOperatorInfoCallback {
 public:
-   static void requestOperatorNameCb(std::string operatorLongName, std::string operatorShortName,
+   static void requestOperatorInfoCb(telux::tel::PlmnInfo info,
       telux::common::ErrorCode error);
 };
 
@@ -163,6 +164,7 @@ public:
    static std::string voiceServiceStateToString(telux::tel::VoiceServiceState vocSrvState);
    static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
    static std::string radioTechToString(telux::tel::RadioTechnology radioTech);
+   static std::string operatorInfoIsHomeToString(telux::common::BoolValue isHome);
 };
 
 #endif  // MYPHONELISTENER_HPP

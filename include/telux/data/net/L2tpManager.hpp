@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -79,6 +79,7 @@
 #include <list>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 #include <telux/data/DataDefines.hpp>
@@ -92,6 +93,15 @@ namespace net {
 
 // Forward declarations
 class IL2tpListener;
+
+
+/**
+ * L2TP session binding to backhaul configuration.
+ */
+struct L2tpSessionBindConfig {
+    uint32_t locId;                 /** Local ID of session to be bound to the specified backhaul */
+    BackhaulInfo bhInfo;            /**< Configuration of backhaul to bind L2TP session to        */
+};
 
 /**
  * L2TP encapsulation protocols
@@ -118,12 +128,14 @@ struct L2tpTunnelConfig {
     uint32_t                    locId;         /**< Local tunnel id */
     uint32_t                    peerId;        /**< Peer tunnel id */
     uint32_t                    localUdpPort;  /**< Local udp port - if UDP encapsulation is used */
-    uint32_t                    peerUdpPort;   /**< Peer udp port - if IP encapsulation is used */
-    std::string                 peerIpv6Addr;  /**< Peer IPv6 Address - for Ipv6 tunnels */
-    std::string                 peerIpv4Addr;  /**< Peer IPv4 Address - for Ipv4 tunnels */
-    std::string                 locIface;      /**< interface name to create L2TP tunnel on */
+    uint32_t                    peerUdpPort;   /**< Peer udp port - if IP encapsulation is used   */
+    std::string                 peerIpv6Addr;  /**< Peer IPv6 Address - for Ipv6 tunnels          */
+    std::string                 peerIpv6GwAddr;/**< Peer IPv6 Gateway Address - for Ipv6 tunnels  */
+    std::string                 peerIpv4Addr;  /**< Peer IPv4 Address - for Ipv4 tunnels          */
+    std::string                 peerIpv4GwAddr;/**< Peer IPv4 Gateway Address - for Ipv4 tunnels  */
+    std::string                 locIface;      /**< interface name to create L2TP tunnel on       */
     telux::data::IpFamilyType   ipType;        /**< Ip family type @ref telux::data::IpFamilyType */
-    std::vector<L2tpSessionConfig> sessionConfig;  /**< List of L2tp tunnel sessions */
+    std::vector<L2tpSessionConfig> sessionConfig;  /**< List of L2tp tunnel sessions              */
 };
 
 /**
@@ -146,6 +158,22 @@ struct L2tpSysConfig {
  */
 using L2tpConfigCb
     = std::function<void(const L2tpSysConfig &l2tpSysConfig, telux::common::ErrorCode error)>;
+
+
+/**
+ * This function is called as a response to
+ * @ref telux::data::net::IL2tpManager::querySessionToBackhaulBindings().
+ *
+ * @param [in] bindings        List of L2TP session binding configurations
+ *                             @ref telux::data::net::L2tpSessionBindConfig
+ * @param [in] error           Return code which indicates whether the operation
+ *                             succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note    Eval: This is a new API and is being evaluated.It is subject to change
+ *          and could break backwards compatibility.
+ */
+using L2tpSessionBindingsResponseCb = std::function<void(
+    const std::vector<L2tpSessionBindConfig> bindings, telux::common::ErrorCode error)>;
 
 /**
  *@brief    L2tpManager is a primary interface for configuring L2TP Service.
@@ -247,6 +275,105 @@ class IL2tpManager {
         uint32_t tunnelId, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Adds L2TP session to the specified tunnel.
+     * Adds the L2TP session to a pre-existing tunnel at run time. Existing tunnel configurations
+     * and sessions are not changed by this API. This API only adds a new session to the tunnel.
+     * This setting is persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] tunnelId          Tunnel ID to add the session to.
+     * @param [in] sessionConfig     Configuration of added session.
+     * @param [in] callback          Callback to get the addSession response; optional.
+     *
+     * @returns Status of addSession, i.e., success or applicable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status addSession(uint32_t tunnelId,
+        L2tpSessionConfig sessionConfig, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Removes L2TP Session from specified tunnel.
+     * Removes L2TP session from a pre-existing tunnel at run time. Existing tunnel configurations
+     * and sessions will not change by this API. This API only removes a session from the tunnel.
+     * This setting is persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] tunnelId          Tunnel ID to remove the session from
+     * @param [in] sessionId         Session ID to be removed.
+     * @param [in] callback          Callback to get the removeSession response; optional.
+     *
+     * @returns Status of removeSession, i.e. success or applicable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status removeSession(uint32_t tunnelId,
+        uint32_t sessionId, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Binds L2TP Session to the specified backhaul.
+     * For WWAN backhaul, sessions can be bound to both default bridge (bridge0) and on-demand
+     * bridges associated with VLANs.
+     * This setting is persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] sessionBindConfig   Backhaul information to bind session ID to.
+     *                                 @ref telux::data::net::L2tpSessionBindConfig
+     * @param [in] callback            Callback to get the bindSessionToBackhaul response; optional
+     *
+     * @returns Status of bindSessionToBackhaul(), i.e. success or applicable status code.
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status bindSessionToBackhaul(L2tpSessionBindConfig sessionBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Unbind L2TP session from the specified backhaul. This API will stop L2TP session traffic flow
+     * to/from specified backhaul type.
+     * This setting is persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] sessionBindConfig     Backhaul information to unbind VLAN ID from.
+     *                                   @ref telux::data::net::L2tpSessionBindConfig
+     * @param [in] callback              Callback to get the unbindSessionFromBackhaul response;
+     *                                   optional.
+     *
+     * @returns Status of unbindSessionFromBackhaul(), i.e. success or applicable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status unbindSessionFromBackhaul(L2tpSessionBindConfig sessionBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Queries L2TP session bindings to the specified backhaul.
+     *
+     * @param [in] backhaul    Backhaul to query L2TP session binding for.
+     * @param [in] callback    callback to get the querySessionToBackhaulBindings response; optional
+     *
+     * @returns Status of querySessionToBackhaulBindings(), i.e. success or applicable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status querySessionToBackhaulBindings(
+        BackhaulType backhaul, L2tpSessionBindingsResponseCb callback) = 0;
+
+    /**
      * Register L2TP Manager as listener for Data Service heath events like data service available
      * or data service not available.
      *
@@ -282,7 +409,7 @@ class IL2tpManager {
  * should be thread safe.
  *
  */
-class IL2tpListener {
+class IL2tpListener : public telux::common::ISDKListener {
  public:
     /**
      * This function is called when service status changes.

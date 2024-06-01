@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -157,14 +157,32 @@ bool ServingSystemMenu::init() {
              "8", "Request_RF_Band_Info", {},
              std::bind(&ServingSystemMenu::requestRFBandInfo, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getRejectInfoCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "9", "Get_Network_Reject_Information", {},
+             std::bind(&ServingSystemMenu::getNetworkRejectInfo, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getCallBarringInfoCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "10", "Get_Call_Barring_Information", {},
+             std::bind(&ServingSystemMenu::getCallBarringInfo, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getSmsCapabilityCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "11", "Get_SMS_Capability", {},
+             std::bind(&ServingSystemMenu::getSmsCapability, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getLteCsCapabilityCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "12", "Get_LTE_CS_Capability", {},
+             std::bind(&ServingSystemMenu::getLteCsCapability, this, std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "9", "Select_sim_slot", {},
+             "13", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
              getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
-             getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand};
+             getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
+             getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
+             getLteCsCapabilityCommand};
 
        if (servingSystemMgrs_.size() > 1) {
           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -356,6 +374,86 @@ void ServingSystemMenu::requestRFBandInfo(std::vector<std::string> userInput) {
          std::cout << "\nGet RF band info sent successfully\n";
       } else {
          std::cout << "\nGet RF band info failed \n";
+      }
+   }
+}
+
+void ServingSystemMenu::getNetworkRejectInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::NetworkRejectInfo rejectInfo = {
+         {telux::tel::RadioTechnology::RADIO_TECH_UNKNOWN,
+          telux::tel::ServiceDomain::UNKNOWN}, 0, "", ""};
+      auto status = servingSystemMgr->getNetworkRejectInfo(rejectInfo);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getNetworkRejectInfo is successful"
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(rejectInfo.rejectSrvInfo.rat)
+            << "\n Service Domain: "
+            << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
+            << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
+            << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc
+            << std::endl;
+      } else {
+         std::cout << "\n getNetworkRejectInfo failed, status: " << static_cast<int>(status);
+      }
+   }
+}
+
+void ServingSystemMenu::getCallBarringInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      std::vector<telux::tel::CallBarringInfo> barringInfo;
+      auto status = servingSystemMgr->getCallBarringInfo(barringInfo);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getCallBarringInfo is successful"  << std::endl;
+         for (auto info : barringInfo) {
+            std::cout << " RAT: "
+               << MyServingSystemHelper::getRadioTechnology(info.rat)
+               << ", Service Domain: "
+               << MyServingSystemHelper::getServiceDomain(info.domain)
+               << ", Call type: "
+               << MyServingSystemHelper::getCallBarringType(info.callType)
+               << std::endl;
+         }
+      } else {
+         std::cout << "\n getCallBarringInfo failed, status: " << static_cast<int>(status);
+      }
+   }
+}
+
+void ServingSystemMenu::getSmsCapability(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::SmsCapability smsCapability = {
+          telux::tel::RadioTechnology::RADIO_TECH_UNKNOWN,
+          telux::tel::SmsDomain::UNKNOWN};
+      auto status = servingSystemMgr->getSmsCapabilityOverNetwork(smsCapability);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getSmsCapability is successful"
+            << "\n RAT: "
+            << MyServingSystemHelper::getRadioTechnology(smsCapability.rat)
+            << "\n SMS Domain: "
+            << MyServingSystemHelper::getSmsDomain(smsCapability.domain)
+            << std::endl;
+      } else {
+         std::cout << "\n getSmsCapability failed, status: " << static_cast<int>(status);
+      }
+   }
+}
+
+void ServingSystemMenu::getLteCsCapability(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::LteCsCapability lteCapability = telux::tel::LteCsCapability::UNKNOWN;
+      auto status = servingSystemMgr->getLteCsCapability(lteCapability);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getLteCsCapability is successful"
+            << "\n LTE CS Capability: "
+            << MyServingSystemHelper::getLteCsCapability(lteCapability)
+            << std::endl;
+      } else {
+         std::cout << "\n getLteCsCapability failed, status: " << static_cast<int>(status);
       }
    }
 }

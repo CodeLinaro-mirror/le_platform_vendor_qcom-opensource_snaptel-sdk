@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -44,6 +44,7 @@
 #define TELUX_WLAN_WLANDEVICEMANAGER_HPP
 
 #include <memory>
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 
@@ -121,8 +122,6 @@ class IWlanDeviceManager {
      *          SERVICE_UNAVAILABLE  -  If wlan manager is temporarily unavailable.
      *          SERVICE_FAILED       -  If wlan manager encountered an irrecoverable failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -147,8 +146,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual  telux::common::ErrorCode enable(bool enable) = 0;
 
@@ -171,8 +168,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual  telux::common::ErrorCode setMode(int numOfAp, int numOfSta) = 0;
 
@@ -189,8 +184,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode getConfig(int& numAp, int& numSta) = 0;
 
@@ -205,8 +198,6 @@ class IWlanDeviceManager {
       *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode getStatus(
         bool& isEnabled, std::vector<InterfaceStatus>& status) = 0;
@@ -299,7 +290,7 @@ class IWlanDeviceManager {
 };  // end of IWlanDeviceManager
 
 
-class IWlanListener {
+class IWlanListener : public telux::common::ISDKListener {
 public:
     /**
      * This function is called when service status changes.

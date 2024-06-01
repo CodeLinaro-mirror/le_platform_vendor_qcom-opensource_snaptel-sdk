@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -119,7 +119,8 @@ class SensorEventListener : public telux::sensor::ISensorEventListener {
     virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
         PRINT_NOTIFICATION << "(" << name_ << "): Received configuration update from sensor: "
                            << sensorClient_->getSensorInfo().name << ": ["
-                           << configuration.samplingRate << ", " << configuration.batchCount << " ]"
+                           << configuration.samplingRate << ", " << configuration.batchCount <<
+                           "," << configuration.isRotated << " ]"
                            << std::endl;
     }
 
@@ -323,10 +324,13 @@ int main(int argc, char **argv) {
     telux::sensor::SensorConfiguration lowRateConfig;
     lowRateConfig.samplingRate = getMinimumSamplingRate(lowRateSensorClient->getSensorInfo());
     lowRateConfig.batchCount = lowRateSensorClient->getSensorInfo().maxBatchCountSupported;
+    lowRateConfig.isRotated = false;
     std::cout << "Configuring sensor with samplingRate, batchCount [" << lowRateConfig.samplingRate
-              << ", " << lowRateConfig.batchCount << "]" << std::endl;
+              << ", " << lowRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]" <<
+    std::endl;
     lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+    lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::ROTATE);
     status = lowRateSensorClient->configure(lowRateConfig);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to configure sensor: " << name << std::endl;
@@ -356,10 +360,13 @@ int main(int argc, char **argv) {
     telux::sensor::SensorConfiguration highRateConfig;
     highRateConfig.samplingRate = getMaximumSamplingRate(highRateSensorClient->getSensorInfo());
     highRateConfig.batchCount = highRateSensorClient->getSensorInfo().maxBatchCountSupported;
+    highRateConfig.batchCount = true;
     std::cout << "Configuring sensor with samplingRate, batchCount [" << highRateConfig.samplingRate
-              << ", " << highRateConfig.batchCount << "]" << std::endl;
+              << ", " << highRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]" <<
+              std::endl;
     highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+    highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::ROTATE);
     status = highRateSensorClient->configure(highRateConfig);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to configure sensor: " << name << std::endl;

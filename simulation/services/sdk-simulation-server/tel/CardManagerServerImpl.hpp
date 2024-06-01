@@ -56,7 +56,7 @@
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include "libs/tel/CardFileHandlerStub.hpp"
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 #include "libs/common/CommonUtils.hpp"
 #include "event/ServerEventManager.hpp"
 #include "event/EventService.hpp"

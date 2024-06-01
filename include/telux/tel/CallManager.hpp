@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -245,9 +245,11 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive Third Party Service(TPS) eCall over CS technologies only
-    * (i.e. not IMS) to the specified phone number with Minimum Set of Data(MSD) at call connect.
+    * Initiate an automotive Third Party Service(TPS) eCall over CS based RAT only
+    * (i.e. not IMS), to the specified phone number with Minimum Set of Data(MSD) at call connect.
     * It will be treated like a regular voice call by the UE and the network.
+    * During this request, if the device was registered over a PS based RAT, it will attempt to
+    * fallback to a CS based RAT. If this attempt fails, the call will end with a failure.
     *
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.
@@ -283,9 +285,11 @@ public:
                                            std::shared_ptr<IMakeCallCallback> callback = nullptr)
       = 0;
    /**
-    * Initiate an automotive Third Party Service(TPS) eCall over IMS to the specified phone number
-    * with Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice
+    * Initiate an automotive Third Party Service(TPS) eCall over IMS only, to the specified phone
+    * number with Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice
     * call over IMS by the UE and the network.
+    * During this request, if the device was not registered over IMS for voice service, the request
+    * will fail.
     *
     * Application is expected to dial only one Third Party Service eCall per subscription.
     * It is the responsibility of application to make sure that another call is not dialed while
@@ -349,8 +353,10 @@ public:
 
    /**
     * Initiate an automotive eCall with raw MSD pdu, to the specified phone number for TPS eCall
-    * over CS Technologies only (i.e. not IMS).
+    * over CS based RAT only (i.e. not IMS).
     * It will be treated like a regular voice call by the UE and the network.
+    * During this request, if the device was registered over a PS based RAT, it will attempt to
+    * fallback to a CS based RAT. If this attempt fails, the call will end with a failure.
     *
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.
@@ -419,9 +425,11 @@ public:
 
    /**
     * Initiate an automotive eCall to the specified phone number for TPS eCall over CS
-    * technologies only (i.e. not IMS), without transmitting Minimum Set of Data(MSD) at call
+    * based RAT only (i.e. not IMS), without transmitting Minimum Set of Data(MSD) at call
     * connect.
     * It will be treated like a regular voice call by the UE and the network.
+    * During this request, if the device was registered over a PS based RAT, it will attempt to
+    * fallback to a CS based RAT. If this attempt fails, the call will end with a failure.
     *
     * It is the responsibility of application to make sure that another call is not dialed while
     * Third Party Service eCall is in progress.

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -334,8 +334,6 @@ public:
     *
     * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backward compatibility.
     */
    virtual telux::common::Status
       requestNetworkSelectionMode(SelectionModeInfoCb callback)
@@ -545,7 +543,7 @@ private:
  *        The methods in listener can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class INetworkSelectionListener : public common::IServiceStatusListener{
+class INetworkSelectionListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called whenever network selection mode is changed.
@@ -555,8 +553,6 @@ public:
     *
     * @param [in] info   Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backward compatibility.
     */
    virtual void onSelectionModeChanged(NetworkModeInfo info) {
    }

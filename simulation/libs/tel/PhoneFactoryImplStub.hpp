@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -42,17 +13,18 @@
 #ifndef TEL_FACTORY_STUB_HPP
 #define TEL_FACTORY_STUB_HPP
 
-#include <memory>
-#include <map>
 #include <telux/tel/PhoneFactory.hpp>
-#include "common/Logger.hpp"
+
 #include "CardManagerStub.hpp"
-#include "common/Logger.hpp"
 #include "SubscriptionManagerStub.hpp"
 #include "PhoneManagerStub.hpp"
 #include "SmsManagerStub.hpp"
 #include "CellBroadcastManagerStub.hpp"
-
+#include "CallManagerStub.hpp"
+#include "MultiSimManagerStub.hpp"
+#include "ImsServingSystemManagerStub.hpp"
+#include "ServingSystemManagerStub.hpp"
+#include "NetworkSelectionManagerStub.hpp"
 
 namespace telux {
 namespace tel {
@@ -103,25 +75,45 @@ class PhoneFactoryImplStub : public PhoneFactory {
     ~PhoneFactoryImplStub();
     std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
     std::map<int, std::shared_ptr<ISmsManager>> smsManagerMap_;
+    std::map<SlotId, std::shared_ptr<IImsServingSystemManager>> imsServSysManagerMap_;
+    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
+    std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;
     std::shared_ptr<ICardManager> cardManager_;
     std::shared_ptr<IPhoneManager> phoneManager_;
     std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+    std::shared_ptr<ICallManager> callManager_;
+    std::shared_ptr<IMultiSimManager> multiSimManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> phoneMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
+    std::vector<telux::common::InitResponseCb> multiSimMgrCallbacks_;
     telux::common::ServiceStatus subscriptionMgrInitStatus_;
     telux::common::ServiceStatus phoneMgrInitStatus_;
+    telux::common::ServiceStatus multiSimMgrInitStatus_;
     std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
     std::map<int, std::vector<telux::common::InitResponseCb>> cbMgrCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> imsServSysCallbacks_;
+    std::map<int, std::vector<telux::common::InitResponseCb>> servingSysMgrCallbacks_;
+    std::map<int, std::vector<telux::common::InitResponseCb>> networkSelMgrCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> cbMgrInitStatus_;
+    std::map<int, telux::common::ServiceStatus> imsServingSystemMgrInitStatus_;
+    std::map<int, telux::common::ServiceStatus> servingSysMgrInitStatus_;
+    std::map<int, telux::common::ServiceStatus> networkSelMgrInitStatus_;
     std::recursive_mutex mutex_;
+    common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
+    void onCallMgrInitResponse(telux::common::ServiceStatus status);
     void onCardManagerResponse(telux::common::ServiceStatus status);
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
     void onCellBroadcastManagerResponse(SlotId slotId, telux::common::ServiceStatus status);
     void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
+    void onImsServingSystemMgrInitResponse(SlotId slotId, telux::common::ServiceStatus status);
+    void onServingSystemMgrInitResponse(int slotId, telux::common::ServiceStatus status);
     void onPhoneManagerResponse(telux::common::ServiceStatus status);
+    void onMultiSimManagerResponse(telux::common::ServiceStatus status);
+    void onNetworkSelectionMgrInitResponse(int slotId, telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -989,21 +989,12 @@ unsigned int id_shift(unsigned int a)
 }
 // Take a line in CSV file and encode its contents into buf and return its length.
 // len parameter just shows the size of buf created by caller.
-int encode_singleline_fromCSV(char *line, char *buf, int len)
+int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
 {
-    int i = 0, j = 0, count = 0, m = 0;
-
-    msg_contents *mc = (msg_contents *)calloc(sizeof(msg_contents), 1);
-#if 0
-    wsmp_data_t *wsmpp = &(mc->wsmp);
-    ieee1609_2_data *ie = &(mc->security_buf);
-    bsm_value_t *bsm = &(mc->j2735.bsm);
-#endif
-    wsmp_data_t *wsmpp = (wsmp_data_t *)calloc(sizeof(wsmp_data_t), 1);
-    mc->wsmp = wsmpp;
-    ieee1609_2_data *ie = (ieee1609_2_data *)calloc(sizeof(ieee1609_2_data), 1);
-    bsm_value_t *bsm = (bsm_value_t *)calloc(sizeof(bsm_value_t), 1);
-    mc->j2735_msg = bsm;
+    int i = 0, m = 0;
+    wsmp_data_t *wsmpp = (wsmp_data_t*)(mc->wsmp);
+    bsm_value_t *bsm = (bsm_value_t *)(mc->j2735_msg);
+    ieee1609_2_data *ie = (ieee1609_2_data*)(mc->ieee1609_2data);
 
     ie->protocolVersion = 3;
     ie->content = 0;
@@ -1012,61 +1003,35 @@ int encode_singleline_fromCSV(char *line, char *buf, int len)
     wsmpp->tpid.octet = 0;
     wsmpp->psid = 1;
 
-    count++;
     char *tmp = strdup(line);
     const char *tok;
     char **tokens = (char **)calloc(sizeof(char *), 1000);
-    i = 0;
-    j = 0;
+
     while ((tok = strsep(&tmp, ",")) != NULL) {
         tokens[i] = strdup(tok);
         i++;
-
     }
-    int a = 0;
 
     bsm->brakes.word = (1 << 15);
     bsm->suppvehopts = 0;
     bsm_init(bsm);
-    while (a < i) {
-        if (strcmp(tokens[a], "") == 0 || strcmp(tokens[a], "\n") == 0 || strlen(tokens[a]) == 0) {
-            if (a == 17)
-                bsm->id = 0x10000000;
-            if (a == 19)
-                bsm->secMark_ms = 65535;
-            if (a == 20)
-                bsm->Latitude = 900000001;
-            if (a == 21)
-                bsm->Longitude = 1800000001;
-            if (a == 22)
-                bsm->Elevation = -4096;
-            if (a == 23)
-                bsm->SemiMajorAxisAccuracy = 255;
-            if (a == 24)
-                bsm->SemiMinorAxisAccuracy = 255;
-            if (a == 25)
-                bsm->SemiMajorAxisOrientation = 65535;
-            if (a == 26)
-                bsm->TransmissionState = 7;
-            if (a == 27)
-                bsm->Speed = 8191;
-            if (a == 28)
-                bsm->Heading_degrees = 28800;
-            if (a == 29)
-                bsm->SteeringWheelAngle = 127;
-            if (a == 30)
-                bsm->AccelLon_cm_per_sec_squared = 2001;
-            if (a == 31)
-                bsm->AccelLat_cm_per_sec_squared = 2001;
-            if (a == 32)
-                bsm->AccelVert_two_centi_gs = -127;
-            if (a == 33)
-                bsm->AccelYaw_centi_degrees_per_sec = 32767;
-        } else {
+    if (minLog) {
+        bsm->timestamp_ms = strtoull(tokens[1], NULL, 0);
+        bsm->MsgCount = strtoul(tokens[8], NULL, 0);
+        bsm->id = id_shift(strtoul(tokens[9], NULL, 0));
+        bsm->secMark_ms = strtoul(tokens[11], NULL, 0);
+        bsm->Latitude = strtod(tokens[12], NULL) * 10000000.0;
+        bsm->Longitude = strtod(tokens[13], NULL) * 10000000.0;
+        bsm->SemiMajorAxisAccuracy = strtoul(tokens[14], NULL, 0) * 20;
+        bsm->Speed = strtoul(tokens[15], NULL, 0) * 250 / 18;
+        bsm->Heading_degrees = strtol(tokens[16], NULL, 0) / 0.0125;
+        bsm->AccelLon_cm_per_sec_squared = strtol(tokens[17], NULL, 0) / 0.01;
+    } else {
+        int a = 0;
+        while (a < i) {
             switch (a) {
             case 15:
-                //mc->msgId = atoi(tokens[15]);
-                mc->msgId = 20;
+                mc->msgId = J2735_MSGID_BASIC_SAFETY;
                 break;
             case 16:
                 bsm->MsgCount = atoi(tokens[16]);
@@ -1211,8 +1176,8 @@ int encode_singleline_fromCSV(char *line, char *buf, int len)
                         bsm->ph.ph_crumb[m].opts_u.byte = 1;
                         bsm->ph.ph_crumb[m].heading_available = 1;
                         bsm->ph.ph_crumb[m].heading_microdegrees = (atoi(tokens[a + 1 + 5 * m + 4]) / 1.5) * 1500;
-                    }
-                    a = a + 5 * (bsm->ph.qty_crumbs);
+                }
+                a = a + 5 * (bsm->ph.qty_crumbs);
                 }
                 break;
             case 163:
@@ -1338,7 +1303,6 @@ int encode_singleline_fromCSV(char *line, char *buf, int len)
                     bsm->veh.supplemental_veh_data_options.word | (1 << 1);
                 bsm->veh.mass_kg = atoi(tokens[181]);
                 break;
-
             case 182:
                 /*
                 bsm->has_partII = 1;
@@ -1347,13 +1311,11 @@ int encode_singleline_fromCSV(char *line, char *buf, int len)
                 bsm->VehicleClass = 10;//atoi (tokens[182]) ; being set in conf file for sxxxxi
                 */
                 break;
-
             default:
-                //printf("In default %d\t%d\n",a,i);
                 break;
             }
+            a++;
         }
-        a++;
     }
 
     if (bsm->has_safety_extension == 1)
@@ -1373,7 +1335,6 @@ int encode_singleline_fromCSV(char *line, char *buf, int len)
 
 
     int size = encode_msg(mc);
-    free(mc);
     free(tokens);
     free(tmp);
     return size;

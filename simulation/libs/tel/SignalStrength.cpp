@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -80,6 +80,10 @@
 #define MIN_WCDMA_LEVEL 0
 #define MAX_WCDMA_BIT_ERROR_RATE 7
 #define MIN_WCDMA_BIT_ERROR_RATE 0
+#define MIN_WCDMA_ECIO -20
+#define MAX_WCDMA_ECIO 0
+#define MIN_WCDMA_RSCP -120
+#define MAX_WCDMA_RSCP -24
 #define WCDMA_DBM_CONVERSION_FACTOR -113
 #define WCDMA_DBM_MULTIPLICATION_FACTOR 2
 
@@ -452,6 +456,15 @@ WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(int signalStrength, int bitErro
    bitErrorRate_ = inRange(bitErrorRate, MIN_WCDMA_BIT_ERROR_RATE, MAX_WCDMA_BIT_ERROR_RATE);
 }
 
+WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate,
+   int ecio, int rscp) {
+   LOG(DEBUG, __FUNCTION__);
+   signalStrength_ = inRange(signalStrength, MIN_WCDMA_LEVEL, MAX_WCDMA_LEVEL);
+   bitErrorRate_ = inRange(bitErrorRate, MIN_WCDMA_BIT_ERROR_RATE, MAX_WCDMA_BIT_ERROR_RATE);
+   ecio_ = inRange(ecio, MIN_WCDMA_ECIO, MAX_WCDMA_ECIO);
+   rscp_ = inRange(rscp, MIN_WCDMA_RSCP, MAX_WCDMA_RSCP);
+}
+
 const SignalStrengthLevel WcdmaSignalStrengthInfo::getLevel() const {
    // Valid values are (0-31, 99) as defined in TS 27.007 8.5
    if(signalStrength_ >= MIN_WCDMA_LEVEL && signalStrength_ <= MAX_WCDMA_LEVEL) {
@@ -480,6 +493,16 @@ const int WcdmaSignalStrengthInfo::getBitErrorRate() const {
    // bit error rate (0-7, 99) as defined in TS 27.007 8.5
    LOG(DEBUG, __FUNCTION__);
    return bitErrorRate_;
+}
+
+const int WcdmaSignalStrengthInfo::getEcio() const {
+   LOG(DEBUG, __FUNCTION__, " ECIO: ", ecio_);
+   return ecio_;
+}
+
+const int WcdmaSignalStrengthInfo::getRscp() const {
+   LOG(DEBUG, __FUNCTION__, " RSCP: ", rscp_);
+   return rscp_;
 }
 
 TdscdmaSignalStrengthInfo::TdscdmaSignalStrengthInfo(int rscp) {

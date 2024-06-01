@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -113,6 +113,9 @@ public:
    static std::string RFBandtoString(telux::tel::RFBand band);
    static std::string RFBandWidthtoString(telux::tel::RFBandWidth bandWidth);
    static void logRFBandInfo(telux::tel::RFBandInfo info);
+   static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
+   static std::string getSmsDomain(telux::tel::SmsDomain domain);
+   static std::string getLteCsCapability(telux::tel::LteCsCapability capability);
 };
 
 class MyServingSystemListener : public telux::tel::IServingSystemListener {
@@ -123,6 +126,10 @@ public:
    void onDcStatusChanged(telux::tel::DcStatus dcStatus) override;
    void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;
    void onRFBandInfoChanged(telux::tel::RFBandInfo bandInfo) override;
+   void onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) override;
+   void onCallBarringInfoChanged(std::vector<telux::tel::CallBarringInfo> barringInfo) override;
+   void onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) override;
+   void onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) override;
 };
 
 #endif  // MYSERVINGSYSTEMHANDLER_HPP

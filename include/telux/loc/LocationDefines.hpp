@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -131,37 +131,38 @@ enum class LocationReliability {
 };
 
 /**
- * Specify set of navigation solutions that contribute to Gnss Location.
- * Defines Satellite Based Augmentation System(SBAS) corrections.
- * SBAS contributes to improve the performance of GNSS system.
+ * Specify the set of navigation solutions that contribute to the Gnss Location.
  */
-enum SbasCorrectionType {
-  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
-                             SBAS ionospheric correction is used */
-  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
-                             SBAS fast correction is used */
-  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
-                             SBAS long correction is used */
-  SBAS_INTEGRITY, /**< Bit mask to specify whether
-                      SBAS integrity information is used */
-  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
-                              SBAS DGNSS correction is used */
-  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
-                            SBAS RTK correction is used */
-  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
-                            SBAS PPP correction is used */
-  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
-                            SBAS RTK fixed correction is used */
-  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
-                            only SBAS corrected SV is used */
-  SBAS_COUNT  /**< Bitset */
+enum NavigationSolutionType {
+    NAV_SBAS_SOLUTION_IONO,       /**< Bit mask to specify whether
+                                        SBAS ionospheric solution is used */
+    NAV_SBAS_SOLUTION_FAST,       /**< Bit mask to specify whether
+                                        SBAS fast solution is used */
+    NAV_SBAS_SOLUTION_LONG,       /**< Bit mask to specify whether
+                                        SBAS long solution is used */
+    NAV_SBAS_INTEGRITY,             /**< Bit mask to specify whether
+                                        SBAS integrity information is used */
+    NAV_DGNSS_SOLUTION,           /**< Bit mask to specify whether
+                                        DGNSS solution is used */
+    NAV_RTK_SOLUTION,             /**< Bit mask to specify whether
+                                        RTK solution is used */
+    NAV_PPP_SOLUTION,             /**< Bit mask to specify whether
+                                        PPP solution is used */
+    NAV_RTK_FIXED_SOLUTION,       /**< Bit mask to specify whether RTK fixed solution is used.
+                                        If only solution RTK is set,
+                                        fixes shall be treated as RTK_FLOAT solution.
+                                        If both solutions RTK & RTK_FIXED are set,
+                                        fixes shall be treated as RTK_FIXED solution. */
+    NAV_ONLY_SBAS_CORRECTED_SV_USED,   /**< Bit mask to specify
+                                           only SBAS corrected SV is used */
+    NAV_COUNT  /**< Bitset */
 };
 
 /**
- * 8 bit mask that denotes which of the SBAS corrections in SbasCorrection used
+ * Bit mask to denote the corrections in NavigationSolutionType that are used
  * to improve the performance of GNSS output.
  */
-using SbasCorrection = std::bitset<SBAS_COUNT>;
+using NavigationSolution = std::bitset<NAV_COUNT>;
 
 /**
  * Indicates whether altitude is assumed or calculated.
@@ -763,7 +764,13 @@ enum LocationValidityType {
     /** Location has valid elapsed real time.*/
     HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
     /** Location has valid elapsed real time uncertainty.*/
-    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10),
+    /** Location has valid time uncertainty.*/
+    HAS_TIME_UNC_BIT = (1<<11),
+    /** Location has valid elapsed gPTP time.*/
+    HAS_GPTP_TIME_BIT         = (1<<12),
+    /** Location has valid elapsed gPTP time uncertainty.*/
+    HAS_GPTP_TIME_UNC_BIT     = (1<<13)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -820,7 +827,11 @@ enum LocationInfoExValidityType {
   HAS_UP_VEL_UNC = (1ULL << 21),
   /** valid leap_seconds */
   HAS_LEAP_SECONDS = (1ULL << 22),
-  /** valid timeUncMs */
+  /** valid timeUncMs
+   *
+   * @deprecated
+   * Use @ref LocationValidityType::HAS_TIME_UNC_BIT to get the required information about
+   * validity of time uncertainty */
   HAS_TIME_UNC = (1ULL << 23),
   /** valid number of sv used */
   HAS_NUM_SV_USED_IN_POSITION = (1ULL << 24),
@@ -851,7 +862,9 @@ enum LocationInfoExValidityType {
   /** valid protect level vertical*/
   HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
   /** valid DR Solution status*/
-  HAS_SOLUTION_STATUS = (1ULL << 38)
+  HAS_SOLUTION_STATUS = (1ULL << 38),
+  /** valid dgnssStationId */
+  HAS_DGNSS_STATION_ID = (1ULL<<39)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1260,7 +1273,15 @@ enum GnssMeasurementsClockValidityType {
     /** Validity of driftUncertaintyNsps.*/
     DRIFT_UNCERTAINTY_BIT             = (1<<7),
     /** Validity of hwClockDiscontinuityCount.*/
-    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8)
+    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8),
+    /** Validity of realTime.*/
+    ELAPSED_REAL_TIME_BIT             = (1<<9),
+    /** Validity of realTimeUncertainity.*/
+    ELAPSED_REAL_TIME_UNC_BIT         = (1<<10),
+    /** Validity of gPTPTime.*/
+    ELAPSED_GPTP_TIME_BIT             = (1<<11),
+    /** Validity of gPTPTimeUncertainity.*/
+    ELAPSED_GPTP_TIME_UNC_BIT         = (1<<12)
 };
 
 /** Specifies GnssMeasurementsClockValidityType.*/
@@ -1357,7 +1378,7 @@ struct GnssMeasurementsClock {
     double timeUncertaintyNs;
     /** Full bias, in uint of nanoseconds.*/
     int64_t fullBiasNs;
-    /** Sub-nanoseconds bias, in unit of nonoseconds.*/
+    /** Sub-nanoseconds bias, in unit of nanoseconds.*/
     double biasNs;
     /** Bias uncertainty (one sigma), in unit of nanoseconds.*/
     double biasUncertaintyNs;
@@ -1369,6 +1390,14 @@ struct GnssMeasurementsClock {
     /** HW clock discontinuity count - incremented
      *  for each discontinuity in HW clock.*/
     uint32_t hwClockDiscontinuityCount;
+    /** elapsed time since boot, in unit of nanoseconds.*/
+    uint64_t elapsedRealTime;
+    /** uncertainty of elapsedRealTime, in unit of nanoseconds.*/
+    uint64_t elapsedRealTimeUnc;
+    /** gPTP since boot, in unit of nanoseconds.*/
+    uint64_t elapsedgPTPTime;
+    /** uncertainty of elapsedgPTPTime, in unit of nanoseconds.*/
+    uint64_t elapsedgPTPTimeUnc;
 };
 
 /** Specify GNSS measurements clock and data.
@@ -1420,6 +1449,407 @@ struct GnssDisasterCrisisReport {
      * per the dcReportData.
      */
     uint16_t numValidBits;
+};
+
+/** Specifies Source of Ephemeris data */
+enum GnssEphSource {
+    /** Source of ephemeris is unknown  */
+    EPH_SRC_UNKNOWN = 0,
+    /** Source of ephemeris is OTA  */
+    EPH_SRC_OTA = 1,
+    /** Max value for ephemeris Source. DO NOT USE  */
+    EPH_SRC_MAX = 999
+};
+
+/** Specifies the action to be performed by the clients on the ephemeris info received. */
+enum GnssEphAction {
+    /** Epehmeris Action Unknown  */
+    EPH_ACTION_UNKNOWN = 0,
+    /** Update ephemeris data */
+    EPH_ACTION_UPDATE = 1,
+    /** delete ephemeris action. */
+    EPH_ACTION_DELETE = 2,
+    /** Max value for  ephemeris action. DO NOT USE  */
+    EPH_ACTION_MAX = 999
+};
+
+/** Galileo Signal Source. */
+enum GalEphSignalSource {
+    /** GALILEO signal is unknown */
+    GAL_SIG_SRC_UNKNOWN = 0,
+    /** GALILEO signal is E1B  */
+    GAL_SIG_SRC_E1B = 1,
+    /** GALILEO signal is E5A  */
+    GAL_SIG_SRC_E5A = 2,
+    /** GALILEO signal is E5B  */
+    GAL_SIG_SRC_E5B = 3
+};
+
+/** Common Ephemeris information for all constellations*/
+struct GnssEphCommon {
+    /** Specify satellite vehicle ID number.
+     * For SV id range of each supported constellations, refer to
+     * documentation of @ref telux::loc::GnssMeasurementInfo::gnssSvId.
+    */
+    uint16_t gnssSvId;
+
+    /** Specifies the source of ephemeris.*/
+    GnssEphSource ephSource;
+
+    /** Specifies the action to be performed on receipt of the ephemeris (Update/Delete)
+     *  Action shall be performed on GnssEphSource specified. */
+    GnssEphAction action;
+
+    /** Issue of data ephemeris used (unit-less).
+     *  GPS: IODE 8 bits.
+     *  BDS: AODE 5 bits.
+     *  GAL: SIS IOD 10 bits.
+     *  Units: Unit-less */
+    uint16_t IODE;
+
+    /** Square root of semi-major axis.
+     * Units: Square Root of Meters */
+    double aSqrt;
+
+    /** Mean motion difference from computed value.
+     * Units: Radians/Second */
+    double deltaN;
+
+    /** Mean anomaly at reference time.
+     * Units: Radians */
+    double m0;
+
+    /** Eccentricity.
+     * Units: Unit-less */
+    double eccentricity;
+
+    /** Longitude of ascending node of orbital plane at the weekly epoch.
+     * Units: Radians */
+    double omega0;
+
+    /** Inclination angle at reference time.
+     * Units: Radians */
+    double i0;
+
+    /** Argument of Perigee.
+     * Units: Radians */
+    double omega;
+
+    /** Rate of change of right ascension.
+     * Units: Radians/Second */
+    double omegaDot;
+
+    /** Rate of change of inclination angle.
+     * Units: Radians/Second */
+    double iDot;
+
+    /** Amplitude of the cosine harmonic correction term to the argument of latitude.
+     * Units: Radians */
+    double cUc;
+
+    /** Amplitude of the sine harmonic correction term to the argument of latitude.
+     * Units: Radians */
+    double cUs;
+
+    /** Amplitude of the cosine harmonic correction term to the orbit radius.
+     * Units: Meters */
+    double cRc;
+
+    /**  Amplitude of the sine harmonic correction term to the orbit radius.
+     * Units: Meters */
+    double cRs;
+
+    /** Amplitude of the cosine harmonic correction term to the angle of inclination.
+     * Units: Radians */
+    double cIc;
+
+    /** Amplitude of the sine harmonic correction term to the angle of inclination.
+     * Units: Radians */
+    double cIs;
+
+    /** Reference time of ephemeris.
+     * Units: Seconds */
+    uint32_t toe;
+
+    /**  Clock data reference time of week.
+     * Units: Seconds */
+    uint32_t toc;
+
+    /** Clock bias correction coefficient.
+     * Units: Seconds */
+    double af0;
+
+    /** Clock drift coefficient.
+     * Units: Seconds/Second */
+    double af1;
+
+    /** Clock drift rate correction coefficient.
+     * Units: Seconds/Seconds^2 */
+    double af2;
+};
+
+/** Common Ephemeris information for GPS and QZSS*/
+struct GpsQzssEphemeris {
+    /**   Common ephemeris data.   */
+    GnssEphCommon commonData;
+
+    /**   Signal health, where set bit indicates unhealthy signal.
+     *   Bit 0 : L5 Signal Health.
+     *   Bit 1 : L2 Signal Health.
+     *   Bit 2 : L1 Signal Health.*/
+    uint8_t signalHealth;
+
+    /**  User Range Accuracy Index.
+     *   Units: Unit-less */
+    uint8_t URAI;
+
+    /**   Indicates which codes are commanded ON for the L2 channel (2-bits).
+     *   Valid Values:
+     *   00 : Reserved
+     *   01 : P code ON
+     *   10 : C/A code ON */
+    uint8_t codeL2;
+
+    /** L2 P-code indication flag.
+     *  Value 1 indicates that the Nav data stream was commanded OFF
+     *  on the P-code of the L2 channel. */
+    uint8_t dataFlagL2P;
+
+    /** Time of group delay.
+     *  Units: Seconds */
+    double tgd;
+
+    /** Indicates the curve-fit interval used by the CS.
+     *  Valid Values:
+     *  0 : Four hours
+     *  1 : Greater than four hours */
+    uint8_t fitInterval;
+
+    /**  Issue of Data, Clock.
+     *   Units: Unit-less */
+    uint16_t IODC;
+};
+
+/** Ephemeris information for GLONASS*/
+struct GlonassEphemeris {
+    /** Specify satellite vehicle ID number.
+     *  For SV id range of each supported constellations, refer to
+     *  documentation of @ref telux::loc::GnssMeasurementInfo::gnssSvId.
+     */
+    uint16_t gnssSvId;
+
+    /** Specifies the source of ephemeris.*/
+    GnssEphSource ephSource;
+
+     /** Specifies the action to be performed on receipt of the ephemeris (Update/Delete)
+      *  Action shall be performed on GnssEphSource specified. */
+    GnssEphAction action;
+
+    /**  SV health flags.
+     * Valid Values:
+     * 0 : Healthy
+     * 1 : Unhealthy */
+    uint8_t bnHealth;
+
+    /** Ln SV health flags.
+     *  Valid Values:
+     *  0 : Healthy
+     *  1 : Unhealthy */
+    uint8_t lnHealth;
+
+    /** Index of a time interval within current day according to UTC(SU) + 03 hours 00 min.
+     * Units: Unit-less */
+    uint8_t tb;
+
+    /** SV accuracy index.
+     * Units: Unit-less */
+    uint8_t ft;
+
+    /** GLONASS-M flag.
+     * Valid Values:
+     * 0 : GLONASS
+     * 1 : GLONASS-M */
+    uint8_t gloM;
+
+    /** Characterizes "Age" of current information.
+     * Units: Days */
+    uint8_t enAge;
+
+    /** GLONASS frequency number + 8.
+     * Range: 1 to 14
+     */
+    uint8_t gloFrequency;
+
+    /** Time interval between two adjacent values of tb parameter.
+     * Units: Minutes */
+    uint8_t p1;
+
+    /** Flag of oddness ("1") or evenness ("0") of the value of tb
+     *  for intervals 30 or 60 minutes. */
+    uint8_t p2;
+
+    /** Time difference between navigation RF signal transmitted in L2 sub-band
+     *  and aviation RF signal transmitted in L1 sub-band.
+     *  Units: Seconds */
+    float deltaTau;
+
+    /** Satellite XYZ position.
+     *  Units: Meters */
+    double position[3];
+
+    /** Satellite XYZ velocity.
+     *  Units: Meters/Second */
+    double velocity[3];
+
+    /** Satellite XYZ sola-luni acceleration.
+     *  Units: Meters/Second^2 */
+    double acceleration[3];
+
+    /** Satellite clock correction relative to GLONASS time.
+     *  Units: Seconds */
+    float tauN;
+
+    /** Relative deviation of predicted carrier frequency value
+     * from nominal value at the instant tb.
+     * Units: Unit-less */
+    float gamma;
+
+    /** Complete ephemeris time, including N4, NT and Tb.
+     * [(N4-1)*1461 + (NT-1)]*86400 + tb*900
+     * Units: Seconds */
+    double toe;
+
+    /** Current date, calendar number of day within four-year interval.
+     *  Starting from the 1-st of January in a leap year.
+     *  Units: Days */
+    uint16_t nt;
+};
+
+/** Ephemeris information for BDS*/
+struct BdsEphemeris {
+
+    /**  Common ephemeris data.   */
+    GnssEphCommon commonData;
+
+    /**  Satellite health information applied to both B1 and B2 (SatH1).
+     * Valid Values:
+     * 0 : Healthy
+     * 1 : Unhealthy */
+    uint8_t svHealth;
+
+    /**  Age of data clock.
+     *   Units: Hours */
+    uint8_t AODC;
+
+    /** Equipment group delay differential on B1 signal.
+     *  Units: Nano-Seconds */
+    double tgd1;
+
+    /** Equipment group delay differential on B2 signal.
+     *  Units: Nano-Seconds */
+    double tgd2;
+
+    /** User range accuracy index (4-bits).
+     *  Units: Unit-less */
+    uint8_t URAI;
+};
+
+/** Ephemeris information for GALILEO*/
+struct GalileoEphemeris{
+
+    /**  Common ephemeris data. */
+    GnssEphCommon commonData;
+
+    /** Galileo Signal Source.*/
+    GalEphSignalSource dataSourceSignal;
+
+    /**  Signal-in-space index for dual frequency E1-E5b/E5a depending on GalEphSignalSource.
+     *   Units: Unit-less */
+    uint8_t sisIndex;
+
+    /** E1-E5a Broadcast group delay from F/Nav (E5A).
+     *  Units: Seconds */
+    double bgdE1E5a;
+
+    /**  E1-E5b Broadcast group delay from I/Nav (E1B or E5B).
+     * For E1B or E5B signal, both bgdE1E5a and bgdE1E5b are valid.
+     * For E5A signal, only bgdE1E5a is valid.
+     * Signal source identified using GalEphSignalSource.
+     * Units: Seconds */
+    double bgdE1E5b;
+
+    /** SV health status of signal identified by GalEphSignalSource.
+     * Valid Values:
+     * 0 : Healthy
+     * 1 : Unhealthy */
+    uint8_t svHealth;
+};
+
+/** Ephemeris information for QZSS*/
+struct QzssEphemeris{
+    /** Common GPS-QZSS Ephemeris structure */
+    GpsQzssEphemeris qzssEphData;
+};
+
+/** Ephemeris information for NAVIC*/
+struct NavicEphemeris {
+    /** Common ephemeris data. */
+    GnssEphCommon commonData;
+    /** Week number since the NavIC system time start epoch (August 22, 1999) */
+    uint32_t weekNum;
+    /** Issue of Data, Clock */
+    uint32_t iodec;
+    /** Health status of navigation data on L5 SPS signal.
+     *  0=OK,
+     *  1=bad */
+    uint8_t l5Health;
+    /** Health status of navigation data on S SPS signal.
+     *  0=OK,
+     *  1=bad */
+    uint8_t sHealth;
+    /** Inclination angle at reference time
+     *  Unit: radian */
+    double inclinationAngleRad;
+    /** User Range Accuracy Index(4bit) */
+    uint8_t urai;
+    /** Time of Group delay
+     *  Unit: second */
+    double  tgd;
+};
+
+/**
+ * Specify the Ephemeris information for a constellation received from the GNSS engine.
+ */
+struct GnssEphemeris {
+    /** SV constellation type.*/
+    GnssSystem constellationType;
+
+    /** Validity of GNSS System Time of the ephemeris report */
+    bool isSystemTimeValid;
+
+    /** GNSS System Time of the ephemeris report */
+    TimeInfo timeInfo;
+
+    /** Based on Constellation type, only the vector for the specified constellation
+     * shall be populated while the other vectors will be empty. */
+
+    /** Ephemeris Data for each GPS SV */
+    std::vector<GpsQzssEphemeris> gpsEphemerisData;
+
+    /** Ephemeris Data for each GLONASS SV */
+    std::vector<GlonassEphemeris> gloEphemerisData;
+
+    /** Ephemeris Data for each BDS SV */
+    std::vector<BdsEphemeris> bdsEphemerisData;
+
+    /** Ephemeris Data for each GAL SV */
+    std::vector<GalileoEphemeris> galEphemerisData;
+
+    /** Ephemeris Data for each QZSS SV */
+    std::vector<QzssEphemeris> qzssEphemerisData;
+
+    /** Ephemeris Data for each NAVIC SV */
+    std::vector<NavicEphemeris> navicEphemerisData;
 };
 
 /** Specify leap second change event info.*/
@@ -1728,7 +2158,17 @@ enum GnssReportType {
      * Also refer to @ref ILocationManager::startDetailedEngineReports
      * to understand the usage further.
      */
-    ENGINE_NMEA       = (1 << 7)
+    ENGINE_NMEA       = (1 << 7),
+    /**
+     * To receive updates via @ref ILocationListener::onGnssEphemerisInfo,
+     * clients need to set this bit in the reportMask parameter passed to
+     * @ref ILocationManager::startDetailedReports and
+     * @ref ILocationManager::startDetailedEngineReports.
+     *
+     * These reports are obtained only from the GNSS(SPE) engine
+     * whenever there is an update in the ephemeris information for a constellation.
+     */
+    EPHEMERIS         = (1 << 8)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
@@ -2011,6 +2451,48 @@ enum LocConfigIndicationsType {
 using LocConfigIndications = std::bitset<32>;
 
 /**
+ * @deprecated This Enum is no longer supported.
+ * Use @ref ILocationInfoEx::NavigationSolutionType to get the required information about
+ * solutions (corrections) used in the fix.
+ */
+/**
+ * Specify set of navigation solutions that contribute to Gnss Location.
+ * Defines Satellite Based Augmentation System(SBAS) corrections.
+ * SBAS contributes to improve the performance of GNSS system.
+ */
+enum SbasCorrectionType {
+  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
+                             SBAS ionospheric correction is used */
+  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
+                             SBAS fast correction is used */
+  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
+                             SBAS long correction is used */
+  SBAS_INTEGRITY, /**< Bit mask to specify whether
+                      SBAS integrity information is used */
+  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
+                              SBAS DGNSS correction is used */
+  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
+                            SBAS RTK correction is used */
+  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
+                            SBAS PPP correction is used */
+  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
+                            SBAS RTK fixed correction is used */
+  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                            only SBAS corrected SV is used */
+  SBAS_COUNT  /**< Bitset */
+};
+/**
+ * @deprecated This bitmask is no longer supported.
+ * Use @ref ILocationInfoEx::NavigationSolution to get the required information about
+ * solutions (corrections) used in the fix.
+ */
+/**
+ * Bit mask that denotes which of the SBAS corrections in SbasCorrection used
+ * to improve the performance of GNSS output.
+ */
+using SbasCorrection = std::bitset<SBAS_COUNT>;
+
+/**
  * @brief ILocationInfoBase provides interface to get basic position related
  * information like latitude, longitude, altitude, timestamp.
  *
@@ -2151,12 +2633,43 @@ public:
  */
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
+/**
+ * Retrieves time uncertainty.
+ * For PVT report from SPE engine, confidence level is at 99%.
+ * For PVT reports from other engines, confidence level is undefined.
+ *
+ * @return - Time uncertainty in milliseconds.
+ *
+ */
+  virtual float getTimeUncMs() = 0;
+
+/**
+ * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
+ * Used for time sync between different systems. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time
+ *
+ */
+  virtual uint64_t getElapsedGptpTime() = 0;
+
+/**
+ * Retrieves elapsed gPTP time uncertainty. Validity of this field is given by value of
+ * @ref LocationValidityType::HAS_GPTP_TIME_UNC_BIT
+ *    - Units: Nanoseconds
+ *
+ * @returns elapsed gPTP time uncertainty
+ *
+ */
+  virtual uint64_t getElapsedGptpTimeUnc() = 0;
+
 };
 
 /**
  * @brief ILocationInfoEx provides interface to get richer position related
  * information like latitude, longitude, altitude and other information like time stamp,
- * session status, dop, reliabilities, uncertainities etc.
+ * session status, dop, reliabilities, uncertainties etc.
  *
  */
 class ILocationInfoEx : public ILocationInfoBase {
@@ -2164,7 +2677,7 @@ public:
 
 /**
  * Retrives the validity of the location info ex. It provides the validity of various information
- * like dop, reliabilities, uncertainities etc.
+ * like dop, reliabilities, uncertainties etc.
  *
  * @returns Location ex validity mask
  */
@@ -2328,12 +2841,12 @@ public:
   virtual void getSVIds(std::vector<uint16_t> &idsOfUsedSVs) = 0;
 
 /**
- * Retrieves navigation solution mask used to indicate SBAS corrections.
+ * Retrieves navigation solution mask used to indicate solutions used in the fix.
  *
- * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
+ * @return - Navigation solution mask used.
  *
  */
-  virtual SbasCorrection getSbasCorrection() = 0;
+  virtual NavigationSolution getNavigationSolution() = 0;
 
 /**
  * Retrieves position technology mask used to indicate which technology is used.
@@ -2362,16 +2875,6 @@ public:
  *
  */
   virtual SystemTime getGnssSystemTime() = 0;
-
-/**
- * Retrieves time uncertainity.
- * For PVT report from SPE engine, confidence level is at 99%.
- * For PVT reports from other engines, confidence level is undefined.
- *
- * @return - Time uncertainty in milliseconds.
- *
- */
-  virtual float getTimeUncMs() = 0;
 
 /**
  * Retrieves leap seconds if available.
@@ -2520,6 +3023,26 @@ public:
  *
  */
   virtual float getProtectionLevelVertical() = 0;
+
+/**
+ * Retrieves navigation solution mask used to indicate SBAS corrections.
+ *
+ * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
+ *
+ * @deprecated This API is no longer supported.
+ * Use @ref ILocationInfoEx::getNavigationSolution to get the required information about
+ * solutions (corrections) used in the fix.
+ *
+ */
+  virtual SbasCorrection getSbasCorrection() = 0;
+
+/** List of DGNSS station IDs providing corrections.
+ *  Range:
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - Other values reserved.
+ */
+  virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
 };
 

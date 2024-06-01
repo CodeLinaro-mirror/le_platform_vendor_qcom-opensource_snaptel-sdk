@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -72,12 +72,15 @@ typedef enum {
 typedef struct {
     bool out_of_zone;   /**< Is RV out of zone of HV? */
     double ttc;         /**< HV Time to crash RV*/
+    double distFromRV;  /**< Distance between HV and RV*/
     lane_types lt;      /**< @lane_types Lane of RV relative to HV */
     bool rapid_decl;    /**< Is RV rapidly decelerating ?*/
     bool stopped;       /**< Is RV stopped ?*/
     bool airbag;        /**< Are airbags open in RV */
     uint64_t hv_timestamp_ms;   /**< Recent timestamp on bsm of the host, Useful for logging warnings*/
     int hv_msgcnt;     /**< Message count of the recent bsm of the host, Useful for logging warnings*/
+    uint64_t rv_timestamp_ms;   /**< Recent timestamp on bsm of the rv*/
+    int rv_msgcnt;     /**< Message count of the recent bsm of the rv*/
     int totalCnt;      /**< Total number of messsages with different msg cnts received by the host*/
     int lastTotalCnt;  /**< Used to calculate msg rate*/
     uint64_t lastTime; /**< Used to calculate msg rate*/
@@ -95,9 +98,10 @@ void init_safety_thr(FILE *fp);
 /** @brief Calculates the time to crash for HV and RV based on distance and relative velocity between them.
  *  @param[in] Host pointer to msg_contents of the host. Contains all the information about the host.
  *  @param[in] Remote pointer to msg_contents of the remote. Contains all the information about the remote.
+ *  @param[in] Distance from RV.
  *  @return double , time to crash in sec
  */
-double time_to_crash(msg_contents *host, msg_contents *remote);
+double time_to_crash(msg_contents *host, msg_contents *remote, double distFromRV);
 
 /** @brief Extrapolates the RV coordinates and speed at its timestamp to the timestamp of the host.
  *  @param[in] Host pointer to msg_contents of the host. Contains all the information about the host.
@@ -105,6 +109,8 @@ double time_to_crash(msg_contents *host, msg_contents *remote);
  *  @return void
  */
 void extrapolate(msg_contents *hv, msg_contents *rv);
+
+void updateRVMsgCount(bsm_value_t *remote_bsm, rv_specs *rvsp);
 
 /** @brief Extrapolates the RV coordinates and speed at its timestamp to the timestamp of the host.
  *  @param[in] Host pointer to msg_contents of the host. Contains all the information about the host.

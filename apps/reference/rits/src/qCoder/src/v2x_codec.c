@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -114,11 +114,14 @@ int decode_msg(msg_contents *mc)
             return ret;
         } else {
             ieee1609_2_data *ie = mc->ieee1609_2data;
-            if (ie->content != unsecuredData)
+            if (ie->content != unsecuredData){
+                if(gVerbosity)
+                    fprintf(stderr, "IEEE1609.2 contains signed data\n");
                 return 1;
+            }
         }
         if(gVerbosity)
-            printf("PSID of received message is: %02x\n", wsmpp->psid); 
+            printf("PSID of received message is: %02x\n", wsmpp->psid);
         if (wsmpp->psid == PSID_WSA && mc->msgId == ((int)WSA_MSG_ID)) {
 #ifdef WITH_WSA
             if ((ret = decode_as_wsa(mc)) < 0) {
@@ -140,8 +143,7 @@ int decode_msg(msg_contents *mc)
                     if(gVerbosity)
                         fprintf(stderr, "J2735 decode failure\n");
                     return -1;
-                } else {
-                    // decode_as_j2735 returned msg_id after successful decoding.
+                }else{
                     ret = 0;
                 }
             }
@@ -160,7 +162,6 @@ int decode_msg(msg_contents *mc)
         }
 #endif
     }
-
     return ret;
 }
 /**

@@ -1,9 +1,13 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
+#include <ctime>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
@@ -183,6 +187,8 @@ ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
         return ErrorCode::INTERNAL;
     } else if (errorCode == "CLIENT_IDS_EXHAUSTED") {
         return ErrorCode::CLIENT_IDS_EXHAUSTED;
+    } else if (errorCode == "NOTSUPPORTED"){
+        return ErrorCode::NOT_SUPPORTED;
     }
 
     return ErrorCode::INTERNAL_ERR;
@@ -243,20 +249,6 @@ std::string CommonUtils::readSystemDataValue(
     return value;
 }
 
-void CommonUtils::writeSystemDataValue(
-    Json::Value &node, std::string value, std::vector<std::string> &path) {
-    try {
-        std::string p = path.front();
-        path.erase(path.begin());
-        if (path.size() > 0) {
-            writeSystemDataValue(node[p], value, path);
-        } else {
-            node[p] = value;
-        }
-    } catch (std::exception &ex) {
-        LOG(DEBUG, ex.what());
-    }
-}
 std::string CommonUtils::readSystemDataValue(
     std::string subsystem, std::string defaultValue, std::vector<std::string> path) {
     Json::Value jsonValue;
@@ -270,20 +262,6 @@ std::string CommonUtils::readSystemDataValue(
     }
     LOG(DEBUG, "Read ", value, " in ", __FUNCTION__);
     return value;
-}
-
-ErrorCode CommonUtils::writeSystemDataValue(
-    std::string subsystem, std::string value, std::vector<std::string> path) {
-    Json::Value root;
-    ErrorCode err = ErrorCode::GENERIC_FAILURE;
-    JsonParser::readFromJsonFile(root, "system-state/" + subsystem + ".json");
-    if (path.size() > 0) {
-        std::string attr = path.front();
-        path.erase(path.begin());
-        writeSystemDataValue(root[attr], value, path);
-        err = JsonParser::writeToJsonFile(root, "system-state/" + subsystem + ".json");
-    }
-    return err;
 }
 
 ErrorCode CommonUtils::readJsonData(std::string apiJsonPath, std::string stateJsonPath,
@@ -337,6 +315,16 @@ telux::common::ServiceStatus CommonUtils::mapServiceStatus(std::string status) {
     }
 }
 
+std::string CommonUtils::mapServiceString(telux::common::ServiceStatus srvStatus) {
+    if (srvStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        return "SERVICE_UNAVAILABLE";
+    } else if (srvStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        return "SERVICE_AVAILABLE";
+    } else {
+        return "SERVICE_FAILED";
+    }
+}
+
 std::vector<std::string> CommonUtils::splitString(const std::string &s, char delim) {
     std::vector<std::string> elements;
     std::istringstream ss(s);
@@ -350,6 +338,34 @@ std::vector<std::string> CommonUtils::splitString(const std::string &s, char del
         }
     }
     return elements;
+}
+
+std::string CommonUtils::getCurrentTimeHHMMSS() {
+    using namespace std::chrono;
+    auto ms =
+        std::chrono::duration_cast<milliseconds>(
+            high_resolution_clock::now().time_since_epoch());
+    ms %= 1000;
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+
+    std::stringstream nowSs;
+    nowSs << std::put_time(&tm, "%H%M%S") << '.' << ms.count()/10;
+
+    return nowSs.str();
+}
+
+int CommonUtils::bitwiseXOR(const std::string& str) {
+    if (str.size() <= 0) {
+        return 0;
+    }
+    int res = static_cast<int>(str[0]);
+
+    for (size_t i = 1; i < str.size(); ++i) {
+        res ^= static_cast<int>(str[i]);
+    }
+
+    return res;
 }
 
 std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
@@ -379,5 +395,17 @@ std::string CommonUtils::getGrpcPort() {
     auto config = std::make_shared<SimulationConfigParser>();
     return ("localhost:" + config->getValue("RPC_PORT"));
 }
+
+std::vector<std::string> CommonUtils::splitString(std::string msg) {
+    std::stringstream ss(msg);
+    std::vector<std::string> message;
+    while(ss.good()) {
+        std::string str;
+        getline(ss, str, ',');
+        message.push_back(str);
+    }
+    return message;
+}
+
 }  // namespace common
 }  // namespace telux

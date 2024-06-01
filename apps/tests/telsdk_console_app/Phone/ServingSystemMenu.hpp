@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -68,6 +68,10 @@ public:
    void getSystemInfo(std::vector<std::string> userInput);
    void requestNetworkInfo(std::vector<std::string> userInput);
    void requestRFBandInfo(std::vector<std::string> userInput);
+   void getNetworkRejectInfo(std::vector<std::string> userInput);
+   void getCallBarringInfo(std::vector<std::string> userInput);
+   void getSmsCapability(std::vector<std::string> userInput);
+   void getLteCsCapability(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -61,7 +61,7 @@ namespace tel {
  *            The methods in listener can be invoked from multiple different
  *            threads. The implementation should be thread safe.
  */
-class ISubscriptionListener : public telux::common::IServiceStatusListener{
+class ISubscriptionListener : public telux::common::IServiceStatusListener {
 
 public:
    /**

@@ -52,7 +52,7 @@ namespace tel {
 
 SubscriptionManagerStub::SubscriptionManagerStub(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<PhoneService>();
+    stub_ = CommonUtils::getGrpcStub<SubscriptionService>();
     cardstub_ = CommonUtils::getGrpcStub<CardService>();
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
     auto f = std::async(std::launch::async,

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -122,6 +122,12 @@ void MyCallListener::onECallMsdTransmissionStatus(int phoneId, telux::common::Er
    }
 }
 
+void MyCallListener::onRingbackTone(bool isAlerting, int phoneId) {
+   PRINT_NOTIFICATION << "onRingbackTone: "
+                      << (isAlerting == true ? "Start":"Stop") << " playing ringback tone on slot "
+                      << phoneId << std::endl;
+}
+
 std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
    switch(cs) {
       case telux::tel::CallState::CALL_IDLE:
@@ -159,14 +165,20 @@ std::string MyCallListener::getCallEndCauseString(telux::tel::CallEndCause callE
       case telux::tel::CallEndCause::NORMAL:
          return std::string("Normal");
       case telux::tel::CallEndCause::BUSY:
+      case telux::tel::CallEndCause::USER_BUSY:
+      case telux::tel::CallEndCause::SIP_BUSY:
          return std::string("Busy");
       case telux::tel::CallEndCause::NO_USER_RESPONDING:
          return std::string("No user responding");
       case telux::tel::CallEndCause::NO_ANSWER_FROM_USER:
          return std::string("No answer from user");
       case telux::tel::CallEndCause::NOT_REACHABLE:
+      case telux::tel::CallEndCause::SIP_NOT_REACHABLE:
          return std::string("Not reachable");
       case telux::tel::CallEndCause::CALL_REJECTED:
+      case telux::tel::CallEndCause::USER_REJECT:
+      case telux::tel::CallEndCause::SIP_USER_REJECTED:
+      case telux::tel::CallEndCause::SIP_REQUEST_CANCELLED:
          return std::string("Call rejected");
       case telux::tel::CallEndCause::NUMBER_CHANGED:
          return std::string("Number changed");
@@ -280,6 +292,84 @@ std::string MyCallListener::getCallEndCauseString(telux::tel::CallEndCause callE
          return std::string("CDMA not emergency");
       case telux::tel::CallEndCause::CDMA_ACCESS_BLOCKED:
          return std::string("CDMA access blocked");
+      case telux::tel::CallEndCause::EMERGENCY_TEMP_FAILURE:
+         return std::string("Emergency temporary failure");
+      case telux::tel::CallEndCause::EMERGENCY_PERM_FAILURE:
+         return std::string("Emergency permanent failure");
+      case telux::tel::CallEndCause::HO_NOT_FEASIBLE:
+         return std::string("Hand over not feasible");
+      case telux::tel::CallEndCause::LOW_BATTERY:
+         return std::string("Low battery");
+      case telux::tel::CallEndCause::BLACKLISTED_CALL_ID:
+         return std::string("Blacklisted call ID");
+      case telux::tel::CallEndCause::CS_RETRY_REQUIRED:
+         return std::string("CS retry required");
+      case telux::tel::CallEndCause::NETWORK_UNAVAILABLE:
+         return std::string("Network unavailable");
+      case telux::tel::CallEndCause::FEATURE_UNAVAILABLE:
+         return std::string("Feature unavailable");
+      case telux::tel::CallEndCause::SIP_ERROR:
+         return std::string("SIP error");
+      case telux::tel::CallEndCause::MISC:
+         return std::string("MISC");
+      case telux::tel::CallEndCause::ANSWERED_ELSEWHERE:
+         return std::string("Answered elsewhere");
+      case telux::tel::CallEndCause::PULL_OUT_OF_SYNC:
+         return std::string("Pull out of sync");
+      case telux::tel::CallEndCause::CAUSE_CALL_PULLED:
+         return std::string("Cause call pulled");
+      case telux::tel::CallEndCause::SIP_REDIRECTED:
+         return std::string("Redirected");
+      case telux::tel::CallEndCause::SIP_BAD_REQUEST:
+         return std::string("Bad request");
+      case telux::tel::CallEndCause::SIP_FORBIDDEN:
+         return std::string("Forbidden");
+      case telux::tel::CallEndCause::SIP_NOT_FOUND:
+         return std::string("Remote URI not found");
+      case telux::tel::CallEndCause::SIP_NOT_SUPPORTED:
+         return std::string("Not Supported");
+      case telux::tel::CallEndCause::SIP_REQUEST_TIMEOUT:
+         return std::string("Request timeout");
+      case telux::tel::CallEndCause::SIP_TEMPORARILY_UNAVAILABLE:
+         return std::string("Temporary unavailable");
+      case telux::tel::CallEndCause::SIP_BAD_ADDRESS:
+         return std::string("Bad address");
+      case telux::tel::CallEndCause::SIP_NOT_ACCEPTABLE:
+         return std::string("Not acceptable");
+      case telux::tel::CallEndCause::SIP_SERVER_INTERNAL_ERROR:
+         return std::string("Server internal error");
+      case telux::tel::CallEndCause::SIP_SERVER_NOT_IMPLEMENTED:
+         return std::string("Server not implemented");
+      case telux::tel::CallEndCause::SIP_SERVER_BAD_GATEWAY:
+         return std::string("Bad gateway");
+      case telux::tel::CallEndCause::SIP_SERVICE_UNAVAILABLE:
+         return std::string("Service unavailable");
+      case telux::tel::CallEndCause::SIP_SERVER_TIMEOUT:
+         return std::string("Server timeout");
+      case telux::tel::CallEndCause::SIP_SERVER_VERSION_UNSUPPORTED:
+         return std::string("Server version unsupported");
+      case telux::tel::CallEndCause::SIP_SERVER_MESSAGE_TOOLARGE:
+         return std::string("Message too large");
+      case telux::tel::CallEndCause::SIP_SERVER_PRECONDITION_FAILURE:
+         return std::string("Precondition failure");
+      case telux::tel::CallEndCause::SIP_GLOBAL_ERROR:
+         return std::string("Global error");
+      case telux::tel::CallEndCause::MEDIA_INIT_FAILED:
+         return std::string("Media init failed");
+      case telux::tel::CallEndCause::MEDIA_NO_DATA:
+         return std::string("Media no data");
+      case telux::tel::CallEndCause::MEDIA_NOT_ACCEPTABLE:
+         return std::string("Media not acceptable");
+      case telux::tel::CallEndCause::MEDIA_UNSPECIFIED_ERROR:
+         return std::string("Media unspecified error");
+      case telux::tel::CallEndCause::HOLD_RESUME_FAILED:
+         return std::string("Hold resume failed");
+      case telux::tel::CallEndCause::HOLD_RESUME_CANCELED:
+         return std::string("Hold resume cancelled");
+      case telux::tel::CallEndCause::HOLD_REINVITE_COLLISION:
+         return std::string("Hold reinvite collision");
+      case telux::tel::CallEndCause::THERMAL_EMERGENCY:
+         return std::string("Thermal emergency");
       case telux::tel::CallEndCause::ERROR_UNSPECIFIED:
          return std::string("Error unspecified");
       default:

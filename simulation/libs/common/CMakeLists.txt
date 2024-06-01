@@ -35,6 +35,14 @@ set (COMMON_STUB_SOURCES
     CsvHandler.cpp
     CommonUtils.cpp
     Utils.cpp
+    BaseState.cpp
+    BaseStateMachine.cpp
+    CommandCallbackManager.cpp
+    TaskQueue.cpp
+    TaskThread.cpp
+    TaskDispatcher.cpp
+    ../../common/therm/ThermalZone.cpp
+    ../../common/therm/CoolingDevice.cpp
 )
 
 add_library (${TARGET_COMMON_LIBRARY} SHARED  ${COMMON_STUB_SOURCES})

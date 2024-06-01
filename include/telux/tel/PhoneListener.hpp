@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -100,7 +100,7 @@ namespace tel {
  * The methods in listener can be invoked from multiple different threads. The
  * implementation should be thread safe.
  */
-class IPhoneListener : public common::IServiceStatusListener{
+class IPhoneListener : public common::IServiceStatusListener {
 public:
    /**
     * This function is called when device service state changes.
@@ -198,6 +198,22 @@ public:
     * @ref ECallModeInfo
     */
    virtual void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) {
+   }
+
+   /**
+    * This function is called when operator information of the device currently camped on
+    * network changes
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to receive this notification.
+    *
+    * @param [in] phoneId - Unique Id of phone for which operator information changed
+    * @param [in] info - Indicates plmn information change reason @ref OperatorInfo
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) {
    }
 
    virtual ~IPhoneListener() {

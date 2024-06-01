@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -93,8 +93,6 @@ public:
     * @returns SERVICE_AVAILABLE    - If Subscription manager is ready for service.
     *          SERVICE_UNAVAILABLE  - If Subscription manager is temporarily unavailable.
     *          SERVICE_FAILED       - If Subscription manager encountered an irrecoverable failure.
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     *
     */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;

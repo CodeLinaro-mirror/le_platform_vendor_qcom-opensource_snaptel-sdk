@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -144,6 +144,8 @@ enum class Cv2xCauseType {
     NO_GNSS,           /**< CV2X is inactive due to GNSS signal is not available when
                             starting CV2X. */
     INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
+
+    NO_DATA_CALL,      /**< CV2X is inactive due to no cv2x data call. */
     UNKNOWN,           /**< Invalid cause type only used internally. */
 };
 

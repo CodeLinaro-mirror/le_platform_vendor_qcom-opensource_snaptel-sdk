@@ -41,6 +41,7 @@ include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/src/qApplication/SafetyApps
     ${PROJECT_SOURCE_DIR}/src/qMessenger/ThrottleManager
     ${PROJECT_SOURCE_DIR}/src/qApplication/Monitor
+    ${PROJECT_SOURCE_DIR}/src/qApplication/Utils
 )
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
     include_directories(${ASN1C_SKELETONS}

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -87,6 +87,7 @@ public:
    static std::string techPreferenceToString(telux::data::TechPreference techPref);
    static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
    static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
+   static std::string usageResetReasonToString(telux::data::UsageResetReason usageResetReason);
    static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
    static std::string operationTypeToString(telux::data::OperationType oprType);
    static std::string protocolToString(telux::data::IpProtocol proto);
@@ -101,6 +102,7 @@ public:
    static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
    static void populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
    static std::string backhaulToString(telux::data::BackhaulType backhaul);
+   static std::string emergencyAllowedTypeToString(telux::data::EmergencyCapability cap);
 };
 
 #endif  // DATAUTILS_HPP

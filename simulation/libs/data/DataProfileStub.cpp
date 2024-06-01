@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -13,7 +13,8 @@ namespace data {
 DataProfile::DataProfile(int id, const std::string &name, const std::string &apn,
                          const std::string &username, const std::string &password,
                          IpFamilyType ipFamilyType, TechPreference techPref,
-                         AuthProtocolType authType, ApnTypes apnTypes)
+                         AuthProtocolType authType, ApnTypes apnTypes,
+                         EmergencyCapability emergencyAllowed)
    : id_(id)
    , name_(name)
    , apn_(apn)
@@ -22,7 +23,8 @@ DataProfile::DataProfile(int id, const std::string &name, const std::string &apn
    , ipFamilyType_(ipFamilyType)
    , techPref_(techPref)
    , authType_(authType)
-   , apnTypes_(apnTypes) {
+   , apnTypes_(apnTypes)
+   , emergencyAllowed_(emergencyAllowed) {
 }
 
 int DataProfile::getId() {
@@ -60,14 +62,18 @@ ApnTypes DataProfile::getApnTypes() {
    return apnTypes_;
 }
 
+EmergencyCapability DataProfile::getIsEmergencyAllowed() {
+    return emergencyAllowed_;
+}
+
 std::string DataProfile::toString() {
-   std::stringstream ss;
-   ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
-      << ", password: " << password_ << ", IP Family: " << static_cast<int>(ipFamilyType_)
-      << ", Tech Pref: " << static_cast<int>(techPref_)
-      << ", Auth Type: " << static_cast<int>(authType_)
-      << ", Apn Type: " << apnTypes_.to_string();
-   return ss.str();
+  std::stringstream ss;
+  ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
+    << ", password: " << password_ << ", IP Family: " << static_cast<int>(ipFamilyType_)
+    << ", Tech Pref: " << static_cast<int>(techPref_)
+    << ", Auth Type: " << static_cast<int>(authType_) << ", Apn Type: " << apnTypes_.to_string()
+    << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_);
+    return ss.str();
 }
 }
 }

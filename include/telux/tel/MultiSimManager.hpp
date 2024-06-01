@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -155,8 +155,6 @@ public:
     * @returns SERVICE_AVAILABLE    - If MultiSim manager is ready for service.
     *          SERVICE_UNAVAILABLE  - If MultiSim manager is temporarily unavailable.
     *          SERVICE_FAILED       - If MultiSim manager encountered an irrecoverable failure.
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     *
     */
    virtual telux::common::ServiceStatus getServiceStatus() = 0;
@@ -266,7 +264,7 @@ public:
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class IMultiSimListener : public common::IServiceStatusListener{
+class IMultiSimListener : public common::IServiceStatusListener {
 public:
 
    /**

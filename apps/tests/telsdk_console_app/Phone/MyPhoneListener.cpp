@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -60,43 +60,6 @@
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <iostream>
@@ -256,6 +219,25 @@ void MyPhoneListener::onSignalStrengthChanged(
             PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
                  << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
         }
+
+        if(signalStrength->getWcdmaSignalStrength()->getEcio()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << signalStrength->getWcdmaSignalStrength()->getEcio() << std::endl;
+        }
+
+        if(signalStrength->getWcdmaSignalStrength()->getRscp()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "WCDMA Reference Signal Code Power(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "WCDMA Reference Signal Code Power(in dBm): "
+                << signalStrength->getWcdmaSignalStrength()->getRscp() << std::endl;
+        }
+
         PRINT_NOTIFICATION
             << "WCDMA Signal Level: "
             << MyPhoneHelper::signalLevelToString(
@@ -398,6 +380,22 @@ std::string MyPhoneHelper::radioTechToString(
         break;
     }
     return rtString;
+}
+
+std::string MyPhoneHelper::operatorInfoIsHomeToString(telux::common::BoolValue isHome) {
+    std::string state = "";
+    switch (isHome) {
+    case telux::common::BoolValue::STATE_FALSE:
+        state = "FALSE";
+        break;
+    case telux::common::BoolValue::STATE_TRUE:
+        state = "TRUE";
+        break;
+    default:
+        state = "UNKNOWN";
+        break;
+    }
+    return state;
 }
 
 void MyVoiceServiceStateCallback::voiceServiceStateResponse(
@@ -934,6 +932,17 @@ std::string MyPhoneListener::eCallModeReasonToString(telux::tel::ECallModeReason
     return reason;
 }
 
+void MyPhoneListener::onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) {
+
+    PRINT_NOTIFICATION << "Operator information changes for PhoneId = " << phoneId
+                       << " , short name = " << info.shortName
+                       << " , long name = " << info.longName
+                       << " , plmn = " << info.plmn
+                       << " , is from home network = "
+                       <<  MyPhoneHelper::operatorInfoIsHomeToString(info.isHome)
+                       << std::endl;
+}
+
 void MySetECallOperatingModeCallback::setECallOperatingModeResponse(
     telux::common::ErrorCode error) {
     std::cout << "\n";
@@ -960,12 +969,16 @@ void MyGetECallOperatingModeCallback::getECallOperatingModeResponse(
     }
 }
 
-void MyOperatorNameCallback::requestOperatorNameCb(std::string operatorLongName,
-   std::string operatorShortName, telux::common::ErrorCode error) {
+void MyOperatorInfoCallback::requestOperatorInfoCb(telux::tel::PlmnInfo info,
+    telux::common::ErrorCode error) {
    std::cout << "\n";
    if (error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "Operator long name: " << operatorLongName
-          << " Short name: " << operatorShortName << "\n";
+      PRINT_CB << "Operator long name: " << info.longName
+          << ", short name: " << info.shortName
+          << ", plmn: " << info.plmn
+          << " , is from home network = "
+          << MyPhoneHelper::operatorInfoIsHomeToString(info.isHome)
+          << "\n";
    } else {
       PRINT_CB << "Operator name request failed with errorCode: "
           << Utils::getErrorCodeAsString(error) << "\n";

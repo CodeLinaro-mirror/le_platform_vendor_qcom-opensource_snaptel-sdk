@@ -53,7 +53,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
-#include "protos/proto-src/tel.grpc.pb.h"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "event/ServerEventManager.hpp"

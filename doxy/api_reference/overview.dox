@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -277,6 +277,9 @@ Data Serving System Manager provides the interface to access network and modem l
    - Request Modem Service Status
    - Request Modem Roaming Status
    - Register to get notifications when Service Status and Roaming status Change
+Data client Manager APIs provide functionality such as
+   - fetch device data usage
+Configurations relevant to device data usage monitoring are available in data related configuration files - /etc/data/mobileap_cfg.xml and /etc/data/ipa/IPACM_cfg.xml
 
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences

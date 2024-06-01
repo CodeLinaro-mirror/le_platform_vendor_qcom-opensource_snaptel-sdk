@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,8 +76,6 @@ class WlanFactory {
      *                                  WlanDeviceManager @ref telux::common::InitResponseCb
      * @returns instance of IWlanDeviceManager
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::shared_ptr<IWlanDeviceManager> getWlanDeviceManager(
        telux::common::InitResponseCb clientCallback = nullptr) = 0;
@@ -87,8 +85,6 @@ class WlanFactory {
      *
      * @returns instance of IApInterfaceManager
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::shared_ptr<IApInterfaceManager> getApInterfaceManager() = 0;
 
@@ -97,8 +93,6 @@ class WlanFactory {
      *
      * @returns instance of IStaInterfaceManager
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::shared_ptr<IStaInterfaceManager> getStaInterfaceManager() = 0;
 

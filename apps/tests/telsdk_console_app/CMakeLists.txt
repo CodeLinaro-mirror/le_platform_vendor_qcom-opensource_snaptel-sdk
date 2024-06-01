@@ -82,6 +82,8 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/vlan/VlanMenu.cpp
    Data/socks/SocksMenu.cpp
    Data/data_settings/DataSettingsMenu.cpp
+   Data/client/ClientMenu.cpp
+   Data/client/ClientListener.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

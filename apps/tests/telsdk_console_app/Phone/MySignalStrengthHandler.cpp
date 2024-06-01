@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -200,6 +200,25 @@ void MySignalStrengthCallback::signalStrengthResponse(
             PRINT_CB << "WCDMA Bit Error Rate: "
                  << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
         }
+
+        if(signalStrength->getWcdmaSignalStrength()->getEcio()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                << signalStrength->getWcdmaSignalStrength()->getEcio() << std::endl;
+        }
+
+        if(signalStrength->getWcdmaSignalStrength()->getRscp()
+             == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                << signalStrength->getWcdmaSignalStrength()->getRscp() << std::endl;
+        }
+
         PRINT_CB
             << "WCDMA Signal Level: "
             << signalLevelToString(signalStrength->getWcdmaSignalStrength()->getLevel())

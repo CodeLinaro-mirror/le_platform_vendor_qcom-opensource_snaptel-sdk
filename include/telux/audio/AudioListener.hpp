@@ -27,9 +27,9 @@
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -70,6 +70,7 @@
 #ifndef TELUX_AUDIO_AUDIOLISTENER_HPP
 #define TELUX_AUDIO_AUDIOLISTENER_HPP
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/audio/AudioDefines.hpp>
 
 namespace telux {
@@ -81,7 +82,7 @@ namespace audio {
 /**
  *  Listener for a DTMF tone detected event on a @ref StreamType::VOICE_CALL stream.
  */
-class IVoiceListener {
+class IVoiceListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when a DTMF tone is detected on a @ref StreamType::VOICE_CALL stream.
@@ -100,7 +101,7 @@ class IVoiceListener {
 /**
  *  Listener for events on a playback stream.
  */
-class IPlayListener {
+class IPlayListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when the audio pipeline is ready to accept the next buffer to play
@@ -127,7 +128,7 @@ class IPlayListener {
 /**
  *  Listener for events during transcoding.
  */
-class ITranscodeListener {
+class ITranscodeListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when the audio pipeline is ready to accept the next buffer containing
@@ -149,6 +150,13 @@ class ITranscodeListener {
 /**
  * Listener for the audio service availability. Refer to @ref telux::common::IServiceStatusListener
  * for details.
+ *
+ * When audio service becomes unavailable, if the client was waiting on any outstanding
+ * response callbacks for APIs that were called just before the SSR, those response
+ * callbacks will not be called anymore.
+ *
+ * For example, if stream->setVolume(callback) is called and SSR occurs then the 'callback'
+ * will be never invoked.
  */
 class IAudioListener : public telux::common::IServiceStatusListener {
  public:

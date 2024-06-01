@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *Changes from Qualcomm Innovation Center are provided under the following license:
+ *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -115,10 +115,9 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
         int VerifyMsg(const SecurityOpt opt);
-        int asyncVerify(
-            Kinematics hvKine, Kinematics rvKine,
-            MisbehaviorStats* misbehaviorStat, void* asyncCbData,
-            ValidateCallback callBackFunction);
+        int checkConsistencyandRelevancy(const SecurityOpt opt);
+        int asyncVerify(Kinematics rvKine,
+        MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;
@@ -179,7 +178,7 @@ class AerolinkSecurity : public SecurityService {
         std::vector<AerolinkEncryptionKey const *> recipients_;
         uint32_t numRecipients_;
         uint8_t keyGenMethod_;
-        char lcmName_[50];
+        char lcmName_[50] = "\0";
         IDChangeData* idChangeData_;
         bool enableMisbehavior;
         bool enableConsistency;

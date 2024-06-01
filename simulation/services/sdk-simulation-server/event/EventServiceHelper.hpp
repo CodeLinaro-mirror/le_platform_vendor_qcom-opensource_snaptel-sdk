@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -18,7 +18,7 @@
 #include "libs/common/Logger.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "ServerEventManager.hpp"
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 
 using grpc::ServerContext;
 using grpc::ServerWriter;
@@ -26,6 +26,24 @@ using grpc::Status;
 
 template <typename T>
 class EventServiceHelper: public T::Service {
+public:
+    /**
+     * @brief This API gets the count of clients registered for a particular filter.
+     * The count is useful in knowing if a filter is being registered by the first client
+     * or deregistered by the last client.
+     */
+    inline int getClientsForFilter(std::string filter) {
+        std::lock_guard<std::mutex> lck(clientMtx_);
+        int count = 0;
+        for(auto &client: clients_) {
+            if(std::find(client.second.filters.begin(), client.second.filters.end(), filter)
+                != client.second.filters.end()) {
+                ++count;
+            }
+        }
+        return count;
+    }
+
 protected:
     EventServiceHelper() {
         LOG(DEBUG, __FUNCTION__);
@@ -164,11 +182,16 @@ public:
 
         std::lock_guard<std::mutex> lck(clientMtx_);
         {
-            Client &client = clients_[request->client_id()];
+            /**
+             * For every updateFilter called by a client, it sends the list of filters the client
+             * is currently interested in. Hence we clear the stale list maintained at the server
+             * and update the filter for the client with the updated list.
+             */
+            clients_[request->client_id()].filters.clear();
             for (auto filter : request->filters()) {
                 LOG(DEBUG, __FUNCTION__, ":: putting filter: ", filter,
                     ", clientId: ", request->client_id());
-                client.filters.push_back(filter);
+                clients_[request->client_id()].filters.push_back(filter);
             }
         }
         return grpc::Status::OK;

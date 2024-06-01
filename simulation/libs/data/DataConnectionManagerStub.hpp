@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11,7 +11,7 @@
 
 #include "DataCallStub.hpp"
 #include "common/AsyncTaskQueue.hpp"
-#include "protos/proto-src/data.grpc.pb.h"
+#include "protos/proto-src/data_simulation.grpc.pb.h"
 
 using ::dataStub::DataConnectionManager;
 
@@ -95,6 +95,7 @@ private:
         std::vector<std::shared_ptr<IDataConnectionListener>> &listeners);
     void invokeDataConnectionListener(std::shared_ptr<IDataCall> call);
     void handleEvent(std::string token , std::string event);
+    void requestConnectedDataCallLists();
 };
 
 } // end of namespace data

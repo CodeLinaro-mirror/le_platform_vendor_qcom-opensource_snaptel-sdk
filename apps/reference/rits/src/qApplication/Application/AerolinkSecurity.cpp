@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -64,6 +64,7 @@
 
 #include <iostream>
 #include <sys/time.h>
+#include "qUtils.hpp"
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */
@@ -255,6 +256,19 @@ void printVerifStats(std::thread::id thrId){
 
 static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
     // on call back, this function provides the new cert index for the complete id change cb fn
+    static uint8_t rng_data = 0;
+    int rng_ret = -1;
+    auto app = static_cast<QUtils*>(userData);
+    rng_ret = app->hwTRNGChar(&rng_data);
+    if(rng_ret){
+        printf("Failure in Randon Number Generation for Cert ID \n");
+    }
+    rng_data = (rng_data % numCerts) + 1;
+    if(secVerbosity > 1)
+    {
+        printf(" Random CertIndex within 1 to %d is :%d \n ", numCerts , rng_data);
+    }
+    memcpy(certIndxCb,&rng_data,sizeof(rng_data));
 }
 
 /* The following type defines a callback function prototype for completion of the ID-change
@@ -946,8 +960,74 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkRelevance
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
+int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
+    // Add new smp (if none exists) for this thread
+    AEROLINK_RESULT result;
+    std::thread::id thrId = std::this_thread::get_id();
+    addNewThrSmp(thrId);
+    sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+    //Kinematics hvKine, Kinematics rvKine
+    // Get corresponding smp for this thread
+    SecuredMessageParserC* smp;
+    smp = getThrSmp(thrId);
+    if(smp == nullptr || thrVerifSemPtr == nullptr){
+        if(secVerbosity > 4)
+        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+        return -1;
+    }
+
+    // set the generation location
+    if(secVerbosity > 7){
+        fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
+            opt.hvKine.latitude, opt.hvKine.longitude, opt.hvKine.elevation);
+
+        fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
+            opt.rvKine.latitude, opt.rvKine.longitude, opt.rvKine.elevation);
+    }
+
+    result = smp_setGenerationLocation(*smp, opt.rvKine.latitude, opt.rvKine.longitude,
+            opt.rvKine.elevation);
+    if (result != WS_SUCCESS)
+    {
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to set the generation location (%s)\n", ws_errid(result));
+        return -1;
+    }
+
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking relevance of signed message\n");
+    }
+    // smp_checkRelevance
+    if(opt.enableRelevance){
+        result = smp_checkRelevance(*smp);
+        if (result != WS_SUCCESS)
+        {
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
+            return -1;
+        }
+    }
+
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking consistency of signed message\n");
+    }
+    // smp_checkConsistency
+    if(opt.enableConsistency){
+        result = smp_checkConsistency(*smp);
+        if(result != WS_SUCCESS){
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
+            return -1;
+        }
+    }
+
+    return 1;
+}
+
+// A function to verify a signed packet that can handle multi-threading:
+//   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
-    Kinematics hvKine, Kinematics rvKine,
+    Kinematics rvKine,
     MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
 
     // Add new smp (if none exists) for this thread
@@ -964,48 +1044,6 @@ int AerolinkSecurity::asyncVerify(
         if(secVerbosity > 4)
         fprintf(stderr,"Unable to retrieve SMP for this thread\n");
         return -1;
-    }
-
-    // set the generation location
-    if(secVerbosity > 7){
-        fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
-            hvKine.latitude, hvKine.longitude, hvKine.elevation);
-
-        fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
-            rvKine.latitude, rvKine.longitude, rvKine.elevation);
-    }
-
-    result = smp_setGenerationLocation(*smp, rvKine.latitude, rvKine.longitude,
-            rvKine.elevation);
-    if (result != WS_SUCCESS)
-    {
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to set the generation location (%s)\n", ws_errid(result));
-        return -1;
-    }
-
-    // smp_checkRelevance
-    if(this->enableRelevance){
-        result = smp_checkRelevance(*smp);
-        if (result != WS_SUCCESS)
-        {
-            if(secVerbosity > 4)
-                fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
-            return -1;
-        }
-    }
-
-    if(secVerbosity > 7) {
-        fprintf(stdout, "Now checking consistency of signed message\n");
-    }
-    // smp_checkConsistency
-    if(this->enableConsistency){
-        result = smp_checkConsistency(*smp);
-        if(result != WS_SUCCESS){
-            if(secVerbosity > 4)
-                fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
-            return -1;
-        }
     }
     // async verification
     result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);

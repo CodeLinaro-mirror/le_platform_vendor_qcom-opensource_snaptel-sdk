@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -78,7 +78,8 @@ bool DataSettingsMenu::init() {
             std::make_pair("Set_Band_Interference_Configuration",
             std::bind(&DataSettingsMenu::setBandInterferenceConfig, this, std::placeholders::_1)) ,
             std::make_pair("Request_Band_Interference_Configuration",
-            std::bind(&DataSettingsMenu::requestBandInterferenceConfig, this, std::placeholders::_1)),
+            std::bind(&DataSettingsMenu::requestBandInterferenceConfig,
+                this, std::placeholders::_1)),
             std::make_pair("Configure_Backhaul_Connectivity",
             std::bind(&DataSettingsMenu::setWwanConnectivityConfig, this, std::placeholders::_1)) ,
             std::make_pair("Request_Backhaul_Connectivity",
@@ -95,6 +96,9 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::switchBackHaul, this, std::placeholders::_1)),
             std::make_pair("Restore_Factory_Settings",
             std::bind(&DataSettingsMenu::restoreFactorySettings, this, std::placeholders::_1)),
+            std::make_pair("Is_Device_Data_Usage_Monitoring_Enabled",
+            std::bind(&DataSettingsMenu::isDeviceDataUsageMonitoringEnabled,
+                this, std::placeholders::_1))
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -767,4 +771,25 @@ void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
         std::cout << "Switch Type: " << type << std::endl;
 
     std::cout << std::endl << std::endl;
+}
+
+void DataSettingsMenu::isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand) {
+    std::cout << "\nIs device data usage monitoring enabled" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    SlotId slotId = DEFAULT_SLOT_ID;
+
+    #ifdef FEATURE_EXTERNAL_AP
+        OperationType oprType = telux::data::OperationType::DATA_REMOTE;
+    #else
+        OperationType oprType = telux::data::OperationType::DATA_LOCAL;
+    #endif
+
+    if (dataSettingsManagerMap_.find(oprType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    bool enable = dataSettingsManagerMap_[oprType]->isDeviceDataUsageMonitoringEnabled();
+    std::cout << "RESPONSE: isDeviceDataUsageMonitoringEnabled "
+        << ", Device data usage monitoring is " << (enable ? "enabled" : "disabled") << std::endl;
 }

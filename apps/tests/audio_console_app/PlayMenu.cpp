@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,7 +62,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <thread>
 #include <chrono>
 #include <iostream>
 
@@ -427,29 +427,36 @@ void PlayMenu::play() {
         }
     }
 
-    if (ready_ && isAMR()) {
-        std::unique_lock<std::mutex> lck(playStopMutex_);
+    if (ready_) {
+        if(isAMR()) {
+            std::unique_lock<std::mutex> lck(playStopMutex_);
 
-        auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
-            [&p](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                    p.set_value(true);
-                } else {
-                    p.set_value(false);
-                    std::cout << "Failed to stop after playing buffers" << std::endl;
+            auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
+                [&p](telux::common::ErrorCode error) {
+                    if (error == telux::common::ErrorCode::SUCCESS) {
+                        p.set_value(true);
+                    } else {
+                        p.set_value(false);
+                        std::cout << "Failed to stop after playing buffers" << std::endl;
+                    }
+            });
+
+            if(status == telux::common::Status::SUCCESS) {
+                std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
                 }
-        });
-
-        if(status == telux::common::Status::SUCCESS) {
-            std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
-            if (p.get_future().get()) {
-                std::cout << "Pending buffers played successfully" << std::endl;
-                playStopcv_.wait(lck);
+            } else {
+                std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
         } else {
-            std::cout << "Request to stop playback after pending buffers failed" << std::endl;
+            while(freeBuffers_.size() != TOTAL_BUFFERS) {
+                cv_.wait(lock);
+            }
         }
     }
+
 
     if(writeFail_) {
         std::cout << "Play Failed" << std::endl;

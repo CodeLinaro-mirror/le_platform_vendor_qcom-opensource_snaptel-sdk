@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -62,6 +62,8 @@ public:
 
    void onGnssDisasterCrisisInfo(const telux::loc::GnssDisasterCrisisReport &dcReportInfo) override;
 
+   void onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) override;
+
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
@@ -74,9 +76,11 @@ public:
    void setNmeaInfoFlag(bool enable);
    void setMeasurementsInfoFlag(bool enable);
    void setDisasterCrisisInfoFlag(bool enable);
+   void setEphemerisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
    void setEngineNmeaInfoFlag(bool enable);
-   void setDetailedLocationRecordingFlag(bool enable);
+
+   void setRecordingFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -87,10 +91,14 @@ private:
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isDisasterCrisisInfoFlagEnabled_ = false;
+   bool isEphemerisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    bool isEngineNmeaInfoFlagEnabled_ = false;
-   bool isDetailedReportsRecordingEnabled_ = false;
+
+   bool isRecordingEnabled_ = false;
+
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printNavigationSolutionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocationPositionDynamics(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -120,6 +128,13 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
+   void printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData);
+   void printEphSrc(telux::loc::GnssEphSource ephSrc);
+   void printEphAct(telux::loc::GnssEphAction ephAct);
+   void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
+   void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
+
+   void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

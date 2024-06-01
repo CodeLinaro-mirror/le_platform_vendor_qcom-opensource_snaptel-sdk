@@ -47,7 +47,7 @@
 #include <string>
 #include <memory>
 
-#include "protos/proto-src/event.grpc.pb.h"
+#include "protos/proto-src/event_simulation.grpc.pb.h"
 
 #define APP_NAME "EventInjector"
 

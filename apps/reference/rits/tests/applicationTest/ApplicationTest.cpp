@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -128,14 +128,12 @@ bool simMode = false;
 void stopThreads() {
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     if (not stopThread) {
-        cout << "stop threads" << endl;
         stopThread = true;
 
         if (application) {
             application->prepareForExit();
              if(application->configuration.enableCongCtrl &&
                     application->congestionControlManager){
-                std::cout << "Deinitializing congestion control library\n";
                 application->congestionControlManager->stopCongestionControl();
             }
             if (application->qMon) {
@@ -318,15 +316,9 @@ void receive(MessageType msgType, int index) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
     }
-    if(application->configuration.enableVerifStatLog){
-        application->initVerifLogging();
-    }
-    if(application->configuration.enableMbdStatLog)
-        application->initMisbehaviorLogging();
 
     // will need to make this compatible for multiple rx ports
     int ret;
-
     gettimeofday(&application->startRxIntervalTime, NULL);
     while (!stopThread) {
         if(!simMode) {
@@ -384,9 +376,6 @@ void receive(MessageType msgType, int index) {
         printf("Thread (%08x) closing\n", tid);
     }
 
-    // notify other threads to stop
-    stopThreads();
-
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -420,7 +409,7 @@ void ldmRx(void) {
     time_t startTime = currTime.tv_sec;
 
     if (nullptr == application) {
-        cerr << "application nullptr" << endl;
+        cerr << "application is nullptr" << endl;
         return;
     }
     if(application->configuration.enableVerifStatLog){
@@ -602,7 +591,6 @@ void transmitEventMsg() {
                 lastEventTxTime = timestamp_now();
                 nextSchedTxTime = lastEventTxTime + 100;
             }
-            // std::cout << "Sending event message!\n";
             int ret = application->send(0, TransmitType::EVENT);
             if (ret <= 0) {
                 cerr << "Failed to send critical event message." << endl;
@@ -685,8 +673,9 @@ void transmit(MessageType msgType) {
             break;
         case MessageType::DENM:
             cerr << "DENM transmit is not supported" << endl;
+            break;
         default:
-            return;
+            break;
     }
 
     /* Logic here changes if congestion control is enabled */
@@ -777,10 +766,6 @@ void transmit(MessageType msgType) {
             }
         }
     }
-    printf("Sending thread stopped\n");
-
-    // notify other threads to stop
-    stopThreads();
 
     // notify rx thread in case it's waiting for status notification
     statusCv.notify_all();
@@ -820,49 +805,70 @@ void txRecorded(string file) {
     ifstream configFile(file);
     string line;
     bool go = true;
+    bool minLog = false;
+
 
     if (configFile.is_open())
     {
-        auto timer = timestamp_now();
+        if (getline(configFile, line)) {
+            // check if it is minLog format
+            if (line == MIN_LOG_HEADER || application->configuration.preRecordedMinLog) {
+                minLog = true;
+            }
+        } else {
+            cout << "txRecorded - fail to read " << file << endl;
+            return;
+        }
+
+        int tx_timer_fd = start_tx_timer(application->configuration.transmitRate);
+        if (tx_timer_fd == -1) {
+            cerr << "Failed to start record Tx timer" << endl;
+            return;
+        }
+
+        uint64_t exp = 0;
+
         while (go and !stopThread) {
-            if(timer + application->configuration.transmitRate < timestamp_now()){
-                if (getline(configFile, line))
-                {
-                    if (application->configuration.eventPorts.size()) {
-                        const auto iEvent = rand() % application->configuration.eventPorts.size();
-                        auto mc = application->eventContents[iEvent];
-                        auto len = encode_singleline_fromCSV((char *)line.data(), mc->abuf.data,
-                                line.length());
-                        abuf_put(&mc->abuf, len);
-                        // event priority is set per packet using traffic class
-                        application->eventTransmits[iEvent].transmit(
+            if (getline(configFile, line))
+            {
+                if (application->configuration.eventPorts.size()) {
+                    const auto iEvent = rand() % application->configuration.eventPorts.size();
+                    auto mc = application->eventContents[iEvent];
+                    auto len = encode_singleline_fromCSV((char *)line.data(), mc.get(), minLog);
+                    // event priority is set per packet using traffic class
+                    application->eventTransmits[iEvent].transmit(
+                        mc->abuf.data, len,
+                        application->configuration.eventPriority);
+                }
+                if (application->configuration.spsPorts.size()) {
+                    if (getline(configFile, line)) {
+                        const auto iSps = rand() % application->configuration.spsPorts.size();
+                        auto mc = application->spsContents[iSps];
+                        auto len = encode_singleline_fromCSV((char*)line.data(),mc.get(), minLog);
+                        // SPS priority is set when creating the flow
+                        application->spsTransmits[iSps].transmit(
                             mc->abuf.data, len,
-                            application->configuration.eventPriority);
-                    }
-                    if (application->configuration.spsPorts.size()) {
-                        if (getline(configFile, line)) {
-                            const auto iSps = rand() % application->configuration.spsPorts.size();
-                            auto mc = application->spsContents[iSps];
-                            auto len = encode_singleline_fromCSV((char*)line.data(),mc->abuf.data,
-                                    line.length());
-                            abuf_put(&mc->abuf, len);
-                            // SPS priority is set when creating the flow
-                            application->spsTransmits[iSps].transmit(
-                                mc->abuf.data, len,
-                                Priority::PRIORITY_UNKNOWN);
-                        }
+                            Priority::PRIORITY_UNKNOWN);
                     }
                 }
-                else {
-                    go = false;
+
+                if (read(tx_timer_fd, &exp, sizeof(exp)) == sizeof(uint64_t) && exp > 1) {
+                    if(application->configuration.driverVerbosity){
+                        cout << "Pre-record TX timer overruns" << endl;
+                    }
                 }
-                timer = timestamp_now();
+            } else {
+                go = false;
             }
         }
+
+
+        close(tx_timer_fd);
     }
     else {
         cout << "Recorded File doesn't exists.\n";
     }
+
 }
 /**
  * transmit pre-recorded BSM message via radio simulation
@@ -883,8 +889,7 @@ void simTxRecorded(string file)
                 if (getline(configFile, line))
                 {
                     auto mc = application->txSimMsg;
-                    auto len = encode_singleline_fromCSV((char*)line.data(), mc->abuf.data,
-                            line.length());
+                    auto len = encode_singleline_fromCSV((char*)line.data(), mc.get(), false);
                     abuf_put(&mc->abuf, len);
                     application->simTransmit->transmit(mc->abuf.data, len,
                                                        Priority::PRIORITY_UNKNOWN);
@@ -1042,8 +1047,8 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'p':
         preRecorded = true;
-        argc += 1;
-        preRecordedFile = string(argv[argc]);
+        idx += 1;
+        preRecordedFile = string(argv[idx]);
         break;
     case 'x':
         tunnelRx = true;
@@ -1272,6 +1277,17 @@ int setup(const bool tx, const bool rx,
         // application->openBsmMinLogFile(csvFileName);
     }
 
+    // for sae message configuration. initialize security-related features for qits
+    if((rx || rxSim) && (bsm || wsa)){
+        if(application->configuration.enableSecurity){
+            if(application->configuration.enableVerifStatLog){
+                application->initVerifLogging();
+            }
+            if(application->configuration.enableMbdStatLog)
+                application->initMisbehaviorLogging();
+        }
+    }
+
     if (rx && !rxSim)
     {
         if (application->radioReceives.empty()) {
@@ -1353,7 +1369,7 @@ int setup(const bool tx, const bool rx,
                         "Transmit from pre-recorded file only supports BSM" << endl;
                 return -1;
             }
-            threads.push_back(thread(simTxRecorded, string(preRecordedFile)));
+            threads.push_back(thread(simTxRecorded, preRecordedFile));
         }
         else {
           threads.push_back(thread(transmit, msgType));
@@ -1413,7 +1429,7 @@ int setup(const bool tx, const bool rx,
             cout << "Only BSM is supported for pre-recorded transmit" << endl;
             return -1;
         }
-        threads.push_back(thread(txRecorded, string(preRecordedFile)));
+        threads.push_back(thread(txRecorded, preRecordedFile));
     }
 
     if (safetyApps)
@@ -1532,8 +1548,8 @@ int main(int argc, char** argv) {
     }
 
     joinThreads();
-    printf("Deleting application\n");
-    if(!rxSim && !txSim && application) {
+
+    if(!rxSim && !txSim && application){
         application->closeAllRadio();
     }
 

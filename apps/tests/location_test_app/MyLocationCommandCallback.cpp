@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -133,6 +133,15 @@ void MyLocationCommandCallback::printLocationValidity(telux::loc::LocationInfoVa
    if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
       std::cout << "valid timestamp" << std::endl;
    }
+   if((validityMask & telux::loc::HAS_TIME_UNC_BIT)) {
+      std::cout << "valid time uncertainty" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_BIT)) {
+      std::cout << "valid gPTP time" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_GPTP_TIME_UNC_BIT)) {
+      std::cout << "valid gPTP time uncertainty" << std::endl;
+   }
 }
 
 void MyLocationCommandCallback::printLocationTech(telux::loc::LocationTechnology techMask) {
@@ -197,7 +206,10 @@ void MyLocationCommandCallback::onTerrestrialPositionInfo(
              << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
              << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
              << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
-             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl;
+             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+             << "Time Uncertainty: " << locationInfo->getTimeUncMs() << std::endl
+             << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
+             << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
 }

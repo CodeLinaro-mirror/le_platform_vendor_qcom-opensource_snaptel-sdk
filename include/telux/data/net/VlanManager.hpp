@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -80,6 +80,7 @@
 #include <list>
 #include <memory>
 
+#include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 #include <telux/data/DataDefines.hpp>
@@ -140,7 +141,6 @@ using VlanMappingResponseCb = std::function<void(
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not @ref telux::common::ErrorCode
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change.
  */
 using VlanBindingsResponseCb = std::function<void(
     const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
@@ -269,9 +269,6 @@ class IVlanManager {
      * @returns Immediate status of bindToBackhaul() request sent i.e. success or
      * suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
-     *
      */
     virtual telux::common::Status bindToBackhaul(VlanBindConfig vlanBindConfig,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -289,8 +286,6 @@ class IVlanManager {
      * @returns Immediate status of unbindFromBackhaul() request sent i.e. success or
      * suitable status code
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status unbindFromBackhaul(VlanBindConfig vlanBindConfig,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -306,8 +301,6 @@ class IVlanManager {
      * @returns Immediate status of queryVlanToBackhaulBindings() request sent i.e. success or
      * suitable status code
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status queryVlanToBackhaulBindings(
         BackhaulType backhaulType, VlanBindingsResponseCb callback,
@@ -421,7 +414,7 @@ class IVlanManager {
  * should be thread safe.
  *
  */
-class IVlanListener {
+class IVlanListener : public telux::common::ISDKListener{
  public:
     /**
      * This function is called when service status changes.

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -187,6 +187,20 @@ enum ApnMaskType {
 using ApnTypes = std::bitset<16>;
 
 /**
+ * This type represents if the emergency call
+ * can be performed on a particular profile.
+ * When telux::common::Status telux::data::IDataProfileManager::createProfile
+ * or telux::common::Status telux::data::IDataProfileManager::modifyProfile
+ * are invoked and the emergency capability is set to UNSPECIFIED, the implementation
+ * of the corresponding APIs will default it to NOT_ALLOWED.
+ */
+enum class EmergencyCapability {
+    UNSPECIFIED = 0,  /**< Emergency capability is not specified */
+    ALLOWED,          /**< Emergency call is allowed on this profile */
+    NOT_ALLOWED,      /**< Emergency call is not allowed on this profile */
+};
+
+/**
  * Profile Parameters used for profile creation, query and modify
  */
 struct ProfileParams {
@@ -202,6 +216,9 @@ struct ProfileParams {
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
     ApnTypes apnTypes;                                       /**< APN Types @ref ApnMaskType */
+    EmergencyCapability emergencyAllowed =
+      telux::data::EmergencyCapability::UNSPECIFIED;         /**< Emergency services are allowed if
+                                                               this field is set to ALLOWED*/
 };
 
 /**

@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -113,6 +113,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDetailedEngineLocReportFlag(false);
       posListener->setMeasurementsInfoFlag(false);
       posListener->setDisasterCrisisInfoFlag(false);
+      posListener->setEphemerisInfoFlag(false);
       posListener->setLocSystemInfoFlag(false);
 
       //Registering listener for fixes
@@ -402,7 +403,7 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
                        " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
-                       "5 - NHzMeasurement\n 6 - Disaster-Crisis) \n\n";
+                       "5 - NHzMeasurement\n 6 - Disaster-Crisis\n 8 - Ephemeris)\n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -414,7 +415,7 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 6) {
+              if(option >= 0 && option <= 8 && option != 7) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -500,8 +501,8 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
-                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
-                       "5 - NHzMeasurement\n 6 - DisasterCrisis\n 7 - EngineNMEA) \n\n";
+                       " (0- Location\n 1- SV\n 2- NMEA\n 3- DATA\n 4- Measurement\n "
+                       "5- NHzMeasurement\n 6 - DisasterCrisis\n 7- EngineNMEA\n 8- Ephemeris)\n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -513,7 +514,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 7) {
+              if(option >= 0 && option <= 8) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -551,13 +552,9 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
    if(locationManager_) {
       char delimiter = '\n';
       std::string minItervalInput;
-      std::string distanceInput;
       std::cout << "Enter Interval in Milliseconds (default: 1000ms): ";
       std::getline(std::cin, minItervalInput, delimiter);
-      std::cout << "Enter Distance in Meters (default: 0m): ";
-      std::getline(std::cin, distanceInput, delimiter);
       int optInterval = -1;
-      int optDistance = -1;
       if(!minItervalInput.empty()) {
          try {
             optInterval = std::stoi(minItervalInput);
@@ -568,20 +565,10 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
       } else {
          optInterval = 1000;
       }
-      if(!distanceInput.empty()) {
-         try {
-            optDistance = std::stoi(distanceInput);
-         } catch(const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << optDistance
-                      << std::endl;
-         }
-      } else {
-         optDistance = 0;
-      }
 
-      if(optInterval > 0 && optDistance >= 0) {
+      if(optInterval > 0) {
          myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Basic report request");
-         locationManager_->startBasicReports((uint32_t)optDistance, (uint32_t)optInterval,
+         locationManager_->startBasicReports((uint32_t)optInterval,
                                              std::bind(&MyLocationCommandCallback::commandResponse,
                                                        myLocCmdResponseCb_, std::placeholders::_1));
       } else {
@@ -1992,7 +1979,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  7 - Measurements_info_notifications" << std::endl;
      std::cout << "  8 - Location_system_information " << std::endl;
      std::cout << "  9 - Disaster_Crisis_info_notifications" << std::endl;
-     std::cout << "  10 - Engine_NMEA_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  10 - Engine_NMEA_info_notifications" << std::endl;
+     std::cout << "  11 - Ephemeris_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -2022,6 +2010,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableDisasterCrisisInfoLogs();
      }  else if(usrInput == "10") {
          LocationMenu::enableEngineNmeaInfoLogs();
+     }  else if(usrInput == "11") {
+         LocationMenu::enableEphemerisInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -2088,6 +2078,15 @@ void LocationMenu::enableDisasterCrisisInfoLogs() {
     }
 }
 
+void LocationMenu::enableEphemerisInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setEphemerisInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
+}
+
 void LocationMenu::enableEngineNmeaInfoLogs() {
     int opt = enableReportLogsUtility();
     if((opt == 0) || (opt == 1)) {
@@ -2106,7 +2105,7 @@ void LocationMenu::enableLocationSystemInfoLogs() {
   }
 }
 
-telux::common::Status LocationMenu::launchAsRecordingUtility() {
+telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engineType) {
     std::cout << "Launching location test app as a recording utility \n";
     std::shared_ptr<MyLocationListener> posListener = std::make_shared<MyLocationListener>();
     std::shared_ptr<ILocationManager> locationManager = nullptr;
@@ -2137,17 +2136,35 @@ telux::common::Status LocationMenu::launchAsRecordingUtility() {
     }
 
     posListener->setDetailedLocationReportFlag(true);
-    posListener->setDetailedLocationRecordingFlag(true);
+    posListener->setSvInfoFlag(true);
+    posListener->setNmeaInfoFlag(true);
+    posListener->setMeasurementsInfoFlag(true);
+    posListener->setDataInfoFlag(true);
+    posListener->setDetailedEngineLocReportFlag(true);
+
+    posListener->setRecordingFlag(true);
     //Registering listener for fixes
     locationManager->registerListenerEx(posListener);
 
     GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
-    reportMask |= 1UL << 0;
+    reportMask |= LOCATION;
+    reportMask |= SATELLITE_VEHICLE;
+    reportMask |= NMEA;
+    reportMask |= DATA;
+    reportMask |= MEASUREMENT;
+
     std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb =
         std::make_shared<MyLocationCommandCallback>("Detailed report request");
-    locationManager->startDetailedReports(
-        1000, std::bind(&MyLocationCommandCallback::commandResponse,
+    if (DEFAULT_UNKNOWN == engineType) {
+        locationManager->startDetailedReports(
+            1000, std::bind(&MyLocationCommandCallback::commandResponse,
             myLocCmdResponseCb, std::placeholders::_1), reportMask);
+    } else {
+        locationManager->startDetailedEngineReports(
+            1000, engineType,
+            std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb, std::placeholders::_1), reportMask);
+    }
 
     while(1) {
         //Infinite polling to keep retrieving position reports.
@@ -2170,7 +2187,36 @@ int main(int argc, char **argv) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
     if((argc > 1) && (strcmp(argv[1], "-r") == 0)) {
-        telux::common::Status status = locationMenu.launchAsRecordingUtility();
+
+        LocReqEngine engineType = DEFAULT_UNKNOWN;
+
+        if (argc > 2) {
+            // possible engine types: FUSED,SPE,PPE,VPE
+            std::stringstream ss{argv[2]};
+            std::string s;
+
+            while (getline(ss, s, ',')) {
+                if (0 == s.compare("FUSED")) {
+                    engineType |= LOC_REQ_ENGINE_FUSED_BIT;
+                } else if (0 == s.compare("SPE")) {
+                    engineType |= LOC_REQ_ENGINE_SPE_BIT;
+                } else if (0 == s.compare("PPE")) {
+                    engineType |= LOC_REQ_ENGINE_PPE_BIT;
+                } else if (0 == s.compare("VPE")) {
+                    engineType |= LOC_REQ_ENGINE_VPE_BIT;
+                } else {
+                    std::cout << "Invalid engine type: " << s << std::endl;
+                    std::cout << "FUSED,SPE,PPE,VPE are engine types supported." << std::endl;
+                    std::cout << "Please specify one or any comninations of the engine names."
+                              << std::endl;
+
+                    return -1;
+                }
+            }
+        }
+
+        std::cout << "engineType : " << engineType << std::endl;
+        telux::common::Status status = locationMenu.launchAsRecordingUtility(engineType);
         if(status != telux::common::Status::SUCCESS) {
             std::cout << "Exiting \n";
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -34,7 +34,7 @@
 
 #include "EventParserUtil.hpp"
 
-// -f Data -m Connection
+/* INPUT: -f <filter> -e <event> <event-args-1> <event-args-2> */ 
 std::string EventParserUtil::getNextToken(std::string& inputString, std::string delimiter) {
     unsigned int position = 0;
     std::string token;
@@ -45,14 +45,19 @@ std::string EventParserUtil::getNextToken(std::string& inputString, std::string 
     return token;
 }
 
+/* INPUT: -f <filter> -e <event> <event-args-1> <event-args-2> */
 void EventParserUtil::parseEventHeaderOptions(std::string flagsString, EventMessage &parsedMsg) {
     std::string delimiter = " ";
     std::string filter = " ";
-    /* Parsing subsystem type header */
-    /* reads '-f' flag. */
+
+    /** INPUT: -f <filter> -e <event> <event-args-1> <event-args-2>
+     *  OPUTPUT: -f
+    **/
     if((EventParserUtil::getNextToken(flagsString, delimiter)) == FILTER_FLAG) {
         parsedMsg.filter = EventParserUtil::getNextToken(flagsString, delimiter);
     }
+
+    /* INPUT: -e <event> <event-args-1> <event-args-2> */
     parsedMsg.event = flagsString;
 
     return;

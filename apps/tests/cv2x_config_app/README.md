@@ -8,6 +8,11 @@ the following functionalities.
 - Enforcing C-V2X configuration expiration
 - Enabling or disabling SLSS
 
+Note that the XML file containing the C-V2X configruation is not maintained or readable
+in the Linux file-system, it has to be retrieved out of the EFS using TelSDK API. The
+exact name and path of the file is not significant, but corresponding SELINUX rules need
+to be added for the APP for file read or write permission.
+
 ## Retrieve the C-V2X configuration
 
 Call the ICv2xConfig::retrieveConfiguration() TelSDK API to retrieve the current C-V2X
@@ -157,6 +162,30 @@ These parameters are defined in 3GPP 36.331.
       Value: [0,5] 0:0dB, 1:3dB, 2:6dB, 3:9dB, 4：12dB, 5:infinity
       Default value: 1
 
+## Disable T5000 timer
+
+T5000 timer is a configuration for the applicability of privacy for V2X communication over PC5,
+indicating how often the UE shall change the source Layer-2 ID and source IP address (for IP
+data) self-assigned by the UE for V2X communication over PC5. The value of T5000 timer is
+configurable by setting the "TimerT5000" value under the "PrivacyConfig" in a v2x.xml, the
+default value is 300, in units of seconds. But no matter what value the T5000 timer is set to,
+the randomization of source Layer-2 ID will always happen on start-up.
+
+T5000 timer should be disabled if
+A/ ITS stack is changing the source Layer-2 ID via API, to coincide with other identifier changes
+like the signing certs.
+B/ RSUs don't want to change the source Layer-2 ID.
+C/ UEs don't want to change the source Layer-2 ID while a unicast session is ongoing.
+
+T5000 timer can be disabled either by removing the "PrivacyConfig" leaf or setting a value 0 to "TimerT5000".
+
+    <PrivacyConfig>
+      <TimerT5000>300</TimerT5000>
+    </PrivacyConfig>
+
+Note that even if T5000 timer is disabled, the randomization of source Layer-2 ID could still happen when
+a Layer-2 ID collision is detected on the radio.
+
 ## Test tool options
 
   After executing "cv2x_config_app", user needs to input option 1/2/3 to select the next step.
@@ -190,9 +219,10 @@ These parameters are defined in 3GPP 36.331.
     ------------------------------------------------
 
     config> 1
-    Enter absolute config file path with file name: /var/tmp/v2x.xml
+    CV2X config file will be stored in /var/tmp/
+    Enter the XML file name(e.g., v2x.xml): v2x.xml
     Retrieving config file...
-    Retrieve config file successfully.
+    Config file saved to /var/tmp/v2x.xml with success.
     ------------------------------------------------
                     Cv2x Config Menu
     ------------------------------------------------
@@ -207,7 +237,8 @@ These parameters are defined in 3GPP 36.331.
     ------------------------------------------------
 
     config> 2
-    Enter absolute config file path and file name: /var/tmp/v2x.xml
+    Put the v2x configuration XML file under /var/tmp/
+    Then enter the file name(e.g., v2x.xml): v2x.xml
     Updating config file...
     Update config file successfully.
     ------------------------------------------------

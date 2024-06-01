@@ -29,19 +29,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
 add_executable (${TARGET_SIMULATION_SERVER_APP} ${TARGET_SIMULATION_SERVER_APP_SRC})
 
+add_subdirectory(common)
 add_subdirectory(data)
 add_subdirectory(event)
 add_subdirectory(tel)
 add_subdirectory(loc)
 add_subdirectory(sensor)
+add_subdirectory(audio)
+add_subdirectory(therm)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common
-    telux_data
     telux_protos
     ${PROTOBUF_LIB_LIBRARIES}
     ${GRPC_LIB_LIBRARIES}
     ${GRPCPP_LIB_LIBRARIES}
+    asound
     )
 
 # install to target

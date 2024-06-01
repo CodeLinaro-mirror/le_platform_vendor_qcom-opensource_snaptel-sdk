@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -50,7 +50,7 @@
 #include <map>
 
 #include <grpcpp/grpcpp.h>
-#include "protos/proto-src/loc.grpc.pb.h"
+#include "protos/proto-src/loc_simulation.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;

@@ -150,7 +150,7 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         std::cout << "onSubscriptionInfoChanged()" << std::endl;
         if (!newSubscription) {
             std::cout << "Empty subscription" << std::endl;
-            return 0;
+            return;
         }
 
         std::cout << " CarrierName : " << newSubscription->getCarrierName() << std::endl;

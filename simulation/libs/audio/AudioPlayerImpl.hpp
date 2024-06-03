@@ -44,6 +44,31 @@ class SetVolumeResponseListener {
     std::mutex &streamMutex_;
 };
 
+class GetMuteResponseListener {
+ public:
+    GetMuteResponseListener(std::mutex &streamMtx);
+    bool responseReady = false;
+    bool enable;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void getMuteComplete(StreamMute mute, telux::common::ErrorCode errorCode);
+
+ private:
+    std::mutex &streamMutex_;
+};
+
+class SetMuteResponseListener {
+ public:
+    SetMuteResponseListener(std::mutex &streamMtx);
+    bool responseReady = false;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void setMuteComplete(telux::common::ErrorCode errorCode);
+
+ private:
+    std::mutex &streamMutex_;
+};
+
 class AudioPlayerImpl : public IAudioPlayer,
                         public IPlayListener,
                         public IAudioListener,
@@ -53,15 +78,16 @@ class AudioPlayerImpl : public IAudioPlayer,
     AudioPlayerImpl(std::shared_ptr<IAudioManager> audioManager);
     ~AudioPlayerImpl();
 
-    telux::common::ErrorCode startPlayback(
-        std::vector<PlaybackConfig> &playbackConfigs,
+    telux::common::ErrorCode startPlayback(std::vector<PlaybackConfig> &playbackConfigs,
         std::weak_ptr<IPlayListListener> statusListener) override;
 
     telux::common::ErrorCode stopPlayback() override;
 
     telux::common::ErrorCode setVolume(StreamVolume volume) override;
-
     telux::common::ErrorCode getVolume(StreamVolume &volume) override;
+
+    telux::common::ErrorCode setMute(bool enable) override;
+    telux::common::ErrorCode getMute(bool &enable) override;
 
     void onReadyForWrite() override;
     void onPlayStopped() override;
@@ -99,9 +125,14 @@ class AudioPlayerImpl : public IAudioPlayer,
     bool isDeleteResponseReady_ = false;
     bool isStopResponseReady_   = false;
     bool isStopAudioReady_      = false;
+    bool buffersAllocated_      = false;
+    bool applyCachedVolume_     = false;
+    bool applyCachedMute_       = false;
     uint32_t bufferSize_        = 0;
-    long contentOffset_ = 0;
+    long contentOffset_         = 0;
 
+    StreamVolume cachedVolume_;
+    StreamMute cachedMuteState_;
     std::FILE *curFile_;
     std::string curFileName_;
     telux::common::Status status_;
@@ -135,6 +166,10 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode waitAllWriteResponse();
     telux::common::ErrorCode setFormatAndOffset(AudioFormat audioFormat);
     telux::common::ErrorCode adjustFileAndState();
+    telux::common::ErrorCode updateVolume(
+        StreamVolume volume, std::unique_lock<std::mutex> &streamLock);
+    telux::common::ErrorCode updateMute(
+        StreamMute muteState, std::unique_lock<std::mutex> &streamLock);
 
     bool isStreamConfigurationSame(uint32_t curFileIdx);
     void resetState();

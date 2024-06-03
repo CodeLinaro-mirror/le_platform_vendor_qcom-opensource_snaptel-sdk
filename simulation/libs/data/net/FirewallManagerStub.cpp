@@ -286,110 +286,137 @@ telux::common::Status FirewallManagerStub::addFirewallEntryRequest(FirewallEntry
         return telux::common::Status::NOTREADY;
     }
 
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay = DEFAULT_DELAY;
+
     ::dataStub::AddFirewallEntryRequest request;
     ::dataStub::AddFirewallEntryReply response;
     ClientContext context;
 
-    request.set_slot_id(entry.bhInfo.slotId);
-    request.set_profile_id(entry.bhInfo.profileId);
-    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
-        entry.bhInfo.backhaul));
-    request.set_is_hw_accelerated(isHwAccelerated);
-    request.mutable_fw_direction()->set_fw_direction(
-        static_cast<::dataStub::Direction::Fw_Direction>(entry.fwEntry->getDirection()));
-    request.set_protocol(DataUtilsStub::protocolToString(
-        entry.fwEntry->getIProtocolFilter()->getIpProtocol()));
-
-    telux::data::IpFamilyType ipFam = entry.fwEntry->getIpFamilyType();
-    request.mutable_ip_family_type()->set_ip_family_type((::dataStub::IpFamilyType::Type)ipFam);
-
-    std::shared_ptr<telux::data::IpFilterImpl> ipfilter =
-        std::dynamic_pointer_cast<telux::data::IpFilterImpl>(
-        entry.fwEntry->getIProtocolFilter());
-    IPv4Info ipv4Info = ipfilter->getIPv4Info();
-    IPv6Info ipv6Info = ipfilter->getIPv6Info();
-
-    if (ipFam == telux::data::IpFamilyType::IPV4) {
-        request.mutable_ipv4_params()->set_ipv4_src_address(ipv4Info.srcAddr);
-        request.mutable_ipv4_params()->set_ipv4_src_subnet_mask(ipv4Info.srcSubnetMask);
-        request.mutable_ipv4_params()->set_ipv4_dest_address(ipv4Info.destAddr);
-        request.mutable_ipv4_params()->set_ipv4_dest_subnet_mask(ipv4Info.destSubnetMask);
-        request.mutable_ipv4_params()->set_ipv4_tos_val(ipv4Info.value);
-        request.mutable_ipv4_params()->set_ipv4_tos_mask(ipv4Info.mask);
-    }
-
-    if (ipFam == telux::data::IpFamilyType::IPV6) {
-        request.mutable_ipv6_params()->set_ipv6_src_address(ipv6Info.srcAddr);
-        request.mutable_ipv6_params()->set_ipv6_dest_address(ipv6Info.destAddr);
-        request.mutable_ipv6_params()->set_ipv6_src_prefix_len(ipv6Info.srcPrefixLen);
-        request.mutable_ipv6_params()->set_ipv6_dest_prefix_len(ipv6Info.dstPrefixLen);
-        request.mutable_ipv6_params()->set_trf_value(ipv6Info.val);
-        request.mutable_ipv6_params()->set_trf_mask(ipv6Info.mask);
-        request.mutable_ipv6_params()->set_flow_label(ipv6Info.flowLabel);
-        request.mutable_ipv6_params()->set_nat_enabled(ipv6Info.natEnabled);
-    }
-
-    IpProtocol proto = ipfilter->getIpProtocol();
-    switch (proto) {
-        case PROTO_TCP:
-        case PROTO_UDP:
-        case PROTO_TCP_UDP: {
-            auto tcpFilter = std::dynamic_pointer_cast<TcpFilterImpl>(ipfilter);
-            if (tcpFilter) {
-                TcpInfo portInfo_ = tcpFilter->getTcpInfo();
-                request.mutable_protocol_params()->set_source_port(portInfo_.src.port);
-                request.mutable_protocol_params()->set_source_port_range(portInfo_.src.range);
-                request.mutable_protocol_params()->set_dest_port(portInfo_.dest.port);
-                request.mutable_protocol_params()->set_dest_port_range(portInfo_.dest.range);
+    do {
+        std::shared_ptr<FirewallEntryImpl> entryImpl
+            = std::dynamic_pointer_cast<FirewallEntryImpl>(entry.fwEntry);
+        if (!entry.fwEntry || !entryImpl) {
+            LOG(ERROR, __FUNCTION__, " Empty firewall entry instance");
+            error = telux::common::ErrorCode::INVALID_ARG;
+            auto handle = -1;
+            if (callback && (delay != SKIP_CALLBACK)) {
+                auto f1 = std::async(std::launch::async,
+                    [this, error, callback, handle, delay]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback(handle, error);
+                    }).share();
+                taskQ_->add(f1);
             }
-        } break;
-        case PROTO_ESP: {
-            auto espFilter = std::dynamic_pointer_cast<IEspFilter>(ipfilter);
-            if (espFilter) {
-                EspInfo portInfo_ = espFilter->getEspInfo();
-                request.mutable_protocol_params()->set_esp_spi(portInfo_.spi);
+            break;
+        }
+
+        request.set_slot_id(entry.bhInfo.slotId);
+        request.set_profile_id(entry.bhInfo.profileId);
+        request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
+            entry.bhInfo.backhaul));
+        request.set_is_hw_accelerated(isHwAccelerated);
+        request.mutable_fw_direction()->set_fw_direction(
+            static_cast<::dataStub::Direction::Fw_Direction>(entry.fwEntry->getDirection()));
+        request.set_protocol(DataUtilsStub::protocolToString(
+            entry.fwEntry->getIProtocolFilter()->getIpProtocol()));
+
+        telux::data::IpFamilyType ipFam = entry.fwEntry->getIpFamilyType();
+        request.mutable_ip_family_type()->set_ip_family_type(
+            (::dataStub::IpFamilyType::Type)ipFam);
+
+        std::shared_ptr<telux::data::IIpFilter> ipfilter = entry.fwEntry->getIProtocolFilter();
+        IPv4Info ipv4Info = ipfilter->getIPv4Info();
+        IPv6Info ipv6Info = ipfilter->getIPv6Info();
+
+        if (ipFam == telux::data::IpFamilyType::IPV4) {
+            request.mutable_ipv4_params()->set_ipv4_src_address(ipv4Info.srcAddr);
+            request.mutable_ipv4_params()->set_ipv4_src_subnet_mask(ipv4Info.srcSubnetMask);
+            request.mutable_ipv4_params()->set_ipv4_dest_address(ipv4Info.destAddr);
+            request.mutable_ipv4_params()->set_ipv4_dest_subnet_mask(ipv4Info.destSubnetMask);
+            request.mutable_ipv4_params()->set_ipv4_tos_val(ipv4Info.value);
+            request.mutable_ipv4_params()->set_ipv4_tos_mask(ipv4Info.mask);
+        }
+
+        if (ipFam == telux::data::IpFamilyType::IPV6) {
+            request.mutable_ipv6_params()->set_ipv6_src_address(ipv6Info.srcAddr);
+            request.mutable_ipv6_params()->set_ipv6_dest_address(ipv6Info.destAddr);
+            request.mutable_ipv6_params()->set_ipv6_src_prefix_len(ipv6Info.srcPrefixLen);
+            request.mutable_ipv6_params()->set_ipv6_dest_prefix_len(ipv6Info.dstPrefixLen);
+            request.mutable_ipv6_params()->set_trf_value(ipv6Info.val);
+            request.mutable_ipv6_params()->set_trf_mask(ipv6Info.mask);
+            request.mutable_ipv6_params()->set_flow_label(ipv6Info.flowLabel);
+            request.mutable_ipv6_params()->set_nat_enabled(ipv6Info.natEnabled);
+        }
+
+        IpProtocol proto = ipfilter->getIpProtocol();
+        switch (proto) {
+            case PROTO_TCP:
+            case PROTO_TCP_UDP:{
+                auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipfilter);
+                if (tcpFilter) {
+                    TcpInfo portInfo_ = tcpFilter->getTcpInfo();
+                    request.mutable_protocol_params()->set_source_port(portInfo_.src.port);
+                    request.mutable_protocol_params()->set_source_port_range(portInfo_.src.range);
+                    request.mutable_protocol_params()->set_dest_port(portInfo_.dest.port);
+                    request.mutable_protocol_params()->set_dest_port_range(portInfo_.dest.range);
+                }
+            } break;
+            case PROTO_UDP:{
+                auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipfilter);
+                if (udpFilter) {
+                    UdpInfo portInfo_ = udpFilter->getUdpInfo();
+                    request.mutable_protocol_params()->set_source_port(portInfo_.src.port);
+                    request.mutable_protocol_params()->set_source_port_range(portInfo_.src.range);
+                    request.mutable_protocol_params()->set_dest_port(portInfo_.dest.port);
+                    request.mutable_protocol_params()->set_dest_port_range(portInfo_.dest.range);
+                }
+            } break;
+            case PROTO_ESP: {
+                auto espFilter = std::dynamic_pointer_cast<IEspFilter>(ipfilter);
+                if (espFilter) {
+                    EspInfo portInfo_ = espFilter->getEspInfo();
+                    request.mutable_protocol_params()->set_esp_spi(portInfo_.spi);
+                }
+            }break;
+            case PROTO_ICMP:
+            case PROTO_ICMP6: {
+                auto icmpFilter = std::dynamic_pointer_cast<IIcmpFilter>(ipfilter);
+                if (icmpFilter) {
+                    IcmpInfo portInfo_ = icmpFilter->getIcmpInfo();
+                    request.mutable_protocol_params()->set_icmp_type(portInfo_.type);
+                    request.mutable_protocol_params()->set_icmp_code(portInfo_.code);
+                }
+            }break;
+            default: {
+                LOG(ERROR, " Unexpected filter type IpProtocol = ", proto);
             }
-        }break;
-        case PROTO_ICMP:
-        case PROTO_ICMP6: {
-            auto icmpFilter = std::dynamic_pointer_cast<IIcmpFilter>(ipfilter);
-            if (icmpFilter) {
-                IcmpInfo portInfo_ = icmpFilter->getIcmpInfo();
-                request.mutable_protocol_params()->set_icmp_type(portInfo_.type);
-                request.mutable_protocol_params()->set_icmp_code(portInfo_.code);
+        }
+
+        grpc::Status reqStatus = stub_->AddFirewallEntry(&context, request, &response);
+
+        error = static_cast<telux::common::ErrorCode>(response.reply().error());
+        status = static_cast<telux::common::Status>(response.reply().status());
+        delay = static_cast<int>(response.reply().delay());
+
+        if (status == telux::common::Status::SUCCESS) {
+            if (!reqStatus.ok()) {
+                LOG(ERROR, __FUNCTION__, " request failed");
+                error = telux::common::ErrorCode::INTERNAL_ERROR;
             }
-        }break;
-        default: {
-            LOG(ERROR, " Unexpected filter type IpProtocol = ", proto);
+            auto handle = response.handle();
+
+            if (callback && (delay != SKIP_CALLBACK)) {
+                auto f1 = std::async(std::launch::async,
+                    [this, error, callback, handle, delay]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback(handle, error);
+                    }).share();
+                taskQ_->add(f1);
+            }
         }
-    }
-
-    grpc::Status reqStatus = stub_->AddFirewallEntry(&context, request, &response);
-
-    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
-    int delay;
-
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
-    status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
-
-    if (status == telux::common::Status::SUCCESS) {
-        if (!reqStatus.ok()) {
-            LOG(ERROR, __FUNCTION__, " request failed");
-            error = telux::common::ErrorCode::INTERNAL_ERROR;
-        }
-        auto handle = response.handle();
-
-        if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, handle, delay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(handle, error);
-                }).share();
-            taskQ_->add(f1);
-        }
-    }
+    } while(0);
 
     return status;
 }
@@ -430,7 +457,6 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(BackhaulInf
         std::vector<FirewallEntryInfo> fwEntries;
         IPv4Info ipv4Info;
         IPv6Info ipv6Info;
-        std::shared_ptr<IIpFilter> ipFilter;
 
         for (auto& entry: response.firewall_entries()) {
             FirewallEntryInfo fwEntryInfo;
@@ -445,8 +471,8 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(BackhaulInf
                 DataUtilsStub::stringToProtocol(protocol), fw_direction, ip_family_type);
             if(fwEntry) {
                 auto fwEntryImpl = std::dynamic_pointer_cast<FirewallEntryImpl>(fwEntry);
-                ipFilter = std::dynamic_pointer_cast<telux::data::IpFilterImpl>(
-                    fwEntry->getIProtocolFilter());
+                std::shared_ptr<telux::data::IIpFilter> ipFilter =
+                    fwEntry->getIProtocolFilter();
                 if(fwEntryImpl) {
                     if (ip_family_type == telux::data::IpFamilyType::IPV4) {
                         ipv4Info.srcAddr = entry.ipv4_params().ipv4_src_address();
@@ -472,10 +498,8 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(BackhaulInf
 
                     IpProtocol proto = DataUtilsStub::stringToProtocol(protocol);
                     switch (proto) {
-                        case PROTO_TCP:
-                        case PROTO_UDP:
-                        case PROTO_TCP_UDP: {
-                            auto tcpFilter = std::dynamic_pointer_cast<TcpFilterImpl>(ipFilter);
+                        case PROTO_TCP:{
+                            auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
                             if (tcpFilter) {
                                 TcpInfo portInfo_;
                                 portInfo_.src.port = entry.protocol_params().source_port();
@@ -483,6 +507,17 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(BackhaulInf
                                 portInfo_.dest.port = entry.protocol_params().dest_port();
                                 portInfo_.dest.range = entry.protocol_params().dest_port_range();
                                 tcpFilter->setTcpInfo(portInfo_);
+                            }
+                        } break;
+                        case PROTO_UDP:{
+                            auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
+                            if (udpFilter) {
+                                UdpInfo portInfo_;
+                                portInfo_.src.port = entry.protocol_params().source_port();
+                                portInfo_.src.range = entry.protocol_params().source_port_range();
+                                portInfo_.dest.port = entry.protocol_params().dest_port();
+                                portInfo_.dest.range = entry.protocol_params().dest_port_range();
+                                udpFilter->setUdpInfo(portInfo_);
                             }
                         } break;
                         case PROTO_ESP: {

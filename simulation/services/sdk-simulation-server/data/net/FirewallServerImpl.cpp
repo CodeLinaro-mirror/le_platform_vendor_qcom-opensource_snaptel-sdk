@@ -5,6 +5,8 @@
 
 #include <telux/common/DeviceConfig.hpp>
 
+#include <sys/time.h>
+
 #include "FirewallServerImpl.hpp"
 #include "libs/common/Logger.hpp"
 
@@ -67,15 +69,11 @@ grpc::Status FirewallServerImpl::SetFirewall(ServerContext* context,
         bool isFound = isConfigAvailable(subsystem, "firewallConfig", data, request, idx);
 
         if (isFound) {
-            if (data.stateRootObj[subsystem]["firewallConfig"][idx]["enable"].asBool() !=
-                request->fw_enable()) {
-                data.stateRootObj[subsystem]["firewallConfig"][idx]["enable"] =
-                    request->fw_enable();
-                data.stateRootObj[subsystem]["firewallConfig"][idx]["allowPackets"] =
-                    request->allow_packets();
-            } else {
-                data.error = telux::common::ErrorCode::NO_EFFECT;
-            }
+            data.stateRootObj[subsystem]["firewallConfig"][idx]["enable"] =
+                request->fw_enable();
+            data.stateRootObj[subsystem]["firewallConfig"][idx]["allowPackets"] =
+                request->allow_packets();
+            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             const Json::Value& config = data.stateRootObj[subsystem]["firewallConfig"];
             int count = config.size();
@@ -165,62 +163,72 @@ grpc::Status FirewallServerImpl::AddFirewallEntry(ServerContext* context,
             LOG(DEBUG, __FUNCTION__, " fw entry already exist.");
             data.error = telux::common::ErrorCode::NO_EFFECT;
         } else {
-            const Json::Value& config = data.stateRootObj[subsystem]["firewallEntry"];
-            int count = config.size();
-            Json::Value newConfig;
-            newConfig["backhaul"] =
-                DataUtilsStub::convertEnumToBackhaulPrefString(
-                    static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
-            newConfig["slotId"] = request->slot_id();
-            newConfig["profileId"] = request->profile_id();
-
-            newConfig["fw_direction"] = request->fw_direction().fw_direction();
-            newConfig["isHwAccelerated"] = request->is_hw_accelerated();
-            newConfig["protocol"] = request->protocol();
-            std::string ipFamily = DataUtilsStub::convertIpFamilyEnumToString(
-                request->ip_family_type().ip_family_type());
-            newConfig["ip_family_type"] = ipFamily;
-
-            if (ipFamily ==  "IPV4") {
-                newConfig["ipv4_srcAddr"] = request->ipv4_params().ipv4_src_address();
-                newConfig["ipv4_srcSubnetMask"] =
-                    request->ipv4_params().ipv4_src_subnet_mask();
-                newConfig["ipv4_destAddr"] = request->ipv4_params().ipv4_dest_address();
-                newConfig["ipv4_destSubnetMask"] =
-                    request->ipv4_params().ipv4_dest_subnet_mask();
-
-                newConfig["ipv4_value"] = request->ipv4_params().ipv4_tos_val();
-                newConfig["ipv4_mask"] = request->ipv4_params().ipv4_tos_mask();
+            std::vector<std::string> protocols;
+            if ("PROTO_TCP_UDP" == request->protocol()) {
+                protocols.push_back("TCP");
+                protocols.push_back("UDP");
+            } else {
+                protocols.push_back(request->protocol());
             }
 
-            if (ipFamily ==  "IPV6") {
-                newConfig["ipv6_srcAddr"] = request->ipv6_params().ipv6_src_address();
-                newConfig["ipv6_srcPrefixLen"] =
-                    request->ipv6_params().ipv6_src_prefix_len();
-                newConfig["ipv6_destAddr"] = request->ipv6_params().ipv6_dest_address();
-                newConfig["ipv6_dstPrefixLen"] =
-                    request->ipv6_params().ipv6_dest_prefix_len();
+            for (const auto& protocol: protocols) {
+                const Json::Value& config = data.stateRootObj[subsystem]["firewallEntry"];
+                int count = config.size();
+                Json::Value newConfig;
+                newConfig["backhaul"] =
+                    DataUtilsStub::convertEnumToBackhaulPrefString(
+                        static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
+                newConfig["slotId"] = request->slot_id();
+                newConfig["profileId"] = request->profile_id();
 
-                newConfig["ipv6_val"] = request->ipv6_params().trf_value();
-                newConfig["ipv6_mask"] = request->ipv6_params().trf_mask();
-                newConfig["ipv6_flowLabel"] = request->ipv6_params().flow_label();
-                newConfig["ipv6_natEnabled"] = request->ipv6_params().nat_enabled();
+                newConfig["fw_direction"] = request->fw_direction().fw_direction();
+                newConfig["isHwAccelerated"] = request->is_hw_accelerated();
+                newConfig["protocol"] = protocol;
+                std::string ipFamily = DataUtilsStub::convertIpFamilyEnumToString(
+                    request->ip_family_type().ip_family_type());
+                newConfig["ip_family_type"] = ipFamily;
+
+                if (ipFamily ==  "IPV4") {
+                    newConfig["ipv4_srcAddr"] = request->ipv4_params().ipv4_src_address();
+                    newConfig["ipv4_srcSubnetMask"] =
+                        request->ipv4_params().ipv4_src_subnet_mask();
+                    newConfig["ipv4_destAddr"] = request->ipv4_params().ipv4_dest_address();
+                    newConfig["ipv4_destSubnetMask"] =
+                        request->ipv4_params().ipv4_dest_subnet_mask();
+
+                    newConfig["ipv4_value"] = request->ipv4_params().ipv4_tos_val();
+                    newConfig["ipv4_mask"] = request->ipv4_params().ipv4_tos_mask();
+                }
+
+                if (ipFamily ==  "IPV6") {
+                    newConfig["ipv6_srcAddr"] = request->ipv6_params().ipv6_src_address();
+                    newConfig["ipv6_srcPrefixLen"] =
+                        request->ipv6_params().ipv6_src_prefix_len();
+                    newConfig["ipv6_destAddr"] = request->ipv6_params().ipv6_dest_address();
+                    newConfig["ipv6_dstPrefixLen"] =
+                        request->ipv6_params().ipv6_dest_prefix_len();
+
+                    newConfig["ipv6_val"] = request->ipv6_params().trf_value();
+                    newConfig["ipv6_mask"] = request->ipv6_params().trf_mask();
+                    newConfig["ipv6_flowLabel"] = request->ipv6_params().flow_label();
+                    newConfig["ipv6_natEnabled"] = request->ipv6_params().nat_enabled();
+                }
+
+                newConfig["source_port"] = request->protocol_params().source_port();
+                newConfig["source_port_range"] = request->protocol_params().source_port_range();
+                newConfig["dest_port"] = request->protocol_params().dest_port();
+                newConfig["dest_port_range"] = request->protocol_params().dest_port_range();
+                newConfig["esp_spi"] = request->protocol_params().esp_spi();
+                newConfig["icmp_type"] = request->protocol_params().icmp_type();
+                newConfig["icmp_code"] = request->protocol_params().icmp_code();
+
+                uint32_t handle = getHandle();
+                newConfig["handle"] = handle;
+                response->set_handle(handle);
+                LOG(DEBUG, __FUNCTION__, " adding fw entry for handle::", handle);
+                data.stateRootObj[subsystem]["firewallEntry"][count] = newConfig;
+                JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
             }
-
-            newConfig["source_port"] = request->protocol_params().source_port();
-            newConfig["source_port_range"] = request->protocol_params().source_port_range();
-            newConfig["dest_port"] = request->protocol_params().dest_port();
-            newConfig["dest_port_range"] = request->protocol_params().dest_port_range();
-            newConfig["esp_spi"] = request->protocol_params().esp_spi();
-            newConfig["icmp_type"] = request->protocol_params().icmp_type();
-            newConfig["icmp_code"] = request->protocol_params().icmp_code();
-
-            uint32_t handle = getHandle();
-            newConfig["handle"] = handle;
-            response->set_handle(handle);
-            LOG(DEBUG, __FUNCTION__, " adding fw entry for handle::", handle);
-            data.stateRootObj[subsystem]["firewallEntry"][count] = newConfig;
-            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
     }
 
@@ -294,7 +302,9 @@ grpc::Status FirewallServerImpl::RemoveFirewallEntry(ServerContext* context,
 }
 
 uint32_t FirewallServerImpl::getHandle() {
-    srand((unsigned)time(0));
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    srand(ts.tv_sec * 1000000000LL + ts.tv_nsec);
     return rand();
 }
 
@@ -401,12 +411,12 @@ grpc::Status FirewallServerImpl::RequestFirewallEntries(ServerContext* context,
                         requestedFirewallEntry["handle"].asInt());
                 } else {
                     LOG(DEBUG, __FUNCTION__, " fw entry doesn't exist");
-                    data.error = telux::common::ErrorCode::INTERNAL;
+                    data.error = telux::common::ErrorCode::SUCCESS;
                 }
             }
         } else {
             LOG(DEBUG, __FUNCTION__, " fw entry doesn't exist");
-            data.error = telux::common::ErrorCode::INTERNAL;
+            data.error = telux::common::ErrorCode::SUCCESS;
         }
     }
 

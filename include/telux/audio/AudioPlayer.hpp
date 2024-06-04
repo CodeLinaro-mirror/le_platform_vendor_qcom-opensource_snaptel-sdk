@@ -44,6 +44,7 @@
 #define TELUX_AUDIO_AUDIOPLAYER_HPP
 
 #include <memory>
+#include <string>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/audio/AudioDefines.hpp>

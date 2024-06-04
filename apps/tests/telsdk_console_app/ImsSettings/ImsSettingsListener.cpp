@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -79,9 +79,9 @@ void ImsSettingsListener::onImsServiceConfigsChange(SlotId slotId,
     }
 }
 
+// Notify ImsSettingsManager subsystem status
 void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat;
-
+   std::string stat = "";
    switch(status) {
       case telux::common::ServiceStatus::SERVICE_AVAILABLE:
          stat = " SERVICE_AVAILABLE";
@@ -93,7 +93,6 @@ void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus sta
          stat = " Unknown service status";
          break;
    }
-
    PRINT_NOTIFICATION << " IMS Settings onServiceStatusChange" << stat << "\n";
 }
 

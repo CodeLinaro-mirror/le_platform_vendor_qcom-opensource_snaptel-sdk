@@ -128,6 +128,23 @@ void MyCallListener::onRingbackTone(bool isAlerting, int phoneId) {
                       << phoneId << std::endl;
 }
 
+// Notify CallManager subsystem restart to user
+void MyCallListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat = "";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " Call onServiceStatusChange" << stat << "\n";
+}
+
 std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
    switch(cs) {
       case telux::tel::CallState::CALL_IDLE:

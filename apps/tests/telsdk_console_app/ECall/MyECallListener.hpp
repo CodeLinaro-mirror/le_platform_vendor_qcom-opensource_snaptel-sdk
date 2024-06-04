@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef MYECALLLISTENER_HPP
 #define MYECALLLISTENER_HPP
@@ -44,6 +50,7 @@ class MyECallListener : public telux::tel::ICallListener {
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
    void onEmergencyNetworkScanFail(int phoneId) override;
    void onEcbmChange(telux::tel::EcbMode mode) override;
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    /**
     * Get current time
     */

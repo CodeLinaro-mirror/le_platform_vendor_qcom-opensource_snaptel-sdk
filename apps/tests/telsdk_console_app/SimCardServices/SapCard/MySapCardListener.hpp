@@ -26,7 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #ifndef MYSAPCARDLISTENER_HPP
 #define MYSAPCARDLISTENER_HPP
 
@@ -66,6 +71,11 @@ class MySapStateCallback {
 public:
    static void sapStateResponse(telux::tel::SapState sapState, telux::common::ErrorCode error);
    static void logSapState(telux::tel::SapState sapState);
+};
+
+class MySapCardListener : public telux::tel::ISapCardListener {
+public:
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
 };
 
 #endif  // MYSAPCARDLISTENER_HPP

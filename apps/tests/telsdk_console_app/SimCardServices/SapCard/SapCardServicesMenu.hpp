@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -66,6 +66,7 @@ private:
    void selectSimSlot(std::vector<std::string> userInput);
    void logSapState(telux::tel::SapState sapState);
 
+   std::shared_ptr<telux::tel::ISapCardListener> sapCardListener_ = nullptr;
    std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_ = nullptr;
    std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_ = nullptr;
    std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_ = nullptr;

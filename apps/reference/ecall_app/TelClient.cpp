@@ -92,7 +92,7 @@ telux::common::Status TelClient::init() {
 
     ServiceStatus callMgrsubSystemStatus = callMgr_->getServiceStatus();
     if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "CallManager subsystem is not ready " << ", Please wait " << std::endl;
+       std::cout << "CallManager subsystem is not ready" << ", Please wait " << std::endl;
     }
     callMgrsubSystemStatus = prom.get_future().get();
     if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {

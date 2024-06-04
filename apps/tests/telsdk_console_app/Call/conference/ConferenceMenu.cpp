@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -69,12 +69,6 @@ auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
        myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
        myResumeCb_ = std::make_shared<MyCallCommandCallback>("Resume");
        callListener_ = std::make_shared<MyCallListener>();
-       // registering listener
-       telux::common::Status status = callManager_->registerListener(callListener_);
-       if(status != telux::common::Status::SUCCESS) {
-          std::cout << "Unable to register Call Manager listener" << std::endl;
-          return false;
-       }
     } else {
        std::cout << "Unable to initialise CallManager subsystem " << std::endl;
        return false;

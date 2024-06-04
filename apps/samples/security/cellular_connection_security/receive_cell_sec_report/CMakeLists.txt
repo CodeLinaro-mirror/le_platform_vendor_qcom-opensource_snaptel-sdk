@@ -1,17 +1,18 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_RCV_CELL_SCAN_REPORT cellular_consec_report)
+set(TARGET_APP cellular_consec_report)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIB_TELUX_SECCON REQUIRED telux-sec-con)
+pkg_check_modules(TELUXSECCON REQUIRED telux-sec-con)
 
-set(SOURCES CellularConnectionReportListener.cpp)
+set(APP_SOURCES CellularConnectionReportListener.cpp)
 
-add_executable(${TARGET_RCV_CELL_SCAN_REPORT} ${SOURCES})
+add_executable(${TARGET_APP} ${APP_SOURCES})
 
-target_compile_options(${TARGET_RCV_CELL_SCAN_REPORT} PRIVATE -std=c++11 -Wall -Werror)
+target_include_directories(${TARGET_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${TARGET_RCV_CELL_SCAN_REPORT} ${LIB_TELUX_SECCON_LIBRARIES})
+target_compile_options(${TARGET_APP} PRIVATE -std=c++11 -Wall -Werror)
 
-install(TARGETS ${TARGET_RCV_CELL_SCAN_REPORT}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${TARGET_APP} PRIVATE ${TELUXSECCON_LIBRARIES})
+
+install(TARGETS ${TARGET_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -1,17 +1,18 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_ECC_VERIFY_ASYNC_POLL ecc_verify_async_poll)
+set(TARGET_APP ecc_verify_async_poll)
 
-include(FindPkgConfig)
-pkg_check_modules(LIB_TELUXSEC REQUIRED telux-sec)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TELUXSEC REQUIRED telux-sec)
 
-set(SOURCES ECCVerifyAsyncPoll.cpp)
+set(APP_SOURCES ECCVerifyAsyncPoll.cpp)
 
-add_executable(${TARGET_ECC_VERIFY_ASYNC_POLL} ${SOURCES})
+add_executable(${TARGET_APP} ${APP_SOURCES})
 
-target_compile_options(${TARGET_ECC_VERIFY_ASYNC_POLL} PRIVATE -std=c++11 -Wall -Werror)
+target_include_directories(${TARGET_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${TARGET_ECC_VERIFY_ASYNC_POLL} ${LIB_TELUXSEC_LIBRARIES})
+target_compile_options(${TARGET_APP} PRIVATE -std=c++11 -Wall -Werror)
 
-install(TARGETS ${TARGET_ECC_VERIFY_ASYNC_POLL}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${TARGET_APP} PRIVATE ${TELUXSEC_LIBRARIES})
+
+install(TARGETS ${TARGET_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

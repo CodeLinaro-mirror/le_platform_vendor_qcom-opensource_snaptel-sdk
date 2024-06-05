@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -90,7 +90,7 @@ public:
 
    DataProfile(int id, const std::string &name, const std::string &apn, const std::string &username,
                const std::string &password, IpFamilyType ipFamilyType, TechPreference techPref,
-               AuthProtocolType authType);
+               AuthProtocolType authType, ApnTypes apnTypes);
 
    /**
     * Get profile identifier.
@@ -157,6 +157,14 @@ public:
    IpFamilyType getIpFamilyType();
 
    /**
+    * Get Apn type mask.
+    *
+    * @returns ApnTypes @ref ApnTypes
+    *
+    */
+   ApnTypes getApnTypes();
+
+   /**
     * Get the text related informative representation of this object.
     *
     * @returns String containing informative string.
@@ -173,6 +181,7 @@ private:
    IpFamilyType ipFamilyType_;
    TechPreference techPref_;
    AuthProtocolType authType_;
+   ApnTypes apnTypes_;
 };
 
 /** @} */ /* end_addtogroup telematics_data */

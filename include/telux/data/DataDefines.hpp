@@ -63,6 +63,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       DataDefines.hpp
  * @brief      DataDefines contains enumerations and variables used for data services
@@ -163,6 +168,30 @@ struct PortInfo {
 };
 
 /**
+ * Specifies APN types that can be set while creating or modifying a profile
+ */
+enum ApnMaskType {
+    APN_MASK_TYPE_DEFAULT     = (1 << 0),   /**< APN type for default/internet traffic  */
+    APN_MASK_TYPE_IMS         = (1 << 1),   /**< APN type for the IP multimedia subsystem  */
+    APN_MASK_TYPE_MMS         = (1 << 2),   /**< APN type for the multimedia messaging service  */
+    APN_MASK_TYPE_DUN         = (1 << 3),   /**< APN type for the dial up network  */
+    APN_MASK_TYPE_SUPL        = (1 << 4),   /**< APN type for secure user plane location  */
+    APN_MASK_TYPE_HIPRI       = (1 << 5),   /**< APN type for high priority mobile data  */
+    APN_MASK_TYPE_FOTA        = (1 << 6),   /**< APN type for over the air administration  */
+    APN_MASK_TYPE_CBS         = (1 << 7),   /**< APN type for carrier branded services  */
+    APN_MASK_TYPE_IA          = (1 << 8),   /**< APN type for initial attach  */
+    APN_MASK_TYPE_EMERGENCY   = (1 << 9),   /**< APN type for emergency  */
+    APN_MASK_TYPE_UT          = (1 << 10),  /**< APN type for UT  */
+    APN_MASK_TYPE_MCX         = (1 << 11),  /**< APN type for mission critical service  */
+};
+
+/**
+ * 16 bit mask to set apn types paramater.
+ * ApnMaskType enum are used to set apn types.
+ */
+using ApnTypes = std::bitset<16>;
+
+/**
  * Profile Parameters used for profile creation, query and modify
  */
 struct ProfileParams {
@@ -177,6 +206,7 @@ struct ProfileParams {
     IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN;       /**< Preferred IP family for the call,
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
+    ApnTypes apnTypes = ApnMaskType::APN_MASK_TYPE_DEFAULT;  /**< APN Types ref @ApnMaskType */
 };
 
 /**

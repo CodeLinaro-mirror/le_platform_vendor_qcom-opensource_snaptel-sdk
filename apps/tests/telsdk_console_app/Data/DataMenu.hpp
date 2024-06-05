@@ -157,6 +157,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
  private:
     void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
     bool validateProfile(int profileId);
+    ApnTypes getApnMask();
 
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;

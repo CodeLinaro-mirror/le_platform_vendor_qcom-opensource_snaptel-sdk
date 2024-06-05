@@ -68,6 +68,7 @@ extern "C" {
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 #include <telux/data/DataFactory.hpp>
 
@@ -553,6 +554,8 @@ void DataMenu::getProfileParamsFromUser() {
     std::cout << "Enter APN : ";
     std::getline(std::cin, apnName, delimiter);
 
+    ApnTypes mask = getApnMask();
+
     std::string username;
     std::cout << "Enter userName : ";
     std::getline(std::cin, username, delimiter);
@@ -582,8 +585,42 @@ void DataMenu::getProfileParamsFromUser() {
     params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
     params_.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     params_.apn = apnName;
+    params_.apnTypes = mask;
     params_.userName = username;
     params_.password = password;
+}
+
+ApnTypes DataMenu::getApnMask() {
+    char delimiter = '\n';
+    std::string apnMask;
+    ApnTypes mask;
+    std::vector<int> options;
+    std::cout << "Enter the apn type mask to be enabled : \n"
+                "0 - DEFAULT, 1 - IMS, 2 - MMS, 3 - DUN, \n"
+                "4 - SUPL, 5 - HIPRI , 6 - FOTA, 7 - CBS \n"
+                "8 - IA, 9 - EMERGENCY, 10 - UT, 11 - MCX \n"
+                "(Example: enter 0,1,3 to enable DEFAULT, IMS and DUN):\n";
+    std::getline(std::cin,apnMask,delimiter);
+    std::stringstream ss(apnMask);
+    int i = -1;
+    while(ss >> i) {
+    options.push_back(i);
+    if(ss.peek() == ',' || ss.peek() == ' ')
+        ss.ignore();
+    }
+    for(auto &opt : options) {
+        if(opt >=0 || opt<= 11) {
+            try {
+                mask.set(opt);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                    << std::endl;
+            }
+        } else {
+            std::cout << "Apn type mask should not be out of range" << std::endl;
+        }
+    }
+    return mask;
 }
 
 void DataMenu::requestProfileList(std::vector<std::string> inputCommand) {

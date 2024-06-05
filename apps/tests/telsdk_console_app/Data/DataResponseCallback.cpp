@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,20 +81,23 @@ void MyDataProfilesCallback::onProfileListResponse(
       std::cout << std::endl << std::endl;
       PRINT_CB << " ** onProfileListResponse **" << std::endl;
       std::cout << std::setw(2)
-                << "+-----------------------------------------------------------------+"
+                << "+------------------------------------------------------------------------------"
+                << "----+"
                 << std::endl;
       std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
                 << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
-                << std::setw(10) << " IP Type |" << std::endl;
+                << std::setw(10) << " IP Type |" << std::setw(16) << "    APN Type    |"
+                << std::endl;
       std::cout << std::setw(2)
-                << "+-----------------------------------------------------------------+"
+                << "+------------------------------------------------------------------------------"
+                << "----+"
                 << std::endl;
       for(auto it : profiles) {
          std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
                    << std::setw(11) << DataUtils::techPreferenceToString(it->getTechPreference())
                    << std::setw(15) << it->getApn() << std::setw(17) << it->getName()
                    << std::setw(10) << DataUtils::ipFamilyTypeToString(it->getIpFamilyType())
-                   << std::endl;
+                   << std::setw(16) << it->getApnTypes().to_string() << std::endl;
       }
       std::cout << std::endl << std::endl;
    } else {

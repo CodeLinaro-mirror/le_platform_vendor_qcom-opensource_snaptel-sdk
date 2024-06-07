@@ -1,6 +1,4 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
  * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -8,6 +6,7 @@
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/ECallDefines.hpp>
 #include "CallManagerStub.hpp"
+#include "ECallMsd.hpp"
 
 using namespace telux::common;
 using namespace telux::tel;
@@ -1461,12 +1460,39 @@ telux::common::Status CallManagerStub::getECallConfig(EcallConfig &config) {
 
 telux::common::Status CallManagerStub::encodeEuroNcapOptionalAdditionalData(
     telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    ECallMsd &eCallMsd = ECallMsd::getInstance();
+    auto status = eCallMsd.encodeEuroNcapOptionalAdditionalDataContent(optionalEuroNcapData, data);
+    return status;
 }
 
 telux::common::ErrorCode CallManagerStub::encodeECallMsd(telux::tel::ECallMsdData eCallMsdData,
     std::vector<uint8_t> &data) {
-    return telux::common::ErrorCode::NOT_SUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::ErrorCode errCode = telux::common::ErrorCode::UNKNOWN;
+    ECallMsd &eCallMsd               = ECallMsd::getInstance();
+    eCallMsd.logMsd(eCallMsdData);
+    auto status = eCallMsd.generateECallMsd(eCallMsdData, data);
+    LOG(DEBUG, __FUNCTION__, " Status : ", static_cast<int>(status));
+    switch (status) {
+        case telux::common::Status::SUCCESS:
+            errCode = telux::common::ErrorCode::SUCCESS;
+            break;
+        case telux::common::Status::FAILED:
+            errCode = telux::common::ErrorCode::GENERIC_FAILURE;
+            break;
+        case telux::common::Status::INVALIDPARAM:
+            errCode = telux::common::ErrorCode::INVALID_ARGUMENTS;
+            break;
+        default:
+            errCode = telux::common::ErrorCode::GENERIC_FAILURE;
+            break;
+    }
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Failed to generate MSD and error is ",
+            static_cast<int>(errCode));
+    }
+    return errCode;
 }
 
 telux::common::Status CallManagerStub::makeRttCall(int phoneId, const std::string &dialNumber,

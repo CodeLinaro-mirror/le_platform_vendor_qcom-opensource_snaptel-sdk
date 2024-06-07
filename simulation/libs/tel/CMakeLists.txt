@@ -15,6 +15,7 @@ set(TEL_STUB_SOURCES
     CardStub.cpp
     CardAppStub.cpp
     CardFileHandlerStub.cpp
+    ECallMsd.cpp
     SubscriptionManagerStub.cpp
     SubscriptionStub.cpp
     SmsManagerStub.cpp

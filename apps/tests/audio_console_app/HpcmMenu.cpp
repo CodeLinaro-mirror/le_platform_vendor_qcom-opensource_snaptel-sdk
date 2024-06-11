@@ -387,6 +387,11 @@ void HpcmMenu::stopHpcmAudio(std::vector<std::string> userInput) {
         }
     }
 
+    writeErrorOccurred_ = false;
+    readErrorOccurred_ = false;
+    exitPlayThread_ = false;
+    exitRecordThread_ = false;
+
     if (setActiveSession(slotId_) != Status::SUCCESS) {
         std::cout << "No running voice session for slotId : " << slotId_
             << ", please create one" << std::endl;

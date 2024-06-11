@@ -1,0 +1,21 @@
+{
+    "IImsSettingsManager" :
+    {
+        "ImsServiceConfigInfo" :
+        {
+            "imsServiceEnabled" : false, /* Refer telux::tel:: ImsServiceConfig::imsServiceEnabled
+                                            for more details. */
+            "voImsEnabled" : false,      /* Refer telux::tel::ImsServiceConfig::voImsEnabled for
+                                            more details. */
+            "smsEnabled" : false,        /* Refer telux::tel::ImsServiceConfig::smsEnabled for more
+                                            details. */
+            "rttEnabled" : false         /* Refer telux::tel::ImsServiceConfig::rttEnabled for more
+                                            details. */
+        },
+        "ImsSipUserAgentInfo" :
+        {
+            "sipUserAgent" : ""          /* Indicates the configured Sip UserAgent. Default, it is
+                                            not configured. */
+        }
+    }
+}

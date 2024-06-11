@@ -23,6 +23,7 @@
 #include "CallManagerStub.hpp"
 #include "MultiSimManagerStub.hpp"
 #include "ImsServingSystemManagerStub.hpp"
+#include "ImsSettingsManagerStub.hpp"
 #include "ServingSystemManagerStub.hpp"
 #include "NetworkSelectionManagerStub.hpp"
 
@@ -83,6 +84,7 @@ class PhoneFactoryImplStub : public PhoneFactory {
     std::shared_ptr<ISubscriptionManager> subscriptionManager_;
     std::shared_ptr<ICallManager> callManager_;
     std::shared_ptr<IMultiSimManager> multiSimManager_;
+    std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> phoneMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
@@ -95,12 +97,14 @@ class PhoneFactoryImplStub : public PhoneFactory {
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> imsServSysCallbacks_;
     std::map<int, std::vector<telux::common::InitResponseCb>> servingSysMgrCallbacks_;
     std::map<int, std::vector<telux::common::InitResponseCb>> networkSelMgrCallbacks_;
+    std::vector<telux::common::InitResponseCb> imssCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> cbMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> imsServingSystemMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> servingSysMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> networkSelMgrInitStatus_;
+    telux::common::ServiceStatus imssInitStatus_;
     std::recursive_mutex mutex_;
     common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
@@ -114,6 +118,7 @@ class PhoneFactoryImplStub : public PhoneFactory {
     void onPhoneManagerResponse(telux::common::ServiceStatus status);
     void onMultiSimManagerResponse(telux::common::ServiceStatus status);
     void onNetworkSelectionMgrInitResponse(int slotId, telux::common::ServiceStatus status);
+    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

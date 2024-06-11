@@ -26,6 +26,7 @@
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
 #include "tel/ImsServingManagerServerImpl.hpp"
+#include "tel/ImsSettingsManagerServerImpl.hpp"
 #include "tel/ServingManagerServerImpl.hpp"
 #include "tel/NetworkSelectionManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
@@ -183,9 +184,13 @@ void SimulationServer::startGrpcServer() {
         std::make_shared<SensorFeatureManagerServerImpl>();
     builder.RegisterService(sensorService.get());
 
-    std::shared_ptr<ImsServingManagerServerImpl> imsService =
+    std::shared_ptr<ImsServingManagerServerImpl> imsServingSystemService =
         std::make_shared<ImsServingManagerServerImpl>();
-    builder.RegisterService(imsService.get());
+    builder.RegisterService(imsServingSystemService.get());
+
+    std::shared_ptr<ImsSettingsManagerServerImpl> imsSettingsService =
+        std::make_shared<ImsSettingsManagerServerImpl>();
+    builder.RegisterService(imsSettingsService.get());
 
     std::shared_ptr<ServingManagerServerImpl> ServingSystemService =
         std::make_shared<ServingManagerServerImpl>();

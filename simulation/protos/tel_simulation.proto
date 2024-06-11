@@ -165,6 +165,18 @@
      rpc PerformNetworkScan (PerformNetworkScanRequest) returns (PerformNetworkScanReply) {}
  }
 
+ service ImsService {
+     rpc InitService (commonStub.GetServiceStatusRequest)
+         returns (commonStub.GetServiceStatusReply) {}
+     rpc GetServiceStatus(commonStub.GetServiceStatusRequest)
+         returns (commonStub.GetServiceStatusReply) {}
+     rpc CleanUpService (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+     rpc RequestServiceConfig (RequestServiceConfigRequest) returns (RequestServiceConfigReply) {}
+     rpc SetServiceConfig (SetServiceConfigRequest) returns (SetServiceConfigReply) {}
+     rpc SetSipUserAgent (SetSipUserAgentRequest) returns (SetSipUserAgentReply) {}
+     rpc RequestSipUserAgent (RequestSipUserAgentRequest) returns (RequestSipUserAgentReply) {}
+ }
+
  /*******************************************************************
   * Messages Definition                                             *
   *******************************************************************/
@@ -2521,3 +2533,76 @@ message VoiceRadioTechnologyChangeEvent {
     RadioTechnology radio_technology = 1;
     int32 phone_id = 2;
 }
+
+// --- ImsService start ---
+
+ message ImsServiceConfig {
+     bool is_ims_service_enabled_valid = 1;
+     bool ims_service_enabled = 2;
+     bool is_voims_enabled_valid = 3;
+     bool voims_enabled = 4;
+     bool is_sms_enabled_valid = 5;
+     bool sms_enabled = 6;
+     bool is_rtt_enabled_valid = 7;
+     bool rtt_enabled = 8;
+ }
+
+ message RequestServiceConfigRequest {
+     int32 phone_id = 1;
+ }
+
+ message RequestServiceConfigReply {
+     ImsServiceConfig config = 1;
+     commonStub.ErrorCode error = 2;
+     commonStub.Status status = 3;
+     int32 delay = 4;
+     bool is_callback = 5;
+ }
+
+ message SetServiceConfigRequest {
+     int32 phone_id = 1;
+     ImsServiceConfig config = 2;
+ }
+
+ message SetServiceConfigReply {
+     commonStub.ErrorCode error = 1;
+     commonStub.Status status = 2;
+     int32 delay = 3;
+     bool is_callback = 4;
+ }
+
+ message ImsServiceConfigsChangeEvent {
+     int32 phone_id = 1;
+     ImsServiceConfig config = 2;
+ }
+
+ message RequestSipUserAgentRequest {
+     int32 phone_id = 1;
+ }
+
+ message RequestSipUserAgentReply {
+     string sip_user_agent = 1;
+     commonStub.ErrorCode error = 2;
+     commonStub.Status status = 3;
+     int32 delay = 4;
+     bool is_callback = 5;
+ }
+
+ message SetSipUserAgentRequest {
+     int32 phone_id = 1;
+     string sip_user_agent = 2;
+ }
+
+ message SetSipUserAgentReply {
+     commonStub.ErrorCode error = 1;
+     commonStub.Status status = 2;
+     int32 delay = 3;
+     bool is_callback = 4;
+ }
+
+ message ImsSipUserAgentChangeEvent {
+     int32 phone_id = 1;
+     string sip_user_agent = 2;
+ }
+
+// --- ImsService end ---

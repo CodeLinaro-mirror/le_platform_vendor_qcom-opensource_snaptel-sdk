@@ -28,9 +28,10 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 -SMS: ISmsManager,ISmsListener, ISmscAddressCallback, SmsMessage<br>
 -Card: ICardApp, ICardFileHandler, ICardManager, ICardListener, ICard<br>
 -Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription<br>
--Phone: IPhoneManager, IPhone <br>
+-Phone: IPhoneManager, IPhone, IPhoneListener <br>
 -Call: ICallManager, ICallListener, ICall <br>
 -ServingSystem: IServingSystemManager, IServingSystemListener <br>
+-ImsSettings: IImsSettingsManager, IImsSettingsListener <br>
 
 <br>
 - - -
@@ -435,6 +436,37 @@ Command: <i>telsdk_event_injector -f tel_serv -e networkRejectionUpdate <slotId>
 Sample input:<br>
 \code{.sh}
 telsdk_event_injector -f tel_serv -e networkRejectionUpdate 1 14 2 1 810 10
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_13 Trigger ims service configuration<br>
+To simulate IImsSettingsManager event - telux::tel::IImsSettingsListener::onImsServiceConfigsChange <br>
+
+Command: <i>telsdk_event_injector -f tel_ims_setting -e imsServiceConfigsUpdate <slotId> <imsServiceEnabled> <voImsEnabled> <smsEnabled> <rttEnabled></i> <br>
+<b>Parameters of event injector command:</b> <br>
+ - slotId:                valid slotIds are 1 & 2 only<br>
+ - imsServiceEnabled:     default value is 0, valid integer imsServiceEnabled Refer for more details telux::tel::ImsServiceConfig<br>
+ - voImsEnabled:          default value is 0, valid integer voImsEnabled Refer for more details telux::tel::ImsServiceConfig<br>
+ - smsEnabled:            default value is 0, valid integer smsEnabled Refer for more details telux::tel::ImsServiceConfig<br>
+ - rttEnabled:            default value is 0, valid integer rttEnabled Refer for more details telux::tel::ImsServiceConfig<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_ims_setting -e imsServiceConfigsUpdate 1 1 1 1 0
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+
+@subsection event_14 Trigger ims sip user agent<br>
+To simulate IImsSettingsManager event - telux::tel::IImsSettingsListener::onImsSipUserAgentChange <br>
+Command: <i>telsdk_event_injector -f tel_ims_setting -e imsSipUserAgentUpdate <slotId> <sipUserAgent></i> <br>
+- slotId:                valid slotIds are 1 & 2 only<br>
+- sipUserAgent:          default, it is not configured, valid string sip user agent(i.e. SA525M_LE_XXX)<br>
+Sample input:<br>
+\code{.sh}
+telsdk_event_injector -f tel_ims_setting -e imsSipUserAgentUpdate 1 sa525m_le_3.0
 \endcode
 \htmlonly
 <BR>

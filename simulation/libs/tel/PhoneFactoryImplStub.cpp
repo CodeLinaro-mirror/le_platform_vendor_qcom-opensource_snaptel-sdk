@@ -14,6 +14,7 @@ PhoneFactoryImplStub::PhoneFactoryImplStub() {
     cardMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     subscriptionMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     multiSimMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    imssInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
 PhoneFactoryImplStub::~PhoneFactoryImplStub() {
@@ -42,6 +43,11 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
             (std::static_pointer_cast<ImsServingSystemManagerStub>(ims.second))->cleanup();
         }
     }
+    // remove imsSettingsManager
+    if (imsSettingsManager_) {
+        (std::static_pointer_cast<ImsSettingsManagerStub>(imsSettingsManager_))->cleanup();
+    }
+
     // remove servingSystemManager
     for (const auto servingSysMgr : servingSystemManagerMap_) {
         if (servingSysMgr.second != nullptr) {
@@ -70,7 +76,9 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
     subscriptionMgrCallbacks_.clear();
     cardMgrCallbacks_.clear();
     multiSimMgrCallbacks_.clear();
+    imssCallbacks_.clear();
 }
+
 PhoneFactory::PhoneFactory() {
     LOG(DEBUG, __FUNCTION__);
 }
@@ -783,7 +791,73 @@ std::shared_ptr<ISimProfileManager> PhoneFactoryImplStub::getSimProfileManager(
 
 std::shared_ptr<IImsSettingsManager> PhoneFactoryImplStub::getImsSettingsManager(
     telux::common::InitResponseCb callback) {
-    return nullptr;
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto initCb = std::bind(
+        &PhoneFactoryImplStub::onImsSettingsManagerResponse, this, std::placeholders::_1);
+    if (imsSettingsManager_ == nullptr) {
+        std::shared_ptr<ImsSettingsManagerStub> imssManagerImpl = nullptr;
+        try {
+            imssManagerImpl = std::make_shared<ImsSettingsManagerStub>(initCb);
+        } catch (std::bad_alloc &e) {
+            LOG(ERROR, __FUNCTION__, e.what());
+            return nullptr;
+        }
+        if (callback) {
+            imssCallbacks_.push_back(callback);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+        }
+        imsSettingsManager_ = imssManagerImpl;
+    } else if (imssInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        LOG(DEBUG, __FUNCTION__, " IMS settings manager is not yet initialized");
+        if (callback) {
+            imssCallbacks_.push_back(callback);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+        }
+    } else if (callback) {
+        LOG(DEBUG, __FUNCTION__, " IMS settings manager is initialized, invoking app callback");
+        std::thread appCallback(callback, imssInitStatus_);
+        appCallback.detach();
+    } else {
+        LOG(ERROR, __FUNCTION__, " IMS settings manager is initialized, app Callback is NULL");
+    }
+    return imsSettingsManager_;
+}
+
+void PhoneFactoryImplStub::onImsSettingsManagerResponse(telux::common::ServiceStatus status) {
+    std::vector<telux::common::InitResponseCb> imssCallbacks;
+    LOG(INFO, __FUNCTION__,
+        " Ims Settings Manager initialization status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        imssInitStatus_          = status;
+        bool reportServiceStatus = false;
+        switch (status) {
+            case telux::common::ServiceStatus::SERVICE_FAILED:
+                imsSettingsManager_ = NULL;
+                reportServiceStatus = true;
+                break;
+            case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+                reportServiceStatus = true;
+                break;
+            default:
+                break;
+        }
+        if (!reportServiceStatus) {
+            return;
+        }
+        imssCallbacks = imssCallbacks_;
+        imssCallbacks_.clear();
+    }
+    for (auto &callback : imssCallbacks) {
+        if (callback) {
+            callback(status);
+        } else {
+            LOG(INFO, __FUNCTION__, " Callback is NULL");
+        }
+    }
 }
 
 std::shared_ptr<IEcallManager> PhoneFactoryImplStub::getEcallManager(

@@ -32,6 +32,7 @@ set(TEL_STUB_SOURCES
     ImsServingSystemManagerStub.cpp
     ServingSystemManagerStub.cpp
     NetworkSelectionManagerStub.cpp
+    ImsSettingsManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

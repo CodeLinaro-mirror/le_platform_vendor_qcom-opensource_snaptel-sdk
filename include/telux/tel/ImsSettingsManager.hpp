@@ -115,7 +115,7 @@ using ImsServiceConfigCb
  * The implementation should be thread safe.
  *
  * @param [in] slotId         Slot for which the IMS service configuration is intended.
- * @param [in] config         Indicates the configured Sip UserAgent.
+ * @param [in] sipUserAgent   Indicates the configured Sip UserAgent.
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ErrorCode.
  *

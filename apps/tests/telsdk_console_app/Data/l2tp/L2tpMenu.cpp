@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -302,10 +302,10 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
         std::cout << "Invalid protocol entered .. exiting ..." <<std::endl;
         return;
     }
-    std::cout << "Enter number of sessions for this tunnel (max allowed 3): ";
+    std::cout << "Enter number of sessions for this tunnel (max allowed 4): ";
     std::cin >> tempInt;
     Utils::validateInput(tempInt);
-    if (tempInt > 3) {
+    if (tempInt > 4) {
         std::cout << "Invalid number of sessions .. exiting ..." <<std::endl;
         return;
     }
@@ -331,11 +331,10 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
         if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
-            std::cout << "L2TP is not enabled, please enable L2TP";
+            std::cout << "L2TP config not supported.";
         }
         else if (error == telux::common::ErrorCode::INCOMPATIBLE_STATE) {
             std::cout << "L2TP config can not be enabled...\n";
-            std::cout << "Please map VLAN to default PDN first.\n";
         }
         else if (error == telux::common::ErrorCode::NO_EFFECT) {
             std::cout << "L2TP Config already set";

@@ -188,8 +188,12 @@ class IVlanManager {
     /**
      * Create a VLAN associated with multiple interfaces
      * Creates VLAN on hardware interface @ref telux::data::InterfaceType, assigns VLAN id, assigns
-     * VLAN priority level (according to IEEE 802.1p priority code point-PCP), and sets whether
-     * traffic on this VLAN needs to be accelerated.
+     * VLAN priority level (according to IEEE 802.1p priority code point-PCP), assigns network type,
+     * sets whether traffic on this VLAN needs to be accelerated and sets the option to create the
+     * VLAN with bridge or not.
+     * 
+     * The creation of VLANs with bridge is not allowed for @ref telux::data::NetworkType::WAN.
+     *
      * If platform does not support assigning priorities to VLANs and priority is set to value
      * other than 0, @ref telux::common::Status::NOTSUPPORTED is returned.
      * If platform supports Vlan priority, all traffic coming from WWAN or LAN are stamped with

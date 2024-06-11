@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 extern "C" {
 #include "unistd.h"
@@ -130,16 +135,8 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
 
     std::cout << "Add Static NAT entry\n";
-
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    telux::data::BackhaulInfo bhInfo {};
+    DataUtils::populateBackhaulInfo(bhInfo);
 
     char delimiter = '\n';
     std::string privIpAddr;
@@ -177,7 +174,7 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = snatManager_->addStaticNatEntry(profileId, natConfig, respCb, static_cast<SlotId>(slotId));
+    retStat = snatManager_->addStaticNatEntry(bhInfo, natConfig, respCb);
     Utils::printStatus(retStat);
 }
 
@@ -185,14 +182,8 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Remove Static NAT entry\n";
     telux::common::Status retStat;
 
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    telux::data::BackhaulInfo bhInfo {};
+    DataUtils::populateBackhaulInfo(bhInfo);
 
     char delimiter = '\n';
     std::string privIpAddr;
@@ -230,8 +221,7 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = snatManager_->removeStaticNatEntry(
-        profileId, natConfig, respCb, static_cast<SlotId>(slotId));
+    retStat = snatManager_->removeStaticNatEntry(bhInfo, natConfig, respCb);
     Utils::printStatus(retStat);
 }
 
@@ -239,14 +229,8 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
 
     std::cout << "List Static NAT entries\n";
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    telux::data::BackhaulInfo bhInfo {};
+    DataUtils::populateBackhaulInfo(bhInfo);
 
     auto respCb = [](const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -266,6 +250,6 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
                       << "\n==========================================\n";
         }
     };
-    retStat = snatManager_->requestStaticNatEntries(profileId, respCb, static_cast<SlotId>(slotId));
+    retStat = snatManager_->requestStaticNatEntries(bhInfo, respCb);
     Utils::printStatus(retStat);
 }

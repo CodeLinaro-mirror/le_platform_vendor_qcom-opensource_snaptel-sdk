@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -252,6 +252,25 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
         isAccelerated = true;
     }
 
+    int nwType = 1;
+    telux::data::NetworkType networkType = NetworkType::LAN;
+    std::cout << "Enter network type ?  (1-Default(LAN), 2-WAN): ";
+    std::cin >> nwType;
+    Utils::validateInput(nwType, {1, 2});
+    networkType = (nwType == 1 ? NetworkType::LAN : NetworkType::WAN);
+
+    int isBridgeCreate = 1;
+    bool isBridgeCreated = false;
+    if (networkType == NetworkType::LAN) {
+        std::cout << "Do you want to create VLAN with Bridge? (0-Vlan Without Bridge,\
+             1-Vlan With Bridge): ";
+        std::cin >> isBridgeCreate;
+        Utils::validateInput(isBridgeCreate, {0, 1});
+        if (isBridgeCreate) {
+            isBridgeCreated = true;
+        }
+    }
+
     auto respCb = [](bool isAccelerated, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
@@ -270,6 +289,8 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     config.vlanId = vlanId;
     config.priority = pcp;
     config.isAccelerated = isAccelerated;
+    config.createBridge  = isBridgeCreated;
+    config.nwType  = networkType;
 
     retStat = vlanManagerMap_[opType]->createVlan(config, respCb);
     Utils::printStatus(retStat);
@@ -377,7 +398,9 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
                 std::cout << "iface: " << DataUtils::vlanInterfaceToString(c.iface, opType)
                           << ", vlanId: " << c.vlanId
                           << ", Priority: " << static_cast<int>(c.priority)
-                          << ", accelerated: " << (int)c.isAccelerated << "\n";
+                          << ", accelerated: " << (int)c.isAccelerated
+                          << ", networkType: " << DataUtils::networkTypeToString(c.nwType)
+                          << ", bridgeCreated: " << static_cast<bool>(c.createBridge) << "\n";
             }
         }
     };
@@ -485,17 +508,19 @@ void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
 
     telux::data::BackhaulType backhaulType = {};
     int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN, 2-ETH): ";
     std::cin >> backhaul;
-    Utils::validateInput(backhaul, {0, 1});
+    Utils::validateInput(backhaul, {0, 1, 2});
     std::cout << std::endl;
-    if (backhaul) {
+    if (backhaul == 1) {
         backhaulType = telux::data::BackhaulType::WWAN;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
             slotId = Utils::getValidSlotId();
         }
-    } else {
+    } else if(backhaul == 0){
         backhaulType = telux::data::BackhaulType::WLAN;
+    } else if(backhaul == 2) {
+        backhaulType = telux::data::BackhaulType::ETH;
     }
     auto respCb =
         [](const std::vector<telux::data::net::VlanBindConfig> bindings,
@@ -510,12 +535,14 @@ void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
                      << ", description: " << Utils::getErrorCodeAsString(error)
                      << std::endl;
            for (auto c : bindings) {
-              std::cout << "Backhaul: "
-                        << DataUtils::backhaulToString(c.bhInfo.backhaul);
-              if (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
-                 std::cout << ", profile id: " << c.bhInfo.profileId;
-              }
-              std::cout << ", vlanId: " << c.vlanId << "\n";
+               std::cout << "Backhaul: "
+                   << DataUtils::backhaulToString(c.bhInfo.backhaul);
+               if (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                   std::cout << ", profile id: " << c.bhInfo.profileId;
+               } else if (c.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+                   std::cout << ", vlan Id associated with Eth backhaul: " << c.bhInfo.vlanId;
+               }
+               std::cout << ", vlanId: " << c.vlanId << "\n";
            }
         };
     retStat = vlanManagerMap_[opType]->queryVlanToBackhaulBindings(

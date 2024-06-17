@@ -107,6 +107,9 @@ class Cv2xRadioSimulation : public ICv2xRadio,
 
     Cv2xRadioCapabilities getCapabilities() const override;
 
+    telux::common::Status
+        injectVehicleSpeed(uint32_t speed, telux::common::ResponseCallback cb) override;
+
  private:
     common::Status waitForInitialization();
     void setInitializedStatus(telux::common::Status status, telux::common::InitResponseCb cb);

@@ -46,6 +46,10 @@
         "disableTxStatusReport": {
             "error": "SUCCESS",
             "status": "SUCCESS"
+        },
+        "injectVehicleSpeed": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

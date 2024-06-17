@@ -3108,3 +3108,18 @@ v2x_status_enum_type v2x_inject_coarse_utc_time(uint64_t utc) {
     LOGD("%s:inject UTC succeeded\n", __FUNCTION__);
     return V2X_STATUS_SUCCESS;
 }
+
+v2x_status_enum_type v2x_inject_vehicle_speed(uint32_t speed) {
+    if (!state_g.radio) {
+        LOGE("%s: called when C-V2X radio is invalid\n", __FUNCTION__);
+        return V2X_STATUS_RADIO_NOT_READY;
+    }
+    promise<ErrorCode> p;
+    auto ret = state_g.radio->injectVehicleSpeed(speed, [&p](ErrorCode err) { p.set_value(err); });
+    if (Status::SUCCESS != ret or ErrorCode::SUCCESS != p.get_future().get()) {
+        LOGE("%s: Failed to inject speed\n", __FUNCTION__);
+        return V2X_STATUS_FAIL;
+    }
+    LOGD("%s:inject speed succeeded\n", __FUNCTION__);
+    return V2X_STATUS_SUCCESS;
+}

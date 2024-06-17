@@ -1709,5 +1709,15 @@ int Cv2xRadioSimulation::getMTU(std::string interfaceName) {
     return mtu;
 }
 
+telux::common::Status Cv2xRadioSimulation::injectVehicleSpeed(
+    uint32_t speed, telux::common::ResponseCallback cb) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    ::cv2xStub::UintNum request;
+
+    request.set_num(static_cast<uint32_t>(speed));
+    CALL_RPC_AND_RESPOND(serviceStub_->injectVehicleSpeed, request, status, cb, taskQ_);
+    return status;
+}
+
 }  // namespace cv2x
 }  // namespace telux

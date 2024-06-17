@@ -5,7 +5,7 @@
 
 #include "PowerManagerServiceImpl.hpp"
 #include "libs/common/SimulationConfigParser.hpp"
-
+#include <thread>
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/CommonUtils.hpp"

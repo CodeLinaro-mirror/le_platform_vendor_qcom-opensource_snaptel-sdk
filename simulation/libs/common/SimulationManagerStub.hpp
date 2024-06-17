@@ -7,7 +7,7 @@
 #define SIMULATION_MANAGER_STUB_HPP
 
 #include <string>
-
+#include <thread>
 #include "AsyncTaskQueue.hpp"
 #include "CommonUtils.hpp"
 #include <grpcpp/grpcpp.h>

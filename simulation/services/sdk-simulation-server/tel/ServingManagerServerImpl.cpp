@@ -4,7 +4,7 @@
  */
 
 #include "ServingManagerServerImpl.hpp"
-
+#include <thread>
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"

@@ -44,6 +44,8 @@
 #ifndef EVENT_MANAGER_HPP
 #define EVENT_MANAGER_HPP
 
+#include <thread>
+#include <chrono>
 #include <unordered_map>
 #include <string>
 #include <memory>

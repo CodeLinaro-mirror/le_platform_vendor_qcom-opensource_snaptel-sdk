@@ -462,7 +462,7 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
     LOG(DEBUG, __FUNCTION__, ":: Received Thermal Zones: ", response.thermal_zones_size());
 
     auto grpcTzones = response.thermal_zones();
-    for(const thermStub::ThermalZone grpcTzone : grpcTzones) {
+    for(const thermStub::ThermalZone &grpcTzone : grpcTzones) {
         std::shared_ptr<ThermalZoneImpl> tZone = std::make_shared<ThermalZoneImpl>();
         tZone->setId(grpcTzone.id());
         tZone->setDescription(grpcTzone.type());
@@ -524,7 +524,7 @@ std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingD
             response.cooling_devices_size());
 
     auto grpcCdevs = response.cooling_devices();
-    for(const thermStub::CoolingDevice grpcCdev : grpcCdevs) {
+    for(const thermStub::CoolingDevice &grpcCdev : grpcCdevs) {
         std::shared_ptr<CoolingDeviceImpl> cDev = std::make_shared<CoolingDeviceImpl>();
         cDev->setId(grpcCdev.id());
         cDev->setDescription(grpcCdev.type());

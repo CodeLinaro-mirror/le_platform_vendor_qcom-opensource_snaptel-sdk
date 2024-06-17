@@ -6,7 +6,7 @@
 #include "ServingSystemManagerStub.hpp"
 #include "common/Logger.hpp"
 #include "common/CommonUtils.hpp"
-
+#include <thread>
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;

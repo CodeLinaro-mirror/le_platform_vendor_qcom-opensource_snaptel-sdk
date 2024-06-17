@@ -18,6 +18,8 @@
 #include "LocationReportService.hpp"
 #include "event/EventService.hpp"
 #include <telux/loc/LocationDefines.hpp>
+#include <thread>
+#include <chrono>
 
 #include <fstream>
 #include <sstream>

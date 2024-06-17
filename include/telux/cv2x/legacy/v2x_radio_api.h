@@ -405,30 +405,30 @@ typedef struct {
     /**< Indicates whether n*10 ms periodicities are supported.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     unsigned supports_20ms_periodicity : 1;
     /**< Indicates whether an n*20 ms bandwidth reservation is supported.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     unsigned supports_50ms_periodicity : 1;
     /**< Indicates whether 50 ms periodicity is supported.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     unsigned supports_100ms_periodicity : 1;
     /**< Indicates whether the basic minimum periodicity of 100 ms is
          supported.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     unsigned max_quantity_of_auto_retrans : 4;
     /**< Maximum number automatic retransmissions.
@@ -900,8 +900,8 @@ typedef struct {
     /**< Indicates whether the default Tx power is specified.
 
          @values
-         - 0 -- Default power is not specified
-         - 1 -- Default power is specified and is valid @tablebulletend */
+         - 0 - Default power is not specified
+         - 1 - Default power is specified and is valid @tablebulletend */
 
     int32_t default_tx_power;
     /**< Default power used for transmission. */
@@ -910,8 +910,8 @@ typedef struct {
     /**< Indicates whether the MCS index is specified.
 
          @values
-         - 0 -- Index is not specified
-         - 1 -- Index is specified and is valid @tablebulletend */
+         - 0 - Index is not specified
+         - 1 - Index is specified and is valid @tablebulletend */
 
     uint8_t mcs_index;
     /**< MCS index number */
@@ -920,8 +920,8 @@ typedef struct {
     /**< Indicates whether the Tx pool ID is valid.
 
          @values
-         - 0 -- ID is not specified
-         - 1 -- ID is specified and is valid @tablebulletend */
+         - 0 - ID is not specified
+         - 1 - ID is specified and is valid @tablebulletend */
 
     uint8_t tx_pool_id;
     /**< ID of the Tx pool. */
@@ -930,8 +930,8 @@ typedef struct {
     /**< Indicates whether is_unicast is specified.
 
          @values
-         - 0 -- Is unicast is not specified
-         - 1 -- Is unicast is specified and is valid @tablebulletend */
+         - 0 - Is unicast is not specified
+         - 1 - Is unicast is specified and is valid @tablebulletend */
 
     uint8_t is_unicast;
     /**< Non zero if requested flow is unicast.
@@ -1140,7 +1140,7 @@ typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
     information, and build date.
 
     @return
-    v2x_api_ver_t -- Contains the build date and API version number. @newpage
+    v2x_api_ver_t - Contains the build date and API version number. @newpage
  */
 extern v2x_api_ver_t v2x_radio_api_version();
 
@@ -1155,10 +1155,10 @@ extern v2x_api_ver_t v2x_radio_api_version();
                            interface.
 
     @return
-    #V2X_STATUS_SUCCESS -- The radio is ready for data-plane sockets to be
+    #V2X_STATUS_SUCCESS - The radio is ready for data-plane sockets to be
     created and bound.
     @par
-    Error code -- If there is a problem (see #v2x_status_enum_type).
+    Error code - If there is a problem (see #v2x_status_enum_type).
  */
 extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_t *caps);
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
@@ -1181,10 +1181,10 @@ extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_
                            interface.
 
     @return
-    #V2X_STATUS_SUCCESS -- The radio is ready for data-plane sockets to be
+    #V2X_STATUS_SUCCESS - The radio is ready for data-plane sockets to be
     created and bound.
     @par
-    Error code -- If there is a problem (see #v2x_status_enum_type).
+    Error code - If there is a problem (see #v2x_status_enum_type).
  */
 extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
 
@@ -1233,7 +1233,7 @@ extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v
     Handle to the specified initialized radio. The handle is used for
     reconfiguring, opening or changing, and closing reservations.
     @par
-    #V2X_RADIO_HANDLE_BAD -- If there is an error. No initialization callback
+    #V2X_RADIO_HANDLE_BAD - If there is an error. No initialization callback
     is made. @newpage
  */
 v2x_radio_handle_t v2x_radio_init(char *interface_name,
@@ -1262,10 +1262,10 @@ v2x_radio_handle_t v2x_radio_init(char *interface_name,
                         as the first parameter in the callback.
 
     @return
-    #V2X_STATUS_SUCCESS -- The radio is now ready for data-plane sockets to be
+    #V2X_STATUS_SUCCESS - The radio is now ready for data-plane sockets to be
     open and bound.
     @par
-    Error code -- If there is a problem (see #v2x_status_enum_type).
+    Error code - If there is a problem (see #v2x_status_enum_type).
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -1322,9 +1322,9 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
     0 -- On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -1388,9 +1388,9 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     0 -- On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init(). The handle from
@@ -1471,9 +1471,9 @@ extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
     0 -- On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init(). The handle from
@@ -1615,9 +1615,9 @@ extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
     0 -- On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init(). The handle from
@@ -1716,12 +1716,12 @@ extern int v2x_radio_sock_create_and_bind(
     use, assuming there is no error.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -1803,8 +1803,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
     0 -- On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EINVAL -- On failure to find the interface or get bad parameters.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EINVAL - On failure to find the interface or get bad parameters.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -1845,7 +1845,7 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
     @return
     #V2X_STATUS_SUCCESS.
     @par
-    Error code -- If there is a problem (see #v2x_status_enum_type).
+    Error code - If there is a problem (see #v2x_status_enum_type).
 
     @dependencies
     An SPS flow must have been successfully initialized with the
@@ -1900,12 +1900,12 @@ extern void v2x_radio_tx_flush(char *interface);
     socket.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device. @newpage
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device. @newpage
  */
 extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface,
         int v2x_id,
@@ -1936,10 +1936,10 @@ extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface,
     interface is closed.
 
     @return
-    #V2X_STATUS_SUCCESS -- The radio is now ready for data-plane sockets to be
+    #V2X_STATUS_SUCCESS - The radio is now ready for data-plane sockets to be
     created and bound.
     @par
-    #V2X_STATUS_FAIL -- CBR measurement is not supported yet.
+    #V2X_STATUS_FAIL - CBR measurement is not supported yet.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -2059,12 +2059,12 @@ extern v2x_event_t cv2x_status_poll(uint64_t *status_age_useconds);
     function.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device. @newpage
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device. @newpage
  */
 extern int v2x_radio_trigger_l2_update(
     v2x_radio_handle_t handle);
@@ -2084,12 +2084,12 @@ extern int v2x_radio_trigger_l2_update(
     @param[in] trusted_list        List of trusted IDs.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device. @newpage
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device. @newpage
  */
 int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
                                      unsigned int malicious_list[MAX_MALICIOUS_IDS_LIST_LEN],
@@ -2182,12 +2182,12 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
     use, assuming there is no error.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -2266,11 +2266,11 @@ extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
     use, assuming there is no error. @newpage
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EINVAL -- On failure to find the interface or get bad parameters.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EINVAL - On failure to find the interface or get bad parameters.
 
     @dependencies
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
@@ -2314,7 +2314,7 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
     @return
     #V2X_STATUS_SUCCESS.
     @par
-    Error code -- On failure (see #v2x_status_enum_type).
+    Error code - On failure (see #v2x_status_enum_type).
 
     @dependencies
     An SPS flow must have been successfully initialized with
@@ -2366,12 +2366,12 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
     socket.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device. @newpage
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device. @newpage
  */
 extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     const char *interface,
@@ -2406,7 +2406,7 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     @return
     #V2X_STATUS_SUCCESS.
     @par
-    Error code -- On failure (see #v2x_status_enum_type).
+    Error code - On failure (see #v2x_status_enum_type).
 
     @dependencies
     An event flow must have been successfully initialized with
@@ -2434,8 +2434,8 @@ extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
     #V2X_STATUS_SUCCESS.
     @par
     Otherwise:
-    - #V2X_STATUS_EALREADY -- Failure because V2X mode is already started.
-    - #V2X_STATUS_FAIL -- Other failure.
+    - #V2X_STATUS_EALREADY - Failure because V2X mode is already started.
+    - #V2X_STATUS_FAIL - Other failure.
 
     @dependencies
     V2X radio status must be #V2X_INACTIVE (#v2x_event_t).
@@ -2458,8 +2458,8 @@ extern v2x_status_enum_type start_v2x_mode();
     #V2X_STATUS_SUCCESS.
     @par
     Otherwise:
-    - #V2X_STATUS_EALREADY -- Failure because V2X mode is already stopped.
-    - #V2X_STATUS_FAIL -- Other failure.
+    - #V2X_STATUS_EALREADY - Failure because V2X mode is already stopped.
+    - #V2X_STATUS_FAIL - Other failure.
 
     @dependencies
     V2X radio status must be #V2X_ACTIVE, #V2X_TX_SUSPENDED, #V2X_RX_SUSPENDED,
@@ -2549,11 +2549,11 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
     initialization is complete.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EINVAL -- Invalid input parmaters.
-     - EPERM -- Radio initialization failed.
+     - EINVAL - Invalid input parmaters.
+     - EPERM - Radio initialization failed.
 
     @dependencies
     This API might fail if the underlying Cv2x status is currently in an inactive state.
@@ -2602,12 +2602,12 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
     socket.
 
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EPERM -- Socket creation failed; for more details, check errno.h.
-     - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device.
+     - EPERM - Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT - On failure to find the interface.
+     - EACCES - On failure to get the MAC address of the device.
  */
 int v2x_radio_tx_event_sock_create_and_bind_v3(
         traffic_ip_type_t ip_type,
@@ -2633,7 +2633,7 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
     @return
     #V2X_STATUS_SUCCESS.
     @par
-    #V2X_STATUS_FAIL -- If there is an error. Interface name will be an
+    #V2X_STATUS_FAIL - If there is an error. Interface name will be an
     empty string. @newpage
  */
 v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name, size_t buffer_len);
@@ -2686,11 +2686,11 @@ v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name
     (AF_INET6).
     @par
     @return
-    0 -- On success.
+    0 - On success.
     @par
     Otherwise:
-     - EINVAL -- On failure to find the interface or get bad parameters.
-     - EPERM -- Socket operation failed; for more details, check errno.h.
+     - EINVAL - On failure to find the interface or get bad parameters.
+     - EPERM - Socket operation failed; for more details, check errno.h.
 
     @dependencies
     The interface used for IP communication must be pre-initialized with

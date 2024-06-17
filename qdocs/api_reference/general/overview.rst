@@ -403,7 +403,7 @@ This table captures when stream could be muted and in which direction.
    :widths: 26, 36, 36
 
    "VOICE_CALL", "Applicable", "Applicable"
-  "PLAY", "Applicable", "Not Applicable"
+   "PLAY", "Applicable", "Not Applicable"
    "CAPTURE", "Not Applicable", "Applicable"
    "LOOPBACK", "Not Applicable", "Not Applicable"
    "TONE_GENERATOR", "Not Applicable", "Not Applicable"

@@ -338,9 +338,9 @@ TelSDK simulation framework supports logging. User configurable logger settings 
 |                  |                                                                 |
 +------------------+-----------------------------------------------------------------+
 
-----------------------
+---------------------------
 Environment specifications
-----------------------
+---------------------------
 Current release has been tested with the combination below.
 
 * Ubuntu 18.04
@@ -1303,6 +1303,7 @@ The following managers are currently available in the simulation:
 6. SocksManager
 7. NatManager
 8. L2tpManager
+9. FirewallManager
 
 
 Data APIs Response handling

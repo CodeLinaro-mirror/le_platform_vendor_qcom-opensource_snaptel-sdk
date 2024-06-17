@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -138,36 +138,36 @@ typedef struct /** @cond */_v2x_GNSSstatus_t/** @endcond */ {
     /**< Specifies whether a constellation is not equipped or is unavailable.
 
          @values
-         - 0 -- GNSS is available
-         - 1 -- GNSS is unavailable @tablebulletend */
+         - 0 - GNSS is available
+         - 1 - GNSS is unavailable @tablebulletend */
 
     bool aPDOPofUnder5;
     /**< Specifies whether dilution of precision is greater than 5.
 
          @values
-         - 0 -- Not greater than 5
-         - 1 -- Greater than 5 @tablebulletend */
+         - 0 - Not greater than 5
+         - 1 - Greater than 5 @tablebulletend */
 
     bool inViewOfUnder5;
     /**< Specifies whether fewer than five satellites are in view.
 
          @values
-         - 0 -- Five or more satellites are in view
-         - 1 -- Fewer than five satellites are in view @tablebulletend */
+         - 0 - Five or more satellites are in view
+         - 1 - Fewer than five satellites are in view @tablebulletend */
 
     bool localCorrectionsPresent;
     /**< Specifies whether DGPS type corrections are used.
 
          @values
-         - 0 -- Not used
-         - 1 -- Used @tablebulletend */
+         - 0 - Not used
+         - 1 - Used @tablebulletend */
 
     bool networkCorrectionsPresent;
     /**< Specifies whether RTK type corrections are used.
 
          @values
-         - 0 -- Not used
-         - 1 -- Used @tablebulletend */
+         - 0 - Not used
+         - 1 - Used @tablebulletend */
 
 /* @@protoc_insertion_point(struct:v2x_GNSSstatus_t) */
 } v2x_GNSSstatus_t;
@@ -181,8 +181,8 @@ typedef struct /** @cond */_v2x_gnss_fix_rates_supported_list_t/** @endcond */ {
          supported.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     pb_size_t rates_supported_hz_array_count;
     /**< Number of supported rates. */
@@ -214,68 +214,68 @@ typedef struct /** @cond */_v2x_kinematics_capabilities_t_feature_flags_t/** @en
     /**< Specifies whether the hardware supports 3-axis gyro.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     bool has_3_axis_accelerometer;
     /**< Specifies whether the hardware supports the 3-axis accelerometer.
 
          @values
-         - 0 -- Not supported
-         - 1 -- Supported @tablebulletend */
+         - 0 - Not supported
+         - 1 - Supported @tablebulletend */
 
     bool has_imu_supplemented_dead_reckoning;
     /**< Specifies whether a dead reckoning (DR) solution is available and
          enabled or only GNSS is the result.
 
          @values
-         - 0 -- GNSS is available
-         - 1 -- DR is available @tablebulletend */
+         - 0 - GNSS is available
+         - 1 - DR is available @tablebulletend */
 
     bool has_yaw_rate_sensor;
     /**< Specifies whether the IMU includes a yaw rate sensor.
 
          @values
-         - 0 -- Does not include sensor
-         - 1 -- Includes sensor @tablebulletend */
+         - 0 - Does not include sensor
+         - 1 - Includes sensor @tablebulletend */
 
     bool used_vehicle_speed;
     /**< Specifies whether the DR algorithm uses the vehicle speed sensor.
 
          @values
-         - 0 -- Does not use sensor
-         - 1 -- Uses sensor @tablebulletend */
+         - 0 - Does not use sensor
+         - 1 - Uses sensor @tablebulletend */
 
     bool used_single_wheel_ticks;
     /**< Specifies whether the DR algorithm uses the single wheel ticks.
 
          @values
-         - 0 -- Does not use ticks
-         - 1 -- Uses ticks @tablebulletend */
+         - 0 - Does not use ticks
+         - 1 - Uses ticks @tablebulletend */
 
     bool used_front_differential_wheel_ticks;
     /**< Specifies whether the DR algorithm uses two front differential wheel
          ticks.
 
          @values
-         - 0 -- Does not use ticks
-         - 1 -- Uses ticks @tablebulletend */
+         - 0 - Does not use ticks
+         - 1 - Uses ticks @tablebulletend */
 
     bool used_rear_differential_wheel_ticks;
     /**< Specifies whether the DR algorithm uses two rear differential wheel
          ticks.
 
          @values
-         - 0 -- Does not use ticks
-         - 1 -- Uses ticks @tablebulletend */
+         - 0 - Does not use ticks
+         - 1 - Uses ticks @tablebulletend */
 
     bool used_vehicle_dynamic_model;
     /**< Specifies whether the DR algorithm uses vehicle dynamic model
          factoring in differential ticks, steering, and so on.
 
          @values
-         - 0 -- Does not use factoring
-         - 1 -- Uses factoring @tablebulletend */
+         - 0 - Does not use factoring
+         - 1 - Uses factoring @tablebulletend */
 
 /* @@protoc_insertion_point(struct:v2x_kinematics_capabilities_t_feature_flags_t) */
 } v2x_kinematics_capabilities_t_feature_flags_t;
@@ -357,8 +357,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double SemiMajorAxisAccuracy;
     /**< Accuracy of the major axis, in meters. */
@@ -368,8 +368,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double SemiMinorAxisAccuracy;
     /**< Accuracy of the minor axis, in meters. */
@@ -379,8 +379,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double SemiMajorAxisOrientation;
     /**< Orientation of the major axis, in meters. */
@@ -389,8 +389,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the heading field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double heading;
     /**< Track degrees relative to true north. */
@@ -399,8 +399,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the velocity field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double velocity;
     /**< Speed over ground in meters/second. */
@@ -409,8 +409,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the climb field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double climb;
     /**< Vertical speed in meters/second. */
@@ -420,8 +420,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double lateral_acceleration;
     /**< Acceleration in a latitudinal direction, in meters/second^2. */
@@ -431,8 +431,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double longitudinal_acceleration;
     /**< Acceleration in a longitudinal direction, in meters/second^2. */
@@ -442,8 +442,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double vehicle_vertical_acceleration;
     /**< Vertical acceleration of the vehicle in G force. */ 
@@ -453,8 +453,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double yaw_rate_degrees_per_second;
     /**< Yaw rate in degrees/second, per SAE J2735. */
@@ -464,8 +464,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double yaw_rate_95pct_confidence;
     /**< 95% confidence (2 sigma) on the yaw rate in degrees/second. */
@@ -475,8 +475,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double lane_position_number;
     /**< Current lane number, where 0 is either the outer-most edge of the hard
@@ -487,8 +487,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     double lane_position_95pct_confidence;
     /**< 95% confidence range on the lane position. */
@@ -497,8 +497,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the time_confidence field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     float time_confidence;
     /**< 95% (2 sigma) confidence in number of seconds. */
@@ -507,8 +507,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the heading_confidence field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     float heading_confidence;
     /**< 95% heading confidence in degrees. */
@@ -517,8 +517,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
     /**< Specifies whether the value of the velocity_confidence field is valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     float velocity_confidence;
     /**< 95% velocity confidence in meters/second. */
@@ -528,8 +528,8 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
          valid.
 
          @values
-         - 0 -- Not valid
-         - 1 -- Valid @tablebulletend */
+         - 0 - Not valid
+         - 1 - Valid @tablebulletend */
 
     float elevation_confidence;
     /**< 95% uncertainty range (2 sigma) confidence in meters. */

@@ -42,7 +42,9 @@
 #define TELUX_SEC_WIFISECURITYMANAGER_HPP
 
 #include <cstdint>
-
+#include <memory>
+#include <vector>
+#include <string>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {

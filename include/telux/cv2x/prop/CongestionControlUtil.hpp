@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELUX_CV2X_PROP_CONGESTIONCONTROLUTIL_HPP
 #define TELUX_CV2X_PROP_CONGESTIONCONTROLUTIL_HPP
+
+#include <cstdint>
 
 namespace telux {
     namespace cv2x {

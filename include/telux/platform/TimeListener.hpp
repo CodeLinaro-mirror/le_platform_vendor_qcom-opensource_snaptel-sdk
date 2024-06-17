@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -45,6 +45,7 @@
 #ifndef TELUX_PLATFORM_TIMELISTENER_HPP
 #define TELUX_PLATFORM_TIMELISTENER_HPP
 
+#include <cstdint>
 
 namespace telux {
 

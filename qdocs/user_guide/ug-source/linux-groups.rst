@@ -57,11 +57,11 @@ Sensor
 |             |                                             |                                  |
 |             |  telux::sensor::ISensorFeatureManager,      |                                  |
 |             |                                             |                                  |
-|             |  telux::sensor::ISensor/telux::sensor::I -  |                                  |
+|             |  telux::sensor::ISensor/telux::sensor::I\   |                                  |
+|             |  SensorClient namespace.                    |                                  |
 |             |                                             |                                  |
-|             |  SensorClient                               |                                  |
 |             |                                             |                                  |
-|             |  namespace.                                 |                                  |
+|             |                                             |                                  |
 |             |                                             |                                  |
 +-------------+---------------------------------------------+----------------------------------+
 

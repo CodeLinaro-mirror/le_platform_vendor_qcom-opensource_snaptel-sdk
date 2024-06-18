@@ -71,6 +71,8 @@
      rpc RequestOperatorInfo(RequestOperatorInfoRequest) returns (RequestOperatorInfoReply) {}
      rpc ConfigureSignalStrength(ConfigureSignalStrengthRequest) returns
          (ConfigureSignalStrengthReply) {}
+     rpc ConfigureSignalStrengthEx(ConfigureSignalStrengthExRequest) returns
+         (ConfigureSignalStrengthExReply) {}
  }
  service SmsService {
      rpc InitService (commonStub.GetServiceStatusRequest) returns (commonStub.GetServiceStatusReply) {}
@@ -2505,6 +2507,56 @@ message ConfigureSignalStrengthReply {
     commonStub.Status status = 3;
     int32 delay = 4;
     bool iscallback = 5;
+}
+
+enum SignalStrengthConfigExType {
+    EX_CONFIG_NONE = 0;
+    EX_DELTA = 1;       /**< Signal strength delta provided. */
+    EX_THRESHOLD = 2;   /**< Signal strength threshold provided. */
+    EX_HYSTERESIS_DB = 3; /**< Signal strength hysteresis delta provided. */
+}
+
+enum SignalStrengthMeasurementType {
+    RSSI = 0;  /**< Received signal strength indicator. */
+    ECIO = 1;  /**< Energy per chip to interference power ratio. */
+    SINR = 2;  /**< Signal-to-interference-plus-noise ratio. */
+    IO = 3;    /**< Interference power ratio. */
+    RSRQ = 4;  /**< Reference signal received quality. */
+    RSRP = 5;  /**< Reference signal received power. */
+    SNR = 6;   /**< Signal-to-noise ratio. */
+    RSCP = 7;  /**< Received signal code power. */
+}
+
+message SignalStrengthConfigDataElements {
+    repeated int32 threshold_list = 1;
+    uint32 hysteresis_db = 2;
+}
+
+message SignalStrengthConfigData {
+    SignalStrengthMeasurementType sig_meas_type = 1;
+    oneof Request{
+        uint32 delta = 2;
+        SignalStrengthConfigDataElements elements = 3;
+    }
+}
+
+message ConfigureSignalStrengthEx {
+    repeated SignalStrengthConfigExType config_types = 1;
+    RadioTechnology radio_tech = 2;
+    repeated SignalStrengthConfigData sig_config_data = 3;
+}
+
+message ConfigureSignalStrengthExRequest {
+    int32 phone_id = 1;
+    repeated ConfigureSignalStrengthEx config = 2;
+    uint32 hysteresis_ms = 3;
+}
+
+message ConfigureSignalStrengthExReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
 }
 
 message GetNetworkRejectInfoRequest {

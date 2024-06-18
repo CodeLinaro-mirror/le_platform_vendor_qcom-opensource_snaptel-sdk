@@ -26,6 +26,7 @@
 #define SLOT_1 1
 #define SLOT_2 2
 #define DEFAULT_SLOT_ID SLOT_1
+#define MAX_THRESHOLD_LIST 10
 
 namespace telux {
 namespace tel {
@@ -123,9 +124,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
                 set_gsm_bit_error_rate(INVALID_SIGNAL_STRENGTH_VALUE);
         }
-        LOG(DEBUG, __FUNCTION__, " gsmSignalStrength:", response->mutable_signal_strength()->\
+        LOG(DEBUG, __FUNCTION__, " gsmSignalStrength: ", response->mutable_signal_strength()->\
             mutable_gsm_signal_strength_info()->gsm_signal_strength(),
-            " gsmBitErrorRate", response->mutable_signal_strength()->\
+            " gsmBitErrorRate: ", response->mutable_signal_strength()->\
             mutable_gsm_signal_strength_info()->gsm_bit_error_rate());
 
         // lte signal strength
@@ -163,17 +164,17 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
                 set_timing_advance(INVALID_SIGNAL_STRENGTH_VALUE);
         }
-        LOG(DEBUG, __FUNCTION__, " lteSignalStrength:",
+        LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                lte_signal_strength(), " lteRsrp:",
+                lte_signal_strength(), " lteRsrp: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                lte_rsrp(), " lteRsrq:",
+                lte_rsrp(), " lteRsrq: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                lte_rsrq(),  " lteRssnr:",
+                lte_rsrq(),  " lteRssnr: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                lte_rssnr(), " lteCqi:",
+                lte_rssnr(), " lteCqi: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                lte_cqi(), " timingAdvance:",
+                lte_cqi(), " timingAdvance: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
                 timing_advance());
 
@@ -202,13 +203,13 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
                 set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
         }
-        LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength:",
+        LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-            signal_strength(), " bitErrorRate:",
+            signal_strength(), " bitErrorRate: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-            bit_error_rate(), " ecio:",
+            bit_error_rate(), " ecio: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-            ecio(), " rscp:",
+            ecio(), " rscp: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
             rscp());
 
@@ -232,11 +233,11 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_nr5g_signal_strength_info()->set_rssnr(
                 INVALID_SIGNAL_STRENGTH_VALUE);
         }
-        LOG(DEBUG, __FUNCTION__, " nr5grsrp:",
+        LOG(DEBUG, __FUNCTION__, " nr5gRsrp: ",
             data.stateRootObj[TEL_PHONE_MANAGER]\
-            ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrp"].asInt(), " nr5grsrq",
+            ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrp"].asInt(), " nr5gRsrq: ",
             data.stateRootObj[TEL_PHONE_MANAGER]\
-            ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5grssnr",
+            ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5gRssnr : ",
             data.stateRootObj[TEL_PHONE_MANAGER]\
             ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rssnr"].asInt());
         response->set_phone_id(phoneId);
@@ -718,17 +719,17 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_timing_advance(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " lteSignalStrength:",
+    LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            lte_signal_strength(), " lteRsrp:",
+            lte_signal_strength(), " lteRsrp: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            lte_rsrp(), " lteRssnr:",
+            lte_rsrp(), " lteRssnr: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            lte_rssnr(), " lteRsrq:",
+            lte_rssnr(), " lteRsrq: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            lte_rsrq(), " lteCqi:",
+            lte_rsrq(), " lteCqi: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            lte_cqi(), " timingAdvance:",
+            lte_cqi(), " timingAdvance: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
             timing_advance());
 
@@ -751,14 +752,18 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
             set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
             set_bit_error_rate(INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+            set_ecio(INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+            set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength:",
+    LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-        signal_strength(), " bitErrorRate:",
+        signal_strength(), " bitErrorRate: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-        bit_error_rate(), " ecio:",
+        bit_error_rate(), " ecio: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-        ecio(), " rscp:",
+        ecio(), " rscp: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
         rscp());
 
@@ -781,11 +786,11 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->set_rssnr(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " nr5grsrp:",
+    LOG(DEBUG, __FUNCTION__, " nr5gRsrp: ",
         stateRootObj[TEL_PHONE_MANAGER]\
-        ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrp"].asInt(), " nr5grsrq",
+        ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrp"].asInt(), " nr5gRsrq: ",
         stateRootObj[TEL_PHONE_MANAGER]\
-        ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5grssnr",
+        ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5gRssnr: ",
         stateRootObj[TEL_PHONE_MANAGER]\
         ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rssnr"].asInt());
     event.set_phone_id(phoneId);
@@ -1143,9 +1148,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_gsm_signal_strength_info()->set_gsm_bit_error_rate(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " gsmSignalStrength:",
+    LOG(DEBUG, __FUNCTION__, " gsmSignalStrength: ",
         signalStrength.mutable_gsm_signal_strength_info()->gsm_signal_strength(),
-        " gsmBitErrorRate",
+        " gsmBitErrorRate: ",
         signalStrength.mutable_gsm_signal_strength_info()->gsm_bit_error_rate());
 
     // lte signal strength
@@ -1182,12 +1187,12 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_lte_signal_strength_info()->set_timing_advance(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " lteSignalStrength:",
-        signalStrength.mutable_lte_signal_strength_info()->lte_signal_strength(), " lteRsrp:",
-        signalStrength.mutable_lte_signal_strength_info()->lte_rsrp(), " lteRsrq:",
-        signalStrength.mutable_lte_signal_strength_info()->lte_rsrq(), " lteRssnr:",
-        signalStrength.mutable_lte_signal_strength_info()->lte_rssnr(), " lteCqi:",
-        signalStrength.mutable_lte_signal_strength_info()->lte_cqi(), " timingAdvance:",
+    LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_signal_strength(), " lteRsrp: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_rsrp(), " lteRsrq: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_rsrq(), " lteRssnr: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_rssnr(), " lteCqi: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_cqi(), " timingAdvance: ",
         signalStrength.mutable_lte_signal_strength_info()->timing_advance());
 
     // wcdma signal strength
@@ -1214,13 +1219,13 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_wcdma_signal_strength_info()->
             set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength:",
+    LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
         signalStrength.mutable_wcdma_signal_strength_info()->signal_strength(),
-        " bitErrorRate:",
+        " bitErrorRate: ",
         signalStrength.mutable_wcdma_signal_strength_info()->bit_error_rate(),
-        " ecio:",
+        " ecio: ",
         signalStrength.mutable_wcdma_signal_strength_info()->ecio(),
-        " rscp:",
+        " rscp: ",
         signalStrength.mutable_wcdma_signal_strength_info()->rscp());
 
     // nr5g signal strength
@@ -1240,9 +1245,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_nr5g_signal_strength_info()->set_rssnr(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
-    LOG(DEBUG, __FUNCTION__, " nr5grsrp:",
-        signalStrength.mutable_nr5g_signal_strength_info()->rsrp(), " nr5grsrq",
-        signalStrength.mutable_nr5g_signal_strength_info()->rsrq(), " nr5grssnr",
+    LOG(DEBUG, __FUNCTION__, " nr5gRsrp: ",
+        signalStrength.mutable_nr5g_signal_strength_info()->rsrp(), " nr5gRsrq: ",
+        signalStrength.mutable_nr5g_signal_strength_info()->rsrq(), " nr5gRssnr: ",
         signalStrength.mutable_nr5g_signal_strength_info()->rssnr());
     return error;
 }
@@ -1301,7 +1306,7 @@ telux::common::ErrorCode TelUtil::readSystemInfoFromJsonFile(int phoneId,
     servingRat = static_cast<telStub::RadioTechnology>(rat);
     int domain = stateRootObj[TEL_SERVING_MANAGER]["ServingSystemInfo"]["domain"].asInt();
     servingDomain = static_cast<telStub::ServiceDomainInfo_Domain>(domain);
-    LOG(DEBUG, __FUNCTION__," RAT:", rat, " Domain: ", domain);
+    LOG(DEBUG, __FUNCTION__," RAT: ", rat, " Domain: ", domain);
     return error;
 }
 
@@ -1318,12 +1323,12 @@ telux::common::ErrorCode TelUtil::readOperatingModeFromJsonFile(telStub::Operati
     int operatingMode = stateRootObj[TEL_PHONE_MANAGER]["operatingModeInfo"]\
         ["operatingMode"].asInt();
     mode = static_cast<telStub::OperatingMode>(operatingMode);
-    LOG(DEBUG, __FUNCTION__," OperatingMode:", operatingMode);
+    LOG(DEBUG, __FUNCTION__," OperatingMode: ", operatingMode);
     return error;
 }
 
 telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
-        telStub::SignalStrengthChangeEvent &event) {
+    telStub::SignalStrengthChangeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
     std::string jsonfilename;
@@ -1333,7 +1338,6 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
         return error;
     }
-    rootObj[TEL_PHONE_MANAGER] ["signalStrengthInfo"].clear();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]["gsmSignalStrength"] =
         event.signal_strength().gsm_signal_strength_info().gsm_signal_strength();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]["gsmBitErrorRate"] =
@@ -1600,49 +1604,48 @@ telux::common::ErrorCode TelUtil::writeConfigureSignalStrengthToJsonFileAndReply
     if (error == ErrorCode::SUCCESS) {
         if (data.status == telux::common::Status::SUCCESS) {
             int currentCount = 0;
-        for (unsigned int i = 0; i < signalStrengthConfig.size(); i++) {
-            Json::Value newconfig;
-            /* TODO check the RAT stored and user requested RAT and update it. currently
-                without check it is written to json */
-            currentCount = data.stateRootObj[TEL_PHONE_MANAGER]\
-                ["configureSignalStrengthInfo"].size();
-            LOG(DEBUG, __FUNCTION__," current configcount is : ", currentCount);
-            newconfig["radioSignalType"] = signalStrengthConfig[i].rat_sig_type();
-            newconfig["configType"] = signalStrengthConfig[i].config_type();
-            switch(signalStrengthConfig[i].config_type()) {
-                case telStub::SignalStrengthConfigType::DELTA:
-                        newconfig["delta"] = signalStrengthConfig[i].delta();
-                    break;
-                case telStub::SignalStrengthConfigType::THRESHOLD:
-                    newconfig["lowerThreshold"] = signalStrengthConfig[i].mutable_threshold()->
-                        lower_range_threshold();
-                    newconfig["upperThreshold"] = signalStrengthConfig[i].mutable_threshold()->
-                        upper_range_threshold();
-                    break;
-                default:
-                    break;
-            }
-
-            bool ratFound = false;
-            for (int j = 0; j < currentCount; j++) {
-                if ((data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"][j]\
-                    ["radioSignalType"]) == newconfig["radioSignalType"]) {
-                        LOG(DEBUG, __FUNCTION__, " Matched RAT");
-                        data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"]\
-                            [j] = newconfig;
-                    ratFound = true;
-                    break;
+            for (unsigned int i = 0; i < signalStrengthConfig.size(); i++) {
+                Json::Value newconfig;
+                currentCount = data.stateRootObj[TEL_PHONE_MANAGER]\
+                    ["configureSignalStrengthInfo"].size();
+                LOG(DEBUG, __FUNCTION__," current configcount is : ", currentCount);
+                newconfig["radioSignalType"] = signalStrengthConfig[i].rat_sig_type();
+                newconfig["configType"] = signalStrengthConfig[i].config_type();
+                switch(signalStrengthConfig[i].config_type()) {
+                     case telStub::SignalStrengthConfigType::DELTA:
+                         newconfig["delta"] = signalStrengthConfig[i].delta();
+                         break;
+                     case telStub::SignalStrengthConfigType::THRESHOLD:
+                         newconfig["lowerThreshold"] = signalStrengthConfig[i].mutable_threshold()->
+                             lower_range_threshold();
+                         newconfig["upperThreshold"] = signalStrengthConfig[i].mutable_threshold()->
+                             upper_range_threshold();
+                         break;
+                    default:
+                        break;
                 }
-            }
 
-            if (ratFound) {
-                LOG(DEBUG, __FUNCTION__, " Matching RAT found");
-                continue;
+                bool ratFound = false;
+                for (int j = 0; j < currentCount; j++) {
+                    // Check the RAT stored and user requested RAT and update it.
+                    if ((data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"][j]\
+                        ["radioSignalType"]) == newconfig["radioSignalType"]) {
+                            LOG(DEBUG, __FUNCTION__, " Matched RAT");
+                            data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"]\
+                                [j] = newconfig;
+                        ratFound = true;
+                        break;
+                    }
+                }
+
+                if (ratFound) {
+                    LOG(DEBUG, __FUNCTION__, " Matching RAT found");
+                    continue;
+                }
+                data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"]\
+                    [currentCount++] = newconfig;
             }
-            data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthInfo"]\
-                [currentCount] = newconfig;
-        }
-        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
 
     } else {
@@ -1658,8 +1661,115 @@ telux::common::ErrorCode TelUtil::writeConfigureSignalStrengthToJsonFileAndReply
     return data.error;
 }
 
-telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std::string> params, int
-    &phoneId) {
+telux::common::ErrorCode TelUtil::writeConfigureSignalStrengthExToJsonFileAndReply(int phoneId,
+    std::vector<telStub::ConfigureSignalStrengthEx> signalStrengthConfigEx,
+    telStub::ConfigureSignalStrengthExReply* response, uint16_t hysTimer) {
+    LOG(DEBUG, __FUNCTION__);
+    JsonData data;
+    std::string stateJsonPath = "";
+
+    telux::common::ErrorCode error = readJsonData(phoneId, TEL_PHONE_MANAGER,
+        "configureSignalStrength", data, stateJsonPath);
+    if (error == ErrorCode::SUCCESS) {
+        if (data.status == telux::common::Status::SUCCESS) {
+            int currentCount = 0;
+            LOG(DEBUG, __FUNCTION__, " signal strength config size = ",
+                signalStrengthConfigEx.size());
+            for (unsigned int idx = 0; idx < signalStrengthConfigEx.size(); idx++) {
+                Json::Value newconfig;
+                currentCount = data.stateRootObj[TEL_PHONE_MANAGER]\
+                    ["configureSignalStrengthExInfo"]["configureSignalStrengthExInfoList"].size();
+                LOG(DEBUG, __FUNCTION__," current config count is : ", currentCount);
+
+                newconfig["radioTech"] = signalStrengthConfigEx[idx].radio_tech();
+                LOG(DEBUG, __FUNCTION__, " signal strength config type size = ",
+                    signalStrengthConfigEx[idx].config_types().size());
+                for (int cfIdx = 0; cfIdx < signalStrengthConfigEx[idx].config_types().size();
+                    cfIdx++) {
+                    if (signalStrengthConfigEx[idx].config_types(cfIdx)) {
+                        newconfig["configExType"][cfIdx] =
+                            static_cast<int>(signalStrengthConfigEx[idx].config_types(cfIdx));
+                    }
+                }
+                LOG(DEBUG, __FUNCTION__, " signal strength config data size = ",
+                    signalStrengthConfigEx[idx].sig_config_data().size());
+                for (int cdIdx = 0;
+                    cdIdx < signalStrengthConfigEx[idx].sig_config_data().size(); cdIdx++) {
+                    newconfig["sigMeasType"] =
+                        signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)->sig_meas_type();
+                    for (int cfIdx = 0;
+                        cfIdx < signalStrengthConfigEx[idx].config_types().size(); cfIdx++) {
+                        if (signalStrengthConfigEx[idx].config_types(cfIdx) ==
+                            telStub::SignalStrengthConfigExType::EX_DELTA) {
+                            newconfig["delta"] =
+                                signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)->delta();
+                        }
+                        if (signalStrengthConfigEx[idx].config_types(cfIdx) ==
+                            telStub::SignalStrengthConfigExType::EX_THRESHOLD) {
+                            for (int arrIdx = 0;
+                                arrIdx < signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)
+                                ->mutable_elements()->threshold_list().size(); arrIdx++) {
+                                if (signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)
+                                    ->mutable_elements()->threshold_list(arrIdx)) {
+                                    newconfig["thresholdList"][arrIdx] =
+                                        signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)
+                                        ->mutable_elements()->threshold_list(arrIdx);
+                                }
+                            }
+                        }
+                        if (signalStrengthConfigEx[idx].config_types(cfIdx) ==
+                            telStub::SignalStrengthConfigExType::EX_HYSTERESIS_DB) {
+                            newconfig["hysteresisDb"] =
+                                signalStrengthConfigEx[idx].mutable_sig_config_data(cdIdx)
+                                ->mutable_elements()->hysteresis_db();
+                        }
+                    }
+
+                    bool ratFound = false;
+                    for (int j = 0; j < currentCount; j++) {
+                        // check the RAT + signal measurement type stored and user requested RAT +
+                        // signal measurement type and update it, otherwise add a new entry.
+                        if ((data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthExInfo"]\
+                            ["configureSignalStrengthExInfoList"][j]\
+                                ["radioTech"]) == newconfig["radioTech"] &&
+                            (data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthExInfo"]\
+                                ["configureSignalStrengthExInfoList"][j]["sigMeasType"])
+                                    == newconfig["sigMeasType"]) {
+                            LOG(DEBUG, __FUNCTION__, " Matched RAT");
+                            data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthExInfo"]\
+                                ["configureSignalStrengthExInfoList"][j] = newconfig;
+                            ratFound = true;
+                            break;
+                        }
+                    }
+
+                    if (ratFound) {
+                        LOG(DEBUG, __FUNCTION__, " Matching RAT found");
+                        continue;
+                    }
+                    data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthExInfo"]\
+                        ["configureSignalStrengthExInfoList"][currentCount++] = newconfig;
+                 }
+             }
+             data.stateRootObj[TEL_PHONE_MANAGER]["configureSignalStrengthExInfo"]\
+                 ["hysteresisMs"] = hysTimer;
+             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to read from JSON");
+        return error;
+    }
+
+    if (data.error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Unable to configure signal strength to JSON");
+    }
+    // Update response
+    updateResponse(response, data);
+    return data.error;
+}
+
+telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std::string> params,
+    int &phoneId, bool &notify) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode errorCode = telux::common::ErrorCode::INTERNAL_ERR;
     try {
@@ -1680,13 +1790,19 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
             LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
             return errorCode;
         }
+        // retrieve serving rat
+        std::string stateJsonPath = (phoneId == SLOT_1)?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+        int servingRat = std::stoi(CommonUtils::readSystemDataValue(stateJsonPath, "",
+            {TEL_SERVING_MANAGER, "ServingSystemInfo", "rat"}));
+        LOG(DEBUG, __FUNCTION__, " Serving RAT is: ", servingRat);
 
-        rootObj[TEL_PHONE_MANAGER] ["signalStrengthInfo"].clear();
         int signalStrengthInfoCount = params.size() - 1;
+        LOG(DEBUG, __FUNCTION__, " signalStrengthInfoCount : ", signalStrengthInfoCount);
         for (int index = 1; index <= signalStrengthInfoCount; index++) {
             std::string rat = telux::common::EventParserUtil::getNextToken(params[index],
                 DEFAULT_DELIMITER);
-            LOG(DEBUG, __FUNCTION__, " RAT Type is:", rat);
+            LOG(DEBUG, __FUNCTION__, " RAT Type is: ", rat);
             if (rat == "GSM") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -1694,14 +1810,20 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int bitErrorRate = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__," signalStrength:", signalStrength," bitErrorRate:",
+                LOG(DEBUG, __FUNCTION__," signalStrength: ", signalStrength," bitErrorRate: ",
                     bitErrorRate);
 
+                if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_GSM)) {
+                    int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                        ["gsmSignalStrengthInfo"]["gsmSignalStrength"].asInt();
+                    notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                        telStub::RadioTechnology::RADIO_TECH_GSM,
+                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+                }
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]\
                     ["gsmSignalStrength"] = signalStrength;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]\
                     ["gsmBitErrorRate"] = bitErrorRate;
-
             } else if(rat == "WCDMA") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -1715,9 +1837,33 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int rscp = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__, " signalStrength:", signalStrength, " bitErrorRate:",
-                    bitErrorRate, "ecio:", ecio, "rscp:", rscp);
+                LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength, " bitErrorRate: ",
+                    bitErrorRate, " ecio: ", ecio, " rscp: ", rscp);
 
+                if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_UMTS)) {
+                    int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["signalStrength"].asInt();
+                    notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                        telStub::RadioTechnology::RADIO_TECH_UMTS,
+                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+
+                    if (!notify) { // if any one field changes, need to notify,
+                                  // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["wcdmaSignalStrengthInfo"]["ecio"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_UMTS,
+                            telStub::SignalStrengthMeasurementType::ECIO, oldValue, ecio);
+                    }
+                    if (!notify) { // if any one field changes,need to notify,
+                                   // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["wcdmaSignalStrengthInfo"]["rscp"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_UMTS,
+                            telStub::SignalStrengthMeasurementType::RSCP, oldValue, rscp);
+                    }
+                }
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
                     ["signalStrength"] = signalStrength;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
@@ -1726,7 +1872,6 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["ecio"] = ecio;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
                     ["rscp"] = rscp;
-
             } else if(rat == "LTE") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -1746,10 +1891,41 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int timingAdvance = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__," signalStrength:", signalStrength," rsrp:",
-                    rsrp, " rsrq:", rsrq," rssnr:", rssnr, " cqi:", cqi," timingAdvance:",
+                LOG(DEBUG, __FUNCTION__," signalStrength: ", signalStrength," rsrp: ",
+                    rsrp, " rsrq: ", rsrq," rssnr: ", rssnr, " cqi: ", cqi," timingAdvance: ",
                     timingAdvance);
 
+                if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_LTE)) {
+                    int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                        ["lteSignalStrengthInfo"]["lteSignalStrength"].asInt();
+                    notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                        telStub::RadioTechnology::RADIO_TECH_LTE,
+                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+                    if (!notify) { // if any one field changes, need to notify
+                                   // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["lteSignalStrengthInfo"]["lteRsrp"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_LTE,
+                            telStub::SignalStrengthMeasurementType::RSRP, oldValue, rsrp);
+                    }
+                    if (!notify) { // if any one field changes, need to notify
+                                   // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["lteSignalStrengthInfo"]["lteRsrq"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_LTE,
+                            telStub::SignalStrengthMeasurementType::RSRQ, oldValue, rsrq);
+                    }
+                    if (!notify) { // if any one field changes, need to notify
+                                   // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["lteSignalStrengthInfo"]["lteRssnr"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_LTE,
+                            telStub::SignalStrengthMeasurementType::SNR, oldValue, rssnr);
+                    }
+                }
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
                     ["lteSignalStrength"] = signalStrength;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
@@ -1772,8 +1948,31 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int rssnr = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__, " rsrp:", rsrp, " rsrq:", rsrq, " rssnr:", rssnr);
+                LOG(DEBUG, __FUNCTION__, " rsrp: ", rsrp, " rsrq: ", rsrq, " rssnr: ", rssnr);
 
+                if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_NR5G)) {
+                    int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                        ["nr5gSignalStrengthInfo"]["rsrp"].asInt();
+                    notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                        telStub::RadioTechnology::RADIO_TECH_NR5G,
+                        telStub::SignalStrengthMeasurementType::RSRP, oldValue, rsrp);
+                    if (!notify) { // if any one field changes for particular RAT, need to notify
+                                  // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["nr5gSignalStrengthInfo"]["rsrq"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_NR5G,
+                            telStub::SignalStrengthMeasurementType::RSRQ, oldValue, rsrq);
+                    }
+                    if (!notify) { // if any one field changes for particular RAT, need to notify
+                                  // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["nr5gSignalStrengthInfo"]["rssnr"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_NR5G,
+                            telStub::SignalStrengthMeasurementType::SNR, oldValue, rssnr);
+                    }
+                }
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]\
                     ["rsrp"] = rsrp;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]\
@@ -1784,6 +1983,15 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 LOG(ERROR, " Invalid or deprecated RAT");
             }
         }
+        LOG(DEBUG, __FUNCTION__, " need to notify : ", notify);
+        // last notification time (this will be used if hystereis timer criteria is set)
+        auto current = std::chrono::system_clock::now();
+        std::time_t now_c = std::chrono::system_clock::to_time_t(current);
+        auto tm = std::localtime(&now_c);
+        char buffer[32];
+        std::strftime(buffer, 32, "%Y-%m-%d %H:%M:%S", tm);
+        rootObj[TEL_PHONE_MANAGER]["lastNotificationInfo"]["ssNotificationTimeStamp"] =
+            std::string(buffer);
         errorCode = JsonParser::writeToJsonFile(rootObj, jsonfilename);
     }  catch(exception const & ex) {
         LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
@@ -2394,6 +2602,211 @@ telStub::VoiceServiceTechnology TelUtil::convertVoiceTechStringToEnum(std::strin
         LOG(ERROR, " Invalid VoiceTech");
     }
     return ::telStub::VoiceServiceTechnology::VOICE_TECH_INVALID;
+}
+
+/*
+ * This function is to check signal strength criteria and control notification
+ * based on the criteria set on subscription.
+ * HysteresisMs is set, it is the highest priority and other criteria is ignored.
+ * Delta or thresholdList can be set as criteria on particular RAT(rat+sigMeasType),
+ * hysteresisDb can be applied only on top of thresholsList.If none of the criteria
+ * is specified, as per on-target behaviour default values(specified in the RIL) are
+ * set.
+ * For example: RSSI(50), ECIO(10), SNR(40), RSRQ(20), RSRP(60), RSCP(40)
+ */
+int TelUtil::checkSignalStrengthCriteriaAndNotify(int phoneId, int rat, int sigMeasType,
+    int oldValue, int newValue) {
+    LOG(DEBUG, __FUNCTION__);
+    bool notify = false;
+    JsonData data;
+    std::string stateJsonPath = "";
+
+    telux::common::ErrorCode error = readJsonData(phoneId, TEL_PHONE_MANAGER,
+        "configureSignalStrength", data, stateJsonPath);
+    if (error == ErrorCode::SUCCESS) {
+        if (data.status == telux::common::Status::SUCCESS) {
+            uint16_t hysteresisMs = data.stateRootObj[TEL_PHONE_MANAGER]\
+                ["configureSignalStrengthExInfo"]["hysteresisMs"].asInt();
+            LOG(DEBUG, __FUNCTION__, " hysteresis timer : ", static_cast<int>(hysteresisMs));
+            // if hysteresis timer is set, skip other criteria check
+            if (hysteresisMs > 0) {
+                std::string lastNotificationString = data.stateRootObj[TEL_PHONE_MANAGER]\
+                    ["lastNotificationInfo"]["ssNotificationTimeStamp"].asString();
+                LOG(DEBUG, __FUNCTION__, " lastNotification time : ", lastNotificationString);
+                std::tm timeDate = {};
+                std::istringstream ss(lastNotificationString);
+                ss >> std::get_time(&timeDate, "%Y-%m-%d %H:%M:%S");
+                auto lastNotification = std::chrono::system_clock::from_time_t(mktime(&timeDate));
+                auto current = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsed_seconds = current - lastNotification;
+                LOG(DEBUG, __FUNCTION__, " signal strength last notification in milliseconds : ",
+                    elapsed_seconds.count()*1000);
+                if ((elapsed_seconds.count()*1000) > hysteresisMs) {
+                    // hysteresis timer crossed, notify here
+                    LOG(DEBUG, __FUNCTION__, " Criteria: hysteresis timer satisfied");
+                    notify = true;
+                }
+            } else {
+                int diff = 0;
+                uint16_t defaultDelta = 0;
+                int diffSoFar = 0;
+                int thresholdValue = 0;
+                bool ratMatched = false;
+                LOG(DEBUG, __FUNCTION__," oldValue : ", oldValue, " newValue : ", newValue);
+                int currentCount = data.stateRootObj[TEL_PHONE_MANAGER]\
+                    ["configureSignalStrengthExInfo"]["configureSignalStrengthExInfoList"].size();
+                LOG(DEBUG, __FUNCTION__," current config count is : ", currentCount);
+                int configType = static_cast<int>(telStub::SignalStrengthConfigExType::EX_DELTA);
+                for (int j = 0; j < currentCount; j++) {
+                    // check config type for RAT and signal measurement type provided from event
+                    if (rat == (data.stateRootObj[TEL_PHONE_MANAGER]\
+                        ["configureSignalStrengthExInfo"]["configureSignalStrengthExInfoList"][j]\
+                        ["radioTech"].asInt()) &&
+                        sigMeasType == (data.stateRootObj[TEL_PHONE_MANAGER]\
+                            ["configureSignalStrengthExInfo"]["configureSignalStrengthExInfoList"]\
+                            [j]["sigMeasType"].asInt())) {
+                        LOG(DEBUG, __FUNCTION__, " matched RAT");
+                        ratMatched = true;
+                        int ctCount = data.stateRootObj[TEL_PHONE_MANAGER]\
+                            ["configureSignalStrengthExInfo"]["configureSignalStrengthExInfoList"]\
+                            [j]["configExType"].size();
+                        LOG(DEBUG, __FUNCTION__," configType+++ count : ", ctCount);
+                        for (int ct = 0; ct < ctCount; ct++) {
+                            configType = data.stateRootObj[TEL_PHONE_MANAGER]\
+                                ["configureSignalStrengthExInfo"]\
+                                ["configureSignalStrengthExInfoList"][j]["configExType"][ct].asInt();
+                            LOG(DEBUG, __FUNCTION__," configType : ", configType);
+                            if (configType ==
+                                static_cast<int>(telStub::SignalStrengthConfigExType::EX_DELTA)) {
+                                diff = newValue - oldValue;
+                                diff = (diff < 0) ? (-1*diff) : diff;
+                                uint16_t delta = data.stateRootObj[TEL_PHONE_MANAGER]\
+                                    ["configureSignalStrengthExInfo"]\
+                                    ["configureSignalStrengthExInfoList"][j]["delta"].asInt();
+                                LOG(DEBUG, " delta : ", delta);
+                                if (diff >= (delta/10)) {
+                                    // send notification
+                                    LOG(DEBUG, __FUNCTION__, " Criteria: delta satisfied");
+                                    notify = true;
+                                }
+                            } else if (configType == static_cast<int>
+                                (telStub::SignalStrengthConfigExType::EX_THRESHOLD)) {
+                                int thresholdListLen = data.stateRootObj[TEL_PHONE_MANAGER]\
+                                ["configureSignalStrengthExInfo"]\
+                                ["configureSignalStrengthExInfoList"][j]["thresholdList"].size();
+                                LOG(DEBUG, "  threshold list size :", thresholdListLen);
+                                if (thresholdListLen > 0 && thresholdListLen <= MAX_THRESHOLD_LIST)
+                                {
+                                    // signal strength(RSSI) and SNR is passed as positive integer,
+                                    // convert to negative to compare with threshold.
+                                    if (sigMeasType == static_cast<int>
+                                        (telStub::SignalStrengthMeasurementType::RSSI)
+                                        || sigMeasType == static_cast<int>
+                                        (telStub::SignalStrengthMeasurementType::SNR))
+                                    {
+                                        // SNR can be negative or positive(range -200 to 300)
+                                        if (oldValue > 0 && newValue > 0) {
+                                            oldValue = oldValue * -1;
+                                            newValue = newValue * -1;
+                                        }
+                                    }
+                                    for (int thIdx = 0; thIdx < thresholdListLen; thIdx++) {
+                                       int threshold = ((data.stateRootObj[TEL_PHONE_MANAGER]\
+                                           ["configureSignalStrengthExInfo"]
+                                           ["configureSignalStrengthExInfoList"][j]\
+                                           ["thresholdList"][thIdx].asInt())/10);
+                                        LOG(DEBUG, __FUNCTION__, " threshold: ", threshold * 10);
+                                       // if newValue < threshold <= oldValue
+                                       if ((newValue < threshold) && (threshold <= oldValue)) {
+                                           LOG(DEBUG, __FUNCTION__,
+                                               " Criteria: threshold satisfied");
+                                           notify = true;
+                                           diff = newValue - threshold;
+                                           diff = (diff < 0) ? (-1*diff) : diff;
+                                           if (diff >= diffSoFar) {
+                                               diffSoFar = diff;
+                                               thresholdValue = threshold;
+                                           }
+                                       }
+                                       // if oldValue < threshold <= newValue
+                                       if ((oldValue < threshold) && (threshold  <= newValue))
+                                       {
+                                           LOG(DEBUG, __FUNCTION__,
+                                               " Criteria: threshold satisfied");
+                                           notify = true;
+                                           diff = newValue - threshold;
+                                           diff = (diff < 0) ? (-1*diff) : diff;
+                                           if (diff >= diffSoFar)
+                                           {
+                                               diffSoFar = diff;
+                                               thresholdValue = threshold;
+                                           }
+                                       }
+                                    }
+                                }
+                            }
+                            if (configType == static_cast<int>
+                                (telStub::SignalStrengthConfigExType::EX_HYSTERESIS_DB)){
+                                uint16_t hysteresisDb = data.stateRootObj[TEL_PHONE_MANAGER]\
+                                    ["configureSignalStrengthExInfo"]\
+                                    ["configureSignalStrengthExInfoList"][j]["hysteresisDb"].asInt();
+                                LOG(DEBUG, " hysteresisDb : ", hysteresisDb);
+                                if (notify && hysteresisDb > 0) {
+                                    diff = 0; // reset diff, threshold criteria is satisfied
+                                    diff = newValue - thresholdValue;
+                                    diff = (diff < 0) ? (-1*diff) : diff;
+                                }
+                                if (diff > (hysteresisDb/10)) {
+                                    // send notification
+                                    LOG(DEBUG, __FUNCTION__,
+                                        " Criteria: threshold + hysteresis delta satisfied");
+                                    notify = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!ratMatched) {
+                    LOG(DEBUG, __FUNCTION__, " Criteria is not set, checking with default");
+                    diff = newValue - oldValue;
+                    diff = (diff < 0) ? (-1*diff) : diff;
+                    switch (sigMeasType) {
+                        case telStub::SignalStrengthMeasurementType::RSSI:
+                            defaultDelta = 50;
+                            break;
+                        case telStub::SignalStrengthMeasurementType::ECIO:
+                            defaultDelta = 10;
+                            break;
+                        case telStub::SignalStrengthMeasurementType::SNR:
+                        case telStub::SignalStrengthMeasurementType::RSCP:
+                            defaultDelta = 40;
+                            break;
+                        case telStub::SignalStrengthMeasurementType::RSRP:
+                            defaultDelta = 60;
+                            break;
+                        case telStub::SignalStrengthMeasurementType::RSRQ:
+                            defaultDelta = 20;
+                            break;
+                        default:
+                            LOG(DEBUG, __FUNCTION__, " not supported signal type");
+                            break;
+                    }
+                    // compare with default delta
+                    if (diff >= (defaultDelta/10)) {
+                        // send notification
+                        LOG(DEBUG, __FUNCTION__, " Criteria: default delta satisfied");
+                        notify = true;
+                    }
+                }
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to read from JSON");
+        // notify if no signal strength config criteria is set
+        notify = true;
+    }
+    LOG(DEBUG, __FUNCTION__, " notify : ", notify);
+    return notify;
 }
 
 }  // End of namespace tel

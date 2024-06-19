@@ -282,6 +282,8 @@ std::string TelClientUtils::eCallHlapTimerEventToString(telux::tel::HlapTimerEve
             return std::string("UNKNOWN");
         case telux::tel::HlapTimerEvent::UNCHANGED:
             return std::string("UNCHANGED");
+        case telux::tel::HlapTimerEvent::RESUMED:
+            return std::string("RESUMED");
         default:
             std::stringstream ss;
             ss << "Unknown HlapTimerEvent  = " << (int)event;

@@ -1583,3 +1583,8 @@ telux::common::Status CallManagerStub::configureECallRedial(RedialConfigType con
     const std::vector<int> &timeGap, common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
+
+telux::common::Status CallManagerStub::restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
+    int duration, common::ResponseCallback callback ) {
+    return telux::common::Status::NOTSUPPORTED;
+}

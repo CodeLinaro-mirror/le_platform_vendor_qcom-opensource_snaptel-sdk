@@ -202,6 +202,18 @@ class ECallManager : public LocationListener,
     telux::common::Status setECallConfig(EcallConfig config);
 
     /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns Status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
      * Gets encoded optional additional data content for eCall MSD.
      *
      * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable

@@ -131,6 +131,11 @@ private:
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
 
     /**
+     * Function to restart eCall High Level Application Protocol (HLAP) from the user-interface
+     */
+    void restartECallHlapTimer();
+
+    /**
      * Function to configure MSD transmission at call connect
      */
     telux::common::Status getMsdTransmissionConfig(bool &transmitMsd);

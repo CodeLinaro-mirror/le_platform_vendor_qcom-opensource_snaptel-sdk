@@ -250,6 +250,16 @@ public:
      */
     void setECallMsd(ECallMsdData& msdData_);
 
+    /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
@@ -261,6 +271,7 @@ public:
                                     std::shared_ptr<telux::tel::ICall>) override;
     void hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
                                  ECallHlapTimerStatus timersStatus);
+    void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

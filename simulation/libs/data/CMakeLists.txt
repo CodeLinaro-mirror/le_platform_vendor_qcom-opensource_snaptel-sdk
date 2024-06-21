@@ -22,6 +22,7 @@ set(DATA_STUB_SOURCES
     net/FirewallManagerStub.cpp
     net/FirewallEntryImpl.cpp
     net/BridgeManagerStub.cpp
+    net/VlanManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

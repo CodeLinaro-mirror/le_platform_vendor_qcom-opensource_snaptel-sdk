@@ -39,6 +39,7 @@
 #include "data/net/FirewallServerImpl.hpp"
 #include "data/net/L2tpServerImpl.hpp"
 #include "data/net/BridgeServerImpl.hpp"
+#include "data/net/VlanServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
@@ -149,6 +150,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<BridgeServerImpl> bridgeService =
         std::make_shared<BridgeServerImpl>();
     builder.RegisterService(bridgeService.get());
+
+    std::shared_ptr<VlanServerImpl> vlanService =
+        std::make_shared<VlanServerImpl>();
+    builder.RegisterService(vlanService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

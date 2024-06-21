@@ -107,6 +107,8 @@ class DataFactoryImplStub : public DataFactory,
     std::weak_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IFirewallManager>>
         firewallManagerMap_;
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IVlanManager>>
+        vlanManagerMap_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
@@ -118,6 +120,7 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
     std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
     std::vector<telux::common::InitResponseCb> firewallCallbacks_;
+    std::vector<telux::common::InitResponseCb> vlanCallbacks_;
 };
 
 }  // namespace data

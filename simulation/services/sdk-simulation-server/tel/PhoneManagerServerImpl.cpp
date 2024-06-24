@@ -10,6 +10,7 @@
 #include "libs/common/Logger.hpp"
 #include "PhoneManagerServerImpl.hpp"
 #include "TelUtil.hpp"
+#include <thread>
 
 #define JSON_PATH1 "api/tel/IPhoneManagerSlot1.json"
 #define JSON_PATH2 "api/tel/IPhoneManagerSlot2.json"

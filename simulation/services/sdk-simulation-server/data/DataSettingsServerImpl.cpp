@@ -4,6 +4,7 @@
  */
 
 #include <telux/common/DeviceConfig.hpp>
+#include <thread>
 
 #include "DataSettingsServerImpl.hpp"
 #include "libs/common/Logger.hpp"

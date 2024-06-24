@@ -36,7 +36,7 @@
 #include "../../../libs/tel/TelDefinesStub.hpp"
 #include "SimulationServer.hpp"
 #include <telux/common/DeviceConfig.hpp>
-
+#include <thread>
 #define CALL_MANAGER "ICallManager"
 #define MSD_UPDATE_EVENT "msdUpdateRequest"
 #define HANGUP_CALL_EVENT "hangupCall"

@@ -9,6 +9,7 @@
 #include "common/Logger.hpp"
 #include "common/CommonUtils.hpp"
 #include "common/AsyncTaskQueue.hpp"
+#include <thread>
 
 using grpc::Channel;
 using grpc::ClientContext;

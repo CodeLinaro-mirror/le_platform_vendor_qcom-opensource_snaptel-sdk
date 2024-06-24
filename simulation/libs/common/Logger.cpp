@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -13,7 +13,7 @@ extern "C" {
 
 #include <algorithm>
 #include <vector>
-
+#include <thread>
 #include "Logger.hpp"
 #include "CommonUtils.hpp"
 #include "SimulationConfigParser.hpp"

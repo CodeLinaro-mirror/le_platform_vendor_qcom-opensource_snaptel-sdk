@@ -21,6 +21,9 @@
 #include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
+#include "cv2x/Cv2xManagerServerImpl.hpp"
+#include "cv2x/Cv2xConfigServerImpl.hpp"
+#include "cv2x/Cv2xRadioServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
 #include "tel/PhoneManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
@@ -110,6 +113,22 @@ void SimulationServer::startGrpcServer() {
 
     std::shared_ptr<SmsManagerServerImpl> smsService = std::make_shared<SmsManagerServerImpl>();
     builder.RegisterService(smsService.get());
+
+    std::shared_ptr<Cv2xManagerServerImpl> cv2xRadioMgrService =
+        std::make_shared<Cv2xManagerServerImpl>();
+    builder.RegisterService(cv2xRadioMgrService.get());
+
+    std::shared_ptr<Cv2xConfigServerImpl> cv2xConfigService =
+        std::make_shared<Cv2xConfigServerImpl>();
+    builder.RegisterService(cv2xConfigService.get());
+
+    std::shared_ptr<Cv2xRadioServer> cv2xRadioServer =
+        std::make_shared<Cv2xRadioServer>();
+    if (cv2xRadioServer) {
+        std::shared_ptr<telux::cv2x::ICv2xListener> self = cv2xRadioServer;
+        cv2xRadioServer->init(self);
+    }
+    builder.RegisterService(cv2xRadioServer.get());
 
     std::shared_ptr<DataConnectionServerImpl> dcmService =
         std::make_shared<DataConnectionServerImpl>();

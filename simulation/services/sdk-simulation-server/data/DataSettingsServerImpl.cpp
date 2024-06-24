@@ -96,8 +96,7 @@ grpc::Status DataSettingsServerImpl::SetDdsSwitch(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     } else if (!telux::common::DeviceConfig::isMultiSimSupported()) {
         data.error = telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
-    } else if ((ddsInfo_.type == static_cast<telux::data::DdsType>(request->switch_type())) &&
-        (ddsInfo_.slotId = static_cast<SlotId>(request->slot_id()))) {
+    } else if (ddsInfo_.slotId == static_cast<SlotId>(request->slot_id())) {
         data.error = telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
     }
 

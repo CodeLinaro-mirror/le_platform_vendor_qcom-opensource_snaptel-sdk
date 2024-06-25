@@ -1004,9 +1004,20 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     wsmpp->psid = 1;
 
     char *tmp = strdup(line);
+    if (tmp == NULL){
+        return 0;
+    }
     const char *tok;
     char **tokens = (char **)calloc(sizeof(char *), 1000);
-
+    if (tokens == NULL){
+        free(tmp);
+        return 0;
+    }
+    int j = 0;
+    while (j < 1000){
+        tokens[j] = "";
+        j++;
+    }
     while ((tok = strsep(&tmp, ",")) != NULL) {
         tokens[i] = strdup(tok);
         i++;
@@ -1015,6 +1026,7 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     bsm->brakes.word = (1 << 15);
     bsm->suppvehopts = 0;
     bsm_init(bsm);
+
     if (minLog) {
         bsm->timestamp_ms = strtoull(tokens[1], NULL, 0);
         bsm->MsgCount = strtoul(tokens[8], NULL, 0);

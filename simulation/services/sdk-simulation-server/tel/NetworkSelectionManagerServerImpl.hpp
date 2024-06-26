@@ -30,6 +30,7 @@ class NetworkSelectionManagerServerImpl final : public telStub::NetworkSelection
 
 public:
     NetworkSelectionManagerServerImpl();
+    ~NetworkSelectionManagerServerImpl();
     grpc::Status InitService(ServerContext* context,
         const ::commonStub::GetServiceStatusRequest* request,
         commonStub::GetServiceStatusReply* response) override;
@@ -78,6 +79,11 @@ private:
      * @param index - Size of new preferred network
      */
     void sortDatabase(int phoneId, Json::Value newData, int index);
+    void handleSelectionModeChanged(std::string eventParams);
+    void handleNetworkScanResultsChanged(std::string eventParams);
+    void triggerChangeEvent(::eventService::EventResponse anyResponse);
+    void onEventUpdate(std::string event);
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
 #endif // NETWORK_SELECTION_MANAGER_SERVER_HPP

@@ -852,6 +852,50 @@ Command: ``telsdk_event_injector -f tel_serv -e networkRejectionUpdate <slotId> 
 
  telsdk_event_injector -f tel_serv -e networkRejectionUpdate 1 14 2 1 810 10
 
+Update network selection mode
+'''''''''''''''''''''''''''''''''''''''
+To simulate INetworkSelectionManager event - telux::tel::INetworkSelectionListener::onSelectionModeChanged
+
+Command: ``telsdk_event_injector -f tel_network_select -e selectionModeUpdate <slotId> <selectionMode> <mcc> <mnc>``
+
+**Parameters of event injector command:**
+
+- slotId:           valid slotIds are 1 & 2 only
+- selectionMode:    valid integer value is filled as per telux::tel::NetworkModeInfo
+- mcc:              valid string value is filled as per telux::tel::NetworkModeInfo
+- mnc:              valid string value is filled as per telux::tel::NetworkModeInfo
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_network_select -e selectionModeUpdate 1 1 460 00
+
+Update network scan results
+'''''''''''''''''''''''''''''''''''''''
+To simulate INetworkSelectionManager event - telux::tel::INetworkSelectionListener::onNetworkScanResults
+
+Command: ``telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate <slotId> ,<scanStatus> ,<operatorName1> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus> ,<operatorName2> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus>``
+
+**Parameters of event injector command:**
+
+- slotId:           valid slotIds are 1 & 2 only
+- scanStatus:       valid integer value is filled as per telux::tel::NetworkScanStatus
+- operatorName:     valid string value is filled as per telux::tel::OperatorInfo
+- mcc:              valid string value is filled as per telux::tel::OperatorInfo
+- mnc:              valid string value is filled as per telux::tel::OperatorInfo
+- rat:              valid integer value is filled as per telux::tel::RadioTechnology
+- inUseStatus:      valid integer value is filled as per telux::tel::OperatorStatus
+- roamingStatus:    valid integer value is filled as per telux::tel::OperatorStatus
+- forbiddenStatus:  valid integer value is filled as per telux::tel::OperatorStatus
+- preferredStatus:  valid integer value is filled as per telux::tel::OperatorStatus
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate 1 ,0 ,CMCC 460 00 14 1 1 1 1 ,CU 460 01 14 1 1 1 1
+
 Additional notes
 """""""""""""""""
 

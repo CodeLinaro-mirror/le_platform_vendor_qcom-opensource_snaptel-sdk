@@ -255,5 +255,27 @@
             "slotId:                integer, valid slotIds are 1 & 2 only." ,
             "sipUserAgent:          string, valid sip user agent"
         ]
+    },
+    "tel_network_select": {
+        "selectionModeUpdate": [
+            "telsdk_event_injector -f tel_network_select -e selectionModeUpdate <slotId> <selectionMode> <mcc> <mnc>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "selectionMode:     integer, valid -1-UNKNOWN, 0-AUTOMATIC, 1-MANUAL.",
+            "mcc :              string, valid mcc Refer for more details telux::tel::NetworkModeInfo.",
+            "mnc :              string, valid mnc Refer for more details telux::tel::NetworkModeInfo."
+        ],
+        "networkScanResultsUpdate": [
+            "telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate <slotId> ,<scanStatus> ,<operatorName1> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus> ,<operatorName2> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus>",
+            "slotId:           integer, valid slotIds are 1 & 2 only.",
+            "scanStatus:       integer, valid 0-COMPLETE, 1-PARTIAL, 1-FAILED.",
+            "operatorName:     string, valid operator name",
+            "mcc :             string, valid mcc Refer for more details telux::tel::OperatorInfo.",
+            "mnc :             string, valid mnc Refer for more details telux::tel::OperatorInfo.",
+            "rat:              integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "inUseStatus:      integer, valid 0-UNKNOWN, 1-CURRENT_SERVING, 1-AVAILABLE.",
+            "roamingStatus:    integer, valid 0-UNKNOWN, 1-HOME, 1-ROAM.",
+            "forbiddenStatus:  integer, valid 0-UNKNOWN, 1-FORBIDDEN, 1-NOT_FORBIDDEN.",
+            "preferredStatus:  integer, valid 0-UNKNOWN, 1-PREFERRED, 1-NOT_PREFERRED."
+        ]
     }
 }

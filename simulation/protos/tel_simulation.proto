@@ -1982,6 +1982,25 @@ message UpdateECallMsdResponse {
      OperatorStatus operator_status = 5;
  }
 
+message SelectionModeChangeEvent {
+    NetworkSelectionMode.Mode mode = 1;
+    string mnc = 2;
+    string mcc = 3;
+    int32 phone_id = 4;
+}
+
+enum NetworkScanStatus {
+    COMPLETE = 0;
+    PARTIAL = 1;
+    FAILED = 2;
+}
+
+message NetworkScanResultsChangeEvent {
+    NetworkScanStatus status = 1;
+    repeated OperatorInfo operator_infos = 2;
+    int32 phone_id = 3;
+}
+
  // --- PhoneService ---
 enum VoiceServiceState {
     NOT_REG_AND_NOT_SEARCHING = 0;

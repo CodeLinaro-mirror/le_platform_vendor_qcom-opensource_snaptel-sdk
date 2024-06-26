@@ -26,7 +26,7 @@ namespace tel {
 
 class NetworkSelectionManagerStub : public INetworkSelectionManager,
                                     public IEventListener,
-                                    public std::enable_shared_from_this<INetworkSelectionManager> {
+                                    public std::enable_shared_from_this<NetworkSelectionManagerStub> {
 public:
     NetworkSelectionManagerStub(int phoneId, telux::common::InitResponseCb callback);
     ~NetworkSelectionManagerStub();
@@ -66,6 +66,8 @@ private:
     std::shared_ptr<telux::common::ListenerManager<INetworkSelectionListener>> listenerMgr_;
     std::unique_ptr<::telStub::NetworkSelectionService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
+    void handleSelectionModeChanged(::telStub::SelectionModeChangeEvent event);
+    void handleNetworkScanResultsChanged(::telStub::NetworkScanResultsChangeEvent event);
 };
 
 } // end of namespace tel

@@ -75,6 +75,7 @@
 #include <string>
 #include <vector>
 #include <bitset>
+#include <cstdint>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/common/ConnectivityDefines.hpp>

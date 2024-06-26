@@ -394,3 +394,15 @@ grpc::Status Cv2xRadioServer::disableTxStatusReport(
   }
   return grpc::Status::OK;
 }
+
+grpc::Status Cv2xRadioServer::injectVehicleSpeed(ServerContext *context,
+    const cv2xStub::UintNum *request,
+    cv2xStub::Cv2xCommandReply *res) {
+    uint32_t speed = request->num();
+    LOG(DEBUG, __FUNCTION__, " speed ", speed);
+
+    Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT,
+                                  "injectVehicleSpeed", res);
+
+    return grpc::Status::OK;
+}

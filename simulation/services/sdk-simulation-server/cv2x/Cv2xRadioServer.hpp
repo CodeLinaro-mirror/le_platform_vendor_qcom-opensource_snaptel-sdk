@@ -77,6 +77,10 @@ public:
   grpc::Status disableTxStatusReport(ServerContext *context,
                                      const cv2xStub::UintNum *request,
                                      cv2xStub::Cv2xCommandReply *res);
+  grpc::Status injectVehicleSpeed(ServerContext *context,
+                                  const cv2xStub::UintNum *request,
+                                  cv2xStub::Cv2xCommandReply *res);
+
 
 private:
   void onStatusChanged(telux::cv2x::Cv2xStatus status) override;

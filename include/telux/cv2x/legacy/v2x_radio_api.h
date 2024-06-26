@@ -2915,6 +2915,26 @@ v2x_status_enum_type v2x_deregister_slss_rx_listener(v2x_slss_rx_listener callba
  */
 v2x_status_enum_type v2x_inject_coarse_utc_time(uint64_t utc);
 
+/**
+    Inject vehicle speed, which will be used to select radio resources for C-V2X
+    transmission when GNSS is not available.
+
+    User could inject speed at any time, the last injected value will be used when
+    GNSS is not available.
+
+    The strategy for speed injection could be
+      - inject periodically, recommended interval bigger than 1 second
+      - inject when speed is crossing 60/80/100/120/140/160/180/200 kmph
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
+    @param [in] speed  - Vehicle speed in kmph.
+    @param [in] cb     - Callback that is invoked when speed injection is done.
+    @returns V2X_STATUS_SUCCESS if no error occurred.
+ */
+v2x_status_enum_type v2x_inject_vehicle_speed(uint32_t speed);
+
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 
 /*

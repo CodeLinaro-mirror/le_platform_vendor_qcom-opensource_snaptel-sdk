@@ -54,6 +54,7 @@ if (TELSDK_FEATURE_CV2X)
         add_subdirectory( cv2x_slss_utc_app)
     endif (TELSDK_FEATURE_PLATFORM)
     add_subdirectory( cv2x_mac_clone_attack_app)
+    add_subdirectory( cv2x_inject_speed)
 endif (TELSDK_FEATURE_CV2X)
 
 if (TELSDK_FEATURE_AUDIO)

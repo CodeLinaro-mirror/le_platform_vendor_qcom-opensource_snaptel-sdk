@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -86,7 +86,7 @@ bool RemoteSimProfile::init() {
     });
     cardManager_ = phoneFactory.getCardManager([&](telux::common::ServiceStatus status) {
         cardMgrprom.set_value(status);
-    );
+    });
 
     if (simProfileManager_) {
         // 2. Check if SIM profile subsystem is ready
@@ -147,6 +147,7 @@ bool RemoteSimProfile::init() {
         std::cout << "ERROR - SimProfileManger is null" << std::endl;
         return false;
     }
+    return true;
 }
 
 void RemoteSimProfile::requestEid() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -43,6 +43,7 @@ using namespace telux::common;
 
 // ##### 6.1. implement IMakeCallCallback interface to receive response for the dial request -
 // optional
+// optional
 class DialCallback : public IMakeCallCallback {
 public:
    void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
@@ -62,7 +63,7 @@ bool CallManagerReadyStatus = false;
 
 //Callback to check CallManager readiness
 void initResponseCb(telux::common::ServiceStatus status) {
-   if(status == SERVICE_AVAILABLE) {
+   if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       CallManagerReadyStatus = true;
       std::cout <<" Call Manager is ready" << std::endl;
    } else {
@@ -84,12 +85,15 @@ int main(int, char **) {
    int phoneId = DEFAULT_PHONE_ID;
 
    // ### 4. Instantiate dial callback instance - this is optional
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+   auto callbackObj   = std::make_shared<DialCallback>();
+   auto dialCb = std::bind(&DialCallback::makeCallResponse, callbackObj,
+       std::placeholders::_1, std::placeholders::_2);
 
    // ### 5. Create details required to make custom number eCall over IMS like dialnumber,
    // ###    msd data, Optional SIP headers.
 
    // Input Dialnumber
+   char delimiter = '\n';
    std::string dialNumber = "";
    std::string contentTypeHeader;
    std::string acceptInfoHeader;
@@ -105,7 +109,6 @@ int main(int, char **) {
               0, 48, 20};
     // Optional SIP headers
     CustomSipHeader header;
-    char delimiter = '\n';
     std::string temp = "";
     std::cout << "Enter Custom SIP Header for contentType (uses default for no input): ";
     std::getline(std::cin, temp, delimiter);
@@ -123,12 +126,12 @@ int main(int, char **) {
         std::cout << "No input, proceeding with default acceptInfo: " << std::endl;
     }
     if (contentTypeHeader != "") {
-        header.contentType = contentType;
+        header.contentType = contentTypeHeader;
     } else {
         header.contentType = telux::tel::CONTENT_HEADER;
     }
     if (acceptInfoHeader != "") {
-        header.acceptInfo = acceptInfo;
+        header.acceptInfo = acceptInfoHeader;
     } else  {
         header.acceptInfo = "";
     }

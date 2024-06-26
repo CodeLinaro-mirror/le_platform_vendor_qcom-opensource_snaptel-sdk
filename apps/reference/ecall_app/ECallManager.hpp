@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -229,6 +229,15 @@ class ECallManager : public LocationListener,
      */
     telux::common::Status setECallConfig(EcallConfig config);
 
+    /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent();
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
@@ -285,6 +294,8 @@ class ECallManager : public LocationListener,
     int phoneId_;
     /** Local copy of MSD data structure that will be used in transmission */
     ECallMsdData msdData_;
+    /** Local copy of MSD optional additional data content. */
+    ECallOptionalEuroNcapData optionalAdditionalDataContent_;
     /** Local copy of MSD raw PDU that will be used in transmission */
     std::vector<uint8_t> msdPdu_ {};
     /** Interval for which the location-fix updates needs to be received */

@@ -29,12 +29,14 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <chrono>
 #include <iostream>
 #include <memory>
+#include <thread>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -73,8 +75,29 @@ using namespace telux::common;
 #define NUMBER_OF_PASSENGERS 2
 #define VIN "ECALLEXAMPLE02013"
 #define OPTIONAL_ADDITIONAL_DATA_PRESENT 1
-#define OID_DATA "1.2.3"
-#define OAD_DATA "0123456789ABCDEF"
+#define OID_DATA "8.1"
+/* If already encoded optional additional data content is available, fill "OAD_DATA",
+otherwise fill Euro NCAP optional additional data content fields.
+# For example, OAD_DATA = "0832D28480" */
+static const std::string OAD_DATA = "";
+/* Below are the Euro NCAP optional additional data content fields. */
+#define EURONCAP_LOCATION_OF_IMPACT 2
+/* Possible LOCATION_OF_IMPACT values are 0 to 6
+  0 = unknown
+  1 = none,
+  2 = front,
+  3 = rear,
+  4 = driver_side,
+  5 = non_driver_side,
+  6 = other */
+#define EURONCAP_ROLL_OVER_DETECTED_PRESENT 0
+#define EURONCAP_ROLL_OVER_DETECTED 0
+// range limit is 100 to 255
+#define EURONCAP_DELTAV_RANGELIMIT 125
+// delta VX range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVX -45
+// delta VY range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVY 10
 
 std::shared_ptr<ICall> dialedCall = nullptr;
 
@@ -112,7 +135,7 @@ int main(int, char **) {
 
    // ### 2. Wait for the Call Manager subsystem to be ready.
    telux::common::ServiceStatus status = cbProm.get_future().get();
-   if(status == SERVICE_AVAILABLE) {
+   if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       std::cout << "Call Manager subsystem is ready" << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
@@ -159,8 +182,32 @@ int main(int, char **) {
    eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
    eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
    eCallMsdData.optionalPdu.oid = OID_DATA;
-   std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
-   msdData_.optionalPdu.data = data;
+   if (!OAD_DATA.empty()) {
+       std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
+       eCallMsdData.optionalPdu.data = data;
+   } else {
+       std::vector<uint8_t> data;
+       // get encoded optional additional data content
+       ECallOptionalEuroNcapData optionalEuroNcapData = {};
+       // refer ECallLocationOfImpact for more values
+       optionalEuroNcapData.locationOfImpact =
+           static_cast<ECallLocationOfImpact>(EURONCAP_LOCATION_OF_IMPACT);
+       optionalEuroNcapData.rollOverDetectedPresent = EURONCAP_ROLL_OVER_DETECTED_PRESENT;
+       optionalEuroNcapData.rollOverDetected = EURONCAP_ROLL_OVER_DETECTED;
+       // deltav range limit is 100 to 255
+       optionalEuroNcapData.deltaV.rangeLimit = EURONCAP_DELTAV_RANGELIMIT;
+       // deltav VX range is -255 to 255
+       optionalEuroNcapData.deltaV.deltaVX = EURONCAP_DELTAV_DELTAVX;
+       // deltav VY range is -255 to 255
+       optionalEuroNcapData.deltaV.deltaVY = EURONCAP_DELTAV_DELTAVY;
+       auto encodeOADContentStatus = callManager->encodeEuroNcapOptionalAdditionalData(
+           optionalEuroNcapData, data);
+       if (encodeOADContentStatus != telux::common::Status::SUCCESS) {
+           std::cout << " Optional additional data content encoding is failed" << std::endl;
+           return 1;
+       }
+       eCallMsdData.optionalPdu.data = data;
+   }
 
    // ### 5. Send an eCall request
    auto makeCallStatus
@@ -168,7 +215,7 @@ int main(int, char **) {
    std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
 
    // ### 6. Wait for the call state to become active and hang-up the call after conversation
-   sleep(10);
+   std::this_thread::sleep_for(std::chrono::seconds(10));
    if(dialedCall) {
       dialedCall->hangup();
    }

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,12 +81,55 @@
 #define MSD_VERSION_THREE 3
 
 telux::tel::ECallMsdData MsdProvider::msdData_ = {};
+std::vector<uint8_t> MsdProvider::optionalAdditionalDataContent_ = {};
 
 /**
  * Reads MSD data from file and caches it
  */
 telux::tel::ECallMsdData MsdProvider::getMsd() {
     return msdData_;
+}
+
+/**
+ * Sets MSD optional additional data content.
+ */
+void MsdProvider::setOptionalAdditionalDataContent(
+    std::vector<uint8_t> optionalAdditionalDataContent) {
+    optionalAdditionalDataContent_ = optionalAdditionalDataContent;
+}
+
+/**
+ * Function to read MSD config file containing optional additional data content key value pairs.
+ */
+telux::tel::ECallOptionalEuroNcapData MsdProvider::readEuroNcapOptionalAdditionalDataContent(
+    std::string filename, std::string filePath) {
+    std::shared_ptr<ConfigParser> msdSettings = nullptr;
+    telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData = {};
+    try {
+        msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    } catch (std::bad_alloc & e) {
+        std::cout << "MSD parsing failed, error: "<< e.what() << std::endl;
+        return optionalEuroNcapData;
+    }
+    // Euro NCAP OPTIONAL_ADDTIONAL_DATA_CONTENT
+    auto locationOfImpactAsString = msdSettings->getValue("EURONCAP_LOCATION_OF_IMPACT");
+    optionalEuroNcapData.locationOfImpact =
+        static_cast<telux::tel::ECallLocationOfImpact>(atoi(locationOfImpactAsString.c_str()));
+    auto rollOverDetectedPresentAsString =
+        msdSettings->getValue("EURONCAP_ROLL_OVER_DETECTED_PRESENT");
+    bool rollOverDetectedPresentAsBool
+        = atoi(rollOverDetectedPresentAsString.c_str()) ? true : false;
+    optionalEuroNcapData.rollOverDetectedPresent =
+        rollOverDetectedPresentAsBool;
+    optionalEuroNcapData.rollOverDetected =
+        atoi(msdSettings->getValue("EURONCAP_ROLL_OVER_DETECTED").c_str());
+    optionalEuroNcapData.deltaV.rangeLimit =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_RANGELIMIT").c_str());
+    optionalEuroNcapData.deltaV.deltaVX =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_DELTAVX").c_str());
+    optionalEuroNcapData.deltaV.deltaVY =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_DELTAVY").c_str());
+    return optionalEuroNcapData;
 }
 
 /**
@@ -246,9 +289,16 @@ void MsdProvider::init(std::string filename, std::string filePath) {
     // NUMBER_OF_PASSENGERS
     msdData_.numberOfPassengers = atoi(msdSettings->getValue("NUMBER_OF_PASSENGERS").c_str());
 
-    // OPTIONAL_ADDTIONAL_DATA
+    // OPTIONAL_ADDTIONAL_DATA OID
     msdData_.optionalPdu.oid = msdSettings->getValue("EUROPEAN_ECALL_OID");
-    std::string str = msdSettings->getValue("EUROPEAN_ECALL_OAD");
-    std::vector<uint8_t> data(str.begin(), str.end());
-    msdData_.optionalPdu.data = data;
+    // OPTIONAL_ADDTIONAL_DATA OAD
+    // If encoded string is available, directly append to the main MSD, otherwise
+    // encode optional additional data content first and then append to the main MSD.
+    if (!msdSettings->getValue("EUROPEAN_ECALL_OAD").empty()) {
+        std::string str = msdSettings->getValue("EUROPEAN_ECALL_OAD");
+        std::vector<uint8_t> data(str.begin(), str.end());
+        msdData_.optionalPdu.data = data;
+    } else {
+        msdData_.optionalPdu.data = optionalAdditionalDataContent_;
+   }
 }

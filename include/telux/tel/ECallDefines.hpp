@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -158,7 +158,7 @@ struct ECallMsdOptionals {
                                                 (as per EN 15722:2020), as recentVehicleLocationN2
                                                 is mandatory, this should be set to true by client*/
    bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data:
-                                                  true - Present or false - Absent*/
+                                                true - Present or false - Absent*/
 };
 
 /**
@@ -233,7 +233,48 @@ struct ECallDefaultOptions {
 /// @endcond
 
 /**
- * Optional information for the emergency rescue service.
+ * Defines the impact location of the triggering incident as per Euro NCAP Technical
+ * Bulletin TB 040.
+ */
+enum class ECallLocationOfImpact {
+   UNKNOWN,                 /**<  Location of impact is unknown. */
+   NONE,                    /**<  No triggering impact detected. */
+   FRONT,                   /**<  At front of the car. */
+   REAR,                    /**<  At rear of the car. */
+   DRIVER_SIDE,             /**<  At the driver side of the car. */
+   NON_DRIVER_SIDE,         /**<  At the other side of the car. */
+   OTHER,                   /**<  At an unspecified location. */
+};
+
+/**
+ * Defines delta-v parameters as per Euro NCAP Technical Bulletin TB 040.
+ */
+struct ECallDeltaV {
+   uint8_t rangeLimit;   /**< Upper limit of the detection range for delta-v.
+                              The range is unsigned integer[100 to 255]. */
+   int16_t deltaVX;      /**< Difference in velocity just before and just after (start of the)
+                              triggering incident measured over the X-axis of the vehicle
+                              coordinate system. The range is signed integer[-255 to 255]. */
+   int16_t deltaVY;      /**< Difference in velocity just before and just after (start of the)
+                              triggering incident measured over the Y-axis of the vehicle
+                              coordinate system. The range is signed integer[-255 to 255]. */
+};
+
+/**
+ * Optional additional data information as per Euro NCAP Technical Bulletin TB 040.
+ */
+struct ECallOptionalEuroNcapData {
+   ECallLocationOfImpact locationOfImpact;  /**< The impact location of the triggering incident. */
+   bool rollOverDetectedPresent = false;    /**< Availability of rollover detected:
+                                                 true - Present or false - Absent */
+   bool rollOverDetected = false;           /**< (Optional) Omitted if vehicle is not able to
+                                                 detect a rollover, else true or false. */
+   ECallDeltaV deltaV;                      /**< Difference between velocity just after and just
+                                                 before impact (delta-v). */
+};
+
+/**
+ * Optional additional data information for the emergency rescue service.
  */
 struct ECallOptionalPdu {
    ECallDefaultOptions eCallDefaultOptions; /**< Optional information. This field is
@@ -249,7 +290,15 @@ struct ECallOptionalPdu {
  * Supports MSD version-2(as per EN 15722:2015) and MSD version-3(as per EN 15722:2020)
  */
 struct ECallMsdData {
-   ECallMsdOptionals optionals; /**< Indicates presence of optionals in ECall MSD */
+   ECallMsdOptionals optionals; /**< Indicates presence of optional data fields in ECall MSD.
+                                     In MSD version-2 (as per EN 15722:2015), the following data
+                                     fields are optional:
+                                     recentVehicleLocationN1, recentVehicleLocationN2,
+                                     numberOfPassengers and optionalAdditionalData.
+                                     However, in MSD version-3 (as per EN 15722:2020), the
+                                     following data fields are optional:
+                                     numberOfOccupants (replacing numberOfPassengers) and
+                                     optionalAdditionalData. */
    uint8_t messageIdentifier;   /**< Starts with 1 for each new eCall and to be incremented with
                                      every retransmission */
    ECallMsdControlBits control; /**< ECallMsdControlBits structure as per European standard i.e. EN
@@ -275,7 +324,8 @@ struct ECallMsdData {
    /** Optional information for the emergency rescue service
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located
     */
-   ECallOptionalPdu optionalPdu; /**< Optional information for the emergency rescue service */
+   ECallOptionalPdu optionalPdu; /**< Optional additional data information for the emergency rescue
+                                      service. */
    uint8_t msdVersion = 2;       /**< MSD format version that is being used */
 };
 

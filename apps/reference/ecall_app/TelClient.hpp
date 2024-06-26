@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -298,6 +298,19 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::Status setECallConfig(EcallConfig config);
+
+    /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @param [in] optionalAdditionalDataContent  Euro NCAP optional additional data content.
+     * @param [out] data                          Encoded vector of bytes.
+     *
+     * @returns Status of getEncodedOptionalAdditionalDataContent i.e success or suitable status
+     * code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent(ECallOptionalEuroNcapData
+        optionalAdditionalData, std::vector<uint8_t> &data);
 
     /**
      * This function provides the eCall progress state.

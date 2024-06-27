@@ -667,7 +667,6 @@ void transmitEventMsg() {
     if (tx_timer_fd != -1) {
         close(tx_timer_fd);
     }
-    cout << "Closing event transmit thread\n";
 }
 
 /**

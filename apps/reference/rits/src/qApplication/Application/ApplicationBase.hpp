@@ -184,7 +184,10 @@ typedef struct {
     uint64_t txInterval;
     double startLatencyTime;
     double endLatencyTime;
+    Kinematics rvKine;
+    MisbehaviorStats* misbehaviorStat;
     VerifStats* asyncVerifStat;
+    void* msgParseContext;
 } asyncCbData_t;
 
 struct Config {
@@ -721,6 +724,8 @@ public:
     static double overrideSpeed;
     static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
     static bool securityInitialized;
+    static int signFail;
+    static int signSuccess;
     static bool exitApp;
     static bool writeLogFinish;
     static void writeLog(const uint8_t index,
@@ -794,11 +799,7 @@ protected:
     /**
      * Security service object.
      */
-    //#ifdef AEROLINK
-   // unique_ptr<AerolinkSecurity> SecService;
-   // #else
     unique_ptr<SecurityService> SecService;
-  //  #endif
 
     /**
      * Vehicle Receive object.

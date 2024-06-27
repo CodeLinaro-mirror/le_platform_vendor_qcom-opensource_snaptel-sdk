@@ -107,6 +107,8 @@ bool ApplicationBase::writeLogFinish;
 bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
 bool ApplicationBase::securityInitialized;
+int ApplicationBase::signFail;
+int ApplicationBase::signSuccess;
 
 #define EventBitsShift(bits, shift) \
     (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
@@ -365,7 +367,7 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%d,",
         validPkt  ? 1: 0);
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,",
-        congestionControlCalculations->maxITT);
+        (long unsigned int)congestionControlCalculations->maxITT);
 
     // gps time, event, random time
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
@@ -573,6 +575,8 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     exitApp = false;
     MsgType = msgType;
     currVehState = nullptr;
+    signSuccess = 0;
+    signFail = 0;
     // set parameters according to config file
     loadConfiguration(fileConfiguration);
 }
@@ -591,6 +595,8 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
     currVehState = nullptr;
+    signSuccess = 0;
+    signFail = 0;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
@@ -808,8 +814,8 @@ ApplicationBase::~ApplicationBase() {
     sem_destroy(&log_sem);
 
     {
-       if (nullptr != csvfp) {
-           std::unique_lock<std::mutex> lock(csvMutex);
+       std::unique_lock<std::mutex> lock(csvMutex);
+       if (nullptr != csvfp && !configuration.enableAsync) {
            writeMutexCv.wait(lock, []{ return writeLogFinish; });
            fclose(csvfp);
            csvfp = nullptr;
@@ -1014,6 +1020,11 @@ void ApplicationBase::prepareForExit() {
     std::unique_lock<std::mutex> loc(stateMtx);
     exitApp = true;
     stateCv.notify_all();
+    {
+        lock_guard<std::mutex> lock(csvMutex);
+        writeLogFinish = true;
+        writeMutexCv.notify_all();
+    }
     if (kinematicsReceive != nullptr) {
         kinematicsReceive->close();
     }
@@ -1730,6 +1741,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("enableMbd") != configs.end()){
             istringstream is1(configs["enableMbd"]);
             is1 >> boolalpha >> configuration.enableMbd;
+            std::cout << "Misbehavior checks enabled\n";
             if(configuration.enableMbd) {
                 if(configs.find("enableMbdStatLog") != configs.end()){
                     istringstream is8(configs["enableMbdStatLog"]);
@@ -1742,12 +1754,14 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                         if(configs.find("mbdStatLogFile") != configs.end()){
                             this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
                         }
-                        std::cout << "Misbehavior statistic logging is ON" << std::endl;
-                        std::cout << "Statistics for last " <<
-                            configuration.mbdStatLogListSize <<
-                            " misbehavior will be reported by each thread" << std::endl;
-                        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                            configuration.mbdStatLogFile << std::endl;
+                        if(configuration.appVerbosity > 1){
+                            std::cout << "Misbehavior statistic logging is ON" << std::endl;
+                            std::cout << "Statistics for last " <<
+                                configuration.mbdStatLogListSize <<
+                                " misbehavior will be reported by each thread" << std::endl;
+                            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                                configuration.mbdStatLogFile << std::endl;
+                        }
                     } else{
                         std::cout << "Misbehavior statistic logging is off" << std::endl;
                     }
@@ -2338,7 +2352,6 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
                                                       this->configuration.eventPriority);
         }
     }
-
     return ret;
 }
 
@@ -2432,9 +2445,6 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         ret = this->transmit(index, mc, encLength, txType);
         if (encLength > 0 && ret > 0) {
             validMessage = true;
-        }
-
-        if (encLength > 0 && ret > 0) {
             if (csvfp || enableDiagLog_) {
                 currTime = timestamp_now();
 
@@ -2561,7 +2571,10 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
     // make buffer copy of the header and the payload.
     if (SecService->SignMsg(sopt, (uint8_t*)mc->abuf.data,
                             encLength, signedSpdu, signedSpduLen, type) < 0) {
+        signFail++;
         return -1;
+    }else{
+        signSuccess++;
     }
     if(configuration.enableSignStatLog){
         // successful signing, increment the sign stat idx
@@ -2770,8 +2783,6 @@ void ApplicationBase::writeMisbehaviorLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    printf("Thread (%08x) is now dumping misbehavior stats to %s\n",
-            std::stoi(ss.str()),configuration.mbdStatLogFile.c_str());
     file.open(configuration.mbdStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];
@@ -2887,7 +2898,10 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
             if (!csvfp) {
                 cerr << "Failed to open log file " << fullPathName << std::endl;
             } else {
-                std::cout << "Open log " << fullPathName << " success!" << std::endl;
+                if(configuration.appVerbosity){
+                    std::cout << "Open log " << fullPathName
+                        << " success!" << std::endl;
+                }
                 res = true;
                 write_bsm_header(csvfp);
             }
@@ -2995,9 +3009,14 @@ void ApplicationBase::writeLog(const uint8_t index,
     // write general data to log
     // build the string in this function instead of immediately writing
     int ret = 0;
+    if(writeMutexCv && !exitApp){
+        lock_guard<std::mutex> lock(csvMutex);
+        writeLogFinish = false;
+    }
     ret  = writeGeneralLog(tmpLogStr, 200, bs, csvfp, isTx, periodicityMs, validPkt,
                 RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
                 locPositionDop, locNumSvUsed, locTimeMs, cbr, txInterval, l2SrcAddr);
+
     // check if error in writing general data
     if(ret == -1){
         return;
@@ -3008,12 +3027,11 @@ void ApplicationBase::writeLog(const uint8_t index,
 
     if (enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation
-            writeCongCtrlLog(tmpLogStr, 200, csvfp,
+        writeCongCtrlLog(tmpLogStr, 200, csvfp,
             &congCtrlCbData,
             validPkt, eventsData);
     }else{
         // make sure to write commas for the empty fields
-        //this->congCtrlConfig.spsEnhHysterPerc
         snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
             validPkt ? 1 : 0,
             (enableCongCtrl && congCtrlInitialized) ?
@@ -3029,12 +3047,16 @@ void ApplicationBase::writeLog(const uint8_t index,
             bs->distFromRV);
         curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     }
-    // lock here to prevent race conditions when writing to file
-    fprintf(csvfp, "%s\n", tmpLogBuf);
 
-    lock_guard<std::mutex> lock(csvMutex);
-    if(writeMutexCv){
-        writeLogFinish = true;
-        writeMutexCv->notify_all();
+    {
+
+        if(writeMutexCv && !exitApp){
+            lock_guard<std::mutex> lock(csvMutex);
+
+            // lock here to prevent race conditions when writing to file
+            fprintf(csvfp, "%s\n", tmpLogBuf);
+            writeLogFinish = true;
+            writeMutexCv->notify_all();
+        }
     }
 }

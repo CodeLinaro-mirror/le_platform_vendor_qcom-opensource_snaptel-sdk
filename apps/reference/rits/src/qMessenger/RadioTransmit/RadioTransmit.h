@@ -171,7 +171,7 @@ public:
     * @param priority a enum value representing the priority to be mapped to traffic class.
     * @return result value is length of transmitted data on success and -1 on fail.
     */
-    int8_t transmit(const char* buf, const uint16_t bufLen, Priority priority);
+    int transmit(const char* buf, const uint16_t bufLen, Priority priority);
 
     /**
     * Method that transmits data in a buffer based in the constructed flow.

@@ -109,7 +109,8 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
                 this->spsResSize = spsInfo.nbytesReserved;
             }
         } else {
-            cout << "Sps Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
+            cout << "Sps Flow creation fails for sid= " << serviceId << " with err "
+                << static_cast<uint32_t>(err) << endl;
         }
     } else {
         cout << "Sps Flow creation fails\n";
@@ -145,7 +146,8 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
         if (ErrorCode::SUCCESS == err) {
             cout << "Event Flow created succesfully\n";
         } else {
-            cout << "Event Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
+            cout << "Event Flow creation fails for sid= " << serviceId << " with err "
+                << static_cast<uint32_t>(err) << endl;
         }
     } else {
         cout << "Event Flow creation fails\n";
@@ -191,7 +193,7 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress) 
     }
 }
 
-int8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
+int RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
     struct timespec ts;
     if (isSim)
     {

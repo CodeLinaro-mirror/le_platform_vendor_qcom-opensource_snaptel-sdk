@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -136,15 +136,15 @@ bool ThermalTestApp::init() {
         ThermalTestApp::getInput(
             "Select the application processor for operations(1-LOCAL/2-REMOTE/3-BOTH): ", cid);
         if (cid == 1) {
-            initStatus = initThermalManager(telux::common::ProcType::LOCAL_PROC);
             initWithProc_ = LOCAL;
+            initStatus = initThermalManager(telux::common::ProcType::LOCAL_PROC);
         } else if (cid == 2) {
-            initStatus = initThermalManager(telux::common::ProcType::REMOTE_PROC);
             initWithProc_ = REMOTE;
+            initStatus = initThermalManager(telux::common::ProcType::REMOTE_PROC);
         } else if (cid == 3) {
+            initWithProc_ = BOTH;
             initThermalManager(telux::common::ProcType::LOCAL_PROC);
             initStatus |= initThermalManager(telux::common::ProcType::REMOTE_PROC);
-            initWithProc_ = BOTH;
         } else {
             std::cout << " Invalid input:  " << cid << ", please re-enter" << std::endl;
         }

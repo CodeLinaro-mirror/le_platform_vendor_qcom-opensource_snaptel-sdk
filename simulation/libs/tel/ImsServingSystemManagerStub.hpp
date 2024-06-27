@@ -26,7 +26,7 @@ namespace tel {
 
 class ImsServingSystemManagerStub : public IImsServingSystemManager,
                                     public IEventListener,
-                                    public std::enable_shared_from_this<IImsServingSystemManager> {
+                                    public std::enable_shared_from_this<ImsServingSystemManagerStub> {
 public:
     ImsServingSystemManagerStub(SlotId slotId, telux::common::InitResponseCb callback);
     ~ImsServingSystemManagerStub();
@@ -52,6 +52,9 @@ private:
     std::shared_ptr<telux::common::ListenerManager<IImsServingSystemListener>> listenerMgr_;
     std::unique_ptr<::telStub::ImsServingSystem::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
+    void handleImsRegStatusChanged(::telStub::ImsRegStatusChangeEvent event);
+    void handleImsServiceInfoChanged(::telStub::ImsServiceInfoChangeEvent event);
+    void handleImsPdpStatusInfoChanged(::telStub::ImsPdpStatusInfoChangeEvent event);
 };
 
 } // end of namespace tel

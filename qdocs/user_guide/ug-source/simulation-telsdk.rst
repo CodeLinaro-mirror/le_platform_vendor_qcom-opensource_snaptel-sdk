@@ -896,6 +896,64 @@ Command: ``telsdk_event_injector -f tel_network_select -e networkScanResultsUpda
 
  telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate 1 ,0 ,CMCC 460 00 14 1 1 1 1 ,CU 460 01 14 1 1 1 1
 
+Update IMS registration status
+'''''''''''''''''''''''''''''''''''''''
+To simulate IImsServingSystemManager event - telux::tel::IImsServingSystemListener::onImsRegStatusChange
+
+Command: ``telsdk_event_injector -f tel_ims_serv -e regStatusUpdate <slotId> <regStatus> <rat> <errorCode> <errorString>``
+
+**Parameters of event injector command:**
+
+- slotId:           valid slotIds are 1 & 2 only
+- regStatus:        valid integer value is filled as per telux::tel::RegistrationStatus
+- rat:              valid integer value is filled as per telux::tel::RadioTechnology
+- errorCode:        valid integer value is filled as per telux::tel::ImsRegistrationInfo
+- errorString:      valid string value is filled as per telux::tel::ImsRegistrationInfo
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_ims_serv -e regStatusUpdate 1 2 20 0
+
+Update IMS service information
+'''''''''''''''''''''''''''''''''''''''
+To simulate IImsServingSystemManager event - telux::tel::IImsServingSystemListener::onImsServiceInfoChange
+
+Command: ``telsdk_event_injector -f tel_ims_serv -e serviceInfoUpdate <slotId> <smsStatus> <voiceStatus>``
+
+**Parameters of event injector command:**
+
+- slotId:           valid slotIds are 1 & 2 only
+- smsStatus:        valid integer value is filled as per telux::tel::CellularServiceStatus
+- voiceStatus:      valid integer value is filled as per telux::tel::CellularServiceStatus
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_ims_serv -e serviceInfoUpdate 1 0 2
+
+Update IMS PDP status information
+'''''''''''''''''''''''''''''''''''''''
+To simulate IImsServingSystemManager event - telux::tel::IImsServingSystemListener::onImsPdpStatusInfoChange
+
+Command: ``telsdk_event_injector -f tel_ims_serv -e pdpStatusInfoUpdate <slotId> <isConnected> <pdpFailure> <dataCallEndReason> <apnName>``
+
+**Parameters of event injector command:**
+
+- slotId:             valid slotIds are 1 & 2 only
+- isConnected:        valid bool value is filled as per telux::tel::ImsPdpStatusInfo
+- pdpFailure:         valid integer value is filled as per telux::tel::PdpFailureCode
+- dataCallEndReason:  valid integer value is filled as per telux::common::EndReasonType
+- apnName:            valid string value is filled as per telux::tel::ImsPdpStatusInfo
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_ims_serv -e pdpStatusInfoUpdate 1 1 0 2 IMS
+
 Additional notes
 """""""""""""""""
 

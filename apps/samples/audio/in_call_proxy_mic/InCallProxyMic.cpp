@@ -20,15 +20,15 @@
  * 10. Delete voice call stream.
  *
  * Usage:
- * # in_call_proxy_mic_play /data/musicfile.pcm
+ * # in_call_proxy_mic_play /data/8k-mono-audio-file.raw
  *
- * Contents of /data/musicfile.pcm file is heard on the far end.
+ * Contents of /data/8k-mono-audio-file.raw file is heard on the far end.
  * Before creating playback stream, voice call must be active (answered) between
  * local end and far end.
  *
  * The appication on MDM receives mic samples from an external application processor
- * (EAP) and injects into proxy mic on MDM. Playback data is injected into the TX path
- * of the voice call. File musicfile.pcm represents samples received from the EAP.
+ * (EAP) and injects into the proxy mic on MDM. Playback data is injected into the TX path
+ * of the voice call. File 8k-mono-audio-file.raw represents samples received from the EAP.
  */
 
 #include <errno.h>
@@ -95,8 +95,9 @@ int InCallProxyMic::createVoiceStream() {
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
-    /* Use proxy device */
+    /* Use proxy device and specify sampling rate */
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_PROXY_MIC);
+    sc.sampleRate = 8000;
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -402,7 +403,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<InCallProxyMic> app;
 
     if (argc < 2) {
-        std::cout << "Usage: ./in_call_proxy_mic_play /data/musicfile.pcm" << std::endl;
+        std::cout << "Usage: ./in_call_proxy_mic_play /data/8k-mono-audio-file.raw" << std::endl;
         return -EINVAL;
     }
 

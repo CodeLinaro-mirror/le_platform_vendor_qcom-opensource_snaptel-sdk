@@ -66,6 +66,7 @@
                              Edit History
 when       who     what, where, why
 --------   ---     ------------------------------------------------------------
+06/27/24   US      Remove unsupported simulation framework.
 10/13/23   FS      Added support for Diagnostics Services in Telematics SDK
 03/06/23   MH      Added documentation for thermal notifications.
 11/02/22   FS      Added support for WLAN feature in Telematics SDK

@@ -120,11 +120,6 @@ if (TELUX_FOR_EXTERNAL_AP)
     endif (TELUX_QTI_EXTERNAL_AP)
 endif (TELUX_FOR_EXTERNAL_AP)
 
-#For simulation apps, set rpath to CMAKE_INSTALL_LIBDIR for telux stub libraries
-if(BUILD_FOR_SIMULATION)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif(BUILD_FOR_SIMULATION)
-
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 # build subdirectories

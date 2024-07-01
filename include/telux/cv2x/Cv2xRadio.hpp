@@ -509,8 +509,6 @@ public:
      * @param [in] spsInfo      - Desired SPS reservation parameters
      * @param [in] cb           - Callback that is invoked upon reservation change. This
      *                            may be null.
-     * @detdesc
-     * This function does not update reservation priority
      *
      * @returns SUCCESS if no error occurred.
      */

@@ -317,12 +317,12 @@ class DataFactory {
     virtual std::shared_ptr<IClientManager> getClientManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
     /**
-     * Get QoS Manager
+     * Gets the QoS manager instance.
      *
      *  @param [in] clientCallback   Optional callback to get the initialization status of
      *                               IQoSManager @ref telux::common::InitResponseCb
      *
-     * @returns instance of IQoSManager
+     * @returns IQoSManager instance.
      *
      */
     virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(

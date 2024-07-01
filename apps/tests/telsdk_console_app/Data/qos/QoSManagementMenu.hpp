@@ -30,6 +30,7 @@ class QoSManagementMenu : public ConsoleApp,
     void getAllTrafficClasses(std::vector<std::string> &inputCommand);
     void deleteTrafficClass(std::vector<std::string> &inputCommand);
     void addQoSFilter(std::vector<std::string> &inputCommand);
+    void getQosFilter(std::vector<std::string> &inputCommand);
     void getQosFilters(std::vector<std::string> &inputCommand);
     void deleteQosFilter(std::vector<std::string> &inputCommand);
     void deleteAllQosConfigs(std::vector<std::string> &inputCommand);

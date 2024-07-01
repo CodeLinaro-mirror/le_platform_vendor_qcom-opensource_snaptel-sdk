@@ -15,26 +15,17 @@ namespace telux {
 namespace data {
 namespace net {
 
+using DataPath = telux::data::DataPath;
 /**
- * @brief Provides a way to distinguish the data path. It indicates how data
- * transfers within internal components.
- */
-enum class DataPath {
-    TETHERED_TO_WAN_HW = 0, /** Hardware-accelerated data path from tethered client to WAN */
-    TETHERED_TO_APPS_SW     /** Software data path from tethered client to to SW
-                               running on Apps processor */
-};
-
-/**
- * Type of bandwidth associated with traffic class
+ * Type of bandwidth configuration associated with traffic class
  */
 enum class BandwidthConfigType {
     BW_RANGE = 1, /**< Bandwidth range */
 };
 
 struct BandwidthRange {
-    uint32_t minBandwidth; /**< minimum bandwidth in Mbps */
-    uint32_t maxBandwidth; /**< maximum bandwidth in Mbps */
+    uint32_t minBandwidth; /**< Minimum bandwidth in Mbps */
+    uint32_t maxBandwidth; /**< Maximum bandwidth in Mbps */
 };
 
 union BandwidthValue {
@@ -47,8 +38,8 @@ union BandwidthValue {
  * @brief Bandwidth configuration
  */
 struct BandwidthConfig {
-    BandwidthConfigType dlBandwidthConfigType; /**< Type of dl bandwidth */
-    BandwidthValue dlBandwidthValue;           /**< Value of dl bandwidth */
+    BandwidthConfigType dlBandwidthConfigType; /**< Type of DL bandwidth */
+    BandwidthValue dlBandwidthValue;           /**< Value of DL bandwidth */
 
     void setDlBandwidthRange(uint32_t minBandwidth, uint32_t maxBandwidth) {
         dlBandwidthConfigType = BandwidthConfigType::BW_RANGE;
@@ -62,25 +53,46 @@ struct BandwidthConfig {
  */
 enum class QoSFilterErrorCode {
     SUCCESS = 0,
-    MISSING_DIRECTION,                 /** Mandatory field 'data traffic direction' is missing */
-    INVALID_MULTIPLE_SOURCE_INFO,      /** If Traffic descriptor is set, expect only
-                                          one of the following: source IPv4, IPv6, VLAN
-                                        */
-    INVALID_MULTIPLE_DESTINATION_INFO, /** If Traffic descriptor is set, expect
-                                          only one of the following: destination
-                                          IPv4 or IPv6 */
+    MISSING_DIRECTION,                 /** The mandatory 'data traffic direction' field is
+                                            missing */
+    INVALID_MULTIPLE_SOURCE_INFO,      /** If traffic descriptor is set, only one of the following
+                                          sources is expected: IPv4, IPv6, or VLAN */
+    INVALID_MULTIPLE_DESTINATION_INFO, /** If traffic descriptor is set, only one of the following
+                                          destinations is expected: IPv4, IPv6, or VLAN */
 };
 
 /**
- * @brief Possible error codes while creating traffic class @ref
- * createTrafficClass.
+ * @brief Possible error codes while creating traffic class ( @ref createTrafficClass ).
  */
 enum class TcConfigErrorCode {
     SUCCESS = 0,
-    MISSING_TRAFFIC_CLASS, /** Mandatory field 'traffic class' is missing */
-    MISSING_DATA_PATH,     /** Mandatory field software path or hardware IPA path is
-                              missing */
-    MISSING_DIRECTION,     /** Mandatory field 'data traffic direction' is missing */
+    MISSING_TRAFFIC_CLASS, /** The mandatory 'traffic class' field is missing */
+    MISSING_DATA_PATH,     /** The mandatory 'data path' field is missing */
+    MISSING_DIRECTION,     /** The mandatory 'data traffic direction' field is missing */
+};
+
+/**
+ * @brief Possible QoS filter 'installation status'.
+ */
+enum class FilterInstallationStatus {
+    SUCCESS = 0,    /** QoS filter installed successfully. */
+    FAILED,         /** QoS filter installation failed. */
+    PENDING,        /** QoS filter is saved and will be installed when necessary conditions are met.
+                        For example, if no data calls are active and the QoS filter installation is
+                        requested on the modem, the status would be PENDING until a data call is
+                        brought up. */
+    NOT_APPLICABLE, /** QoS filter is not applicable for the module.
+                        For example, in the case of @ref DataPath::TETHERED_TO_APPS_SW, filters will
+                        not be applicable for the modem. */
+};
+
+/**
+ * @brief QoS filter status at different modules.
+ */
+struct QoSFilterStatus {
+    FilterInstallationStatus ethStatus;   /** QoS filter installation status at the Eth. */
+    FilterInstallationStatus modemStatus; /** QoS filter installation status at the modem. */
+    FilterInstallationStatus ipaStatus;   /** QoS filter installation status at the IPA. */
 };
 
 /**
@@ -110,9 +122,8 @@ using TcConfigValidFields = uint32_t;
 class ITcConfig {
  public:
     /**
-     * @brief Get the Traffic Class config Valid Fields
-     * This function can be used to check whether the respective parameter is
-     * valid.
+     * @brief Gets the valid fields in the traffic class configuration.
+     * This function can be used to check whether a respective parameter is valid.
      *
      * @return TcConfigValidFields bit mask
      */
@@ -133,14 +144,14 @@ class ITcConfig {
     virtual Direction getDirection() = 0;
 
     /**
-     * @brief Get the data path of the QoS filter.
+     * @brief Gets the QoS filter data path.
      *
      * @return DataPath enum representing the data path.
      */
     virtual DataPath getDataPath() = 0;
 
     /**
-     * @brief Get the bandwidth configuration.
+     * @brief Gets the bandwidth configuration.
      *
      * @return BandwidthConfig representing the andwidth configuration.
      */
@@ -165,6 +176,9 @@ class TcConfigBuilder {
      *
      * @param [in] trafficClass     The desired traffic class.
      * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setTrafficClass(TrafficClass trafficClass);
 
@@ -173,6 +187,9 @@ class TcConfigBuilder {
      *
      * @param [in] direction    The desired direction.
      * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setDirection(Direction direction);
 
@@ -181,16 +198,30 @@ class TcConfigBuilder {
      * indicates how data transfers are expected to happen within internal
      * components.
      *
+     * - Traffic classes with data path TETHERED_TO_WAN_HW can be associated with traffic filters
+     *   with data path TETHERED_TO_WAN_HW and APPS_TO_WAN.
+     * - Traffic classes with data path TETHERED_TO_APPS_SW can be associated with traffic filters
+     *   with data path TETHERED_TO_APPS_SW and APPS_TO_WAN.
+     * - Traffic classes with data path APPS_TO_WAN can be associated with traffic filters with data
+     *   path APPS_TO_WAN. Traffic classes created with APPS_TO_WAN can only be associated with
+     *   UPLINK data path.
+     *
      * @param [in] dataPath     Expected data path
      * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setDataPath(DataPath dataPath);
 
     /**
-     * @brief Set the bandwidth configuration.
+     * @brief Sets the bandwidth configuration.
      *
      * @param [in] bandwidthConfig     Expected bandwidth configuration
      * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setBandwidthConfig(BandwidthConfig bandwidthConfig);
 
@@ -198,6 +229,9 @@ class TcConfigBuilder {
      * @brief Builds the traffic class configuration.
      *
      * @return Shared pointer to the constructed traffic class configuration.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     std::shared_ptr<ITcConfig> build();
 
@@ -206,13 +240,12 @@ class TcConfigBuilder {
 };
 
 /**
- * @brief Handle of QoS filter @ref IQoSFilter
+ * @brief QoS filter ( @ref IQoSFilter ) handle.
  */
 using QoSFilterHandle = uint32_t;
 
 /**
- * @brief QoS filter configuration
- * It is combination of traffic class and traffic filter
+ * @brief QoS filter configuration.
  */
 struct QoSFilterConfig {
     TrafficClass trafficClass;
@@ -220,9 +253,7 @@ struct QoSFilterConfig {
 };
 
 /**
- * @brief QoS Filter information
- * It provides QoS filter handle, and QoS filter config such as traffic class
- * number and traffic filter.
+ * @brief QoS filter information.
  */
 class IQoSFilter {
  public:
@@ -232,13 +263,29 @@ class IQoSFilter {
      * @brief Returns the Quality of Service (QoS) filter handle.
      *
      * @return QoS filter handle as a @ref QoSFilterHandle.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     virtual QoSFilterHandle getHandle() = 0;
+
+    /**
+     * @brief Returns the installation status of a QoS filter.
+     *
+     * @return QoS filter status as a @ref QoSFilterStatus.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    virtual QoSFilterStatus getStatus() = 0;
 
     /**
      * @brief Returns the traffic class.
      *
      * @return TrafficClass representing the traffic class.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     virtual TrafficClass getTrafficClass() = 0;
 
@@ -246,12 +293,18 @@ class IQoSFilter {
      * @brief Returns a shared pointer to the traffic descriptor.
      *
      * @return Shared pointer to ITrafficFilter.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ITrafficFilter> getTrafficFilter() = 0;
 
     /**
      * @brief Converts the API object to a human-readable string.
      * @return A string representation of the API state.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
      */
     virtual std::string toString() = 0;
 };
@@ -260,60 +313,55 @@ class IQoSFilter {
 class IQoSListener;
 
 /**
- * @brief The QoS Manager class provides a set of APIs related to Quality of
- * Service (QoS) for the various data flows that flow via the NAD. Its purpose
- * is to manage aspects like assigning priority to the data flow, limiting the
- * bandwidth of each flow, relative to other flows, etc.
+ * @brief The QoS Manager class provides a set of APIs related to Quality of Service (QoS) for the
+ * various data flows that flow via the NAD. Its purpose is to manage aspects like assigning
+ * priority to the data flow, limiting the bandwidth of each flow relative to other flows, etc.
  *
- * Here are the key points:
  *    - Data Flow Identification @ref ITrafficFilter :
- *          - Data flows can be identified using various parameters from network
- * layers 2, 3, and 4.
- *          - These parameters include: Five-tuple (source and destination IP
- * addresses, source and destination port numbers, and IP protocol), VLAN ID,
- * and PCP number (assigned to VLAN using @ref IVlanManager::createVlan) etc.
- *          - A data flow is described using a Traffic Filter @ref
- * ITrafficFilter. A Traffic Filter is created using @ref TrafficFilterBuilder.
+ *          - Data flows can be identified using various parameters from network layers 2, 3, and 4.
+ *          - These parameters include: Five-tuple (source and destination IP addresses, source and
+ *            destination port numbers, and IP protocol), VLAN ID, and PCP number (assigned to VLAN
+ *            using @ref IVlanManager::createVlan) etc.
+ *          - A data flow is described using a Traffic Filter @ref ITrafficFilter. A Traffic Filter
+ *            is created using @ref TrafficFilterBuilder.
  *
  *    - Traffic Classes:
- *          - A traffic class is similar to a class in Linux traffic control
- * (tc).
+ *          - A traffic class is similar to a class in Linux traffic control (tc).
  *          - Each traffic class can have multiple associated data flows.
- *          - Each traffic class is identified by a unique ID. Traffic class IDs
- * start from 0 (highest priority) and go up to the maximum allowed traffic
- * class.
- *          - Lower value of Traffic Class corresponds to higher priority.
+ *          - Each traffic class is identified by a unique ID. Traffic class IDs start from 0
+ *            (highest priority) and go up to the maximum allowed traffic class.
+ *          - Lower values correspond to higher priorities.
  *
  *    - Traffic bandwidth configuration:
- *          - One can specify constraints/limits on the bandwidth that each
- * Traffic class is allowed using @ref createTrafficClass.
- *          - Currently this is used to configure the bandwidth on the traffic
- * egressing the NAD via the Eth link, to other devices/ECUs.
+ *          - One can specify constraints/limits on the bandwidth that each Traffic class is allowed
+ *            using @ref createTrafficClass.
+ *          - Currently this is used to configure the bandwidth on the traffic egressing the NAD via
+ *            the Eth link, to other devices/ECUs.
  *
- *    - Creating Qos filter:
- *          - Associating a data flow with a traffic class allows one to assign
- * relative priorities between the data flows and QoS filter.
- *          - This association is done by @ref QoSFilterConfig
- *          - Once a QoS filter config is created, it needs to be added to the
- * system using
- *            @ref addQoSFilter. Adding a filter returns a handle. This handle
- * can then be used to perform operations like deleting a QoS filter @ref
- * deleteQosFilter
+ *    - Creating QoS filter:
+ *          - Users assign relative priorities between data flows and QoS filter by associating a
+ *            data flow with a traffic class.
+ *          - This association is done by @ref QoSFilterConfig.
+ *          - Once a QoS filter config is created, it needs to be added to the system using
+ *            @ref addQoSFilter. Adding a filter returns a handle. This handle can then be used to
+ *            perform operations like deleting a QoS filter @ref deleteQosFilter.
+ *
+ *    - QoS filters are added to different modules based on the data path assigned to the traffic
+ *      class. These can be Ethernet (Eth), IP Accelerator (IPA), modem.
  */
 class IQoSManager {
  public:
     /**
      * Checks the status of QoS manager and returns the result.
      *
-     * @returns SERVICE_AVAILABLE     If QoS manager object is ready for service.
-     *          SERVICE_UNAVAILABLE   If QoS manager object is temporarily
-     * unavailable. SERVICE_FAILED        If QoS manager object encountered an
-     * irrecoverable failure
+     * @returns SERVICE_AVAILABLE     QoS manager object is ready for service.
+     *          SERVICE_UNAVAILABLE   QoS manager object is temporarily unavailable.
+     *          SERVICE_FAILED        QoS manager object encountered an irrecoverable failure
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * @brief Create traffic class.
+     * @brief Creates a traffic class.
      *
      * To create a traffic class, provide the traffic class configuration using
      * @ref ITcConfig, which is constructed using @ref TcConfigBuilder. Traffic
@@ -329,10 +377,10 @@ class IQoSManager {
      * - Create the traffic class with the updated configuration.
      * - Create and add required QoS filters using @ref addQoSFilter.
      *
-     * Traffic class creation is persistence across reboots.
+     * Traffic class creation is persistent across reboots.
      *
-     * On platforms with Access control enabled, Caller needs to have
-     * TELUX_DATA_QOS_OPS permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] tcConfig             Traffic class configuration.
      * @param [out] tcConfigErrorCode   Error code specific to @ref ITcConfig
@@ -368,8 +416,8 @@ class IQoSManager {
      * TcConfigBuilder. The traffic class number and direction are mandatory
      * parameters that need to be set via the builder.
      *
-     * On platforms with Access control enabled, Caller needs to have
-     * TELUX_DATA_QOS_OPS permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] tcConfig   Traffic class config
      * @return Error code which indicates whether the operation succeeded or not
@@ -383,22 +431,51 @@ class IQoSManager {
     /**
      * @brief Adds a QoS filter.
      *
-     * A QoS filter configuration ( @ref QoSFilterConfig) associates data flow
-     * identifiers ( @ref ITrafficFilter) with a traffic class. The traffic filter
-     * is constructed using @ref TrafficFilterBuilder. The direction is a
-     * mandatory parameter that must be set via the @ref TrafficFilterBuilder
-     * Other parameters are optional. In a single traffic filter, multiple source
-     * or destination information are not expected. For example, when dealing with
-     * the @ref FieldType::SOURCE, only one of the following options can be set:
-     * @ref TrafficFilterBuilder::setIPv4Address, @ref
-     * TrafficFilterBuilder::setIPv6Address, or
-     * @ref TrafficFilterBuilder::setVlanList.
-     * The same rule applies to the @ref FieldType::DESTINATION.
+     * A QoS filter configuration ( @ref QoSFilterConfig) associates data flow identifiers
+     * ( @ref ITrafficFilter) with a traffic class. Associating a data flow with a traffic class
+     * allows users to assign relative priorities between data flows and build QoS filters. The
+     * traffic filter is constructed using @ref TrafficFilterBuilder.
      *
-     * Associating a data flow with a traffic class allows one to assign relative
-     * priorities between the data flows and build QoS filter. Adding a filter
-     * returns a handle. This handle can then be used to perform operations like
-     * deleting a QoS filter @ref deleteQosFilter
+     * - While building a TrafficFilter, direction is a mandatory parameter that must be set via the
+     *   @ref TrafficFilterBuilder. Other parameters are optional.
+     *
+     * - The IPv4 ( @ref TrafficFilterBuilder::setIPv4Address ),
+     *   IPv6 ( @ref TrafficFilterBuilder::setIPv6Address ), and
+     *   VLAN ( @ref TrafficFilterBuilder::setVlanList ) parameters of the traffic filter are
+     *   mutually exclusive and only one type of attribute can be set out of these for a given
+     *   filter. For example, if a filter is needed for both IPv4 and IPv6, then two filters will
+     *   have to be added one for IPv4 and the other for IPv6.
+     *
+     * - Prioritization is possible in the uplink and downlink direction. However, prioritization in
+     *   the modem is possible only in the uplink direction.Modem uses 5 tuple information to do
+     *   prioritization. To do prioritization in the modem the following parameters are mandatory
+     *   when creating traffic filters.
+     *   - Source IP @ref TrafficFilterBuilder::setIPv4Address(ipv4Addr, FieldType::SOURCE) or
+     *     @ref TrafficFilterBuilder::setIPv6Address(ipv6Addr, FieldType::SOURCE)
+     *   - Protocol @ref TrafficFilterBuilder::setIPProtocol
+     *   - Destination address or destination port, one of:
+     *     @ref TrafficFilterBuilder::setIPv4Address(ipv4Addr, FieldType::DESTINATION) or
+     *     @ref TrafficFilterBuilder::setIPv6Address(ipv6Addr, FieldType::DESTINATION) or
+     *     @ref TrafficFilterBuilder::setPort(port, FieldType::DESTINATION)
+     *
+     * - PCP associated with a QoS filter will be used for prioritization with the Eth module.
+     *   - The traffic class has a one-to-one mapping with PCP, i.e., only one PCP-based traffic
+     *     filter can be associated with a traffic class.
+     *   - A traffic class with a higher priority PCP should be associated with a traffic class of
+     *     high priority. Note: A higher value PCP (for example 7) is considered the highest
+     *     priority whereas a lower value traffic class (for example 0) is considered as highest
+     *     priority.
+     *      - For example, traffic class 0 (highest priority) can be associated with PCP 7 (highest
+     *        priority).
+     *   - PCP 0 is reserved and should not be used by clients.
+     *   - To ensure prioritization of data flows originating from clients running on the NAD
+     *     application processor destined towards the Ethernet module, VLAN needs to be used and the
+     *     VLAN needs to be associated with a PCP value with the corresponding priority. To create
+     *     the VLAN refer to @ref IVlanManager::createVlan and to associate the PCP value refer to
+     *     @ref VlanConfig::priority parameter.
+     *
+     * Adding a filter returns a handle. This handle can then be used to perform operations like
+     * deleting a QoS filter @ref deleteQosFilter or getting a QoS filter info @ref getQosFilter.
      *
      * If any attribute of the QoS filter needs to be updated,
      * - Delete the existing QoS filter using @ref deleteQosFilter.
@@ -406,14 +483,12 @@ class IQoSManager {
      *
      * Once a QoS filter is added, it remains persistent across reboots.
      *
-     * On platforms with Access control enabled, Caller needs to have
-     * TELUX_DATA_QOS_OPS permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in]  qosFilterConfig     QoS filter configuration
-     * @param [out] filterHandle        On successful addition QoS filter handle
-     * will be provided
-     * @param [out] qosFilterErrorCode  Error code specific to @ref
-     * QoSFilterConfig
+     * @param [out] filterHandle        On successful addition QoS filter handle will be provided
+     * @param [out] qosFilterErrorCode  Error code specific to @ref QoSFilterConfig
      * @return Error code which indicates whether the operation succeeded or not.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
@@ -424,7 +499,23 @@ class IQoSManager {
         = 0;
 
     /**
-     * @brief Retrieves information about existing QoS policies.
+     * @brief Retrieves QoS filter information for a given handle.
+     *
+     * QoS filter status at each module can be retrieved from @ref IQoSFilter::getStatus().
+     *
+     * @param [in] qosFilterHandle      QoS filter handle.
+     * @param [out] qosFilter           Shared pointer to QoSFilter corresponding to the handle.
+     * @return Error code which indicates whether the operation succeeded or not
+     *         @ref telux::common::ErrorCode
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getQosFilter(QoSFilterHandle filterHandle,
+        std::shared_ptr<IQoSFilter> &qosFilter) = 0;
+
+    /**
+     * @brief Retrieves information about existing QoS filters.
      *
      * @param [out] qosFilters     Vector of shared pointers to IQoSFilter.
      * @return Error code which indicates whether the operation succeeded or not
@@ -440,15 +531,13 @@ class IQoSManager {
     /**
      * @brief Deletes a QoS filter.
      *
-     * QoS filter handle is used to delete QoS filter. QoS filter handle can be
-     * obtained by two ways
-     * 1. Using filter handle provided during addition of QoS filter @ref
-     * addQoSFilter
-     * 2. Get QoS policies @ref getQosFilters provide IQoSFilter which has
-     *    @ref IQoSFilter::getHandle to get filter handle.
+     * The QoS filter handle is used to delete a QoS filter. The QoS filter handle can be obtained:
+     * 1. During QoS filter ( @ref addQoSFilter ) addition.
+     * 2. Getting QoS filters ( @ref getQosFilters ) which has @ref IQoSFilter::getHandle to get
+     * the filter handle.
      *
-     * On platforms with Access control enabled, Caller needs to have
-     * TELUX_DATA_QOS_OPS permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] qosFilterHandle      QoS filter handle to be deleted.
      * @return Error code which indicates whether the operation succeeded or not
@@ -460,13 +549,12 @@ class IQoSManager {
     virtual telux::common::ErrorCode deleteQosFilter(QoSFilterHandle qosFilterHandle) = 0;
 
     /**
-     * @brief Deletes all traffic classes and QoS policies.
+     * @brief Deletes all traffic classes and QoS filters.
      *
-     * This API will delete all configurations added via @ref addQoSFilter and
-     * @ref createTrafficClass.
+     * This API deletes all configurations added via @ref addQoSFilter and @ref createTrafficClass.
      *
-     * On platforms with Access control enabled, Caller needs to have
-     * TELUX_DATA_QOS_OPS permission to invoke this API successfully.
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
+     * permission to successfully invoke this API.
      *
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
@@ -477,11 +565,9 @@ class IQoSManager {
     virtual telux::common::ErrorCode deleteAllQosConfigs() = 0;
 
     /**
-     * Register QoS Manager as a listener for QoS Service health events like QoS
-     * service available or QoS service not available.
+     * Registers a listener with the QoS Manager.
      *
-     * @param [in] listener    pointer of IQoSListener object that processes the
-     * notification
+     * @param [in] listener     Pointer to theIQoSListener object that processes the notification
      *
      * @returns Status of registerListener success or suitable status code
      *
@@ -491,8 +577,7 @@ class IQoSManager {
     /**
      * Removes a previously added listener.
      *
-     * @param [in] listener    pointer of IQoSListener object that needs to be
-     * removed
+     * @param [in] listener     Pointer to the IQoSListener object that needs to be removed
      *
      * @returns Status of deregisterListener success or suitable status code
      *

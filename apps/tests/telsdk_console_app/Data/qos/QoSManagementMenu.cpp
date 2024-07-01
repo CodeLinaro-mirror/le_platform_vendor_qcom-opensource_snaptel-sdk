@@ -46,20 +46,23 @@ bool QoSManagementMenu::init() {
         std::shared_ptr<ConsoleAppCommand> addQoSFilter
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "create_QoS_filter", {},
                 std::bind(&QoSManagementMenu::addQoSFilter, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getQosFilter
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "get_QoS_filter", {},
+                std::bind(&QoSManagementMenu::getQosFilter, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getQosFilters
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "get_QoS_filters", {},
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "get_QoS_filters", {},
                 std::bind(&QoSManagementMenu::getQosFilters, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> deleteQosFilter
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "delete_QoS_filter", {},
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "delete_QoS_filter", {},
                 std::bind(&QoSManagementMenu::deleteQosFilter, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> deleteAllQosConfigs
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "delete_all_QoS_config",
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "delete_all_QoS_config",
                 {},
                 std::bind(&QoSManagementMenu::deleteAllQosConfigs, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
             = {createTrafficClass, getAllTrafficClasses, deleteTrafficClass, addQoSFilter,
-                getQosFilters, deleteQosFilter, deleteAllQosConfigs};
+                getQosFilter, getQosFilters, deleteQosFilter, deleteAllQosConfigs};
 
         addCommands(commandsList);
     }
@@ -120,12 +123,12 @@ void QoSManagementMenu::addQoSFilter(std::vector<std::string> &inputCommand) {
     // traffic filter
     qosFilterConfig.trafficFilter = getTrafficFilter();
 
-    uint32_t policyHandle;
+    telux::data::net::QoSFilterHandle filterHandle;
     telux::data::net::QoSFilterErrorCode qosFilterErrorCode;
     telux::common::ErrorCode errorCode
-        = qosManager_->addQoSFilter(qosFilterConfig, policyHandle, qosFilterErrorCode);
+        = qosManager_->addQoSFilter(qosFilterConfig, filterHandle, qosFilterErrorCode);
     if (errorCode == telux::common::ErrorCode::SUCCESS)
-        std::cout << " Add QoS filter is successful. Handle of the QoS filter = " << policyHandle
+        std::cout << " Add QoS filter is successful. Handle of the QoS filter = " << filterHandle
                   << std::endl;
     else {
         std::cout << " Add QoS filter is failed. ErrorCode: " << static_cast<int>(errorCode)
@@ -134,18 +137,36 @@ void QoSManagementMenu::addQoSFilter(std::vector<std::string> &inputCommand) {
     }
 }
 
+void QoSManagementMenu::getQosFilter(std::vector<std::string> &inputCommand) {
+    std::cout << "request QoS filter" << std::endl;
+    uint32_t handle;
+    std::cout << "Enter QoS filter handle: ";
+    std::cin >> handle;
+    Utils::validateInput(handle);
+
+    std::shared_ptr<telux::data::net::IQoSFilter> qosFilterInfo;
+    telux::common::ErrorCode errorCode = qosManager_->getQosFilter(handle, qosFilterInfo);
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << " Request QoS filter is successful." << std::endl;
+        std::cout << qosFilterInfo->toString() << std::endl;
+    } else {
+        std::cout << " Get QoS filter has failed. ErrorCode: " << static_cast<int>(errorCode)
+                  << ", description: " << Utils::getErrorCodeAsString(errorCode) << std::endl;
+    }
+}
+
 void QoSManagementMenu::getQosFilters(std::vector<std::string> &inputCommand) {
-    std::cout << "request QoS policies" << std::endl;
+    std::cout << "request QoS filters" << std::endl;
     std::vector<std::shared_ptr<telux::data::net::IQoSFilter>> qosFilterInfo;
     telux::common::ErrorCode errorCode = qosManager_->getQosFilters(qosFilterInfo);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        std::cout << " Request QoS policies is successful. Count " << qosFilterInfo.size()
+        std::cout << " Request QoS filters is successful. Count " << qosFilterInfo.size()
                   << std::endl;
         for (size_t i = 0; i < qosFilterInfo.size(); ++i) {
             std::cout << qosFilterInfo[i]->toString() << std::endl;
         }
     } else {
-        std::cout << " Get QoS filter has failed. ErrorCode: " << static_cast<int>(errorCode)
+        std::cout << " Get QoS filters has failed. ErrorCode: " << static_cast<int>(errorCode)
                   << ", description: " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
@@ -207,12 +228,18 @@ void QoSManagementMenu::createTrafficClass(std::vector<std::string> &inputComman
 
     // data path
     telux::data::net::DataPath dataPath;
-    std::cout << "\nConfigure data path: "
-              << "\n\n0 - Hardware-accelerated data path between a tethered "
-                 "client and the WAN "
-              << "\n1 - Software data path goes via apps\n";
+    std::cout <<
+        "\nConfigure data path: "
+        "\n0 - TETHERED_TO_WAN_HW: Traffic classes with data path TETHERED_TO_WAN_HW can be"
+        " associated with traffic filters with data path TETHERED_TO_WAN_HW and APPS_TO_WAN\n"
+        "\n1 - TETHERED_TO_APPS_SW: Traffic classes with data path TETHERED_TO_APPS_SW can be"
+        " associated with traffic filters with data path TETHERED_TO_APPS_SW and APPS_TO_WAN\n"
+        "\n2 - APPS_TO_WAN: Traffic classes with data path APPS_TO_WAN can be associated with"
+        " traffic filters with data path APPS_TO_WAN"
+        "\n    Traffic classes created with APPS_TO_WAN can only be associated with UPLINK data"
+        " path\n";
     std::cin >> input;
-    Utils::validateInput(input, {0, 1});
+    Utils::validateInput(input, {0, 1, 2});
     dataPath = static_cast<telux::data::net::DataPath>(input);
     tcConfigBuilder.setDataPath(dataPath);
 
@@ -342,6 +369,20 @@ std::shared_ptr<telux::data::ITrafficFilter> QoSManagementMenu::getTrafficFilter
         direction = telux::data::Direction::DOWNLINK;
     }
     tfBuilder.setDirection(direction);
+
+    // data path
+    telux::data::net::DataPath dataPath;
+    std::cout <<
+        "\nConfigure data path: "
+        "\n0 - Data flow between clients tethered to the NAD over Eth and the WAN interface using"
+        " HW acceleration (Eth <=> IPA <=> Modem <=> WAN)"
+        "\n1 - Data flows between clients tethered to the NAD over Eth and software running on the"
+        " apps processor using a software path (Eth <=> Apps Processor)"
+        "\n2 - Data flow between the apps processor and WAN (Apps Processor <=> WAN)\n";
+    std::cin >> input;
+    Utils::validateInput(input, {0, 1, 2});
+    dataPath = static_cast<telux::data::net::DataPath>(input);
+    tfBuilder.setDataPath(dataPath);
 
     // pcp
     std::cout << "Do you want to enter PCP info: [0 - Skip, 1 - Yes]: ";

@@ -60,7 +60,7 @@ static void print_help(void)
 int main(int argc, char **argv)
 {
     int c;
-    FILE *fpi;
+    FILE *fpi = NULL;
     size_t buf_len = MAX_BUF_LEN;
     int pkt_type = PKT_TYPE_UNKNOWN;
     msg_contents mc;
@@ -108,6 +108,8 @@ int main(int argc, char **argv)
     if (pkt_type == PKT_TYPE_BSM) {
         decode_as_j2735(&mc);
     }
-
+    if (NULL != fpi) {
+        fclose(fpi);
+    }
     return 0;
 }

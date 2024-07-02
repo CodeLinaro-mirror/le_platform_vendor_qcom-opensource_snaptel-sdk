@@ -26,6 +26,43 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+ /*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file GeoNetRouterImpl.hpp
  * @brief implementation of GeoNetwork router, header.
@@ -60,28 +97,40 @@ namespace gn {
 class Qelement {
 public:
     Qelement() {}
-    Qelement(uint8_t *p, size_t BufLen, txcb_t txcb) : Buffer(p),
-        BufLen(BufLen),
+    Qelement(uint8_t *p, size_t BufLen, txcb_t txcb) : BufLen(BufLen),
         txcb_(txcb),
         To(0),
         Counter(0) {
+        Buffer = new uint8_t[BufLen];
+        if (Buffer && p) {
+            memcpy(Buffer, p, BufLen);
+        }
         Ts = gn::GeoNetUtils::GetTimestampSinceEpoch();
     }
-    Qelement(uint8_t *p, size_t BufLen, txcb_t txcb, int to) : Buffer(p),
-        BufLen(BufLen),
+    Qelement(uint8_t *p, size_t BufLen, txcb_t txcb, int to) : BufLen(BufLen),
         txcb_(txcb),
         To(to),
         Counter(0) {
+        Buffer = new uint8_t[BufLen];
+        if (Buffer && p) {
+            memcpy(Buffer, p, BufLen);
+        }
         Ts = gn::GeoNetUtils::GetTimestampSinceEpoch();
     }
-    ~Qelement() { }
+    ~Qelement() {
+        if (Buffer) {
+            delete[] Buffer;
+            Buffer = nullptr;
+        }
+    }
+
     int To;
     int Counter;
     int Ts;
     std::mutex EMutex;
     std::condition_variable Ecv;
     std::promise<int> AsyncResult;
-    uint8_t *Buffer;
+    uint8_t* Buffer = nullptr;
     size_t BufLen;
 
     txcb_t txcb_;
@@ -160,7 +209,6 @@ private:
     void FlushQueue(int Qid, const uint8_t *Addr = nullptr, bool Purge = false);
     void Enqueue(int Qid, const uint8_t *Buffer, size_t BufLen, txcb_t txcb,
             const uint8_t *Addr = nullptr);
-    void CBFEnqueue(const uint8_t *Buffer, size_t BufLen, int To);
     void LocationServiceSync(const uint8_t *Addr);
     void LocationServiceStart(const uint8_t *Addr);
     void CBFTimerTask(void);

@@ -2475,8 +2475,8 @@ void ApplicationBase::writeVerifLogging() {
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats;
-    if (auto itr = thrVerifLatencies.find(std::this_thread::get_id());
-            itr != thrVerifLatencies.end()){
+    auto itr = thrVerifLatencies.find(std::this_thread::get_id());
+    if (itr != thrVerifLatencies.end()){
         stats = itr->second;
     }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
@@ -2522,8 +2522,8 @@ void ApplicationBase::writeResultsLogging() {
     file.open(configuration.verifResLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<ResultLoggingStats> stats;
-    if (auto itr = thrResLoggingValues.find(std::this_thread::get_id());
-            itr != thrResLoggingValues.end()){
+    auto itr = thrResLoggingValues.find(std::this_thread::get_id());
+    if (itr != thrResLoggingValues.end()){
         stats = itr->second;
     }
     std::sort(stats.begin(), stats.end(), compareByVHz);

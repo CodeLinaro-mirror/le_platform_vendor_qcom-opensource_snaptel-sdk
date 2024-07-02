@@ -117,6 +117,13 @@
 #define PP_BUFFER_MAX_SIZE 4096
 #define SHARED_BUFFER_MAX_SIZE 1024
 
+#define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
+                       "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
+                       "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
+                       "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
+                       "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
+                       "TotalRVs,DistanceFromRV"
+
 using telux::cv2x::Priority;
 using namespace std;
 using namespace telux::cv2x::prop;
@@ -177,6 +184,7 @@ struct Config{
     bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
+    bool preRecordedMinLog = false;
     bool enableTxAlways = true;
     uint16_t ldmGbTime = 3;
     uint8_t ldmGbTimeThreshold= 5;

@@ -86,7 +86,6 @@ thread_local int rxFail = 0;
 thread_local int txFail = 0;
 thread_local int decFail = 0;
 thread_local int encFail = 0;
-thread_local int rxSuccess = 0;
 thread_local int txSuccess = 0;
 thread_local int signFail = 0;
 thread_local int signSuccess = 0;
@@ -105,8 +104,9 @@ static std::mutex AsyncMtx;
 static std::condition_variable* writeMutexCvSae;
 static int shared_index = 0;
 static int start_index = 0;
-static int asyncVerifFail = 0;
-static int asyncVerifSuccess = 0;
+static std::atomic<int> rxSuccess{0};
+static std::atomic<int> asyncVerifFail{0};
+static std::atomic<int> asyncVerifSuccess{0};
 static int asyncCallbackVerifSuccess = 0;
 static int asyncCallbackVerifFail = 0;
 static int prevVerifSuccess = 0;
@@ -224,10 +224,6 @@ SaeApplication::~SaeApplication() {
     printf("Total number of transmitted packets: %d\n",totalTxSuccess);
     printf("Total number of received packets: %d\n",totalRxSuccess);
     exit_ = true;
-    if(configuration.enableAsync){
-        exitAsync = true;
-        sem_post(&verificationSem);
-    }
     {
         if(enableCsvLog_ && writeMutexCvSae && writeLogFinishSae){
             std::unique_lock<std::mutex> csvLk(csvMutex);
@@ -282,16 +278,21 @@ std::string SAEgetCurrentTimestamp()
 void SaeApplication::printRxStats() {
     if(configuration.enableAsync)
     {
+        exitAsync = true;
+        sem_post(&verificationSem);
+
+        for (auto &th : asyncThreads) th.join();
+
         std::stringstream ss;
         ss << std::this_thread::get_id();
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
         printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
-        printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
+        printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
-            printf("Thread (%08x) verif fails is: %d\n", tid, asyncVerifFail);
-            printf("Thread (%08x) verif success is: %d\n", tid, asyncVerifSuccess);
+            printf("Thread (%08x) verif fails is: %d\n", tid, asyncVerifFail.load());
+            printf("Thread (%08x) verif success is: %d\n", tid, asyncVerifSuccess.load());
         }
         totalRxSuccess=rxSuccess;
     }
@@ -302,7 +303,7 @@ void SaeApplication::printRxStats() {
         ss << std::this_thread::get_id();
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
-        printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
+        printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
         printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
@@ -813,6 +814,7 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
     std::unique_lock<std::mutex> lock(AsyncMtx);
     asyncCbData_t* cb_data = (asyncCbData_t*) userData;
     if(cb_data == nullptr){
+        printf("cb_data is a null pointer\n");
         return;
     }
     if(returnCode != WS_SUCCESS){
@@ -871,7 +873,7 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
         asyncVerifFail > (prevVerifFail + ASYNC_BATCH_SIZE)){
         if(secVerbosity > 4)
             fprintf(stdout, "VerifSuccess: %d; VerifFail: %d\n",
-                     asyncVerifSuccess, asyncVerifFail);
+                    asyncVerifSuccess.load(), asyncVerifFail.load());
         prevVerifFail = asyncVerifFail;
     }
     // batch stats reporting (per 2500 successful verifications)
@@ -909,7 +911,7 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
             else{
                 // logging for batch verif stats
                 fprintf(stdout, "ThreadID: 0x%08x; ", tid);
-                fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", asyncVerifSuccess);
+                fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", asyncVerifSuccess.load());
                 fprintf(stdout, "BatchVerifRate: %fk VHz; ", rate);
                 fprintf(stdout, "BatchTimeStep: %fms;\n", dur);
                 fprintf(stdout, "MinBatchTime: %fms; ", minBatchTime);
@@ -946,11 +948,8 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
         congCtrlInitialized = true;
     }
     thread::id thrId = std::this_thread::get_id();
-    while(not exitAsync){
+    while(not (exitAsync && (rxSuccess == (asyncVerifFail + asyncVerifSuccess)))){
         sem_wait(&verificationSem);
-        if(exitAsync){
-            return;
-        }
         int i = 0 ;
         for(i = start_index; PostProcessingCbData[i]!=0;++i)
         {
@@ -1064,7 +1063,6 @@ void SaeApplication::PostProcessingThread()
         overridePsidCheck, enableCongCtrl,
         congestionControlManager, qMonPtr, secVerbosity,
         radioReceivePtr));
-    for (auto& th : asyncThreads) th.detach();
 }
 
 #ifdef AEROLINK

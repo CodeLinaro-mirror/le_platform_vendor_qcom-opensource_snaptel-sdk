@@ -124,12 +124,12 @@ sem_t bufferClearedSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
-static QUtils* utility;
 static ResultLoggingStats* asyncLogStat ;
 static bool resFileLogging = false;
 
-SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
-    ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
+SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType,
+    bool enableCsvLog, bool enableDiagLog):
+    ApplicationBase(fileConfiguration, msgType, enableCsvLog, enableDiagLog) {
     if (not configuration.isValid) {
         return;
     }
@@ -177,8 +177,9 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bo
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType, bool enableCsvLog) :
-        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration, enableCsvLog) {
+        char* fileConfiguration, MessageType msgType, bool enableCsvLog, bool enableDiagLog) :
+        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration,
+            enableCsvLog, enableDiagLog) {
     if (not configuration.isValid) {
         return;
     }
@@ -746,6 +747,17 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                         writelog_data.distFromRV, 0, txInterval,
                         configuration.enableCongCtrl, congCtrlInitialized,
                         writeMutexCvSae);
+                if (enableDiagLog_) {
+                    DiagLogData logData = {0};
+                    logData.validPkt = (ret >= 0) ? true : false;
+                    logData.currTime = timestamp;
+                    logData.cbr = cbr;
+                    logData.monotonicTime = monotonicTime;
+                    logData.txInterval = txInterval;
+                    logData.enableCongCtrl = configuration.enableCongCtrl;
+                    logData.monotonicTime = congCtrlInitialized;
+                    diagLogPktTxRx(false, TransmitType::SPS, &logData, &writelog_data.bs);
+                }
             }
         }
     }
@@ -1018,7 +1030,18 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
                         asyncCbData[PostProcessingCbData[i]].RVsInRange,
                         asyncCbData[PostProcessingCbData[i]].txInterval,
                         enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
-
+                    if (enableDiagLog_) {
+                        DiagLogData logData = {0};
+                        logData.validPkt = asyncCbData[PostProcessingCbData[i]].verifSuccess;
+                        logData.currTime = asyncCbData[PostProcessingCbData[i]].timestamp;
+                        logData.cbr = cbr;
+                        logData.monotonicTime = monotonicTime;
+                        logData.txInterval = asyncCbData[PostProcessingCbData[i]].txInterval;
+                        logData.enableCongCtrl = enableCongCtrl;
+                        logData.monotonicTime = congCtrlInitialized;
+                        diagLogPktTxRx(false, TransmitType::SPS, &logData,
+                            &(asyncCbData[PostProcessingCbData[i]].asyncBs));
+                    }
                 }
             }
         }
@@ -1060,7 +1083,7 @@ void SaeApplication::postprocessing_cleanup()
 // thread function to PostProcessingThread
 void SaeApplication::PostProcessingThread()
 {
-    asyncThreads.push_back(std::thread(AsyncPostProcessing,
+    asyncThreads.push_back(std::thread(&SaeApplication::AsyncPostProcessing, this,
         overridePsidCheck, enableCongCtrl,
         congestionControlManager, qMonPtr, secVerbosity,
         radioReceivePtr));
@@ -1817,12 +1840,14 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
     // for synchronization between Application and Aerolink sides
     // Using the HW TME Random number Generator as the TRNG Source
-    auto app = static_cast<QUtils*>(utility);
-    rng_ret = app->hwTRNGInt(randNumMsgCount);
+    if (!utility_) {
+        utility_ = std::make_shared<QUtils>();
+    }
+    rng_ret = utility_->hwTRNGInt(randNumMsgCount);
     if(rng_ret){
         printf("Failure in Randon Number Generation for Message Count \n");
     }
-    rng_ret = app->hwTRNGInt(randNumMsgId);
+    rng_ret = utility_->hwTRNGInt(randNumMsgId);
     if(rng_ret){
         printf("Failure in Randon Number Generation for Message Id \n");
     }

@@ -224,7 +224,7 @@ uint32_t RadioReceive::receive(const char* buf, int len,
     msgL2SrcAdrr = ntohl(from.sin6_addr.s6_addr32[3]);
 
     if(bytesReceived > 0){
-        if (enableCsvLog_) {
+        if (enableCsvLog_ || enableDiagLogPacket_) {
             clock_gettime(CLOCK_MONOTONIC, &ts);
             lastRxMonotonicTime_ = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
         }

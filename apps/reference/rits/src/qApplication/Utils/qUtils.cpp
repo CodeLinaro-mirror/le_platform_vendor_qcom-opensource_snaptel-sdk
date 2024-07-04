@@ -46,6 +46,16 @@
 #include <telux/sec/RandomNumberManager.hpp>
 #include <telux/sec/SecurityFactory.hpp>
 
+void QUtils::initDiagLog()
+{
+    v2x_diag_log_init();
+}
+
+void QUtils::deInitDiagLog()
+{
+    v2x_diag_log_deinit();
+}
+
 int QUtils::hwTRNGInt(uint32_t& randomNumber)
 {
     telux::common::ErrorCode ec;
@@ -93,4 +103,11 @@ int QUtils::hwTRNGChar(uint8_t *randomNumber)
     }
     memcpy(randomNumber,generatedData.data(),sizeof(generatedData.data()));
     return 0;
+}
+
+void QUtils::fillVersion(uint32_t *version)
+{
+    if (version != NULL) {
+        *version = V2X_QITS_LOG_VERSION;
+    }
 }

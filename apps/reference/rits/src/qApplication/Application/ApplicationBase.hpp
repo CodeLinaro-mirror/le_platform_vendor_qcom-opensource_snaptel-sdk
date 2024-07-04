@@ -99,6 +99,7 @@
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
 #include "qMonitor.hpp"
+#include "qUtils.hpp"
 #include <telux/sec/CryptoAcceleratorManager.hpp>
 #include <telux/sec/SecurityFactory.hpp>
 #include <telux/sec/CAControlManager.hpp>
@@ -186,7 +187,7 @@ typedef struct {
     VerifStats* asyncVerifStat;
 } asyncCbData_t;
 
-struct Config{
+struct Config {
     int procPriority = DEFAULT_PROCESS_PRIORITY;
     bool isValid = false;
     int codecVerbosity = 0;
@@ -343,6 +344,16 @@ struct Config{
     double overrideSpeed = 0.0;
 };
 
+struct DiagLogData {
+    bool validPkt;
+    uint64_t currTime;
+    uint8_t cbr;
+    uint64_t monotonicTime;
+    uint64_t txInterval;
+    bool enableCongCtrl;
+    bool congCtrlInitialized;
+};
+
 /* Congestion Control CongestionControl Data */
 struct CongCtrlConfig {
     /*
@@ -486,7 +497,8 @@ public:
     * @param fileConfiguration a char* that contains the file path of the
     * @param msgType application message type .
     */
-    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * Constructs Application with all the specifications of a
@@ -499,8 +511,9 @@ public:
     * @param rxPort a const uint16_t that contains the receive port.
     * @param fileConfiguration a char* that contains the file path of the
     */
-    ApplicationBase(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false);
+    ApplicationBase(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * send  send V2X message.
@@ -719,6 +732,7 @@ public:
     bsm_data* bs, double distFromRV, uint32_t RVsInRange,
     uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
     std::condition_variable* writeMutexCv);
+    void diagLogPktGenericInfo();
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
@@ -733,6 +747,7 @@ protected:
     float locPositionDop_ = 0.0;
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
+    bool enableDiagLog_ = false;
     // congestionControl cong ctrl
     static CongestionControlData congestionControlOut;
     CongestionControlCalculations qitsCongControlCalculations;
@@ -744,6 +759,7 @@ protected:
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
     std::condition_variable writeMutexCv;
+    std::shared_ptr<QUtils> utility_ = nullptr;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -794,6 +810,10 @@ protected:
 
     static FILE *csvfp;
     static std::mutex csvMutex;
+    static v2x_diag_qits_general_data generalInfo;
+    static unsigned short getEventsData(const vehicleeventflags_ut *events);
+    static void fillEventsData(v2x_diag_event_bit_t *eventBit, const vehicleeventflags_ut *events);
+    void diagLogPktTxRx(bool isTx, TransmitType txType, const DiagLogData *logData, const bsm_data *bs);
 private:
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;

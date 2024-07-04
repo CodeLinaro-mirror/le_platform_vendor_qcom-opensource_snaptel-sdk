@@ -78,10 +78,11 @@
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false);
-    SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
+    SaeApplication(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, MessageType msgType,
+        bool enableCsvLog = false, bool enableDiagLog = false);
     ~SaeApplication();
 
     /**
@@ -124,11 +125,11 @@ public:
     int clearGlobalIPv6Prefix(void);
     static std::vector<asyncCbData_t> asyncCbData;
     static bool exitAsync;
-    static void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
+    void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
         shared_ptr<ICongestionControlManager> congestionControlManager, QMonitor* qMon,
         int secVerbosity, RadioReceive* radioReceive);
     static void postprocessing_cleanup();
-    static void PostProcessingThread();
+    void PostProcessingThread();
 private:
     uint32_t fakeTmpId = 0;
     bool exit_ = false;

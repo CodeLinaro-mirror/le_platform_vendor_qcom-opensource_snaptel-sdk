@@ -27,6 +27,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef _J2735_H_
 #define _J2735_H_
 
@@ -556,10 +563,26 @@ typedef union {
     uint16_t word;
 } brakeStatus_ut;
 
+/* this enum is for bit shift to unused bit in vehicleeventflags_ut */
+typedef enum {
+    SHIFT_HAZARDLIGHTS = 0,
+    SHIFT_STOPLINEVIOLATION = 1,
+    SHIFT_ABSACTIVATED = 2,
+    SHIFT_TRACTIONCONTROLLOSS = 3,
+    SHIFT_STABILITYCONTROLACTIVATED = 4,
+    SHIFT_HAZARDOUSMATERIALS = 5,
+    SHIFT_RESERVED = 6,
+    SHIFT_HARDBRAKING = 7,
+    SHIFT_LIGHTSCHANGED = 8,
+    SHIFT_WIPERSCHANGED = 9,
+    SHIFT_FLATTIRE = 10,
+    SHIFT_DISABLEDVEHICLE = 11,
+    SHIFT_AIRBAGDEPLOYMENT = 12
+}event_bits_shift_et;
+
 /* this typedef match the J2735 2016 version, or whatever you are working with */
 typedef union {
     struct {
-
         unsigned eventAirBagDeployment : 1;       // (12)
         unsigned eventDisabledVehicle  : 1;       // (11), -- The DisabledVehicle DF may also be sent
         unsigned eventFlatTire         : 1;       // (10),

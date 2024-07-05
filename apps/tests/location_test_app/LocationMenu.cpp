@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -128,6 +128,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setNmeaInfoFlag(false);
       posListener->setDetailedEngineLocReportFlag(false);
       posListener->setMeasurementsInfoFlag(false);
+      posListener->setEphemerisInfoFlag(false);
       posListener->setLocSystemInfoFlag(false);
 
       //Registering listener for fixes
@@ -351,7 +352,8 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
           GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
-                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
+                       "5 - Ephemeris)\n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -363,7 +365,7 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 4) {
+              if(option >= 0 && option <= 5) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -449,7 +451,8 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
-                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+                       " (0- Location\n 1- SV\n 2- NMEA\n 3- DATA\n 4- Measurement\n "
+                       "5- Ephemeris)\n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -461,7 +464,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 4) {
+              if(option >= 0 && option <= 5) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -1482,7 +1485,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  5 - Detailed_Engine_location_notifications" << std::endl;
      std::cout << "  6 - Nmea_info_notifications" << std::endl;
      std::cout << "  7 - Measurements_info_notifications" << std::endl;
-     std::cout << "  8 - Location_system_information " << std::endl << std::endl << std::endl;
+     std::cout << "  8 - Location_system_information " << std::endl;
+     std::cout << "  9 - Ephemeris_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -1508,6 +1512,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableMeasurementsInfoLogs();
      } else if(usrInput == "8") {
          LocationMenu::enableLocationSystemInfoLogs();
+     } else if(usrInput == "9") {
+         LocationMenu::enableEphemerisInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -1563,6 +1569,15 @@ void LocationMenu::enableMeasurementsInfoLogs() {
   } else {
     std::cout << "ERROR: invalid input, please enter 0 or 1\n";
   }
+}
+
+void LocationMenu::enableEphemerisInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setEphemerisInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
 }
 
 void LocationMenu::enableLocationSystemInfoLogs() {

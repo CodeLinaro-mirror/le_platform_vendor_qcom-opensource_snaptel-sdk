@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef LOCATIONMENU_HPP
 #define LOCATIONMENU_HPP
@@ -100,6 +105,7 @@ public:
    void enableDataInfoLogs();
    void enableNmeaInfoLogs();
    void enableMeasurementsInfoLogs();
+   void enableEphemerisInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);

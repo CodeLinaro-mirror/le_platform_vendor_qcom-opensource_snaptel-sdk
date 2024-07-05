@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       LocationListener.hpp
@@ -137,6 +142,21 @@ public:
  *              and could break backwards compatibility.
  */
   virtual void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) {}
+
+/**
+ * This function is called when there is an update in the ephemeris information for a constellation.
+ *
+ * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::EPHEMERIS bit
+ * in the reportMask passed as a paramter to @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] ephemerisInfo - GNSS ephemeris information for a constellation.
+ *
+ */
+  virtual void onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo){}
 
 
 /**

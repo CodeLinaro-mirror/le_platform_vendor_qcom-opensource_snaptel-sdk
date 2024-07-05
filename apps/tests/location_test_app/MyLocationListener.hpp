@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -88,6 +88,8 @@ public:
 
    void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) override;
 
+   void onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) override;
+
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
    void setDetailedLocationReportFlag(bool enable);
@@ -97,6 +99,7 @@ public:
    void setDataInfoFlag(bool enable);
    void setNmeaInfoFlag(bool enable);
    void setMeasurementsInfoFlag(bool enable);
+   void setEphemerisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
 
    ~MyLocationListener() {
@@ -107,6 +110,7 @@ private:
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isMeasurementsInfoFlagEnabled_ = false;
+   bool isEphemerisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
@@ -138,6 +142,10 @@ private:
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
    void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
+   void printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData);
+   void printEphSrc(telux::loc::GnssEphSource ephSrc);
+   void printEphAct(telux::loc::GnssEphAction ephAct);
+   void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

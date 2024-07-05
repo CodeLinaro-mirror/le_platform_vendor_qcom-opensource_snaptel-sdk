@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       LocationManager.hpp
@@ -152,8 +157,9 @@ public:
  * then all the clients will be benefited with interval which is smallest among all the intervals.
  * Calling this Api will result in @ref ILocationListener::onDetailedLocationUpdate,
  * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
- * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
- * on the listener being invoked, assuming they have not been disabled using the
+ * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onGnssMeasurementsInfo and
+ * @ref ILocationListener::onGnssEphemerisInfo APIs on the listener being invoked,
+ * assuming they have not been disabled using the
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *
@@ -190,8 +196,9 @@ public:
  * all the intervals.
  * Calling this Api will result in @ref ILocationListener::onDetailedEngineLocationUpdate,
  * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
- * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
- * on the listener being invoked, assuming they have not been disabled using the
+ * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onGnssMeasurementsInfo and
+ * @ref ILocationListener::onGnssEphemerisInfo APIs on the listener being invoked,
+ * assuming they have not been disabled using the
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *

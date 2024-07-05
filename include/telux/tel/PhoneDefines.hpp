@@ -85,6 +85,18 @@ enum class CallState {
 };
 
 /**
+ * Defines call type
+ */
+enum class CallType {
+   UNKNOWN = -1,       /**< Unknown; information is not available */
+   VOICE_CALL,         /**< Normal voice call or TPS eCall */
+   VOICE_IP_CALL,      /**< Normal Voice over IP (VoIP) call or TPS eCall over IP */
+   EMERGENCY_CALL,     /**< Non-automotive emergency call */
+   EMERGENCY_IP_CALL,  /**< Non-automotive emergency Voice over IP (VoIP) call */
+   ECALL               /**< Normal automotive eCall or NGeCall */
+};
+
+/**
  * Reason for the recently terminated call (either normally ended or failed)
  */
 enum class CallEndCause {

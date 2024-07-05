@@ -96,6 +96,7 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
    PRINT_NOTIFICATION << " Call State: " << getCallStateString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << (int)call->getCallDirection()
+                      << ", Call Type: " << getCallTypeString(call->getCallType())
                       << ", Phone Number: " << call->getRemotePartyNumber()
                       << ", Slot Id: " << call->getPhoneId()
                       << ", RTT mode of the call: " << getRttModeString(call->getRttMode())
@@ -185,6 +186,23 @@ std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
          return std::string("Call ended");
       default:
          std::cout << "Unexpected CallState = " << (int)cs << std::endl;
+         return std::string("unknown");
+   }
+}
+
+std::string MyCallListener::getCallTypeString(telux::tel::CallType type) {
+   switch(type) {
+      case telux::tel::CallType::VOICE_CALL:
+         return std::string("Voice call");
+      case telux::tel::CallType::VOICE_IP_CALL:
+         return std::string("Voice IP call");
+      case telux::tel::CallType::EMERGENCY_CALL:
+         return std::string("Emergency call");
+      case telux::tel::CallType::EMERGENCY_IP_CALL:
+         return std::string("Emergency IP call");
+      case telux::tel::CallType::ECALL:
+         return std::string("Automotive emergency call");
+      default:
          return std::string("unknown");
    }
 }

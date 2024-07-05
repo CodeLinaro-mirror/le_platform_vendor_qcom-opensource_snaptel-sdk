@@ -79,6 +79,7 @@ struct CallInfo {
    RttMode mode = RttMode::DISABLED;
    RttMode localRttCapability = RttMode::DISABLED;
    RttMode peerRttCapability  = RttMode::DISABLED;
+   CallType callType  = CallType::UNKNOWN;
 };
 
 
@@ -220,6 +221,7 @@ private:
         callInfo.index = size + 1;
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
+        callInfo.callType = CallType::VOICE_CALL;
         callInfo.isMultiPartyCall = true;
         CallApi makeCallApiType = static_cast<CallApi>(request->api());
         if((makeCallApiType == CallApi::makeECallWithMsd) ||

@@ -688,7 +688,8 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", isTpseCallOverIms = ", static_cast<bool>(call->isTpseCallOverIms),
         ", rttMode = ", static_cast<int>(call->mode),
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
-        ", peerRttCapability = ", static_cast<int>(call->peerRttCapability));
+        ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
+        ", callType = ", static_cast<int>(call->callType));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -1894,10 +1895,12 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo>
         result->set_is_mpty(it->isMpty);
         LOG(DEBUG, __FUNCTION__," Rtt mode: ", static_cast<int>(it->mode),
             " Local capability: ", static_cast<int>(it->localRttCapability),
-            " Peer capability: ", static_cast<int>(it->peerRttCapability));
+            " Peer capability: ", static_cast<int>(it->peerRttCapability),
+            " Call type: ", static_cast<int>(it->callType));
         result->set_mode(static_cast<telStub::RttMode>(it->mode));
         result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
         result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
+        result->set_call_type(static_cast<telStub::CallType>(it->callType));
     }
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);

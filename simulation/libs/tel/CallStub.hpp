@@ -73,6 +73,7 @@ struct CallInfo {
    RttMode mode = RttMode::DISABLED;                // RTT mode of the call
    RttMode localRttCapability = RttMode::DISABLED;  // RTT capability of local device
    RttMode peerRttCapability  = RttMode::DISABLED;  // RTT capability of peer device
+   CallType callType          = CallType::UNKNOWN;
 };
 
 class CallStub : public ICall {
@@ -106,6 +107,7 @@ public:
     RttMode getRttMode();
     RttMode getLocalRttCapability();
     RttMode getPeerRttCapability();
+    CallType getCallType();
     telux::common::Status modify(RttMode mode,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     telux::common::Status respondToModifyRequest(bool modifyResponseType,

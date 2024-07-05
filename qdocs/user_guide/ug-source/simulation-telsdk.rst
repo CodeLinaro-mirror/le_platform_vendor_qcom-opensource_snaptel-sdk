@@ -500,6 +500,9 @@ Details of parameters that can be configured in the Simulation framework.
 
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
+Retrieve eCall MSD payload or encoded optional additional data content
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+To simulate retrieval of eCall MSD payload or optional additional data content, msdsettings.txt is copied to the application(ecall_app) launching path in "out/bin/". To modify MSD information, goto "out/bin/" and edit msdsettings.txt file.
 
 Telephony data handling
 """"""""""""""""""""""""

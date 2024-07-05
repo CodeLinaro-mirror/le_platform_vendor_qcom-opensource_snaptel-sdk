@@ -44,7 +44,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-
+#include <string>
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 

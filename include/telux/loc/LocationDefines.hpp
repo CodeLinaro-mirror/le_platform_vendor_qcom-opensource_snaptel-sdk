@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -741,7 +741,11 @@ enum LocationInfoExValidityType {
   /** valid protect level vertical*/
   HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
   /** valid dgnssStationId */
-  HAS_DGNSS_STATION_ID = (1ULL<<39)
+  HAS_DGNSS_STATION_ID = (1ULL<<39),
+  /** valid baseline length */
+  HAS_BASE_LINE_LENGTH = (1ULL<<40),
+  /** valid age of correction */
+  HAS_AGE_OF_CORRECTION = (1ULL<<41)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1951,6 +1955,17 @@ public:
  *  - Other values reserved.
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;
+
+ /** Distance between the basestation and the receiver.
+  *  Units: meter.
+ */
+  virtual double getBaselineLength() = 0;
+
+ /** Difference in time between the fix timestamp using the correction
+  * and the time of the correction data.
+  * Units: milliseconds.
+ */
+  virtual uint64_t getAgeOfCorrections() = 0;
 
 };
 

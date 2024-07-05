@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -230,6 +230,12 @@ void MyLocationListener::printLocationExValidity(
     }
     if((validityMask & telux::loc::HAS_DGNSS_STATION_ID)) {
       std::cout << "valid dgnss station id" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_BASE_LINE_LENGTH)) {
+      std::cout << "valid base station distance" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_AGE_OF_CORRECTION)) {
+      std::cout << "valid age of correction" << std::endl;
     }
 
 }
@@ -1125,6 +1131,10 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
    printDgnssStationIds(locationInfo->getDgnssStationIds());
+   std::cout << "Baseline length : " <<
+       locationInfo->getBaselineLength() << std::endl;
+   std::cout << "Age of corrections : " <<
+       locationInfo->getAgeOfCorrections() << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1142,6 +1152,9 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
     std::cout << std::endl;
     for (auto locationInfo : locationEngineInfo) {
       std::cout << "For Engine[ " << ++engReportCount << " ]" << std::endl;
+      printLocationValidity(locationInfo->getLocationInfoValidity());
+      printLocationExValidity(locationInfo->getLocationInfoExValidity());
+      printLocationTech(locationInfo->getTechMask());
       if(locationInfo->getTimeStamp() != telux::loc::UNKNOWN_TIMESTAMP) {
         time_t realtime;
         realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
@@ -1244,6 +1257,10 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
      printDgnssStationIds(locationInfo->getDgnssStationIds());
+     std::cout << "Baseline length : " <<
+         locationInfo->getBaselineLength() << std::endl;
+     std::cout << "Age of corrections : " <<
+         locationInfo->getAgeOfCorrections() << std::endl;
      std::cout << "*************************************************************" << std::endl;
     }
 }

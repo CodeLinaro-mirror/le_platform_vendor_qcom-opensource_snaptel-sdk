@@ -429,24 +429,27 @@ telux::common::Status LocationManagerStub::registerForSystemInfoUpdates(
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> listenerLock(listenerMutex_);
     auto spt = listener.lock();
+    bool existing = 0;
     if (spt != nullptr) {
-        bool existing = 0;
         for (auto iter=systemInfoListener_.begin(); iter<systemInfoListener_.end();++iter) {
             if (spt == (*iter).lock()) {
                 existing = 1;
                 LOG(DEBUG, __FUNCTION__, " System Info Listener : Existing");
-                return telux::common::Status::ALREADY;
+                break;
             }
         }
         if (existing == 0) {
             systemInfoListener_.emplace_back(listener);
             LOG(DEBUG, __FUNCTION__, " Registering SystemInfo Listener");
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Invalid parameter, listener is null");
+        return telux::common::Status::FAILED;
     }
     telux::common::Status status = telux::common::Status::SUCCESS;
     telux::common::ErrorCode errorCode = telux::common::ErrorCode::SUCCESS;
     int cbDelay =DEFAULT_CALLBACK_DELAY;
-    if(systemInfoListener_.size() == 1) {
+    if(existing == 0 && systemInfoListener_.size() == 1) {
         const ::google::protobuf::Empty request;
         ::locStub::LocManagerCommandReply response;
         ClientContext context;

@@ -60,7 +60,9 @@ telux::common::Status CallStub::answer(
         ClientContext context;
         request.set_phone_id(phoneId_);
         request.set_call_index(callInfo_.index);
-        LOG(DEBUG, "Answer(), phoneId ", phoneId_, "CallIndex", callInfo_.index);
+        request.set_mode(static_cast<telStub::RttMode>(mode));
+        LOG(DEBUG, "Answer(), phoneId ", phoneId_, " callIndex", callInfo_.index, " rtt mode ",
+        static_cast<int>(mode));
         grpc::Status reqstatus = stub_->Answer(&context, request, &response);
         if (!reqstatus.ok()) {
             return telux::common::Status::FAILED;
@@ -403,7 +405,10 @@ bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
     return ((callInfo_.index != ci->getCallIndex()) ||
             (callInfo_.callDirection != ci->getCallDirection())
             || (callInfo_.remotePartyNumber != ci->getRemotePartyNumber())
-            || (callInfo_.callState != ci->getCallState()));
+            || (callInfo_.callState != ci->getCallState())
+            || (callInfo_.mode != ci->getRttMode())
+            || (callInfo_.localRttCapability != ci->getLocalRttCapability())
+            || (callInfo_.peerRttCapability != ci->getPeerRttCapability()));
 }
 
 /*
@@ -416,11 +421,14 @@ void CallStub::logCallDetails() {
         " Call Info: remotePartyNumber = ", callInfo_.remotePartyNumber,
         ", callIndex = ", callInfo_.index,
         ", callDirection = ", static_cast<int>(callInfo_.callDirection),
-        ", callState = ", static_cast<int>(callInfo_.callState));
+        ", callState = ", static_cast<int>(callInfo_.callState),
+        ", rttMode = ", static_cast<int>(callInfo_.mode),
+        ", localRttCapability = ", static_cast<int>(callInfo_.localRttCapability),
+        ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability));
 }
 
 /**
- * Update call details from RIL
+ * Update call details obtained from server
  */
 telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callInfo) {
     LOG(DEBUG, "Current call details");
@@ -429,6 +437,9 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.callDirection = callInfo->getCallDirection();
     callInfo_.remotePartyNumber = callInfo->getRemotePartyNumber();
     callInfo_.callState = callInfo->getCallState();
+    callInfo_.mode = callInfo->getRttMode();
+    callInfo_.localRttCapability = callInfo->getLocalRttCapability();
+    callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -443,24 +454,81 @@ void CallStub::setCallState(CallState callState) {
 }
 
 RttMode CallStub::getRttMode() {
-    return RttMode::DISABLED;
+    LOG(DEBUG, __FUNCTION__, " Rtt mode is ", static_cast<int>(callInfo_.mode));
+    return callInfo_.mode;
 }
 
 RttMode CallStub::getLocalRttCapability() {
-    return RttMode::DISABLED;
+    LOG(DEBUG, __FUNCTION__, " Local rtt capability is ",
+        static_cast<int>(callInfo_.localRttCapability));
+    return callInfo_.localRttCapability;
 }
 
 RttMode CallStub::getPeerRttCapability() {
-    return RttMode::DISABLED;
-
+    LOG(DEBUG, __FUNCTION__, " Peer rtt capability is ",
+        static_cast<int>(callInfo_.peerRttCapability));
+    return callInfo_.peerRttCapability;
 }
 
 telux::common::Status CallStub::modify(RttMode mode,
     std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__, " RTT mode is : ", static_cast<int>(mode));
+    if (mode == RttMode::UNKNOWN) {
+        return telux::common::Status::INVALIDPARAM;
+    }
+    telux::common::Status status = modifyOrRespondToModifyCall(mode, "modify", callback);
+    return status;
 }
 
-telux::common::Status  CallStub::respondToModifyRequest(bool modifyResponseType,
+telux::common::Status CallStub::respondToModifyRequest(bool modifyResponseType,
     std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    RttMode rttMode = RttMode::DISABLED;
+    LOG(DEBUG, __FUNCTION__, " Current rtt mode is : ", static_cast<int>(callInfo_.mode));
+    if ((callInfo_.mode == RttMode::DISABLED) || (callInfo_.mode == RttMode::FULL)) {
+        if (modifyResponseType == true) {
+            // Accept, check the current RTT mode and send the request upgrade to RTT call or
+            // downgrade to voice call accordingly.
+            if (callInfo_.mode == RttMode::DISABLED) {
+                rttMode = RttMode::FULL;
+            } else {
+                rttMode = RttMode::DISABLED;
+            }
+        } else {
+            // Reject, retain the same RTT mode
+            rttMode = callInfo_.mode;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, " Modified rtt mode is : ", static_cast<int>(rttMode));
+    telux::common::Status status = modifyOrRespondToModifyCall(rttMode, "respondToModifyRequest",
+        callback);
+    return status;
+}
+
+telux::common::Status CallStub::modifyOrRespondToModifyCall(RttMode mode, std::string api,
+    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    ::telStub::ModifyOrRespondToModifyCallRequest request;
+    ::telStub::ModifyOrRespondToModifyCallReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.set_call_index(callInfo_.index);
+    request.set_rtt_mode(static_cast<telStub::RttMode>(mode));
+    request.set_api_type(api);
+    LOG(DEBUG, __FUNCTION__," phoneId ", phoneId_, " callIndex ", callInfo_.index);
+    grpc::Status reqstatus = stub_->ModifyOrRespondToModifyCall(&context, request, &response);
+    if (!reqstatus.ok()) {
+        return telux::common::Status::FAILED;
+    }
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    int delay = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async,
+            [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
+        taskQ_->add(f1);
+    }
+    return status;
 }

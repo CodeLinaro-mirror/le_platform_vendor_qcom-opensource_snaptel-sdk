@@ -122,6 +122,9 @@
      rpc Hold(HoldRequest) returns (HoldReply) {}
      rpc RequestNetworkDeregistration(RequestNetworkDeregistrationRequest) returns
          (RequestNetworkDeregistrationReply) {}
+     rpc ModifyOrRespondToModifyCall(ModifyOrRespondToModifyCallRequest) returns
+         (ModifyOrRespondToModifyCallReply) {}
+     rpc SendRtt(SendRttRequest) returns (SendRttReply) {}
  }
 
  service ImsServingSystem {
@@ -227,11 +230,6 @@ message GetCardStateRequest {
      int32 phone_id = 1;
  }
 
- message HangupCallEvent {
-     int32 phone_id = 1;
-     int32 call_index = 2;
- }
-
  message CallStateChangeEvent {
     repeated Call calls = 1;
 }
@@ -283,6 +281,16 @@ message GetCardStateRequest {
      string mcc = 5;
      string mnc = 6;
  }
+
+message ModifyCallRequestEvent {
+    int32 phone_id = 1;
+    int32 call_index = 2;
+}
+
+message RttMessageEvent {
+    int32 phone_id = 1;
+    string message = 2;
+}
 
  enum AppType {
      APPTYPE_UNKNOWN = 0;
@@ -1028,6 +1036,12 @@ message GetCardStateRequest {
    EXPIRED = 3;                 /**< eCall Timer is expired */
  }
 
+ enum RttMode {
+   RTT_MODE_DISABLED = 0;       /**< RTT mode is not enabled */
+   RTT_MODE_FULL = 1;           /**< RTT call being used by both the parties*/
+   RTT_MODE_UNKNOWN = -1;       /**< RTT mode data is unknown */
+};
+
  message ECallInfoEvent {
     int32 phone_id = 1;
     HlapTimerEvent action = 2;
@@ -1043,6 +1057,9 @@ message GetCardStateRequest {
      int32 phone_id = 6;
      bool is_multi_party_call = 7;
      bool is_mpty = 8;
+     RttMode mode = 9;
+     RttMode local_rtt_capability = 10;
+     RttMode peer_rtt_capability = 11;
  }
 
  message MakeECallRequest {
@@ -1067,6 +1084,31 @@ message HangupRequest {
  }
 
 message HangupReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+message ModifyOrRespondToModifyCallRequest {
+   int32 call_index = 1;
+   int32 phone_id = 2;
+   RttMode rtt_mode = 3;
+   string api_type = 4;
+ }
+
+message ModifyOrRespondToModifyCallReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+message SendRttRequest {
+   int32 phone_id = 1;
+ }
+
+message SendRttReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
@@ -1292,6 +1334,8 @@ message UpdateECallMsdResponse {
  message AnswerRequest {
      int32 call_index = 1;
      int32 phone_id = 2;
+     RttMode mode = 3;
+
  }
 
  message AnswerReply {

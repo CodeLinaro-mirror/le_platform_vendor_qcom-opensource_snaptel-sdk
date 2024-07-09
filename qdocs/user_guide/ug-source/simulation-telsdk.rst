@@ -28,11 +28,11 @@ Users can run the Simulation framework within a docker as well if desired.
 .. _telsdk-simulation-arch :
 .. figure:: ../../images/telsdk_simulation_overview.png
   :width: 500
-  
+
   TelSDK Simulation Architecture
 
 
----------------------------------------  
+---------------------------------------
 Components of the simulation framework
 ---------------------------------------
 
@@ -115,7 +115,7 @@ The above script would setup different environment variables like ``PATH, LD_LIB
 
   $ cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=<DESTINATION_FOLDER_ROOT_PATH>/include -DCMAKE_INSTALL_PREFIX=<DESTINATION_FOLDER_ROOT_PATH> <APPS_CMAKE_PATH> && make install
 
-    
+
 Run apps with docker
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,7 +124,7 @@ To run applications within the docker container:
 1. Install docker
 
   .. code-block::
-  
+
     $ sudo apt update
     $ sudo apt install apt-transport-https ca-certificates curl software-properties-common
     $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -133,39 +133,39 @@ To run applications within the docker container:
     $ sudo apt install docker-ce
 
   Once the installation is complete, we recommend that users do the following to add a docker affiliation group for the current user. This will make it easier to develop and avoid typing the "sudo" prefix every time.
-  
+
   .. code-block::
-  
+
     $ sudo usermod -aG docker ${USER}
 
 2. Build docker image
 
   .. code-block::
-  
+
     $ cd telux/
     $ ./build_sim.sh docker-image <DESTINATION_FOLDER_ROOT_PATH>
 
 3. Run docker container
 
   .. code-block::
-  
+
     $ docker run -ti --rm -h telsdk_simulation -v telsdk_volume:/data/telux telsdk-sim-image
 
 4. User application can be started or if users wish to run one of the SDK's sample app or test app within the docker, then
 
   .. code-block::
-  
+
     $ <APP_NAME>
 
   **Note:**
-  
+
   1. The docker image built will have user application binaries installed to the docker container ``/usr/bin/`` path.
   2. When the docker container is started, it automatically starts the simulation server in the background.
   3. The path ``/data/telux/`` holds all TelSDK simulation related data.
   4. We are making use of the docker volume, to make this folder ``/data/telux`` persistent across multiple boots of the docker.
   5. To reset the persistent data, delete the docker volume.
 
-  
+
 Run apps without docker
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -190,7 +190,7 @@ To run applications without the docker container:
     $ <APP_NAME>
 
   **Note:**
-  
+
   1. In the host machine, application binaries are installed to the ``<DESTINATION_FOLDER_ROOT_PATH>/bin/``
   2. The path ``<DESTINATION_FOLDER_ROOT_PATH>/data/telux/`` holds all TelSDK simulation related data.
   3. The path ``<DESTINATION_FOLDER_ROOT_PATH>/etc/telux/tel.conf`` holds TelSDK simulation configuration data.
@@ -213,12 +213,12 @@ For example: IDataConnectionManager.json present in ``/data/telux/json/api/``
 |  JSON attribute  |  Description                          |
 +==================+=======================================+
 |  IsSubsystem     |  Specifies the subsystem readiness.   |
-|  Ready           |                                       |  
+|  Ready           |                                       |
 +------------------+---------------------------------------+
 |  IsSubsystem     |  Specifies time the simulation        |
 |  ReadyDelay      |  framework should take to indicate    |
-|                  |  subsystem readiness)                 | 
-|                  |                                       | 
+|                  |  subsystem readiness)                 |
+|                  |                                       |
 +------------------+---------------------------------------+
 
 
@@ -238,20 +238,20 @@ The table shows the JSON attributes to modify the behavior of the API in simulat
 +------------------+------------------------------------------------+
 |  status          |  Specifies the immediate synchronous           |
 |                  |  response that application would receive when  |
-|                  |  the TelSDK API is invoked. It is usually the  | 
-|                  |  return status of the API invoked.             | 
+|                  |  the TelSDK API is invoked. It is usually the  |
+|                  |  return status of the API invoked.             |
 |                  |                                                |
 +------------------+------------------------------------------------+
 |  callbackDelay   |  Specifies the time that simulation libraries  |
 |                  |  shall take before invoking the callback       |
-|                  |  function and -1 could be configured to avoid  | 
+|                  |  function and -1 could be configured to avoid  |
 |                  |  callback invocation. This would be given      |
 |                  |  preference over DefaultCallbackDelay          |
-|                  |                                                | 
+|                  |                                                |
 +------------------+------------------------------------------------+
 |  error           |  Specifies ErrorCode that will be sent along   |
 |                  |  with the user provided callback function.     |
-|                  |                                                | 
+|                  |                                                |
 +------------------+------------------------------------------------+
 
 The JSON for API behavior could be updated dynamically by making use of the json_update script.
@@ -267,7 +267,7 @@ For example: Considering the below API entry in JSON
   },
 
 .. code-block::
- 
+
  $ json_update /api/data/IDataConnectionManager.json IDataConnectionManager getDefaultProfile callbackDelay 300
 
 Above would update callbackDelay to 300.
@@ -311,7 +311,7 @@ TelSDK simulation framework supports logging. User configurable logger settings 
 
 +------------------+-----------------------------------------------------------------+
 |  LOGGER_LEVEL    |  Supported log levels are:                                      |
-|                  |                                                                 | 
+|                  |                                                                 |
 |                  |  NONE -- No logging.                                            |
 |                  |                                                                 |
 |                  |  PERF -- Prints messages with nanoseconds precision timestamp.  |
@@ -375,16 +375,16 @@ sub-system that are part of the telux::tel namespace of the Telematics SDK.
 .. _fig-tel-sim-overview:
 .. figure:: ../../images/simulation_telephony_overview.png
   :width: 500
-  
+
   Telephony Simulation Framework
 
 
 APIs supported by the Simulation framework
 """""""""""""""""""""""""""""""""""""""""""
 
-| -SMS: ISmsManager,ISmsListener, ISmscAddressCallback, SmsMessage 
+| -SMS: ISmsManager,ISmsListener, ISmscAddressCallback, SmsMessage
 | -Card: ICardApp, ICardFileHandler, ICardManager, ICardListener, ICard
-| -Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription 
+| -Subscription: ISubscriptionManager, ISubscriptionListener, ISubscription
 | -Phone: IPhoneManager, IPhone
 | -Call: ICallManager, ICallListener, ICall
 | -ServingSystem: IServingSystemManager, IServingSystemListener
@@ -485,7 +485,7 @@ Details of parameters that can be configured in the Simulation framework.
 
 
  -T6FAILED: This configuration would lead to expiry of T6 timer. The simulation framework depicts that AL-ACK message is not recieved by IVS-NAD so it shall mark the transfer of the MSD as unsuccessful and terminate eCall specific behaviour.
-  
+
    When it is configured, T6 timer's timeout is set to 5 sec as per EN 16062:2015.
 
 
@@ -551,7 +551,7 @@ User input for filepaths provided using APIs present under telux::tel::ICardFile
   |  File Id 3456 , File Id 5666 | | File Id 1234 , No of records 3   |
   |                              | | File Id 5678 , No of records 1   |
   +------------------------------+------------------------------------+
-  
+
 
 **Note:** Data stored in every record of Linear fixed EF file should be of same length.
 
@@ -609,7 +609,7 @@ Segment-2 of multipart message:
       "requestStorageDetailsCb_maxCount" : 10
   }
 
-  
+
 Update subscription information
 ''''''''''''''''''''''''''''''''
 
@@ -743,6 +743,42 @@ To simulate ICallManager event - telux::tel::ICallListener::OnMsdUpdateRequest
 .. code-block::
 
  telsdk_event_injector -f tel_call -e msdUpdateRequest 1
+
+Trigger an modification request to change the call from a normal voice call to a real time text (RTT) call
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+To simulate ICallManager event - telux::tel::ICallListener::onModifyCallRequest
+
+Command: ``telsdk_event_injector -f tel_call -e modifyCallRequest <slotId> <callId>``
+
+**Parameters of event injector command:**
+
+- slotId: valid slotIds are 1 & 2 only
+- callId: valid call index on which upgrade request was triggered by remote party
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_call -e modifyCallRequest 1 1
+
+Trigger an event to send RTT message from a remote party.
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+To simulate ICallManager event - telux::tel::ICallListener::onRttMessage
+
+Command: ``telsdk_event_injector -f tel_call -e rttMessageRequest <slotId> <message>``
+
+**Parameters of event injector command:**
+
+- slotId: valid slotIds are 1 & 2 only
+- message: valid string (text message) received from remote device.
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_call -e rttMessageRequest 1 GoodDay
 
 Update RAT preference and service domain preference
 ''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -926,7 +962,7 @@ Applications using ILocationManager APIs will get reports from this recorded dat
 .. _fig-loc-sim-overview:
 .. figure:: ../../images/simulation_location_overview.png
   :width: 500
-  
+
   Location Simulation Framework
 
 
@@ -1023,7 +1059,7 @@ If the replay configuration is not selected, the location reports are stopped.
 1. The prerecorded/captured CSV file is present by default under - ``${ROOTFS}/data/telux/csv/PRE-RECORDED_LOCATION_DATA.csv``.
 
 2. Clients can configure the retrieval of reports via tel.conf by modifying the following fields:
-  
+
   **sim.loc.location_report_file_name**
 
   Clients are requested to refer to the documentation of these fields under tel.conf for further usage.
@@ -1215,12 +1251,12 @@ Audio simulation supports configurability for ALSA devices and amixer control de
 |                                  |  the soundcard's behaviour. The main use is to control     |
 |                                  |                                                            |
 |                                  |  the mixer. To list all the soundcards, use below          |
-|                                  |                                                            |  
+|                                  |                                                            |
 |                                  |  commands:                                                 |
 |                                  |                                                            |
 |                                  |  1. aplay -l                                               |
 |                                  |                                                            |
-|                                  |  2. arecord -l                                             |      
+|                                  |  2. arecord -l                                             |
 |                                  |                                                            |
 |                                  |  Example: SND_CARD_CTL_DEVICE = h3                         |
 +----------------------------------+------------------------------------------------------------+

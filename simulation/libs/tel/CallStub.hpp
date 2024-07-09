@@ -70,6 +70,9 @@ struct CallInfo {
    CallEndCause callEndCause = CallEndCause::NORMAL;
    bool isMultiPartyCall = false;
    bool isMpty = false;
+   RttMode mode = RttMode::DISABLED;                // RTT mode of the call
+   RttMode localRttCapability = RttMode::DISABLED;  // RTT capability of local device
+   RttMode peerRttCapability  = RttMode::DISABLED;  // RTT capability of peer device
 };
 
 class CallStub : public ICall {
@@ -129,6 +132,8 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     void invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
         ErrorCode error, int cbDelay);
+    telux::common::Status modifyOrRespondToModifyCall(RttMode mode, std::string api,
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback);
 };
 
 } // end of namespace tel

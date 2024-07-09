@@ -128,6 +128,13 @@ telux::common::Status CallManagerStub::removeListener(std::shared_ptr<ICallListe
 
 telux::common::Status CallManagerStub::makeCall(int phoneId, const std::string &dialNumber,
     std::shared_ptr<IMakeCallCallback> callback) {
+    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
+    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeVoiceCall);
+    return status;
+}
+
+telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &dialNumber,
+    std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi) {
     LOG(DEBUG, " CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -140,7 +147,7 @@ telux::common::Status CallManagerStub::makeCall(int phoneId, const std::string &
     }
 
     ::telStub::MakeCallRequest request =
-        createRequest<::telStub::MakeCallRequest>(phoneId, dialNumber, false, makeVoiceCall);
+        createRequest<::telStub::MakeCallRequest>(phoneId, dialNumber, false, inputApi);
     ::telStub::MakeCallReply response;
     ClientContext context;
 
@@ -319,41 +326,52 @@ void CallManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::CallStateChangeEvent callevent;
         event.UnpackTo(&callevent);
         handleCallInfoChanged(callevent);
-    } else if(event.Is<::telStub::HangupCallEvent>()) {
-        ::telStub::HangupCallEvent callevent;
+    } else if(event.Is<::telStub::ModifyCallRequestEvent>()) {
+        ::telStub::ModifyCallRequestEvent callevent;
         event.UnpackTo(&callevent);
-        handleHangup(callevent);
+        handleModifyCallRequest(callevent);
+    } else if(event.Is<::telStub::RttMessageEvent>()) {
+        ::telStub::RttMessageEvent callevent;
+        event.UnpackTo(&callevent);
+        handleRttMessage(callevent);
     } else {
         LOG(DEBUG, __FUNCTION__, "No handling required for other events");
     }
 }
 
-void CallManagerStub::handleHangup(::telStub::HangupCallEvent event) {
+void CallManagerStub::handleRttMessage(::telStub::RttMessageEvent event) {
     int phoneId = event.phone_id();
-    int callIndex = event.call_index();
-    LOG(DEBUG, __FUNCTION__, " PhoneId is: ", phoneId, " and callIndex is: ", callIndex);
-    // Clear local cache for the call
-    findAndRemoveMatchingCall(phoneId, callIndex);
+    std::string message = event.message();
+    std::vector<std::weak_ptr<ICallListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onRttMessage(phoneId, message);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
 }
 
-void CallManagerStub::findAndRemoveMatchingCall(int phoneId, int index) {
-    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId , " Call Index ", index);
-    std::vector<std::shared_ptr<CallStub>>::iterator iter;
-    std::lock_guard<std::mutex> lock(callManagerMutex_);
-
-    iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallStub> call) {
-        if((call->getPhoneId() == phoneId ) && (call->getCallIndex() == index)) {
-            return true;
-        } else {
-            return false;
+void CallManagerStub::handleModifyCallRequest(::telStub::ModifyCallRequestEvent event) {
+    int phoneId = event.phone_id();
+    int callIndex = event.call_index();
+    std::vector<std::weak_ptr<ICallListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                // RttMode is hardcoded to FULL because modem invokes notification only during
+                // upgrade of the call.
+                sp->onModifyCallRequest(RttMode::FULL, callIndex, phoneId);
+            }
         }
-    });
-
-    if (iter != std::end(calls_)) {
-        LOG(DEBUG, __FUNCTION__, " found matched call");
-        calls_.erase(iter);
     } else {
-        LOG(DEBUG, __FUNCTION__, " call not found ");
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 
@@ -402,6 +420,15 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMultiPartyCall is ", callInfo.isMultiPartyCall);
         callInfo.isMpty = event.calls(i).is_mpty();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMpty is ", callInfo.isMpty);
+        callInfo.mode = static_cast<telux::tel::RttMode>(event.calls(i).mode());
+        callInfo.localRttCapability =
+            static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
+        callInfo.peerRttCapability =
+            static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
+        LOG(DEBUG, __FUNCTION__,
+            " Rtt mode: ", static_cast<int>(callInfo.mode),
+            " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
+            " Peer Rtt capability:", static_cast<int>(callInfo.peerRttCapability));
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         {
             calls.emplace_back(Info);
@@ -1497,10 +1524,39 @@ telux::common::ErrorCode CallManagerStub::encodeECallMsd(telux::tel::ECallMsdDat
 
 telux::common::Status CallManagerStub::makeRttCall(int phoneId, const std::string &dialNumber,
     std::shared_ptr<IMakeCallCallback> callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
+    telux::common::Status status = dialCall(phoneId, dialNumber, callback,
+        makeRttVoiceCall);
+    return status;
 }
 
 telux::common::Status CallManagerStub::sendRtt(int phoneId, std::string message,
     common::ResponseCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SendRttRequest request;
+    ::telStub::SendRttReply response;
+    ClientContext context;
+    // Text message obtained from the user is not sent to server as there is no need to store
+    // or manipulate messages at server.
+    request.set_phone_id(phoneId);
+    telux::common::Status status = telux::common::Status::FAILED;
+    grpc::Status reqstatus = stub_->SendRtt(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
 }

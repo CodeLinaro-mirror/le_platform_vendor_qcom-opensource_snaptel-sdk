@@ -46,22 +46,25 @@
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
- enum TelEventType {
+enum TelEventType {
     UNKNOWN,
     SMS_MEMORY_FULL,
     SMS_INCOMING
 };
 
-#define makeECallWithMsd 0
-#define makeTpsECallOverCSWithMsd 1
-#define makeTpsECallOverIMS 2
-#define makeECallWithRawMsd 3
-#define makeTpsECallOverCSWithRawMsd 4
-#define makeECallWithoutMsd 5
-#define makeTpsECallOverCSWithoutMsd 6
-#define updateEcallMsd 7
-#define updateECallRawMsd 8
-#define makeVoiceCall 9
+enum CallApi {
+    makeECallWithMsd = 0,
+    makeTpsECallOverCSWithMsd = 1,
+    makeTpsECallOverIMS = 2,
+    makeECallWithRawMsd = 3,
+    makeTpsECallOverCSWithRawMsd = 4,
+    makeECallWithoutMsd = 5,
+    makeTpsECallOverCSWithoutMsd = 6,
+    updateEcallMsd = 7,
+    updateECallRawMsd = 8,
+    makeVoiceCall = 9,
+    makeRttVoiceCall = 10
+};
 
 class Helper  {
 public:

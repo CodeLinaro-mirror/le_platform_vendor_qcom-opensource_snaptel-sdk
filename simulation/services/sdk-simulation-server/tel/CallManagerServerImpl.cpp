@@ -41,6 +41,8 @@
 #define MSD_UPDATE_EVENT "msdUpdateRequest"
 #define HANGUP_CALL_EVENT "hangupCall"
 #define INCOMING_CALL_EVENT "incomingCall"
+#define MODIFY_CALL_REQUEST "modifyCallRequest"
+#define RTT_MESSAGE_REQUEST "rttMessageRequest"
 
 #define REST_TIMERS_ON_CALL_SETUP 2
 #define JSON_PATH1 "system-state/tel/ICallManagerStateSlot1.json"
@@ -176,11 +178,17 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
     int phoneId = request->phone_id();
-
+    CallApi makecallApiType = static_cast<CallApi>(request->api());
+    std::string apiInput = "";
+    if(makecallApiType == CallApi::makeRttVoiceCall) {
+        apiInput = "makeRttCall";
+    } else {
+        apiInput = "makeCall";
+    }
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
-        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, "makeCall", status,
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status,
             error, cbDelay );
 
         if(cbDelay == -1) {
@@ -234,6 +242,7 @@ grpc::Status CallManagerServerImpl::Answer(ServerContext* context,
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
     int phoneId = request->phone_id();
+    RttMode mode = static_cast<telux::tel::RttMode>(request->mode());
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
@@ -250,6 +259,9 @@ grpc::Status CallManagerServerImpl::Answer(ServerContext* context,
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
             if(info->callState == CallState::CALL_INCOMING) {
+                // Update RTT mode and peer capability of the call based on user input.
+                info->mode = mode;
+                info->peerRttCapability = mode;
                 changeCallState(info->phoneId ,"CALL_ACTIVE", info->remotePartyNumber);
             } else if(info->callState == CallState::CALL_WAITING){
                 changeCallStateofActiveCalls(*info);
@@ -288,21 +300,21 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
     bool isCallback = true;
     int cbDelay;
     int phoneId = request->phone_id();
-    int makeEcallApiType = static_cast<int>(request->api());
+    CallApi makeEcallApiType = static_cast<CallApi>(request->api());
     std::string input = "";
-    if(makeEcallApiType == makeECallWithMsd) {
+    if(makeEcallApiType == CallApi::makeECallWithMsd) {
         input = "makeECallWithMsd";
-    } else if(makeEcallApiType == makeTpsECallOverCSWithMsd) {
+    } else if(makeEcallApiType == CallApi::makeTpsECallOverCSWithMsd) {
         input = "makeTpsECallOverCSWithMsd";
-    } else if(makeEcallApiType == makeTpsECallOverIMS) {
+    } else if(makeEcallApiType == CallApi::makeTpsECallOverIMS) {
         input = "makeTpsECallOverIMS";
-    } else if(makeEcallApiType == makeECallWithRawMsd) {
+    } else if(makeEcallApiType == CallApi::makeECallWithRawMsd) {
         input = "makeECallWithRawMsd";
-    } else if(makeEcallApiType == makeTpsECallOverCSWithRawMsd) {
+    } else if(makeEcallApiType == CallApi::makeTpsECallOverCSWithRawMsd) {
         input = "makeTpsECallOverCSWithRawMsd";
-    } else if(makeEcallApiType == makeECallWithoutMsd) {
+    } else if(makeEcallApiType == CallApi::makeECallWithoutMsd) {
         input = "makeECallWithoutMsd";
-    } else if(makeEcallApiType == makeTpsECallOverCSWithoutMsd) {
+    } else if(makeEcallApiType == CallApi::makeTpsECallOverCSWithoutMsd) {
         input = "makeTpsECallOverCSWithoutMsd";
     } else {
         input = "makeECallWithMsd";
@@ -673,7 +685,10 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", isRegulatoryeCall = ", static_cast<bool>(call->isRegulatoryeCall),
         ", isMsdTransmitted = ", static_cast<bool>(call->callState),
         ", isMpty = ", static_cast<bool>(call->isMpty),
-        ", isTpseCallOverIms = ", static_cast<bool>(call->isTpseCallOverIms));
+        ", isTpseCallOverIms = ", static_cast<bool>(call->isTpseCallOverIms),
+        ", rttMode = ", static_cast<int>(call->mode),
+        ", localRttCapability = ", static_cast<int>(call->localRttCapability),
+        ", peerRttCapability = ", static_cast<int>(call->peerRttCapability));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -1054,6 +1069,10 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
     } else {
         try {
             phoneId = std::stoi(token);
+            if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+                LOG(ERROR, " Invalid input for slot id");
+                return;
+            }
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
             return;
@@ -1088,7 +1107,7 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
             //Clear call cache in server
            std::shared_ptr<CallInfo> call =
             findCallAndUpdateCallState
-                (getRemotePartyNumber(phoneId), CallState::CALL_ENDED);
+                (getRemotePartyNumber(phoneId), CallState::CALL_ENDED, phoneId);
         } else {
             changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
         }
@@ -1188,6 +1207,56 @@ grpc::Status CallManagerServerImpl::UpdateECallMsd(ServerContext* context,
     return readStatus;
 }
 
+grpc::Status CallManagerServerImpl::ModifyOrRespondToModifyCall(ServerContext* context,
+    const telStub::ModifyOrRespondToModifyCallRequest* request,
+    telStub::ModifyOrRespondToModifyCallReply* response) {
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    bool isCallback = true;
+    int cbDelay;
+    int phoneId = request->phone_id();
+    int callIndex = request->call_index();
+    RttMode rttMode  = static_cast<telux::tel::RttMode>(request->rtt_mode());
+    grpc::Status readStatus = readJson();
+    std::string inputApi = request->api_type();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, inputApi, status,
+            error, cbDelay );
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
+        if(info != nullptr) {
+            if(inputApi == "modify") {
+                // Update rtt mode of the call based on user input. Rtt mode input validation is
+                // not performed to check the current RTT mode of the call. Hence, if user sets
+                // same rtt mode as current rtt mode of the call, response callback will not report
+                // error.
+                // API is expected to be called when call state is ACTIVE.
+                info->mode = rttMode;
+                changeRttModeOfCall(info->mode, info->remotePartyNumber, info->phoneId);
+            } else {
+                if(rttMode == info->mode) {
+                    // User requested RTT mode is same as current rtt mode of the call then
+                    // there is no change in call attributes.
+                } else {
+                    // Update the RTT mode of the call and trigger event to clients
+                    info->mode = rttMode;
+                    changeRttModeOfCall(info->mode, info->remotePartyNumber, info->phoneId);
+                }
+            }
+            response->set_status(static_cast<commonStub::Status>(status));
+            response->set_iscallback(isCallback);
+            response->set_error(static_cast<commonStub::ErrorCode>(error));
+            response->set_delay(cbDelay);
+        }
+    }
+    return readStatus;
+}
+
 grpc::Status CallManagerServerImpl::RequestNetworkDeregistration(ServerContext* context,
     const telStub::RequestNetworkDeregistrationRequest* request,
     telStub::RequestNetworkDeregistrationReply* response) {
@@ -1234,8 +1303,34 @@ grpc::Status CallManagerServerImpl::RequestNetworkDeregistration(ServerContext* 
     return readStatus;
 }
 
+grpc::Status CallManagerServerImpl::SendRtt(ServerContext* context,
+    const telStub::SendRttRequest* request, telStub::SendRttReply* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    bool isCallback = true;
+    std::string input = "sendRtt";
+    int phoneId = request->phone_id();
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, input, status,
+            error, cbDelay );
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_delay(cbDelay);
+    }
+    return readStatus;
+}
+
 void CallManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
-    if (message.filter() == "tel_call") {
+    if (message.filter() == TEL_CALL_FILTER) {
         onEventUpdate(message.event());
     }
 }
@@ -1248,9 +1343,13 @@ void CallManagerServerImpl::onEventUpdate(std::string event) {
         handleMsdUpdateRequest(event);
     } else if(HANGUP_CALL_EVENT == token) {
          handleHangupRequest(event);
-    } else if("incomingCall" == token) {
+    } else if(INCOMING_CALL_EVENT == token) {
         handleIncomingCallRequest(event);
-    } else {
+    } else if(MODIFY_CALL_REQUEST == token) {
+        handleModifyCallRequest(event);
+    } else if(RTT_MESSAGE_REQUEST == token) {
+        handleRttMessageRequest(event);
+    }else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
 }
@@ -1261,7 +1360,7 @@ void CallManagerServerImpl::triggerMsdPullrequestEvent(int phoneId) {
     ::eventService::EventResponse anyResponse;
 
     msdPullRequestEvent.set_phone_id(phoneId);
-    anyResponse.set_filter("tel_call");
+    anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(msdPullRequestEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
@@ -1274,9 +1373,141 @@ void CallManagerServerImpl::triggerMsdPullrequestEvent(int phoneId) {
     }
 }
 
+void CallManagerServerImpl::triggerModifyCallRequestEvent(int phoneId, int callIndex) {
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::ModifyCallRequestEvent modifyCallRequestEvent;
+    ::eventService::EventResponse anyResponse;
+
+    modifyCallRequestEvent.set_phone_id(phoneId);
+    modifyCallRequestEvent.set_call_index(callIndex);
+    anyResponse.set_filter(TEL_CALL_FILTER);
+    anyResponse.mutable_any()->PackFrom(modifyCallRequestEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+}
+
+void CallManagerServerImpl::handleModifyCallRequest(std::string eventParams) {
+    int phoneId;
+    int callIndex;
+    // Fetch phoneId
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The slot id is not passed! Assuming default slot id");
+        phoneId = 1;
+    } else {
+        try {
+            phoneId = std::stoi(token);
+            if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+                LOG(ERROR, " Invalid input for slot id");
+                return;
+            }
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            return;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
+    // Fetch callId
+    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(ERROR, __FUNCTION__, "CallId not passed");
+        return;
+    } else {
+        try {
+            callIndex = std::stoi(token);
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            return;
+        }
+    }
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+    std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
+    // Trigger event only if call state is ACTIVE and current call is a voice call.
+    if(info != nullptr) {
+        if((info->callState == CallState::CALL_ACTIVE) && (info->mode != RttMode::FULL)) {
+            auto f = std::async(std::launch::async, [this, phoneId, callIndex]() {
+                this->triggerModifyCallRequestEvent(phoneId, callIndex);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+}
+
+void CallManagerServerImpl::triggerRttMessageEvent(int phoneId, std::string message) {
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::RttMessageEvent event;
+    ::eventService::EventResponse anyResponse;
+
+    event.set_phone_id(phoneId);
+    event.set_message(message);
+    anyResponse.set_filter(TEL_CALL_FILTER);
+    anyResponse.mutable_any()->PackFrom(event);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+}
+
+void CallManagerServerImpl::handleRttMessageRequest(std::string eventParams) {
+    int phoneId;
+    std::string message;
+    // Fetch phoneId
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "The slot id is not passed! assuming default slot Id");
+        phoneId = 1;
+    } else {
+        try {
+            phoneId = std::stoi(token);
+            if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+                LOG(ERROR, " Invalid input for slot id");
+                return;
+            }
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            return;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
+    // Fetch message
+    if(eventParams == "") {
+        LOG(ERROR, __FUNCTION__, "Message not passed");
+        return;
+    }
+    message = eventParams;
+    if(phoneId == SLOT_2) {
+        if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+    }
+    auto f = std::async(std::launch::async, [this, phoneId, message]() {
+        this->triggerRttMessageEvent(phoneId, message);
+    }).share();
+    taskQ_->add(f);
+}
+
 void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     int phoneId;
     std::string dialNumber;
+    RttMode mode;
     /* Fetch the slotId */
     std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if(token == "") {
@@ -1285,6 +1516,10 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     } else {
         try {
             phoneId = std::stoi(token);
+            if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+                LOG(ERROR, " Invalid input for slot id");
+                return;
+            }
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
@@ -1305,10 +1540,33 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     } else {
         dialNumber = token;
     }
-    LOG(DEBUG, __FUNCTION__, "The fetched dialNumber is: ", dialNumber);
+    LOG(DEBUG, __FUNCTION__, "The fetched dial number is: ", dialNumber);
+
+    /* Fetch the rttMode */
+    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, " rttMode input is not provided");
+        mode = RttMode::DISABLED;
+    } else {
+        mode = static_cast<RttMode>(std::stoi(token));
+        if (mode < RttMode::DISABLED || mode > RttMode::FULL) {
+            LOG(ERROR, " Invalid input for rtt mode");
+            return;
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, "The fetched rttMode is: ", static_cast<int>(mode));
+
     //Update call cache for new MT Voice call
     CallInfo callInfo;
     callInfo.phoneId = phoneId;
+    callInfo.mode = mode;
+    if(callInfo.mode == RttMode::FULL) {
+        // TODO: Capability of simulation framework depends on IMS Settings
+        // Currently, it is assumed to have full capability when incoming call is RTT.
+        callInfo.localRttCapability = RttMode::FULL;
+        // Since, remote end user makes the rtt call, peer capability is FULL.
+        callInfo.peerRttCapability = RttMode::FULL;
+    }
     callInfo.index = calls_.size() + 1;
     callInfo.callDirection = CallDirection::INCOMING;
     if(callInfo.index > 1) { //MO or MT call already exist then callState = WAITING
@@ -1349,6 +1607,10 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
     } else {
         try {
             phoneId = std::stoi(token);
+            if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+                LOG(ERROR, " Invalid input for slot id");
+                return;
+            }
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
             return;
@@ -1483,7 +1745,7 @@ void CallManagerServerImpl::startTimer(std::string timer) {
         || (timer == "T7Timer") || (timer == "T9Timer") || (timer == "T10Timer")) {
         startTimers(timer);
         auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
+            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else {
@@ -1494,7 +1756,7 @@ void CallManagerServerImpl::startTimer(std::string timer) {
 void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision ) {
     auto f = std::async(std::launch::async, [this, msdtransmision ]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(msdtransmision, HlapTimerEvent::UNCHANGED);
+            this->triggerECallInfoChangeEvent(msdtransmision, HlapTimerEvent::UNCHANGED);
         }).share();
     taskQ_->add(f);
 }
@@ -1536,7 +1798,7 @@ void CallManagerServerImpl::startTimers(std::string timer) {
                     updateEcallHlapTimer(timer[i], HlapTimerStatus::INACTIVE);
                     auto f = std::async(std::launch::async, [this, timer, i, status]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                        this->triggerCallInfoChangeEvent(timer[i],
+                        this->triggerECallInfoChangeEvent(timer[i],
                             HlapTimerEvent::STOPPED);
                     }).share();
                     taskQ_->add(f);
@@ -1564,7 +1826,7 @@ void CallManagerServerImpl::expiryTimer(std::string timer) {
     LOG(DEBUG, __FUNCTION__,"timer is ", timer);
     updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
     auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::EXPIRED);
+            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::EXPIRED);
     }).share();
     taskQ_->add(f);
 }
@@ -1576,14 +1838,14 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
         updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
         auto f = std::async(std::launch::async, [this, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
+            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else if (status == "stop" ) {
         updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
         auto f = std::async(std::launch::async, [this, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerCallInfoChangeEvent(timer, HlapTimerEvent::STOPPED);
+            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STOPPED);
         }).share();
         taskQ_->add(f);
     } else {
@@ -1591,7 +1853,7 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
     }
 }
 
-void CallManagerServerImpl::triggerCallInfoChangeEvent(std::string timer,
+void CallManagerServerImpl::triggerECallInfoChangeEvent(std::string timer,
     HlapTimerEvent action ) {
     LOG(DEBUG, __FUNCTION__);
     int slotId = 1;
@@ -1600,18 +1862,14 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::string timer,
     eCallInfoEvent.set_timer(timer);
     eCallInfoEvent.set_action(static_cast<telStub::HlapTimerEvent>(action));
     eCallInfoEvent.set_phone_id(slotId);
-    anyResponse.set_filter("tel_call");
+    anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(eCallInfoEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
-    std::string remotepartyNumber) {
-    LOG(DEBUG, __FUNCTION__);
-    CallState state = Helper::getCallState(action);
-    std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(remotepartyNumber, state);
+void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo> call) {
     int callIndex = call->index;
     ::telStub::CallStateChangeEvent callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
@@ -1634,14 +1892,20 @@ void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
         result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
+        LOG(DEBUG, __FUNCTION__," Rtt mode: ", static_cast<int>(it->mode),
+            " Local capability: ", static_cast<int>(it->localRttCapability),
+            " Peer capability: ", static_cast<int>(it->peerRttCapability));
+        result->set_mode(static_cast<telStub::RttMode>(it->mode));
+        result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
+        result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
     }
-    anyResponse.set_filter("tel_call");
+    anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 
-    if(state == CallState::CALL_ENDED ) {
+    if(call->callState == CallState::CALL_ENDED ) {
         //Clear call cache in server
         auto f = std::async(std::launch::async, [this, callIndex]() {
          std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -1653,6 +1917,21 @@ void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
         }).share();
         taskQ_->add(f);
     }
+}
+
+void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, std::string remotepartyNumber,
+    int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    std::shared_ptr<CallInfo> call = findCallAndUpdateRttMode(remotepartyNumber, mode, phoneId);
+    triggerCallInfoChangeEvent(call);
+}
+
+void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
+    std::string remotepartyNumber) {
+    LOG(DEBUG, __FUNCTION__);
+    CallState state = Helper::getCallState(action);
+    std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(remotepartyNumber, state, phoneId);
+    triggerCallInfoChangeEvent(call);
 }
 
 void CallManagerServerImpl::triggerCallListAfterCallEnd() {
@@ -1678,7 +1957,7 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
     }
-    anyResponse.set_filter("tel_call");
+    anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
@@ -1686,14 +1965,14 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
-    std::string remotePartyNumber, CallState action) {
+    std::string remotePartyNumber, CallState action, int phoneId) {
     LOG(DEBUG, __FUNCTION__,"Remote party number is ",remotePartyNumber,
         "Call state is ", static_cast<int>(action) );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
-        return find(call, remotePartyNumber, action);
+        return find(call, remotePartyNumber, phoneId);
     });
 
     if (iter != std::end(calls_)) {
@@ -1705,9 +1984,30 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
     }
 }
 
+std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateRttMode(
+    std::string remotePartyNumber, RttMode mode, int phoneId) {
+    LOG(DEBUG, __FUNCTION__,"Remote party number is ", remotePartyNumber,
+        "Rtt mode is ", static_cast<int>(mode) );
+    std::vector<std::shared_ptr<CallInfo>>::iterator iter;
+    std::lock_guard<std::mutex> lock(callManagerMutex_);
+
+    iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
+        return find(call, remotePartyNumber, phoneId);
+    });
+
+    if (iter != std::end(calls_)) {
+        LOG(DEBUG, __FUNCTION__, " found matched call");
+        (*iter)->mode = mode;
+        (*iter)->peerRttCapability = mode;
+        return *iter;
+    } else {
+        return nullptr;
+    }
+}
+
 bool CallManagerServerImpl::find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber,
-    CallState action) {
-    if(call->remotePartyNumber == remotePartyNumber) {
+    int phoneId) {
+    if((call->remotePartyNumber == remotePartyNumber) && (call->phoneId == phoneId)) {
         return true;
     } else {
         return false;

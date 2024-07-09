@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -232,8 +232,6 @@ namespace gn {
                     auto e = q->front();
                     gn_guc_hdr_t *h = reinterpret_cast<gn_guc_hdr_t *>(e->Buffer);
                     if ((TsNow - e->Ts) > DecodeLifeTime(h->bh.lt)) {
-                        if (e->Buffer)
-                            delete e->Buffer;
                         q->pop_front();
                         continue;
                     }
@@ -253,8 +251,6 @@ namespace gn {
                     auto e = q->front();
                     gn_guc_hdr_t *h = reinterpret_cast<gn_guc_hdr_t *>(e->Buffer);
                     if ((purge == true) || ((TsNow - e->Ts) > DecodeLifeTime(h->bh.lt))) {
-                        if (e->Buffer)
-                            delete e->Buffer;
                         q->pop_front();
                         continue;
                     }
@@ -271,8 +267,6 @@ namespace gn {
                 gn_gbc_gac_hdr_t *h = reinterpret_cast<gn_gbc_gac_hdr_t *>(e->Buffer);
 
                 if ((TsNow - e->Ts) > DecodeLifeTime(h->bh.lt)) {
-                    if (e->Buffer)
-                        delete e->Buffer;
                     continue;
                 }
                 // call radio transmit callback function to send packet.
@@ -302,17 +296,8 @@ namespace gn {
 
     void GeoNetRouterImpl::Enqueue(int Qid, const uint8_t *Buffer, size_t BufLen,
             txcb_t txcb, const uint8_t *addr) {
-
-        // Duplicate the buffer
-        uint8_t *Buf = new uint8_t[BufLen];
-        if (!Buf) {
-            std::cerr << "Enqueue: No mem!" << std::endl;
-            return;
-        } else {
-            memcpy(Buf, Buffer, BufLen);
-        }
         std::lock_guard<std::mutex> lk(qMutex_);
-
+        uint8_t* Buf = (uint8_t*)Buffer;
         if (Qid & UC_Q) {
             if (!addr) {
                 std::cerr << "Request to queue packet in UC queue but address is not given" <<
@@ -330,9 +315,6 @@ namespace gn {
                 auto q = it->second;    // q is shared_ptr of QueueT
                 if (q->size() == Config_.itsGnUcForwardingPacketBufferSize) {
                     std::cerr << "UC queue for addr: " << addr << "overrun!" << std::endl;
-                    auto e = q->front();
-                    if (e->Buffer)
-                        delete e->Buffer;
                     q->pop_front();
                 }
                 q->push_back(std::make_shared<Qelement>(Buf, BufLen, txcb));
@@ -354,9 +336,6 @@ namespace gn {
                 auto q = it->second;    // q is shared_ptr of QueueT
                 if (q->size() == Config_.itsGnUcForwardingPacketBufferSize) {
                     std::cerr << "UC queue for addr: " << addr << "overrun!" << std::endl;
-                    auto e = q->front();
-                    if (e->Buffer)
-                        delete e->Buffer;
                     q->pop_front();
                 }
                 q->push_back(std::make_shared<Qelement>(Buf, BufLen, txcb));
@@ -364,20 +343,12 @@ namespace gn {
         } else if (Qid & BC_Q) {
             if (BcQueue_.size() == Config_.itsGnBcForwardingPacketBufferSize) {
                 std::cerr << "BC Buffer overrun!" << std::endl;
-                auto e = BcQueue_.front();
-                if (e->Buffer)
-                    delete e->Buffer;
                 BcQueue_.pop_front();
             }
             BcQueue_.push_back(std::make_shared<Qelement>(Buf, BufLen, txcb));
         }
     }
 
-    void GeoNetRouterImpl::CBFEnqueue(const uint8_t *Buffer, size_t BufLen, int To) {
-        std::lock_guard<std::mutex> lk(CBFmutex_);
-        CBFqueue_.push(std::make_shared<Qelement>(const_cast<uint8_t *>(Buffer), BufLen, df_txcb, To));
-        CBFcv_.notify_one();
-    }
 
     /**
      * Start Location service synchronously
@@ -390,7 +361,7 @@ namespace gn {
 
         // Create a packet queue element to prepare for retransmit.
         size_t BufLen = sizeof(gn_lsreq_hdr_t) + 1; // account for 1 byte cv2x family ID
-        auto e = std::make_shared<Qelement>(new uint8_t[BufLen], BufLen, df_txcb);
+        auto e = std::make_shared<Qelement>(nullptr, BufLen, df_txcb);
         gn_lsreq_hdr_t *h = reinterpret_cast<gn_lsreq_hdr_t *>(e->Buffer + 1);
 
         // Initialize LS request packet.

@@ -80,7 +80,6 @@ protected:
    std::shared_ptr<MyCallCommandCallback> myAnswerCb_;
    std::shared_ptr<MyCallCommandCallback> myRejectCb_;
    std::shared_ptr<MyCallCommandCallback> mySwapCb_;
-   std::vector<int> phoneIds_;
 
 private:
    void conferenceSubMenu(std::vector<std::string> userInput);

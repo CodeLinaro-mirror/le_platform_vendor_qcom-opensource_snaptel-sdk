@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,47 +62,30 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifndef THERMSHUTDOWNSAMP_HPP
-#define THERMSHUTDOWNSAMP_HPP
+#ifndef THERMALSHUTDOWNAPP_HPP
+#define THERMALSHUTDOWNAPP_HPP
 
 #include <memory>
-#include <future>
 
-#include <telux/therm/ThermalDefines.hpp>
-#include <telux/therm/ThermalFactory.hpp>
 #include <telux/therm/ThermalShutdownManager.hpp>
 #include <telux/therm/ThermalShutdownListener.hpp>
 
-#define APP_NAME "thermal_shutdown_sample_app"
-#define PRINT_NOTIFICATION std::cout << APP_NAME << " \033[1;35mNOTIFICATION: \033[0m"
-
-using namespace telux::therm;
-using namespace telux::common;
-
-class ThermalShutdownSampApp : public IThermalShutdownListener,
-                           public std::enable_shared_from_this<ThermalShutdownSampApp> {
-public:
-
-    ThermalShutdownSampApp();
-    ~ThermalShutdownSampApp();
-
-    int init();
+class ThermalShutdownListener : public telux::therm::IThermalShutdownListener {
+ public:
     void onShutdownEnabled() override;
     void onShutdownDisabled() override;
-    void onImminentShutdownEnablement(const uint32_t imminentDuration) override;
-    void onServiceStatusChange(ServiceStatus status) override;
+    void onImminentShutdownEnablement(const uint32_t imminentDuration) override;   
+};
 
-    std::future<AutoShutdownMode> getAutoShutdownMode();
-    void registerForUpdates();
-    void deregisterForUpdates();
-private:
+class Application {
+ public:
+    int init();
+    int deinit();
+    int getAutoShutdownMode();
 
-    ThermalShutdownSampApp(ThermalShutdownSampApp const &) = delete;
-    ThermalShutdownSampApp &operator=(ThermalShutdownSampApp const &) = delete;
-
-    // Member variable to keep the manager object alive till application ends.
+ private:
+    std::shared_ptr<ThermalShutdownListener> thermShutdownListener_;
     std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
 };
 
-#endif  // THERMSHUTDOWNSAMP_HPP
+#endif  // THERMALSHUTDOWNAPP_HPP

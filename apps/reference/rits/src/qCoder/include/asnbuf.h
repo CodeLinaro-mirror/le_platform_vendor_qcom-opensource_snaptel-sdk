@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -646,6 +646,10 @@ static inline int asn_ncat_bits(abuf_t *bp, uint32_t data, int bitlen)
         bp->tail = bp->data;
         bp->head_headspace_bits = 0;
         bp->tail_bits_left = 8;
+    }
+
+    if(bp->tail_bits_left == 8){
+        *bp->tail = 0;
     }
 
     if (bitlen <= bp->tail_bits_left) {

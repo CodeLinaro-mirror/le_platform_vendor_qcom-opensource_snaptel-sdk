@@ -1028,25 +1028,27 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics rvKine,
-    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData ,uint8_t sopt_priority, ValidateCallback callBackFunction) {
 
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    int priority = 1;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+    uint8_t aerolinkPriority = (sopt_priority <= 4) ? 0 : 1;
+    if (secVerbosity > 6)
+        printf("Aerolink Priority %d \n",aerolinkPriority);
 
     // Get corresponding smp for this thread
     SecuredMessageParserC* smp;
     smp = getThrSmp(thrId);
     if(smp == nullptr || thrVerifSemPtr == nullptr){
         if(secVerbosity > 4)
-        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+            fprintf(stderr,"Unable to retrieve SMP for this thread\n");
         return -1;
     }
     // async verification
-    result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);
+    result = smp_verifySignaturesAsyncPriority(*smp, aerolinkPriority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)

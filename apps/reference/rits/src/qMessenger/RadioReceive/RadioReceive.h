@@ -73,6 +73,7 @@
 #pragma once
 
 #include "RadioInterface.h"
+#include <telux/cv2x/legacy/v2x_radio_api.h>
 #include <vector>
 #include <ifaddrs.h>
 #include <unistd.h>
@@ -109,6 +110,7 @@ protected:
 public:
     shared_ptr<ICv2xRxSubscription> gRxSub = nullptr;
 
+    v2x_priority_et priority = V2X_PRIO_BACKGROUND;
     /**
     * Stores the value L2 source address for a received message
     */
@@ -171,5 +173,13 @@ public:
     uint8_t closeFlow();
 
     uint64_t latestTxRxTimeMonotonic() override;
+
+    /**
+    * Method that gets the priority from the Received Message object
+    * @param Pointer to store the Priority level of the Received Message .
+    * @param Received Message
+    * @return true if success , false if error.
+    */
+    bool get_priority_from_received_message(const struct msghdr* message, v2x_priority_et* prior);
 };
 

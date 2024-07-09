@@ -70,12 +70,40 @@
   */
 
 #include "RadioReceive.h"
+#include <telux/cv2x/legacy/v2x_radio_api.h>
+
 static int gRxCount = 0;
 void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         this->gRxSub = rxSub;
     }
 };
+
+bool RadioReceive::get_priority_from_received_message(const struct msghdr* message,
+                                               v2x_priority_et* prior) {
+    if (NULL == message || NULL == prior) {
+        fprintf(stderr, "null input\n");
+        return false;
+    }
+    // get ancillary data
+    struct cmsghdr *cmsghp = CMSG_FIRSTHDR(message);
+    if (cmsghp) {
+        // get traffic class
+        int tclass = 0;
+        if (cmsghp->cmsg_level == IPPROTO_IPV6 &&
+            cmsghp->cmsg_type == IPV6_TCLASS) {
+            memcpy(&tclass, CMSG_DATA(cmsghp), sizeof(tclass));
+            *prior = v2x_convert_traffic_class_to_priority((uint16_t)tclass);
+            return true;
+        } else {
+            fprintf(stderr, "unexpected ancillary data\n");
+        }
+    } else {
+        fprintf(stderr, "empty ancillary data here\n");
+    }
+
+    return false;
+}
 
 RadioReceive::RadioReceive(const TrafficCategory category,
                             const TrafficIpType trafficIpType, const uint16_t port,
@@ -186,6 +214,12 @@ uint32_t RadioReceive::receive(const char* buf, int len,
         socket = this->gRxSub->getSock();
     }
 
+    if(!isSim) {
+        int flag = 1;
+        if (setsockopt(socket, IPPROTO_IPV6, IPV6_RECVTCLASS,&flag, sizeof(flag)) < 0) {
+                        fprintf(stderr, "Setsockopt(IPV6_RECVTCLASS) failed\n");
+        }
+    }
     struct pollfd fd;
     int ret;
     fd.fd = socket;
@@ -224,6 +258,15 @@ uint32_t RadioReceive::receive(const char* buf, int len,
     msgL2SrcAdrr = ntohl(from.sin6_addr.s6_addr32[3]);
 
     if(bytesReceived > 0){
+        if (get_priority_from_received_message(&message, &this->priority)) {
+            if(rVerbosity){
+                cout << "Read  priority in message" << std::endl;
+            }
+        } else {
+            if(rVerbosity){
+                cerr<<"Error in reading priority"<<std::endl;
+            }
+        }
         if (enableCsvLog_ || enableDiagLogPacket_) {
             clock_gettime(CLOCK_MONOTONIC, &ts);
             lastRxMonotonicTime_ = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;

@@ -1111,6 +1111,12 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     sopt.enableRelevance = this->configuration.enableRelevance;
     sopt.enableEnc  = this->configuration.enableEncrypt;
     sopt.secVerbosity = this->configuration.secVerbosity;
+    if(!isRxSim){
+        sopt.priority= (uint8_t)radioReceives[0].priority;
+    }
+    else{
+        sopt.priority = 1;
+    }
     uint32_t dot2HdrLen;
     uint8_t const *payload = NULL;
     uint32_t       payloadLen = 0;
@@ -1318,7 +1324,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         // returns nonzero value if success, otherwise -1
                         ret = tmpAeroSecurity->asyncVerify(
                                 sopt.rvKine, sopt.misbehaviorStat,
-                                (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
+                                (void *)&(asyncCbData[async_index]), sopt.priority, AsyncCallbackFunction);
                         if (ret == DECODE_FAIL){
                             asyncVerifFail++;
                         }
@@ -1890,15 +1896,24 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 {
     //fill data with values that may not make sense, these data should come from vehicle
     //CAN network
-    bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
     if(criticalState){
         bsm->has_partII = (v2x_bool_t)1;
+        bsm->qty_partII_extensions = (int)1;
         bsm->has_safety_extension = (v2x_bool_t)1;
+        bsm->has_special_extension = (v2x_bool_t)0;
+        bsm->has_supplemental_extension = (v2x_bool_t)0;
+        bsm->TransmissionState = J2735_TRANNY_REVERSE_GEARS;
     }else{
         bsm->has_partII = (v2x_bool_t)0;
         bsm->has_safety_extension = (v2x_bool_t)0;
+        bsm->qty_partII_extensions = (int)0;
+        bsm->has_safety_extension = (v2x_bool_t)0;
+        bsm->has_special_extension = (v2x_bool_t)0;
+        bsm->has_supplemental_extension = (v2x_bool_t)0;
+        bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
     }
-    bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
+
+    bsm->vehsafeopts = 0;
     bsm->events.data = 0;
 
     if(this->currVehState != NULL){

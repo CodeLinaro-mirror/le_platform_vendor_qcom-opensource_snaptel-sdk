@@ -117,7 +117,7 @@ class AerolinkSecurity : public SecurityService {
         int VerifyMsg(const SecurityOpt opt);
         int checkConsistencyandRelevancy(const SecurityOpt opt);
         int asyncVerify(Kinematics rvKine,
-        MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction);
+        MisbehaviorStats* misbehaviorStat,void *asyncCbData , uint8_t priority, ValidateCallback callBackFunction);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;

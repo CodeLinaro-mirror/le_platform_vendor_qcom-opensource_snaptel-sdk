@@ -144,6 +144,7 @@ typedef struct SecurityOpt {
     bool enableRelevance = true;
     bool setGenLocation = true;
     uint8_t secVerbosity;
+    uint8_t priority = 7;
     VerifStats* verifStat;
     SignStats* signStat;
     MisbehaviorStats* misbehaviorStat;

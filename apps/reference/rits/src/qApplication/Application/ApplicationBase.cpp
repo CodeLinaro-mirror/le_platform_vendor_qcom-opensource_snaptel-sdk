@@ -2575,7 +2575,7 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
         signStatIdx[tid]++;
         signStatIdx[tid]%=thrSignLatencies[tid].size();
     }
-    abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
+    abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
     // transmit packet
     return encode_msg_continue(mc.get());

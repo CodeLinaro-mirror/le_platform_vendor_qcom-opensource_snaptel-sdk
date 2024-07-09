@@ -38,4 +38,5 @@ target_link_libraries(${TARGET_ECALL_APP} telux_tel telux_loc telux_therm telux_
 install ( TARGETS ${TARGET_ECALL_APP}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 install ( FILES config_files/eCall.conf
-                DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+          DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )

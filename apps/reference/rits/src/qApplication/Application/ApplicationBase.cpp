@@ -2372,8 +2372,8 @@ void ApplicationBase::writeVerifLogging() {
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats;
-    if (auto itr = thrVerifLatencies.find(std::this_thread::get_id());
-            itr != thrVerifLatencies.end()){
+    auto itr = thrVerifLatencies.find(std::this_thread::get_id());
+    if (itr != thrVerifLatencies.end()){
         stats = itr->second;
     }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
@@ -2415,8 +2415,8 @@ void ApplicationBase::writeSignLogging() {
     file.open(configuration.signStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<SignStats> stats;
-    if (auto itr = thrSignLatencies.find(std::this_thread::get_id());
-            itr != thrSignLatencies.end()){
+    auto itr = thrSignLatencies.find(std::this_thread::get_id());
+    if (itr != thrSignLatencies.end()){
         stats = itr->second;
     }
     for (auto it = stats.begin(); it != stats.end(); ++it) {

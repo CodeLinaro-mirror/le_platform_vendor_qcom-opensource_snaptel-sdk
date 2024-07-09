@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -67,7 +67,6 @@ protected:
    std::shared_ptr<telux::tel::ICallManager> callManager_;
    std::shared_ptr<MyCallCommandCallback> myHoldCb_;
    std::shared_ptr<MyCallCommandCallback> myResumeCb_;
-   std::vector<int> phoneIds_;
 
 private:
    void conferenceSubMenu(std::vector<std::string> userInput);

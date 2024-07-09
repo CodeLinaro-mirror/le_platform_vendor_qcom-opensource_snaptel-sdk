@@ -278,15 +278,39 @@
         "networkScanResultsUpdate": [
             "telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate <slotId> ,<scanStatus> ,<operatorName1> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus> ,<operatorName2> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus>",
             "slotId:           integer, valid slotIds are 1 & 2 only.",
-            "scanStatus:       integer, valid 0-COMPLETE, 1-PARTIAL, 1-FAILED.",
+            "scanStatus:       integer, valid 0-COMPLETE, 1-PARTIAL, 2-FAILED.",
             "operatorName:     string, valid operator name",
             "mcc :             string, valid mcc Refer for more details telux::tel::OperatorInfo.",
             "mnc :             string, valid mnc Refer for more details telux::tel::OperatorInfo.",
             "rat:              integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
-            "inUseStatus:      integer, valid 0-UNKNOWN, 1-CURRENT_SERVING, 1-AVAILABLE.",
-            "roamingStatus:    integer, valid 0-UNKNOWN, 1-HOME, 1-ROAM.",
-            "forbiddenStatus:  integer, valid 0-UNKNOWN, 1-FORBIDDEN, 1-NOT_FORBIDDEN.",
-            "preferredStatus:  integer, valid 0-UNKNOWN, 1-PREFERRED, 1-NOT_PREFERRED."
+            "inUseStatus:      integer, valid 0-UNKNOWN, 1-CURRENT_SERVING, 2-AVAILABLE.",
+            "roamingStatus:    integer, valid 0-UNKNOWN, 1-HOME, 2-ROAM.",
+            "forbiddenStatus:  integer, valid 0-UNKNOWN, 1-FORBIDDEN, 2-NOT_FORBIDDEN.",
+            "preferredStatus:  integer, valid 0-UNKNOWN, 1-PREFERRED, 2-NOT_PREFERRED."
+        ]
+    },
+    "tel_ims_serv": {
+        "regStatusUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e regStatusUpdate <slotId> <regStatus> <rat> <errorCode> <errorString>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "regStatus:         integer, valid -1-UNKOWN_STATE, 0-NOT_REGISTERED, 1-REGISTERING, 2-REGISTERED, 3-LIMITED_REGISTERED.",
+            "rat:               integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "errorCode:         integer, only valid when the IMS in NOT_REGISTERED status. More details refer to SIP-RFC3261 section 13.2.2.2 and section 13.2.2.3.",
+            "errorString:       string, only valid when the IMS in NOT_REGISTERED status. More details refer to SIP-RFC3261 section 13.2.2.2 and section 13.2.2.3."
+        ],
+        "serviceInfoUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e serviceInfoUpdate <slotId> <smsStatus> <voiceStatus>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "smsStatus:         integer, valid -1-UNKNOWN, 0-NO_SERVICE, 1-LIMITED_SERVICE, 2-FULL_SERVICE.",
+            "voiceStatus:       integer, valid -1-UNKNOWN, 0-NO_SERVICE, 1-LIMITED_SERVICE, 2-FULL_SERVICE."
+        ],
+        "pdpStatusInfoUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e pdpStatusInfoUpdate <slotId> <isConnected> <pdpFailure> <dataCallEndReason> <apnName>",
+            "slotId:               integer, valid slotIds are 1 & 2 only.",
+            "isConnected:          bool, valid value is 1 or 0 signifies PDP is connected or not",
+            "pdpFailure:           integer, PDP failure error code. Refer for more details telux::tel::PdpFailureCode.",
+            "dataCallEndReason:    integer, PDP call end reason type. Refer for more details telux::common::EndReasonType.",
+            "apnName:              string, IMS registration APN name. Refer for more details telux::tel::ImsPdpStatusInfo."
         ]
     }
 }

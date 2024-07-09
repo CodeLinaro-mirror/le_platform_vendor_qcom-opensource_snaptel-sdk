@@ -1462,6 +1462,43 @@ message UpdateECallMsdResponse {
     bool is_callback = 6;
  }
 
+ message RequestPdpStatusRequest {
+   int32 phone_id = 1;
+ }
+
+ message RequestPdpStatusReply {
+   bool is_pdp_connected = 1;
+   PdpFailureCode failure_code = 2;
+   EndReasonType failure_reason = 3;
+   string apn_name = 4;
+   commonStub.ErrorCode error = 5;
+   commonStub.Status status = 6;
+   int32 delay = 7;
+   bool is_callback = 8;
+ }
+
+ message ImsRegStatusChangeEvent {
+    int32 phone_id = 1;
+    RegistrationStatus ims_reg_status = 2;
+    RadioTechnology rat = 3;
+    int32 error_code = 4;
+    string error_string = 5;
+ }
+
+ message ImsServiceInfoChangeEvent {
+    int32 phone_id = 1;
+    CellularService.Status sms = 2;
+    CellularService.Status voice = 3;
+ }
+
+ message ImsPdpStatusInfoChangeEvent {
+    int32 phone_id = 1;
+    bool is_pdp_connected = 2;
+    PdpFailureCode failure_code = 3;
+    EndReasonType failure_reason = 4;
+    string apn_name = 5;
+ }
+
  // --- ServingSystemService ---
 
  message RequestRATPreferenceRequest {
@@ -1863,21 +1900,6 @@ message UpdateECallMsdResponse {
      commonStub.Status status = 5;
      int32 delay = 6;
      bool is_callback = 7;
- }
-
- message RequestPdpStatusRequest {
-   int32 phone_id = 1;
- }
-
- message RequestPdpStatusReply {
-   bool is_pdp_connected = 1;
-   PdpFailureCode failure_code = 2;
-   EndReasonType failure_reason = 3;
-   string apn_name = 4;
-   commonStub.ErrorCode error = 5;
-   commonStub.Status status = 6;
-   int32 delay = 7;
-   bool is_callback = 8;
  }
 
  // --- NetworkSelectionService ---

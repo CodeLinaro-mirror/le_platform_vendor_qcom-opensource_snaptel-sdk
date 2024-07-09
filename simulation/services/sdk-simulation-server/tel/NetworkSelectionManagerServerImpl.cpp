@@ -454,8 +454,7 @@ void NetworkSelectionManagerServerImpl::handleSelectionModeChanged(std::string e
         rootObj[MANAGER]["NetworkSelectionMode"]["mcc"] = mcc;
         rootObj[MANAGER]["NetworkSelectionMode"]["mnc"] = mnc;
         selectionModeEvent.set_phone_id(phoneId);
-        selectionModeEvent.set_mode(
-            static_cast<telStub::NetworkSelectionMode_Mode>(selectionMode));
+        selectionModeEvent.set_mode(static_cast<telStub::NetworkSelectionMode_Mode>(selectionMode));
         selectionModeEvent.set_mcc(mcc);
         selectionModeEvent.set_mnc(mnc);
         LOG(DEBUG, __FUNCTION__, " selectionMode: ", selectionMode, " MCC: ", mcc, " MNC: ", mnc);
@@ -484,8 +483,7 @@ void NetworkSelectionManagerServerImpl::handleNetworkScanResultsChanged(std::str
     std::string jsonfilename;
     ::telStub::NetworkScanResultsChangeEvent networkScanResultsEvent;
 
-    // Split the event string into parameters
-    //(phoneId ,scanStatus ,operatorInfo1 ,operatorInfo2...)
+    // Split the event string into parameters (phoneId ,scanStatus ,operatorInfo1 ,operatorInfo2...)
     // based on delimeter as ","
     std::stringstream ss(eventParams);
     std::vector<string> params;
@@ -527,8 +525,7 @@ void NetworkSelectionManagerServerImpl::handleNetworkScanResultsChanged(std::str
         int infoCount = params.size() - 1;
         for (int i = NETWORK_SCAN_RESULTS_OPERATOR_INFO_START_INDEX; i <= infoCount; i++) {
             LOG(DEBUG, " Parsing Params:" , params[i]);
-            std::string operatorName =
-                EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            std::string operatorName = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
             std::string mcc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
             std::string mnc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
             LOG(DEBUG, __FUNCTION__,  " operatorName is: ", operatorName, " MCC is: ", mcc,

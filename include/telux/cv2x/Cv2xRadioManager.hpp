@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -304,7 +304,10 @@ public:
      * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
      * permission to successfully invoke this API.
      *
-     * @param [in] txPower - Desired global Cv2x peak tx power in dbm
+     * @param [in] txPower - Desired global Cv2x peak tx power in dBm,
+     *                       The value should be in the range from -40 to 31.
+     *                       CV2X modem will set the TX power to -40dBm or 31dBm respectively
+     *                       if the value provided is less than -40 or bigger than 31.
      * @param [in] cb      - Callback that is invoked when Cv2x peak tx power is set
      *
      * @returns SUCCESS on success. Error status otherwise.

@@ -2713,7 +2713,10 @@ extern int v2x_radio_tcp_sock_create_and_bind(
 
     Precondition -- v2x mode enabled.
 
-    @param [in] txPower   Desired global Cv2x peak tx power in dbm
+    @param [in] txPower   Desired global Cv2x peak tx power in dBm,
+                          The value should be in the range from -40 to 31.
+                          CV2X modem will set the TX power to -40dBm or 31dBm respectively
+                          if the value provided is less than -40 or bigger than 31.
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */

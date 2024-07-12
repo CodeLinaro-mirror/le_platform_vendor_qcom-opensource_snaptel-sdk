@@ -11,6 +11,7 @@
 #include "IpFilterImpl.hpp"
 #include "DataHelper.hpp"
 #include "ServingSystemManagerStub.hpp"
+#include "DualDataManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/VlanManagerStub.hpp"
@@ -422,6 +423,27 @@ std::shared_ptr<telux::data::net::IBridgeManager> DataFactoryImplStub::getBridge
     auto manager
         = getManager<telux::data::net::IBridgeManager>(type,
             bridgeManager_, bridgeCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
+std::shared_ptr<telux::data::IDualDataManager> DataFactoryImplStub::getDualDataManager(
+    telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IDualDataManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IDualDataManager> {
+            std::shared_ptr<telux::data::DualDataManagerStub> manager
+                = std::make_shared<telux::data::DualDataManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("DualData manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &dualDataCallbacks_);
+    auto manager
+        = getManager<telux::data::IDualDataManager>(type,
+            dualDataManager_, dualDataCallbacks_, clientCallback, createAndInit);
     return manager;
 }
 

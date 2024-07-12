@@ -312,5 +312,15 @@
             "dataCallEndReason:    integer, PDP call end reason type. Refer for more details telux::common::EndReasonType.",
             "apnName:              string, IMS registration APN name. Refer for more details telux::tel::ImsPdpStatusInfo."
         ]
+    },
+    "dual_data": {
+        "capabilityChange" : [
+            "telsdk_event_injector -f dual_data -e capabilityChange <enable>",
+            "enable:   bool, 1 :dppd capable, 0 :not dppd capable"
+        ],
+        "recommendationChange" : [
+            "telsdk_event_injector -f dual_data -e recommendationChange <recommendation>",
+            "recommendation:  string, ALLOWED :dual data is allowed, NOT_ALLOWED :dual data is not allowed, NOT_RECOMMENDED :dual data is not recommended"
+        ]
     }
 }

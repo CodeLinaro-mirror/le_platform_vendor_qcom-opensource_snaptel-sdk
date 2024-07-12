@@ -37,6 +37,7 @@
 #include "data/DataSettingsServerImpl.hpp"
 #include "data/ServingSystemServerImpl.hpp"
 #include "data/DataFilterServerImpl.hpp"
+#include "data/DualDataServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
@@ -173,6 +174,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<VlanServerImpl> vlanService =
         std::make_shared<VlanServerImpl>();
     builder.RegisterService(vlanService.get());
+
+    std::shared_ptr<DualDataServerImpl> dualDataService =
+        std::make_shared<DualDataServerImpl>();
+    builder.RegisterService(dualDataService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

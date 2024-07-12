@@ -194,9 +194,43 @@ service DataFilterManager {
     rpc enableSocks(EnableSocksRequest) returns (DefaultReply) {}
   }
 
+  service DualDataManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc GetDualDataCapability(google.protobuf.Empty) returns (GetDualDataCapabilityReply) {}
+    rpc GetDualDataUsageRecommendation(google.protobuf.Empty) returns
+        (GetDualDataUsageRecommendationReply) {}
+  }
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
+
+message GetDualDataCapabilityReply {
+    bool capability = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DualDataCapabilityEvent {
+    bool capability = 1;
+}
+
+message UsageRecommendation {
+    enum Recommendation {
+        ALLOWED = 0;
+        NOT_ALLOWED = 1;
+        NOT_RECOMMENDED = 2;
+    }
+    Recommendation recommendation = 1;
+}
+
+message GetDualDataUsageRecommendationReply {
+    UsageRecommendation usage_recommendation = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DualDataUsageRecommendationEvent {
+    string recommendation = 1;
+}
 
 message ClientInfo {
     int32 client_id = 1;

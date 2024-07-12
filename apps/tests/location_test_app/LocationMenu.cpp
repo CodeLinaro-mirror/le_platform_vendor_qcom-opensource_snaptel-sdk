@@ -2182,7 +2182,7 @@ int main(int argc, char **argv) {
         "Release name: " + sdkReleaseName;
     LocationMenu locationMenu(appName, "location> ");
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

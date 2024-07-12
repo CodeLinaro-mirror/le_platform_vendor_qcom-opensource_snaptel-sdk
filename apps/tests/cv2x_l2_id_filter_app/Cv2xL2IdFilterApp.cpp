@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     if (parseOpts(argc, argv) < 0) {
         return EXIT_FAILURE;
     }
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
     int rc = Utils::setSupplementaryGroups(groups);
     if (rc == -1){
         cout << "Adding supplementary group failed!" << std::endl;

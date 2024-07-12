@@ -56,18 +56,28 @@ void DataCallStub::getDataCallStatus(DataCallStatus &ipv4, DataCallStatus &ipv6)
 }
 
 IpFamilyInfo DataCallStub::getIpv4Info() {
-    IpFamilyInfo ipFamilyInfo {};
+    IpFamilyInfo ipFamilyInfo{};
     lock_guard<mutex> lock(statusMutex_);
     ipFamilyInfo.status = ipv4Status_;
-    ipFamilyInfo.addr = ipv4_;
+    for (auto &it : ipAddrList_) {
+        if (DataHelper::isValidIpv4Address(it.ifAddress)) {
+            ipFamilyInfo.addr = it;
+            break;
+        }
+    }
     return ipFamilyInfo;
 }
 
 IpFamilyInfo DataCallStub::getIpv6Info() {
-    IpFamilyInfo ipFamilyInfo {};
+    IpFamilyInfo ipFamilyInfo{};
     lock_guard<mutex> lock(statusMutex_);
     ipFamilyInfo.status = ipv6Status_;
-    ipFamilyInfo.addr = ipv6_;
+    for (auto &it : ipAddrList_) {
+        if (DataHelper::isValidIpv6Address(it.ifAddress)) {
+            ipFamilyInfo.addr = it;
+            break;
+        }
+    }
     return ipFamilyInfo;
 }
 
@@ -77,16 +87,8 @@ TechPreference DataCallStub::getTechPreference() {
 }
 
 std::list<IpAddrInfo> DataCallStub::getIpAddressInfo() {
-    std::list<IpAddrInfo> ipAddrList;
     lock_guard<mutex> lock(statusMutex_);
-    if (DataHelper::isValidIpv4Address(ipv4_.ifAddress)) {
-        ipAddrList.push_back(ipv4_);
-    }
-    if (DataHelper::isValidIpv6Address(ipv6_.ifAddress)) {
-        ipAddrList.push_back(ipv6_);
-    }
-
-    return ipAddrList;
+    return ipAddrList_;
 }
 
 IpFamilyType DataCallStub::getIpFamilyType() {
@@ -114,9 +116,6 @@ telux::common::Status DataCallStub::requestDataCallStatistics(StatisticsResponse
     ErrorCode error = ErrorCode::SUCCESS;
     lock_guard<mutex> lock(statusMutex_);
     DataCallStats stats;
-    // if (auto sp = networkHandler_.lock()) {
-    //     sp->getIfaceStatistics(ifaceName_, stats);
-    // }
     auto f = std::async(std::launch::async,
              [this, stats, error, callback]() {
                    callback(stats, error);
@@ -129,14 +128,7 @@ telux::common::Status DataCallStub::resetDataCallStatistics(
     telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     ErrorCode error = ErrorCode::SUCCESS;
-    // Status status = Status::FAILED;
     lock_guard<mutex> lock(statusMutex_);
-    // if (auto sp = networkHandler_.lock()) {
-    //     status = sp->clearIfaceStatistics(ifaceName_);
-    // }
-    // if (status != Status::SUCCESS) {
-    //     error = ErrorCode::INTERNAL_ERROR;
-    // }
     auto f = std::async(std::launch::async,
              [this, error, callback]() {
                    callback(error);
@@ -183,24 +175,9 @@ void DataCallStub::setIpFamilyType(IpFamilyType family) {
     family_ = family;
 }
 
-void DataCallStub::setIpv4Addr(IpAddrInfo ipv4Addr) {
+void DataCallStub::setIpAddrList(std::list<IpAddrInfo> ipAddrList) {
     lock_guard<mutex> lock(statusMutex_);
-    ipv4_.ifAddress = ipv4Addr.ifAddress;
-    ipv4_.gwAddress = ipv4Addr.gwAddress;
-    ipv4_.gwMask = ipv4Addr.gwMask;
-    ipv4_.ifMask = ipv4Addr.ifMask;
-    ipv4_.primaryDnsAddress = ipv4Addr.primaryDnsAddress;
-    ipv4_.secondaryDnsAddress = ipv4Addr.secondaryDnsAddress;
-}
-
-void DataCallStub::setIpv6Addr(IpAddrInfo ipv6Addr) {
-    lock_guard<mutex> lock(statusMutex_);
-    ipv6_.ifAddress = ipv6Addr.ifAddress;
-    ipv6_.gwAddress = ipv6Addr.gwAddress;
-    ipv6_.gwMask = ipv6Addr.gwMask;
-    ipv6_.ifMask = ipv6Addr.ifMask;
-    ipv6_.primaryDnsAddress = ipv6Addr.primaryDnsAddress;
-    ipv6_.secondaryDnsAddress = ipv6Addr.secondaryDnsAddress;
+    ipAddrList_ = ipAddrList;
 }
 
 void DataCallStub::setTechPreference(TechPreference techPref) {

@@ -128,10 +128,10 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
-   void printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData);
+   void printGnssEphemerisCommonData(const telux::loc::GnssEphCommon &commonData);
    void printEphSrc(telux::loc::GnssEphSource ephSrc);
    void printEphAct(telux::loc::GnssEphAction ephAct);
-   void printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData);
+   void printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData);
    void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
 
    void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);

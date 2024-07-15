@@ -435,3 +435,22 @@ void TelClientUtils::printECallMsdPayload(std::string encodedPdu) {
             << std::endl;
     }
 }
+
+std::string TelClientUtils::eCallRedialReasonToString(ReasonType reason) {
+    switch(reason) {
+        case telux::tel::ReasonType::CALL_ORIG_FAILURE:
+            return std::string(" call origination failure");
+        case telux::tel::ReasonType::CALL_DROP:
+            return std::string(" call drop failure");
+        case telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED:
+            return std::string(" maximum redial count reached");
+        case telux::tel::ReasonType::CALL_CONNECTED:
+            return std::string(" call connected successfully");
+        case telux::tel::ReasonType::NONE:
+            return std::string(" none");
+        default:
+            std::stringstream ss;
+            ss << " Unknown ReasonType  = " << (int)reason;
+            return ss.str();
+    }
+}

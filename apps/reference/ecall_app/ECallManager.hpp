@@ -164,19 +164,32 @@ public:
      */
     telux::common::ErrorCode getECallMsdPayload();
 
-   /**
-    * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
-    *
-    * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
-    * @param [in] id          Timer ID
-    * @param [in] duration    Time gap between two successive redial attempts
-    *
-    * @returns Status for restartECallHlapTimer i.e success or suitable status code.
-    *
-    */
-   telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+    /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns Status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
+     * Configure eCall redial parameters for call origination failure or call drop
+     *
+     * @param [in] config   Redial configuration type. Values: 0 - Call drop and 1 - Call
+     *                      origination failure.
+     * @param [in] timeGap  Indicates time gap between successive redial attempts in milliseconds.
+     *
+     * @returns status code for configureECallRedial i.e success or suitable status code.
+     *
+     */
+    telux::common::Status configureECallRedial(int config, std::vector<int> &timeGap);
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
+
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
 
@@ -235,7 +248,7 @@ private:
     /** Local copy of MSD optional additional data content. */
     ECallOptionalEuroNcapData optionalAdditionalDataContent_;
     /** Local copy of MSD raw PDU that will be used in transmission */
-    std::vector<uint8_t> msdPdu_ {};
+    std::vector<uint8_t> msdPdu_{};
     /** Interval for which the location-fix updates needs to be received */
     uint32_t locUpdateIntervalMs_;
     std::mutex mutex_;
@@ -248,4 +261,4 @@ private:
     ChannelTypeMask voiceChannels_;
 };
 
-#endif  // ECALLMANAGER_HPP
+#endif // ECALLMANAGER_HPP

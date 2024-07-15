@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -131,6 +130,47 @@ enum class ECallMsdTransmissionStatus {
    OUTBAND_MSD_TRANSMISSION_STARTED = 10,    /**< Outband MSD transmission started in NG eCall */
    OUTBAND_MSD_TRANSMISSION_SUCCESS = 11,    /**< Outband MSD transmission succeeded in NG eCall */
    OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall */
+   LL_NACK_DUE_TO_T7_EXPIRY = 13,   /**< Link-Layer Acknowledgement(LL-NACK) is received during
+                                         in-band MSD transmission due to expiry of T7 HLAP eCall
+                                         timer */
+   MSD_AL_ACK_CLEARDOWN = 14,   /**< Modem can cleardown the eCall after receipt of
+                                     Application-Layer Acknowledgement(AL-LCK) during in-band MSD
+                                     transmission */
+};
+
+/*
+ * Represents reasons for performing redial of eCall or not.
+ */
+
+enum class ReasonType {
+    NONE = 0,                   /**< Redial reason is NONE */
+    CALL_ORIG_FAILURE = 1,      /**< Redial will be attempted due to eCall origination failure */
+    CALL_DROP = 2,              /**< Redial will be attempted as the eCall is terminated before the
+                                     reciept of MSD Transmission status */
+    MAX_REDIAL_ATTEMPTED = 3,   /**< Redial will not be attempted as the maximum redial count
+                                     is reached */
+    CALL_CONNECTED = 4,         /**< Redial will not be attempted as the eCall is connected
+                                     successfully. */
+};
+
+/*
+ * Represents information about the redial eCall.
+ */
+
+struct ECallRedialInfo {
+   bool willECallRedial; /**< Indicates whether redial of eCall will be attempted by modem or
+                              not */
+   ReasonType reason; /**< Indicates the reason for redial of eCall to be performed or not */
+};
+
+/*
+ * Represents the redial configuration type for eCall
+ */
+
+enum class RedialConfigType {
+    CALL_DROP = 0,  /**< Redial configuration for eCall termination before reciept of MSD
+                         Transmission status */
+    CALL_ORIG = 1,  /**< Redial configuration for eCall origination failure */
 };
 
 /**

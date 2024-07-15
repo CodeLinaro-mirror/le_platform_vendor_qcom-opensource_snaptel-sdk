@@ -556,8 +556,6 @@ public:
     * 3. T9 eCall HLAP timer cannot be restarted after transition of device operating mode from
     *    low power mode to online.
     *
-    * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
-    * permission to invoke this API successfully.
     *
     * @param [in] timerId - Represents the timer which is required to be restarted by
     *                       application. @ref telux::tel::EcallHlapTimerId.
@@ -573,6 +571,121 @@ public:
     */
    virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr ) = 0;
+
+   /**
+    * Configure eCall redial parameters.
+    *
+    * Redial of an eCall can be attempted by the modem during an eCall origination failure
+    * or when it gets dropped before receipt of the MSD transmission status.
+    *
+    * The eCall redial parameters should be configured before initiating a regulatory eCall
+    * and this configuration is not persistent after modem reset.
+    *
+    *
+    * **Note:**
+    *    Platform supports CS eCall only.
+    *
+    *    Redial attempts for eCall origination failures can be configured to range from
+    *    1 to 10 attempts. If an eCall disconnects before the MSD transmission status is
+    *    received, the application must ensure that all retry attempts are completed within
+    *    2 minutes from the time of the initial drop. The application is expected to determine
+    *    an appropriate time gap between successive redial attempts using the tables below
+    *    (values in milliseconds).
+    *
+    * <b>Configuration: ECALL ORIGINATION FAILURE</b>
+    * (<tt> @ref telux::tel::RedialConfigType::CALL_ORIG</tt>)
+    *
+    * <table>
+    * <tr>
+    *   <th>Call attempt</th>
+    *   <th>Minimum duration between attempts (ms)</th>
+    *   <th>Maximum duration between attempts (ms)</th>
+    * </tr>
+    * <tr><td>Initial call attempt</td><td>NA</td><td>NA</td></tr>
+    * <tr><td>1</td><td>5000</td><td>60000</td></tr>
+    * <tr><td>2</td><td>60000</td><td>180000</td></tr>
+    * <tr><td>3</td><td>60000</td><td>180000</td></tr>
+    * <tr><td>4</td><td>60000</td><td>180000</td></tr>
+    * <tr><td>5 attempts and subsequent attempts</td><td>180000</td><td>300000</td></tr>
+    * </table>
+    *
+    * <b>Configuration: ECALL DROP</b>
+    * (<tt> @ref telux::tel::RedialConfigType::CALL_DROP</tt>)
+    *
+    * <table>
+    *   <tr>
+    *     <th>Call attempt</th>
+    *     <th>Minimum duration between attempts (ms)</th>
+    *     <th>Maximum duration between attempts (ms)</th>
+    *   </tr>
+    *   <tr>
+    *     <td>Initial call attempt</td>
+    *     <td>NA</td>
+    *     <td>NA</td>
+    *   </tr>
+    *   <tr>
+    *     <td>1</td>
+    *     <td>5000</td>
+    *     <td>60000</td>
+    *   </tr>
+    *   <tr>
+    *     <td>2 attempts and subsequent attempts</td>
+    *     <td>60000</td>
+    *     <td>180000</td>
+    *   </tr>
+    * </table>
+    *
+    *
+    * **Note:**
+    *    Platform supports both NG eCall and CS eCall configuration:
+    *
+    *    Application input configurations for call origination failures will not be applied
+    *    in the case of eCall origination failures. This behavior is governed by the scan times
+    *    required for domain selection by the modem (independent of NG vs CS coverage).
+    *
+    *    To ensure timely redial attempts for eCall drops occurring before MSD status receipt,
+    *    the application must be configured to complete retries within 2 minutes. Use the
+    *    table below to determine appropriate time gaps.
+    *
+    * <b>ECall redial configuration: ECALL DROP</b>
+    * (<tt> @ref telux::tel::RedialConfigType::CALL_DROP</tt>)
+    *
+    * <table>
+    *   <tr>
+    *     <th>Call attempt</th>
+    *     <th>Minimum duration between attempts (ms)</th>
+    *     <th>Maximum duration between attempts (ms)</th>
+    *   </tr>
+    *   <tr>
+    *     <td>Initial call attempt</td>
+    *     <td>NA</td>
+    *     <td>NA</td>
+    *   </tr>
+    *   <tr>
+    *     <td>1</td>
+    *     <td>5000</td>
+    *     <td>30000</td>
+    *   </tr>
+    *   <tr>
+    *     <td>2 attempts and subsequent attempts</td>
+    *     <td>30000</td>
+    *     <td>60000</td>
+    *   </tr>
+    * </table>
+    *
+    * @param [in] config   Indicates eCall redial configuration
+    *                      @ref telux::tel::RedialConfigType
+    * @param [in] timeGap  Indicates time gap between successive redial attempts in milliseconds.
+    * @param [in] callback  Callback function to get the response of the
+    *                       configureECallRedial request.
+    *
+    * @returns Status of configureECallRedial i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+    virtual telux::common::Status configureECallRedial(RedialConfigType config,
+         const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Add a listener to listen for incoming call, call info change and eCall MSD

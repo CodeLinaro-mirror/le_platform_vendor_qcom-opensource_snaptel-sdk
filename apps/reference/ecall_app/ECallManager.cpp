@@ -520,6 +520,19 @@ void ECallManager::parseAppConfig() {
     }
 }
 
+telux::common::Status ECallManager::configureECallRedial(int config, std::vector<int> &timeGap) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->configureECallRedial(config, timeGap);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to configure eCall redial " << std::endl;
+        return status;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 /**
  * This function will be invoked when an eCall is failed to establish or an eCall is disconnected
  */

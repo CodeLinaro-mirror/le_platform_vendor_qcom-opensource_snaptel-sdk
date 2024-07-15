@@ -251,6 +251,17 @@ public:
         std::vector<uint8_t> &msdPdu);
 
     /**
+     * Configure eCall redial parameters.
+     *
+     * @param [in] config      Configure parameter for call origination failure or call drop
+     * @param [out] timeGap    Time gap between two successive redial attempts
+     *
+     * @returns Error code for configureECallRedial i.e success or suitable status code.
+     *
+     */
+    telux::common::Status configureECallRedial(int config, std::vector<int> &timeGap);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -296,6 +307,8 @@ public:
     void hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
                                  ECallHlapTimerStatus timersStatus);
     void restartHlapTimerResponse(telux::common::ErrorCode error);
+    void onECallRedial(int phoneId, ECallRedialInfo info) override;
+    void configureECallRedialResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

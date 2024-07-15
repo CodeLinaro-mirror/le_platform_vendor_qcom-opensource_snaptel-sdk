@@ -148,6 +148,11 @@ private:
      */
     std::vector<uint8_t> getMsdPduInput();
 
+    /**
+     * Set eCall redial configuration parameters for call drop or call origination failure.
+     */
+    void setECallRedialConfig();
+
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;
 };

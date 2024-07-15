@@ -104,6 +104,11 @@ public:
      */
     static void printEcallConfig(EcallConfig config);
 
+    /*
+     * Prints the reason to redial eCall or not.
+     */
+    static std::string eCallRedialReasonToString(ReasonType reason);
+
     TelClientUtils();
     ~TelClientUtils();
 };

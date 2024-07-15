@@ -137,6 +137,10 @@ std::string TelClientUtils::eCallMsdTransmissionStatusToString(
             return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
         case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
             return std::string("OUTBAND MSD TRANSMISSION FAILURE");
+        case telux::tel::ECallMsdTransmissionStatus::LL_NACK_DUE_TO_T7_EXPIRY:
+            return std::string("LL_NACK_DUE_TO_T7_EXPIRY");
+        case telux::tel::ECallMsdTransmissionStatus::MSD_AL_ACK_CLEARDOWN:
+            return std::string("MSD_AL_ACK_CLEARDOWN");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;
@@ -358,5 +362,24 @@ void TelClientUtils::printEcallConfig(EcallConfig config) {
     if(validityMask.test(ECALL_CONFIG_MSD_VERSION)) {
         std::cout << CLIENT_NAME << " MSD Version: " << static_cast<int>(config.msdVersion)
             << std::endl;
+    }
+}
+
+std::string TelClientUtils::eCallRedialReasonToString(ReasonType reason) {
+    switch(reason) {
+        case telux::tel::ReasonType::CALL_ORIG_FAILURE:
+            return std::string(" call origination failure");
+        case telux::tel::ReasonType::CALL_DROP:
+            return std::string(" call drop failure");
+        case telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED:
+            return std::string(" maximum redial count reached");
+        case telux::tel::ReasonType::CALL_CONNECTED:
+            return std::string(" call connected successfully");
+        case telux::tel::ReasonType::NONE:
+            return std::string(" none");
+        default:
+            std::stringstream ss;
+            ss << " Unknown ReasonType  = " << (int)reason;
+            return ss.str();
     }
 }

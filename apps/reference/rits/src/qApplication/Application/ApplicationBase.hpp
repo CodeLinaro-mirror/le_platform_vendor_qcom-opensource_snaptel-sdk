@@ -459,8 +459,8 @@ public:
     int rxCount = 0;
     struct timeval startRxIntervalTime;
     struct timeval endRxIntervalTime;
-    QMonitor* qMon = nullptr;
-    QMonitor::Configuration* qMonConfig = nullptr;
+    std::shared_ptr<QMonitor> qMon = nullptr;
+    std::shared_ptr<QMonitor::Configuration> qMonConfig = nullptr;
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
@@ -473,6 +473,9 @@ public:
     std::map<std::thread::id, std::vector<ResultLoggingStats>> thrResLoggingValues;
 
     virtual ~ApplicationBase();
+
+    /* Initialization */
+    virtual bool init();
 
     /* Method to update the local stored V2X IP rmnet addr */
     int updateCachedV2xIpIfaceAddr();
@@ -770,7 +773,7 @@ protected:
     /**
      * Overloaded function to initialize the message content for transmition.
      */
-    virtual void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
+    virtual bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
     /**
      * Overloaded function to free the message content, counter-part of initMsg.
      */

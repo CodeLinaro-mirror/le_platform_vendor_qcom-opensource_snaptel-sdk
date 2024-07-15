@@ -569,127 +569,10 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
+    MsgType = msgType;
+    currVehState = nullptr;
     // set parameters according to config file
-    if (this->loadConfiguration(fileConfiguration)) {
-        return;
-    }
-    exitApp = false;
-    if(configuration.enableL2Filtering) {
-        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
-    }
-
-    // set up kinematics listener
-    if(configuration.enableLocationFixes){
-        if (appVerbosity > 5){
-            std::cout << "Enabling location fixes\n";
-        }
-        appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&locCbFn);
-        locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
-    }
-
-    // setup radio flows
-    this->setup(msgType);
-
-    uint8_t keyGenMethod = NO_KEY_GEN;
-    if(!this->isTx)
-        keyGenMethod = ASYMMETRIC_KEY_GEN;
-
-    // one-time initialization for security ; if any
-    if (this->configuration.enableSecurity == true) {
-    #ifdef AEROLINK
-        try{
-          // LCM Constructor for Aerolink
-          if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
-              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                      configuration.securityContextName,
-                      configuration.securityCountryCode,
-                      configuration.lcmName.c_str(),
-                      std::ref(idChangeData)
-                      ));
-
-              // lcm id change timer thread
-              sem_init(&idChangeData.idSem, 0, 1);
-              if (appVerbosity > 5){
-                  fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                      this->configuration.idChangeInterval/1000.0);
-              }
-              changeIdTimer(this->configuration.idChangeInterval);
-
-          }else{
-              // Non-LCM Constructor for Aerolink
-              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                      configuration.securityContextName,
-                      configuration.securityCountryCode));
-          }
-          ApplicationBase::securityInitialized = true;
-          // set the verbosity of aerolink
-          SecService->setSecVerbosity(this->configuration.secVerbosity);
-          // set the leap seconds
-          int ret = -1;
-          if (kinematicsReceive && appLocListener_) {
-            auto locationInfo = appLocListener_->getLocation();
-            if (locationInfo) {
-                uint8_t leapSeconds = 0;
-                telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                if(stat == Status::FAILED || leapSeconds == 0){
-                    leapSeconds = configuration.leapSeconds;
-                }
-                if (appVerbosity > 5){
-                    printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
-                }
-                ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
-            }
-          }else{
-            ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
-          }
-        }catch(const std::runtime_error& error){
-            fprintf(stderr, "Aerolink init failed: Please check config params \n");
-            fprintf(stderr, "Attempting to close all radio flows\n");
-            closeAllRadio();
-            exit(0);
-        }
-    #else
-        // If no Aerolink security library is specified
-        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-    #endif
-    }
-
-
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
-    cb =
-        [this](bool emergent,
-               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
-            vehicleEventReport(emergent, vehicle_state);
-    };
-
-    if(configuration.enableVehicleDataCallbacks){
-        VehRec.enableVehicleReceive(cb);
-    }
-
-    if (configuration.qMonEnabled) // Add to config
-    {
-        qMon = new QMonitor(*qMonConfig);
-    }
-
-    if(configuration.enableL2FloodingDetect){
-        // if flooding mitigation enabled
-        // if configuration.floodingMitigationEnabled
-        // setup telux security service to get the mvm stats
-        auto& secFactory = SecurityFactory::getInstance();
-        telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
-        caControlMgr = secFactory.getCAControlManager(ec);
-        cacMgrListr = std::make_shared<CaControlManagerListener>();
-        LoadConfig loadConfig = {0};
-        loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
-        ec = caControlMgr->registerListener(cacMgrListr);
-        ec = caControlMgr->startMonitoring(loadConfig);
-    }
+    loadConfiguration(fileConfiguration);
 }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
@@ -705,22 +588,15 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
+    currVehState = nullptr;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
 
-    if(configuration.enableL2Filtering) {
-        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
-    }
-
-    // set to no encryption key generation by default
-    uint8_t keyGenMethod = NO_KEY_GEN;
     if (txPort)
     {
         this->simTxSetup(txIpv4, txPort);
         this->isTxSim = true;
-        // default is asymmetric in tx mode
-        keyGenMethod = ASYMMETRIC_KEY_GEN;
     }
     if (rxPort) {
         this->simRxSetup(rxIpv4, rxPort);
@@ -733,8 +609,6 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                 this->simTxSetup(this->configuration.ipv4_dest,
                         this->configuration.tx_port);
                 this->isTxSim = true;
-                // default is asymmetric in tx mode
-                keyGenMethod = ASYMMETRIC_KEY_GEN;
             }else{
                 // turn the flag off so that driver program knows
                 printf("Please provide TX Port and Dest IP in config file\n");
@@ -743,18 +617,14 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             }
         }
     }
-    if (this->configuration.enableSecurity == true) {
-#ifdef AEROLINK
-        SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-#else
-        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-#endif
+}
+
+bool ApplicationBase::init() {
+    if(configuration.enableL2Filtering) {
+        cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
 
+    // set up kinematics listener
     if(configuration.enableLocationFixes){
         if (appVerbosity > 5){
             std::cout << "Enabling location fixes\n";
@@ -767,24 +637,148 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         // wait some time for location fixes to come in
         usleep(100000);
     }
+    if (!(isTxSim || isRxSim)) {
+        // setup radio flows
+        if (0 != setup(MsgType)) {
+            printf("radio setup failed\n");
+            return false;
+        }
+        // one-time initialization for security ; if any
+        if (this->configuration.enableSecurity == true) {
+        #ifdef AEROLINK
+            try{
+              // LCM Constructor for Aerolink
+              if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                          configuration.securityContextName,
+                          configuration.securityCountryCode,
+                          configuration.lcmName.c_str(),
+                          std::ref(idChangeData)
+                          ));
+
+                  // lcm id change timer thread
+                  sem_init(&idChangeData.idSem, 0, 1);
+                  if (appVerbosity > 5){
+                      fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
+                          this->configuration.idChangeInterval/1000.0);
+                  }
+                  changeIdTimer(this->configuration.idChangeInterval);
+
+              }else{
+                  // Non-LCM Constructor for Aerolink
+                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                          configuration.securityContextName,
+                          configuration.securityCountryCode));
+              }
+              ApplicationBase::securityInitialized = true;
+              // set the verbosity of aerolink
+              SecService->setSecVerbosity(this->configuration.secVerbosity);
+              // set the leap seconds
+              int ret = -1;
+              if (kinematicsReceive && appLocListener_) {
+                auto locationInfo = appLocListener_->getLocation();
+                if (locationInfo) {
+                    uint8_t leapSeconds = 0;
+                    telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
+                    if(stat == Status::FAILED || leapSeconds == 0){
+                        leapSeconds = configuration.leapSeconds;
+                    }
+                    if (appVerbosity > 5){
+                        printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
+                    }
+                    ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
+                }
+              }else{
+                ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
+              }
+            }catch(const std::runtime_error& error){
+                fprintf(stderr, "Aerolink init failed: Please check config params \n");
+                fprintf(stderr, "Attempting to close all radio flows\n");
+                closeAllRadio();
+                exit(0);
+            }
+        #else
+            // If no Aerolink security library is specified
+            SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
+                        configuration.securityContextName,
+                        configuration.securityCountryCode));
+        #endif
+        }
+
+        if (configuration.enableL2FloodingDetect) {
+            // if flooding mitigation enabled
+            // if configuration.floodingMitigationEnabled
+            // setup telux security service to get the mvm stats
+            auto& secFactory = SecurityFactory::getInstance();
+            telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
+            caControlMgr = secFactory.getCAControlManager(ec);
+            cacMgrListr = std::make_shared<CaControlManagerListener>();
+            LoadConfig loadConfig = {0};
+            loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
+            ec = caControlMgr->registerListener(cacMgrListr);
+            ec = caControlMgr->startMonitoring(loadConfig);
+        }
+    } else {
+        if (this->configuration.enableSecurity == true) {
+#ifdef AEROLINK
+            SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                         configuration.securityContextName,
+                         configuration.securityCountryCode));
+#else
+            SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
+                         configuration.securityContextName,
+                         configuration.securityCountryCode));
+#endif
+        }
+    }
 
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
-
     cb =
         [this](bool emergent,
-               const current_dynamic_vehicle_state_t* const vehicle_state) {
+               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
             vehicleEventReport(emergent, vehicle_state);
     };
 
-    if(configuration.enableVehicleDataCallbacks){
+    if (configuration.enableVehicleDataCallbacks) {
         VehRec.enableVehicleReceive(cb);
     }
 
-    if (configuration.qMonEnabled) // Add to config
+    if (configuration.qMonEnabled && qMonConfig) // Add to config
     {
-        qMon = new QMonitor(*qMonConfig);
+        qMon = std::make_shared<QMonitor>(*qMonConfig);
     }
+
+    //init messages for sending.
+    if (isTxSim) {
+        if (!initMsg(txSimMsg)) {
+            return false;
+        }
+    }
+    for (auto mc : eventContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+    for (auto mc : spsContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+
+    if (isRxSim) {
+        if (!initMsg(rxSimMsg, true)) {
+            return false;
+        }
+    }
+
+    for (auto mc : receivedContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 ApplicationBase::~ApplicationBase() {
@@ -794,39 +788,30 @@ ApplicationBase::~ApplicationBase() {
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
     }
-    if (qMon) {
-        delete qMon;
-        if(appVerbosity){
-            std::cout << "Closed qMon\n";
-        }
-    }
-    if (qMonConfig) {
-        delete qMonConfig;
-        std::cout << "Closed qMonConfig\n";
-    }
+
     if (ldm) {
         delete ldm;
         ldm = nullptr;
     }
     {
-         std::unique_lock<std::mutex> loc(stateMtx);
-         exitApp = true;
-         stateCv.notify_all();
-         if(nullptr != this->currVehState){
-             free(currVehState);
-         }
-     }
-     sem_destroy(&rx_sem);
-     sem_destroy(&log_sem);
-
-     {
-        if (nullptr != csvfp) {
-            std::unique_lock<std::mutex> lock(csvMutex);
-            writeMutexCv.wait(lock, []{ return writeLogFinish; });
-            fclose(csvfp);
-            csvfp = nullptr;
+        std::unique_lock<std::mutex> loc(stateMtx);
+        exitApp = true;
+        stateCv.notify_all();
+        if(nullptr != this->currVehState){
+            free(currVehState);
         }
-     }
+    }
+    sem_destroy(&rx_sem);
+    sem_destroy(&log_sem);
+
+    {
+       if (nullptr != csvfp) {
+           std::unique_lock<std::mutex> lock(csvMutex);
+           writeMutexCv.wait(lock, []{ return writeLogFinish; });
+           fclose(csvfp);
+           csvfp = nullptr;
+       }
+    }
 }
 
 void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
@@ -1951,7 +1936,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     {
         istringstream is(configs["qMonEnabled"]);
         is >> boolalpha >> this->configuration.qMonEnabled;
-        qMonConfig = new QMonitor::Configuration();
+        qMonConfig = std::make_shared<QMonitor::Configuration>();
     }
     // Add qMonConfig elements here after this line.
     // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
@@ -2139,7 +2124,7 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
     simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
-    txSimMsg = std::make_shared<msg_contents>();
+    txSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
 }
 
@@ -2152,7 +2137,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
     simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
-    rxSimMsg = std::make_shared<msg_contents>();
+    rxSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
 }
 
@@ -2216,7 +2201,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->spsContents.push_back(mc);
         }
@@ -2255,7 +2240,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->receivedContents.push_back(mc);
         }
@@ -2284,7 +2269,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->eventContents.push_back(mc);
         }

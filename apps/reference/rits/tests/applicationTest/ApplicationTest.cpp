@@ -989,6 +989,7 @@ void runApps(void) {
             print_rvspecs(rvSpecs);
         }
     }
+    delete rvSpecs;
 }
 
 /**
@@ -1282,8 +1283,9 @@ int setup(const bool tx, const bool rx,
     }
 
     if (not application
-        or not application->configuration.isValid) {
-        cout << "Invalid configuration" << endl;
+        or not application->configuration.isValid
+        or not application->init()) {
+        cout << "Initialization Failed" << endl;
         return -1;
     }
 

@@ -62,6 +62,8 @@
 #define ECALL_T10_TIMER_MAX 720
 #define T9 5
 #define T10 6
+#define CALL_DROP 0
+#define CALL_ORIG 1
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -141,12 +143,16 @@ void ECallApp::init() {
         std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Restart_ECall_Hlap_Timer", {},
         std::bind(&ECallApp::restartECallHlapTimer, this)));
 
+    std::shared_ptr<ConsoleAppCommand> setECallRedialConfigCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "Set_ECall_Redial_Config", {},
+        std::bind(&ECallApp::setECallRedialConfig, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
             setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
-            restartECallHlapTimerCommand};
+            restartECallHlapTimerCommand, setECallRedialConfigCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -678,6 +684,45 @@ void ECallApp::getECallMsdPayload() {
     auto ret = eCallMgr_->getECallMsdPayload();
     if (ret != telux::common::ErrorCode::SUCCESS) {
         std::cout << "Failed to get eCall MSD payload" << std::endl;
+        return;
+    }
+}
+
+void ECallApp::setECallRedialConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    std::string redialConfig;
+    char delimiter = '\n';
+    int config = 0;
+    std::cout << "Enter ECall redial config : 0 - call drop , 1 - call origination failure ";
+    std::getline(std::cin, redialConfig, delimiter);
+    try {
+        config = std::stoi(redialConfig);
+        std::cout << "ECall redial config is " << config << std::endl;
+        if(config < CALL_DROP || config > CALL_ORIG) {
+            std::cout << "ERROR: Invalid config is entered" << std::endl;
+            return;
+        }
+    } catch (const std::exception &e) {
+        std::cout << "ERROR: invalid input, please enter a valid value. INPUT: "
+            << config << std::endl;
+        return;
+    }
+    std::string timeGapData;
+    std::cout << "Enter time gap between two successive redial attempts in milliseconds with space"
+        << "between the elements for example, input 5000 60000 : ";
+    std::getline(std::cin, timeGapData, delimiter);
+    std::vector<int> timeGap;
+    if (!timeGapData.empty()) {
+        timeGap = Utils::convertStringToVector(timeGapData);
+    } else {
+        std::cout << "ERROR: empty input ";
+    }
+    auto ret = eCallMgr_->configureECallRedial(config, timeGap);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to set eCall configuration" << std::endl;
         return;
     }
 }

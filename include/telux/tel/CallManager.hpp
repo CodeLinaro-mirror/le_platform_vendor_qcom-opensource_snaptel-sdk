@@ -827,6 +827,68 @@ public:
         int duration, common::ResponseCallback callback = nullptr ) = 0;
 
    /**
+    * Configure eCall redial parameters.
+    * Redial of an eCall can be attempted by the modem during an eCall origination failure or when
+    * it gets terminated before receipt of the MSD transmission status.
+    * The eCall redial parameters should be configured before initiating a regulatory eCall and
+    * this configuration is not persistent after modem reset.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] config         Indicates eCall redial configuration
+    *                            @ref telux::tel::RedialConfigType
+    * @param [in] timeGap        Indicates time gap between successive redial attempts in
+    *                            milliseconds.
+    *                            Redial attempts can range from 1 to 10 for eCall origination
+    *                            failures. For eCall termination before the receipt of MSD
+    *                            Transmission status, the range is between 1 and 2 attempts.
+    *                            The redial minimum time duration between the successive redial
+    *                            attempts is set as per 3GPP TS22.001 annex 6 and the user is
+    *                            expected to provide a suitable value of timeGap.
+    * ---------------------------------------------------------------------------------------------
+    * -----------------------------------ECALL ORIGINATION FAILURE---------------------------------
+    * -------------------( @ref telux::tel::RedialConfigType::CALL_ORIG )--------------------------
+    * ---------------------------------------------------------------------------------------------
+    * Call attempt                                                    Minimum duration between
+    *                                                                       call attempt
+    *                                                              ( in milliseconds as per
+    *                                                                3GPP TS22.001 annex 6 )
+    *----------------------------------------------------------------------------------------------
+    * Initial call attempt                                                     NA
+    *     1                                                                    5000
+    *     2                                                                    60000
+    *     3                                                                    60000
+    *     4                                                                    60000
+    *     5 attempt and                                                        180000
+    *     subsequent attempts
+    * ---------------------------------------------------------------------------------------------
+    * -----------------------------------------ECALL DROP -----------------------------------------
+    * -----------------------( @ref telux::tel::RedialConfigType::CALL_DROP )----------------------
+    * ---------------------------------------------------------------------------------------------
+    * Call attempt                                                    Minimum duration between
+    *                                                                       call attempt
+    *                                                              ( in milliseconds as per
+    *                                                                3GPP TS22.001 annex 6 )
+    *----------------------------------------------------------------------------------------------
+    * Initial call attempt                                                      NA
+    *     1                                                                     5000
+    *     2                                                                     60000
+    *----------------------------------------------------------------------------------------------
+
+    *
+    * @param [in] callback       Callback function to get the response of the configureECallRedial
+    *                            request.
+    *
+    * @returns Status of configureECallRedial i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
+    *             backwards compatibility.
+    */
+   virtual telux::common::Status configureECallRedial(RedialConfigType config,
+        const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr) = 0;
+
+   /**
     * Add a listener to listen for incoming call, call info change and eCall MSD
     * transmission status change.
     *

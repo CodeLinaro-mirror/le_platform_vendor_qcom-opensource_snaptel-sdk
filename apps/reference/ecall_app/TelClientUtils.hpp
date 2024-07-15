@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -84,6 +84,11 @@ public:
      * Prints the encoded eCall MSD payload.
      */
     static void printECallMsdPayload(std::string encodedPdu);
+
+    /*
+     * Prints the reason to redial eCall or not.
+     */
+    static std::string eCallRedialReasonToString(ReasonType reason);
 
     TelClientUtils();
     ~TelClientUtils();

@@ -239,6 +239,15 @@ void TelClient::OnMsdUpdateRequest(int phoneId) {
     }
 }
 
+// Notify clients whether redial will be perfomed or not with the reason
+void TelClient::onECallRedial(int phoneId, ECallRedialInfo info) {
+    std::cout << CLIENT_NAME << " eCall redial will"
+              << (info.willECallRedial ? " be performed " : " not be perfomed")
+              << (info.willECallRedial ? " and redial reason is " : " and not redial reason is")
+              << TelClientUtils::eCallRedialReasonToString(info.reason)
+              << std::endl;
+}
+
 // Callback to notify eCall HLAP timers status
 void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) {
     std::string infoStr = "\n";
@@ -424,6 +433,18 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
+    }
+}
+
+// Callback which provides response to configure ECall redial parameters
+void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME <<
+            "Configuration of ECall Redial parameters failed with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully configured eCall redial parameters" << std::endl;
     }
 }
 
@@ -853,4 +874,19 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
         TelClientUtils::printECallMsdPayload(ss.str());
     }
     return telux::common::ErrorCode::SUCCESS;
+}
+
+telux::common::Status TelClient::configureECallRedial(int config, std::vector<int> &timeGap) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager,  Failed to configure eCall redial"
+            << " configuration " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->configureECallRedial(static_cast<RedialConfigType>(config), timeGap,
+        std::bind(&TelClient::configureECallRedialResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to configure eCall redial configuration" << std::endl;
+        return status;
+    }
+    return telux::common::Status::SUCCESS;
 }

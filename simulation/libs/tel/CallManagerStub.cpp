@@ -178,13 +178,12 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
  * same call object cached by client.
  */
 
-void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,int phoneId,
+void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber, int phoneId,
     int cbDelay, std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,
     telux::common::ErrorCode error) {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__," phoneId:: ", phoneId);
     std::vector<std::shared_ptr<CallStub>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
-
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallStub> call) {
         return find(phoneId, call, remotePartyNumber);
     });
@@ -196,6 +195,7 @@ void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,
             auto f = std::async(std::launch::async,
                 [this, error, iter, iMakecallback, cbDelay]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    LOG(DEBUG, __FUNCTION__, " invoking callback");
                     iMakecallback->makeCallResponse(error, *iter);
                 }).share();
             taskQ_->add(f);
@@ -204,6 +204,7 @@ void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,
             auto f = std::async(std::launch::async,
                 [this, error, iter, callback, cbDelay]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                    LOG(DEBUG, __FUNCTION__, " invoking callback");
                     callback(error, *iter);
                 }).share();
             taskQ_->add(f);
@@ -213,8 +214,12 @@ void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,
 
 bool CallManagerStub::find(int phoneId, std::shared_ptr<CallStub> call,
     std::string remotePartyNumber) {
-    if((call->getRemotePartyNumber() == remotePartyNumber) &&
-        (call->getPhoneId() == phoneId)) {
+    // Remote party number is known by client for a custom number ecall over PS/CS or voice call
+    // when the call is dialed
+    if((call->getRemotePartyNumber() == remotePartyNumber) && (call->getPhoneId() == phoneId)) {
+        return true;
+    } else if((call->getRemotePartyNumber() == "") && (call->getPhoneId() == phoneId)) {
+        // Remote party number is not known by client for a standard ecall when the call is dialed.
         return true;
     } else {
         return false;
@@ -500,8 +505,6 @@ void CallManagerStub::refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> 
     notifyAndRemoveDroppedCalls();
 }
 
-
-
 void CallManagerStub::addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls) {
     LOG(DEBUG, __FUNCTION__, " Number of latest calls: ", latestCalls.size());
     for (std::shared_ptr<CallStub> ci : latestCalls) {
@@ -771,7 +774,6 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::vector<
         std::string remotePartyNumber =
             static_cast<std::string>(response.call().remote_party_number());
         int callIndex = static_cast<int>(response.call().call_index());
-
         if (status == telux::common::Status::SUCCESS ) {
             // Update call details from server and invoke callback
             findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,

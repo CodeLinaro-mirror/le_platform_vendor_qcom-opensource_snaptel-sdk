@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -101,7 +101,7 @@ class SensorClient : public ISensorEventListener,
     bool isActive() const {
         return activated_;
     }
-
+    void setRecordingFlag(bool enable);
     const int id_;
 
  private:
@@ -117,6 +117,7 @@ class SensorClient : public ISensorEventListener,
     std::shared_ptr<std::thread> workerThread_;
     // Structure instance to store the command line args passed
     SensorTestAppArguments commandLineArgs_;
+    bool isRecordingEnabled_ = false;
 };
 
 #endif  // SENSORCLIENT_HPP

@@ -83,6 +83,10 @@ extern "C" {
 #include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
 
+#define SENSOR_RECORDING_ROTATED_CONFIG "104,50,1"
+#define SENSOR_RECORDING_UNROTATED_CONFIG "104,50,0"
+#define RECORDING_MODE_SLEEP 60
+
 std::shared_ptr<SensorTestApp> sensorTestApp;
 
 SensorTestApp::SensorTestApp(std::string appName, std::string cursor)
@@ -169,6 +173,8 @@ void SensorTestApp::printHelp(std::string programName) {
               << std::endl
               << " -g samplerate,batchcount,isRotated -g samplerate,batchcount,isRotated"
               << std::endl
+              << "-r Create accel and gyro clients for configs [104,50,1] and [104,50,0] and enable recording mode."
+              << std::endl
               << "-h           This help" << std::endl
               << "In case -q and -n both are specified, the argument specified in the end would "
                  "take effect"
@@ -181,9 +187,10 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
         = {{"notification configuration", no_argument, 0, 'n'}, {"help", no_argument, 0, 'h'},
             {"quiet mode", required_argument, 0, 'q'},
             {"accel", required_argument, nullptr, 'a'},
-            {"gyro", required_argument, nullptr, 'g'}, {0, 0, 0, 0}};
+            {"gyro", required_argument, nullptr, 'g'},
+            {"recording", no_argument, nullptr, 'r'}, {0, 0, 0, 0}};
     int option_index = 0;
-    c = getopt_long(argc, argv, "nq:a:g:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "nq:a:g:rh", long_options, &option_index);
     if (c == -1) {
         return;
     }
@@ -227,6 +234,22 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
                     exit(1);
                 }
                 commandlineArgs_.verboseNotification = false;
+                break;
+            }
+            case 'r': {
+                commandlineArgs_.verboseNotification = true;
+                commandlineArgs_.quiet = false;
+                std::string rotatedConfigStr = SENSOR_RECORDING_ROTATED_CONFIG;
+                std::string unrotatedConfigStr = SENSOR_RECORDING_UNROTATED_CONFIG;
+                telux::sensor::SensorConfiguration rotatedSensorConfig;
+                telux::sensor::SensorConfiguration unrotatedSensorConfig;
+                updateSensorConfig(rotatedConfigStr, rotatedSensorConfig);
+                updateSensorConfig(unrotatedConfigStr, unrotatedSensorConfig);
+                sensorList_.push_back({"Accel", rotatedSensorConfig});
+                sensorList_.push_back({"Gyro", rotatedSensorConfig});
+                sensorList_.push_back({"Accel", unrotatedSensorConfig});
+                sensorList_.push_back({"Gyro", unrotatedSensorConfig});
+                setRecordingFlag(true);
                 break;
             }
             case 'h': {
@@ -317,6 +340,10 @@ void SensorTestApp::nonInteractiveLaunch() {
             return;
         }
 
+        if(isRecordingEnabled_){
+            sensorClient->setRecordingFlag(true);
+        }
+
         //Activate the client.
         status = sensorClient->activate();
         if (status != telux::common::Status::SUCCESS) {
@@ -324,6 +351,13 @@ void SensorTestApp::nonInteractiveLaunch() {
             return;
         }
     }
+    if(isRecordingEnabled_){
+        while(1) {
+            //Infinite polling to keep retrieving position reports.
+            std::this_thread::sleep_for(std::chrono::seconds(RECORDING_MODE_SLEEP));
+        }
+    }
+
     //Retrieve reports for a minute
     std::this_thread::sleep_for(std::chrono::seconds(60));
 
@@ -373,4 +407,8 @@ int main(int argc, char **argv) {
         sensorTestApp = nullptr;
     }
     return 0;
+}
+
+void SensorTestApp::setRecordingFlag(bool enable) {
+   isRecordingEnabled_ = enable;
 }

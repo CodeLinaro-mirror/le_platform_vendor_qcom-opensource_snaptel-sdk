@@ -1,0 +1,351 @@
+/*
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/**
+ * @file       SensorFeatureManagerServerImpl.cpp
+ *
+ *
+ */
+
+
+#include "SensorClientServerImpl.hpp"
+#include "libs/common/SimulationConfigParser.hpp"
+
+#include "libs/common/Logger.hpp"
+#include "libs/common/JsonParser.hpp"
+#include "libs/common/CommonUtils.hpp"
+#include "event/EventService.hpp"
+#include "SensorReportService.hpp"
+
+#define CSV_BATCH_COUNT 1000
+#define SENSOR_CLIENT_API_JSON "api/sensor/ISensorClient.json"
+#define SUPPORTED_SENSOR_JSON "api/sensor/SupportedSensors.json"
+
+SensorClientServerImpl::SensorClientServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+    init();
+}
+
+SensorClientServerImpl::~SensorClientServerImpl() {
+    LOG(DEBUG, __FUNCTION__ , " Destructing");
+    if(fileBuffer_) {
+        fileBuffer_->cleanup();
+    }
+}
+
+telux::sensor::SensorType SensorClientServerImpl::getSensorType(std::string sensorType) {
+    LOG(DEBUG,__FUNCTION__);
+    telux::sensor::SensorType type = telux::sensor::SensorType::INVALID;
+    if (sensorType == "Accelerometer") {
+        type = telux::sensor::SensorType::ACCELEROMETER;
+    } else if (sensorType == "Gyroscope") {
+        type = telux::sensor::SensorType::GYROSCOPE;
+    } else if (sensorType == "Accelerometer_Uncalibrated") {
+        type = telux::sensor::SensorType::ACCELEROMETER_UNCALIBRATED;
+    } else if (sensorType == "Gyroscope_Uncalibrated") {
+        type = telux::sensor::SensorType::GYROSCOPE_UNCALIBRATED;
+    }
+    return type;
+}
+
+void SensorClientServerImpl::updateSensorInfo(){
+    LOG(DEBUG,__FUNCTION__);
+    try{
+        Json::Value rootNode;
+        telux::common::ErrorCode errorCode
+            = JsonParser::readFromJsonFile(rootNode, SUPPORTED_SENSOR_JSON);
+        if (errorCode == ErrorCode::SUCCESS) {
+            unsigned int numOfSensors = rootNode["sensors"].size();
+        /* As Json::Value::ArrayIndex is a typedef of unsigned int. */
+            for (Json::Value::ArrayIndex i = 0; i < numOfSensors; i++) {
+                telux::sensor::SensorInfo info;
+                info.id = std::stoi(rootNode["sensors"][i]["id"].asString());
+                info.type = getSensorType(
+                rootNode["sensors"][i]["sensor_type"].asString());
+                info.name = rootNode["sensors"][i]["sensor_name"].asString();
+                info.vendor = rootNode["sensors"][i]["vendor"].asString();
+                for (Json::Value::ArrayIndex j = 0;
+                    j < rootNode["sensors"][i]["sampling_rate"].size(); j++) {
+                    info.samplingRates.push_back(
+                    rootNode["sensors"][i]["sampling_rate"][j].asFloat());
+                }
+                info.maxSamplingRate =
+                    std::stof(rootNode["sensors"][i]["max_sampling_rate"].asString());
+                info.maxBatchCountSupported =
+                    std::stoi(rootNode["sensors"][i]["max_batch_count"].asString());
+                info.minBatchCountSupported =
+                    std::stoi(rootNode["sensors"][i]["min_batch_count"].asString());
+                info.range = std::stoi(rootNode["sensors"][i]["range"].asString());
+                info.version = std::stoi(rootNode["sensors"][i]["version"].asString());
+                info.resolution = std::stof(rootNode["sensors"][i]["resolution"].asString());
+                info.maxRange = std::stof(rootNode["sensors"][i]["max_range"].asString());
+                sensorInfo_.emplace_back(info);
+            }
+        }
+    } catch(std::exception const & ex){
+        LOG(DEBUG, "Exception Occur ", ex.what());
+    }
+}
+
+grpc::Status SensorClientServerImpl::GetSensorList(ServerContext* context,
+    const google::protobuf::Empty* request, sensorStub::SensorInfoResponse* response) {
+    LOG(DEBUG, __FUNCTION__);
+    updateSensorInfo();
+    for (const auto& dataStruct : sensorInfo_) {
+        sensorStub::SensorInfo* data = response->add_sensor_info();
+        data->set_id(dataStruct.id);
+        data->set_sensor_type(static_cast<uint32_t>(dataStruct.type));
+        data->set_name(dataStruct.name);
+        data->set_vendor(dataStruct.vendor);
+        for (const auto& samplingRate : dataStruct.samplingRates) {
+            data->add_sampling_rates(samplingRate);
+        }
+        data->set_max_sampling_rate(dataStruct.maxSamplingRate);
+        data->set_max_batch_count_supported(dataStruct.maxBatchCountSupported);
+        data->set_min_batch_count_supported(dataStruct.minBatchCountSupported);
+        data->set_range(dataStruct.range);
+        data->set_version(dataStruct.version);
+        data->set_resolution(dataStruct.resolution);
+        data->set_max_range(dataStruct.maxRange);
+    }
+    sensorInfo_.clear();
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::InitService(ServerContext* context,
+    const google::protobuf::Empty* request, sensorStub::GetServiceStatusReply* response) {
+    LOG(DEBUG,__FUNCTION__);
+    int cbDelay = 100;
+    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    Json::Value rootNode;
+    telux::common::ErrorCode errorCode
+        = JsonParser::readFromJsonFile(rootNode, SENSOR_CLIENT_API_JSON);
+    if (errorCode == ErrorCode::SUCCESS) {
+        cbDelay = rootNode["ISensorClient"]["IsSubsystemReadyDelay"].asInt();
+        std::string cbStatus = rootNode["ISensorClient"]["IsSubsystemReady"].asString();
+        serviceStatus = CommonUtils::mapServiceStatus(cbStatus);
+    } else {
+        LOG(ERROR, "Unable to read SensorClient JSON");
+    }
+    response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
+    response->set_delay(cbDelay);
+    return grpc::Status::OK;
+}
+
+inline bool fileExists(const std::string &csvFile) {
+    std::ifstream f(csvFile.c_str());
+    return f.good();
+}
+
+void SensorClientServerImpl::init() {
+    LOG(DEBUG, __FUNCTION__);
+    SimulationConfigParser configParser;
+    std::string fileName = configParser.getValue("sim.sensor.sensor_report_file_name");
+    std::string filePath = std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
+    if (!fileExists(filePath)) {
+        filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
+            + std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
+        if (!fileExists(filePath)) {
+            LOG(DEBUG, __FUNCTION__ , " Failed to open CSV");
+            return;
+        }
+    }
+    fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
+    fileBuffer_->startBuffering();
+    bufferingInitialized_ = true;
+    std::string replayCsvStr = configParser.getValue("sim.sensor.sensor_report_replay");
+    if(replayCsvStr == "TRUE") {
+        replayCsv_ = true;
+    }
+}
+
+void SensorClientServerImpl::updateStreamRequest() {
+    LOG(DEBUG, __FUNCTION__);
+    if(bufferingInitialized_) {
+        auto &sensorReportService = SensorReportService::getInstance();
+        size_t clientSize = sensorReportService.getClientsForFilter("SENSOR_REPORTS");
+        LOG(DEBUG, __FUNCTION__, " Client size- ", clientSize);
+        if(clientSize == 1) {
+            //Initializing/Resetting the flag.
+            stopStreamingData_ = false;
+            //Starting the stream.
+            auto f = std::async(std::launch::deferred,
+                [=]() {
+                    this->startStreaming();
+                }).share();
+            taskQ_.add(f);
+        }
+    }
+}
+
+
+void SensorClientServerImpl::startStreaming() {
+    LOG(DEBUG, __FUNCTION__);
+    while(true) {
+        if(fileBuffer_->getNextBuffer(requestBuffer_)) {
+            while(!requestBuffer_.empty()) {
+                //Send requestBuffer_[0] to clients via streams.
+                std::vector<std::string> message = CommonUtils::splitString(requestBuffer_[0]);
+                uint64_t currentTimestamp = std::stoull(message[2]);
+                if(lastBatchStreamed_) {
+                    /**
+                     * During replay, we may reach EOF in between the sample processing for a batch.
+                     * This 104Hz sleep is to synchronize the last sample and the first sample of the
+                     * CSV since we can't calculate the time difference.
+                     */
+                    std::this_thread::sleep_for(
+                            std::chrono::nanoseconds(8500000));
+                    lastBatchStreamed_ = false;
+                } else {
+                    if(previousTimestamp_ != 0) {
+                        std::this_thread::sleep_for(
+                            std::chrono::nanoseconds(currentTimestamp-previousTimestamp_));
+                    }
+                }
+                previousTimestamp_ = currentTimestamp;
+                //Updating timestamp of sample going out
+                timespec ts;
+                clock_gettime(CLOCK_MONOTONIC, &ts);
+                uint64_t sampleTimestamp = (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
+                message[3] = std::to_string(sampleTimestamp);
+                std::string temp = "";
+                for(auto s: message) {
+                    temp += s;
+                    temp += ",";
+                }
+                temp.pop_back();
+                requestBuffer_[0] = temp;
+                //Send requestBuffer_[0] to clients via streams.
+                ::sensorStub::StartReportsEvent startReportsEvent;
+                ::eventService::EventResponse anyResponse;
+                startReportsEvent.set_sensor_report(requestBuffer_[0]);
+                anyResponse.set_filter("SENSOR_REPORTS");
+                anyResponse.mutable_any()->PackFrom(startReportsEvent);
+                //posting the event to EventService event queue
+                auto &SensorReportService = SensorReportService::getInstance();
+                SensorReportService.updateEventQueue(anyResponse);
+                requestBuffer_.erase(requestBuffer_.begin());
+                // Stop Stream on Request as per config.
+                // Will be checked for last client on stop reports.
+                if(stopStreamingData_) {
+                    LOG(INFO, " Last client de-registered. Streaming stopped.");
+                    return;
+                }
+            }
+        } else {
+            //EOF is reached and request buffer is empty.
+            if(replayCsv_) {
+                LOG(INFO, " Last batch streamed. Replaying CSV.");
+                //Restart buffering
+                fileBuffer_->startBuffering();
+                //To continue filling the batch since the CSV can terminate in between a batch fill.
+                lastBatchStreamed_ = true;
+            } else {
+                LOG(INFO, " Last batch streamed. Streaming stopped.");
+                triggerStreamingStoppedEvent();
+                return;
+            }
+        }
+    }
+}
+
+void SensorClientServerImpl::triggerStreamingStoppedEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    ::sensorStub::StreamingStoppedEvent streamingStoppedEvent;
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("SENSOR_REPORTS");
+    anyResponse.mutable_any()->PackFrom(streamingStoppedEvent);
+    //posting the event to EventService event queue
+    auto &SensorReportService = SensorReportService::getInstance();
+    SensorReportService.updateEventQueue(anyResponse);
+}
+
+grpc::Status SensorClientServerImpl::Configure(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("configure", response);
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::GetConfiguration(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("getConfiguration", response);
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::GetSensorInfo(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("getSensorInfo", response);
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::Activate(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response){
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("activate", response);
+    if (response->status() == ::commonStub::Status::SUCCESS) {
+        updateStreamRequest();
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::SelfTest(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response){
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("selfTest", response);
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::Deactivate(ServerContext* context,
+    const google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response){
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("deactivate", response);
+    if (response->status() == ::commonStub::Status::SUCCESS) {
+        if(bufferingInitialized_) {
+            auto &SensorReportService = SensorReportService::getInstance();
+            size_t clientSize = SensorReportService.getClientsForFilter("SENSOR_REPORTS");
+            LOG(DEBUG, __FUNCTION__, " Client size: ", clientSize);
+            if(clientSize == 0) {
+                SimulationConfigParser configParser;
+                std::string stopStreamStr =
+                    configParser.getValue("sim.sensor.sensor_report_consumption");
+                if(stopStreamStr == "TRUE") {
+                    stopStreamingData_ = true;
+                }
+            }
+        }
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status SensorClientServerImpl::SensorUpdateRotationMatrix(ServerContext* context,
+    const ::google::protobuf::Empty* request,
+    sensorStub::SensorClientCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("sensorUpdateRotationMatrix", response);
+    return grpc::Status::OK;
+}
+
+void SensorClientServerImpl::apiJsonReader(
+    std::string apiName, sensorStub::SensorClientCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, SENSOR_CLIENT_API_JSON);
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    int cbDelay;
+    CommonUtils::getValues(rootNode, "ISensorClient", apiName, status, errorCode, cbDelay);
+    response->set_status(static_cast<::commonStub::Status>(status));
+    response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
+    response->set_delay(cbDelay);
+}

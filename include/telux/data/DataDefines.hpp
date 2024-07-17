@@ -106,6 +106,24 @@ enum class IpFamilyType {
 };
 
 /**
+ * Network type
+ */
+enum class NetworkType {
+    UNKNOWN = -1,
+    LAN = 1,   /**< LAN network type */
+    WAN = 2,   /**< WAN network type */
+};
+
+/**
+ * Specifies operation
+ */
+enum class Operation {
+    UNKNOWN = -1,    /** UNKNOWN operation */
+    DISABLE = 0,     /** DISABLE operation */
+    ENABLE  = 1,     /** ENABLE operation  */
+};
+
+/**
  * Technology Preference
  */
 enum class TechPreference {
@@ -381,11 +399,60 @@ enum class BackhaulType {
  * Encapsulate backhaul configuration parameters
  */
 struct BackhaulInfo {
-    BackhaulType backhaul;              /** Backhaul type to apply configuration on.           */
-    SlotId slotId = DEFAULT_SLOT_ID;    /** Slot Id which has sim that contains profile id    */
+    BackhaulType backhaul;              /** Backhaul type to apply configuration on.          */
+    SlotId slotId = DEFAULT_SLOT_ID;    /** Slot ID on which the profile ID is available.    */
                                         /** Needed only for WWAN backhaul                     */
-    int profileId = -1;                 /** Profile id to apply configuration on              */
+    int profileId = -1;                 /** Profile ID to apply configuration on              */
                                         /** Needed only for WWAN backhaul                     */
+    int vlanId = -1;                    /** Vlan ID should be provided only if vlan is treated as
+                                            backhaul.
+                                            e.g. if the backhaul is Vlan over Ethernet (ETH) with
+                                            Vlan ID 4, Vlan ID should be set to 4 and backhaul type
+                                            should be set to ETH */
+};
+
+enum class IpAssignType {
+    UNKNOWN    = -1,    /** UNKNOW IP Type */
+    STATIC_IP  = 0,     /** STATIC IP */
+    DYNAMIC_IP = 1,     /** DYNAMIC IP */
+};
+
+/**
+ * Specifies IP assign operation
+ */
+enum class IpAssignOperation {
+    UNKNOWN     = -1,   /** UNKNOWN IP assign operation   */
+    DISABLE     = 0,    /** DISABLE IP assignment     */
+    ENABLE      = 1,    /** ENABLE IP assignment      */
+    RECONFIGURE = 2,    /** RECONFIGURE IP assignment */
+};
+
+/**
+ * Specifies IP configuration parameters
+ */
+struct IpConfigParams {
+    InterfaceType ifType;                              /** Interfaces (i.e. ETH, ECM and RNDIS) */
+    IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN; /** Preferred IP family, default is
+                                                           IpFamilyType::UNKNOWN */
+    uint32_t vlanId = -1;                              /** Vlan ID should be provided only if vlan
+                                                           is treated as backhaul. e.g. if the
+                                                           backhaul is Vlan over Ethernet (ETH) with
+                                                           Vlan ID 4, Vlan ID should be set to 4 and
+                                                           interface type should be set to ETH */
+};
+
+/**
+ * Specifies WAN config
+ */
+struct IpConfig {
+    IpAssignType ipType;      /** IP type assignment,
+                                  STATIC_IP:  STATIC IP assignment
+                                  DYNAMIC_IP: DYNAMIC IP assignment */
+    IpAssignOperation ipOpr;  /** IP assign operation,
+                                  DISABLE: if @ref telux::data::DataCallStatus::NET_NO_NET
+                                  ENABLE:  if @ref telux::data::DataCallStatus::NET_CONNECTED
+                                  RECONFIG: if @ref telux::data::DataCallStatus::NET_RECONFIGURED */
+    IpAddrInfo ipAddr;        /** IP configuration, needed only for STATIC type IP */
 };
 
 /**
@@ -405,6 +472,9 @@ struct VlanConfig {
     bool isAccelerated;        /**< is acceleration allowed                                      */
     uint8_t priority = 0;      /**< Vlan priority - A 3-bit field which refers to the IEEE 802.1p
                                     class of service to traffic priority level. Don't care = 0   */
+    NetworkType nwType = NetworkType::LAN;        /**< Network type */
+    bool createBridge = true;                     /**< TRUE:  create VLAN with bridge,
+                                                       FALSE: create VLAN without bridge */
 };
 
 /**

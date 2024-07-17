@@ -103,6 +103,33 @@ struct BandInterferenceConfig {
 };
 
 /**
+ * Specifies the IP passthrough parameters.
+ */
+struct IpptParams {
+    int profileId  = -1;             /** Profile ID to apply the ippt configuration on */
+    int16_t vlanId = -1;             /** Vlan ID associated with network interface for
+                                         @ref telux::data::IpptDeviceConfig */
+    SlotId slotId = DEFAULT_SLOT_ID; /** Slot ID on which the profile ID is available */
+};
+
+/**
+ * Specifies the IP passthrough device configuration.
+ */
+struct IpptDeviceConfig {
+    InterfaceType nwInterface = InterfaceType::UNKNOWN;  /** Network interface on which peer device
+                                                             is connected */
+    std::string macAddr;                                 /** Device MAC address */
+};
+
+/**
+ * IP passthrough configuration
+ */
+struct IpptConfig {
+    Operation ipptOpr = Operation::UNKNOWN; /** Ippt operation */
+    IpptDeviceConfig devConfig;             /** Ippt device configuration */
+};
+
+/**
  * This function is called with the response to requestBackhaulPreference API.
  *
  * The callback can be invoked from multiple different threads.
@@ -440,6 +467,127 @@ public:
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Allows the client to set the IP passthrough configuration for a specific profile and vlan ID.
+     *
+     * When @ref telux::data::IpptConfig ipptOpr is set to ENABLE, the client can add a new
+     * @ref telux::data::IpptDeviceConfig or modify an existing configuration.
+     *
+     * The @ref telux::data::IpAddrInfo gwMask is not required for this API.
+     *
+     * If @ref telux::data::IpptDeviceConfig is not provided, the system will perform an IP
+     * passthrough operation on the existing configuration.
+     *
+     * The system cannot add or modify the @ref telux::data::IpptDeviceConfig if the @ref
+     * telux::data::IpptConfig ipptOpr is set to DISABLE.
+     *
+     * Configuration changes will be persistent across reboots.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] ipptParms  IP passthrough parameters, @ref telux::data::IpptParams
+     * @param [in] config     IP passthrough configuration, @ref telux::data::IpptConfig
+     *
+     * @returns               @ref telux::common::ErrorCode as appropriate.
+     *
+     * @note   @ref telux::data::IpAddrInfo gwMask is not required for this API.
+     *         Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setIpPassThroughConfig(const IpptParams &ipptParms,
+            const IpptConfig &config) = 0;
+
+    /**
+     * Get the current IP passthrough configuration for a specific profile ID and vlan ID.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] ipptParms  IP passthrough parameters, @ref telux::data::IpptParams
+     * @param [out] config    IP passthrough configuration, @ref telux::data::IpptConfig
+     *
+     * @returns              @ref telux::common::ErrorCode as appropriate.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getIpPassThroughConfig(const IpptParams &ipptParms,
+            IpptConfig &config) = 0;
+
+    /**
+     * Set the IP configuration for an interface.
+     * Provides the ability to configure @ref telux::data::IpAssignType::STATIC_IP or
+     * @ref telux::data::IpAssignType::DYNAMIC_IP to a specified @ref telux::data::InterfaceType.
+     *
+     * Currently, @ref telux::data::IpAssignType::STATIC_IP support is only available for
+     * @ref telux::data::IpFamilyType::IPV4.
+     *
+     * To change the @ref telux::data::IpAssignType from STATIC_IP to DYNAMIC_IP (or vice versa),
+     * the client must first configure the @ref telux::data::IpConfig ipOpr to DISABLE using this
+     * API.
+     *
+     * This API does not support @ref telux::data::IpFamilyType::IPV4V6. The client must
+     * invoke this API multiple times to configure @ref telux::data::IpAssignType::STATIC_IP or
+     * @ref telux::data::IpAssignType::DYNAMIC_IP for @ref telux::data::IpFamilyType::IPV4 and
+     * @ref telux::data::IpFamilyType::IPV6 separately.
+     *
+     * Prior to invoking this API, the data call should be up and running.
+     * If the data call status changes, the clients will be notified using
+     * @ref telux::data::IDataConnectionListener::onDataCallInfoChanged and this API must be
+     * invoked again as described below.
+     *
+     * When @ref telux::data::DataCallStatus, whose IP address is being passed through to this
+     * NAD, changes to NET_NO_NET, this API must be invoked again with @ref telux::data::IpConfig
+     * ipOpr to DISABLE.
+     * When @ref telux::data::DataCallStatus, whose IP address is being passed through to this
+     * NAD, changes to NET_CONNECTED, this API must be invoked again with @ref telux::data::IpConfig
+     * ipOpr to ENABLE.
+     * When @ref telux::data::DataCallStatus, whose IP address is being passed through to this
+     * NAD, changes to NET_RECONFIGURED, this API must be invoked again with
+     * @ref telux::data::IpConfig ipOpr to RECONFIG.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] ipConfigParams     @ref telux::data:IpConfigParams
+     * @param [in] ipConfig           @ref telux::data:IpConfig
+     *
+     * @returns                  @ref telux::common::ErrorCode as appropriate.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setIpConfig(const IpConfigParams &ipConfigParams,
+            const IpConfig &ipConfig) = 0;
+
+    /**
+     * Get the IP configuration for an interface.
+     * Provides the ability to get the configuration for @ref telux::data::IpAssignType::STATIC_IP
+     * or @ref telux::data::IpAssignType::DYNAMIC_IP for a specific @ref telux::data::InterfaceType
+     * and @ref telux::data::IpFamilyType.
+     *
+     * This API does not support @ref telux::data::IpFamilyType::IPV4V6. The client must invoke this
+     * API multiple times to get IP configuration for @ref telux::data::IpFamilyType::IPV4 and
+     * @ref telux::data::IpFamilyType::IPV6.
+     *
+     * The @ref telux::data::IpAddrInfo only provides @ref telux::data::IpAssignType::STATIC_IP
+     * configuration.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in]  ipConfigParams     @ref telux::data:IpConfigParams
+     * @param [out] ipConfig           @ref telux::data:IpConfig
+     *
+     * @returns                @ref telux::common::ErrorCode as appropriate.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
+            IpConfig &ipConfig) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

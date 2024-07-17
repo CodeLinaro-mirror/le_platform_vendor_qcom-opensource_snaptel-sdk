@@ -511,14 +511,28 @@ void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
     Utils::validateInput(sessionId);
     bindConfig.locId = sessionId;
 
-    int profileId;
+    int bhType;
     bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
-    std::cout << "Enter Profile Id to bind session to: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
-    bindConfig.bhInfo.profileId = profileId;
-    retStat = l2tpManager_->bindSessionToBackhaul(bindConfig, respCb);
-    Utils::printStatus(retStat);
+    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
+    std::cin >> bhType;
+    Utils::validateInput(bhType, {1, 2});
+    bindConfig.bhInfo.backhaul = ( bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
+
+    if (bindConfig.bhInfo.backhaul == BackhaulType::WWAN) {
+        int profileId;
+        std::cout << "Enter Profile Id to bind session to: ";
+        std::cin >> profileId;
+        Utils::validateInput(profileId);
+        bindConfig.bhInfo.profileId = profileId;
+    } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
+        int vlanId;
+        std::cout << "Enter Vlan Id to bind session to: ";
+        std::cin >> vlanId;
+        Utils::validateInput(vlanId);
+        bindConfig.bhInfo.vlanId = vlanId;
+    }
+        retStat = l2tpManager_->bindSessionToBackhaul(bindConfig, respCb);
+        Utils::printStatus(retStat);
 }
 
 void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) {
@@ -542,12 +556,27 @@ void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) 
     Utils::validateInput(sessionId);
     bindConfig.locId = sessionId;
 
-    int profileId;
+    int bhType;
     bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
-    std::cout << "Enter Profile Id to unbind session from: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
-    bindConfig.bhInfo.profileId = profileId;
+    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
+    std::cin >> bhType;
+    Utils::validateInput(bhType, {1, 2});
+    bindConfig.bhInfo.backhaul = ( bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
+
+    if (bindConfig.bhInfo.backhaul == BackhaulType::WWAN) {
+        int profileId;
+        std::cout << "Enter Profile Id to unbind session from: ";
+        std::cin >> profileId;
+        Utils::validateInput(profileId);
+        bindConfig.bhInfo.profileId = profileId;
+    } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
+        int vlanId;
+        std::cout << "Enter Vlan Id to bind session to: ";
+        std::cin >> vlanId;
+        Utils::validateInput(vlanId);
+        bindConfig.bhInfo.vlanId = vlanId;
+    }
+
     retStat = l2tpManager_->unbindSessionFromBackhaul(bindConfig, respCb);
     Utils::printStatus(retStat);
 }
@@ -556,6 +585,12 @@ void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputComma
     std::cout << "Query Session To Backhaul Mappings\n";
     telux::common::Status retStat;
     telux::data::BackhaulType backhaulType = BackhaulType::WWAN;
+
+    int bhType;
+    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
+    std::cin >> bhType;
+    Utils::validateInput(bhType, {1, 2});
+    backhaulType = ( bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
 
     auto respCb = [](const std::vector<telux::data::net::L2tpSessionBindConfig> bindings,
         telux::common::ErrorCode error) {
@@ -568,8 +603,16 @@ void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputComma
         if(error == telux::common::ErrorCode::SUCCESS) {
             if(bindings.size() > 0) {
                 for (auto c : bindings) {
-                    std::cout << "profId: " << (int)c.bhInfo.profileId
-                              << ", Local id: " << c.locId << "\n";
+                    std::string bh = (c.bhInfo.backhaul == telux::data::BackhaulType::ETH ?
+                            "ETH" : (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN ? "WWAN" :
+                                "UNKNOWN"));
+                    if (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                        std::cout << "Backhaul: " << bh << ", profId: " << (int)c.bhInfo.profileId
+                            << ", Local id: " << c.locId << "\n";
+                    } else if (c.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+                        std::cout << "Backhaul: " << bh << ", vlanId associated with session: "
+                            << (int)c.bhInfo.vlanId << ", Local id: " << c.locId << "\n";
+                    }
                 }
             } else {
                 std::cout << "No bindings found" << std::endl;

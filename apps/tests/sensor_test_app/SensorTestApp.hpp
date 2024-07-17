@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2017-2019, 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef SENSORTESTAPP_HPP
 #define SENSORTESTAPP_HPP
 
@@ -69,6 +74,7 @@ class SensorTestApp : public ConsoleApp {
     void sensorControlMenu(std::vector<std::string> userInput);
     void sensorFeatureControlMenu(std::vector<std::string> userInput);
     void updateSensorConfig(std::string str, telux::sensor::SensorConfiguration &sensorConfig);
+    void setRecordingFlag(bool enable);
 
     std::vector<std::shared_ptr<SensorClient>> sensorClientList_;
     // Instance of all menu created are stored to maintain parallel running streams
@@ -76,6 +82,7 @@ class SensorTestApp : public ConsoleApp {
     std::shared_ptr<SensorFeatureControlMenu> sensorFeatureControlMenu_;
     // Structure instance to store the command line args passed
     SensorTestAppArguments commandlineArgs_;
+    bool isRecordingEnabled_ = false;
 };
 
 #endif  // SensorTestApp_HPP

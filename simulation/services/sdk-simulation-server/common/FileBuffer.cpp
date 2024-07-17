@@ -47,6 +47,9 @@ void FileBuffer::startBufferingSync() {
         std::string line = "";
         while(lineCount < threshold_ && ifs.peek() != EOF) {
             std::getline(ifs, line);
+            if((line.empty()) || (line.find('*') != std::string::npos)) {
+                continue;
+            }
             readBuffer_.push_back(line);
             lineCount++;
         }

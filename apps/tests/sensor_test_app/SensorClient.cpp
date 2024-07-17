@@ -87,6 +87,7 @@
 
 #define print_notification(tag) std::cout << "\033[1;35m" << tag << "\033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
+#define SENSOR_DATA_RECORDING std::cerr << "###"
 
 SensorClient::SensorClient(
     int id, std::shared_ptr<ISensorClient> sensor, SensorTestAppArguments commandLineArgs)
@@ -196,6 +197,19 @@ void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
             }
             samplingRateAggregate += samplingRate;
             eventTimeStamp = s.timestamp;
+            if(isRecordingEnabled_) {
+                //Recording Data.
+                std::ostringstream recordStream;
+                recordStream << static_cast<uint32_t>(sensor_->getSensorInfo().type) << ","
+                << sensor_->getConfiguration().isRotated << "," << s.timestamp << ","
+                << s.uncalibrated.data.x << "," << s.uncalibrated.data.y << ","
+                << s.uncalibrated.data.z << "," << s.uncalibrated.bias.x << ","
+                << s.uncalibrated.bias.y << "," << s.uncalibrated.bias.z << std::endl;
+                {
+                    std::lock_guard<std::mutex> lock(mtx_);
+                    SENSOR_DATA_RECORDING << recordStream.str() << std::endl;
+                }
+            }
         }
         print_notification("Batch")
             << tag_ << samplingRateAggregate / count << "Hz, " << receivedTimeStamp << "ns, "
@@ -293,4 +307,8 @@ telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
             << " successful, waiting for callback" << std::endl;
     }
     return status;
+}
+
+void SensorClient::setRecordingFlag(bool enable) {
+   isRecordingEnabled_ = enable;
 }

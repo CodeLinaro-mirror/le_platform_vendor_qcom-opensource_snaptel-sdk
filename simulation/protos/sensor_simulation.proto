@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -8,18 +8,38 @@ syntax = "proto3";
 package sensorStub;
 import "google/protobuf/empty.proto";
 import "common_simulation.proto";
+import "event_simulation.proto";
 
 /*******************************************************************
  * Services Definition                                             *
  *******************************************************************/
 
-service SensorFeatureManagerService{
+service SensorFeatureManagerService {
    rpc InitService (google.protobuf.Empty) returns (GetServiceStatusReply) {}
    rpc GetFeatureList (google.protobuf.Empty) returns (GetFeatureListReply) {}
    rpc EnableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
    rpc DisableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
 }
 
+service SensorClientService {
+    rpc InitService (google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc GetSensorList (google.protobuf.Empty) returns (SensorInfoResponse) {}
+    rpc Configure (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc GetConfiguration (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc GetSensorInfo (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc Activate (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc Deactivate (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc SelfTest (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc SensorUpdateRotationMatrix (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+}
+
+service EventDispatcherService {
+    rpc isServiceAvailable(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc registerForEvents(eventService.EventRequest) returns (stream eventService.EventResponse) {}
+    rpc InjectEvent(eventService.UnsolicitedEvent) returns (google.protobuf.Empty) {}
+    rpc updateFilter(eventService.EventRequest) returns (google.protobuf.Empty) {}
+    rpc cleanup(eventService.CleanupRequest) returns (google.protobuf.Empty) {}
+}
 
 /*******************************************************************
  * Messages Definition                                             *
@@ -33,6 +53,12 @@ message GetServiceStatusReply {
 message SensorFeatureManagerCommandReply {
     commonStub.Status status = 1;
     int32 delay = 2;
+}
+
+message SensorClientCommandReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
 }
 
 message SensorEnableFeature{
@@ -51,6 +77,27 @@ message GetFeatureListReply {
     string list = 3;
 }
 
+message StartReportsEvent {
+    string sensor_report = 1;
+}
 
+message StreamingStoppedEvent {}
 
+message SensorInfo {
+    int32 id = 1;
+    int32 sensor_type = 2;
+    string name = 3;
+    string vendor = 4;
+    repeated float sampling_rates = 5;
+    float max_sampling_rate = 6;
+    uint32 max_batch_count_supported = 7;
+    uint32 min_batch_count_supported = 8;
+    int32 range = 9;
+    int32 version = 10;
+    float resolution = 11;
+    float max_range = 12;
+}
 
+message SensorInfoResponse {
+    repeated SensorInfo sensor_info = 1;
+}

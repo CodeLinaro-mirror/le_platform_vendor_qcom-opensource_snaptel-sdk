@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -53,6 +53,8 @@
 #include "loc/LocationReportService.hpp"
 #include "audio/AudioGrpcServiceImpl.hpp"
 #include "power/PowerManagerServiceImpl.hpp"
+#include "sensor/SensorClientServerImpl.hpp"
+#include "sensor/SensorReportService.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -228,6 +230,13 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
         std::make_shared<NetworkSelectionManagerServerImpl>();
     builder.RegisterService(NetworkSelectionSystemService.get());
+
+    std::shared_ptr<SensorClientServerImpl> sensorClientService =
+        std::make_shared<SensorClientServerImpl>();
+    builder.RegisterService(sensorClientService.get());
+
+    auto& sensorEventService = SensorReportService::getInstance();
+    builder.RegisterService(&sensorEventService);
 
     std::shared_ptr<PowerManagerServiceImpl> powerService =
         std::make_shared<PowerManagerServiceImpl>();

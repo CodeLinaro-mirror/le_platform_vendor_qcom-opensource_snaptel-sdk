@@ -14,6 +14,9 @@ set(PROTO_SRC_DIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}/proto-src)
 set(SENSOR_TEST_LIB_SOURCES
     SensorFactoryStub.cpp
     SensorFeatureManagerStub.cpp
+    SensorManagerStub.cpp
+    SensorClientStub.cpp
+    SensorReportListener.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)
@@ -40,4 +43,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/telux-sensor.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/")
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/PRE-RECORDED_SENSOR_BUFFER_DATA.csv"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/data/telux/csv/")
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/PRE-RECORDED_SENSOR_DATA.csv"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/data/telux/csv/")

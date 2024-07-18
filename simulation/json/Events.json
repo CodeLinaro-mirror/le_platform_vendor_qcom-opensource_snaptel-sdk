@@ -106,14 +106,25 @@
             "slotId:       valid slotIds are 1 & 2 only."
         ],
         "incomingCall":[
-            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber>",
+            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber> <rttMode>",
             "slotId:           valid slotIds are 1 & 2 only.",
-            "phonenumber:      valid phonenumber "
+            "phonenumber:      valid phonenumber ",
+            "rttMode:          valid rttMode are 0 - DISABLED and 1 - FULL only"
         ],
         "hangupCall":[
             "telsdk_event_injector -f tel_call -e hangupCall <slotId> <callId>",
             "slotId:           valid slotIds are 1 & 2 only." ,
             "callId:           valid callId"
+        ],
+        "modifyCallRequest" : [
+            "telsdk_event_injector -f tel_call -e modifyCallRequest <slotId> <callId>",
+            "slotId:           valid slotIds are 1 & 2 only." ,
+            "callId:           valid callId"
+        ],
+        "rttMessageRequest" : [
+            "telsdk_event_injector -f tel_call -e rttMessageRequest <slotId> <message>",
+            "slotId:           valid slotIds are 1 & 2 only." ,
+            "message:          valid message"
         ]
     },
     "tel_phone": {
@@ -254,6 +265,62 @@
             "telsdk_event_injector -f tel_ims_setting -e imsSipUserAgentUpdate <slotId> <sipUserAgent>",
             "slotId:                integer, valid slotIds are 1 & 2 only." ,
             "sipUserAgent:          string, valid sip user agent"
+        ]
+    },
+    "tel_network_select": {
+        "selectionModeUpdate": [
+            "telsdk_event_injector -f tel_network_select -e selectionModeUpdate <slotId> <selectionMode> <mcc> <mnc>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "selectionMode:     integer, valid -1-UNKNOWN, 0-AUTOMATIC, 1-MANUAL.",
+            "mcc :              string, valid mcc Refer for more details telux::tel::NetworkModeInfo.",
+            "mnc :              string, valid mnc Refer for more details telux::tel::NetworkModeInfo."
+        ],
+        "networkScanResultsUpdate": [
+            "telsdk_event_injector -f tel_network_select -e networkScanResultsUpdate <slotId> ,<scanStatus> ,<operatorName1> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus> ,<operatorName2> <mcc> <mnc> <rat> <inUseStatus> <roamingStatus> <forbiddenStatus> <preferredStatus>",
+            "slotId:           integer, valid slotIds are 1 & 2 only.",
+            "scanStatus:       integer, valid 0-COMPLETE, 1-PARTIAL, 2-FAILED.",
+            "operatorName:     string, valid operator name",
+            "mcc :             string, valid mcc Refer for more details telux::tel::OperatorInfo.",
+            "mnc :             string, valid mnc Refer for more details telux::tel::OperatorInfo.",
+            "rat:              integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "inUseStatus:      integer, valid 0-UNKNOWN, 1-CURRENT_SERVING, 2-AVAILABLE.",
+            "roamingStatus:    integer, valid 0-UNKNOWN, 1-HOME, 2-ROAM.",
+            "forbiddenStatus:  integer, valid 0-UNKNOWN, 1-FORBIDDEN, 2-NOT_FORBIDDEN.",
+            "preferredStatus:  integer, valid 0-UNKNOWN, 1-PREFERRED, 2-NOT_PREFERRED."
+        ]
+    },
+    "tel_ims_serv": {
+        "regStatusUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e regStatusUpdate <slotId> <regStatus> <rat> <errorCode> <errorString>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "regStatus:         integer, valid -1-UNKOWN_STATE, 0-NOT_REGISTERED, 1-REGISTERING, 2-REGISTERED, 3-LIMITED_REGISTERED.",
+            "rat:               integer, Radio technology for Voice service state. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "errorCode:         integer, only valid when the IMS in NOT_REGISTERED status. More details refer to SIP-RFC3261 section 13.2.2.2 and section 13.2.2.3.",
+            "errorString:       string, only valid when the IMS in NOT_REGISTERED status. More details refer to SIP-RFC3261 section 13.2.2.2 and section 13.2.2.3."
+        ],
+        "serviceInfoUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e serviceInfoUpdate <slotId> <smsStatus> <voiceStatus>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "smsStatus:         integer, valid -1-UNKNOWN, 0-NO_SERVICE, 1-LIMITED_SERVICE, 2-FULL_SERVICE.",
+            "voiceStatus:       integer, valid -1-UNKNOWN, 0-NO_SERVICE, 1-LIMITED_SERVICE, 2-FULL_SERVICE."
+        ],
+        "pdpStatusInfoUpdate": [
+            "telsdk_event_injector -f tel_ims_serv -e pdpStatusInfoUpdate <slotId> <isConnected> <pdpFailure> <dataCallEndReason> <apnName>",
+            "slotId:               integer, valid slotIds are 1 & 2 only.",
+            "isConnected:          bool, valid value is 1 or 0 signifies PDP is connected or not",
+            "pdpFailure:           integer, PDP failure error code. Refer for more details telux::tel::PdpFailureCode.",
+            "dataCallEndReason:    integer, PDP call end reason type. Refer for more details telux::common::EndReasonType.",
+            "apnName:              string, IMS registration APN name. Refer for more details telux::tel::ImsPdpStatusInfo."
+        ]
+    },
+    "dual_data": {
+        "capabilityChange" : [
+            "telsdk_event_injector -f dual_data -e capabilityChange <enable>",
+            "enable:   bool, 1 :dppd capable, 0 :not dppd capable"
+        ],
+        "recommendationChange" : [
+            "telsdk_event_injector -f dual_data -e recommendationChange <recommendation>",
+            "recommendation:  string, ALLOWED :dual data is allowed, NOT_ALLOWED :dual data is not allowed, NOT_RECOMMENDED :dual data is not recommended"
         ]
     }
 }

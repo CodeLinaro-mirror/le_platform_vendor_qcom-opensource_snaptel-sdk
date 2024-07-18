@@ -110,10 +110,10 @@ struct ImsRegistrationInfo {
                                   registration status is RegistrationStatus::NOT_REGISTERED.
                                   Values(Defined in SIP-RFC3261 section 13.2.2.2
                                   and section 13.2.2.3): \n
-                                  - 3xx -- Redirection responses
-                                  - 4xx -- Client failure responses
-                                  - 5xx -- Server failure responses
-                                  - 6xx -- Global failure responses
+                                  - 3xx - Redirection responses
+                                  - 4xx - Client failure responses
+                                  - 5xx - Server failure responses
+                                  - 6xx - Global failure responses
                                 */
     std::string errorString;    /**< Registration failure error string when the
                                   IMS is not registered. */

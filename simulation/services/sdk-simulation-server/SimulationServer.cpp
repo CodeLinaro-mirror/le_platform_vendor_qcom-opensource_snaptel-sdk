@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -21,6 +21,9 @@
 #include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
+#include "cv2x/Cv2xManagerServerImpl.hpp"
+#include "cv2x/Cv2xConfigServerImpl.hpp"
+#include "cv2x/Cv2xRadioServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
 #include "tel/PhoneManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
@@ -34,11 +37,13 @@
 #include "data/DataSettingsServerImpl.hpp"
 #include "data/ServingSystemServerImpl.hpp"
 #include "data/DataFilterServerImpl.hpp"
+#include "data/DualDataServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
 #include "data/net/L2tpServerImpl.hpp"
 #include "data/net/BridgeServerImpl.hpp"
+#include "data/net/VlanServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
@@ -48,6 +53,8 @@
 #include "loc/LocationReportService.hpp"
 #include "audio/AudioGrpcServiceImpl.hpp"
 #include "power/PowerManagerServiceImpl.hpp"
+#include "sensor/SensorClientServerImpl.hpp"
+#include "sensor/SensorReportService.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -110,6 +117,22 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SmsManagerServerImpl> smsService = std::make_shared<SmsManagerServerImpl>();
     builder.RegisterService(smsService.get());
 
+    std::shared_ptr<Cv2xManagerServerImpl> cv2xRadioMgrService =
+        std::make_shared<Cv2xManagerServerImpl>();
+    builder.RegisterService(cv2xRadioMgrService.get());
+
+    std::shared_ptr<Cv2xConfigServerImpl> cv2xConfigService =
+        std::make_shared<Cv2xConfigServerImpl>();
+    builder.RegisterService(cv2xConfigService.get());
+
+    std::shared_ptr<Cv2xRadioServer> cv2xRadioServer =
+        std::make_shared<Cv2xRadioServer>();
+    if (cv2xRadioServer) {
+        std::shared_ptr<telux::cv2x::ICv2xListener> self = cv2xRadioServer;
+        cv2xRadioServer->init(self);
+    }
+    builder.RegisterService(cv2xRadioServer.get());
+
     std::shared_ptr<DataConnectionServerImpl> dcmService =
         std::make_shared<DataConnectionServerImpl>();
     builder.RegisterService(dcmService.get());
@@ -149,6 +172,14 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<BridgeServerImpl> bridgeService =
         std::make_shared<BridgeServerImpl>();
     builder.RegisterService(bridgeService.get());
+
+    std::shared_ptr<VlanServerImpl> vlanService =
+        std::make_shared<VlanServerImpl>();
+    builder.RegisterService(vlanService.get());
+
+    std::shared_ptr<DualDataServerImpl> dualDataService =
+        std::make_shared<DualDataServerImpl>();
+    builder.RegisterService(dualDataService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);
@@ -199,6 +230,13 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
         std::make_shared<NetworkSelectionManagerServerImpl>();
     builder.RegisterService(NetworkSelectionSystemService.get());
+
+    std::shared_ptr<SensorClientServerImpl> sensorClientService =
+        std::make_shared<SensorClientServerImpl>();
+    builder.RegisterService(sensorClientService.get());
+
+    auto& sensorEventService = SensorReportService::getInstance();
+    builder.RegisterService(&sensorEventService);
 
     std::shared_ptr<PowerManagerServiceImpl> powerService =
         std::make_shared<PowerManagerServiceImpl>();

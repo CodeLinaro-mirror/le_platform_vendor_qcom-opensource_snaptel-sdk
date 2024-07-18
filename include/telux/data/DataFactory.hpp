@@ -92,6 +92,7 @@
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
 #include <telux/data/ClientManager.hpp>
+#include <telux/data/DualDataManager.hpp>
 
 namespace telux {
 namespace data {
@@ -300,6 +301,18 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get DualData Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              DuaData manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IDualDataManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::IDualDataManager> getDualDataManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

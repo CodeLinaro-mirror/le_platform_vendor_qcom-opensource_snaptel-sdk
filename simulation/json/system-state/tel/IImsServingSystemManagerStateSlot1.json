@@ -15,7 +15,7 @@
         },
         "ImsPdpStatusInfo" :
         {
-            "isPdpConnected" : true, /* Refer telux::tel::ImsPdpStatusInfo::isPdpConnected for more details */
+            "isPdpConnected" : 1, /* Refer telux::tel::ImsPdpStatusInfo::isPdpConnected for more details */
             "failureCode" : 0, /* Refer telux::tel::PdpFailureCode for more details */
             "failureReason" : 2, /* Refer telux::common::DataCallEndReason for more details */
             "apnName" : "IMS" /* Refer telux::tel::ImsPdpStatusInfo::apnName for more details */

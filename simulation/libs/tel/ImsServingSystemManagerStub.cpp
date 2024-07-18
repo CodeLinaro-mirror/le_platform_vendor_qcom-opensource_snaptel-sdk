@@ -89,12 +89,38 @@ telux::common::ServiceStatus ImsServingSystemManagerStub::getServiceStatus() {
 
 telux::common::Status ImsServingSystemManagerStub::registerListener(
     std::weak_ptr<IImsServingSystemListener> listener) {
-    return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        status = listenerMgr_->registerListener(listener);
+        std::vector<std::string> filters = {TEL_IMS_SERVING_FILTER};
+        std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 1) {
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.registerListener(shared_from_this(), filters);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
+        }
+    }
+    return status;
 }
 
 telux::common::Status ImsServingSystemManagerStub::deregisterListener(
     std::weak_ptr<telux::tel::IImsServingSystemListener> listener) {
-     return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
+        status = listenerMgr_->deRegisterListener(listener);
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 0) {
+            std::vector<std::string> filters = {TEL_IMS_SERVING_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
+        }
+    }
+    return status;
 }
 
 telux::common::Status
@@ -221,8 +247,99 @@ telux::common::Status ImsServingSystemManagerStub::requestPdpStatus(ImsPdpStatus
     return status;
 }
 
-void ImsServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
+void ImsServingSystemManagerStub::handleImsRegStatusChanged
+    (::telStub::ImsRegStatusChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    ImsRegistrationInfo info = {};
+    info.imsRegStatus = static_cast<telux::tel::RegistrationStatus>(event.ims_reg_status());
+    info.rat = static_cast<telux::tel::RadioTechnology>(event.rat());
+    info.errorCode = event.error_code();
+    info.errorString = event.error_string();
+    std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onImsRegStatusChange(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
 }
 
+void ImsServingSystemManagerStub::handleImsServiceInfoChanged
+    (::telStub::ImsServiceInfoChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    ImsServiceInfo info = {};
+    info.sms = static_cast<telux::tel::CellularServiceStatus>(event.sms());
+    info.voice = static_cast<telux::tel::CellularServiceStatus>(event.voice());
+    std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onImsServiceInfoChange(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
 
+void ImsServingSystemManagerStub::handleImsPdpStatusInfoChanged
+    (::telStub::ImsPdpStatusInfoChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    ImsPdpStatusInfo info = {};
+    telux::common::DataCallEndReason failureReason = {};
+    info.isPdpConnected = event.is_pdp_connected();
+    info.apnName = event.apn_name();
+    info.failureCode = static_cast<telux::tel::PdpFailureCode>(event.failure_code());
+    failureReason.type = static_cast<telux::common::EndReasonType>(event.failure_reason());
+    info.failureReason = failureReason;
+    std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onImsPdpStatusInfoChange(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ImsServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
+    if (event.Is<::telStub::ImsRegStatusChangeEvent>()) {
+        ::telStub::ImsRegStatusChangeEvent imsRegStatusChangeEvent;
+        event.UnpackTo(&imsRegStatusChangeEvent);
+        handleImsRegStatusChanged(imsRegStatusChangeEvent);
+    } else if(event.Is<::telStub::ImsServiceInfoChangeEvent>()) {
+        ::telStub::ImsServiceInfoChangeEvent imsServiceInfoChangeEvent;
+        event.UnpackTo(&imsServiceInfoChangeEvent);
+        handleImsServiceInfoChanged(imsServiceInfoChangeEvent);
+    } else if(event.Is<::telStub::ImsPdpStatusInfoChangeEvent>()) {
+        ::telStub::ImsPdpStatusInfoChangeEvent imsPdpStatusInfoChangeEvent;
+        event.UnpackTo(&imsPdpStatusInfoChangeEvent);
+        handleImsPdpStatusInfoChanged(imsPdpStatusInfoChangeEvent);
+    }
+}

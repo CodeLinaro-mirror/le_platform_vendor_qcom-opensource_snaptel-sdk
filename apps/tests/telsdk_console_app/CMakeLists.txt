@@ -85,6 +85,7 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/data_settings/DataSettingsMenu.cpp
    Data/client/ClientMenu.cpp
    Data/client/ClientListener.cpp
+   Data/dual_data/DualDataManagementMenu.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

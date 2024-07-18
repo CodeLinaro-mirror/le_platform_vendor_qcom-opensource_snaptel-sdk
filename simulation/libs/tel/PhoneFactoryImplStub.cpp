@@ -28,7 +28,7 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
         (std::static_pointer_cast<SubscriptionManagerStub>(subscriptionManager_))->cleanup();
     }
     // remove smsManager
-    for (const auto sms : smsManagerMap_) {
+    for (const auto &sms : smsManagerMap_) {
         if (sms.second != nullptr) {
             (std::static_pointer_cast<SmsManagerStub>(sms.second))->cleanup();
         }
@@ -38,7 +38,7 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
         (std::static_pointer_cast<MultiSimManagerStub>(multiSimManager_))->cleanup();
     }
     // remove imsServSysManager
-    for (const auto ims : imsServSysManagerMap_) {
+    for (const auto &ims : imsServSysManagerMap_) {
         if (ims.second != nullptr) {
             (std::static_pointer_cast<ImsServingSystemManagerStub>(ims.second))->cleanup();
         }
@@ -49,13 +49,13 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
     }
 
     // remove servingSystemManager
-    for (const auto servingSysMgr : servingSystemManagerMap_) {
+    for (const auto &servingSysMgr : servingSystemManagerMap_) {
         if (servingSysMgr.second != nullptr) {
             (std::static_pointer_cast<ServingSystemManagerStub>(servingSysMgr.second))->cleanup();
         }
     }
     // remove networkSelectionManager
-    for (const auto networkSelMgr : networkSelectionManagerMap_) {
+    for (const auto &networkSelMgr : networkSelectionManagerMap_) {
         if (networkSelMgr.second != nullptr) {
             (std::static_pointer_cast<NetworkSelectionManagerStub>
             (networkSelMgr.second))->cleanup();

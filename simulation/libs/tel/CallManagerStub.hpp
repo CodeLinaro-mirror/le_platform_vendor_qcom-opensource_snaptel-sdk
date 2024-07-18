@@ -112,7 +112,8 @@ private:
     void handleEcallEvent(::telStub::ECallInfoEvent event);
     void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);
-    void handleHangup(::telStub::HangupCallEvent event);
+    void handleModifyCallRequest(::telStub::ModifyCallRequestEvent event);
+    void handleRttMessage(::telStub::RttMessageEvent event);
     void invokeECallHlapTimerEventlisteners(int phoneId,
         ECallHlapTimerEvents timersStatus);
     void invokeECallMsdTransmissionStatuslisteners(int phoneId,
@@ -134,9 +135,11 @@ private:
     void refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
     void notifyAndRemoveDroppedCalls();
     void onEventUpdate(std::string event);
+    telux::common::Status dialCall(int phoneId, const std::string &dialNumber,
+        std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi);
     template <typename T>
     T createRequest(int phoneId,
-        const std::string dialNumber, bool isMsdTransmitted, int inputApi) {
+        const std::string dialNumber, bool isMsdTransmitted, CallApi inputApi) {
         T request;
         CallInfo callInfo;
         callInfo.remotePartyNumber = dialNumber;

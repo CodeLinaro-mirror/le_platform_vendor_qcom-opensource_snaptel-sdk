@@ -45,7 +45,7 @@
 #ifndef TELUX_PLATFORM_TIMELISTENER_HPP
 #define TELUX_PLATFORM_TIMELISTENER_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include <telux/common/SDKListener.hpp>
 
 namespace telux {

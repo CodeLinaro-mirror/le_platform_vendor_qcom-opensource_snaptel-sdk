@@ -38,6 +38,8 @@ extern "C" {
 
 #include <algorithm>
 #include <iostream>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -48,6 +50,7 @@ extern "C" {
 
 using namespace std;
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_RESPONSE_DATA std::cout << "\033[1;32mRESPONSE-DATA: \033[0m"
 
 DataSettingsMenu::DataSettingsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -98,7 +101,15 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::restoreFactorySettings, this, std::placeholders::_1)),
             std::make_pair("Is_Device_Data_Usage_Monitoring_Enabled",
             std::bind(&DataSettingsMenu::isDeviceDataUsageMonitoringEnabled,
-                this, std::placeholders::_1))
+                this, std::placeholders::_1)),
+            std::make_pair("Get_IP_Passthrough_Configuration",
+            std::bind(&DataSettingsMenu::getIpPassthroughConfig, this, std::placeholders::_1)),
+            std::make_pair("Set_IP_Passthrough_Configuration",
+            std::bind(&DataSettingsMenu::setIpPassthroughConfig, this, std::placeholders::_1)),
+            std::make_pair("Get_IP_Config",
+            std::bind(&DataSettingsMenu::getIpConfig, this, std::placeholders::_1)),
+            std::make_pair("Set_IP_Config",
+            std::bind(&DataSettingsMenu::setIpConfig, this, std::placeholders::_1))
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -668,6 +679,238 @@ void DataSettingsMenu::restoreFactorySettings(std::vector<std::string> inputComm
     retStat = dataSettingsManagerMap_[opType]->restoreFactorySettings(
         opType, respCb, static_cast<bool>(rebootNeeded));
     Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::getIpPassthroughConfig(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    int profileId = -1, slotId = DEFAULT_SLOT_ID;
+    int16_t vlanId    = -1;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+
+    std::cout << "Enter Vlan Id: ";
+    std::cin >> vlanId;
+
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    telux::data::IpptConfig config;
+    telux::data::IpptParams ipptParams;
+    ipptParams.profileId = profileId;
+    ipptParams.vlanId = vlanId;
+    ipptParams.slotId = static_cast<SlotId>(slotId);
+
+
+    errCode = dataSettingsManagerMap_[opType]->getIpPassThroughConfig(ipptParams, config);
+    std::cout << "Response Code: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        return;
+    }
+
+    PRINT_RESPONSE_DATA << "profileId:\t\t" << ipptParams.profileId << std::endl;
+    PRINT_RESPONSE_DATA << "vlanId:\t\t" << ipptParams.vlanId << std::endl;
+    PRINT_RESPONSE_DATA << "slotId:\t\t" << static_cast<int>(ipptParams.slotId) << std::endl;
+    PRINT_RESPONSE_DATA << "ip passthrough operation:\t\t" << (config.ipptOpr ==
+            telux::data::Operation::ENABLE ? "ENABLE" :
+            (config.ipptOpr == telux::data::Operation::DISABLE ? "DISABLE" : "UNKNOWN"))
+        << std::endl;
+    PRINT_RESPONSE_DATA << "nework interface:\t\t"
+        << DataUtils::vlanInterfaceToString(config.devConfig.nwInterface,
+                telux::data::OperationType::DATA_LOCAL) << std::endl;
+    PRINT_RESPONSE_DATA << "mac addr:\t\t" << config.devConfig.macAddr << std::endl;
+
+}
+
+void DataSettingsMenu::setIpPassthroughConfig(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    int profileId = -1, slotId = DEFAULT_SLOT_ID, networkIf = -1;
+    int16_t vlanId    = -1;
+    bool ipptOpr = false;
+    std::string macAddr;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+    telux::data::IpptConfig config;
+    telux::data::IpptParams ipptParams;
+
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    ipptParams.profileId = profileId;
+
+    std::cout << "Enter Vlan Id: ";
+    std::cin >> vlanId;
+    ipptParams.vlanId = vlanId;
+
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    ipptParams.slotId = static_cast<SlotId>(slotId);
+
+    std::cout << "Enter IP Passthrough operation (0-DISABLE, 1-ENABLE): ";
+    std::cin >> ipptOpr;
+    config.ipptOpr = (ipptOpr == 1 ? telux::data::Operation::ENABLE :
+            telux::data::Operation::DISABLE );
+
+    if (ipptOpr == 1) {
+        bool newConfig = false;
+        std::cout << "Do you want to add device config ? (0-No, 1-Yes): ";
+        std::cin >> newConfig;
+
+        if (ipptOpr && newConfig) {
+            std::cout << "Enter Network interface (1-ETH): ";
+            std::cin >> networkIf;
+            DataUtils::validateInput(networkIf, {1});
+            config.devConfig.nwInterface = (networkIf == 1 ? telux::data::InterfaceType::ETH :
+                    telux::data::InterfaceType::UNKNOWN);
+
+            std::cout << "Enter MAC addr: ";
+            std::cin >> macAddr;
+            config.devConfig.macAddr = macAddr;
+        }
+    }
+
+    errCode = dataSettingsManagerMap_[opType]->setIpPassThroughConfig(ipptParams, config);
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+}
+
+void DataSettingsMenu::setIpConfig(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    uint32_t vlanId    = 0;
+    int interfaceType = -1, ipType = -1, ipFamilyType = -1, ipAssignOpr = -1;
+    std::string ipAddr, gwAddr, primaryDns, secondaryDns;
+    unsigned int ipMask;
+    telux::data::IpConfig ipConfig;
+    telux::data::IpConfigParams ipConfigParams;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+
+    std::cout << "Enter Vlan Id: ";
+    std::cin >> vlanId;
+    ipConfigParams.vlanId = vlanId;
+
+    std::cout << "Enter Interface Type (1-ETH): ";
+    std::cin >> interfaceType;
+    DataUtils::validateInput(interfaceType, {1});
+    ipConfigParams.ifType = (interfaceType == 1 ? telux::data::InterfaceType::ETH
+            : telux::data::InterfaceType::UNKNOWN);
+
+    std::cout << "Enter IP Type (1-STATIC_IP, 2-DYNAMIC_IP): ";
+    std::cin >> ipType;
+    DataUtils::validateInput(ipType, {1, 2});
+    ipConfig.ipType = (ipType == 1 ? telux::data::IpAssignType::STATIC_IP
+            : telux::data::IpAssignType::DYNAMIC_IP);
+
+    std::cout << "Enter IP Assign Operation (0-DISABLE, 1-ENABLE, 2-RECONFIGURE): ";
+    std::cin >> ipAssignOpr;
+    DataUtils::validateInput(ipAssignOpr, {0, 1, 2});
+    ipAssignOpr == 0 ? ipConfig.ipOpr = telux::data::IpAssignOperation::DISABLE
+            : (ipAssignOpr == 1 ? ipConfig.ipOpr = telux::data::IpAssignOperation::ENABLE
+            : ipConfig.ipOpr = telux::data::IpAssignOperation::RECONFIGURE);
+
+    if ((ipAssignOpr != 0) && (ipType == 1)) {
+        /** Requires only in case of IP is STATIC_IP */
+        std::cout << "Enter interface IP address: ";
+        std::cin >> ipAddr;
+        ipConfig.ipAddr.ifAddress = ipAddr;
+
+        std::cout << "Enter interface IP address subnet mask: ";
+        std::cin >> ipMask;
+        ipConfig.ipAddr.ifMask = ipMask;
+
+        std::cout << "Enter gateway IP address: ";
+        std::cin >> gwAddr;
+        ipConfig.ipAddr.gwAddress = gwAddr;
+
+        std::cout << "Enter primary dns address: ";
+        std::cin >> primaryDns;
+        ipConfig.ipAddr.primaryDnsAddress = primaryDns;
+
+        std::cout << "Enter secondary dns address: ";
+        std::cin >> secondaryDns;
+        ipConfig.ipAddr.secondaryDnsAddress = secondaryDns;
+
+        // Currently for STATIC IP only IPV4 is supported
+        ipConfigParams.ipFamilyType = telux::data::IpFamilyType::IPV4;
+
+    } else if (ipType == 2) {
+        /** Requires only in case of IP is DYNAMIC_IP */
+        std::cout << "Enter IP Family Type (1-IPV4, 2-IPV6): ";
+        std::cin >> ipFamilyType;
+        DataUtils::validateInput(ipFamilyType, {1, 2});
+        ipFamilyType == 1 ? ipConfigParams.ipFamilyType = telux::data::IpFamilyType::IPV4
+                : (ipFamilyType == 2 ? ipConfigParams.ipFamilyType = telux::data::IpFamilyType::IPV6
+                    : ipConfigParams.ipFamilyType = telux::data::IpFamilyType::UNKNOWN);
+    }
+
+    errCode = dataSettingsManagerMap_[opType]->setIpConfig(ipConfigParams, ipConfig);
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+}
+
+void DataSettingsMenu::getIpConfig(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    uint32_t vlanId    = 0;
+    int interfaceType = -1, ipType = -1, ipFamilyType = -1, ipAssignOpr = -1;
+    std::string ipAddr, gwAddr, primaryDns, secondaryDns, ipTypeStr, ipOprStr;
+    unsigned int ipMask;
+    telux::data::IpConfig ipConfig;
+    telux::data::IpConfigParams ipConfigParams;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+
+    std::cout << "Enter Vlan Id: ";
+    std::cin >> vlanId;
+    ipConfigParams.vlanId = vlanId;
+
+    std::cout << "Enter Interface Type (1-ETH, 2-ECM): ";
+    std::cin >> interfaceType;
+    DataUtils::validateInput(interfaceType, {1, 2});
+    ipConfigParams.ifType = (interfaceType == 1 ? telux::data::InterfaceType::ETH
+            : telux::data::InterfaceType::ECM);
+
+    std::cout << "Enter IP Family Type (1-IPV4, 2-IPV6): ";
+    std::cin >> ipFamilyType;
+    DataUtils::validateInput(ipFamilyType, {1, 2});
+    ipConfigParams.ipFamilyType = (ipFamilyType == 1 ? telux::data::IpFamilyType::IPV4
+            : (ipFamilyType == 2 ? telux::data::IpFamilyType::IPV6
+                : telux::data::IpFamilyType::UNKNOWN));
+
+    errCode = dataSettingsManagerMap_[opType]->getIpConfig(ipConfigParams, ipConfig);
+
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        return;
+    }
+
+    PRINT_RESPONSE_DATA << "interface type:\t\t" <<
+        (ipConfigParams.ifType == telux::data::InterfaceType::ETH ? "ETH" : "ECM") << std::endl;
+    PRINT_RESPONSE_DATA << "vlan id:\t\t" << ipConfigParams.vlanId << std::endl;
+    ipConfigParams.ipFamilyType == telux::data::IpFamilyType::IPV4 ? ipTypeStr = "IPV4"
+        : (ipConfigParams.ipFamilyType == telux::data::IpFamilyType::IPV6 ? ipTypeStr = "IPV6"
+                : ipTypeStr = "IPV4V6");
+    PRINT_RESPONSE_DATA << "ip family type:\t\t" << ipTypeStr << std::endl;
+
+    PRINT_RESPONSE_DATA << "ip type:\t\t" <<
+        (ipConfig.ipType == telux::data::IpAssignType::STATIC_IP ? "STATIC_IP" : "DYNAMIC_IP")
+        << std::endl;
+    ipConfig.ipOpr == telux::data::IpAssignOperation::DISABLE ? ipOprStr = "DISABLE"
+        : (ipConfig.ipOpr == telux::data::IpAssignOperation::ENABLE ? ipOprStr = "ENABLE"
+                : ipOprStr = "RECONFIGURE");
+    PRINT_RESPONSE_DATA << "ipAssign operation:\t\t" << ipOprStr << std::endl;
+
+    struct in_addr ifMaskAddr;
+
+    if (ipConfig.ipType == telux::data::IpAssignType::STATIC_IP) {
+        PRINT_RESPONSE_DATA << "ipAddr:\t\t" << ipConfig.ipAddr.ifAddress << std::endl;
+        PRINT_RESPONSE_DATA << "gwAddr:\t\t" << ipConfig.ipAddr.gwAddress << std::endl;
+        PRINT_RESPONSE_DATA << "primary dns:\t\t"   << ipConfig.ipAddr.primaryDnsAddress
+            << std::endl;
+        PRINT_RESPONSE_DATA << "secondary dns:\t\t" << ipConfig.ipAddr.secondaryDnsAddress
+            << std::endl;
+        ifMaskAddr.s_addr= ipConfig.ipAddr.ifMask;
+        PRINT_RESPONSE_DATA << "ifMask:\t\t" << inet_ntoa(ifMaskAddr) << std::endl;
+    }
 }
 
 void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {

@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -194,22 +194,22 @@ typedef union {
         /**< Indicates whether the auxiliary braking system is on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         v2x_BrakeBoostApplied_enum_type brake_boost_applied             : 2;
         /**< Indicates whether the brakes are actively being boosted.
 
              @values
-             - 0 -- Not boosted
-             - 1 -- Boosted @tablebulletend */
+             - 0 - Not boosted
+             - 1 - Boosted @tablebulletend */
 
         v2x_StabilityControlStatus_enum_type stability_control_status   : 2;
         /**< Indicates whether stability control is on and engaged.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         v2x_AntiLockBrakeStatus_enum_type antilock_brake_status         : 2;
         /**< Indicates the status of the ABS. */
@@ -222,32 +222,32 @@ typedef union {
              applied.
 
              @values
-             - 0 -- Not applied
-             - 1 -- Applied @tablebulletend */
+             - 0 - Not applied
+             - 1 - Applied @tablebulletend */
 
         unsigned rightFront                                     : 1;
         /**< Indicates whether the right front brakes are actively being
              applied.
 
              @values
-             - 0 -- Not applied
-             - 1 -- Applied @tablebulletend */
+             - 0 - Not applied
+             - 1 - Applied @tablebulletend */
 
         unsigned leftRear                                       : 1;
         /**< Indicates whether the left rear brakes are actively being
              applied
 
              @values
-             - 0 -- Not applied
-             - 1 -- Applied @tablebulletend */
+             - 0 - Not applied
+             - 1 - Applied @tablebulletend */
 
         unsigned leftFront                                      : 1;
         /**< Indicates whether the front left brakes are actively being
              applied.
 
              @values
-             - 0 -- Not applied
-             - 1 -- Applied @tablebulletend */
+             - 0 - Not applied
+             - 1 - Applied @tablebulletend */
 
         unsigned unavailable                                    : 1;
         /**< No information is available. */
@@ -279,22 +279,22 @@ typedef union {
         /**< Indicates whether the airbag is deployed.
 
              @values
-             - 0 -- Not deployed
-             - 1 -- Deployed @tablebulletend */
+             - 0 - Not deployed
+             - 1 - Deployed @tablebulletend */
 
         unsigned eventDisabledVehicle           : 1;
         /**< Indicates whether the vehicle is disabled.
 
              @values
-             - 0 -- Not disabled
-             - 1 -- Disabled @tablebulletend */
+             - 0 - Not disabled
+             - 1 - Disabled @tablebulletend */
 
         unsigned eventFlatTire                  : 1;
         /**< Indicates whether the tire is flat.
 
              @values
-             - 0 -- Not flat
-             - 1 -- Flat @tablebulletend */
+             - 0 - Not flat
+             - 1 - Flat @tablebulletend */
 
         unsigned eventWipersChanged             : 1;
         /**< Indicates the status of the windshield wipers. For more
@@ -309,8 +309,8 @@ typedef union {
         /**< Indicates whether hard braking is activated.
 
              @values
-             - 0 -- Not activated
-             - 1 -- Activated @tablebulletend */
+             - 0 - Not activated
+             - 1 - Activated @tablebulletend */
 
         unsigned eventReserved1                 : 1;
         /**< Event bit reserved for future use. Do not use. */
@@ -319,44 +319,44 @@ typedef union {
         /**< Indicates whether a hazmat load is present.
 
              @values
-             - 0 -- Not present
-             - 1 -- Present @tablebulletend */
+             - 0 - Not present
+             - 1 - Present @tablebulletend */
 
         unsigned eventStabilityControlactivated : 1;
         /**< Indicates whether stability control is on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned eventTractionControlLoss       : 1;
         /**< Indicates whether traction control is activated (1) or not (0).
 
              @values
-             - 0 -- Not applied
-             - 1 -- Applied @tablebulletend */
+             - 0 - Not applied
+             - 1 - Applied @tablebulletend */
 
         unsigned eventABSactivated              : 1;
         /**< Indicates whether ABS is activated.
 
              @values
-             - 0 -- Not activated
-             - 1 -- Activated @tablebulletend */
+             - 0 - Not activated
+             - 1 - Activated @tablebulletend */
 
         unsigned eventStopLineViolation         : 1;
         /**< Indicates whether the vehicle has detected that a violation of the
              Stop Line is imminent.
 
              @values
-             - 0 -- Not imminent
-             - 1 -- Imminent @tablebulletend */
+             - 0 - Not imminent
+             - 1 - Imminent @tablebulletend */
 
         unsigned eventHazardLights              : 1;
         /**< Indicates whether the hazard lights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
     }  bits; /**< Bit values for vehicle event flags. */
 
@@ -380,64 +380,64 @@ typedef union {
         /**< Indicates whether the parking lights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned fogLightOn                : 1;
         /**< Indicates whether the fog lights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned daytimeRunningLightsOn    : 1;
         /**< Indicates whether the running lights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned automaticLightControlOn   : 1;
         /**< Indicates whether the automatic light control is on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned hazardSignalOn            : 1;
         /**< Indicates whether the hazard lights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned rightTurnSignalOn         : 1;
         /**< Indicates whether the right turn light is on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned leftTurnSignalOn          : 1;
         /**< Indicates whether the left turn light is on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned highBeamHeadlightsOn      : 1;
         /**< Indicates whether the high beam headlights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned lowBeamHeadlightsOn       : 1;
         /**< Indicates whether the low beam headlights are on.
 
              @values
-             - 0 -- Off
-             - 1 -- On @tablebulletend */
+             - 0 - Off
+             - 1 - On @tablebulletend */
 
         unsigned unused                    : 7;
         /**< Unused padding bits. */
@@ -494,8 +494,8 @@ typedef struct {
     /**< Indicates whether brakes or emergency brakes (ABS) are activated.
 
          @values
-         - 0 -- Not activated
-         - 1 -- Activated @tablebulletend */
+         - 0 - Not activated
+         - 1 - Activated @tablebulletend */
 
     ExteriorLights_ut exterior_lights;
     /**< Conglomeration of bits that indicate the status of the exterior

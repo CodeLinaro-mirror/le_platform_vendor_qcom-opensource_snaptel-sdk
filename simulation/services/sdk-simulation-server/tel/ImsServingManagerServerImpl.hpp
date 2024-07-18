@@ -28,6 +28,7 @@ class ImsServingManagerServerImpl final : public telStub::ImsServingSystem::Serv
 
 public:
     ImsServingManagerServerImpl();
+    ~ImsServingManagerServerImpl();
     grpc::Status InitService(ServerContext* context,
         const ::commonStub::GetServiceStatusRequest* request,
         commonStub::GetServiceStatusReply* response) override;
@@ -46,6 +47,14 @@ public:
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
+
+private:
+    void handleImsRegStatusChanged(std::string eventParams);
+    void handleImsServiceInfoChanged(std::string eventParams);
+    void handleImsPdpStatusInfoChanged(std::string eventParams);
+    void triggerChangeEvent(::eventService::EventResponse anyResponse);
+    void onEventUpdate(std::string event);
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
 #endif // IMS_SERVING_SYSTEM_MANAGER_SERVER_HPP

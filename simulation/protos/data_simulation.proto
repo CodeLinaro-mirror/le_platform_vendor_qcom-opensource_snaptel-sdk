@@ -81,14 +81,14 @@ service DataFilterManager {
   */
 
   service VlanManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc CreateVlan(CreateVlanRequest) returns (CreateVlanReply) {}
-    rpc RemoveVlan(RemoveVlanRequest) returns (google.protobuf.Empty) {}
+    rpc RemoveVlan(RemoveVlanRequest) returns (DefaultReply) {}
     rpc QueryVlanInfo(QueryVlanInfoRequest) returns (QueryVlanInfoReply);
     rpc QueryVlanMappingList(QueryVlanMappingListRequest) returns (QueryVlanMappingListReply) {}
-    rpc BindWithProfile(BindWithProfileRequest) returns (google.protobuf.Empty) {}
-    rpc UnBindWithProfile(UnBindWithProfileRequest) returns (google.protobuf.Empty) {}
+    rpc BindToBackhaul(BindToBackhaulConfig) returns (DefaultReply) {}
+    rpc UnbindFromBackhaul(BindToBackhaulConfig) returns (DefaultReply) {}
 }
 
 /*
@@ -194,9 +194,43 @@ service DataFilterManager {
     rpc enableSocks(EnableSocksRequest) returns (DefaultReply) {}
   }
 
+  service DualDataManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc GetDualDataCapability(google.protobuf.Empty) returns (GetDualDataCapabilityReply) {}
+    rpc GetDualDataUsageRecommendation(google.protobuf.Empty) returns
+        (GetDualDataUsageRecommendationReply) {}
+  }
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
+
+message GetDualDataCapabilityReply {
+    bool capability = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DualDataCapabilityEvent {
+    bool capability = 1;
+}
+
+message UsageRecommendation {
+    enum Recommendation {
+        ALLOWED = 0;
+        NOT_ALLOWED = 1;
+        NOT_RECOMMENDED = 2;
+    }
+    Recommendation recommendation = 1;
+}
+
+message GetDualDataUsageRecommendationReply {
+    UsageRecommendation usage_recommendation = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DualDataUsageRecommendationEvent {
+    string recommendation = 1;
+}
 
 message ClientInfo {
     int32 client_id = 1;
@@ -590,10 +624,12 @@ message CreateVlanRequest {
     InterfaceType interface_type = 2;
     int32 vlan_id = 3;
     bool is_accelerated = 4;
+    int32 priority = 5;
 }
 
 message CreateVlanReply {
     bool is_accelerated = 1;
+    DefaultReply reply = 2;
 }
 
 message RemoveVlanRequest {
@@ -610,15 +646,18 @@ message VlanConfig {
     InterfaceType interface_type = 1;
     int32 vlan_id = 2;
     bool is_accelerated = 3;
+    int32 priority = 4;
 }
 
 message QueryVlanInfoReply {
     repeated VlanConfig vlan_config = 1;
+    DefaultReply reply = 2;
 }
 
 message QueryVlanMappingListRequest {
     OperationType operation_type = 1;
     int32 slot_id = 2;
+    BackhaulPreference backhaul_type = 3;
 }
 
 message VlanMapping {
@@ -628,6 +667,7 @@ message VlanMapping {
 
 message QueryVlanMappingListReply {
     repeated VlanMapping vlan_mapping = 1;
+    DefaultReply reply = 2;
 }
 
 message BindUnBindRequest {
@@ -929,6 +969,14 @@ message Direction {
         DOWNLINK = 2;
     }
     Fw_Direction fw_direction = 1;
+}
+
+message BindToBackhaulConfig {
+    int32 vlan_id = 1;
+    int32 slot_id = 2;
+    int32 profile_id = 3;
+    BackhaulPreference backhaul_type = 4;
+    OperationType operation_type = 5;
 }
 
 message AddFirewallEntryRequest {

@@ -77,6 +77,10 @@ class DataSettingsMenu : public ConsoleApp ,
     void requestMacSecState(std::vector<std::string> inputCommand);
     void switchBackHaul(std::vector<std::string> inputCommand);
     void restoreFactorySettings(std::vector<std::string> inputCommand);
+    void setIpPassthroughConfig(std::vector<std::string> inputCommand);
+    void getIpPassthroughConfig(std::vector<std::string> inputCommand);
+    void getIpConfig(std::vector<std::string> inputCommand);
+    void setIpConfig(std::vector<std::string> inputCommand);
     void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;

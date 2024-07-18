@@ -7,6 +7,7 @@
 
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 #define JSON_PATH1 "api/tel/INetworkSelectionManagerSlot1.json"
 #define JSON_PATH2 "api/tel/INetworkSelectionManagerSlot2.json"
@@ -16,8 +17,21 @@
 #define SLOT_1 1
 #define SLOT_2 2
 
+#define NETWORK_SELECTION_EVENT_SELECTION_MODE_CHANGE          "selectionModeUpdate"
+#define NETWORK_SELECTION_EVENT_NETWORK_SCAN_RESULTS_CHANGE    "networkScanResultsUpdate"
+
+#define NETWORK_SCAN_RESULTS_OPERATOR_INFO_START_INDEX    2
+
 NetworkSelectionManagerServerImpl::NetworkSelectionManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
+    taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
+}
+
+NetworkSelectionManagerServerImpl::~NetworkSelectionManagerServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+    if (taskQ_) {
+        taskQ_ = nullptr;
+    }
 }
 
 grpc::Status NetworkSelectionManagerServerImpl::CleanUpService(ServerContext* context,
@@ -396,7 +410,195 @@ grpc::Status NetworkSelectionManagerServerImpl::PerformNetworkScan(ServerContext
     return grpc::Status::OK;
 }
 
+void NetworkSelectionManagerServerImpl::handleSelectionModeChanged(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId;
+    Json::Value rootObj;
+    std::string jsonfilename;
+    ::telStub::SelectionModeChangeEvent selectionModeEvent;
+    try {
+        // Read string to get slotId
+        std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        phoneId = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
+        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+            LOG(ERROR, " Invalid input for slot id");
+            return;
+        }
+        if(phoneId == SLOT_2) {
+            if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+                LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+                return;
+            }
+        }
+        // Read string to get selection mode
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int selectionMode = std::stoi(token);
+        if (selectionMode < (static_cast<int>(telStub::NetworkSelectionMode::UNKNOWN)) ||
+            selectionMode > (static_cast<int>(telStub::NetworkSelectionMode::MANUAL))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for selection mode");
+            return;
+        }
+
+        // Read string to get MCC and MNC
+        std::string mcc = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        std::string mnc = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+
+        jsonfilename = (phoneId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+        if (error != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+            return;
+        }
+        rootObj[MANAGER]["NetworkSelectionMode"]["networkSelectionMode"] = selectionMode;
+        rootObj[MANAGER]["NetworkSelectionMode"]["mcc"] = mcc;
+        rootObj[MANAGER]["NetworkSelectionMode"]["mnc"] = mnc;
+        selectionModeEvent.set_phone_id(phoneId);
+        selectionModeEvent.set_mode(static_cast<telStub::NetworkSelectionMode_Mode>(selectionMode));
+        selectionModeEvent.set_mcc(mcc);
+        selectionModeEvent.set_mnc(mnc);
+        LOG(DEBUG, __FUNCTION__, " selectionMode: ", selectionMode, " MCC: ", mcc, " MNC: ", mnc);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
+        return;
+    }
+
+    if (JsonParser::writeToJsonFile(rootObj, jsonfilename) == telux::common::ErrorCode::SUCCESS) {
+        ::eventService::EventResponse anyResponse;
+        anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
+        anyResponse.mutable_any()->PackFrom(selectionModeEvent);
+        auto f = std::async(std::launch::async, [this, anyResponse]() {
+            this->triggerChangeEvent(anyResponse);
+        }).share();
+        taskQ_->add(f);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to write selection mode");
+    }
+}
+
+void NetworkSelectionManagerServerImpl::handleNetworkScanResultsChanged(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId;
+    Json::Value rootObj;
+    std::string jsonfilename;
+    ::telStub::NetworkScanResultsChangeEvent networkScanResultsEvent;
+
+    // Split the event string into parameters (phoneId ,scanStatus ,operatorInfo1 ,operatorInfo2...)
+    // based on delimeter as ","
+    std::stringstream ss(eventParams);
+    std::vector<string> params;
+    while (getline(ss, eventParams, ',')) {
+        params.emplace_back(eventParams);
+    }
+    for(std::string str:params) {
+        LOG(DEBUG, __FUNCTION__," Param: ", str);
+    }
+
+    try {
+        // Read string to get slotId
+        std::string token = EventParserUtil::getNextToken(params[0], DEFAULT_DELIMITER);
+        phoneId = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
+        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+            LOG(ERROR, " Invalid input for slot id");
+            return;
+        }
+        if(phoneId == SLOT_2) {
+            if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+                LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+                return;
+            }
+        }
+        // Read string to get scan status
+        token = EventParserUtil::getNextToken(params[1], DEFAULT_DELIMITER);
+        int scanStatus = std::stoi(token);
+        if (scanStatus < (static_cast<int>(telStub::NetworkScanStatus::COMPLETE)) ||
+            scanStatus > (static_cast<int>(telStub::NetworkScanStatus::FAILED))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for scan status");
+            return;
+        }
+        networkScanResultsEvent.set_phone_id(phoneId);
+        networkScanResultsEvent.set_status
+            (static_cast<telStub::NetworkScanStatus>(scanStatus));
+
+        // Read string to get operator info
+        int infoCount = params.size() - 1;
+        for (int i = NETWORK_SCAN_RESULTS_OPERATOR_INFO_START_INDEX; i <= infoCount; i++) {
+            LOG(DEBUG, " Parsing Params:" , params[i]);
+            std::string operatorName = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            std::string mcc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            std::string mnc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            LOG(DEBUG, __FUNCTION__,  " operatorName is: ", operatorName, " MCC is: ", mcc,
+                " MNC is: ", mnc);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int rat = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " Rat is: ", rat);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int inUseStatus = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " InUseStatus is: ", inUseStatus);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int roamingStatus = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " RoamingStatus is: ", roamingStatus);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int forbiddenStatus = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " ForbiddenStatus is: ", forbiddenStatus);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int  preferredStatus = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " PreferredStatus is: ", preferredStatus);
+
+            telStub::OperatorInfo *result = networkScanResultsEvent.add_operator_infos();
+            result->set_name(operatorName);
+            result->set_mcc(mcc);
+            result->set_mnc(mnc);
+            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
+            result->mutable_operator_status()->set_inuse
+                (static_cast<telStub::InUseStatus_Status>(inUseStatus));
+            result->mutable_operator_status()->set_roaming
+                (static_cast<telStub::RoamingStatus_Status>(roamingStatus));
+            result->mutable_operator_status()->set_forbidden
+                (static_cast<telStub::ForbiddenStatus_Status>(forbiddenStatus));
+            result->mutable_operator_status()->set_preferred
+                (static_cast<telStub::PreferredStatus_Status>(preferredStatus));
+        }
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
+        return;
+    }
+
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
+    anyResponse.mutable_any()->PackFrom(networkScanResultsEvent);
+    auto f = std::async(std::launch::async, [this, anyResponse]() {
+        this->triggerChangeEvent(anyResponse);
+    }).share();
+    taskQ_->add(f);
+}
+
+void NetworkSelectionManagerServerImpl::triggerChangeEvent(
+    ::eventService::EventResponse anyResponse) {
+    LOG(DEBUG, __FUNCTION__);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+}
+
 void NetworkSelectionManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
-    LOG(DEBUG, __FUNCTION__, "Not Supported");
-    /*TODO: Add event handling in later release*/
+    if (message.filter() == telux::tel::TEL_NETWORK_SELECTION_FILTER) {
+        std::string event = message.event();
+        onEventUpdate(event);
+    }
+}
+
+void NetworkSelectionManagerServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__," Event: ", event );
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__," Token: ", token );
+    if (NETWORK_SELECTION_EVENT_SELECTION_MODE_CHANGE == token) {
+        handleSelectionModeChanged(event);
+    } else if (NETWORK_SELECTION_EVENT_NETWORK_SCAN_RESULTS_CHANGE == token) {
+        handleNetworkScanResultsChanged(event);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Event not supported");
+    }
 }

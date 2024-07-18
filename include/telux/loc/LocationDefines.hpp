@@ -3074,8 +3074,8 @@ public:
 
 /** List of DGNSS station IDs providing corrections.
  *  Range:
- *  - SBAS --  120 to 158 and 183 to 191
- *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - SBAS -  120 to 158 and 183 to 191
+ *  - Monitoring station - 1000-2023 (Station ID biased by 1000)
  *  - Other values reserved.
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;

@@ -17,20 +17,20 @@ headers:
 	cd build && mkdir -p build_telux_headers && cd build_telux_headers && cmake -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../include && make install
 
 jsoncpp:
-	cd build && if [ ! -d jsoncpp ] ; then git clone https://git.codelinaro.org/clo/le/jsoncpp.git jsoncpp ; fi && mkdir -p build_jsoncpp && cd build_jsoncpp && cmake -DCMAKE_INSTALL_PREFIX=${ROOTFS} -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_INCLUDEDIR=${ROOTFS}/include/jsoncpp ../jsoncpp && make install
+	cd build && if [ ! -d jsoncpp ] ; then git clone https://git.codelinaro.org/clo/le/jsoncpp.git jsoncpp ; fi && mkdir -p build_jsoncpp && cd build_jsoncpp && cmake -DCMAKE_INSTALL_PREFIX=${ROOTFS} -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_INCLUDEDIR=${ROOTFS}/include/jsoncpp ../jsoncpp && cmake --build . -- -j $(shell nproc) && cmake --build . --target install
 	mv ${ROOTFS}/lib/x86_64-linux-gnu/libjson* ${ROOTFS}/lib/ && rm -rf ${ROOTFS}/lib/x86_64-linux-gnu
 
 cmake:
-	mkdir build && cd build && wget https://cmake.org/files/v3.15/cmake-3.15.3.tar.gz && tar -zxvf cmake-3.15.3.tar.gz && rm cmake-3.15.3.tar.gz && cd cmake-3.15.3 && ./configure --prefix=${PWD}/build/ && make -j16 && make install
+	mkdir build && cd build && wget https://cmake.org/files/v3.15/cmake-3.15.3-Linux-x86_64.sh && chmod a+x ./cmake-3.15.3-Linux-x86_64.sh && ./cmake-3.15.3-Linux-x86_64.sh --prefix=${PWD}/build --skip-license && rm cmake-3.15.3-Linux-x86_64.sh
 
 grpc:
-	cd build && if [ ! -d grpc_repo ] ; then git clone --recurse-submodules -b v1.48.0 --depth 1 --shallow-submodules https://git.codelinaro.org/clo/le/grpc_repo.git ; fi && mkdir -p build_grpc && cd build_grpc && ${PWD}/build/bin/cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../grpc_repo && make -j16 && make install
+	cd build && if [ ! -d grpc_repo ] ; then git clone --recurse-submodules -b v1.48.0 --depth 1 --shallow-submodules https://git.codelinaro.org/clo/le/grpc_repo.git ; fi && mkdir -p build_grpc && cd build_grpc && ${PWD}/build/bin/cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../grpc_repo && cmake --build . -- -j $(shell nproc) && cmake --build . --target install
 
 sim: headers
-	cd build && export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ROOTFS}/lib/ && mkdir -p build_sim && cd build_sim && cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=${PWD}/build/lib/cmake/ -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../simulation && make install
+	cd build && export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ROOTFS}/lib/ && mkdir -p build_sim && cd build_sim && cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=${PWD}/build/lib/cmake/ -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../simulation && cmake --build . -- -j $(shell nproc) && cmake --build . --target install
 
 apps: sim
-	cd build && mkdir -p build_apps && cd build_apps && cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../apps && make install
+	cd build && mkdir -p build_apps && cd build_apps && cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../apps && cmake --build . -- -j $(shell nproc) && cmake --build . --target install
 
 docker-image: apps
 	cd ${ROOTFS}/.. && docker build --build-arg="ROOTFS=${ROOTFS_BN}" -t telsdk-sim-image -f ${SIM_REPO}/simulation/Dockerfile . && echo "Docker image "telsdk-sim-image" is created. Use below command to drop to the shell" && echo "docker run -ti --device=/dev/snd/ --rm -h telsdk_simulation -v telsdk_volume:/data --name telsdk_simulation telsdk-sim-image"

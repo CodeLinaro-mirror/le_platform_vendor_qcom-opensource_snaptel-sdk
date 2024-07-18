@@ -35,7 +35,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_POWER_REF_DAEMON} ${TARGET_POWER_REF_DAEMON_SOURCES})
-target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power 
+target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power
     telux_data pthread)
 
 if (CAN_WRAPPER_LIB_FOUND)
@@ -46,5 +46,5 @@ endif (CAN_WRAPPER_LIB_FOUND)
 install ( TARGETS ${TARGET_POWER_REF_DAEMON}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 install ( FILES config_files/telux_power_refd.conf
-          DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
-
+          DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )

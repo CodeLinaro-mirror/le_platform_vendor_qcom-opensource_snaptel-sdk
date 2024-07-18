@@ -44,6 +44,7 @@
 #include <string>
 #include <bitset>
 #include <vector>
+#include <cstdint>
 
 namespace telux {
 

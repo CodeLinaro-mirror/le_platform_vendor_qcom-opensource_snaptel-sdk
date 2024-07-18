@@ -1,7 +1,7 @@
-.. _set-radio-power:
+.. _request_set_operating_mode:
 
 Request and set operating mode 
-=======================================
+===============================
 
 This sample application demonstrates how to request and set Operating mode of device
 

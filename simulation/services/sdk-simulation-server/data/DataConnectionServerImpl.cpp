@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <resolv.h>
+#include <thread>
 
 #include "DataConnectionServerImpl.hpp"
 #include "SimulationServer.hpp"

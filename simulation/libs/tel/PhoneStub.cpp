@@ -695,5 +695,78 @@ telux::common::Status PhoneStub::configureSignalStrength(
 telux::common::Status PhoneStub::configureSignalStrength(
     std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs,
     telux::common::ResponseCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
+    ::telStub::ConfigureSignalStrengthExRequest request;
+    ::telStub::ConfigureSignalStrengthExReply response;
+    ClientContext context;
+
+    if (signalStrengthConfigEx.size() == 0) {
+        LOG(DEBUG, __FUNCTION__, " Invalid signal strength configuration");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    request.set_phone_id(phoneId_);
+    for (auto elem : signalStrengthConfigEx) {
+        telStub::ConfigureSignalStrengthEx *sigConfigEx = request.add_config();
+        sigConfigEx->set_radio_tech(static_cast<telStub::RadioTechnology>
+            (elem.radioTech));
+        int configSize = elem.configTypeMask.size();
+        for (int idx = 0; idx < configSize; idx++) {
+            if (elem.configTypeMask.test(idx)) {
+                sigConfigEx->add_config_types
+                    (static_cast<telStub::SignalStrengthConfigExType>(idx));
+            }
+        }
+        for (int idx = 0; idx < static_cast<int>(elem.sigConfigData.size()); idx++) {
+            telStub::SignalStrengthConfigData *sigConfigData = sigConfigEx->add_sig_config_data();
+            sigConfigData->set_sig_meas_type(
+                static_cast<telStub::SignalStrengthMeasurementType>
+                    (elem.sigConfigData[idx].sigMeasType));
+            if (elem.configTypeMask
+                [static_cast<int>(SignalStrengthConfigExType::DELTA)]) {
+               sigConfigData->set_delta
+                   (elem.sigConfigData[idx].delta);
+            }
+            if (elem.configTypeMask
+                [static_cast<int>(SignalStrengthConfigExType::THRESHOLD)]) {
+                for (int arrIdx = 0;
+                    arrIdx < static_cast<int>(elem.sigConfigData[idx].thresholdList.size());
+                    arrIdx++) {
+                    if (elem.sigConfigData[idx].thresholdList[arrIdx]){
+                        sigConfigData->mutable_elements()
+                            ->add_threshold_list(elem.sigConfigData[idx].thresholdList[arrIdx]);
+                    }
+                }
+            }
+            if (elem.configTypeMask
+                [static_cast<int>(SignalStrengthConfigExType::HYSTERESIS_DB)]) {
+                sigConfigData->mutable_elements()->set_hysteresis_db
+                    (elem.sigConfigData[idx].hysteresisDb);
+            }
+        }
+    }
+    request.set_hysteresis_ms(hysteresisMs);
+
+    grpc::Status reqstatus = stub_->ConfigureSignalStrengthEx(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " failed on phoneId ", phoneId_);
+        return telux::common::Status::FAILED;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    int cbDelay = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+        auto fut = std::async(std::launch::async,
+            [this, cbDelay, error, callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                if (callback) {
+                    callback(error);
+                } else {
+                    LOG(ERROR, __FUNCTION__, " Callback is null");
+                }
+            }).share();
+        taskQ_->add(fut);
+    }
+    return status;
 }

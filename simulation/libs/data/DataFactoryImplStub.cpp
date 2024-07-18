@@ -11,8 +11,10 @@
 #include "IpFilterImpl.hpp"
 #include "DataHelper.hpp"
 #include "ServingSystemManagerStub.hpp"
+#include "DualDataManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
+#include "net/VlanManagerStub.hpp"
 #include "net/L2tpManagerStub.hpp"
 #include "net/FirewallManagerStub.hpp"
 #include "net/FirewallEntryImpl.hpp"
@@ -351,7 +353,29 @@ std::shared_ptr<telux::data::net::IFirewallEntry> DataFactoryImplStub::getNewFir
 
 std::shared_ptr<telux::data::net::IVlanManager> DataFactoryImplStub::getVlanManager(
     telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+    if (oprType == telux::data::OperationType::DATA_REMOTE) {
+        return nullptr;
+    }
+
+    std::function<std::shared_ptr<telux::data::net::IVlanManager>(
+        telux::common::InitResponseCb)>
+        createAndInit = [oprType](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::net::IVlanManager> {
+        std::shared_ptr<telux::data::net::VlanManagerStub> manager
+            = std::make_shared<telux::data::net::VlanManagerStub>(oprType);
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Vlan manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " for operationType = ", static_cast<int>(oprType), " , callback = ",
+       &vlanCallbacks_);
+    auto manager
+        = getManager<telux::data::net::IVlanManager>(type,
+            vlanManagerMap_[oprType], vlanCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::net::ISocksManager> DataFactoryImplStub::getSocksManager(
@@ -399,6 +423,27 @@ std::shared_ptr<telux::data::net::IBridgeManager> DataFactoryImplStub::getBridge
     auto manager
         = getManager<telux::data::net::IBridgeManager>(type,
             bridgeManager_, bridgeCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
+std::shared_ptr<telux::data::IDualDataManager> DataFactoryImplStub::getDualDataManager(
+    telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IDualDataManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IDualDataManager> {
+            std::shared_ptr<telux::data::DualDataManagerStub> manager
+                = std::make_shared<telux::data::DualDataManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("DualData manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &dualDataCallbacks_);
+    auto manager
+        = getManager<telux::data::IDualDataManager>(type,
+            dualDataManager_, dualDataCallbacks_, clientCallback, createAndInit);
     return manager;
 }
 

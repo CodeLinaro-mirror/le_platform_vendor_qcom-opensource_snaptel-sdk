@@ -354,6 +354,8 @@ struct AmrwbpParams : FormatParams {
  *      type, slotId, channelTypeMask, format, deviceTypes, enableHpcm
  *  For ecall:
  *      type, slotId, channelTypeMask, format, deviceTypes, ecnrMode
+ *  For proxy mic voicecall:
+ *      type, slotId, channelTypeMask, format, deviceTypes, sampleRate
  *
  *  For playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
@@ -361,6 +363,8 @@ struct AmrwbpParams : FormatParams {
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
  *  For hpcm-playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths, enableHpcm
+ *  For proxy speaker playback:
+ *      type, channelTypeMask, format, deviceTypes, sampleRate
  *
  *  For capture:
  *      type, sampleRate, channelTypeMask, format, deviceTypes

@@ -71,6 +71,8 @@
      rpc RequestOperatorInfo(RequestOperatorInfoRequest) returns (RequestOperatorInfoReply) {}
      rpc ConfigureSignalStrength(ConfigureSignalStrengthRequest) returns
          (ConfigureSignalStrengthReply) {}
+     rpc ConfigureSignalStrengthEx(ConfigureSignalStrengthExRequest) returns
+         (ConfigureSignalStrengthExReply) {}
  }
  service SmsService {
      rpc InitService (commonStub.GetServiceStatusRequest) returns (commonStub.GetServiceStatusReply) {}
@@ -120,6 +122,9 @@
      rpc Hold(HoldRequest) returns (HoldReply) {}
      rpc RequestNetworkDeregistration(RequestNetworkDeregistrationRequest) returns
          (RequestNetworkDeregistrationReply) {}
+     rpc ModifyOrRespondToModifyCall(ModifyOrRespondToModifyCallRequest) returns
+         (ModifyOrRespondToModifyCallReply) {}
+     rpc SendRtt(SendRttRequest) returns (SendRttReply) {}
  }
 
  service ImsServingSystem {
@@ -225,11 +230,6 @@ message GetCardStateRequest {
      int32 phone_id = 1;
  }
 
- message HangupCallEvent {
-     int32 phone_id = 1;
-     int32 call_index = 2;
- }
-
  message CallStateChangeEvent {
     repeated Call calls = 1;
 }
@@ -281,6 +281,16 @@ message GetCardStateRequest {
      string mcc = 5;
      string mnc = 6;
  }
+
+message ModifyCallRequestEvent {
+    int32 phone_id = 1;
+    int32 call_index = 2;
+}
+
+message RttMessageEvent {
+    int32 phone_id = 1;
+    string message = 2;
+}
 
  enum AppType {
      APPTYPE_UNKNOWN = 0;
@@ -1026,6 +1036,12 @@ message GetCardStateRequest {
    EXPIRED = 3;                 /**< eCall Timer is expired */
  }
 
+ enum RttMode {
+   RTT_MODE_DISABLED = 0;       /**< RTT mode is not enabled */
+   RTT_MODE_FULL = 1;           /**< RTT call being used by both the parties*/
+   RTT_MODE_UNKNOWN = -1;       /**< RTT mode data is unknown */
+};
+
  message ECallInfoEvent {
     int32 phone_id = 1;
     HlapTimerEvent action = 2;
@@ -1041,6 +1057,9 @@ message GetCardStateRequest {
      int32 phone_id = 6;
      bool is_multi_party_call = 7;
      bool is_mpty = 8;
+     RttMode mode = 9;
+     RttMode local_rtt_capability = 10;
+     RttMode peer_rtt_capability = 11;
  }
 
  message MakeECallRequest {
@@ -1065,6 +1084,31 @@ message HangupRequest {
  }
 
 message HangupReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+message ModifyOrRespondToModifyCallRequest {
+   int32 call_index = 1;
+   int32 phone_id = 2;
+   RttMode rtt_mode = 3;
+   string api_type = 4;
+ }
+
+message ModifyOrRespondToModifyCallReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+message SendRttRequest {
+   int32 phone_id = 1;
+ }
+
+message SendRttReply {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
@@ -1290,6 +1334,8 @@ message UpdateECallMsdResponse {
  message AnswerRequest {
      int32 call_index = 1;
      int32 phone_id = 2;
+     RttMode mode = 3;
+
  }
 
  message AnswerReply {
@@ -1414,6 +1460,43 @@ message UpdateECallMsdResponse {
     commonStub.Status status = 4;
     int32 delay = 5;
     bool is_callback = 6;
+ }
+
+ message RequestPdpStatusRequest {
+   int32 phone_id = 1;
+ }
+
+ message RequestPdpStatusReply {
+   bool is_pdp_connected = 1;
+   PdpFailureCode failure_code = 2;
+   EndReasonType failure_reason = 3;
+   string apn_name = 4;
+   commonStub.ErrorCode error = 5;
+   commonStub.Status status = 6;
+   int32 delay = 7;
+   bool is_callback = 8;
+ }
+
+ message ImsRegStatusChangeEvent {
+    int32 phone_id = 1;
+    RegistrationStatus ims_reg_status = 2;
+    RadioTechnology rat = 3;
+    int32 error_code = 4;
+    string error_string = 5;
+ }
+
+ message ImsServiceInfoChangeEvent {
+    int32 phone_id = 1;
+    CellularService.Status sms = 2;
+    CellularService.Status voice = 3;
+ }
+
+ message ImsPdpStatusInfoChangeEvent {
+    int32 phone_id = 1;
+    bool is_pdp_connected = 2;
+    PdpFailureCode failure_code = 3;
+    EndReasonType failure_reason = 4;
+    string apn_name = 5;
  }
 
  // --- ServingSystemService ---
@@ -1819,21 +1902,6 @@ message UpdateECallMsdResponse {
      bool is_callback = 7;
  }
 
- message RequestPdpStatusRequest {
-   int32 phone_id = 1;
- }
-
- message RequestPdpStatusReply {
-   bool is_pdp_connected = 1;
-   PdpFailureCode failure_code = 2;
-   EndReasonType failure_reason = 3;
-   string apn_name = 4;
-   commonStub.ErrorCode error = 5;
-   commonStub.Status status = 6;
-   int32 delay = 7;
-   bool is_callback = 8;
- }
-
  // --- NetworkSelectionService ---
 
  message RequestNetworkSelectionModeRequest {
@@ -1981,6 +2049,25 @@ message UpdateECallMsdResponse {
      RadioTechnology rat = 4;
      OperatorStatus operator_status = 5;
  }
+
+message SelectionModeChangeEvent {
+    NetworkSelectionMode.Mode mode = 1;
+    string mnc = 2;
+    string mcc = 3;
+    int32 phone_id = 4;
+}
+
+enum NetworkScanStatus {
+    COMPLETE = 0;
+    PARTIAL = 1;
+    FAILED = 2;
+}
+
+message NetworkScanResultsChangeEvent {
+    NetworkScanStatus status = 1;
+    repeated OperatorInfo operator_infos = 2;
+    int32 phone_id = 3;
+}
 
  // --- PhoneService ---
 enum VoiceServiceState {
@@ -2505,6 +2592,56 @@ message ConfigureSignalStrengthReply {
     commonStub.Status status = 3;
     int32 delay = 4;
     bool iscallback = 5;
+}
+
+enum SignalStrengthConfigExType {
+    EX_CONFIG_NONE = 0;
+    EX_DELTA = 1;       /**< Signal strength delta provided. */
+    EX_THRESHOLD = 2;   /**< Signal strength threshold provided. */
+    EX_HYSTERESIS_DB = 3; /**< Signal strength hysteresis delta provided. */
+}
+
+enum SignalStrengthMeasurementType {
+    RSSI = 0;  /**< Received signal strength indicator. */
+    ECIO = 1;  /**< Energy per chip to interference power ratio. */
+    SINR = 2;  /**< Signal-to-interference-plus-noise ratio. */
+    IO = 3;    /**< Interference power ratio. */
+    RSRQ = 4;  /**< Reference signal received quality. */
+    RSRP = 5;  /**< Reference signal received power. */
+    SNR = 6;   /**< Signal-to-noise ratio. */
+    RSCP = 7;  /**< Received signal code power. */
+}
+
+message SignalStrengthConfigDataElements {
+    repeated int32 threshold_list = 1;
+    uint32 hysteresis_db = 2;
+}
+
+message SignalStrengthConfigData {
+    SignalStrengthMeasurementType sig_meas_type = 1;
+    oneof Request{
+        uint32 delta = 2;
+        SignalStrengthConfigDataElements elements = 3;
+    }
+}
+
+message ConfigureSignalStrengthEx {
+    repeated SignalStrengthConfigExType config_types = 1;
+    RadioTechnology radio_tech = 2;
+    repeated SignalStrengthConfigData sig_config_data = 3;
+}
+
+message ConfigureSignalStrengthExRequest {
+    int32 phone_id = 1;
+    repeated ConfigureSignalStrengthEx config = 2;
+    uint32 hysteresis_ms = 3;
+}
+
+message ConfigureSignalStrengthExReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
 }
 
 message GetNetworkRejectInfoRequest {

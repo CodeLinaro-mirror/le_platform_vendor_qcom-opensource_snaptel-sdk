@@ -16,19 +16,19 @@ set(DATA_STUB_SOURCES
     DataFilterManagerStub.cpp
     DataHelper.cpp
     IpFilterImpl.cpp
+    DualDataManagerStub.cpp
     net/SocksManagerStub.cpp
     net/NatManagerStub.cpp
     net/L2tpManagerStub.cpp
     net/FirewallManagerStub.cpp
     net/FirewallEntryImpl.cpp
     net/BridgeManagerStub.cpp
+    net/VlanManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
 endmacro()
-
-find_library(JSONCPP_LIBRARY NAMES jsoncpp)
 
 # add these sub-folders from /usr/include/<subdir>
 SYSR_INCLUDE_DIR(telux)
@@ -44,7 +44,6 @@ add_library (${TARGET_DATA_LIBRARY} SHARED ${SOURCE} ${DATA_STUB_SOURCES})
 
 target_link_libraries(${TARGET_DATA_LIBRARY}
     ${GRPCPP_EXECUTABLE}
-    jsoncpp
     telux_protos
     telux_common
     )

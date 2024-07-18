@@ -10,6 +10,7 @@
 #include "libs/common/Logger.hpp"
 #include "PhoneManagerServerImpl.hpp"
 #include "TelUtil.hpp"
+#include <thread>
 
 #define JSON_PATH1 "api/tel/IPhoneManagerSlot1.json"
 #define JSON_PATH2 "api/tel/IPhoneManagerSlot2.json"
@@ -298,6 +299,27 @@ grpc::Status PhoneManagerServerImpl::ConfigureSignalStrength(ServerContext* cont
     return grpc::Status::OK;
 }
 
+grpc::Status PhoneManagerServerImpl::ConfigureSignalStrengthEx(ServerContext* context,
+    const telStub::ConfigureSignalStrengthExRequest* request,
+    telStub::ConfigureSignalStrengthExReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int phoneId = request->phone_id();
+    std::vector<telStub::ConfigureSignalStrengthEx> signalStrengthConfigEx = {};
+    for (auto config : request->config()) {
+        signalStrengthConfigEx.emplace_back(config);
+    }
+    uint16_t hysTimer = static_cast<uint16_t>(request->hysteresis_ms());
+
+    telux::common::ErrorCode error =
+        telux::tel::TelUtil::writeConfigureSignalStrengthExToJsonFileAndReply(
+        phoneId, signalStrengthConfigEx, response, hysTimer);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, " Error in configuring signal strength");
+    }
+    return grpc::Status::OK;
+}
+
 void PhoneManagerServerImpl::triggerChangeEvent(::eventService::EventResponse anyResponse) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -317,8 +339,9 @@ void PhoneManagerServerImpl::handleSignalStrengthChanged(std::string eventParams
     }
 
     int phoneId;
+    bool notify = false;
     telux::common::ErrorCode errorCode = telux::tel::TelUtil::writeSignalStrengthToJsonFile(params,
-        phoneId);
+        phoneId, notify);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         ::telStub::SignalStrengthChangeEvent signalStrengthChangeEvent;
         errorCode = telux::tel::TelUtil::readSignalStrengthEventFromJsonFile(phoneId,
@@ -329,10 +352,14 @@ void PhoneManagerServerImpl::handleSignalStrengthChanged(std::string eventParams
             anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
             anyResponse.mutable_any()->PackFrom(signalStrengthChangeEvent);
             modemMgr_->updateSignalStrength(signalStrengthChangeEvent.phone_id());
-            auto f = std::async(std::launch::async, [this, anyResponse]() {
+            // notify signal strength only if any criteria is met
+            LOG(INFO, __FUNCTION__, " notification needed : ", notify);
+            if (notify) {
+                auto f = std::async(std::launch::async, [this, anyResponse]() {
                     this->triggerChangeEvent(anyResponse);
-            }).share();
-            taskQ_->add(f);
+                }).share();
+                taskQ_->add(f);
+            }
         } else {
             LOG(ERROR, __FUNCTION__, " Unable to read signal strength");
         }

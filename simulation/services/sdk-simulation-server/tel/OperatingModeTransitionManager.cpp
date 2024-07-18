@@ -9,6 +9,8 @@
 #include "libs/tel/TelDefinesStub.hpp"
 #include "OperatingModeTransitionManager.hpp"
 #include "TelUtil.hpp"
+#include <thread>
+#include <chrono>
 
 #define TEL_PHONE_MANAGER                       "IPhoneManager"
 

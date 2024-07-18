@@ -10,7 +10,7 @@ Telephony
    make_eCall
    make_tps_eCall_over_Ims
    request_voice_service_state
-   set_radio_power
+   request_set_operating_mode
    ../serving_system/serving_system
    ../subscription/get_subscription
    ../card_services/card_services_app
@@ -29,7 +29,7 @@ Telephony
    * :ref:`make-eCall`
    * :ref:`make-eCall-Over-Ims`
    * :ref:`request-voice-service-state`
-   * :ref:`set-radio-power`
+   * :ref:`request_set_operating_mode`
    * :ref:`serving-system`
    * :ref:`get-subscription`
    * :ref:`card-services-app`

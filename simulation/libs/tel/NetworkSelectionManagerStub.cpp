@@ -115,12 +115,38 @@ bool NetworkSelectionManagerStub::isSubsystemReady() {
 
 telux::common::Status NetworkSelectionManagerStub::registerListener(
     std::weak_ptr<INetworkSelectionListener> listener) {
-    return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        status = listenerMgr_->registerListener(listener);
+        std::vector<std::string> filters = {TEL_NETWORK_SELECTION_FILTER};
+        std::vector<std::weak_ptr<INetworkSelectionListener>> applisteners;
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 1) {
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.registerListener(shared_from_this(), filters);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
+        }
+    }
+    return status;
 }
 
 telux::common::Status NetworkSelectionManagerStub::deregisterListener(
     std::weak_ptr<INetworkSelectionListener> listener) {
-    return telux::common::Status::SUCCESS;
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<INetworkSelectionListener>> applisteners;
+        status = listenerMgr_->deRegisterListener(listener);
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 0) {
+            std::vector<std::string> filters = {TEL_NETWORK_SELECTION_FILTER};
+            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            clientEventManager.deregisterListener(shared_from_this(), filters);
+        }
+    }
+    return status;
 }
 
 telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
@@ -357,12 +383,93 @@ telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
 }
 
 void NetworkSelectionManagerStub::onEventUpdate(google::protobuf::Any event) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
+    if (event.Is<::telStub::SelectionModeChangeEvent>()) {
+        ::telStub::SelectionModeChangeEvent selectionModeChangeEvent;
+        event.UnpackTo(&selectionModeChangeEvent);
+        handleSelectionModeChanged(selectionModeChangeEvent);
+    } else if(event.Is<::telStub::NetworkScanResultsChangeEvent>()) {
+        ::telStub::NetworkScanResultsChangeEvent networkScanResultsChangeEvent;
+        event.UnpackTo(&networkScanResultsChangeEvent);
+        handleNetworkScanResultsChanged(networkScanResultsChangeEvent);
+    }
 }
 
 telux::common::Status NetworkSelectionManagerStub::performNetworkScan(
     NetworkScanCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
+}
+
+void NetworkSelectionManagerStub::handleSelectionModeChanged
+    (::telStub::SelectionModeChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    NetworkModeInfo info = {};
+    info.mode = static_cast<telux::tel::NetworkSelectionMode>(event.mode());
+    info.mnc = event.mnc();
+    info.mcc = event.mcc();
+    std::vector<std::weak_ptr<INetworkSelectionListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onSelectionModeChanged(info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void NetworkSelectionManagerStub::handleNetworkScanResultsChanged
+    (::telStub::NetworkScanResultsChangeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    telux::tel::NetworkScanStatus status =
+        static_cast<telux::tel::NetworkScanStatus>(event.status());
+    // update OperatorInfo
+    std::vector<OperatorInfo> infos = {};
+    for (int i = 0; i < event.operator_infos_size(); i++) {
+        OperatorStatus operatorStatus = {};
+        operatorStatus.inUse =
+            static_cast<InUseStatus>(
+            event.mutable_operator_infos(i)->mutable_operator_status()->inuse());
+        operatorStatus.roaming =
+            static_cast<RoamingStatus>(
+            event.mutable_operator_infos(i)->mutable_operator_status()->roaming());
+        operatorStatus.forbidden =
+            static_cast<ForbiddenStatus>(
+            event.mutable_operator_infos(i)->mutable_operator_status()->forbidden());
+        operatorStatus.preferred =
+            static_cast<PreferredStatus>(
+            event.mutable_operator_infos(i)->mutable_operator_status()->preferred());
+        OperatorInfo info(event.operator_infos(i).name(),
+            event.operator_infos(i).mcc(),
+            event.operator_infos(i).mnc(),
+            static_cast<RadioTechnology>(event.operator_infos(i).rat()),
+            operatorStatus);
+        infos.emplace_back(info);
+    }
+    std::vector<std::weak_ptr<INetworkSelectionListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onNetworkScanResults(status, infos);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
 }
 
 OperatorInfo::OperatorInfo(std::string networkName, std::string mcc, std::string mnc,

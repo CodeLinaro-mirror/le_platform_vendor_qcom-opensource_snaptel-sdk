@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -123,7 +123,7 @@ void SensorFeatureManagerServerImpl::handleFeatureEvent(std::string eventParams)
         eventId =std::stoi(token);
     }
     std::string eventString =
-        readBufferedEventStringFromFile("SENSOR_BUFFERED_EVENTS_FILE_NAME",eventId);
+        readBufferedEventStringFromFile("sim.sensor.sensor_buffered_events_file_name",eventId);
     if(eventString != "") {
         auto f = std::async(std::launch::async, [this,featureName,eventId,eventString](){
             this->triggerFeatureEvent(featureName,eventId,eventString);

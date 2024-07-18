@@ -1,0 +1,55 @@
+{
+    "ICv2xRadio": {
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400,
+        "requestCv2xStatus": {
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "addRxSubscription": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "delRxSubscription": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "enableRxMetaDataReport": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "registerFlow": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "deregisterFlow": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "updateSrcL2Info": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "updateTrustedUEList": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "getIfaceNameFromIpType": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "enableTxStatusReport": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "disableTxStatusReport": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "injectVehicleSpeed": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        }
+    }
+}

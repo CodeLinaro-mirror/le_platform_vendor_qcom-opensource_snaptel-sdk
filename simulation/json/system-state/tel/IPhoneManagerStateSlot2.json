@@ -171,6 +171,46 @@
         "voiceRatInfo" :
         {
             "rat" : 14
+        },
+
+        "configureSignalStrengthExInfo" :
+        {
+           "configureSignalStrengthExInfoList" :
+           [
+               {
+                  "radioTech"         : 14,    /* Refer telux::tel::RadioTechnology for more
+                                                  details. */
+                  "configExType"      : [ 1 ], /* Refer telux::tel::SignalStrengthConfigExType
+                                                  for more details. */
+                  "sigMeasType"       : 0,     /* Refer telux::tel::SignalStrengthMeasurementType
+                                                  for more details. */
+                  "delta"             : 50     /* Refer telux::tel::SignalStrengthConfigData::delta
+                                                  for more details. */
+               },
+               {
+                  "radioTech"         : 10,    /* Refer telux::tel::RadioTechnology for more
+                                                  details. */
+                  "configExType"      : [ 2, 3 ], /* Refer telux::tel::SignalStrengthConfigExType
+                                                  for more details. */
+
+                  "sigMeasType"       : 0,     /* Refer telux::tel::SignalStrengthMeasurementType
+                                                  for more details. */
+
+                  "thresholdList"     : [-1130, -1040, -940, -840],
+                                               /* Refer telux::tel::SignalStrengthConfigData::
+                                                  thresholdList for more details. */
+                  "hysteresisDb"      : 50     /* Refer telux::tel::SignalStrengthConfigData::
+                                                  hysteresisDb for more details. */
+               }
+           ],
+           "hysteresisMs"             : 0     /* Refer telux::tel::configureSignalStrength API
+                                                 for hysteresisMs. */
+        },
+        "lastNotificationInfo" :
+        {
+           "ssNotificationTimeStamp" : ""   /* Last signal strength notification arrived. This
+                                               is to compare with signal strength criteria to
+                                               notify user. */
         }
     }
 }

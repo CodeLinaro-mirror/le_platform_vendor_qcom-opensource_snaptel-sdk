@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -509,8 +509,6 @@ public:
      * @param [in] spsInfo      - Desired SPS reservation parameters
      * @param [in] cb           - Callback that is invoked upon reservation change. This
      *                            may be null.
-     * @detdesc
-     * This function does not update reservation priority
      *
      * @returns SUCCESS if no error occurred.
      */
@@ -757,6 +755,28 @@ public:
      * @deprecated Use requestCapabilities() API
      */
     virtual Cv2xRadioCapabilities getCapabilities() const = 0;
+
+    /**
+     * Inject vehicle speed, which will be used to select radio resources for C-V2X
+     * transmission when GNSS is not available.
+     *
+     * User could inject speed at any time, the last injected value will be used when
+     * GNSS is not available.
+     *
+     * The strategy for speed injection could be
+     *  - inject periodically, recommended interval bigger than 1 second
+     *  - inject when speed is crossing 60/80/100/120/140/160/180/200 kmph
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
+     * @param [in] speed  - Vehicle speed in kmph.
+     * @param [in] cb     - Callback that is invoked when speed injection is done.
+     * @returns SUCCESS if no error occurred.
+     *
+     */
+    virtual telux::common::Status injectVehicleSpeed(
+        uint32_t speed, telux::common::ResponseCallback cb) = 0;
 
     /**
      * Returns true if the radio interface was successfully initialized.

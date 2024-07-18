@@ -111,30 +111,28 @@ auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 int ConferenceMenu::getInputPhoneId() {
     int phoneId = DEFAULT_PHONE_ID;
 
-    if(telux::common::DeviceConfig::isMultiSimSupported()) {
-        if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
-            std::string slotSelection;
-            char delimiter = '\n';
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::string slotSelection;
+        char delimiter = '\n';
 
-            std::cout << "Enter the desired Phone ID / SIM slot: ";
-            std::getline(std::cin, slotSelection, delimiter);
+        std::cout << "Enter the desired Phone ID / SIM slot: ";
+        std::getline(std::cin, slotSelection, delimiter);
 
-            if (!slotSelection.empty()) {
-                try {
-                    phoneId = std::stoi(slotSelection);
-                    if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
-                        std::cout << "ERROR: Invalid slot entered" << std::endl;
-                        return INVALID_PHONE_ID;
-                    }
-                } catch (const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
-                        << slotSelection << std::endl;
+        if (!slotSelection.empty()) {
+            try {
+                phoneId = std::stoi(slotSelection);
+                if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                    std::cout << "ERROR: Invalid slot entered" << std::endl;
                     return INVALID_PHONE_ID;
                 }
-            } else {
-                std::cout << "Empty input, enter the correct slot" << std::endl;
+            } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                    << slotSelection << std::endl;
                 return INVALID_PHONE_ID;
             }
+        } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return INVALID_PHONE_ID;
         }
     }
     return phoneId;

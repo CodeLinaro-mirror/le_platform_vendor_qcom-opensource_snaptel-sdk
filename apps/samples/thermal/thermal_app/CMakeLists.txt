@@ -1,20 +1,18 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_THERMAL_APP thermal_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXTHERM REQUIRED telux-therm)
 
-add_compile_options(${TELUXTHERM_CFLAGS})
+set(THERMAL_APP_SOURCES ThermalApp.cpp)
 
-set(SOURCES
-    ThermalSampleApp.cpp
-)
+add_executable (${TARGET_THERMAL_APP} ${THERMAL_APP_SOURCES})
 
-add_executable (${TARGET_THERMAL_APP} ${SOURCES})
+target_include_directories(${TARGET_THERMAL_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
 target_compile_options(${TARGET_THERMAL_APP} PRIVATE -std=c++11 -Wall -Werror)
+
 target_link_libraries(${TARGET_THERMAL_APP} ${TELUXTHERM_LIBRARIES})
 
-# install to target
-install ( TARGETS ${TARGET_THERMAL_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-         )
+install(TARGETS ${TARGET_THERMAL_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

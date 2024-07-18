@@ -152,6 +152,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bo
         }
         for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
             asyncCbData_t tmpData;
+            memset(&tmpData, 0 , sizeof(asyncCbData_t));
             asyncCbData.push_back(tmpData);
         }
         PostProcessingThread();
@@ -198,6 +199,7 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
         qMonPtr = qMon;
         for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
             asyncCbData_t tmpData;
+            memset(&tmpData, 0 , sizeof(asyncCbData_t));
             asyncCbData.push_back(tmpData);
         }
         PostProcessingThread();

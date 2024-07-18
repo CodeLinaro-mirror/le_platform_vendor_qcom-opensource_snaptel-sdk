@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 if((NOT MACHINE_HAS_CV2X_ONLY) AND (NOT BUILD_FOR_SIMULATION))
     add_subdirectory(voice_call_and_volume)
@@ -11,6 +11,7 @@ if((NOT MACHINE_HAS_CV2X_ONLY) AND (NOT BUILD_FOR_SIMULATION))
     add_subdirectory(in_call_playback_amrwb_plus)
     add_subdirectory(in_call_playback_pcm)
     add_subdirectory(in_call_record_pcm)
+    add_subdirectory(in_call_proxy_mic)
     add_subdirectory(bt_hfg_voice_call)
     add_subdirectory(bt_hfg_inband_ringtone)
     add_subdirectory(bt_hf_voice_call)

@@ -1940,7 +1940,7 @@ void MyLocationListener::printEphAct(telux::loc::GnssEphAction ephAct) {
     }
 }
 
-void MyLocationListener::printGnssEphemerisCommonData(telux::loc::GnssEphCommon commonData) {
+void MyLocationListener::printGnssEphemerisCommonData(const telux::loc::GnssEphCommon &commonData) {
     std::cout   << "Common Data";
     std::cout   << "\nSVID       : " << commonData.gnssSvId;
     std::cout   << "\nephSource    : "; printEphSrc(commonData.ephSource);
@@ -1968,7 +1968,7 @@ void MyLocationListener::printGnssEphemerisCommonData(telux::loc::GnssEphCommon 
                 << "\naf2          : " << commonData.af2;
 }
 
-void MyLocationListener::printGpsQzssEphData(telux::loc::GpsQzssEphemeris ephData) {
+void MyLocationListener::printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData) {
     printGnssEphemerisCommonData(ephData.commonData);
     std::cout   << "\nSignal Health   : " << static_cast<unsigned>(ephData.signalHealth)
                 << "\nURAI            : " << static_cast<unsigned>(ephData.URAI)

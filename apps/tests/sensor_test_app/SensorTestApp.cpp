@@ -27,39 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
  * @file       sensorTestApp.cpp
@@ -82,6 +53,10 @@ extern "C" {
 #include "SensorTestApp.hpp"
 #include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
+
+#define SENSOR_RECORDING_ROTATED_CONFIG "104,50,1"
+#define SENSOR_RECORDING_UNROTATED_CONFIG "104,50,0"
+#define RECORDING_MODE_SLEEP 60
 
 std::shared_ptr<SensorTestApp> sensorTestApp;
 
@@ -169,6 +144,8 @@ void SensorTestApp::printHelp(std::string programName) {
               << std::endl
               << " -g samplerate,batchcount,isRotated -g samplerate,batchcount,isRotated"
               << std::endl
+              << "-r Create accel and gyro clients for configs [104,50,1] and [104,50,0] and enable recording mode."
+              << std::endl
               << "-h           This help" << std::endl
               << "In case -q and -n both are specified, the argument specified in the end would "
                  "take effect"
@@ -181,9 +158,10 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
         = {{"notification configuration", no_argument, 0, 'n'}, {"help", no_argument, 0, 'h'},
             {"quiet mode", required_argument, 0, 'q'},
             {"accel", required_argument, nullptr, 'a'},
-            {"gyro", required_argument, nullptr, 'g'}, {0, 0, 0, 0}};
+            {"gyro", required_argument, nullptr, 'g'},
+            {"recording", no_argument, nullptr, 'r'}, {0, 0, 0, 0}};
     int option_index = 0;
-    c = getopt_long(argc, argv, "nq:a:g:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "nq:a:g:rh", long_options, &option_index);
     if (c == -1) {
         return;
     }
@@ -227,6 +205,22 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
                     exit(1);
                 }
                 commandlineArgs_.verboseNotification = false;
+                break;
+            }
+            case 'r': {
+                commandlineArgs_.verboseNotification = true;
+                commandlineArgs_.quiet = false;
+                std::string rotatedConfigStr = SENSOR_RECORDING_ROTATED_CONFIG;
+                std::string unrotatedConfigStr = SENSOR_RECORDING_UNROTATED_CONFIG;
+                telux::sensor::SensorConfiguration rotatedSensorConfig;
+                telux::sensor::SensorConfiguration unrotatedSensorConfig;
+                updateSensorConfig(rotatedConfigStr, rotatedSensorConfig);
+                updateSensorConfig(unrotatedConfigStr, unrotatedSensorConfig);
+                sensorList_.push_back({"Accel", rotatedSensorConfig});
+                sensorList_.push_back({"Gyro", rotatedSensorConfig});
+                sensorList_.push_back({"Accel", unrotatedSensorConfig});
+                sensorList_.push_back({"Gyro", unrotatedSensorConfig});
+                setRecordingFlag(true);
                 break;
             }
             case 'h': {
@@ -317,6 +311,10 @@ void SensorTestApp::nonInteractiveLaunch() {
             return;
         }
 
+        if(isRecordingEnabled_){
+            sensorClient->setRecordingFlag(true);
+        }
+
         //Activate the client.
         status = sensorClient->activate();
         if (status != telux::common::Status::SUCCESS) {
@@ -324,6 +322,13 @@ void SensorTestApp::nonInteractiveLaunch() {
             return;
         }
     }
+    if(isRecordingEnabled_){
+        while(1) {
+            //Infinite polling to keep retrieving position reports.
+            std::this_thread::sleep_for(std::chrono::seconds(RECORDING_MODE_SLEEP));
+        }
+    }
+
     //Retrieve reports for a minute
     std::this_thread::sleep_for(std::chrono::seconds(60));
 
@@ -355,7 +360,7 @@ int main(int argc, char **argv) {
     setupSignalHandler();
     sensorTestApp = std::make_shared<SensorTestApp>(appName, "sensor> ");
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "sensors"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "sensors", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
@@ -373,4 +378,8 @@ int main(int argc, char **argv) {
         sensorTestApp = nullptr;
     }
     return 0;
+}
+
+void SensorTestApp::setRecordingFlag(bool enable) {
+   isRecordingEnabled_ = enable;
 }

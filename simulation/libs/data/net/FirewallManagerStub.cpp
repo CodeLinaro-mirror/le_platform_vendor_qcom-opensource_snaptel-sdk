@@ -638,8 +638,14 @@ telux::common::Status FirewallManagerStub::enableDmz(DmzConfig config,
     ::dataStub::DefaultReply response;
     ClientContext context;
 
-    request.set_slot_id(config.bhInfo.slotId);
-    request.set_profile_id(config.bhInfo.profileId);
+    // currently supported backhauls are WWAN, WLAN and ETH
+    if (config.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.set_slot_id(config.bhInfo.slotId);
+        request.set_profile_id(config.bhInfo.profileId);
+    } else if (config.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.set_vlan_id(config.bhInfo.vlanId);
+    }
+
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
         config.bhInfo.backhaul));
     request.set_ip_address(config.ipAddr);
@@ -682,8 +688,15 @@ telux::common::Status FirewallManagerStub::disableDmz(BackhaulInfo bhInfo,
     ::dataStub::DisableDmzRequest request;
     ::dataStub::DefaultReply response;
     ClientContext context;
-    request.set_slot_id(bhInfo.slotId);
-    request.set_profile_id(bhInfo.profileId);
+
+    // currently supported backhauls are WWAN, WLAN and ETH
+    if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.set_slot_id(bhInfo.slotId);
+        request.set_profile_id(bhInfo.profileId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.set_vlan_id(bhInfo.vlanId);
+    }
+
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
         bhInfo.backhaul));
     request.mutable_ip_family_type()->set_ip_family_type((::dataStub::IpFamilyType::Type)ipType);
@@ -727,8 +740,14 @@ telux::common::Status FirewallManagerStub::requestDmzEntry(BackhaulInfo bhInfo,
     ::dataStub::RequestDMZEntryReply response;
     ClientContext context;
 
-    request.set_slot_id(bhInfo.slotId);
-    request.set_profile_id(bhInfo.profileId);
+    // currently supported backhauls are WWAN, WLAN and ETH
+    if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.set_slot_id(bhInfo.slotId);
+        request.set_profile_id(bhInfo.profileId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.set_vlan_id(bhInfo.vlanId);
+    }
+
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
         bhInfo.backhaul));
 

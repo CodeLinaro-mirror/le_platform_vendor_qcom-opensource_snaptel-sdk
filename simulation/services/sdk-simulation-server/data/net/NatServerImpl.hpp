@@ -12,6 +12,9 @@
 #include "libs/common/CommonUtils.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
+#define WWAN_BH_IDX 0
+#define ETH_BH_IDX 1
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -48,10 +51,20 @@ private:
         LOG(DEBUG, __FUNCTION__);
         bool entryExists = false;
 
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["snatEntries"].size();
-        auto profile_id = request->static_nat_entry().profile_id();
-        auto slot_id = request->static_nat_entry().slot_id();
+        auto bh_info = request->static_nat_entry().backhaul_type();
+        int32_t profile_id, slot_id, vlan_id, backhaul;
+
+        Json::Value entry;
+        if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+            backhaul = WWAN_BH_IDX;
+            profile_id = request->static_nat_entry().profile_id();
+            slot_id = request->static_nat_entry().slot_id();
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+            backhaul = ETH_BH_IDX;
+            vlan_id = request->static_nat_entry().vlan_id();
+        }
+
+        int currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
         auto addr = request->static_nat_entry().nat_config().address();
         auto port = request->static_nat_entry().nat_config().port();
         auto global_port = request->static_nat_entry().nat_config().global_port();
@@ -59,16 +72,21 @@ private:
 
         int index = 0;
         for (; index < currentEntryCount; index++) {
-            Json::Value currentEntry =
-                data.stateRootObj[subsystem]
-                ["snatEntries"][index];
+            Json::Value currentEntry = data.stateRootObj[subsystem][backhaul]["snatEntries"][index];
 
-            if (currentEntry["profileId"].asInt() != profile_id) {
-                continue;
-            }
+            if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+                if (currentEntry["profileId"].asInt() != profile_id) {
+                    continue;
+                }
 
-            if (currentEntry["slotId"].asInt() != slot_id) {
-                continue;
+                if (currentEntry["slotId"].asInt() != slot_id) {
+                    continue;
+                }
+
+            } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+                if (currentEntry["vlanId"].asInt() != vlan_id) {
+                    continue;
+                }
             }
 
             if (currentEntry["addr"].asString() != addr) {

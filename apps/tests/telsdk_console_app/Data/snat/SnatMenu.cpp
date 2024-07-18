@@ -117,8 +117,20 @@ bool SnatMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_static_nat_entries",
                 {}, std::bind(&SnatMenu::requestStaticNatEntries, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> addStaticNatEntry_V1
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "add_static_nat_v1", {},
+                std::bind(&SnatMenu::addStaticNatEntry_V1, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeStaticNatEntry_V1
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "remove_static_nat_v1", {},
+                std::bind(&SnatMenu::removeStaticNatEntry_V1, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries_V1
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
+                        "request_static_nat_entries_v1",
+                {}, std::bind(&SnatMenu::requestStaticNatEntries_V1, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {addStaticNatEntry,
-            removeStaticNatEntry, reqStaticNatEntries};
+            removeStaticNatEntry, reqStaticNatEntries, addStaticNatEntry_V1,
+            removeStaticNatEntry_V1, reqStaticNatEntries_V1};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -251,5 +263,150 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
         }
     };
     retStat = snatManager_->requestStaticNatEntries(bhInfo, respCb);
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::addStaticNatEntry_V1(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "Add Static NAT entry\n";
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    char delimiter = '\n';
+    std::string privIpAddr;
+    std::cout << "Enter Private IP address: ";
+    std::getline(std::cin, privIpAddr, delimiter);
+
+    int privPort;
+    std::cout << "Enter Private port: ";
+    std::cin >> privPort;
+    Utils::validateInput(privPort);
+
+    int globPort;
+    std::cout << "Enter Global port: ";
+    std::cin >> globPort;
+    Utils::validateInput(globPort);
+
+    std::string protoStr;
+    std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
+    std::getline(std::cin, protoStr, delimiter);
+
+    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+    struct NatConfig natConfig;
+    natConfig.addr = privIpAddr;
+    natConfig.port = (uint16_t)privPort;
+    natConfig.globalPort = (uint16_t)globPort;
+    natConfig.proto = (uint8_t)proto;
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "addStaticNatEntry Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = snatManager_->addStaticNatEntry(profileId, natConfig, respCb,
+            static_cast<SlotId>(slotId));
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::removeStaticNatEntry_V1(std::vector<std::string> inputCommand) {
+    std::cout << "Remove Static NAT entry\n";
+    telux::common::Status retStat;
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    char delimiter = '\n';
+    std::string privIpAddr;
+    std::cout << "Enter Private IP address: ";
+    std::getline(std::cin, privIpAddr, delimiter);
+
+    int privPort;
+    std::cout << "Enter Private port: ";
+    std::cin >> privPort;
+    Utils::validateInput(privPort);
+
+    int globPort;
+    std::cout << "Enter Global port: ";
+    std::cin >> globPort;
+    Utils::validateInput(globPort);
+
+    std::string protoStr;
+    std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
+    std::getline(std::cin, protoStr, delimiter);
+
+    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+    struct NatConfig natConfig;
+    natConfig.addr = privIpAddr;
+    natConfig.port = (uint16_t)privPort;
+    natConfig.globalPort = (uint16_t)globPort;
+    natConfig.proto = (uint8_t)proto;
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "removeStaticNatEntry Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = snatManager_->removeStaticNatEntry(
+        profileId, natConfig, respCb, static_cast<SlotId>(slotId));
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::requestStaticNatEntries_V1(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "List Static NAT entries\n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    auto respCb = [](const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestStaticNatEntries Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (snatEntries.size() > 0) {
+            std::cout << "==========================================\n";
+        }
+        for (auto entry : snatEntries) {
+            std::cout << "Private IP address: " << entry.addr << "\nPrivate port: " << entry.port
+                      << "\nGlobal port: " << entry.globalPort
+                      << "\nProtocol: " << DataUtils::protocolToString(entry.proto)
+                      << "\n==========================================\n";
+        }
+    };
+    retStat = snatManager_->requestStaticNatEntries(profileId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }

@@ -119,5 +119,6 @@ if(WITH_SYSTEMD)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
 
     install(FILES scripts/qits_env_file
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/../etc/)
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../etc/
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )
 endif()

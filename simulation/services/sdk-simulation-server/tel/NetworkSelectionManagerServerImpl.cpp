@@ -8,6 +8,7 @@
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include <telux/common/DeviceConfig.hpp>
+#include "TelUtil.hpp"
 
 #define JSON_PATH1 "api/tel/INetworkSelectionManagerSlot1.json"
 #define JSON_PATH2 "api/tel/INetworkSelectionManagerSlot2.json"
@@ -378,25 +379,122 @@ void NetworkSelectionManagerServerImpl::createPreferredNetworkInfo(
     }
 }
 
+::telStub::RadioTechnology NetworkSelectionManagerServerImpl::converRatTypeToRadioTechnology
+    (::telStub::RatType_Type rat) {
+    switch(rat) {
+        case ::telStub::RatType::UMTS:
+           return ::telStub::RadioTechnology::RADIO_TECH_UMTS;
+        case ::telStub::RatType::LTE:
+           return ::telStub::RadioTechnology::RADIO_TECH_LTE;
+        case ::telStub::RatType::GSM:
+           return ::telStub::RadioTechnology::RADIO_TECH_EDGE;
+        case ::telStub::RatType::NR5G:
+           return ::telStub::RadioTechnology::RADIO_TECH_NR5G;
+        default:
+           return ::telStub::RadioTechnology::RADIO_TECH_UNKNOWN;
+    }
+}
+
+::telStub::RadioTechnology NetworkSelectionManagerServerImpl::converRatPrefTypeToRadioTechnology
+    (::telStub::RatPrefType rat) {
+    switch(rat) {
+        case ::telStub::RatPrefType::PREF_WCDMA:
+           return ::telStub::RadioTechnology::RADIO_TECH_UMTS;
+        case ::telStub::RatPrefType::PREF_LTE:
+           return ::telStub::RadioTechnology::RADIO_TECH_LTE;
+        case ::telStub::RatPrefType::PREF_GSM:
+           return ::telStub::RadioTechnology::RADIO_TECH_EDGE;
+        case ::telStub::RatPrefType::PREF_TDSCDMA:
+           return ::telStub::RadioTechnology::RADIO_TECH_TD_SCDMA;
+        case ::telStub::RatPrefType::PREF_NR5G:
+        case ::telStub::RatPrefType::PREF_NR5G_NSA:
+        case ::telStub::RatPrefType::PREF_NR5G_SA:
+           return ::telStub::RadioTechnology::RADIO_TECH_NR5G;
+        default:
+           return ::telStub::RadioTechnology::RADIO_TECH_UNKNOWN;
+    }
+}
+
 grpc::Status NetworkSelectionManagerServerImpl::PerformNetworkScan(ServerContext* context,
     const ::telStub::PerformNetworkScanRequest* request,
     telStub::PerformNetworkScanReply* response) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
-    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    int phoneId = request->phone_id();
+    std::string apiJsonPath = (phoneId == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (phoneId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
     std::string subsystem = MANAGER;
     std::string method = "performNetworkScan";
     JsonData data;
+
     telux::common::ErrorCode error =
         CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::vector<telStub::OperatorInfo> infos = {};
+    std::string OperatorInfosType = "";
+    std::vector<int> ratData;
+    ::telStub::NetworkScanResultsChangeEvent networkScanResultsEvent;
 
     if (error != ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
+
     if(data.status == telux::common::Status::SUCCESS) {
-        /*TODO: Add server logic as per user RAT selection in later releases*/
+        int size = 0;
+        int rat = 0;
+        if(request->scan_type() == telStub::NetworkScanType::CURRENT_RAT_PREFERENCE) {
+            if(telux::tel::TelUtil::readRatPreferenceFromJsonFile(phoneId, ratData)
+                != ErrorCode::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+                return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+            }
+            OperatorInfosType = "NetworkScanResultsForSpecRats";
+            size = ratData.size();
+        } else if(request->scan_type() == telStub::NetworkScanType::USER_SPECIFIED_RAT) {
+            OperatorInfosType = "NetworkScanResultsForSpecRats";
+            size = request->rat_types().size();
+        } else {
+            OperatorInfosType = "NetworkScanResultsForAllRats";
+            size = data.stateRootObj[MANAGER][OperatorInfosType].size();
+        }
+        for (int j = 0; j < size; j++) {
+            Json::Value config;
+            if(request->scan_type() == telStub::NetworkScanType::CURRENT_RAT_PREFERENCE) {
+                config = data.stateRootObj[MANAGER][OperatorInfosType];
+                rat = static_cast<int>(converRatPrefTypeToRadioTechnology(
+                    static_cast<telStub::RatPrefType>(ratData[j])));
+            } else if(request->scan_type() == telStub::NetworkScanType::USER_SPECIFIED_RAT) {
+                config = data.stateRootObj[MANAGER][OperatorInfosType];
+                rat = static_cast<int>(converRatTypeToRadioTechnology(request->rat_types(j)));
+            } else {
+                config = data.stateRootObj[MANAGER][OperatorInfosType][j];
+                rat = config["rat"].asInt();
+            }
+            std::string operatorName = config["networkName"].asString();
+            std::string mcc = config["mcc"].asString();
+            std::string mnc = config["mnc"].asString();
+            int inUseStatus = config["inUse"].asInt();
+            int roamingStatus = config["roaming"].asInt();
+            int forbiddenStatus = config["forbidden"].asInt();
+            int preferredStatus = config["preferred"].asInt();
+
+            telStub::OperatorInfo *result = networkScanResultsEvent.add_operator_infos();
+            result->set_name(operatorName);
+            result->set_mcc(mcc);
+            result->set_mnc(mnc);
+            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
+            result->mutable_operator_status()->set_inuse
+                (static_cast<telStub::InUseStatus_Status>(inUseStatus));
+            result->mutable_operator_status()->set_roaming
+                (static_cast<telStub::RoamingStatus_Status>(roamingStatus));
+            result->mutable_operator_status()->set_forbidden
+                (static_cast<telStub::ForbiddenStatus_Status>(forbiddenStatus));
+            result->mutable_operator_status()->set_preferred
+                (static_cast<telStub::PreferredStatus_Status>(preferredStatus));
+        }
     }
+    networkScanResultsEvent.set_phone_id(phoneId);
+    networkScanResultsEvent.set_status(telStub::NetworkScanStatus::COMPLETE);
+
     //Create response
     if(data.cbDelay != -1) {
         response->set_is_callback(true);
@@ -407,7 +505,23 @@ grpc::Status NetworkSelectionManagerServerImpl::PerformNetworkScan(ServerContext
     response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
 
+    auto f = std::async(std::launch::async, [this, networkScanResultsEvent]() {
+        this->triggerNetworkScanResultsEvent(networkScanResultsEvent);
+    }).share();
+    taskQ_->add(f);
+
     return grpc::Status::OK;
+}
+
+void NetworkSelectionManagerServerImpl::triggerNetworkScanResultsEvent(
+    ::telStub::NetworkScanResultsChangeEvent event) {
+    ::eventService::EventResponse anyResponse;
+
+    anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
+    anyResponse.mutable_any()->PackFrom(event);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }
 
 void NetworkSelectionManagerServerImpl::handleSelectionModeChanged(std::string eventParams) {
@@ -560,18 +674,11 @@ void NetworkSelectionManagerServerImpl::handleNetworkScanResultsChanged(std::str
             result->mutable_operator_status()->set_preferred
                 (static_cast<telStub::PreferredStatus_Status>(preferredStatus));
         }
+        triggerNetworkScanResultsEvent(networkScanResultsEvent);
     } catch(exception const & ex) {
         LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
         return;
     }
-
-    ::eventService::EventResponse anyResponse;
-    anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
-    anyResponse.mutable_any()->PackFrom(networkScanResultsEvent);
-    auto f = std::async(std::launch::async, [this, anyResponse]() {
-        this->triggerChangeEvent(anyResponse);
-    }).share();
-    taskQ_->add(f);
 }
 
 void NetworkSelectionManagerServerImpl::triggerChangeEvent(

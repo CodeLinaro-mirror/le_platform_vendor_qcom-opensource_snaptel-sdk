@@ -1327,6 +1327,23 @@ telux::common::ErrorCode TelUtil::readOperatingModeFromJsonFile(telStub::Operati
     return error;
 }
 
+telux::common::ErrorCode TelUtil::readRatPreferenceFromJsonFile(int phoneId,
+    std::vector<int> &ratData) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value stateRootObj;
+    std::string jsonfilename;
+    telux::common::ErrorCode error = readFromJsonFile(phoneId, TEL_SERVING_MANAGER, stateRootObj,
+        jsonfilename);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+        return error;
+    }
+    std::string ratPref = stateRootObj[TEL_SERVING_MANAGER]["RATPreference"].asString();
+    ratData = CommonUtils::convertStringToVector(ratPref);
+    LOG(DEBUG, __FUNCTION__," RAT preference: ", ratPref);
+    return error;
+}
+
 telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
     telStub::SignalStrengthChangeEvent &event) {
     LOG(DEBUG, __FUNCTION__);

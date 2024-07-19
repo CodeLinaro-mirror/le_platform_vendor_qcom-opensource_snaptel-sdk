@@ -83,6 +83,9 @@ private:
     void handleNetworkScanResultsChanged(std::string eventParams);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
     void onEventUpdate(std::string event);
+    void triggerNetworkScanResultsEvent(::telStub::NetworkScanResultsChangeEvent event);
+    ::telStub::RadioTechnology converRatTypeToRadioTechnology(::telStub::RatType_Type rat);
+    ::telStub::RadioTechnology converRatPrefTypeToRadioTechnology(::telStub::RatPrefType rat);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 

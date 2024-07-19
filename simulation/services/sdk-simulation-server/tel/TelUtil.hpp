@@ -73,6 +73,8 @@ public:
     static telux::common::ErrorCode readSystemInfoFromJsonFile(int phoneId,
         telStub::RadioTechnology &servingRat, telStub::ServiceDomainInfo_Domain &servingDomain);
     static telux::common::ErrorCode readOperatingModeFromJsonFile(telStub::OperatingMode &mode);
+    static telux::common::ErrorCode readRatPreferenceFromJsonFile(int phoneId,
+        std::vector<int> &ratData);
 
     static telux::common::ErrorCode writeSignalStrengthToJsonFile(int phoneId,
         telStub::SignalStrengthChangeEvent &event);

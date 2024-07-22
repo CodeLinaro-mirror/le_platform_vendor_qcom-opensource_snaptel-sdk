@@ -1,35 +1,6 @@
 /*
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <string>
@@ -46,16 +17,34 @@ using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
 
-SmsManagerStub::SmsManagerStub(int phoneId, telux::common::InitResponseCb callback) {
+SmsManagerStub::SmsManagerStub(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<SmsService>();
     phoneId_ = phoneId;
+}
+
+telux::common::Status SmsManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<ISmsListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+    stub_ = CommonUtils::getGrpcStub<SmsService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate sms service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
     auto f = std::async(std::launch::async,
         [this, callback]() {
             this->initSync(callback);
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 void SmsManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -71,13 +60,6 @@ void SmsManagerStub::initSync(telux::common::InitResponseCb callback) {
         static_cast<telux::common::ServiceStatus>(response.service_status());
     int cbDelay = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ = std::make_shared<telux::common::ListenerManager<ISmsListener>>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
-    }
     if(callback) {
         this->invokeInitResponseCallback(cbDelay, cbStatus, callback);
     }

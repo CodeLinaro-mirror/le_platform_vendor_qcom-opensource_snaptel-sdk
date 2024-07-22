@@ -32,7 +32,9 @@ class CallManagerStub : public ICallManager,
                         public std::enable_shared_from_this<CallManagerStub> {
 public:
 
-    CallManagerStub(telux::common::InitResponseCb clientCallback);
+    CallManagerStub();
+
+    telux::common::Status init(telux::common::InitResponseCb callback);
 
     void initSync(telux::common::InitResponseCb callback);
 

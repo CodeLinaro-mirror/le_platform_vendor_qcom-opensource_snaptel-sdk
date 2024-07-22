@@ -28,7 +28,8 @@ class ImsSettingsManagerStub : public IImsSettingsManager,
                                public IEventListener,
                                public std::enable_shared_from_this<ImsSettingsManagerStub> {
 public:
-    ImsSettingsManagerStub(telux::common::InitResponseCb callback);
+    ImsSettingsManagerStub();
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~ImsSettingsManagerStub();
 
     telux::common::ServiceStatus getServiceStatus() override;

@@ -383,7 +383,6 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string apn;
-    std::cin.get();
     std::cout << "Enter APN (used only in low latency calls): ";
     std::getline(std::cin, apn, delimiter);
 
@@ -412,7 +411,6 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string apn;
-    std::cin.get();
     std::cout << "Enter APN: ";
     std::getline(std::cin, apn, delimiter);
 
@@ -450,6 +448,7 @@ void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
+    Utils::validateInput(profileId);
 
     auto dataCall = dataListener_->getDataCall(profileId);
     if (dataCall) {
@@ -823,7 +822,6 @@ void DataMenu::getProfileParamsFromUser() {
     std::cin >> techPref;
     Utils::validateInput(techPref);
 
-    std::cin.get();
     std::string profileName;
     std::cout << "Enter profileName : ";
     std::getline(std::cin, profileName, delimiter);
@@ -931,7 +929,6 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
     std::cin >> techPref;
     Utils::validateInput(techPref);
 
-    std::cin.get();
     std::string profileName;
     std::cout << "Enter profileName: ";
     std::getline(std::cin, profileName, delimiter);
@@ -1029,7 +1026,6 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string privIpAddr;
-    std::cin.get();
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
@@ -1044,7 +1040,6 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     Utils::validateInput(globPort);
 
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
@@ -1095,7 +1090,6 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string privIpAddr;
-    std::cin.get();
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
@@ -1110,7 +1104,6 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     Utils::validateInput(globPort);
 
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
@@ -1330,7 +1323,6 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
     telux::data::IpProtocol proto = getProtcol(protoStr);
@@ -1350,22 +1342,18 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
         // Entry IPv4 info
         if (ipFamilyType == 4) {
             std::string srcAddr;
-            std::cin.get();
             std::cout << "Enter IPv4 Source address: ";
             std::getline(std::cin, srcAddr, delimiter);
 
             std::string srcSubnetMask;
-            std::cin.get();
             std::cout << "Enter IPv4 Source subnet mask: ";
             std::getline(std::cin, srcSubnetMask, delimiter);
 
             std::string destAddr;
-            std::cin.get();
             std::cout << "Enter IPv4 Destination address: ";
             std::getline(std::cin, destAddr, delimiter);
 
             std::string destSubnetMask;
-            std::cin.get();
             std::cout << "Enter IPv4 Destination subnet mask: ";
             std::getline(std::cin, destSubnetMask, delimiter);
 
@@ -1394,12 +1382,10 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
         // Entry IPv6 info
         if (ipFamilyType == 6) {
             std::string srcAddr;
-            std::cin.get();
             std::cout << "Enter IPv6 Source address: ";
             std::getline(std::cin, srcAddr, delimiter);
 
             std::string destAddr;
-            std::cin.get();
             std::cout << "Enter IPv6 Destination address: ";
             std::getline(std::cin, destAddr, delimiter);
 
@@ -1595,7 +1581,6 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
     telux::data::IpProtocol proto = getProtcol(protoStr);
@@ -1654,7 +1639,6 @@ void DataMenu::addDmz(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string ipAddr;
-    std::cin.get();
     std::cout << "Enter IP address: ";
     std::getline(std::cin, ipAddr, delimiter);
 
@@ -1697,7 +1681,6 @@ void DataMenu::removeDmz(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string ipAddr;
-    std::cin.get();
     std::cout << "Enter IP address: ";
     std::getline(std::cin, ipAddr, delimiter);
 

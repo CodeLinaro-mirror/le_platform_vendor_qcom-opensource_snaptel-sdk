@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -698,4 +698,33 @@ void DataFilterController::DataFilterListener::onServiceStatusChange(
 
     LOG(INFO, __FUNCTION__, " isDataFilterMgrReady_ = ",
         (int)dfmStatus);
+}
+
+/*
+ * Returns true, if the TRANSPORT_PROTOCOL is set to UDP under [communication]
+ * section in the file defined by NAOIP_FILTER_CONFIG_FILE.
+ *
+ * Returns false in all other cases.
+ */
+bool DataFilterController::isUDP() {
+
+    std::string configFilterFile = ConfigParser::getInstance()->getValue(
+        "NAOIP_TRIGGER", "NAOIP_FILTER_CONFIG_FILE");
+    if (configFilterFile.empty()) {
+        configFilterFile = DEFAULT_DATA_CONFIG_FILE_NAME;
+    }
+
+    DataConfigParser cfgParser("communication", configFilterFile);
+    std::vector<std::map<std::string, std::string>> keyValMaps = cfgParser.getFilters();
+
+    if (keyValMaps.size() > 0) {
+        std::string proto = cfgParser.getValue(keyValMaps[0], "TRANSPORT_PROTOCOL");
+        if (!proto.compare("UDP")) {
+            LOG(DEBUG, __FUNCTION__, "Using UDP communication");
+            return true;
+        }
+    }
+
+    LOG(DEBUG, __FUNCTION__, "Using TCP communication");
+    return false;
 }

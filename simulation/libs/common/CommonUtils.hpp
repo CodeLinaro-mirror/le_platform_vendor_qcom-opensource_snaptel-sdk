@@ -86,6 +86,8 @@ class CommonUtils {
     static std::vector<std::string> splitString(const std::string &str, char delimiter);
     static std::string getCurrentTimeHHMMSS();
     static int bitwiseXOR(const std::string& str);
+    /* convert hexadecimal value to decimal */
+    static long convertHexToInt(std::string hex);
 
     static void getValues(Json::Value &values, std::string subsystem,
         std::string method, telux::common::Status &status,

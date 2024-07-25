@@ -571,6 +571,29 @@ Currently, the simulation framework supports the APIs for ``telux::tel::IServing
 
 Performing operations such as setting the RAT mode preference or service domain preference (``telux::tel::IServingSystemManager::setRatPreference`` API or ``telux::tel::IServingSystemManager::setServiceDomainPreference`` API) on the target can have system-level impact, which could alter the response of other APIs within the same class or different classes, such as getting signal strength notifications or change of current serving RAT etc. Currently, this behavior is not implemented, but it will be in future releases.
 
+Supplementary Services
+''''''''''''''''''''''
+
+Details of parameters that can be configured in the simulation framework.
+- "failureCause" : To configure failureCause for supplementary services.
+  Refer ``telux::tel::FailureCause`` for values.
+
+To simulate, No service as a failure cause.
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f json_update -e modify /api/tel/ISuppServicesManagerSlot1.json ISuppServicesManager.failureCause 0x15
+
+- "suppSvcProvisionStatus" : To configure supplementary services provision status.
+  Refer ``telux::tel::SuppSvcProvisionStatus`` for valid values of supplementary services provision status.
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f json_update -e modify /api/tel/ISuppServicesManagerSlot1.json ISuppServicesManager.requestOirPref.suppSvcProvisionStatus 0
+
 Telephony event handling
 """""""""""""""""""""""""
 

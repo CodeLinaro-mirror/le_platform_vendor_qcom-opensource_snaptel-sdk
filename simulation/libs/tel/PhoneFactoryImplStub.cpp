@@ -61,6 +61,12 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
             (networkSelMgr.second))->cleanup();
         }
     }
+    // cleanup suppServicesManager
+    for (const auto &suppSvcMgr : suppSvcManagerMap_) {
+        if (suppSvcMgr.second != nullptr) {
+            (std::static_pointer_cast<SuppServicesManagerStub>(suppSvcMgr.second))->cleanup();
+        }
+    }
     networkSelectionManagerMap_.clear();
     networkSelMgrCallbacks_.clear();
     networkSelMgrInitStatus_.clear();
@@ -77,6 +83,9 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
     cardMgrCallbacks_.clear();
     multiSimMgrCallbacks_.clear();
     imssCallbacks_.clear();
+    suppSvcManagerMap_.clear();
+    suppSvcCallbacks_.clear();
+    suppSvcInitStatus_.clear();
 }
 
 PhoneFactory::PhoneFactory() {
@@ -615,7 +624,6 @@ std::shared_ptr<telux::tel::INetworkSelectionManager>
        LOG(DEBUG, __FUNCTION__, " NetworkSelectionManager is initialized, app callback is NULL");
     }
     return networkSelectionManagerMap_[slotId];
-
 }
 
 void PhoneFactoryImplStub::onNetworkSelectionMgrInitResponse(int slotId,
@@ -1064,9 +1072,95 @@ void PhoneFactoryImplStub::onImsServingSystemMgrInitResponse(SlotId slotId,
     }
 }
 
-std::shared_ptr<ISuppServicesManager> PhoneFactoryImplStub::getSuppServicesManager( SlotId slotId,
-    telux::common::InitResponseCb  callback) {
-    return nullptr;
+void PhoneFactoryImplStub::onSuppSvcInitResponse(SlotId slotId, telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Supp Service Manager init status : ", static_cast<int>(status));
+    std::vector<telux::common::InitResponseCb> suppSvcCallbacks;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        suppSvcInitStatus_[slotId] = status;
+        bool reportedServiceStatus = false;
+        switch (status) {
+            case telux::common::ServiceStatus::SERVICE_FAILED:
+                suppSvcManagerMap_.erase(slotId);
+                suppSvcInitStatus_.erase(slotId);
+                reportedServiceStatus = true;
+                break;
+            case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+                reportedServiceStatus = true;
+                break;
+            default:
+                break;
+        }
+        if (!reportedServiceStatus) {
+            return;
+        }
+        auto cbIter = suppSvcCallbacks_.find(slotId);
+        if (cbIter != suppSvcCallbacks_.end()) {
+            suppSvcCallbacks = suppSvcCallbacks_[slotId];
+            suppSvcCallbacks_.erase(slotId);
+        }
+    }
+    for (auto &callback : suppSvcCallbacks) {
+        if (callback) {
+            callback(status);
+        } else {
+            LOG(INFO, __FUNCTION__, " Callback is NULL");
+        }
+    }
+}
+
+std::shared_ptr<ISuppServicesManager> PhoneFactoryImplStub::getSuppServicesManager(
+    SlotId slotId, telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if ((slotId < DEFAULT_SLOT_ID) || (slotId > MAX_SLOT_ID)) {
+        LOG(ERROR, __FUNCTION__, " Invalid slotId: ", slotId);
+        return nullptr;
+    }
+    if (!telux::common::DeviceConfig::isMultiSimSupported() && (slotId != DEFAULT_SLOT_ID)) {
+        LOG(ERROR, __FUNCTION__, " MultiSim not supported, slotId: ", slotId);
+        return nullptr;
+    }
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
+    auto suppServiceMgr = suppSvcManagerMap_.find(slotId);
+    if (suppServiceMgr == suppSvcManagerMap_.end()) {
+        std::shared_ptr<SuppServicesManagerStub> suppSvcManagerImpl = nullptr;
+        try {
+            suppSvcManagerImpl = std::make_shared<SuppServicesManagerStub>(slotId);
+        } catch (std::bad_alloc &e) {
+            LOG(ERROR, __FUNCTION__, e.what());
+            return nullptr;
+        }
+        auto initCb = [this, slotId](telux::common::ServiceStatus status) {
+            LOG(DEBUG, __FUNCTION__, " Supplementary service manager init callback");
+            this->onSuppSvcInitResponse(slotId, status);
+        };
+        auto status = suppSvcManagerImpl->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize the SuppServices manager");
+            return nullptr;
+        }
+        suppSvcManagerMap_.emplace(slotId, suppSvcManagerImpl);
+        suppSvcInitStatus_.emplace(slotId, telux::common::ServiceStatus::SERVICE_UNAVAILABLE);
+        LOG(DEBUG, __FUNCTION__, " SuppServicesManager initialized");
+        if (callback) {
+            suppSvcCallbacks_[slotId].push_back(callback);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+        }
+    } else if (suppSvcInitStatus_[slotId] == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        if (callback) {
+            suppSvcCallbacks_[slotId].push_back(callback);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Call back is null");
+        }
+    } else if (callback) {
+        std::thread appCallback(callback, suppSvcInitStatus_[slotId]);
+        appCallback.detach();
+    } else {
+        LOG(ERROR, __FUNCTION__, " Supp Svc Manager is initialized, Callback is NULL");
+    }
+    return suppSvcManagerMap_[slotId];
 }
 
 }  // namespace tel

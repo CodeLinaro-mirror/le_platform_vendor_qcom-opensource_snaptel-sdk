@@ -111,8 +111,8 @@ void SensorFeatureManagerServerImpl::handleFeatureEvent(std::string eventParams)
            LOG(INFO, __FUNCTION__, " The featureName not exists");
            return;
         }
-        if(featureStatusMap_[featureName]){
-            LOG(INFO, __FUNCTION__, "Feature Already Enabled");
+        if(!featureStatusMap_[featureName]){
+            LOG(INFO, __FUNCTION__, " Feature not enabled");
             return;
         }
     }

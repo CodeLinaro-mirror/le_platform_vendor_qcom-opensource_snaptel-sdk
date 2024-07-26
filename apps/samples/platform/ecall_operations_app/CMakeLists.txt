@@ -1,20 +1,18 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_ECALL_OPERATIONS_APP ecall_operations_app)
+set(TARGET_ECALL_APP ecall_operations_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXPLATFORM REQUIRED telux-platform)
 
-add_compile_options(${TELUXPLATFORM_CFLAGS})
+set(ECALL_APP_SOURCES EcallOperationsApp.cpp)
 
-set(SOURCES
-    EcallOperationsApp.cpp
-    ../../../common/utils/Utils.cpp
-)
+add_executable(${TARGET_ECALL_APP} ${ECALL_APP_SOURCES})
 
-add_executable (${TARGET_ECALL_OPERATIONS_APP} ${SOURCES})
-target_compile_options(${TARGET_ECALL_OPERATIONS_APP} PRIVATE -std=c++11 -Wall -Werror)
-target_link_libraries(${TARGET_ECALL_OPERATIONS_APP} ${TELUXPLATFORM_LIBRARIES})
+target_include_directories(${TARGET_ECALL_APP} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# install to target
-install ( TARGETS ${TARGET_ECALL_OPERATIONS_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_compile_options(${TARGET_ECALL_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_ECALL_APP} PRIVATE ${TELUXPLATFORM_LIBRARIES})
+
+install(TARGETS ${TARGET_ECALL_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

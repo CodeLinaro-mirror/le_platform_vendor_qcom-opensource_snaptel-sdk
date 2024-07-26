@@ -90,6 +90,7 @@ CongestionControlData ApplicationBase::congestionControlOut;
 sem_t ApplicationBase::congCtrlCbSem;
 shared_ptr<CongestionControlUserData> ApplicationBase::congCtrlCbDataPtr;
 CongestionControlCalculations ApplicationBase::congCtrlCbData;
+v2x_diag_qits_general_data ApplicationBase::generalInfo;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
 FILE* ApplicationBase::csvfp;
@@ -106,6 +107,10 @@ bool ApplicationBase::writeLogFinish;
 bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
 bool ApplicationBase::securityInitialized;
+
+#define EventBitsShift(bits, shift) \
+    (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
+
 std::string getCurrentTimestamp()
 {
     using std::chrono::system_clock;
@@ -165,6 +170,145 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         }
     }
 
+}
+
+unsigned short ApplicationBase::getEventsData(const vehicleeventflags_ut *events) {
+    unsigned short eventsData = 0;
+    eventsData |= EventBitsShift(
+        events->bits.eventAirBagDeployment, event_bits_shift_et::SHIFT_AIRBAGDEPLOYMENT);
+    eventsData |= EventBitsShift(
+        events->bits.eventDisabledVehicle, event_bits_shift_et::SHIFT_DISABLEDVEHICLE);
+    eventsData |= EventBitsShift(
+        events->bits.eventFlatTire, event_bits_shift_et::SHIFT_FLATTIRE);
+    eventsData |= EventBitsShift(
+        events->bits.eventWipersChanged, event_bits_shift_et::SHIFT_WIPERSCHANGED);
+    eventsData |= EventBitsShift(
+        events->bits.eventLightsChanged, event_bits_shift_et::SHIFT_LIGHTSCHANGED);
+    eventsData |= EventBitsShift(
+        events->bits.eventHardBraking, event_bits_shift_et::SHIFT_HARDBRAKING);
+    eventsData |= EventBitsShift(
+        events->bits.eventHazardousMaterials, event_bits_shift_et::SHIFT_HAZARDOUSMATERIALS);
+    eventsData |= EventBitsShift(events->bits.eventStabilityControlactivated,
+        event_bits_shift_et::SHIFT_STABILITYCONTROLACTIVATED);
+    eventsData |= EventBitsShift(
+        events->bits.eventTractionControlLoss, event_bits_shift_et::SHIFT_TRACTIONCONTROLLOSS);
+    eventsData |= EventBitsShift(
+        events->bits.eventABSactivated, event_bits_shift_et::SHIFT_ABSACTIVATED);
+    eventsData |= EventBitsShift(
+        events->bits.eventStopLineViolation, event_bits_shift_et::SHIFT_STOPLINEVIOLATION);
+    eventsData |= EventBitsShift(
+        events->bits.eventHazardLights, event_bits_shift_et::SHIFT_HAZARDLIGHTS);
+    return eventsData;
+}
+
+void ApplicationBase::fillEventsData(v2x_diag_event_bit_t *eventBit,
+    const vehicleeventflags_ut *events) {
+    eventBit->eventAirBagDeployment = events->bits.eventAirBagDeployment;
+    eventBit->eventDisabledVehicle = events->bits.eventDisabledVehicle;
+    eventBit->eventFlatTire = events->bits.eventFlatTire;
+    eventBit->eventWipersChanged = events->bits.eventWipersChanged;
+    eventBit->eventLightsChanged = events->bits.eventLightsChanged;
+    eventBit->eventHardBraking = events->bits.eventHardBraking;
+    eventBit->eventHazardousMaterials = events->bits.eventHazardousMaterials;
+    eventBit->eventStabilityControlactivated = events->bits.eventStabilityControlactivated;
+    eventBit->eventTractionControlLoss = events->bits.eventTractionControlLoss;
+    eventBit->eventABSactivated = events->bits.eventABSactivated;
+    eventBit->eventStopLineViolation = events->bits.eventStopLineViolation;
+    eventBit->eventHazardLights = events->bits.eventHazardLights;
+    eventBit->unused = events->bits.unused;
+}
+
+void ApplicationBase::diagLogPktTxRx(bool isTx, TransmitType txType,
+    const DiagLogData *logData, const bsm_data *bs) {
+    if (!logData) {
+        std::cout << "logData is null" << std::endl;
+        return;
+    }
+
+    if (!bs) {
+        std::cout << "bsm_data is null" << std::endl;
+        return;
+    }
+
+    // fill location and athletic info
+    v2x_diag_bsm_data bsm_info = {0};
+    bsm_info.msg_count = bs->MsgCount;
+    bsm_info.temp_id = bs->id;
+    bsm_info.secmark_ms = bs->secMark_ms;
+    bsm_info.latitude = bs->Latitude;
+    bsm_info.longitude = bs->Longitude;
+    bsm_info.semi_major_dev = bs->SemiMajorAxisAccuracy;
+    bsm_info.speed = bs->Speed;
+    bsm_info.heading = bs->Heading_degrees;
+    bsm_info.long_accel = bs->AccelLon_cm_per_sec_squared;
+    bsm_info.lat_accel = bs->AccelLat_cm_per_sec_squared;
+
+    // fill other general
+    generalInfo.time_stamp_log = timestamp_now();
+    generalInfo.time_stamp_msg = logData->currTime;
+    generalInfo.gnss_time = 0;
+    generalInfo.CPU_Util = (uint32_t)(get_CPU_percentage(logData->monotonicTime) * 100.0);
+    generalInfo.GPS_mode = 0;
+    generalInfo.msg_valid = logData->validPkt;
+    fillEventsData(&(generalInfo.events), &(bs->events));
+    generalInfo.hysterisis = 5;
+    generalInfo.L2_ID = logData->cbr;
+
+    v2x_diag_transmit_type_et msg_type = txType == TransmitType::SPS ? DIAG_SPS : DIAG_EVENT;
+    bool congCtrlPrepared = logData->enableCongCtrl && logData->congCtrlInitialized;
+    if (isTx) {
+        // tx
+        v2x_qits_general_tx_info info = {0};
+        V2X_QITS_GENERAL_TX_PKG *msg = (V2X_QITS_GENERAL_TX_PKG *)((uint32_t *)(&info) + 1);
+        if (congCtrlPrepared) {
+            generalInfo.tracking_error = congCtrlCbData.trackingError ?
+                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+            msg->channel_quality_indication = congCtrlCbData.channData ?
+                (uint32_t)(congCtrlCbData.channData->channQualInd * 100.0) : 0;
+            generalInfo.max_ITT = congCtrlCbData.maxITT;
+        }
+        msg->bsm_data = bsm_info;
+        msg->general_data = generalInfo;
+        msg->tx_interval = logData->txInterval;
+        msg->DCC_random_time = (long unsigned int)0;
+        msg->msg_type = msg_type;
+        utility_->sendLogPacket(&info, PKT_ID_QITS_TX_FLOW);
+    } else {
+        // rx
+        v2x_qits_general_rx_info info = {0};
+        V2X_QITS_GENERAL_RX_PKG *msg = (V2X_QITS_GENERAL_RX_PKG *)((uint32_t *)(&info) + 1);
+        if (congCtrlPrepared) {
+            generalInfo.tracking_error = congCtrlCbData.trackingError ?
+                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+            generalInfo.max_ITT = congCtrlCbData.maxITT;
+            msg->total_RVs = congCtrlCbData.totalRvsInRange;
+            msg->distance_from_RV = bs->distFromRV;
+        }
+        msg->bsm_data = bsm_info;
+        msg->general_data = generalInfo;
+        msg->msg_type = msg_type;
+        utility_->sendLogPacket(&info, PKT_ID_QITS_RX_FLOW);
+    }
+}
+
+void ApplicationBase::diagLogPktGenericInfo() {
+    v2x_qits_general_periodic_info info = {0};
+    V2X_QITS_GENERAL_PERIODIC_PKG *msg = (V2X_QITS_GENERAL_PERIODIC_PKG *)((uint32_t *)(&info) + 1);
+    bool congCtrlPrepared = this->configuration.enableCongCtrl && congCtrlInitialized;
+    if (congCtrlPrepared) {
+        msg->max_ITT = congCtrlCbData.maxITT;
+        msg->vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+        msg->total_RVs = congCtrlCbData.totalRvsInRange;
+        msg->tracking_error = congCtrlCbData.trackingError;
+    }
+
+    msg->CPU_Util = generalInfo.CPU_Util;
+    msg->L2_ID = generalInfo.L2_ID;
+    msg->events = generalInfo.events;
+
+    utility_->sendLogPacket(&info, PKT_ID_QITS_GENERIC_INFO);
 }
 
 void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
@@ -414,7 +558,15 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
 }
 
 ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
-    bool enableCsvLog){
+    bool enableCsvLog, bool enableDiagLog){
+    generalInfo = {0};
+    if (enableDiagLog) {
+        enableDiagLog_ = enableDiagLog;
+        if (!utility_) {
+            utility_ = std::make_shared<QUtils>();
+        }
+        utility_->initDiagLog();
+    }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
     // set parameters according to config file
@@ -542,7 +694,15 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
-            char* fileConfiguration, bool enableCsvLog) {
+            char* fileConfiguration, bool enableCsvLog, bool enableDiagLog) {
+    generalInfo = {0};
+    if (enableDiagLog) {
+        enableDiagLog_ = enableDiagLog;
+        if (!utility_) {
+            utility_ = std::make_shared<QUtils>();
+        }
+        utility_->initDiagLog();
+    }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
     if (this->loadConfiguration(fileConfiguration)) {
@@ -628,6 +788,9 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 ApplicationBase::~ApplicationBase() {
+    if (enableDiagLog_ && utility_) {
+        utility_->deInitDiagLog();
+    }
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
     }
@@ -2279,7 +2442,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         }
 
         if (encLength > 0 && ret > 0) {
-            if(csvfp) {
+            if (csvfp || enableDiagLog_) {
                 currTime = timestamp_now();
 
                 txInterval = currTime - lastTxTime;
@@ -2329,11 +2492,24 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                             cbr = eventTransmits[index].getCBRValue();
                             monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
                         }
-                        // write the log here for this tx now. using tx timestamp made before sendto
-                        writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM,
-                            monotonicTime, 0.0, 0, 0, cbr,
-                            &bs, 0.0, 0, txInterval,
-                            configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
+                        if (csvfp) {
+                            // write the log here for this tx now.
+                            // using tx timestamp made before sendto
+                            writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM,
+                                monotonicTime, 0.0, 0, 0, cbr, &bs, 0.0, 0, txInterval,
+                                configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
+                        }
+                        if (enableDiagLog_) {
+                            DiagLogData logData = {0};
+                            logData.validPkt = validMessage;
+                            logData.currTime = currTime;
+                            logData.cbr = cbr;
+                            logData.monotonicTime = monotonicTime;
+                            logData.txInterval = txInterval;
+                            logData.enableCongCtrl = configuration.enableCongCtrl;
+                            logData.monotonicTime = congCtrlInitialized;
+                            diagLogPktTxRx(true, txType, &logData, &bs);
+                        }
                     }
                 }
             }
@@ -2842,20 +3018,7 @@ void ApplicationBase::writeLog(const uint8_t index,
     }
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // if congestion control enabled, write cong ctrl data to log
-    unsigned short eventsData = 0;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventAirBagDeployment) << 12;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventDisabledVehicle) << 11;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventFlatTire) << 10;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventWipersChanged) << 9;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventLightsChanged) << 8;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHardBraking) << 7;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardousMaterials) <<5;
-    eventsData |= (unsigned short)
-        (1 & bs->events.bits.eventStabilityControlactivated) << 4;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventTractionControlLoss) << 3;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventABSactivated) << 2;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventStopLineViolation) <<1;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardLights) << 12;
+    unsigned short eventsData = getEventsData(&(bs->events));
 
     if (enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation

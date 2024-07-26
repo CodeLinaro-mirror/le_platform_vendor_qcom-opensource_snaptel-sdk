@@ -31,7 +31,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -167,6 +167,7 @@ private:
 protected:
     TrafficCategory category;
     bool enableCsvLog_ = false;
+    static bool enableDiagLogPacket_;
 
 public:
 
@@ -247,6 +248,8 @@ public:
     virtual uint64_t latestTxRxTimeMonotonic();
 
     virtual void enableCsvLog(bool enable);
+
+    static void enableDiagLog(bool enable);
 
     int onWraTimedout(void);
     int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr, const uint32_t serviceId);

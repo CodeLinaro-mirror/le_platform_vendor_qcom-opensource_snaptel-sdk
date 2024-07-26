@@ -257,7 +257,7 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
         cout << "\n";
         resp = -1;
     }
-    if (resp && enableCsvLog_) {
+    if (resp && (enableCsvLog_ || enableDiagLog)) {
         clock_gettime(CLOCK_MONOTONIC, &ts);
         auto nowMonotonicTime = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
         if (spsFlowInfo) {
@@ -359,7 +359,7 @@ uint8_t RadioTransmit::closeFlow() {
 
 int RadioTransmit::getTxInterval(uint64_t& periodicityMs) {
     int res = -1;
-    if (enableCsvLog_ && spsFlowInfo) {
+    if ((enableCsvLog_ || enableDiagLog) && spsFlowInfo) {
         periodicityMs = actualSPSTxIntervalMs_;
         res = 1;
     }

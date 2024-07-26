@@ -69,6 +69,7 @@ extern "C" {
 #endif
 #include <v2x_msg.h>
 int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog);
+double get_CPU_percentage(uint64_t monotonicTime);
 void write_bsm_header(FILE *fp);
 void writeToCsv(msg_contents *mc, FILE *fp, bool isTx, uint64_t periodicityMs,
     bool validPkt, uint32_t RVsInRange, uint64_t monotonicTime, uint64_t realworldTime,

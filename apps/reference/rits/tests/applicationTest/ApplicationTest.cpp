@@ -112,6 +112,8 @@ using std::make_shared;
 shared_ptr<ApplicationBase> application = nullptr;
 vector<thread> threads;
 bool csv = false;
+bool enableDiagLog = false;
+int timerFd = -1;
 string csvFileName;
 sem_t cnt_sem;
 auto rxsuccess = 0;
@@ -131,6 +133,9 @@ void stopThreads() {
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     if (not stopThread) {
         stopThread = true;
+        if (timerFd >= 0) {
+            close(timerFd);
+        }
 
         if (application) {
             application->prepareForExit();
@@ -161,11 +166,11 @@ void joinThreads() {
 }
 
 /**
- * Initialize timer for transmit
- * @param[in] interval_ms timer interval value in miliseconds
+ * Initialize timer
+ * @param[in] intervalMs timer interval value in miliseconds
  * @return timer's file descriptor if success or -1 on failure.
  */
-int start_tx_timer(uint32_t interval_ms) {
+int startTimerMs(uint32_t intervalMs) {
     int timerfd;
     struct itimerspec its = {0};
 
@@ -175,8 +180,8 @@ int start_tx_timer(uint32_t interval_ms) {
     }
 
     /* Start the timer */
-    its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
+    its.it_value.tv_sec = intervalMs / 1000;
+    its.it_value.tv_nsec = (intervalMs%1000) * 1000000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
@@ -226,14 +231,14 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
         uint64_t exp = 0;
         ssize_t s;
         int ciTimerFd, tshiftTimerFd = 0;
-        ciTimerFd = start_tx_timer(application->configuration.commandInterval);
+        ciTimerFd = startTimerMs(application->configuration.commandInterval);
         if (ciTimerFd == -1) {
             cerr << "Failed to start command interval timer" << endl;
             return;
         }
 
-        tshiftTimerFd = start_tx_timer(application->configuration.tShiftInterval);
-        if (ciTimerFd == -1) {
+        tshiftTimerFd = startTimerMs(application->configuration.tShiftInterval);
+        if (tshiftTimerFd == -1) {
             cerr << "Failed to start t shift timer" << endl;
             return;
         }
@@ -714,7 +719,7 @@ void transmit(MessageType msgType) {
     // default timer
     int tx_timer_fd = 0;
     if(!application->configuration.enableCongCtrl){
-        tx_timer_fd = start_tx_timer(txInterval);
+        tx_timer_fd = startTimerMs(txInterval);
         if (tx_timer_fd == -1) {
             cerr << "Failed to start Tx timer" << endl;
             return;
@@ -757,7 +762,7 @@ void transmit(MessageType msgType) {
 
                         if(!application->configuration.enableCongCtrl){
                             close(tx_timer_fd);
-                            tx_timer_fd = start_tx_timer(txInterval);
+                            tx_timer_fd = startTimerMs(txInterval);
                         }
                         // need to re-set the WSA Tx after the radio instance is re-created
                         if (MessageType::WSA == msgType
@@ -849,7 +854,7 @@ void txRecorded(string file) {
             return;
         }
 
-        int tx_timer_fd = start_tx_timer(application->configuration.transmitRate);
+        int tx_timer_fd = startTimerMs(application->configuration.transmitRate);
         if (tx_timer_fd == -1) {
             cerr << "Failed to start record Tx timer" << endl;
             return;
@@ -890,7 +895,6 @@ void txRecorded(string file) {
                 go = false;
             }
         }
-
 
         close(tx_timer_fd);
     }
@@ -987,6 +991,30 @@ void runApps(void) {
     }
 }
 
+/**
+ * run for periodic logs.
+ */
+void periodicDiagLog(void) {
+    uint64_t exp = 0;
+    ssize_t s;
+    timerFd = startTimerMs(application->configuration.transmitRate);
+    if (timerFd == -1) {
+        cerr << "Failed to start diag log timer" << endl;
+        return;
+    }
+
+    while (!stopThread) {
+        if (not application) {
+            break;
+        }
+        application->diagLogPktGenericInfo();
+        s = read(timerFd, &exp, sizeof(uint64_t));
+        if (s != sizeof(uint64_t)) {
+            printf("periodicDiagLog error read from timerFd\n");
+        }
+    }
+    return;
+}
 
 void printUse() {
     cout << "Usage: qits [options] <Config File Path>\n";
@@ -1171,6 +1199,9 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
     case 'v':
         print_rv = false;
         break;
+    case 'q':
+        enableDiagLog = true;
+        break;
     default:
         break;
     }
@@ -1215,12 +1246,12 @@ int setup(const bool tx, const bool rx,
         }
         if (txSim)
             application = make_shared<SaeApplication>(txSimIp, txSimPort, string(""), 0,
-                                                      configFile, msgType, csv);
+                                                      configFile, msgType, csv, enableDiagLog);
         else if (rxSim)
             application = make_shared<SaeApplication>(string(""), 0, rxSimIp, rxSimPort,
-                                                      configFile, msgType, csv);
+                                                      configFile, msgType, csv, enableDiagLog);
         else
-            application = make_shared<SaeApplication>(configFile, msgType, csv);
+            application = make_shared<SaeApplication>(configFile, msgType, csv, enableDiagLog);
         // prevent tx and rx during wsa mode
         if(rx && wsa){
             printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
@@ -1468,6 +1499,11 @@ int setup(const bool tx, const bool rx,
             return -1;
         }
         threads.push_back(thread(runApps));
+    }
+
+    if (enableDiagLog) {
+        RadioInterface::enableDiagLog(enableDiagLog);
+        threads.push_back(thread(periodicDiagLog));
     }
 
     return 0;

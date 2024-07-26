@@ -1,7 +1,6 @@
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * All rights reserved.
- * Confidential and Proprietary - Qualcomm Technologies, Inc.
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -346,7 +345,7 @@ grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
             if ((slotId == request->slot_id()) && (reqBackhaul == backhaul)) {
                 dataStub::VlanMapping *config = response->add_vlan_mapping();
                 config->set_vlan_id(requestedBinding["vlanId"].asInt());
-                config->set_profile_id(requestedBinding["profileId"].asBool());
+                config->set_profile_id(requestedBinding["profileId"].asInt());
             }
         }
     }

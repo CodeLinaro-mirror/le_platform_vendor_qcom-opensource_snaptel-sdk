@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -49,8 +49,6 @@ public:
     void setProfileId(int id);
     void setSlotId(SlotId id);
     void setIpFamilyType(IpFamilyType family);
-    void setIpv6Addr(IpAddrInfo ipv4Addr);
-    void setIpv4Addr(IpAddrInfo ipv6Addr);
     void setTechPreference(TechPreference techPref);
     void setDataCallStatus(DataCallStatus status);
     void setDataCallStatus(DataCallStatus status, IpFamilyType family);
@@ -58,6 +56,7 @@ public:
     void setDataBearerTechnology(DataBearerTechnology bearerTech);
     void setInterfaceName(std::string ifName);
     void setOperationType(OperationType type);
+    void setIpAddrList(std::list<IpAddrInfo> ipAddrList);
 
 private:
     std::string ifaceName_;
@@ -65,8 +64,7 @@ private:
     int profileId_;
     SlotId slotId_ = DEFAULT_SLOT_ID;
     IpFamilyType family_ = IpFamilyType::UNKNOWN;
-    IpAddrInfo ipv4_;
-    IpAddrInfo ipv6_;
+    std::list<IpAddrInfo> ipAddrList_;
     TechPreference techPref_ = TechPreference::TP_ANY;
     DataCallStatus ipv4Status_ = DataCallStatus::INVALID;
     DataCallStatus ipv6Status_ = DataCallStatus::INVALID;

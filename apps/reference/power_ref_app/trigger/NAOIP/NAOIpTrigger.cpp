@@ -61,6 +61,7 @@ bool NAOIpTrigger::init() {
         }
         dataController_ = std::make_shared<DataFilterController>();
         if (dataController_ ) {
+            isUDP_ = dataController_->isUDP();
             for (size_t i = 0; i < RETRY_INIT_SDK; i++) {
                 returnValue = dataController_->initializeSDK(
                     // callback to actually start naoip trigger after default data call is available
@@ -245,15 +246,7 @@ void NAOIpTrigger::listenNewTriggerClient(int triggerSocket, bool closeSocket) {
 void NAOIpTrigger::startServer() {
     LOG(DEBUG, __FUNCTION__);
 
-    string configFilterFile =
-        ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "NAOIP_FILTER_CONFIG_FILE");
-    if (configFilterFile.empty()) {
-        configFilterFile = DEFAULT_DATA_CONFIG_FILE_NAME;
-    }
-
-    DataConfigParser dataConfParser("communication", configFilterFile);
-
-    if (dataConfParser.getValue(dataConfParser.getFilters()[0], "TRANSPORT_PROTOCOL") == "UDP") {
+    if (isUDP_) {
         startUDPSever();
     } else {
         startTCPSever();

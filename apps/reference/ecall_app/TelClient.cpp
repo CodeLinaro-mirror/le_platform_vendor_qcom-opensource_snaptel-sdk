@@ -169,7 +169,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     // During the redial(by modem or app) scenario to setup audio session
-    if (call->getCallState() == telux::tel::CallState::CALL_DIALING) {
+    if (call->getCallState() == telux::tel::CallState::CALL_DIALING &&
+        call->getCallType() == telux::tel::CallType::ECALL) {
         if (eCall_ == nullptr) {
             eCall_ = call;
             setECallProgressState(true);
@@ -180,7 +181,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
             std::cout << CLIENT_NAME << "eCall ptr is not null\n";
         }
     }
-    if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
+    if (call->getCallState() == telux::tel::CallState::CALL_ENDED &&
+        call->getCallType() == telux::tel::CallType::ECALL) {
         std::cout << CLIENT_NAME << "  Cause of call termination: "
                   << TelClientUtils::callEndCauseToString(call->getCallEndCause()) << std::endl;
         if (eCall_ != nullptr) {

@@ -408,7 +408,8 @@ bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
             || (callInfo_.callState != ci->getCallState())
             || (callInfo_.mode != ci->getRttMode())
             || (callInfo_.localRttCapability != ci->getLocalRttCapability())
-            || (callInfo_.peerRttCapability != ci->getPeerRttCapability()));
+            || (callInfo_.peerRttCapability != ci->getPeerRttCapability())
+            || (callInfo_.callType != ci->getCallType()));
 }
 
 /*
@@ -424,7 +425,8 @@ void CallStub::logCallDetails() {
         ", callState = ", static_cast<int>(callInfo_.callState),
         ", rttMode = ", static_cast<int>(callInfo_.mode),
         ", localRttCapability = ", static_cast<int>(callInfo_.localRttCapability),
-        ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability));
+        ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
+        ", callType = ", static_cast<int>(callInfo_.callType));
 }
 
 /**
@@ -440,6 +442,7 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.mode = callInfo->getRttMode();
     callInfo_.localRttCapability = callInfo->getLocalRttCapability();
     callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
+    callInfo_.callType = callInfo->getCallType();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -468,6 +471,11 @@ RttMode CallStub::getPeerRttCapability() {
     LOG(DEBUG, __FUNCTION__, " Peer rtt capability is ",
         static_cast<int>(callInfo_.peerRttCapability));
     return callInfo_.peerRttCapability;
+}
+
+CallType CallStub::getCallType() {
+    LOG(DEBUG, __FUNCTION__, " Call type is ", static_cast<int>(callInfo_.callType));
+    return callInfo_.callType;
 }
 
 telux::common::Status CallStub::modify(RttMode mode,

@@ -425,10 +425,15 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
             static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
         callInfo.peerRttCapability =
             static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
+        callInfo.callType =
+            static_cast<telux::tel::CallType>(event.calls(i).call_type());
         LOG(DEBUG, __FUNCTION__,
             " Rtt mode: ", static_cast<int>(callInfo.mode),
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
-            " Peer Rtt capability:", static_cast<int>(callInfo.peerRttCapability));
+            " Peer Rtt capability:", static_cast<int>(callInfo.peerRttCapability),
+            " Call Type:", static_cast<int>(callInfo.callType));
+
+
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         {
             calls.emplace_back(Info);

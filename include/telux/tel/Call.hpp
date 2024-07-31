@@ -488,6 +488,19 @@ public:
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
       = 0;
 
+   /**
+    * Gets the current type of the call, such as emergency call, voice call, etc.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns CallType - enumeration representing call type @ref telux::tel::CallType
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual CallType getCallType() = 0;
+
    virtual ~ICall() {
    }
 };

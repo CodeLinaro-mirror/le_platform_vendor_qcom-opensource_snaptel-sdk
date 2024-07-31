@@ -28,7 +28,7 @@
  */
 
  /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -76,6 +76,8 @@ public:
     shared_ptr<ILocationInfoEx> getLocation();
     void close();
     void setLocCbFn(void(*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo));
+    LocListener();
+    ~LocListener();
 
 private:
     void onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) override;
@@ -96,6 +98,7 @@ private:
    uint16_t interval = 100;
    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
    std::shared_ptr<LocListener> locListener_ = nullptr;
+   std::vector<std::weak_ptr<ILocationListener>> locListeners_;
    void startDetailsCallback(ErrorCode eventError);
 
 protected:
@@ -133,7 +136,6 @@ public:
     * @see ILocationInfoEx in Snaptel SDK.
     */
    shared_ptr<ILocationInfoEx> getLocation();
-   std::vector<std::shared_ptr<ILocationListener>> locListeners_;
 
     /**
     * Destructor that closes listener to Location SDK. This method closes

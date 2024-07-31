@@ -97,7 +97,13 @@ grpc::Status DataSettingsServerImpl::SetDdsSwitch(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     } else if (!telux::common::DeviceConfig::isMultiSimSupported()) {
         data.error = telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
-    } else if (ddsInfo_.slotId == static_cast<SlotId>(request->slot_id())) {
+    } else if ((ddsInfo_.slotId == static_cast<SlotId>(request->slot_id())) &&
+        ((ddsInfo_.type == static_cast<telux::data::DdsType>(
+        request->switch_type())) || ((ddsInfo_.type == telux::data::DdsType::PERMANENT)
+        && (static_cast<telux::data::DdsType>(request->switch_type()) ==
+        telux::data::DdsType::TEMPORARY)))) {
+        //If for a slot_id, the requested switch_type is same as existing switch_type or
+        //switch_type is from PERMANENT to TEMPORARY, it is not allowed.
         data.error = telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
     }
 

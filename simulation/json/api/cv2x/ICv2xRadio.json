@@ -47,6 +47,18 @@
             "error": "SUCCESS",
             "status": "SUCCESS"
         },
+        "setGlobalIPInfo": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "setGlobalIPUnicastRoutingInfo": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestDataSessionSettings": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
         "injectVehicleSpeed": {
             "error": "SUCCESS",
             "status": "SUCCESS"

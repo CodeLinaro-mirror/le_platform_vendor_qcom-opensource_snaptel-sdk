@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <cstdlib>
+#include <ctime>
+#include "event/EventService.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
 #include "Cv2xRadioServer.hpp"
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/JsonParser.hpp"
@@ -13,6 +17,7 @@ static const std::string RADIO_API_JSON = "api/cv2x/ICv2xRadio.json";
 static const std::string RADIO_STATE_JSON = "system-state/cv2x/ICv2xRadio.json";
 
 static const std::string CV2X_EVENT_FILTER = "cv2x_status";
+static const std::string CV2X_SRC_L2_ID_FILTER = "cv2x_src_l2_id";
 
 Cv2xRadioServer::Cv2xRadioServer() {
   LOG(DEBUG, __FUNCTION__);
@@ -211,6 +216,7 @@ grpc::Status Cv2xRadioServer::enableRxMetaDataReport(
       }
     }
   }
+  LOG(ERROR, __FUNCTION__, " existing flows reached to max ", max);
   return ::commonStub::Status::FAILED;
 }
 
@@ -312,7 +318,19 @@ grpc::Status Cv2xRadioServer::updateSrcL2Info(
   LOG(DEBUG, __FUNCTION__);
   Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT, "updateSrcL2Info",
                                 res);
+  if (::commonStub::Status::SUCCESS == res->status()) {
+      // Initialize random seed
+      std::srand(std::time(0));
+      // Generate random number with 24 bits
+      cv2xStub::UintNum srcL2Id;
+      srcL2Id.set_num(static_cast<uint32_t>(std::rand() % 0x1000000));
 
+      ::eventService::EventResponse srcL2IdChangeInd;
+      srcL2IdChangeInd.set_filter(CV2X_SRC_L2_ID_FILTER);
+      srcL2IdChangeInd.mutable_any()->PackFrom(srcL2Id);
+      // posting the event to EventService event queue
+      EventService::getInstance().updateEventQueue(srcL2IdChangeInd);
+  }
   return grpc::Status::OK;
 }
 
@@ -393,6 +411,33 @@ grpc::Status Cv2xRadioServer::disableTxStatusReport(
     }
   }
   return grpc::Status::OK;
+}
+
+grpc::Status Cv2xRadioServer::setGlobalIPInfo(ServerContext *context,
+    const google::protobuf::Empty *request, ::cv2xStub::Cv2xCommandReply *res) {
+    LOG(DEBUG, __FUNCTION__);
+    Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT, "setGlobalIPInfo",
+        res);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status Cv2xRadioServer::setGlobalIPUnicastRoutingInfo(ServerContext *context,
+    const google::protobuf::Empty *request, ::cv2xStub::Cv2xCommandReply *res) {
+    LOG(DEBUG, __FUNCTION__);
+    Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT, "setGlobalIPUnicastRoutingInfo",
+        res);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status Cv2xRadioServer::requestDataSessionSettings(ServerContext *context,
+    const google::protobuf::Empty *request, ::cv2xStub::Cv2xCommandReply *res) {
+    LOG(DEBUG, __FUNCTION__);
+    Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT, "requestDataSessionSettings",
+        res);
+
+    return grpc::Status::OK;
 }
 
 grpc::Status Cv2xRadioServer::injectVehicleSpeed(ServerContext *context,

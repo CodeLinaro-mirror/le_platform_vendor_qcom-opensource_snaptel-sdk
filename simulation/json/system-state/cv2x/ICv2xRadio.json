@@ -7,8 +7,8 @@
         "cv2xDefaultStatus": {
             "rxStatus" : "active",
             "txStatus" : "active",
-            "rxCause" : 1,
-            "txCause" : 1
+            "rxCause" : 15,
+            "txCause" : 15
         }
     }
 }

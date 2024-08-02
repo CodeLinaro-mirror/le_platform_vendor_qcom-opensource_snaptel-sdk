@@ -190,19 +190,27 @@
             "example: telsdk_event_injector -f tel_serv -e \"callBarringUpdate 1 ,14 2 3\""
         ],
         "systemSelectionPreferenceUpdate":[
-            "telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ",
+            "telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ,<gsmBands> ,<wcdmaBands> ,<lteBands> ,<nsaBands> ,<saBands> ",
             "slotId:        integer, valid slotIds are 1 & 2 only.",
             "serviceDomainPreference: integer, valid serviceDomainPreference are UNKNOWN = -1, CS_ONLY = 0, PS_ONLY = 1, CS_PS = 2 Refer for more details telux::tel::ServiceDomainPreference",
             "ratPreferences: integer, valid ratPreference are 0 - PREF_CDMA_1X , 1 - PREF_CDMA_EVDO, 2 - PREF_GSM, 3 - PREF_WCDMA, 4 - PREF_LTE, 5 -PREF_TDSCDMA, 6 - PREF_NR5G, 7 - PREF_NR5G_NSA, 8 - PREF_NR5G_SA  Refer for more details telux::tel::RatPrefType ",
-            "Example: telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012"
+            "gsmBands: integer, gsm bands preference. Refer for more details telux::tel::GsmRFBand",
+            "wcdmaBands: integer, wcdma Bands preference. Refer for more details telux::tel::WcdmaRFBand",
+            "lteBands: integer, lte bands preference. Refer for more details telux::tel::LteRFBand",
+            "nsaBands: integer, nsa bands preference. Refer for more details telux::tel::NrRFBand",
+            "saBands: integer, sa bands preference. Refer for more details telux::tel::NrRFBand",
+            "Example: telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012 ,1 2 3 ,4 5 6 ,7 8 9 ,10 11 12 ,96 102 "
         ],
         "systemInfoUpdate":[
-            "telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction>",
+            "telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability>",
             "slotId:            integer, valid slotIds are 1 & 2 only." ,
             "currentServingRat: integer, valid currentServingRat Refer for more details telux::tel::RadioTechnology ",
             "currentServingDomain: integer, valid currentServingDomain Refer for more details telux::tel::ServiceDomain",
             "endcAvailability:  integer, valid UNKNOWN = -1, AVAILABLE = 0, UNAVAILABLE = 1 Refer for more details telux::tel::endcAvailability" ,
-            "dcnrRestriction:   integer, valid UNKNOWN = -1, RESTRICTED = 0, UNRESTRICTED = 1 Refer for more details telux::tel::dcnrRestriction"
+            "dcnrRestriction:   integer, valid UNKNOWN = -1, RESTRICTED = 0, UNRESTRICTED = 1 Refer for more details telux::tel::dcnrRestriction",
+            "smsRat:  integer, valid smsRat refer for more details telux::tel::RadioTechnology" ,
+            "smsDomain:   integer, valid UNKNOWN = -1, NO_SMS = 0, SMS_ON_IMS = 1, SMS_ON_3GPP = 2. Refer for more details telux::tel::SmsDomain",
+            "lteCapability:   integer, refer for more details telux::tel::LteCsCapability"
         ],
         "networkTimeUpdate":[
             "telsdk_event_injector -f tel_serv -e networkTimeUpdate <slotId> <year> <month> <day> <hour> <minute> <second> <dayOfWeek> <timeZone> <dstAdj> <nitzTime>",

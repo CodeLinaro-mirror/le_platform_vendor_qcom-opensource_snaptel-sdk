@@ -141,6 +141,7 @@ class CommonUtils {
         std::string subsystem, std::string method, JsonData& data);
 
     static std::vector<std::string> splitString(std::string str);
+    static std::string convertIntVectorToString(std::vector<int> integers);
  private:
     static std::string readSystemDataValue(
         Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);

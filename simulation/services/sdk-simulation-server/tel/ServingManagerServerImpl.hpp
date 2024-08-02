@@ -62,6 +62,21 @@ public:
     grpc::Status GetCallBarringInfo(ServerContext* context,
         const ::telStub::GetCallBarringInfoRequest* request,
         telStub::GetCallBarringInfoReply* response) override;
+    grpc::Status GetSmsCapabilityOverNetwork(ServerContext* context,
+        const ::telStub::GetSmsCapabilityOverNetworkRequest* request,
+        telStub::GetSmsCapabilityOverNetworkReply* response);
+    grpc::Status GetLteCsCapability(ServerContext* context,
+        const ::telStub::GetLteCsCapabilityRequest* request,
+        telStub::GetLteCsCapabilityReply* response) override;
+    grpc::Status RequestRFBandPreferences(ServerContext* context,
+        const ::telStub::RequestRFBandPreferencesRequest* request,
+        telStub::RequestRFBandPreferencesReply* response) override;
+    grpc::Status SetRFBandPreferences(ServerContext* context,
+        const ::telStub::SetRFBandPreferencesRequest* request,
+        telStub::SetRFBandPreferencesReply* response) override;
+    grpc::Status RequestRFBandCapability(ServerContext* context,
+        const ::telStub::RequestRFBandCapabilityRequest* request,
+        telStub::RequestRFBandCapabilityReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
@@ -77,7 +92,11 @@ private:
     void handleRfBandInfoUpdateEvent(std::string eventParams);
     void handleNetworkRejectionUpdateEvent(std::string eventParams);
     void triggerSystemSelectionPreferenceEvent(int slotId,
-        std::vector<uint8_t> ratPrefs, int domain);
+        std::vector<uint8_t> ratPrefs, int domain,
+        std::vector<int> gsmBandPrefs,std::vector<int> wcdmaBandPrefs,
+        std::vector<int> lteBandPrefs,std::vector<int> nsaBandPrefs,
+        std::vector<int> saBandPrefs);
+    std::vector<int> readBandPreferenceFromEvent(std::string eventParams);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 
 };

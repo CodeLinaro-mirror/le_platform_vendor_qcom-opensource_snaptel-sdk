@@ -418,5 +418,14 @@ long CommonUtils::convertHexToInt(std::string hex) {
     return value;
 }
 
+std::string CommonUtils::convertIntVectorToString(std::vector<int> integers) {
+  std::stringstream ss;
+  for (std::size_t i = 0; i < integers.size(); i++)
+  {
+          ss << integers[i] << " ";
+  }
+  return ss.str();
+}
+
 }  // namespace common
 }  // namespace telux

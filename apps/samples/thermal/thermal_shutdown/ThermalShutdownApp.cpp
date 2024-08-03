@@ -82,6 +82,8 @@
 #include <errno.h>
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include <telux/therm/ThermalDefines.hpp>
 #include <telux/common/CommonDefines.hpp>

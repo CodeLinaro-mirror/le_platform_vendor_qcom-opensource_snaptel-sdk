@@ -84,6 +84,8 @@
 #include <cstdlib>
 #include <future>
 #include <list>
+#include <chrono>
+#include <thread>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataFactory.hpp>

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,143 +62,272 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This application demonstrates how to get modem configuration, auto selection
+ * mode and the active config. The steps are as follows:
+ *
+ * 1. Get a ConfigFactory instance.
+ * 2. Get a IModemConfigManager instance from the ConfigFactory.
+ * 3. Wait for the config service to become available.
+ * 4. Retrieve all configs present in the modem's storage.
+ * 5. Retrieve selection mode of the configs.
+ * 6. Retrieve the active config.
+ *
+ * Usage:
+ * # ./modem_config_app
+ */
 
+#include <errno.h>
+
+#include <chrono>
+#include <thread>
 #include <iostream>
-#include <future>
+#include <memory>
+#include <string>
+#include <mutex>
+#include <condition_variable>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/config/ConfigFactory.hpp>
 #include <telux/config/ModemConfigManager.hpp>
 
-std::promise<telux::common::ErrorCode> gCallbackPromise;
+class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListener> {
+ public:
+    int init() {
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
 
-// Resets the global callback promise variable
-static inline void resetCallbackPromise(void) {
-    gCallbackPromise = std::promise<telux::common::ErrorCode>();
-}
+        /* Step - 1 */
+        auto &configFactory = telux::config:: ConfigFactory::getInstance();
 
-static void configListCb(std::vector<telux::config::ConfigInfo> configList,
-                                    telux::common::ErrorCode errCode) {
-    if (errCode == telux::common::ErrorCode::SUCCESS) {
-        std::cout << "Total Configs in Modem " << configList.size() << std::endl;
+        /* Step - 2 */
+        modemConfigMgr_ = configFactory.getModemConfigManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!modemConfigMgr_) {
+            std::cout << "Can't get IModemConfigManager" << std::endl;
+            return -ENOMEM;
+        }
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Config service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
+    }
+
+    int getConfigurationFilesInfo() {
         int count = 0;
-        for (auto &config : configList) {
+        std::string type;
+        telux::common::Status status;
+
+        auto responseCb = std::bind(
+            &ModemConfigListener::onConfigListAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 4 */
+        status = modemConfigMgr_->requestConfigList(responseCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't request config list, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        if (!waitForResponse()) {
+            std::cout << "Failed to request config list, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "\nCurrent configs are:" << std::endl;
+        for (auto &config : configList_) {
             std::cout << "Config No  : " << count << std::endl;
-            std::string type;
             if (config.type == telux::config::ConfigType::HARDWARE) {
                 type = "HARDWARE";
             } else if(config.type == telux::config::ConfigType::SOFTWARE) {
                 type = "SOFTWARE";
+            } else {
+                type = "";
             }
-        std::cout << "Type        : " << type << std::endl;
-        std::cout << "Size        : " << static_cast<uint32_t>(config.size) << std::endl;
-        std::cout << "Version     : " << static_cast<uint32_t>(config.version) << std::endl;
-        std::cout << "Description : " << (config.desc) << std::endl << std::endl;
-        count++;
+            std::cout << "Type        : " << type << std::endl;
+            std::cout << "Size        : " << static_cast<uint32_t>(config.size) << std::endl;
+            std::cout << "Version     : " << static_cast<uint32_t>(config.version) << std::endl;
+            std::cout << "Description : " << config.desc << std::endl;
+            count++;
         }
-    }
-    gCallbackPromise.set_value(errCode);
-}
 
-static void getActiveConfigCb(telux::config::ConfigInfo configInfo,
-                                                    telux::common::ErrorCode errCode) {
-    if (errCode == telux::common::ErrorCode::SUCCESS) {
-        std::cout << "Active Config Details" << std::endl;
-        std::string type;
-        if (configInfo.type == telux::config::ConfigType::HARDWARE) {
-            type = "HARDWARE";
-        } else if(configInfo.type == telux::config::ConfigType::SOFTWARE) {
-            type = "SOFTWARE";
+        return 0;
+    }
+
+    int retrieveAutoSelectionMode() {
+        telux::common::Status status;
+
+        auto responseCb = std::bind(
+            &ModemConfigListener::onAutoSelectionAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
+
+        /* Step - 5 */
+        status = modemConfigMgr_->getAutoSelectionMode(responseCb, DEFAULT_SLOT_ID);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't get selection mode, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
         }
-        std::cout << "Type        :" << type << std::endl;
-        std::cout << "Size        :" << static_cast<uint32_t>(configInfo.size) << std::endl;
-        std::cout << "Version     :" << static_cast<uint32_t>(configInfo.version) << std::endl;
-        std::cout << "Description :" << configInfo.desc << std::endl;
-    }
-    gCallbackPromise.set_value(errCode);
-}
 
-static void getAutoSelectionModeCb(telux::config::AutoSelectionMode selectionMode,
-                                                            telux::common::ErrorCode errCode) {
-    if (errCode == telux::common::ErrorCode::SUCCESS) {
-        if (selectionMode == telux::config::AutoSelectionMode::DISABLED) {
+        if (!waitForResponse()) {
+            std::cout << "Failed to get selection mode, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
+        }
+
+        if (selectionMode_ == telux::config::AutoSelectionMode::DISABLED) {
             std::cout << "Auto selection is disabled" << std::endl;
         } else {
             std::cout << "Auto selection is enabled" << std::endl;
         }
-    }
-    gCallbackPromise.set_value(errCode);
-}
 
-int main(int argc, char **argv) {
-
-    // ### 1. Get the ConfigFactory and ModemConfigManager instances.
-    auto &configFactory = telux::config::ConfigFactory::getInstance();
-    std::promise<telux::common::ServiceStatus> prom{};
-    auto modemConfigManager_ = configFactory.getModemConfigManager(
-        [&prom](telux::common::ServiceStatus status) {
-            prom.set_value(status);
-    });
-    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    // ### 2. Requesting to get modem config subsystem state
-    subSystemStatus = modemConfigManager_->getServiceStatus();
-
-    // #### 2.1  If modem config subsystem is not ready, wait for it to be ready
-    if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
-        // Wait unconditionally for modem config subsystem to be ready
-        subSystemStatus = prom.get_future().get();
-    } else {
-        std::cout << "Invalid modem config Manager" << std::endl;
-        return EXIT_FAILURE;
+        return 0;
     }
 
-    if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Modem Config Subsystem is ready." << std::endl;
-    } else {
-        std::cout << " *** ERROR - Unable to initialize modem config subsystem" << std::endl;
-        return EXIT_FAILURE;
-    }
+    int getActiveConfiguration() {
+        std::string type;
+        telux::common::Status status;
 
-    // Setting up default Parameters
-    telux::config::ConfigType configType_ = telux::config::ConfigType::SOFTWARE;
-    int slotId_ = 1;
+        auto responseCb = std::bind(
+            &ModemConfigListener::onActiveConfigAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
-    // ### 3. Requesting all configs present in the modem's storage
-    auto status = modemConfigManager_->requestConfigList(configListCb);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Get Config List Request sent" << std::endl;
-        if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-            std::cout << "Error : failed to get config list." << std::endl;
+        /* Step - 6 */
+        /* Get active config, this will error out if only default configs are active */
+        status = modemConfigMgr_->getActiveConfig(
+            telux::config::ConfigType::SOFTWARE, responseCb, DEFAULT_SLOT_ID);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't get active config, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
         }
-    } else {
-        std::cout << "Get Config List Request failed" << std::endl;
-    }
 
-    resetCallbackPromise();
-
-    // ### 4. Requesting selection mode of configs
-    status = modemConfigManager_->getAutoSelectionMode(getAutoSelectionModeCb, slotId_);
-     if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Get selection mode Request sent" << std::endl;
-        if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-            std::cout << "Error : failed to get selection mode" << std::endl;
+        if (!waitForResponse()) {
+            std::cout << "Failed to get active config, err " <<
+                static_cast<int>(errorCode_) << std::endl;
+            return -EIO;
         }
-    } else {
-        std::cout << "Get selection mode Request failed" << std::endl;
-    }
 
-    resetCallbackPromise();
-
-    // ### 5. Requesting active config info, will error out if only default configs active
-    status = modemConfigManager_->getActiveConfig(configType_,getActiveConfigCb, slotId_);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "get active config request sent" << std::endl;
-        if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-            std::cout << "Error : failed to get active config info" << std::endl;
+        std::cout << "Current active configuration:" << std::endl;
+        if (configInfo_.type == telux::config::ConfigType::HARDWARE) {
+            type = "HARDWARE";
+        } else if(configInfo_.type == telux::config::ConfigType::SOFTWARE) {
+                type = "SOFTWARE";
+        } else {
+                type = "";
         }
-    } else {
-        std::cout << "get active config request failed" << std::endl;
+
+        std::cout << "Type        : " << type << std::endl;
+        std::cout << "Size        : " << static_cast<uint32_t>(configInfo_.size) << std::endl;
+        std::cout << "Version     : " << static_cast<uint32_t>(configInfo_.version) << std::endl;
+        std::cout << "Description : " << configInfo_.desc << std::endl;
+
+        return 0;
     }
 
-    return EXIT_SUCCESS;
+    /* Receives response of the requestConfigList() request */
+    void onConfigListAvailable(std::vector<telux::config::ConfigInfo> configList,
+            telux::common::ErrorCode error) {
+
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonConfigListAvailable()" << std::endl;
+        errorCode_ = error;
+        configList_ = configList;
+        updateCV_.notify_one();
+    }
+
+    /* Receives response of the getAutoSelectionMode() request */
+    void onAutoSelectionAvailable(telux::config::AutoSelectionMode selectionMode,
+            telux::common::ErrorCode error) {
+
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonAutoSelectionAvailable()" << std::endl;
+        errorCode_ = error;
+        selectionMode_ = selectionMode;
+        updateCV_.notify_one();
+    }
+
+    /* Receives response of the getActiveConfig() request */
+    void onActiveConfigAvailable(telux::config::ConfigInfo configInfo,
+            telux::common::ErrorCode error) {
+
+        std::lock_guard<std::mutex> lock(updateMutex_);
+        std::cout << "\nonActiveConfigAvailable()" << std::endl;
+        errorCode_ = error;
+        configInfo_ = configInfo;
+        updateCV_.notify_one();
+    }
+
+    bool waitForResponse() {
+        int const DEFAULT_TIMEOUT_SECONDS = 5;
+        std::unique_lock<std::mutex> lock(updateMutex_);
+
+        auto cvStatus = updateCV_.wait_for(lock,
+            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (cvStatus == std::cv_status::timeout) {
+            std::cout << "Timedout" << std::endl;
+            errorCode_ = telux::common::ErrorCode::TIMEOUT_ERROR;
+            return false;
+        }
+
+        return true;
+    }
+
+ private:
+    std::mutex updateMutex_;
+    std::condition_variable updateCV_;
+    telux::common::ErrorCode errorCode_;
+    telux::config::ConfigInfo configInfo_;
+    telux::config::AutoSelectionMode selectionMode_;
+    std::vector<telux::config::ConfigInfo> configList_;
+    std::shared_ptr<telux::config::IModemConfigManager> modemConfigMgr_;
+};
+
+int main(int argc, char *argv[]) {
+
+    int ret;
+    std::shared_ptr<ModemConfigListener> app;
+
+    try {
+        app = std::make_shared<ModemConfigListener>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate ModemConfigListener" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->getConfigurationFilesInfo();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->retrieveAutoSelectionMode();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->getActiveConfiguration();
+    if (ret < 0) {
+        return ret;
+    }
+
+    std::cout << "\nModem config app exiting" << std::endl;
+    return 0;
 }

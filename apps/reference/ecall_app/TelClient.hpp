@@ -358,6 +358,7 @@ public:
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
+    telux::tel::CallDirection getECallDirection();
 
     TelClient();
     ~TelClient();

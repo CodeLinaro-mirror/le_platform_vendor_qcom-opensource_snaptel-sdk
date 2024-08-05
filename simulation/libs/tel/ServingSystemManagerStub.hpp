@@ -55,7 +55,8 @@ class ServingSystemManagerStub : public IServingSystemManager,
                                  public IEventListener,
                                  public std::enable_shared_from_this<ServingSystemManagerStub> {
 public:
-    ServingSystemManagerStub(int phoneId, telux::common::InitResponseCb callback);
+    ServingSystemManagerStub(int phoneId);
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~ServingSystemManagerStub();
 
     bool isSubsystemReady() override;

@@ -12,17 +12,35 @@
 using namespace telux::common;
 using namespace telux::tel;
 
-NetworkSelectionManagerStub::NetworkSelectionManagerStub(int phoneId,
+NetworkSelectionManagerStub::NetworkSelectionManagerStub(int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    phoneId_ = phoneId;
+}
+
+telux::common::Status NetworkSelectionManagerStub::init(
     telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<INetworkSelectionListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
     stub_ = CommonUtils::getGrpcStub<::telStub::NetworkSelectionService>();
-    phoneId_ = phoneId;
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate network selection service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
     auto f = std::async(std::launch::async,
         [this, callback]() {
             this->initSync(callback);
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 void NetworkSelectionManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -37,14 +55,6 @@ void NetworkSelectionManagerStub::initSync(telux::common::InitResponseCb callbac
         static_cast<telux::common::ServiceStatus>(response.service_status());
     int cbDelay = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<INetworkSelectionListener>>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
-    }
     if(callback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
         callback(cbStatus);

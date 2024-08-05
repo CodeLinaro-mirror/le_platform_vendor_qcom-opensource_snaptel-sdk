@@ -28,7 +28,8 @@ class NetworkSelectionManagerStub : public INetworkSelectionManager,
                                     public IEventListener,
                                     public std::enable_shared_from_this<NetworkSelectionManagerStub> {
 public:
-    NetworkSelectionManagerStub(int phoneId, telux::common::InitResponseCb callback);
+    NetworkSelectionManagerStub(int phoneId);
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~NetworkSelectionManagerStub();
 
     bool isSubsystemReady() override;

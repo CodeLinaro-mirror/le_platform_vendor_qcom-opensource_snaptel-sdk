@@ -28,7 +28,8 @@ class ImsServingSystemManagerStub : public IImsServingSystemManager,
                                     public IEventListener,
                                     public std::enable_shared_from_this<ImsServingSystemManagerStub> {
 public:
-    ImsServingSystemManagerStub(SlotId slotId, telux::common::InitResponseCb callback);
+    ImsServingSystemManagerStub(SlotId slotId);
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~ImsServingSystemManagerStub();
 
     telux::common::ServiceStatus getServiceStatus() override;

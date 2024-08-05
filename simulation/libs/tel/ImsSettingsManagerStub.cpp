@@ -9,15 +9,33 @@
 
 using namespace telux::tel;
 
-ImsSettingsManagerStub::ImsSettingsManagerStub(telux::common::InitResponseCb callback) {
+ImsSettingsManagerStub::ImsSettingsManagerStub() {
     LOG(DEBUG, __FUNCTION__);
+}
+
+telux::common::Status ImsSettingsManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IImsSettingsListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
     stub_ = CommonUtils::getGrpcStub<::telStub::ImsService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ims settings service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
     auto f = std::async(std::launch::async,
         [this, callback]() {
             this->initSync(callback);
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 void ImsSettingsManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -36,14 +54,6 @@ void ImsSettingsManagerStub::initSync(telux::common::InitResponseCb callback) {
         static_cast<telux::common::ServiceStatus>(response.service_status());
     int cbDelay = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<IImsSettingsListener>>();
-        if (!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
-    }
     this->onServiceStatusChange(cbStatus);
     if (callback) {
         auto f1 = std::async(std::launch::async,

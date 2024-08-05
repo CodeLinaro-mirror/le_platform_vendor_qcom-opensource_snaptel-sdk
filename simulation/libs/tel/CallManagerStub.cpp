@@ -12,19 +12,37 @@ using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
 
-CallManagerStub::CallManagerStub(telux::common::InitResponseCb callback) {
+CallManagerStub::CallManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<DialerService>();
     noOfSlots_ = 1;                            // Defaulting to 1 for Single SIM.
     if (telux::common::DeviceConfig::isMultiSimSupported()) {  // For DSDA slot count is 2.
         noOfSlots_ = 2;
     }
+}
+
+telux::common::Status CallManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<ICallListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+    stub_ = CommonUtils::getGrpcStub<DialerService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate dialer service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
     auto f = std::async(std::launch::async,
         [this, callback]() {
             this->initSync(callback);
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 void CallManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -38,13 +56,6 @@ void CallManagerStub::initSync(telux::common::InitResponseCb callback) {
         telux::common::ServiceStatus cbStatus =
             static_cast<telux::common::ServiceStatus>(response.service_status());
         int cbDelay = static_cast<int>(response.delay());
-        if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            listenerMgr_ = std::make_shared<telux::common::ListenerManager<ICallListener>>();
-            if(!listenerMgr_) {
-                LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-                cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-            }
-        }
         LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         if(callback) {
             auto f = std::async(std::launch::async,

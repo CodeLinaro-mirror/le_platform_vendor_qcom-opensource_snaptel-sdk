@@ -114,15 +114,20 @@ std::shared_ptr<ISmsManager> PhoneFactoryImplStub::getSmsManager(int phoneId,
     if (sms == smsManagerMap_.end()) {
        LOG(DEBUG, __FUNCTION__, " Creating SMS Manager for phoneId ", phoneId);
        std::shared_ptr<SmsManagerStub> smsMgr = nullptr;
+       try {
+           smsMgr = std::make_shared<SmsManagerStub>(phoneId);
+       } catch (std::bad_alloc & e) {
+           LOG(ERROR, __FUNCTION__ , e.what());
+           return nullptr;
+       }
        auto initCb = [this, phoneId](telux::common::ServiceStatus status) {
            LOG(DEBUG, __FUNCTION__, " SMS Manager initialization callback");
            this->onSmsMgrInitResponse(phoneId, status);
        };
-       try {
-           smsMgr = std::make_shared<SmsManagerStub>(phoneId, initCb);
-       } catch (std::bad_alloc & e) {
-           LOG(ERROR, __FUNCTION__ , e.what());
-           return nullptr;
+       auto status = smsMgr->init(initCb);
+       if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the SMS manager");
+          return nullptr;
        }
        smsManagerMap_.emplace(phoneId, smsMgr);
        smsMgrInitStatus_.emplace(phoneId, telux::common::ServiceStatus::SERVICE_UNAVAILABLE);
@@ -190,17 +195,23 @@ std::shared_ptr<IPhoneManager> PhoneFactoryImplStub::getPhoneManager(
     telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    auto initCb = [this](telux::common::ServiceStatus status) {
-           LOG(DEBUG, __FUNCTION__, " Phone Manager initialization callback");
-           this->onPhoneManagerResponse(status);
-    };
     if (phoneManager_ == nullptr) {
        std::shared_ptr<PhoneManagerStub> phoneManager = nullptr;
        try {
-           phoneManager = std::make_shared<PhoneManagerStub>(initCb);
+           phoneManager = std::make_shared<PhoneManagerStub>();
        } catch (std::bad_alloc & e) {
            LOG(ERROR, __FUNCTION__ , e.what());
            return nullptr;
+       }
+       auto initCb = [this](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " Phone Manager initialization callback");
+           this->onPhoneManagerResponse(status);
+       };
+       auto status = phoneManager->init(initCb);
+       if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the Phone manager");
+          phoneManager_ = nullptr;
+          return nullptr;
        }
        if (callback) {
           phoneMgrCallbacks_.push_back(callback);
@@ -291,15 +302,21 @@ std::shared_ptr<ICallManager> PhoneFactoryImplStub::getCallManager(
     telux::common::InitResponseCb callback) {
     std::lock_guard<std::recursive_mutex> guard(mutex_);
     std::shared_ptr<CallManagerStub> callManager = nullptr;
-    auto initCb = [this](telux::common::ServiceStatus status) {
-           LOG(DEBUG, __FUNCTION__, " Call Manager initialization callback");
-           this->onCallMgrInitResponse(status);
-       };
     if (callManager_ == nullptr) {
         try {
-            callManager = std::make_shared<CallManagerStub>(initCb);
+            callManager = std::make_shared<CallManagerStub>();
         } catch (std::bad_alloc & e) {
             LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
+        auto initCb = [this](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " Call Manager initialization callback");
+           this->onCallMgrInitResponse(status);
+        };
+        auto status = callManager->init(initCb);
+        if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize CallManager");
+            callManager_ = nullptr;
             return nullptr;
         }
         callMgrInitCallbacks_.push_back(callback);
@@ -324,14 +341,20 @@ std::shared_ptr<ICardManager> PhoneFactoryImplStub::getCardManager(
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (cardManager_ == nullptr) {
         std::shared_ptr<CardManagerStub> cardManager = nullptr;
+        try {
+            cardManager = std::make_shared<CardManagerStub>();
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
         auto initCb = [this](telux::common::ServiceStatus status) {
             LOG(DEBUG, __FUNCTION__, " CardManager initialization callback");
             this->onCardManagerResponse(status);
         };
-        try {
-            cardManager = std::make_shared<CardManagerStub>(initCb);
-        } catch (std::bad_alloc & e) {
-            LOG(ERROR, __FUNCTION__ , e.what());
+        auto status = cardManager->init(initCb);
+        if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize cardManager");
+            cardManager_ = nullptr;
             return nullptr;
         }
         if (callback) {
@@ -402,14 +425,20 @@ std::shared_ptr<ISubscriptionManager> PhoneFactoryImplStub::getSubscriptionManag
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (subscriptionManager_ == nullptr) {
        std::shared_ptr<SubscriptionManagerStub> subscriptionMgr = nullptr;
+       try {
+          subscriptionMgr = std::make_shared<SubscriptionManagerStub>();
+       } catch (std::bad_alloc & e) {
+          LOG(ERROR, __FUNCTION__ , e.what());
+          return nullptr;
+       }
        auto initCb = [this](telux::common::ServiceStatus status) {
           LOG(DEBUG, __FUNCTION__, " Subscription initialization callback");
           this->onSubscriptionManagerResponse(status);
        };
-       try {
-          subscriptionMgr = std::make_shared<SubscriptionManagerStub>(initCb);
-       } catch (std::bad_alloc & e) {
-          LOG(ERROR, __FUNCTION__ , e.what());
+       auto status = subscriptionMgr->init(initCb);
+       if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the Subscription manager");
+          subscriptionManager_ = nullptr;
           return nullptr;
        }
        if (callback) {
@@ -487,16 +516,21 @@ std::shared_ptr<telux::tel::IServingSystemManager> PhoneFactoryImplStub::getServ
     if (mgr == servingSystemManagerMap_.end()) {
        LOG(DEBUG, __FUNCTION__, " Creating ServingSystem Manager for slotId ", slotId);
        std::shared_ptr<ServingSystemManagerStub> servingSystemMgr = nullptr;
-       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
-           LOG(DEBUG, __FUNCTION__, " ServingSystem initialization callback");
-           this->onServingSystemMgrInitResponse(slotId, status);
-       };
        try {
-           servingSystemMgr = std::make_shared<ServingSystemManagerStub>(slotId, initCb);
+           servingSystemMgr = std::make_shared<ServingSystemManagerStub>(slotId);
        } catch (std::bad_alloc & e) {
            LOG(ERROR, __FUNCTION__ , e.what());
            return nullptr;
        }
+       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " ServingSystem initialization callback");
+           this->onServingSystemMgrInitResponse(slotId, status);
+       };
+       auto status = servingSystemMgr->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize the Serving System Manager");
+            return nullptr;
+        }
        servingSystemManagerMap_.emplace(slotId, servingSystemMgr);
        servingSysMgrInitStatus_.emplace(slotId,
        telux::common::ServiceStatus::SERVICE_UNAVAILABLE);
@@ -542,15 +576,20 @@ std::shared_ptr<telux::tel::INetworkSelectionManager>
     if (mgr == networkSelectionManagerMap_.end()) {
        LOG(DEBUG, __FUNCTION__, " Creating networkSelection Manager for slotId ", slotId);
        std::shared_ptr<NetworkSelectionManagerStub> networkSelectionMgr = nullptr;
-       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
-           LOG(DEBUG, __FUNCTION__, " networkSelection Manager initialization callback");
-           this->onNetworkSelectionMgrInitResponse(slotId, status);
-       };
        try {
-           networkSelectionMgr = std::make_shared<NetworkSelectionManagerStub>(slotId, initCb);
+           networkSelectionMgr = std::make_shared<NetworkSelectionManagerStub>(slotId);
        } catch (std::bad_alloc & e) {
            LOG(ERROR, __FUNCTION__ , e.what());
            return nullptr;
+       }
+       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " networkSelection manager initialization callback");
+           this->onNetworkSelectionMgrInitResponse(slotId, status);
+       };
+       telux::common::Status status = networkSelectionMgr->init(initCb);
+       if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize networkSelection manager");
+            return nullptr;
        }
        networkSelectionManagerMap_.emplace(slotId, networkSelectionMgr);
        networkSelMgrInitStatus_.emplace(slotId,
@@ -629,14 +668,20 @@ std::shared_ptr<IMultiSimManager> PhoneFactoryImplStub::getMultiSimManager(
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (multiSimManager_ == nullptr) {
        std::shared_ptr<MultiSimManagerStub> multiSimMgr = nullptr;
+       try {
+          multiSimMgr = std::make_shared<MultiSimManagerStub>();
+       } catch (std::bad_alloc & e) {
+          LOG(ERROR, __FUNCTION__ , e.what());
+          return nullptr;
+       }
        auto initCb = [this](telux::common::ServiceStatus status) {
           LOG(DEBUG, __FUNCTION__, " MultiSim Manager initialization callback");
           this->onMultiSimManagerResponse(status);
        };
-       try {
-          multiSimMgr = std::make_shared<MultiSimManagerStub>(initCb);
-       } catch (std::bad_alloc & e) {
-          LOG(ERROR, __FUNCTION__ , e.what());
+       auto status = multiSimMgr->init(initCb);
+       if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the Muti Sim manager");
+          multiSimManager_ = nullptr;
           return nullptr;
        }
        if (callback) {
@@ -710,15 +755,20 @@ std::shared_ptr<ICellBroadcastManager> PhoneFactoryImplStub::getCellBroadcastMan
     auto cbMgr = cbMap_.find(slotId);
     if (cbMgr == cbMap_.end()) {
         LOG(DEBUG, __FUNCTION__, " Creating CellBroadcastManager for slot id: ", slotId);
+        std::shared_ptr<CellBroadcastManagerStub> cellbroadcastMgr = nullptr;
+        try {
+            cellbroadcastMgr = std::make_shared<CellBroadcastManagerStub>(slotId);
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
         auto initCb = [this, slotId](telux::common::ServiceStatus status) {
             LOG(DEBUG, __FUNCTION__, " CellBroadcast Manager init callback");
             this->onCellBroadcastManagerResponse(slotId, status);
         };
-        std::shared_ptr<CellBroadcastManagerStub> cellbroadcastMgr = nullptr;
-        try {
-            cellbroadcastMgr = std::make_shared<CellBroadcastManagerStub>(slotId, initCb);
-        } catch (std::bad_alloc & e) {
-            LOG(ERROR, __FUNCTION__ , e.what());
+        auto status = cellbroadcastMgr->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize CellBroadcast Manager");
             return nullptr;
         }
         cbMap_.emplace(slotId, cellbroadcastMgr);
@@ -793,16 +843,23 @@ std::shared_ptr<IImsSettingsManager> PhoneFactoryImplStub::getImsSettingsManager
     telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    auto initCb = std::bind(
-        &PhoneFactoryImplStub::onImsSettingsManagerResponse, this, std::placeholders::_1);
     if (imsSettingsManager_ == nullptr) {
         std::shared_ptr<ImsSettingsManagerStub> imssManagerImpl = nullptr;
         try {
-            imssManagerImpl = std::make_shared<ImsSettingsManagerStub>(initCb);
+            imssManagerImpl = std::make_shared<ImsSettingsManagerStub>();
         } catch (std::bad_alloc &e) {
             LOG(ERROR, __FUNCTION__, e.what());
             return nullptr;
         }
+        auto initCb = std::bind(&PhoneFactoryImplStub::onImsSettingsManagerResponse, this,
+            std::placeholders::_1);
+        auto status = imssManagerImpl->init(initCb);
+        if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the IMS settings manager");
+          imsSettingsManager_ = nullptr;
+          return nullptr;
+        }
+        LOG(DEBUG, __FUNCTION__, " initialize the IMS settings manager");
         if (callback) {
             imssCallbacks_.push_back(callback);
         } else {
@@ -887,16 +944,22 @@ std::shared_ptr<IImsServingSystemManager> PhoneFactoryImplStub::getImsServingSys
     if (ims == imsServSysManagerMap_.end()) {
        LOG(DEBUG, __FUNCTION__, " Creating IMSServingSystem Manager for slotId ", slotId);
        std::shared_ptr<ImsServingSystemManagerStub> imsMgr = nullptr;
-       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
-           LOG(DEBUG, __FUNCTION__, " IMSServingSystem initialization callback");
-           this->onImsServingSystemMgrInitResponse(slotId, status);
-       };
        try {
-           imsMgr = std::make_shared<ImsServingSystemManagerStub>(slotId, initCb);
+           imsMgr = std::make_shared<ImsServingSystemManagerStub>(slotId);
        } catch (std::bad_alloc & e) {
            LOG(ERROR, __FUNCTION__ , e.what());
            return nullptr;
        }
+       auto initCb = [this, slotId](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " IMSServingSystem initialization callback");
+           this->onImsServingSystemMgrInitResponse(slotId, status);
+       };
+       auto status = imsMgr->init(initCb);
+       if (status != telux::common::Status::SUCCESS) {
+          LOG(ERROR, __FUNCTION__, " Failed to initialize the IMSServingSystem manager");
+          return nullptr;
+       }
+       LOG(DEBUG, __FUNCTION__, " initialize the IMSServingSystem manager");
        imsServSysManagerMap_.emplace(slotId, imsMgr);
        imsServingSystemMgrInitStatus_.emplace(slotId,
        telux::common::ServiceStatus::SERVICE_UNAVAILABLE);

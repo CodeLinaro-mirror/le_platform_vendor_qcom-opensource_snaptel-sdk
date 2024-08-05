@@ -12,17 +12,35 @@
 using namespace telux::common;
 using namespace telux::tel;
 
-ServingSystemManagerStub::ServingSystemManagerStub(int phoneId,
+ServingSystemManagerStub::ServingSystemManagerStub(int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    phoneId_ = phoneId;
+}
+
+telux::common::Status ServingSystemManagerStub::init(
     telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IServingSystemListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
     stub_ = CommonUtils::getGrpcStub<::telStub::ServingSystemService>();
-    phoneId_ = phoneId;
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate serving system service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
     auto f = std::async(std::launch::async,
         [this, callback]() {
             this->initSync(callback);
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -38,13 +56,6 @@ void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) 
     int cbDelay = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
     if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<IServingSystemListener,
-                ServingSystemNotificationMask >>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
         // TODO: Add SSR related changes
         LOG(DEBUG, __FUNCTION__, " ServingSystemManager is ready");
     }

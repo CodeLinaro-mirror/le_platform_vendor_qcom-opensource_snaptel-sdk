@@ -185,6 +185,7 @@ enum class ErrorCode {
    DEVICE_IN_USE = 64,                   /**< Operation cannot be performed because the device
                                               is currently in use */
    ABORTED = 65,                         /**< Operation aborted */
+   ALREADY = 66,                         /**< Already registered handler */
    INCOMPATIBLE_STATE = 90,              /**< Operation cannot be performed because the device
                                           is in incompatible state */
    NO_EFFECT = 101,                      /**< Given request had to no effect */

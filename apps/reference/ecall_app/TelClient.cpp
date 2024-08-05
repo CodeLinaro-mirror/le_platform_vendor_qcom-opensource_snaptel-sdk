@@ -41,6 +41,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -197,7 +198,10 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
     }
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
         std::cout << CLIENT_NAME << "  Cause of call termination: "
-                  << TelClientUtils::callEndCauseToString(call->getCallEndCause()) << std::endl;
+            << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+            << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+            << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << std::endl;
         if (eCall_ != nullptr) {
             if (eCall_->getCallIndex() == call->getCallIndex()
                 && eCall_->getPhoneId() == call->getPhoneId()) {

@@ -64,8 +64,6 @@ public:
     SmsManagerStub(int phoneId);
     telux::common::Status init(telux::common::InitResponseCb callback);
 
-    void initSync(telux::common::InitResponseCb callback);
-
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener(std::weak_ptr<ISmsListener> listener) override;
@@ -119,9 +117,14 @@ public:
 private:
     int phoneId_ = INVALID;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    std::mutex smsManagerMutex_;
+    std::mutex mtx_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::ListenerManager<ISmsListener>> listenerMgr_;
     std::unique_ptr<::telStub::SmsService::Stub> stub_;
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void invokeCallback(int cbDelay, ErrorCode error, std::vector<int> msgRefs,
          SmsResponseCb sentCallback = nullptr);
     void invokeDeliveryReportListener(std::string receiverAddress, int noofdeliveryreport,
@@ -131,8 +134,6 @@ private:
     void invokesendSmsCallback(int cbDelay,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback,
         telux::common::ErrorCode error);
-    void invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
-        telux::common::InitResponseCb callback);
     void invokeRequestSmsInfoListCb(std::vector<SmsMetaInfo> infos,
         telux::common::ErrorCode error, RequestSmsInfoListCb callback, int cbDelay );
     void invokeResponseCallback(int cbDelay, telux::common::ErrorCode error,

@@ -9,11 +9,12 @@
 #include "PhoneManagerStub.hpp"
 #include "common/Logger.hpp"
 
-#define DELAY 100
 using namespace telux::tel;
 
 PhoneManagerStub::PhoneManagerStub() {
     LOG(DEBUG, __FUNCTION__);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
 }
 
 telux::common::Status PhoneManagerStub::init(telux::common::InitResponseCb callback) {
@@ -38,15 +39,34 @@ telux::common::Status PhoneManagerStub::init(telux::common::InitResponseCb callb
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
+    initCb_ = callback;
     auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
+        [this]() {
+            this->initSync();
         }).share();
     auto status = taskQ_->add(f);
     return status;
 }
 
-void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
+void PhoneManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(phoneManagerMutex_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
+}
+
+void PhoneManagerStub::initSync() {
     LOG(DEBUG, __FUNCTION__);
     ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
@@ -58,8 +78,9 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
         LOG(DEBUG, __FUNCTION__, " PhoneService init successfully");
         telux::common::ServiceStatus cbStatus =
             static_cast<telux::common::ServiceStatus>(response.service_status());
-        int cbDelay = static_cast<int>(response.delay());
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
+        cbDelay_ = static_cast<int>(response.delay());
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay_,
+            " cbStatus::", static_cast<int>(cbStatus));
         if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             LOG(INFO, __FUNCTION__, " Phone subsystem is ready");
             ClientContext context;
@@ -108,15 +129,7 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
         bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
             true : false;
         setSubsystemReady(isSubsystemReady);
-
-        if (callback) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            if (callback) {
-                callback(cbStatus);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }
+        setServiceStatus(cbStatus);
     }
 }
 
@@ -149,14 +162,7 @@ void PhoneManagerStub::setSubsystemReady(bool status) {
 
 telux::common::ServiceStatus PhoneManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = phoneStub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 telux::common::Status PhoneManagerStub::registerListener(std::weak_ptr<IPhoneListener> listener) {
@@ -483,10 +489,6 @@ telux::common::Status PhoneManagerStub::setOperatingMode(telux::tel::OperatingMo
 telux::common::Status PhoneManagerStub::requestOperatingMode(
     std::shared_ptr<IOperatingModeCallback> callback) {
     LOG(DEBUG, __FUNCTION__);
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
-        LOG(ERROR, __FUNCTION__, " Phone Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     const ::google::protobuf::Empty request;
     telStub::GetOperatingModeReply response;
     ClientContext context;

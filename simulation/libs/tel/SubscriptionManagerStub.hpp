@@ -54,16 +54,17 @@ public:
     void cleanup();
 private:
     SlotId slotId_;
-    void initSync(telux::common::InitResponseCb callback);
     std::mutex subscriptionManagerMutex_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
+    telux::common::ServiceStatus subSystemStatus_;
     std::unique_ptr<::telStub::SubscriptionService::Stub> stub_;
     std::unique_ptr<::telStub::CardService::Stub> cardstub_;
     std::map<int, std::shared_ptr<SubscriptionStub>> subscriptionMap_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    telux::common::InitResponseCb initCb_;
     std::shared_ptr<telux::common::ListenerManager<ISubscriptionListener>> listenerMgr_;
-    void invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
-    telux::common::InitResponseCb callback);
+    void initSync();
+    void setServiceStatus(telux::common::ServiceStatus status);
     void notifyNumberOfSubscriptions(int count);
     void notifySubscriptionListener(std::shared_ptr<ISubscription> subscription);
     telux::common::Status createSubscriptionAndNotify(int slotId);

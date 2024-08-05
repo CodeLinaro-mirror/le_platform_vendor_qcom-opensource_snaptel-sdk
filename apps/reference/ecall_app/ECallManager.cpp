@@ -180,15 +180,15 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
         std::cout << CLIENT_NAME << " Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
         // If the existing/in-progress call is an MT call on the same phoneId, allow the app to
         // answer the WAITING call
-        if(telClient_->getECallDirection() == telux::tel::CallDirection::INCOMING) {
-            if(phoneId_ == phoneId) {
+        if (telClient_->getECallDirection() == telux::tel::CallDirection::INCOMING) {
+            if (phoneId_ == phoneId) {
                 std::cout << CLIENT_NAME << " Accepting the WAITING call" << std::endl;
             } else {
                 std::cout << CLIENT_NAME << " Operation not supported by the application"
-                    << std::endl;
+                          << std::endl;
                 return telux::common::Status::FAILED;
             }
         } else {
@@ -348,7 +348,7 @@ void ECallManager::setup(int phoneId) {
     // Get the location updates. This application doesn't update the MSD automatically when a TPS
     // eCall over IMS is triggered or when user provides MSD in raw PDU format(contains location
     // info). Hence location reports are not enabled in these scenarios.
-    if(!isTpsEcallOverImsTriggered && msdPdu_.empty()) {
+    if(msdPdu_.empty()) {
         setLocationReceived(false);
         if (!locClient_) {
             std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"

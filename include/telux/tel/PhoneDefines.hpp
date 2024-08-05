@@ -157,9 +157,24 @@ enum class CallEndCause {
    DIAL_MODIFIED_TO_USSD = 244,          /**< DIAL request modified to USSD */
    DIAL_MODIFIED_TO_SS = 245,            /**< DIAL request modified to SS */
    DIAL_MODIFIED_TO_DIAL = 246,          /**< DIAL request modified to DIAL with different data */
+   RADIO_OFF = 247,                      /**< Radio is OFF */
+   OUT_OF_SERVICE = 248,                 /**< No cellular coverage */
+   NO_VALID_SIM = 249,                   /**< No valid SIM is present */
+   RADIO_INTERNAL_ERROR = 250,           /**< Internal error at Modem */
+   NETWORK_RESP_TIMEOUT = 251,           /**< No response from network */
+   NETWORK_REJECT = 252,                 /**< Explicit network reject */
+   RADIO_ACCESS_FAILURE = 253,           /**< RRC connection failure. Eg.RACH */
+   RADIO_LINK_FAILURE = 254,             /**< Radio Link Failure */
+   RADIO_LINK_LOST = 255,                /**< Radio link lost due to poor coverage */
+   RADIO_UPLINK_FAILURE = 256,           /**< Radio uplink failure */
+   RADIO_SETUP_FAILURE = 257,            /**< RRC connection setup failure */
+   RADIO_RELEASE_NORMAL = 258,           /**< RRC connection release, normal */
+   RADIO_RELEASE_ABNORMAL = 259,         /**< RRC connection release, abnormal */
+   ACCESS_CLASS_BLOCKED = 260,           /**< Access class barring */
+   NETWORK_DETACH = 261,                 /**< Explicit network detach */
    EMERGENCY_TEMP_FAILURE = 325,         /**< Emergency redial temporary failure */
    EMERGENCY_PERM_FAILURE = 326,         /**< Emergency redial permanent failure */
-   HO_NOT_FEASIBLE = 386,                /**< Hand over not feasible */
+   HO_NOT_FEASIBLE = 382,                /**< Hand over not feasible */
    USER_BUSY = 501,                      /**< User busy */
    USER_REJECT = 502,                    /**< User reject */
    LOW_BATTERY = 503,                    /**< Battery is low */
@@ -215,6 +230,74 @@ enum class CallEndCause {
    HOLD_RESUME_FAILED = 3005,            /**< Resume failed for hold call */
    HOLD_RESUME_CANCELED = 3006,          /**< Resume cancelled for hold call */
    HOLD_REINVITE_COLLISION = 3007,       /**< Reinvite collision for hold call */
+   SIP_ALTERNATE_EMERGENCY_CALL = 3008,  /**< Alternate emergency call */
+   NO_CSFB_IN_CS_ROAM = 3009,            /**< CS fallback in roaming not allowed */
+   SRV_NOT_REGISTERED = 3010,            /**< Service not registered */
+   CALL_TYPE_NOT_ALLOWED = 3011,         /**< Call type not allowed */
+   EMRG_CALL_ONGOING = 3012,             /**< Emergency call is in progress */
+   CALL_SETUP_ONGOING = 3013,            /**< Call setup is in progress */
+   MAX_CALL_LIMIT_REACHED = 3014,        /**< Maximum call limit reached */
+   UNSUPPORTED_SIP_HDRS = 3015,          /**< Unsupported sip header */
+   CALL_TRANSFER_ONGOING = 3016,         /**< Call transfer is in progress */
+   PRACK_TIMEOUT = 3017,                 /**< Memory allocation failure or RTP open failure */
+   QOS_FAILURE = 3018,                   /**< Call failed due to lack of dedicated bearer */
+   ONGOING_HANDOVER = 3019,              /**< Call rejected due to pending handover */
+   VT_WITH_TTY_NOT_ALLOWED = 3020,       /**< TTY and VT are not supported together */
+   CALL_UPGRADE_ONGOING = 3021,          /**< Upgrade request is in progress */
+   CONFERENCE_WITH_TTY_NOT_ALLOWED = 3022,/**< Call from conference server received when TTY is
+                                               ON */
+   CALL_CONFERENCE_ONGOING = 3023,       /**< Conference call is ongoing */
+   VT_WITH_AVPF_NOT_ALLOWED = 3024,      /**< VT call with AVPF */
+   ENCRYPTION_CALL_ONGOING = 3025,       /**< Encrypted call could not coexist with other calls */
+   CALL_ONGOING_CW_DISABLED = 3026,      /**< Call waiting disabled during incoming call */
+   CALL_ON_OTHER_SUB = 3027,             /**< Active call on other subscription */
+   ONE_X_COLLISION = 3028,               /**< CDMA collision */
+   UI_NOT_READY = 3029,                  /**< UI is not ready during the incoming call */
+   CS_CALL_ONGOING = 3030,               /**< CS call ongoing when incoming call is received */
+   REJECTED_ELSEWHERE = 3031,            /**< One of the devices (interconnected endpoints)
+                                              rejected the call */
+   USER_REJECTED_SESSION_MODIFICATION = 3032,/**< Upgrade/downgrade rejected */
+   USER_CANCELLED_SESSION_MODIFICATION = 3033,/**< Upgrade/downgrade cancelled */
+   SESSION_MODIFICATION_FAILED = 3034,   /**< Upgrade/downgrade failed */
+   SIP_UNAUTHORIZED = 3035,              /**< Unauthorized */
+   SIP_PAYMENT_REQUIRED = 3036,          /**< Payment required */
+   SIP_METHOD_NOT_ALLOWED = 3037,        /**< Method requested in the address line was not allowed
+                                              for the address identified by the request-URI */
+   SIP_PROXY_AUTHENTICATION_REQUIRED = 3038,/**< Client must first authenticate with a proxy */
+   SIP_REQUEST_ENTITY_TOO_LARGE = 3039,  /**< Request entity body is larger than what the server
+                                              is willing to process */
+   SIP_REQUEST_URI_TOO_LARGE = 3040,     /**< Server is refusing to service because the request-URI
+                                              is longer than the server willing to interpret */
+   SIP_EXTENSION_REQUIRED = 3041,        /**< Extension to process a request is not listed in the
+                                              supported header field in the request */
+   SIP_INTERVAL_TOO_BRIEF = 3042,        /**< Expiration time of the resource refreshed by the
+                                              request is too short */
+   SIP_CALL_OR_TRANS_DOES_NOT_EXIST = 3043,/**< Request received by a UAS does not match any
+                                                existing dialog or transaction */
+   SIP_LOOP_DETECTED = 3044,             /**< Server detected a loop */
+   SIP_TOO_MANY_HOPS = 3045,             /**< Request received has Max-Forwards header field at 0
+                                              */
+   SIP_AMBIGUOUS = 3046,                 /**< Requested URI was ambiguous */
+   SIP_REQUEST_PENDING = 3047,           /**< Request was received by a UAS that had a pending
+                                              request within the same dialog */
+   SIP_UNDECIPHERABLE = 3048,            /**< Request has an encrypted MIME body for which the
+                                              recipient does not possess an appropriate decryption
+                                              key */
+   RETRY_ON_IMS_WITHOUT_RTT = 3049,      /**< Call should be tried on IMS with RTT disabled */
+   MAX_PS_CALLS = 3050,                  /**< Maximum PS calls exceeded */
+   SIP_MULTIPLE_CHOICES = 3051,          /**< Multiple choices */
+   SIP_MOVED_PERMANENTLY = 3052,         /**< Moved permanently */
+   SIP_MOVED_TEMPORARILY = 3053,         /**< Moved temporarily */
+   SIP_USE_PROXY = 3054,                 /**< Use proxy */
+   SIP_ALTERNATE_SERVICE = 3055,         /**< Alternate service */
+   SIP_UNSUPPORTED_URI_SCHEME = 3056,    /**< Unsupported URI scheme */
+   SIP_REMOTE_UNSUPP_MEDIA_TYPE = 3057,  /**< Unsupported media type */
+   SIP_BAD_EXTENSION = 3058,             /**< Bad extension */
+   DSDA_CONCURRENT_CALL_NOT_POSSIBLE = 3059,/**< Concurrent call is not possible */
+   EPSFB_FAILURE = 3060,                 /**< Call ended due to evolved packet system fallback
+                                              (EPSFB) failure */
+   TWAIT_EXPIRED = 3061,                 /**< Call ended due to twait timer expired */
+   TCP_CONNECTION_REQ = 3062,            /**< Call ended due to TCP connection */
    THERMAL_EMERGENCY = 3100,             /**< Thermal emergency */
    ERROR_UNSPECIFIED = 0xffff,           /**< Error unspecified */
 };

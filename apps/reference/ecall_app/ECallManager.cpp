@@ -142,10 +142,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(
-                    lock,
-                    std::chrono::steady_clock::duration(
-                        std::chrono::milliseconds(locUpdateIntervalMs_)))) {
+                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
@@ -179,10 +176,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(
-                    lock,
-                    std::chrono::steady_clock::duration(
-                        std::chrono::milliseconds(locUpdateIntervalMs_)))) {
+                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
@@ -206,9 +200,21 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
         std::cout << CLIENT_NAME << " Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(telClient_->isECallInProgress()) {
-        std::cout << CLIENT_NAME << " An ECall is in progress already " << std::endl;
-        return telux::common::Status::FAILED;
+    if (telClient_->isECallInProgress()) {
+        // If the existing/in-progress call is an MT call on the same phoneId, allow the app to
+        // answer the WAITING call
+        if (telClient_->getECallDirection() == telux::tel::CallDirection::INCOMING) {
+            if (phoneId_ == phoneId) {
+                std::cout << CLIENT_NAME << " Accepting the WAITING call" << std::endl;
+            } else {
+                std::cout << CLIENT_NAME << " Operation not supported by the application"
+                          << std::endl;
+                return telux::common::Status::FAILED;
+            }
+        } else {
+            std::cout << CLIENT_NAME << " An ECall is in progress already " << std::endl;
+            return telux::common::Status::FAILED;
+        }
     }
     setup(phoneId);
     auto status = telClient_->answer(phoneId_, shared_from_this());
@@ -399,13 +405,17 @@ void ECallManager::setup(int phoneId) {
         audioClient_->startVoiceSession(phoneId, audioDevice_, voiceSampleRate_, voiceFormat_,
                                 voiceChannels_, ecnrMode_);
     }
-    // Get the location updates
-    setLocationReceived(false);
-    if(!locClient_) {
-        std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
-                << std::endl;
-    } else {
-        locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+    // Get the location updates. This application doesn't update the MSD automatically when a TPS
+    // eCall over IMS is triggered or when user provides MSD in raw PDU format(contains location
+    // info). Hence location reports are not enabled in these scenarios.
+    if(msdPdu_.empty()) {
+        setLocationReceived(false);
+        if (!locClient_) {
+            std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
+                      << std::endl;
+        } else {
+            locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+        }
     }
     // Disable Thermal auto-shutdown
     if(!thermClient_) {

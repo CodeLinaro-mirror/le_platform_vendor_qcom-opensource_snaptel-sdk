@@ -1901,6 +1901,7 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo>
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_sip_error_code(it->sipErrorCode);
         result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
@@ -1967,6 +1968,7 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_sip_error_code(it->sipErrorCode);
         result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);

@@ -301,6 +301,13 @@ CallEndCause CallStub::getCallEndCause() {
 }
 
 /**
+ * Get the SIP error code for IMS call termination
+ */
+int CallStub::getSipErrorCode() {
+    return callInfo_.sipErrorCode;
+}
+
+/**
  * Get the call type - incoming, outgoing etc
  */
 CallDirection CallStub::getCallDirection() {

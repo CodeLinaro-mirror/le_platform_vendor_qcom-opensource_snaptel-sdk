@@ -1086,6 +1086,7 @@ enum CallType {
      RttMode local_rtt_capability = 10;
      RttMode peer_rtt_capability = 11;
      CallType call_type = 12;
+     int32 sip_error_code = 13;
  }
 
  message MakeECallRequest {

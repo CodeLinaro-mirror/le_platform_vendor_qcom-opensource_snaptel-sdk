@@ -42,6 +42,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -169,15 +170,15 @@ void TelClient::setECallProgressState(bool state) {
     eCallInprogress_ = state;
 }
 
-telux::tel::CallDirection TelClient::getECallDirection(){
-    if(eCall_) {
+telux::tel::CallDirection TelClient::getECallDirection() {
+    if (eCall_) {
         return eCall_->getCallDirection();
     } else {
         return telux::tel::CallDirection::NONE;
     }
 }
 
-//Updates locally cached MSD recieved after location update
+// Update locally cached MSD recieved after location update
 void TelClient::setECallMsd(ECallMsdData& msdData) {
     std::lock_guard<std::mutex> lock(mutex_);
     msdData_ = msdData;
@@ -217,11 +218,14 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
 
     if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
         std::cout << CLIENT_NAME << "  Cause of call termination: "
-                      << TelClientUtils::callEndCauseToString(call->getCallEndCause()) << std::endl;
-        if(eCall_ != nullptr) {
-            if(eCall_->getCallIndex() == call->getCallIndex() &&
-                eCall_->getPhoneId() == call->getPhoneId()) {
-                if(callListener_) {
+            << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+            << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+            << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << std::endl;
+        if (eCall_ != nullptr) {
+            if (eCall_->getCallIndex() == call->getCallIndex()
+                && eCall_->getPhoneId() == call->getPhoneId()) {
+                if (callListener_) {
                     callListener_->onCallDisconnect();
                 }
                 setECallProgressState(false);
@@ -540,11 +544,11 @@ telux::common::Status TelClient::answer(int phoneId,
     std::shared_ptr<telux::tel::ICall> spCall = nullptr;
     std::vector<std::shared_ptr<telux::tel::ICall>> callList = callMgr_->getInProgressCalls();
     // Fetch the list of in progress calls from CallManager and accept the incoming call.
-    for(auto callIterator = std::begin(callList); callIterator != std::end(callList)
-                        ; ++callIterator) {
-        if((((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) ||
-            ((*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING)) &&
-                            (phoneId == (*callIterator)->getPhoneId())) {
+    for (auto callIterator = std::begin(callList); callIterator != std::end(callList);
+         ++callIterator) {
+        if ((((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
+                || ((*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING))
+            && (phoneId == (*callIterator)->getPhoneId())) {
             spCall = *callIterator;
             break;
         }

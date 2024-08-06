@@ -1445,6 +1445,9 @@ The following managers are currently available in the simulation:
 7. NatManager
 8. L2tpManager
 9. FirewallManager
+10. BridgeManager
+11. VlanManager
+12. DualDataManager
 
 
 Data APIs Response handling
@@ -1465,6 +1468,32 @@ Each manager has its own JSON configuration file present under ``simulation/json
  },
 
 The JSON file holds the default values and could be updated dynamically by the users of the simulation.
+
+Data event handling
+"""""""""""""""""""""""""
+
+Update dual data capability change
+''''''''''''''''''''''''''''''''''
+
+The event injector allows you to inject event for simulating dual data capability change.
+
+*Sample input:*
+
+.. code-block::
+
+  telsdk_event_injector -f dual_data -e capabilityChange 1
+
+
+Update dual data usage recommendation change
+''''''''''''''''''''''''''''''''''''''''''''
+
+The event injector allows you to inject event for simulating dual data usage recommendation change.
+
+*Sample input:*
+
+.. code-block::
+
+  telsdk_event_injector -f dual_data -e recommendationChange ALLOWED
 
 
 Network Interface Configuration

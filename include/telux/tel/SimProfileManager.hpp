@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -298,7 +298,7 @@ class ISimProfileManager {
      * TELUX_TEL_SIM_PROFILE_USER_CONSENT permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
-     * @param [in] userConsent       Consent for proﬁle download and install.
+     * @param [in] userConsent       Consent for profile download and install.
                                      True means user consent given to download and install.
      * @param [in] reason            Reason for not providing user consent to download and install.
      *                               @ref telux::tel::UserConsentReasonType

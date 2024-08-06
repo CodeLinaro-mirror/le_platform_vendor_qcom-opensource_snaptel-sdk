@@ -29,13 +29,13 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
  * @file       ImsSettingsManager.hpp
- * @brief      ImsSettingsManager allows to set or get IMS service conﬁguration parameters.
+ * @brief      ImsSettingsManager allows to set or get IMS service configuration parameters.
  *             For example to enable or disable the IMS service, VOIMS service.
  *
  */

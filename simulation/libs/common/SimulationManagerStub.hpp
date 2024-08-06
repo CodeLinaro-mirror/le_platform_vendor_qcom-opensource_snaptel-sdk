@@ -61,6 +61,7 @@ class SimulationManagerStub {
     virtual telux::common::Status initSyncComplete(
             telux::common::ServiceStatus srvcStatus) = 0;
     virtual void notifyServiceStatus(telux::common::ServiceStatus srvcStatus) = 0;
+    virtual void setInitCbDelay(uint32_t cbDelay) = 0;
 
     telux::common::ServiceStatus getServiceStatus() {
         LOG(DEBUG, __FUNCTION__);
@@ -118,6 +119,7 @@ class SimulationManagerStub {
             isInitsyncTriggered_ = true;
         }
         waitForServiceReady(serviceStatus, cbDelay);
+        setInitCbDelay(cbDelay);
         setServiceReady(serviceStatus);
         if (serviceStatus != ServiceStatus::SERVICE_FAILED) {
             auto status = initSyncComplete(serviceStatus);
@@ -150,7 +152,7 @@ class SimulationManagerStub {
         const ::google::protobuf::Empty request;
         ClientContext context{};
 
-        srvcStatus = getRemoteServiceStatus();
+        srvcStatus = getRemoteServiceStatus(cbDelay);
         if (srvcStatus == telux::common::ServiceStatus::SERVICE_FAILED) {
             return;
         } else if (srvcStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
@@ -172,11 +174,10 @@ class SimulationManagerStub {
                 LOG(ERROR, __FUNCTION__, ":: failed to initialize");
                 return;
             }
-            cbDelay = static_cast<uint32_t>(response.delay());
         }
     }
 
-    telux::common::ServiceStatus getRemoteServiceStatus() {
+    telux::common::ServiceStatus getRemoteServiceStatus(uint32_t &cbDelay) {
         LOG(DEBUG, __FUNCTION__);
         ::commonStub::GetServiceStatusReply response;
         const ::google::protobuf::Empty request;
@@ -185,6 +186,8 @@ class SimulationManagerStub {
         grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
         telux::common::ServiceStatus serviceStatus =
             static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay = static_cast<uint32_t>(response.delay());
+        LOG(INFO, __FUNCTION__, ", Init cbDelay:: ", cbDelay);
 
         return serviceStatus;
     }

@@ -63,6 +63,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -130,6 +135,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setMeasurementsInfoFlag(false);
       posListener->setEphemerisInfoFlag(false);
       posListener->setLocSystemInfoFlag(false);
+      posListener->setExtendedInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -452,7 +458,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
                        " (0- Location\n 1- SV\n 2- NMEA\n 3- DATA\n 4- Measurement\n "
-                       "5- Ephemeris)\n\n";
+                       "5- Ephemeris\n 6 - Extended Data) \n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -464,7 +470,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 5) {
+              if(option >= 0 && option <= 6) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -1486,7 +1492,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  6 - Nmea_info_notifications" << std::endl;
      std::cout << "  7 - Measurements_info_notifications" << std::endl;
      std::cout << "  8 - Location_system_information " << std::endl;
-     std::cout << "  9 - Ephemeris_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  9 - Ephemeris_info_notifications" << std::endl;
+     std::cout << "  10 - Extended_information " << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -1514,6 +1521,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableLocationSystemInfoLogs();
      } else if(usrInput == "9") {
          LocationMenu::enableEphemerisInfoLogs();
+     } else if(usrInput == "10") {
+         LocationMenu::enableExtendedInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -1587,6 +1596,15 @@ void LocationMenu::enableLocationSystemInfoLogs() {
   } else {
     std::cout << "ERROR: invalid input, please enter 0 or 1\n";
   }
+}
+
+void LocationMenu::enableExtendedInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setExtendedInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
 }
 
 // Main function that displays the console and processes user input

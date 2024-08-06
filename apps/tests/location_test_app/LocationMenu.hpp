@@ -106,6 +106,7 @@ public:
    void enableNmeaInfoLogs();
    void enableMeasurementsInfoLogs();
    void enableEphemerisInfoLogs();
+   void enableExtendedInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);

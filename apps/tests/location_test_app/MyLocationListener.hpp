@@ -92,6 +92,8 @@ public:
 
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
+   void onGnssExtendedDataInfo(const std::vector<uint8_t>& payload) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
@@ -101,6 +103,7 @@ public:
    void setMeasurementsInfoFlag(bool enable);
    void setEphemerisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
+   void setExtendedInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -112,6 +115,7 @@ private:
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isEphemerisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
+   bool isExtendedInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

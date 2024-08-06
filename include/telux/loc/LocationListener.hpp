@@ -32,6 +32,11 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       LocationListener.hpp
  *
@@ -158,6 +163,19 @@ public:
  */
   virtual void onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo){}
 
+/**
+ * This function is called to provide the GNSS extended data
+ * on products having applicable license enabled.
+ * This data is generated only via the GNSS SPE engine. To receive these updates,
+ * clients need to set the @ref telux::loc::GnssReportType::EXTENDED_DATA
+ * bit in the reportMask passed as a parameter to @ref ILocationManager::startDetailedEngineReports.
+ *
+ * @param [in] payload - A blob of the GNSS extended data.
+ *
+ * @note  Eval: This is a new API and is being evaluated. It is subject to change
+ *              and could break backwards compatibility.
+ */
+  virtual void onGnssExtendedDataInfo(const std::vector<uint8_t>& payload) {}
 
 /**
  * Destructor of ILocationListener

@@ -1337,6 +1337,24 @@ void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &n
    std::cout << " Nmea String : " << nmea << std::endl;
 }
 
+void MyLocationListener::onGnssExtendedDataInfo(const std::vector<uint8_t>& payload) {
+    PRINT_NOTIFICATION << "\n************ Gnss Extended Information ***********" << std::endl;
+    size_t length = payload.size();
+    std::cout << " Payload len : " << length << std::endl;
+    std::cout << " Payload byte information: ";
+    if(!isExtendedInfoFlagEnabled_) {
+        std::cout << static_cast<unsigned>(payload[0]) << " "
+                  << static_cast<unsigned>(payload[1]) << " "
+                  << static_cast<unsigned>(payload[length - 2]) << " "
+                  << static_cast<unsigned>(payload[length - 1]) << std::endl;
+        return;
+    }
+    for(size_t i = 0; i < length; i++) {
+        std::cout << static_cast<unsigned>(payload[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
 void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      GnssMeasurements &measurementInfo) {
    if(!isMeasurementsInfoFlagEnabled_) {
@@ -1649,4 +1667,8 @@ void MyLocationListener::setEphemerisInfoFlag(bool enable) {
 
 void MyLocationListener::setLocSystemInfoFlag(bool enable) {
    isLocSysInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setExtendedInfoFlag(bool enable) {
+    isExtendedInfoFlagEnabled_ = enable;
 }

@@ -32,6 +32,11 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       LocationManager.hpp
  * @brief      Location manager provides APIs to get position reports
@@ -197,8 +202,9 @@ public:
  * Calling this Api will result in @ref ILocationListener::onDetailedEngineLocationUpdate,
  * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
  * @ref ILocationListener::onGnssNmeaInfo, @ref ILocationListener::onGnssMeasurementsInfo and
- * @ref ILocationListener::onGnssEphemerisInfo APIs on the listener being invoked,
- * assuming they have not been disabled using the
+ * @ref ILocationListener::onGnssEphemerisInfo and
+ * @ref ILocationListener::onGnssExtendedDataInfo APIs
+ * on the listener being invoked, assuming they have not been disabled using the
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *

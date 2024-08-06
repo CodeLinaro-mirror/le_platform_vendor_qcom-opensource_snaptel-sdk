@@ -63,6 +63,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -1815,7 +1820,9 @@ enum GnssReportType {
      * These reports are obtained only from the GNSS(SPE) engine
      * whenever there is an update in the ephemeris information for a constellation.
      */
-    EPHEMERIS         = (1 << 5)
+    EPHEMERIS         = (1 << 5),
+    /** GNSS extended data */
+    EXTENDED_DATA     = (1 << 6)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */

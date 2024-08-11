@@ -1090,6 +1090,40 @@ public:
    virtual telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) = 0;
 
    /**
+    * Retrieves the LTE(SIB16) network time from the UE.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
+    *
+    * @param [in] callback    Callback function to get the response of an LTE(SIB16)
+    *                         network time information request.
+    *
+    * @returns Status of requestLteSib16NetworkTime i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback)
+       = 0;
+
+   /**
+    * Retrieves the NR5G RRC(SIB9) UTC time from the UE.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
+    *
+    * @param [in] callback    Callback function to get the response of NR5G
+    *                         RRC(SIB9) UTC time information request.
+    *
+    * @returns Status of requestNr5gRrcUtcTime i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status requestNr5gRrcUtcTime(NetworkTimeResponseCallback callback)
+       = 0;
+
+   /**
     * Get the information about the band that the device is currently using.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
@@ -1347,6 +1381,23 @@ public:
     *
     */
    virtual void onNetworkTimeChanged(NetworkTimeInfo info) {
+   }
+
+   /**
+    * This function is called whenever LTE(SIB16) or NR5G RRC(SIB9) UTC time information is
+    * changed.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] radioTech    Time information changed on specified Radio technology.
+    *                          @ref telux::tel::RadioTechnology
+    * @param [in] info         Network time information. @ref telux::tel::NetworkTimeInfo
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onNetworkTimeChanged(RadioTechnology radioTech, NetworkTimeInfo info) {
    }
 
    /**

@@ -75,6 +75,9 @@ public:
     telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) override;
     telux::tel::DcStatus getDcStatus() override;
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;
+    telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback)
+        override;
+    telux::common::Status requestNr5gRrcUtcTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
     telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
     telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) override;

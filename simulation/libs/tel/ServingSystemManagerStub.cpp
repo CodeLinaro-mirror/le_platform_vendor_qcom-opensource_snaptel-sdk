@@ -543,6 +543,16 @@ telux::common::Status ServingSystemManagerStub::requestNetworkTime(
     return status;
 }
 
+telux::common::Status ServingSystemManagerStub::requestLteSib16NetworkTime(
+    NetworkTimeResponseCallback callback) {
+    return requestNetworkTime(callback);
+}
+
+telux::common::Status ServingSystemManagerStub::requestNr5gRrcUtcTime(
+    NetworkTimeResponseCallback callback) {
+    return requestNetworkTime(callback);
+}
+
 telux::common::Status ServingSystemManagerStub::requestRFBandInfo(RFBandInfoCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {

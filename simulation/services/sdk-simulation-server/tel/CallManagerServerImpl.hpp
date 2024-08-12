@@ -52,7 +52,7 @@
 #include "../event/ServerEventManager.hpp"
 #include "../event/EventService.hpp"
 #include "../../../libs/tel/Helper.hpp"
-
+#include "TelUtil.hpp"
 
 namespace telux {
 namespace tel {
@@ -222,20 +222,22 @@ private:
         callInfo.index = size + 1;
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
-        callInfo.callType = CallType::VOICE_CALL;
         callInfo.isMultiPartyCall = true;
         CallApi makeCallApiType = static_cast<CallApi>(request->api());
         if((makeCallApiType == CallApi::makeECallWithMsd) ||
             (makeCallApiType == CallApi::makeECallWithRawMsd) ||
             (makeCallApiType == CallApi::makeECallWithoutMsd)) {
             callInfo.isRegulatoryeCall = true;
+            callInfo.callType = CallType::ECALL;
         } else {
             callInfo.isRegulatoryeCall = false;
         }
         if(makeCallApiType == makeTpsECallOverIMS) {
             callInfo.isTpseCallOverIms = true;
+            callInfo.callType = CallType::VOICE_IP_CALL;
         } else {
             callInfo.isTpseCallOverIms = false;
+            callInfo.callType = CallType::VOICE_CALL;
         }
         if(request->remote_party_number() == "") {
             // No input will be passed from client for regulatory eCall
@@ -243,6 +245,37 @@ private:
         } else {
             // Normal Voice call and custom number eCall
             callInfo.remotePartyNumber = request->remote_party_number();
+            telStub::RadioTechnology rat;
+            std::vector<std::string> eccNumberList = {"112", "911"};
+            std::vector<telStub::RadioTechnology> psRatList =
+                {telStub::RadioTechnology::RADIO_TECH_NR5G,
+                telStub::RadioTechnology::RADIO_TECH_LTE};
+            if(telux::common::ErrorCode::SUCCESS ==
+                TelUtil::readVoiceRadioTechnologyFromJsonFile(callInfo.phoneId, rat)) {
+                if(std::find(eccNumberList.begin(), eccNumberList.end(),
+                    callInfo.remotePartyNumber) != eccNumberList.end()) {
+                    if (std::find(psRatList.begin(), psRatList.end(), rat)
+                        != psRatList.end()) {
+                        callInfo.callType = CallType::EMERGENCY_IP_CALL;
+                    } else {
+                        callInfo.callType = CallType::EMERGENCY_CALL;
+                    }
+                } else {
+                    if (std::find(psRatList.begin(), psRatList.end(), rat)
+                        != psRatList.end()) {
+                        callInfo.callType = CallType::VOICE_IP_CALL;
+                    } else {
+                        callInfo.callType = CallType::VOICE_CALL;
+                    }
+                }
+            } else {
+                if (std::find(eccNumberList.begin(), eccNumberList.end(),
+                    callInfo.remotePartyNumber) != eccNumberList.end()) {
+                    callInfo.callType = CallType::EMERGENCY_CALL;
+                } else {
+                    callInfo.callType = CallType::VOICE_CALL;
+                }
+            }
         }
         if(makeCallApiType == CallApi::makeRttVoiceCall) {
             callInfo.mode = RttMode::FULL;

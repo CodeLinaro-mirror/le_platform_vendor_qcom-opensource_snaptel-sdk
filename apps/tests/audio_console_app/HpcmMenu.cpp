@@ -541,8 +541,8 @@ void HpcmMenu::record() {
     will be waiting for buffer. To avoid that notify play thread to exit. */
     bufferReadyCv_.notify_all();
 
-    if(freeCaptureBuffers_.empty()) {
-        captureCv_.wait(lock);
+    while((freeCaptureBuffers_.size()!= 1) && hpcmReady_) {
+        captureCv_.wait_for(lock, std::chrono::milliseconds(5000));
     }
 
     exitRecordThread_ = false;

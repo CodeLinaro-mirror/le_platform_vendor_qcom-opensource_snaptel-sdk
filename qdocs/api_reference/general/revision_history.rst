@@ -21,13 +21,16 @@ Revision History
      - Date
      - Description
 
-   * - AW
+   * - BA
+     - Aug 2024
+     - Updated documentation for SDK release V1.70.0 changes
+   * - AY
      - Jul 2024
      - Updated documentation for SDK release V1.69.0 changes
-   * - AV
+   * - AW
      - Jun 2024
      - Updated documentation for SDK release V1.68.0 changes
-   * - AU
+   * - AU/AV
      - Apr 2024
      - Updated documentation for SDK release V1.67.0 changes
    * - AT

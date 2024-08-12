@@ -13,11 +13,13 @@ Revision history
 | Revision  |  Date         |  Description                                                                               |
 +===========+===============+============================================================================================+
 +-----------+---------------+--------------------------------------------------------------------------------------------+
-| AW        |  Jul 2024     |  - Updated documentation for API reference and user guide for V1.69.0                      |
+| BA        |  Aug 2024     |  - Updated documentation for API reference and user guide for V1.70.0                      |
 +-----------+---------------+--------------------------------------------------------------------------------------------+
-| AV        |  Jun 2024     |  - Updated documentation for API reference and user guide for V1.68.0                      |
+| AY        |  Jul 2024     |  - Updated documentation for API reference and user guide for V1.69.0                      |
 +-----------+---------------+--------------------------------------------------------------------------------------------+
-| AU        |  Apr 2024     |  - Updated documentation for API reference and user guide for V1.67.0                      |
+| AW        |  Jun 2024     |  - Updated documentation for API reference and user guide for V1.68.0                      |
++-----------+---------------+--------------------------------------------------------------------------------------------+
+| AU/AV     |  Apr 2024     |  - Updated documentation for API reference and user guide for V1.67.0                      |
 +-----------+---------------+--------------------------------------------------------------------------------------------+
 | AT        |  Feb 2024     |  - Updated documentation for API reference and user guide for V1.66.0                      |
 +-----------+---------------+--------------------------------------------------------------------------------------------+

@@ -12,6 +12,9 @@ using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
 
+#define INVALID_CALL_INDEX -1
+#define MAX_NO_OF_CALLS_ALLOWED 2
+
 CallManagerStub::CallManagerStub() {
     LOG(DEBUG, __FUNCTION__);
     noOfSlots_ = 1;                            // Defaulting to 1 for Single SIM.
@@ -164,6 +167,34 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
         return telux::common::Status::NOTREADY;
     }
 
+    //Restrict to have only two in progress calls per sub at any instance.
+    //Call can be MO or MT or a conference call
+    //Note: Conference supported is not added in simulation.
+    int callsInConference = 0;
+    int callsInProgress = 0;
+    std::vector<std::shared_ptr<ICall>> inProgressCalls = getInProgressCalls();
+    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
+        ++callIterator) {
+        if (phoneId == (*callIterator)->getPhoneId()) {
+            if ((*callIterator)->isMultiPartyCall()) {
+                callsInConference++;
+            } else {
+                callsInProgress++;
+            }
+        }
+    }
+    //If a CS conference call is present, callsInProgress will treat as one call even though
+    //we have the calls as two seperate in inProgressCalls.
+    if (callsInConference) {
+        callsInProgress++;
+    }
+
+    if (callsInProgress >= MAX_NO_OF_CALLS_ALLOWED) {
+        LOG(ERROR, __FUNCTION__, " ", callsInProgress,
+            " calls already in progress. So dial request not allowed.");
+        return telux::common::Status::NOTALLOWED;
+    }
+
     ::telStub::MakeCallRequest request =
         createRequest<::telStub::MakeCallRequest>(phoneId, dialNumber, false, inputApi);
     ::telStub::MakeCallReply response;
@@ -199,31 +230,41 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
 void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber, int phoneId,
     int cbDelay, std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,
     telux::common::ErrorCode error) {
-    LOG(DEBUG, __FUNCTION__," phoneId:: ", phoneId);
+    LOG(DEBUG, __FUNCTION__," phoneId:: ", phoneId, "errorcode is ", static_cast<int>(error));
     std::vector<std::shared_ptr<CallStub>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallStub> call) {
-        return find(phoneId, call, remotePartyNumber);
+        return find(phoneId, call, remotePartyNumber, index);
     });
 
     if (iter != std::end(calls_)) {
-        LOG(DEBUG, __FUNCTION__, " found matched call");
+        size_t value = std::distance(calls_.begin(), iter);
         (*iter)->setCallIndex(index);
         if(iMakecallback) {
             auto f = std::async(std::launch::async,
-                [this, error, iter, iMakecallback, cbDelay]() {
+                [this, error, iter, iMakecallback, cbDelay, value]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
                     LOG(DEBUG, __FUNCTION__, " invoking callback");
-                    iMakecallback->makeCallResponse(error, *iter);
+                    iMakecallback->makeCallResponse(error, calls_[value]);
+                    if(error != telux::common::ErrorCode::SUCCESS) {
+                        // update local cache to clear calls
+                        updateCurrentCalls();
+                    }
                 }).share();
             taskQ_->add(f);
+
         }
         if(callback) {
             auto f = std::async(std::launch::async,
-                [this, error, iter, callback, cbDelay]() {
+                [this, error, iter, callback, cbDelay, value]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
                     LOG(DEBUG, __FUNCTION__, " invoking callback");
-                    callback(error, *iter);
+                    callback(error, calls_[value]);
+                    if(error != telux::common::ErrorCode::SUCCESS) {
+                        // update local cache to clear calls
+                        LOG(DEBUG, __FUNCTION__, " updating call cache");
+                        updateCurrentCalls();
+                    }
                 }).share();
             taskQ_->add(f);
         }
@@ -231,16 +272,35 @@ void CallManagerStub::findMatchingCall(int index, std::string remotePartyNumber,
 }
 
 bool CallManagerStub::find(int phoneId, std::shared_ptr<CallStub> call,
-    std::string remotePartyNumber) {
-    // Remote party number is known by client for a custom number ecall over PS/CS or voice call
-    // when the call is dialed
-    if((call->getRemotePartyNumber() == remotePartyNumber) && (call->getPhoneId() == phoneId)) {
-        return true;
-    } else if((call->getRemotePartyNumber() == "") && (call->getPhoneId() == phoneId)) {
-        // Remote party number is not known by client for a standard ecall when the call is dialed.
-        return true;
+    std::string remotePartyNumber, int index) {
+    // To identify between when two MO calls to same remote party number
+    if (call->getCallIndex() != INVALID_CALL_INDEX) {
+        // Remote party number is known by client for a custom number ecall over PS/CS or voice
+        // call when the call is dialed
+        if((call->getRemotePartyNumber() == remotePartyNumber) && (call->getPhoneId() == phoneId)
+            && (call->getCallIndex() == index)) {
+            return true;
+        } else if((call->getRemotePartyNumber() == "") && (call->getPhoneId() == phoneId)
+            && (call->getCallIndex() == index)) {
+            // Remote party number is not known by client for a standard ecall when the call is
+            // dialed.
+            return true;
+        } else {
+            return false;
+        }
     } else {
-        return false;
+        // Remote party number is known by client for a custom number ecall over PS/CS or voice
+        // call when the call is dialed
+        if((call->getRemotePartyNumber() == remotePartyNumber)
+            && (call->getPhoneId() == phoneId)) {
+            return true;
+        } else if((call->getRemotePartyNumber() == "") && (call->getPhoneId() == phoneId)) {
+            // Remote party number is not known by client for a standard ecall when the call is
+            // dialed.
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -415,7 +475,8 @@ void CallManagerStub::handleMsdUpdateRequest(::telStub::MsdPullRequestEvent even
 }
 
 void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent event) {
-
+    int phoneId = event.phone_id();
+    LOG(DEBUG, __FUNCTION__," phoneId ", phoneId);
     std::vector<std::shared_ptr<CallStub>> calls ;
     for (int i = 0; i < event.calls_size(); i++) {
         CallInfo callInfo;
@@ -438,8 +499,6 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
         callInfo.sipErrorCode = event.calls(i).sip_error_code();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"callEndCause is ",
             static_cast<int>(callInfo.callEndCause), " sipErrorCode is ", callInfo.sipErrorCode);
-        int phoneId = event.calls(i).phone_id();
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__," phoneId is ", phoneId);
         callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMultiPartyCall is ", callInfo.isMultiPartyCall);
         callInfo.isMpty = event.calls(i).is_mpty();
@@ -464,17 +523,36 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
         }
     }
     // updates/removes cached calls
-    refreshCachedCalls(calls);
+    refreshCachedCalls(phoneId, calls);
 
     // adds new calls into calls_ list
     addLatestCalls(calls);
 }
 
-void CallManagerStub::refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls) {
+void CallManagerStub::updateCurrentCalls() {
+    for (int i = 1; i <= noOfSlots_; i++) {
+        ::telStub::UpdateCurrentCallsRequest request;
+        ::google::protobuf::Empty response;
+        ClientContext context;
+
+        request.set_phone_id(i);
+        LOG(DEBUG, __FUNCTION__, " Requested calls information for slot " , i);
+        grpc::Status reqstatus = stub_->updateCalls(&context, request, &response);
+        if (reqstatus.ok()) {
+            LOG(DEBUG, __FUNCTION__, " Requested calls information for slot is successful ");
+        }
+        else {
+            LOG(ERROR, __FUNCTION__, " Requested calls information for slot failed ");
+        }
+    }
+}
+
+
+void CallManagerStub::refreshCachedCalls(int phoneId,
+    std::vector<std::shared_ptr<CallStub>> &latestCalls) {
     LOG(DEBUG, __FUNCTION__, " Number of latest calls: ", latestCalls.size());
 
     std::vector<std::shared_ptr<CallStub>> callsToBeNotified;
-
     {
         std::lock_guard<std::mutex> lock(callManagerMutex_);
         LOG(DEBUG, "Number of inProgress calls: ", calls_.size());
@@ -484,6 +562,11 @@ void CallManagerStub::refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> 
         // If it is not found we assume that the modem has dropped the call.
         // So we add it to the dropped call list.
         for (auto cachedCall = std::begin(calls_); cachedCall != std::end(calls_);) {
+            if ((*cachedCall)->getPhoneId() != phoneId) {
+                // ignore if this function was called for a
+                cachedCall++;  // different slot.
+                continue;
+            }
             auto iter = std::find_if(
                 std::begin(latestCalls), std::end(latestCalls), [=](
                     std::shared_ptr<CallStub> latestCallInfo) {
@@ -1057,7 +1140,7 @@ telux::common::Status CallManagerStub::requestECallHlapTimerStatus(int phoneId,
 }
 
 std::vector<std::shared_ptr<ICall>> CallManagerStub::getInProgressCalls() {
-    LOG(DEBUG, "CallMgr - ", __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<ICall>> iCalls(calls_.begin(), calls_.end());
     return iCalls;
 }

@@ -124,6 +124,7 @@
      rpc ModifyOrRespondToModifyCall(ModifyOrRespondToModifyCallRequest) returns
          (ModifyOrRespondToModifyCallReply) {}
      rpc SendRtt(SendRttRequest) returns (SendRttReply) {}
+     rpc updateCalls(UpdateCurrentCallsRequest) returns (google.protobuf.Empty) {}
  }
 
  service ImsServingSystem {
@@ -257,7 +258,8 @@ message GetCardStateRequest {
  }
 
  message CallStateChangeEvent {
-    repeated Call calls = 1;
+    int32 phone_id = 1;
+    repeated Call calls = 2;
 }
 
  message MsdPullRequestEvent {
@@ -1098,14 +1100,13 @@ enum CallType {
      CallDirection.Direction call_direction = 3;
      string remote_party_number = 4;
      CallEndCause.Cause call_end_cause = 5;
-     int32 phone_id = 6;
-     bool is_multi_party_call = 7;
-     bool is_mpty = 8;
-     RttMode mode = 9;
-     RttMode local_rtt_capability = 10;
-     RttMode peer_rtt_capability = 11;
-     CallType call_type = 12;
-     int32 sip_error_code = 13;
+     bool is_multi_party_call = 6;
+     bool is_mpty = 7;
+     RttMode mode = 8;
+     RttMode local_rtt_capability = 9;
+     RttMode peer_rtt_capability = 10;
+     CallType call_type = 11;
+     int32 sip_error_code = 12;
  }
 
  message MakeECallRequest {
@@ -1160,6 +1161,10 @@ message SendRttReply {
     int32 delay = 3;
     bool iscallback = 4;
  }
+
+message UpdateCurrentCallsRequest {
+    int32 phone_id = 1;
+}
 
 message UpdateECallMsdRequest {
     int32 phone_id = 1;

@@ -200,22 +200,18 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
                 handleCallMachine();
             }).share();
             taskQ_->add(f);
-        } else {
-            error = telux::common::ErrorCode::OP_IN_PROGRESS;
-            response->set_error(static_cast<commonStub::ErrorCode>(error));
         }
         telStub::Call call_;
         call_.set_call_direction
                 (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
         call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
+        call_.set_call_index(static_cast<int>(callInfo_.index));
+
         response->set_iscallback(isCallback);
         response->set_delay(cbDelay);
         response->set_status(static_cast<commonStub::Status>(status));
-        call_.set_call_index(static_cast<int>(callInfo_.index));
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
         *response->mutable_call() = call_;
-        if(error == telux::common::ErrorCode::SUCCESS) {
-            response->set_error(static_cast<commonStub::ErrorCode>(error));
-        }
     }
     return readStatus;
 }
@@ -223,15 +219,15 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
 void CallManagerServerImpl::handleCallMachine() {
     if(callInfo_.callDirection == CallDirection::OUTGOING) {
         if(calls_.size() == 1) {
-            changeCallState(callInfo_.phoneId , "CALL_DIALING", callInfo_.remotePartyNumber);
+            changeCallState(callInfo_.phoneId , "CALL_DIALING", callInfo_.index);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.remotePartyNumber);
+            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.index);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ACTIVE", callInfo_.remotePartyNumber);
+            changeCallState(callInfo_.phoneId ,"CALL_ACTIVE", callInfo_.index);
         } else {
-            changeCallState(callInfo_.phoneId ,"CALL_DIALING", callInfo_.remotePartyNumber);
+            changeCallState(callInfo_.phoneId ,"CALL_DIALING", callInfo_.index);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.remotePartyNumber);
+            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.index);
             changeCallStateofActiveCalls(callInfo_);
         }
     }
@@ -262,7 +258,7 @@ grpc::Status CallManagerServerImpl::Answer(ServerContext* context,
                 // Update RTT mode and peer capability of the call based on user input.
                 info->mode = mode;
                 info->peerRttCapability = mode;
-                changeCallState(info->phoneId ,"CALL_ACTIVE", info->remotePartyNumber);
+                changeCallState(info->phoneId ,"CALL_ACTIVE", info->index);
             } else if(info->callState == CallState::CALL_WAITING){
                 changeCallStateofActiveCalls(*info);
             }
@@ -282,13 +278,33 @@ void CallManagerServerImpl::changeCallStateofActiveCalls(CallInfo info) {
         if ((*callIterator)->index != info.index) {
             if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
             }
         } else {
             newCall = (*callIterator);
         }
     }
-    changeCallState(newCall->phoneId, "CALL_ACTIVE", newCall->remotePartyNumber);
+    changeCallState(newCall->phoneId, "CALL_ACTIVE", newCall->index);
+}
+
+int CallManagerServerImpl::setCallIndexForNewCall() {
+    int size = calls_.size();
+    int index = 1;
+    LOG(DEBUG, __FUNCTION__, " Number of calls ", size);
+    if(size > 0) {
+        for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
+            ++callIterator) {
+            if ((*callIterator)->index != index) {
+                LOG(DEBUG, __FUNCTION__, " new call index ", index);
+                break;
+            } else {
+                index++;
+            }
+        }
+    } else {
+        LOG(DEBUG, __FUNCTION__, " new call index ", index);
+    }
+    return index;
 }
 
 grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
@@ -339,7 +355,7 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
             *response->mutable_call() = call_;
             auto f = std::async(std::launch::async,
                 [this]() {
-                    handleStateMachine(callInfo_.phoneId);
+                    handleStateMachine(callInfo_.phoneId, callInfo_.index);
                 }).share();
             taskQ_->add(f);
         } else {
@@ -738,9 +754,21 @@ void CallManagerServerImpl::hangupWaitingOrBackgroundCalls(int phoneId) {
         ++callIterator) {
         if((*callIterator)->phoneId == phoneId) {
             if(((*callIterator)->callState == CallState::CALL_ON_HOLD)
-            ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
+                ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
+                changeCallState((*callIterator)->phoneId, "CALL_ENDED", (*callIterator)->index);
+            }
+        }
+    }
+}
+
+void CallManagerServerImpl::hangupForegroundgroundCalls(int phoneId) {
+    for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
+        ++callIterator) {
+        if((*callIterator)->phoneId == phoneId) {
+            if(((*callIterator)->callState == CallState::CALL_ACTIVE)
+                ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
             changeCallState((*callIterator)->phoneId, "CALL_ENDED",
-            (*callIterator)->remotePartyNumber);
+            (*callIterator)->index);
         }
         }
     }
@@ -753,7 +781,7 @@ void CallManagerServerImpl::resumeBackgroundCalls(int phoneId) {
         if((*callIterator)->phoneId == phoneId) {
             if((*callIterator)->callState == CallState::CALL_WAITING) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
                 foundCall = true;
                 break;
             }
@@ -764,7 +792,7 @@ void CallManagerServerImpl::resumeBackgroundCalls(int phoneId) {
             ++callIterator) {
             if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
                 break;
             }
         }
@@ -786,11 +814,11 @@ grpc::Status CallManagerServerImpl::HangupForegroundResumeBackground(ServerConte
         bool isCallback = true;
         int cbDelay;
         CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER,
-            "hangupWaitingOrBackground", status, error, cbDelay );
+            "hangupForegroundResumeBackground", status, error, cbDelay );
         if(cbDelay == -1) {
             isCallback = false;
         }
-        hangupWaitingOrBackgroundCalls(phoneId);
+        hangupForegroundgroundCalls(phoneId);
         resumeBackgroundCalls(phoneId);
         response->set_status(static_cast<commonStub::Status>(status));
         response->set_iscallback(isCallback);
@@ -800,17 +828,18 @@ grpc::Status CallManagerServerImpl::HangupForegroundResumeBackground(ServerConte
     return readStatus;
 }
 
-void CallManagerServerImpl::resumeCall(int phoneId, int callIndex) {
+int CallManagerServerImpl::getCallIndexOfActiveCall(int phoneId) {
+    int index = CALL_INDEX_INVALID;
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
-        if(((*callIterator)->phoneId == phoneId) && ((*callIterator)->index )) {
-            if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
-                changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
-                (*callIterator)->remotePartyNumber);
+        if(((*callIterator)->phoneId == phoneId)
+            && ((*callIterator)->callState == CallState::CALL_ACTIVE)) {
+                index = (*callIterator)->index;
                 break;
-            }
         }
     }
+    LOG(DEBUG, __FUNCTION__, "Call Index of active call ", index);
+    return index;
 }
 
 grpc::Status CallManagerServerImpl::Resume(ServerContext* context,
@@ -832,7 +861,8 @@ grpc::Status CallManagerServerImpl::Resume(ServerContext* context,
         if(cbDelay == -1) {
             isCallback = false;
         }
-        resumeCall(phoneId, callIndex);
+        int callActivateIndex = getCallIndexOfActiveCall(phoneId);
+        swapCalls(callIndex, phoneId, callActivateIndex);
         response->set_status(static_cast<commonStub::Status>(status));
         response->set_iscallback(isCallback);
         response->set_error(static_cast<commonStub::ErrorCode>(error));
@@ -875,7 +905,7 @@ void CallManagerServerImpl::holdCall(int phoneId, int callIndex) {
         if(((*callIterator)->phoneId == phoneId) && ((*callIterator)->index )) {
             if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
                 break;
             }
         }
@@ -890,14 +920,14 @@ void CallManagerServerImpl::swapCalls(int callHoldIndex, int phoneIndex,
             && ((*callIterator)->index  == callHoldIndex)) {
             if((*callIterator)->callState == CallState::CALL_ON_HOLD) {
                 changeCallState((*callIterator)->phoneId, "CALL_ACTIVE",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
             }
         }
         if(((*callIterator)->phoneId == phoneIndex)
             && ((*callIterator)->index  == callActivateIndex)) {
             if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
-                (*callIterator)->remotePartyNumber);
+                (*callIterator)->index);
             }
         }
 
@@ -993,7 +1023,7 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
                     "", phoneId));
                 }
             } else {  // Custom number eCall over PS or voice call
-                changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
+                changeCallState(info->phoneId, "CALL_ENDED", info->index);
             }
             response->set_status(static_cast<commonStub::Status>(status));
             response->set_iscallback(isCallback);
@@ -1024,7 +1054,7 @@ grpc::Status CallManagerServerImpl::Reject(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
-            changeCallState(info->phoneId , "CALL_ENDED", info->remotePartyNumber);
+            changeCallState(info->phoneId , "CALL_ENDED", info->index);
             response->set_status(static_cast<commonStub::Status>(status));
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
@@ -1054,7 +1084,7 @@ grpc::Status CallManagerServerImpl::RejectWithSMS(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
-            changeCallState(info->phoneId , "CALL_ENDED", info->remotePartyNumber);
+            changeCallState(info->phoneId , "CALL_ENDED", info->index);
             response->set_status(static_cast<commonStub::Status>(status));
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
@@ -1112,10 +1142,9 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
             }
             //Clear call cache in server
            std::shared_ptr<CallInfo> call =
-            findCallAndUpdateCallState
-                (getRemotePartyNumber(phoneId), CallState::CALL_ENDED, phoneId);
+            findCallAndUpdateCallState(callIndex, CallState::CALL_ENDED, phoneId);
         } else {
-            changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
+            changeCallState(info->phoneId, "CALL_ENDED", info->index);
         }
     } else {
         LOG(ERROR, __FUNCTION__, " Matching call not found ");
@@ -1243,7 +1272,7 @@ grpc::Status CallManagerServerImpl::ModifyOrRespondToModifyCall(ServerContext* c
                 // error.
                 // API is expected to be called when call state is ACTIVE.
                 info->mode = rttMode;
-                changeRttModeOfCall(info->mode, info->remotePartyNumber, info->phoneId);
+                changeRttModeOfCall(info->mode, info->index, info->phoneId);
             } else {
                 if(rttMode == info->mode) {
                     // User requested RTT mode is same as current rtt mode of the call then
@@ -1251,7 +1280,7 @@ grpc::Status CallManagerServerImpl::ModifyOrRespondToModifyCall(ServerContext* c
                 } else {
                     // Update the RTT mode of the call and trigger event to clients
                     info->mode = rttMode;
-                    changeRttModeOfCall(info->mode, info->remotePartyNumber, info->phoneId);
+                    changeRttModeOfCall(info->mode, info->index, info->phoneId);
                 }
             }
             response->set_status(static_cast<commonStub::Status>(status));
@@ -1573,7 +1602,7 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
         // Since, remote end user makes the rtt call, peer capability is FULL.
         callInfo.peerRttCapability = RttMode::FULL;
     }
-    callInfo.index = calls_.size() + 1;
+    callInfo.index = setCallIndexForNewCall();
     callInfo.callDirection = CallDirection::INCOMING;
     if(callInfo.index > 1) { //MO or MT call already exist then callState = WAITING
         callInfo.callState = CallState::CALL_WAITING;
@@ -1613,7 +1642,7 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     }
     auto f = std::async(std::launch::async, [this, callInfo]() {
             this->changeCallState(callInfo.phoneId,
-                Helper::getCallStateInString(callInfo.callState), callInfo.remotePartyNumber);
+                Helper::getCallStateInString(callInfo.callState), callInfo.index);
         }).share();
     taskQ_->add(f);
 }
@@ -1687,7 +1716,7 @@ std::string CallManagerServerImpl::fetchNextToken(std::string& inputString, std:
     return token;
 }
 
-telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId) {
+telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId, int callIndex) {
     LOG(DEBUG, __FUNCTION__);
     if(callInfo_.isRegulatoryeCall != true) {
         // User configurable failures for Ecall HLAP timers are not applicable for a
@@ -1695,15 +1724,15 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId) {
         std::vector<std::string> input = {"SUCCESS"};
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
             input, callInfo_.isMsdTransmitted, callInfo_.isTpseCallOverIms, phoneId,
-                callInfo_.remotePartyNumber, true, false);
+                callIndex, true, false);
     } else {
         // Regulatory eCall
         std::vector<std::string> input = parseUserInput();
         bool isNGeCall = getUserConfiguredeCallRat();
-        std::string remotePartyNumber = getRemotePartyNumber(phoneId);
+        // std::string remotePartyNumber = getRemotePartyNumber(phoneId);
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
-            input, callInfo_.isMsdTransmitted, isNGeCall, phoneId, remotePartyNumber, false,
+            input, callInfo_.isMsdTransmitted, isNGeCall, phoneId, callIndex, false,
             false);
     }
     if(!ecallStateMachine_) {
@@ -1802,12 +1831,16 @@ void CallManagerServerImpl::startTimers(std::string timer) {
         } else {
             delay = rootObj[CALL_MANAGER]["eCallConfig"][timer].asInt();
         }
-        auto f = std::async(std::launch::async, [this, delay, timer, rootObj]() {
+        auto f = std::async(std::launch::async, [this, delay, timer]() {
             LOG(DEBUG, __FUNCTION__,"Delay is", delay);
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            Json::Value obj;
+            std::string filename = "";
+            getJsonForSystemData(callInfo_.phoneId, filename, obj);
             HlapTimerStatus status = static_cast<HlapTimerStatus>(
-                rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
+                obj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
             if(status == HlapTimerStatus::ACTIVE) {
+                LOG(DEBUG, __FUNCTION__," Timer is active", timer);
                 this->triggerTimerExpiry(timer, callInfo_.phoneId);
             }
         }).share();
@@ -1896,12 +1929,50 @@ void CallManagerServerImpl::triggerECallInfoChangeEvent(std::string timer,
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo> call) {
+void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId,
+    std::shared_ptr<CallInfo> call) {
     int callIndex = call->index;
+    triggerCallInfoChange(phoneId);
+    if(call->callState == CallState::CALL_ENDED ) {
+        //Clear call cache in server
+        auto f = std::async(std::launch::async, [this, callIndex, phoneId]() {
+         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+            bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
+            if(isCallRemoved) {
+                // Event to update the call cache for clients.
+                triggerCallListAfterCallEnd(phoneId);
+            }
+        }).share();
+        taskQ_->add(f);
+    }
+}
+
+std::vector<std::shared_ptr<CallInfo>>
+    CallManagerServerImpl::fetchSlotIdCalls(int phoneId) {
+    std::vector<std::shared_ptr<CallInfo>> calls;
+    for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
+        ++callIterator) {
+        if((*callIterator)->phoneId == phoneId) {
+            calls.emplace_back(*callIterator);
+            logCallDetails(*callIterator);
+        }
+    }
+    return calls;
+}
+
+grpc::Status CallManagerServerImpl::updateCalls(ServerContext* context,
+    const telStub::UpdateCurrentCallsRequest* request, ::google::protobuf::Empty* response) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = request->phone_id();
+    triggerCallInfoChange(phoneId);
+    return grpc::Status::OK;
+}
+
+void CallManagerServerImpl::triggerCallInfoChange(int phoneId) {
+    LOG(DEBUG, __FUNCTION__, "PhoneId ", phoneId);
     ::telStub::CallStateChangeEvent callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
-
-    std::vector<std::shared_ptr<CallInfo>> calls = calls_;
+    std::vector<std::shared_ptr<CallInfo>> calls = fetchSlotIdCalls(phoneId);
     for(auto &it : calls) {
         telStub::Call *result = callStateChangeEvent.add_calls();
         result->set_call_state(static_cast<telStub::CallState>(it->callState));
@@ -1917,7 +1988,6 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo>
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
-        result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         LOG(DEBUG, __FUNCTION__," Rtt mode: ", static_cast<int>(it->mode),
@@ -1929,43 +1999,30 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo>
         result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
         result->set_call_type(static_cast<telStub::CallType>(it->callType));
     }
+    callStateChangeEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
-
-    if(call->callState == CallState::CALL_ENDED ) {
-        //Clear call cache in server
-        auto f = std::async(std::launch::async, [this, callIndex]() {
-         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-            bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
-            if(isCallRemoved) {
-                // Event to update the call cache for clients.
-                triggerCallListAfterCallEnd();
-            }
-        }).share();
-        taskQ_->add(f);
-    }
 }
 
-void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, std::string remotepartyNumber,
-    int phoneId) {
+void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, int index, int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    std::shared_ptr<CallInfo> call = findCallAndUpdateRttMode(remotepartyNumber, mode, phoneId);
-    triggerCallInfoChangeEvent(call);
+    std::shared_ptr<CallInfo> call = findCallAndUpdateRttMode(index, mode, phoneId);
+    triggerCallInfoChangeEvent(phoneId, call);
 }
 
 void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
-    std::string remotepartyNumber) {
+    int index) {
     LOG(DEBUG, __FUNCTION__);
     CallState state = Helper::getCallState(action);
-    std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(remotepartyNumber, state, phoneId);
-    triggerCallInfoChangeEvent(call);
+    std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
+    triggerCallInfoChangeEvent(phoneId, call);
 }
 
-void CallManagerServerImpl::triggerCallListAfterCallEnd() {
-    LOG(DEBUG, __FUNCTION__);
+void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
+    LOG(DEBUG, __FUNCTION__, " PhoneId ", phoneId);
     ::telStub::CallStateChangeEvent callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
     std::vector<std::shared_ptr<CallInfo>> calls = calls_;
@@ -1984,10 +2041,10 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
-        result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
     }
+    callStateChangeEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
     //posting the event to EventService event queue
@@ -1996,14 +2053,13 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
-    std::string remotePartyNumber, CallState action, int phoneId) {
-    LOG(DEBUG, __FUNCTION__,"Remote party number is ",remotePartyNumber,
-        "Call state is ", static_cast<int>(action) );
+    int index, CallState action, int phoneId) {
+    LOG(DEBUG, __FUNCTION__," call Index ", index, " call state is ", static_cast<int>(action) );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
-        return find(call, remotePartyNumber, phoneId);
+        return find(call, index, phoneId);
     });
 
     if (iter != std::end(calls_)) {
@@ -2016,14 +2072,13 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateRttMode(
-    std::string remotePartyNumber, RttMode mode, int phoneId) {
-    LOG(DEBUG, __FUNCTION__,"Remote party number is ", remotePartyNumber,
-        "Rtt mode is ", static_cast<int>(mode) );
+    int index, RttMode mode, int phoneId) {
+    LOG(DEBUG, __FUNCTION__," Call Index ", index, " Rtt mode ", static_cast<int>(mode) );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
-        return find(call, remotePartyNumber, phoneId);
+        return find(call, index, phoneId);
     });
 
     if (iter != std::end(calls_)) {
@@ -2036,9 +2091,8 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateRttMode(
     }
 }
 
-bool CallManagerServerImpl::find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber,
-    int phoneId) {
-    if((call->remotePartyNumber == remotePartyNumber) && (call->phoneId == phoneId)) {
+bool CallManagerServerImpl::find(std::shared_ptr<CallInfo> call, int index, int phoneId) {
+    if((call->index == index) && (call->phoneId == phoneId)) {
         return true;
     } else {
         return false;

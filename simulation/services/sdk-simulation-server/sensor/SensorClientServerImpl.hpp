@@ -71,7 +71,7 @@ class SensorClientServerImpl final :
 
  private:
     void apiJsonReader(std::string apiName, sensorStub::SensorClientCommandReply* response);
-    void init();
+    bool init();
     void updateSensorInfo();
     telux::sensor::SensorType getSensorType(std::string sensorType);
     void startStreaming();

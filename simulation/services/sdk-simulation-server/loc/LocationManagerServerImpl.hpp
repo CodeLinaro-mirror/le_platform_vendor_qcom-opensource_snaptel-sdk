@@ -72,7 +72,7 @@ class LocationManagerServerImpl final : public locStub::LocationManagerService::
 
  private:
     void apiJsonReader(std::string apiName, locStub::LocManagerCommandReply* response);
-    void init();
+    bool init();
     void startStreaming();
     void updateStreamRequest();
     void onEventUpdate(std::string event);

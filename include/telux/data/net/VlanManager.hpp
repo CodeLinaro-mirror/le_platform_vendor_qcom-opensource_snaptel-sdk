@@ -248,17 +248,21 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a VLAN with a particular profile id. When a WWAN network interface is brought up using
-     * IDataConnectionManager::startDataCall on that profile id, that interface will be accessible
-     * from this VLAN
+     * Bind Vlan to a particular backhaul. When network interface associated with specified
+     * backhaul is brought up, VLAN traffic will be forwarded to specified backhaul via the
+     * network interface.
+     *
+     * @note    Slot ID and profile ID are relevant only for WWAN backhaul. For all other
+     * backhauls types, values are don't care.
+     *
      * The behavior of this API is dependent on platform/system configuration.
-     * If the platform is configured to allow multiple VLANs to be bound to the same
-     * profile id then:
+     * For WWAN backhaul, if the platform is configured to allow multiple VLANs to be
+     * bound to the same profile id then:
      *   - Binding multiple VLANs to any profile id can be achieved by calling this
      *     API with each VLAN id. Each VLAN will be associated with it's own bridge.
      *   - Reboot is not triggered with any bind operation.
-     * If the platform is not configured to allow multiple VLANs to be bound to the same
-     * profile id then:
+     * For WWAN backhaul, if the platform is not configured to allow multiple VLANs
+     * to be bound to the same profile id then:
      *   - Binding VLAN to default profile id will associate it with bridge0 and
      *     trigger automatic reboot.
      *   - Binding VLAN to any other profile id will associate it with own bridge.
@@ -280,8 +284,8 @@ class IVlanManager {
     /**
      * Unbind VLAN from particular backhaul. This API will stop vlan traffic flow to/from specified
      * backhaul type.
-     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
-     * values are don't care.
+     * @note    Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls
+     * types, values are don't care.
      *
      * @param [in] vlanBindConfig       Backhaul information and vlan id to unbind it from.
      *                                  @ref telux::data::net::VlanBindConfig

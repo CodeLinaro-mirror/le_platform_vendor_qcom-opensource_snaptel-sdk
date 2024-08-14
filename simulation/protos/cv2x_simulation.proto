@@ -44,6 +44,9 @@ service Cv2xRadioService {
     rpc getIfaceNameFromIpType(IpType) returns (IfaceNameReply) {}
     rpc enableTxStatusReport(UintNum) returns (Cv2xCommandReply) {}
     rpc disableTxStatusReport(UintNum) returns (Cv2xCommandReply) {}
+    rpc setGlobalIPInfo(google.protobuf.Empty) returns (Cv2xCommandReply) {}
+    rpc setGlobalIPUnicastRoutingInfo(google.protobuf.Empty) returns (Cv2xCommandReply) {}
+    rpc requestDataSessionSettings(google.protobuf.Empty) returns (Cv2xCommandReply) {}
     rpc injectVehicleSpeed(UintNum) returns (Cv2xCommandReply) {}
 }
 

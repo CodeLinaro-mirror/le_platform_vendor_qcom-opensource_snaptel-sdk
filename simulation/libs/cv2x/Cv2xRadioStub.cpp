@@ -93,9 +93,65 @@ static constexpr unsigned int SIMULATION_MINIMUM_PORT_NUMBER = 1024;
 static std::string DEFAULT_DEST_IP_ADDR = "ff02::1";
 static std::string LO_IPV6_ADDR         = "::1";
 
+static const std::string CV2X_EVENT_FILTER = "cv2x_status";
+static const std::string CV2X_SRC_L2_ID_FILTER = "cv2x_src_l2_id";
+
+void Cv2xRadioEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::cv2x::Cv2xStatusEx statusEx;
+    std::vector<std::weak_ptr<ICv2xRadioListener>> listeners;
+
+    statusEx.status = status;
+    listenerMgr_.getAvailableListeners(listeners);
+    for (auto &wp : listeners) {
+        if (auto sp = wp.lock()) {
+            sp->onStatusChanged(status);
+            sp->onStatusChanged(statusEx);
+        }
+    }
+}
+
+void Cv2xRadioEvtListener::onL2AddrChanged(uint32_t newL2Address) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::weak_ptr<ICv2xRadioListener>> listeners;
+    listenerMgr_.getAvailableListeners(listeners);
+    for (auto &wp : listeners) {
+        if (auto sp = wp.lock()) {
+            sp->onL2AddrChanged(newL2Address);
+        }
+    }
+}
+
+void Cv2xRadioEvtListener::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::cv2xStub::Cv2xStatus>()) {
+        ::cv2xStub::Cv2xStatus stubStatus;
+        event.UnpackTo(&stubStatus);
+
+        telux::cv2x::Cv2xStatus cv2xStatus;
+        RPC_TO_CV2X_STATUS(stubStatus, cv2xStatus);
+        onCv2xStatusChange(cv2xStatus);
+    } else if (event.Is<::cv2xStub::UintNum>()) {
+        ::cv2xStub::UintNum srcL2Id;
+        event.UnpackTo(&srcL2Id);
+        onL2AddrChanged(srcL2Id.num());
+    }
+}
+
+telux::common::Status Cv2xRadioEvtListener::registerListener(
+    std::weak_ptr<ICv2xRadioListener> listener) {
+    return listenerMgr_.registerListener(listener);
+}
+
+telux::common::Status Cv2xRadioEvtListener::deregisterListener(
+    std::weak_ptr<ICv2xRadioListener> listener) {
+    return listenerMgr_.deRegisterListener(listener);
+}
+
+
 Cv2xRadioSimulation::Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
-    pEvtListener_ = std::make_shared<Cv2xEvtListener>();
+    pEvtListener_ = std::make_shared<Cv2xRadioEvtListener>();
     taskQ_        = std::make_shared<AsyncTaskQueue<void>>();
     serviceStub_  = CommonUtils::getGrpcStub<::cv2xStub::Cv2xRadioService>();
 
@@ -128,6 +184,12 @@ Cv2xRadioSimulation::Cv2xRadioSimulation() {
 Cv2xRadioSimulation::~Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
     setInitializedStatus(telux::common::Status::FAILED, nullptr);
+    if (pEvtListener_) {
+        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        clientEventManager.deregisterListener(pEvtListener_, filters);
+    }
+
     // close all TCP sockets and remove associated Tx/Rx flows
     closeAllCv2xTcpSockets();
 
@@ -209,7 +271,7 @@ int Cv2xRadioSimulation::getV6AddrByIface(string &ifaceName, struct in6_addr &v6
         } else {
             if (!ifa->ifa_name) {
                 LOG(ERROR, __FUNCTION__, " null ifa name ptr should not happen.");
-                return result;
+                break;
             }
         }
 
@@ -234,7 +296,20 @@ void Cv2xRadioSimulation::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (pEvtListener_) {
+        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        res = clientEventManager.registerListener(pEvtListener_, filters);
+        if (res != telux::common::Status::SUCCESS) {
+            setInitializedStatus(res, callback);
+            return;
+        }
+
         res = pEvtListener_->registerListener(shared_from_this());
+        if (res != telux::common::Status::SUCCESS) {
+            setInitializedStatus(res, callback);
+            clientEventManager.deregisterListener(pEvtListener_, filters);
+            return;
+        }
     }
     if (res != telux::common::Status::SUCCESS) {
         setInitializedStatus(res, callback);
@@ -294,35 +369,24 @@ void Cv2xRadioSimulation::onStatusChanged(Cv2xStatus status) {
         /*cv2x radio work only if cv2x status ACTIVE | SUSPEND*/
         setInitializedStatus(common::Status::INVALIDSTATE, nullptr);
     }
-
-    notifyListenersStatusChange(status);
-}
-
-void Cv2xRadioSimulation::notifyListenersStatusChange(Cv2xStatus status) {
-    auto f = std::async(std::launch::async, [this, status]() {
-        telux::cv2x::Cv2xStatusEx statusEx;
-        std::vector<std::weak_ptr<ICv2xRadioListener>> lists;
-
-        statusEx.status = status;
-        radioListenerMgr_.getAvailableListeners(lists);
-        for (auto &wp : lists) {
-            if (auto sp = wp.lock()) {
-                sp->onStatusChanged(status);
-                sp->onStatusChanged(statusEx);
-            }
-        }
-    }).share();
-    taskQ_->add(f);
 }
 
 telux::common::Status Cv2xRadioSimulation::registerListener(
     std::weak_ptr<ICv2xRadioListener> listener) {
-    return radioListenerMgr_.registerListener(listener);
+    auto res = telux::common::Status::FAILED;
+    if (pEvtListener_) {
+        res = pEvtListener_->registerListener(listener);
+    }
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::deregisterListener(
     std::weak_ptr<ICv2xRadioListener> listener) {
-    return radioListenerMgr_.deRegisterListener(listener);
+    auto res = telux::common::Status::FAILED;
+    if (pEvtListener_) {
+        res = pEvtListener_->deregisterListener(listener);
+    }
+    return res;
 }
 
 template <class T>
@@ -1671,12 +1735,20 @@ void Cv2xRadioSimulation::cleanupAllSpsFlows() {
 
 telux::common::Status Cv2xRadioSimulation::setGlobalIPInfo(
     const IPv6AddrType &ipv6Addr, common::ResponseCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+
+    CALL_RPC_AND_RESPOND(serviceStub_->setGlobalIPInfo, request, res, cb, taskQ_);
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::setGlobalIPUnicastRoutingInfo(
     const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+
+    CALL_RPC_AND_RESPOND(serviceStub_->setGlobalIPUnicastRoutingInfo, request, res, cb, taskQ_);
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::requestCapabilities(RequestCapabilitiesCallback cb) {
@@ -1686,7 +1758,26 @@ telux::common::Status Cv2xRadioSimulation::requestCapabilities(RequestCapabiliti
 
 telux::common::Status Cv2xRadioSimulation::requestDataSessionSettings(
     RequestDataSessionSettingsCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+    ::cv2xStub::Cv2xCommandReply response;
+    int delay = DEFAULT_DELAY;
+
+    CALL_RPC(serviceStub_->requestDataSessionSettings, request, res, response, delay);
+    if (res == telux::common::Status::SUCCESS && cb && taskQ_) {
+        auto ec = static_cast<telux::common::ErrorCode>(response.error());
+        auto f = std::async(std::launch::async, [this, delay, ec, cb]() {
+            if (delay > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            }
+            DataSessionSettings nonIpSettings;
+            nonIpSettings.mtuValid = true;
+            nonIpSettings.mtu = getCapabilities().linkNonIpMtuBytes;
+            cb(nonIpSettings, ec);
+        }).share();
+        taskQ_->add(f);
+    }
+    return res;
 }
 
 Cv2xRadioCapabilities Cv2xRadioSimulation::getCapabilities() const {

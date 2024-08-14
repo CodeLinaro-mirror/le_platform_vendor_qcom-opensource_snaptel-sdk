@@ -28,12 +28,12 @@
             "status": "SUCCESS"
         },
         "setL2Filters": {
-            "error": "MODE_NOT_SUPPORTED",
-            "status": "FAILED"
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         },
         "removeL2Filters": {
-            "error": "MODE_NOT_SUPPORTED",
-            "status": "FAILED"
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

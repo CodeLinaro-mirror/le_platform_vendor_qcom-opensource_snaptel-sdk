@@ -77,6 +77,15 @@ public:
   grpc::Status disableTxStatusReport(ServerContext *context,
                                      const cv2xStub::UintNum *request,
                                      cv2xStub::Cv2xCommandReply *res);
+  grpc::Status setGlobalIPInfo(ServerContext *context,
+                               const google::protobuf::Empty *request,
+                               ::cv2xStub::Cv2xCommandReply *res);
+  grpc::Status setGlobalIPUnicastRoutingInfo(ServerContext *context,
+                                             const google::protobuf::Empty *request,
+                                             ::cv2xStub::Cv2xCommandReply *res);
+  grpc::Status requestDataSessionSettings(ServerContext *context,
+                                          const google::protobuf::Empty *request,
+                                          ::cv2xStub::Cv2xCommandReply *res);
   grpc::Status injectVehicleSpeed(ServerContext *context,
                                   const cv2xStub::UintNum *request,
                                   cv2xStub::Cv2xCommandReply *res);

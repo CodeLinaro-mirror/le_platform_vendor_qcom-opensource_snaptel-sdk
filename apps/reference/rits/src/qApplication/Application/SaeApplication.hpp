@@ -85,6 +85,9 @@ public:
         bool enableCsvLog = false, bool enableDiagLog = false);
     ~SaeApplication();
 
+    /* Initialization */
+    bool init() override;
+
     /**
     * Method that decodes bsm from raw buffer to bsm contents data structure in ldm.
     * It also handles the Tunc. This method should be deprecated once Encoding and Decoding
@@ -126,7 +129,8 @@ public:
     static std::vector<asyncCbData_t> asyncCbData;
     static bool exitAsync;
     void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
-        shared_ptr<ICongestionControlManager> congestionControlManager, QMonitor* qMon,
+        shared_ptr<ICongestionControlManager> congestionControlManager,
+        shared_ptr<QMonitor> qMon,
         int secVerbosity, RadioReceive* radioReceive);
     static void postprocessing_cleanup();
     void PostProcessingThread();
@@ -225,13 +229,13 @@ private:
     * @param mc - A shared pointer to the msg_contents struct
     * @param isRx - A flag to indicate if the packet is used for Rx
     */
-    void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false);
+    bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) override;
 
     /**
     * Method to delete and free SAE packet memory in msg_contents struct.
     * @param mc - A shared pointer to the msg_contents struct
     */
-    void freeMsg(std::shared_ptr<msg_contents> mc);
+    void freeMsg(std::shared_ptr<msg_contents> mc) override;
 
     /**
     * Method to setup and fill BSM related information.

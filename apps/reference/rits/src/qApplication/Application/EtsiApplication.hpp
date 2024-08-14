@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -80,6 +80,9 @@ public:
 
     ~EtsiApplication();
 
+    /* Initialization */
+    bool init() override;
+
     /**
     * Method to setup and perform transmission for ETSI packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -109,13 +112,13 @@ private:
     * @param mc - A shared pointer to the msg_contents struct
     * @param isRx - A flag to indicate if the packet is used for Rx
     */
-    void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false);
+    bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) override;
 
     /**
     * Method to delete and free ETSI packet memory in msg_contents struct.
     * @param mc - A shared pointer to the msg_contents struct
     */
-    void freeMsg(std::shared_ptr<msg_contents> mc);
+    void freeMsg(std::shared_ptr<msg_contents> mc) override;
 
     /**
     * Method to setup and fill BTP related information.

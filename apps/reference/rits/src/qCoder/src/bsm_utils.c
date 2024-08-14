@@ -1015,7 +1015,7 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     }
     int j = 0;
     while (j < 1000){
-        tokens[j] = "";
+        tokens[j] = NULL;
         j++;
     }
     while ((tok = strsep(&tmp, ",")) != NULL) {
@@ -1345,8 +1345,14 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
         bsm->vehsafeopts &= (1 << 0) - 1;
     }
 
-
     int size = encode_msg(mc);
+
+    while ((--i) >= 0) {
+        if (NULL != tokens[i]) {
+            free(tokens[i]);
+        }
+    }
+
     free(tokens);
     free(tmp);
     return size;

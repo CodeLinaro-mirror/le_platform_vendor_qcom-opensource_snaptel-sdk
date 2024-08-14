@@ -97,7 +97,7 @@ static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
 static bool overridePsidCheck = false;
 static bool enableCongCtrl = false;
 static int secVerbosity = 0;
-static QMonitor* qMonPtr;
+static shared_ptr<QMonitor> qMonPtr;
 static RadioReceive* radioReceivePtr;
 static bsm_data bs;
 static std::mutex AsyncMtx;
@@ -120,7 +120,6 @@ static double LogstartTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
 std::vector<asyncCbData_t> SaeApplication::asyncCbData;
 std::vector<std::thread> asyncThreads;
 sem_t verificationSem;
-sem_t bufferClearedSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
@@ -134,93 +133,51 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType,
         return;
     }
     sem_init(&verificationSem, 0, 0);
-    sem_init(&bufferClearedSem, 0, 0);
     gettimeofday(&currTime, NULL);
     LogstartTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
     prevBatchTimeStamp = LogstartTime;
-    MsgType = msgType;
+    wraInterval = std::chrono::milliseconds::zero();
+
     writeMutexCvSae = &writeMutexCv;
     writeLogFinishSae = &writeLogFinish;
     resFileLogging = configuration.enableVerifResLog;
-    if(configuration.enableAsync){
-        overridePsidCheck = configuration.overridePsidCheck;
-        enableCongCtrl = configuration.enableCongCtrl;
-        secVerbosity = configuration.secVerbosity;
-        qMonPtr = qMon;
-        if(radioReceives.size()){
-            radioReceivePtr = &radioReceives[0];
-        }
-        for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
-            asyncCbData_t tmpData;
-            memset(&tmpData, 0 , sizeof(asyncCbData_t));
-            asyncCbData.push_back(tmpData);
-        }
-        PostProcessingThread();
-    }
-    wraInterval = std::chrono::milliseconds::zero();
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort,
         char* fileConfiguration, MessageType msgType, bool enableCsvLog, bool enableDiagLog) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration,
-            enableCsvLog, enableDiagLog) {
+        enableCsvLog, enableDiagLog) {
+    SaeApplication(fileConfiguration, msgType, enableCsvLog, enableDiagLog);
+}
+
+bool SaeApplication::init() {
     if (not configuration.isValid) {
-        return;
+        printf("SaeApplication invalid configuration\n");
+        return false;
     }
-    sem_init(&verificationSem, 0, 0);
-    gettimeofday(&currTime, NULL);
-    LogstartTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
-    prevBatchTimeStamp = LogstartTime;
-    wraInterval = std::chrono::milliseconds::zero();
-    MsgType = msgType;
-    writeMutexCvSae = &writeMutexCv;
-    writeLogFinishSae = &writeLogFinish;
-    resFileLogging = configuration.enableVerifResLog;
+
+    if (false == ApplicationBase::init()) {
+        printf("SaeApplication initialization failed\n");
+        return false;
+    }
+
     if(configuration.enableAsync){
-        overridePsidCheck = configuration.overridePsidCheck;
-        enableCongCtrl = configuration.enableCongCtrl;
-        secVerbosity = configuration.secVerbosity;
-        qMonPtr = qMon;
-        for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
-            asyncCbData_t tmpData;
-            memset(&tmpData, 0 , sizeof(asyncCbData_t));
-            asyncCbData.push_back(tmpData);
-        }
-        PostProcessingThread();
+       overridePsidCheck = configuration.overridePsidCheck;
+       enableCongCtrl = configuration.enableCongCtrl;
+       secVerbosity = configuration.secVerbosity;
+       qMonPtr = qMon;
+       if(radioReceives.size()){
+           radioReceivePtr = &radioReceives[0];
+       }
+       for (int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++) {
+           asyncCbData_t tmpData;
+           asyncCbData.push_back(tmpData);
+       }
+       PostProcessingThread();
     }
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
+
+     return true;
 }
 
 SaeApplication::~SaeApplication() {
@@ -953,7 +910,7 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
 
 void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
     shared_ptr<ICongestionControlManager> congestionControlManager,
-    QMonitor* qMon, int secVerbosity, RadioReceive* radioReceive)
+    shared_ptr<QMonitor> qMon, int secVerbosity, RadioReceive* radioReceive)
 {
     uint64_t monotonicTime = 0;
     uint8_t cbr = 0;
@@ -1303,7 +1260,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                                 thrVerifLatencies.insert(std::pair<std::thread::id,
                                 std::vector<VerifStats>>(tid, tmp));
                                 for(int i = 0 ; i < configuration.verifStatsSize; i++){
-                                    VerifStats tmpVerifStat;
+                                    VerifStats tmpVerifStat = {0};
                                     thrVerifLatencies[tid].push_back(tmpVerifStat);
                                 }
                             }
@@ -1423,7 +1380,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
 /*
  * Initialize the wsmp header, ieee 1609.2 header, and j2735 contents unless WRA/WSA
  */
-void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
+bool SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
     mc->stackId = STACK_ID_SAE;
 
     if (isRx) {
@@ -1441,15 +1398,17 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
         mc->wsmp = (wsmp_data_t*) calloc(1, sizeof(wsmp_data_t));
         if (!mc->wsmp) {
             std::cerr << "calloc wsmp failed" << endl;
-            return;
+            return false;
         }
 
         ((wsmp_data_t*)mc->wsmp)->abp = (abuf_t*) calloc(1, sizeof(abuf_t));
 
         if (!((wsmp_data_t*)mc->wsmp)->abp)
         {
+            free(mc->wsmp);
+            mc->wsmp = nullptr;
             std::cerr << "calloc wsmp asnbuf structure failed" << endl;
-            return;
+            return false;
         }
 
         const auto abuf_ret = abuf_alloc(((wsmp_data_t*)mc->wsmp)->abp,
@@ -1457,22 +1416,25 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 
         if (abuf_ret != WSMP_ABUF_DEFAULT_SIZE)
         {
+            freeMsg(mc);
             std::cerr << "alloc wsmp asn buffer failed" << endl;
-            return;
+            return false;
         }
 
         mc->ieee1609_2data = malloc(sizeof(ieee1609_2_data));
         if (!mc->ieee1609_2data) {
+            freeMsg(mc);
             std::cerr << "alloc ieee1609_2data failed" << endl;
-            return;
+            return false;
         }
         memset(mc->ieee1609_2data, 0, sizeof(ieee1609_2_data));
 
         if (MsgType == MessageType::BSM) {
             mc->j2735_msg = malloc(sizeof(bsm_value_t));
             if (!mc->j2735_msg) {
+                freeMsg(mc);
                 std::cerr << "alloc j2735_msg failed" << endl;
-                return;
+                return false;
             }
             memset(mc->j2735_msg, 0, sizeof(bsm_value_t));
             mc->wsa = 0;
@@ -1481,15 +1443,17 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 #ifdef WITH_WSA
             mc->wsa = malloc(sizeof(SrvAdvMsg_t));
             if (!mc->wsa) {
+                freeMsg(mc);
                 std::cerr << "alloc wsa failed" << endl;
-                return;
+                return false;
             }
             memset(mc->wsa, 0, sizeof(SrvAdvMsg_t));
 
             mc->wra = malloc(sizeof(RoutingAdvertisement_t));
             if (!mc->wra) {
+                freeMsg(mc);
                 std::cerr << "alloc wra failed" << endl;
-                return;
+                return false;
             }
             memset(mc->wra, 0, sizeof(RoutingAdvertisement_t));
 
@@ -1501,6 +1465,8 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 #endif
         }
     }
+
+    return true;
 }
 
 /*
@@ -1516,6 +1482,9 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         }
 
         abuf_free(wsmp->abp);
+        if (wsmp->abp) {
+            free(wsmp->abp);
+        }
         free(mc->wsmp);
         mc->wsmp = nullptr;
     }
@@ -1536,6 +1505,7 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         mc->wsa = nullptr;
     }
 #endif
+
     abuf_free(&(mc->abuf));
 }
 

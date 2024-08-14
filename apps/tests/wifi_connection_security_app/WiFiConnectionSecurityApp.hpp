@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -36,11 +36,17 @@
 #define CELLULARCONNECTIONSECURITYAPP_HPP
 
 #include <mutex>
+#include <iostream>
+#include <memory>
+#include <future>
 #include <condition_variable>
 
 #include <telux/sec/ConnectionSecurityFactory.hpp>
 
 #include "common/console_app_framework/ConsoleApp.hpp"
+
+using namespace telux::sec;
+using namespace telux::common;
 
 class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener {
 
@@ -62,11 +68,16 @@ class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener {
     std::condition_variable trustCV_;
 };
 
-class WiFiConnectionSecurityApp : public ConsoleApp {
+class WiFiConnectionSecurityApp : public ConsoleApp,
+                                  public IServiceStatusListener,
+                                  public std::enable_shared_from_this<WiFiConnectionSecurityApp> {
 
  public:
     WiFiConnectionSecurityApp(std::string appName, std::string cursor);
     ~WiFiConnectionSecurityApp();
+
+    void initConsole();
+    void onServiceStatusChange(ServiceStatus status) override;
 
     void init(void);
     void registerListener(void);

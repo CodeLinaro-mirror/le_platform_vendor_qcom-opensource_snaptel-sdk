@@ -55,6 +55,8 @@
 #include <memory>
 #include <cstdlib>
 #include <future>
+#include <chrono>
+#include <thread>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/PlatformFactory.hpp>

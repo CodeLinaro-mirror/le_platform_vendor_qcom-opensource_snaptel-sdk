@@ -1121,6 +1121,7 @@ struct SvBlackListInfo {
     GnssConstellationType constellation;
     /** sv id for the constellation:
      * 0 means blacklist for all SVIds of a given constellation type
+     * GPS SV id range: 1 to 32
      * GLONASS SV id range: 65 to 96
      * QZSS SV id range: 193 to 197
      * BDS SV id range: 201 to 237
@@ -3074,8 +3075,8 @@ public:
 
 /** List of DGNSS station IDs providing corrections.
  *  Range:
- *  - SBAS -  120 to 158 and 183 to 191
- *  - Monitoring station - 1000-2023 (Station ID biased by 1000)
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
  *  - Other values reserved.
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;

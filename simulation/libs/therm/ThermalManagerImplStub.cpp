@@ -44,6 +44,11 @@ void ThermalManagerImplStub::cleanup() {
     LOG(DEBUG, __FUNCTION__);
 }
 
+void ThermalManagerImplStub::setInitCbDelay(uint32_t cbDelay) {
+    cbDelay_ = cbDelay;
+    LOG(DEBUG, __FUNCTION__, ":: cbDelay_: ", cbDelay_);
+}
+
 uint32_t ThermalManagerImplStub::getInitCbDelay() {
     LOG(DEBUG, __FUNCTION__, ":: cbDelay_: ", cbDelay_);
     return cbDelay_;

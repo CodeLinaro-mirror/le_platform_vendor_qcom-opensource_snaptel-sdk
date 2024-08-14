@@ -52,6 +52,7 @@ class ThermalManagerImplStub : public IThermalManager,
     telux::common::Status init();
     void createListener();
     void cleanup();
+    void setInitCbDelay(uint32_t cbDelay);
     uint32_t getInitCbDelay();
     void notifyServiceStatus(telux::common::ServiceStatus srvcStatus);
     telux::common::Status registerDefaultIndications();

@@ -1173,9 +1173,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.preRecordedFile = configs["PreRecordedFile"];
     }
 
-    if (configs.end() != configs.find("preRecordedMinLog")) {
-        istringstream is(configs["preRecordedMinLog"]);
-        is >> boolalpha >> this->configuration.preRecordedMinLog;
+    if (configs.end() != configs.find("preRecordedBsmLog")) {
+        istringstream is(configs["preRecordedBsmLog"]);
+        is >> boolalpha >> this->configuration.preRecordedBsmLog;
     }
 
     if (configs.end() != configs.find("TransmitRateInterval")) {
@@ -2918,7 +2918,7 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
  */
 void ApplicationBase::writeLogHeader(FILE *fp) {
     // Writes log header to the csv file pointed by fp.
-    fprintf(fp, MIN_LOG_HEADER);
+    fprintf(fp, LOG_HEADER);
     // TODO add security headers here too
     fprintf(fp, "\n");
 }

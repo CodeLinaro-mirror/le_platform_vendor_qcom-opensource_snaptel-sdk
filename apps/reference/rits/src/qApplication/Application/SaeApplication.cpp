@@ -84,7 +84,6 @@ thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
-thread_local int decFail = 0;
 thread_local int encFail = 0;
 thread_local int txSuccess = 0;
 thread_local int signFail = 0;
@@ -107,6 +106,7 @@ static int start_index = 0;
 static std::atomic<int> rxSuccess{0};
 static std::atomic<int> asyncVerifFail{0};
 static std::atomic<int> asyncVerifSuccess{0};
+static std::atomic<int> decFail{0};
 static int asyncCallbackVerifSuccess = 0;
 static int asyncCallbackVerifFail = 0;
 static int prevVerifSuccess = 0;
@@ -163,18 +163,18 @@ bool SaeApplication::init() {
     }
 
     if(configuration.enableAsync){
-       overridePsidCheck = configuration.overridePsidCheck;
-       enableCongCtrl = configuration.enableCongCtrl;
-       secVerbosity = configuration.secVerbosity;
-       qMonPtr = qMon;
-       if(radioReceives.size()){
-           radioReceivePtr = &radioReceives[0];
-       }
-       for (int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++) {
-           asyncCbData_t tmpData;
-           asyncCbData.push_back(tmpData);
-       }
-       PostProcessingThread();
+        // TODO: These seems only needed when do RX, no need for TX
+        overridePsidCheck = configuration.overridePsidCheck;
+        enableCongCtrl = configuration.enableCongCtrl;
+        secVerbosity = configuration.secVerbosity;
+        qMonPtr = qMon;
+        if(radioReceives.size()){
+            radioReceivePtr = &radioReceives[0];
+        }
+        for (int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++) {
+            asyncCbData_t tmpData;
+            asyncCbData.push_back(tmpData);
+        }
     }
 
      return true;
@@ -247,7 +247,7 @@ void SaeApplication::printRxStats() {
         ss << std::this_thread::get_id();
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
-        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail.load());
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
@@ -264,7 +264,7 @@ void SaeApplication::printRxStats() {
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
-        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail.load());
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
             printf("Thread (%08x) verif fails is: %d\n", tid, syncVerifFail);
@@ -919,8 +919,9 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
         congCtrlInitialized = true;
     }
     thread::id thrId = std::this_thread::get_id();
-    while(not (exitAsync && (rxSuccess == (asyncVerifFail + asyncVerifSuccess)))){
+    while(not (exitAsync && (rxSuccess == (decFail + asyncVerifFail + asyncVerifSuccess)))){
         sem_wait(&verificationSem);
+
         int i = 0 ;
         for(i = start_index; PostProcessingCbData[i]!=0;++i)
         {
@@ -1282,9 +1283,6 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         ret = tmpAeroSecurity->asyncVerify(
                                 sopt.rvKine, sopt.misbehaviorStat,
                                 (void *)&(asyncCbData[async_index]), sopt.priority, AsyncCallbackFunction);
-                        if (ret == DECODE_FAIL){
-                            asyncVerifFail++;
-                        }
                     }
                }
                async_index--;

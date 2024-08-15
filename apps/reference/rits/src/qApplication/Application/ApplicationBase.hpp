@@ -127,12 +127,12 @@
 #define DECODE_FAIL -1
 #define DECODE_SIGNED 1
 
-#define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
-                       "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
-                       "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
-                       "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
-                       "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
-                       "TotalRVs,DistanceFromRV"
+#define LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
+                   "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
+                   "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
+                   "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
+                   "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
+                   "TotalRVs,DistanceFromRV"
 
 using telux::cv2x::Priority;
 using namespace std;
@@ -211,7 +211,7 @@ struct Config {
     bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
-    bool preRecordedMinLog = false;
+    bool preRecordedBsmLog = false;
     bool enableTxAlways = true;
     uint16_t ldmGbTime = 3;
     uint8_t ldmGbTimeThreshold= 5;

@@ -44,26 +44,26 @@ class SetVolumeResponseListener {
     std::mutex &streamMutex_;
 };
 
-class GetMuteResponseListener {
+class GetDeviceResponseListener {
  public:
-    GetMuteResponseListener(std::mutex &streamMtx);
+    GetDeviceResponseListener(std::mutex &streamMtx);
     bool responseReady = false;
-    bool enable;
+    std::vector<DeviceType> devices;
     telux::common::ErrorCode errorCode;
     std::condition_variable cv;
-    void getMuteComplete(StreamMute mute, telux::common::ErrorCode errorCode);
+    void getDeviceComplete(std::vector<DeviceType> devices, telux::common::ErrorCode errorCode);
 
  private:
     std::mutex &streamMutex_;
 };
 
-class SetMuteResponseListener {
+class SetDeviceResponseListener {
  public:
-    SetMuteResponseListener(std::mutex &streamMtx);
+    SetDeviceResponseListener(std::mutex &streamMtx);
     bool responseReady = false;
     telux::common::ErrorCode errorCode;
     std::condition_variable cv;
-    void setMuteComplete(telux::common::ErrorCode errorCode);
+    void setDeviceComplete(telux::common::ErrorCode errorCode);
 
  private:
     std::mutex &streamMutex_;
@@ -88,6 +88,9 @@ class AudioPlayerImpl : public IAudioPlayer,
 
     telux::common::ErrorCode setMute(bool enable) override;
     telux::common::ErrorCode getMute(bool &enable) override;
+
+    telux::common::ErrorCode setDevice(std::vector<DeviceType> devices) override;
+    telux::common::ErrorCode getDevice(std::vector<DeviceType> &devices) override;
 
     void onReadyForWrite() override;
     void onPlayStopped() override;
@@ -128,11 +131,14 @@ class AudioPlayerImpl : public IAudioPlayer,
     bool buffersAllocated_      = false;
     bool applyCachedVolume_     = false;
     bool applyCachedMute_       = false;
+    bool isStreamMuted_         = false;
     uint32_t bufferSize_        = 0;
     long contentOffset_         = 0;
 
     StreamVolume cachedVolume_;
-    StreamMute cachedMuteState_;
+    StreamVolume cachedVolumeOnMute_;
+    std::vector<DeviceType> cachedDevices_;
+    std::vector<DeviceType> lastUsedDevices_;
     std::FILE *curFile_;
     std::string curFileName_;
     telux::common::Status status_;
@@ -168,8 +174,9 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode adjustFileAndState();
     telux::common::ErrorCode updateVolume(
         StreamVolume volume, std::unique_lock<std::mutex> &streamLock);
-    telux::common::ErrorCode updateMute(
-        StreamMute muteState, std::unique_lock<std::mutex> &streamLock);
+    telux::common::ErrorCode updateMute(std::unique_lock<std::mutex> &streamLock);
+    telux::common::ErrorCode updateDevice(
+        std::vector<DeviceType> devices, std::unique_lock<std::mutex> &streamLock);
 
     bool isStreamConfigurationSame(uint32_t curFileIdx);
     void resetState();

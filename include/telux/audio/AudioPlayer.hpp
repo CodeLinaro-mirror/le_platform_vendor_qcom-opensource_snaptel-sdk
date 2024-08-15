@@ -252,6 +252,26 @@ class IAudioPlayer {
     */
    virtual telux::common::ErrorCode getMute(bool &enable) = 0;
 
+   /**
+    * Associates the given audio devices with the audio stream.
+    *
+    * @param[in] devices List of the audio devices
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the device is set,
+    *          otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode setDevice(std::vector<DeviceType> devices) = 0;
+
+   /**
+    * Retrieves list of the audio devices associated with the audio stream.
+    *
+    * @param[out] devices List of the audio devices
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the list is retrieved,
+    *          otherwise, an appropriate error code.
+    */
+   virtual telux::common::ErrorCode getDevice(std::vector<DeviceType> &devices) = 0;
+
     /**
      * Destructor of the IAudioPlayer.
      */

@@ -408,5 +408,15 @@ std::vector<std::string> CommonUtils::splitString(std::string msg) {
     return message;
 }
 
+long CommonUtils::convertHexToInt(std::string hex) {
+    long value = 0;
+    if (hex.rfind("0x", 0) == 0) {
+        value = std::stol(hex, nullptr, 0);
+    } else {
+        value = std::stol(hex, nullptr, 16);
+    }
+    return value;
+}
+
 }  // namespace common
 }  // namespace telux

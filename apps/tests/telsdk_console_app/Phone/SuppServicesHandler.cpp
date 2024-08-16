@@ -130,7 +130,7 @@ void GetSuppSvcResponseCallback::getOirStatusResp(SuppServicesStatus suppSvcStat
     } else {
         PRINT_CB << "Get Call Identification Restriction failed with ErrorCode: "
             << static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error)
-            << "Failure Cause : " << static_cast<int>(failureCause) << std::endl;
+            << " Failure Cause : " << static_cast<int>(failureCause) << std::endl;
     }
 }
 

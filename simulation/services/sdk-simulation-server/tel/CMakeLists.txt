@@ -9,6 +9,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/ImsServingManagerServerImpl.cpp
     tel/ImsSettingsManagerServerImpl.cpp
     tel/ServingManagerServerImpl.cpp
+    tel/SuppServicesManagerServerImpl.cpp
     tel/NetworkSelectionManagerServerImpl.cpp
     tel/PhoneManagerServerImpl.cpp
     tel/OperatingModeTransitionManager.cpp

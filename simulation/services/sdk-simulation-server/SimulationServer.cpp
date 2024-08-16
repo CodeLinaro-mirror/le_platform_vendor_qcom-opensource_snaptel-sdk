@@ -55,6 +55,7 @@
 #include "power/PowerManagerServiceImpl.hpp"
 #include "sensor/SensorClientServerImpl.hpp"
 #include "sensor/SensorReportService.hpp"
+#include "tel/SuppServicesManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -241,6 +242,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<PowerManagerServiceImpl> powerService =
         std::make_shared<PowerManagerServiceImpl>();
     builder.RegisterService(powerService.get());
+
+    std::shared_ptr<SuppServicesManagerServerImpl> suppService =
+        std::make_shared<SuppServicesManagerServerImpl>();
+    builder.RegisterService(suppService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

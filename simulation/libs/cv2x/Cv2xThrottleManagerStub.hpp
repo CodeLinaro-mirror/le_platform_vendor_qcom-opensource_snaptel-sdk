@@ -8,10 +8,11 @@
 
 #include <future>
 
+#include "common/AsyncTaskQueue.hpp"
+#include "protos/proto-src/cv2x_simulation.grpc.pb.h"
+
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xThrottleManager.hpp>
-
-#include "protos/proto-src/cv2x_simulation.grpc.pb.h"
 
 namespace telux {
 namespace cv2x {
@@ -35,6 +36,7 @@ class Cv2xThrottleManagerStub : public ICv2xThrottleManager {
         telux::common::ServiceStatus::SERVICE_UNAVAILABLE};
 
     void initSync(telux::common::InitResponseCb callback);
+    telux::common::AsyncTaskQueue<void> taskQ_;
 };
 
 }  // namespace cv2x

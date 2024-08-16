@@ -15,9 +15,6 @@ using grpc::ClientContext;
 using grpc::Status;
 
 #define DEFAULT_DELAY 100
-#define SKIP_CALLBACK -1
-#define DEFAULT_NOTIFICATION_DELAY 2000
-#define RPC_FAIL_SUFFIX " RPC Request failed - "
 
 namespace telux {
 namespace cv2x {
@@ -32,6 +29,15 @@ Cv2xThrottleManagerStub::~Cv2xThrottleManagerStub() {
 
 telux::common::Status Cv2xThrottleManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    auto f
+        = std::async(std::launch::async,
+                     [callback]() {
+                         if (callback) {
+                             std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
+                             callback(telux::common::ServiceStatus::SERVICE_AVAILABLE);
+                         }
+                     }).share();
+    taskQ_.add(f);
     return telux::common::Status::SUCCESS;
 }
 
@@ -54,6 +60,12 @@ telux::common::Status Cv2xThrottleManagerStub::deregisterListener(
 telux::common::Status Cv2xThrottleManagerStub::setVerificationLoad(
     int load, setVerificationLoadCallback cb) {
     LOG(DEBUG, __FUNCTION__);
+    auto f
+        = std::async(std::launch::async,
+                     [cb]() { cb(telux::common::ErrorCode::SUCCESS); }).share();
+
+    taskQ_.add(f);
+
     return telux::common::Status::SUCCESS;
 }
 

@@ -17,17 +17,61 @@ using grpc::Status;
 namespace telux {
 namespace cv2x {
 
+static const std::string CV2X_CONFIG_FILTER = "cv2x_config";
+
+void ConfigChangedListener::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::cv2xStub::ConfigEventInfo>()) {
+        ::cv2xStub::ConfigEventInfo configEvt;
+        event.UnpackTo(&configEvt);
+
+        telux::cv2x::ConfigEventInfo config;
+        config.source = static_cast<telux::cv2x::ConfigSourceType>(configEvt.source());
+        config.event = static_cast<telux::cv2x::ConfigEvent>(configEvt.event());
+        onConfigChanged(config);
+    }
+}
+
+telux::common::Status ConfigChangedListener::registerListener(
+    std::weak_ptr<telux::cv2x::ICv2xConfigListener> listener) {
+    return listenerMgr_.registerListener(listener);
+}
+
+telux::common::Status ConfigChangedListener::deregisterListener(
+    std::weak_ptr<telux::cv2x::ICv2xConfigListener> listener) {
+    return listenerMgr_.deRegisterListener(listener);
+}
+
+void ConfigChangedListener::onConfigChanged(const ConfigEventInfo &info) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::weak_ptr<ICv2xConfigListener>> applisteners;
+
+    listenerMgr_.getAvailableListeners(applisteners);
+    for (auto &wp : applisteners) {
+        if (auto sp = wp.lock()) {
+            sp->onConfigChanged(info);
+        }
+    }
+}
+
 Cv2xConfigStub::Cv2xConfigStub() {
     LOG(DEBUG, __FUNCTION__);
     exiting_ = false;
     taskQ_   = std::make_shared<AsyncTaskQueue<void>>();
     stub_    = CommonUtils::getGrpcStub<::cv2xStub::Cv2xConfigService>();
+    configEvtListener_ = std::make_shared<ConfigChangedListener>();
 }
 
 Cv2xConfigStub::~Cv2xConfigStub() {
     LOG(DEBUG, __FUNCTION__);
     exiting_ = true;
     cv_.notify_all();
+
+    if (configEvtListener_) {
+       std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        clientEventManager.deregisterListener(configEvtListener_, filters);
+     }
 }
 
 telux::common::Status Cv2xConfigStub::init(telux::common::InitResponseCb callback) {
@@ -45,6 +89,12 @@ void Cv2xConfigStub::initSync(telux::common::InitResponseCb callback) {
     const ::google::protobuf::Empty request;
     ::cv2xStub::GetServiceStatusReply response;
     int delay = DEFAULT_DELAY;
+
+    if (configEvtListener_) {
+       std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        clientEventManager.registerListener(configEvtListener_, filters);
+     }
 
     CALL_RPC(stub_->initService, request, status, response, delay);
     {
@@ -111,43 +161,23 @@ telux::common::Status Cv2xConfigStub::retrieveConfiguration(
 telux::common::Status Cv2xConfigStub::registerListener(
     std::weak_ptr<ICv2xConfigListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    std::lock_guard<std::mutex> listenerLock(mutex_);
-    auto spt = listener.lock();
-    if (spt != nullptr) {
-        bool existing = 0;
-        for (auto iter = listeners_.begin(); iter < listeners_.end(); ++iter) {
-            if (spt == (*iter).lock()) {
-                existing = 1;
-                LOG(DEBUG, __FUNCTION__, " Register Listener : Existing");
-                break;
-            }
-        }
-        if (existing == 0) {
-            listeners_.emplace_back(listener);
-            LOG(DEBUG, __FUNCTION__, " Register Listener : Adding");
-        }
+    auto status = telux::common::Status::FAILED;
+    if (configEvtListener_) {
+        status = configEvtListener_->registerListener(listener);
     }
 
-    return telux::common::Status::SUCCESS;
+    return status;
 }
 
 telux::common::Status Cv2xConfigStub::deregisterListener(
     std::weak_ptr<ICv2xConfigListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    telux::common::Status retVal = telux::common::Status::FAILED;
-    std::lock_guard<std::mutex> listenerLock(mutex_);
-    auto spt = listener.lock();
-    if (spt != nullptr) {
-        for (auto iter = listeners_.begin(); iter < listeners_.end(); ++iter) {
-            if (spt == (*iter).lock()) {
-                iter = listeners_.erase(iter);
-                LOG(DEBUG, __FUNCTION__, " In deRegister Listener : Removing");
-                retVal = telux::common::Status::SUCCESS;
-                break;
-            }
-        }
+    auto status = telux::common::Status::FAILED;
+    if (configEvtListener_) {
+        status = configEvtListener_->deregisterListener(listener);
     }
-    return (retVal);
+
+    return status;
 }
 
 telux::common::ServiceStatus Cv2xConfigStub::getServiceStatus() {

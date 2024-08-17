@@ -112,7 +112,7 @@ private:
         std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress);
 
     void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
-        unsigned int client_id);
+        unsigned int client_id, std::string ifaceName = "");
     void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
         std::string ifaceName);
 

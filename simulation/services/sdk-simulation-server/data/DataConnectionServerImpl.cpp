@@ -380,13 +380,15 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
 }
 
 void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slotId,
-    std::string ipFamilyType, unsigned int client_id) {
+    std::string ipFamilyType, unsigned int client_id, std::string ifaceName) {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lck(mtx_);
     bool dataCallExist = true;
 
-    //Reading ifaces from .conf file
-    getInactiveInterfaces();
+    if (ifaceName.empty()) {
+        //Reading ifaces from .conf file
+        getInactiveInterfaces();
+    }
 
     std::shared_ptr<DataCallParams> call;
     if ((slotId == SLOT_ID_1) &&
@@ -402,9 +404,16 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         //creating cached datacall object if it doesn't already exist
         call = std::make_shared<DataCallParams>();
         {
-            if (inactiveNwIfaces_.size() != 0) {
-                auto itr = inactiveNwIfaces_.begin();
-                call->ifaceName = *itr;
+            //if user provides interface name during start data call, we start
+            //data call with user provided iface name else we take iface name
+            //from .conf file.
+            if (ifaceName.empty()) {
+                if (inactiveNwIfaces_.size() != 0) {
+                    auto itr = inactiveNwIfaces_.begin();
+                    call->ifaceName = *itr;
+                }
+            } else {
+                call->ifaceName = ifaceName;
             }
         }
         call->slotId = slotId;
@@ -459,8 +468,11 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     //keeping local copy of data call params in server
     if ((!dataCallExist) && (ipv4Supported || ipv6Supported)) {
         LOG(DEBUG, __FUNCTION__, " caching data call params in server for ", call->ifaceName);
-        inactiveNwIfaces_.erase(
-            std::find(inactiveNwIfaces_.begin(), inactiveNwIfaces_.end(), call->ifaceName));
+        auto it = std::find(inactiveNwIfaces_.begin(), inactiveNwIfaces_.end(), call->ifaceName);
+        if (it != inactiveNwIfaces_.end()) {
+            inactiveNwIfaces_.erase(it);
+        }
+
         activeNwIfaces_.push_back(call->ifaceName);
 
         if (slotId == SLOT_ID_1) {
@@ -516,8 +528,14 @@ grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
     }
 
     int slotId = request->slot_id();
+    std::string ifaceName = request->iface_name();
     if (!isWwanConnectivityAllowed(slotId)) {
         data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if (std::find(activeNwIfaces_.begin(), activeNwIfaces_.end(), ifaceName)
+        != activeNwIfaces_.end()) {
+        data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
     if (data.status == telux::common::Status::SUCCESS &&
@@ -556,9 +574,10 @@ grpc::Status DataConnectionServerImpl::StartDatacall(ServerContext* context,
         //trigger the start datacall event with new IPFamilyType.
         if ((!dataCall) || (ipFamilyMismatch)) {
             auto f = std::async(std::launch::deferred,
-                    [this, profileId, slotId, ipFamilyType, data, client_id]() {
+                    [this, profileId, slotId, ipFamilyType, data, client_id, ifaceName]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(data.cbDelay));
-                    this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType, client_id);
+                    this->triggerStartDataCallEvent(profileId, slotId, ipFamilyType,
+                        client_id, ifaceName);
                 }).share();
             taskQ_->add(f);
         }

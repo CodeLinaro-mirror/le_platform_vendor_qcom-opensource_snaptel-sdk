@@ -281,6 +281,7 @@ void TransCodeMenu::write() {
     }
 
     writeStatus_ = true;
+    pipeLineEmpty_ = true;
     auto writeCb = std::bind(&TransCodeMenu::writeCallback, this, std::placeholders::_1,
                     std::placeholders::_2, std::placeholders::_3);
 

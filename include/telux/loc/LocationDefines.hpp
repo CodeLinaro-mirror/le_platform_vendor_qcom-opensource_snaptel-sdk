@@ -2377,12 +2377,16 @@ public:
 
  /** Distance between the basestation and the receiver.
   *  Units: meter.
+  *
+  *  This field is supported only on MDM. On unsupported platforms INT_MAX is returned.
  */
   virtual double getBaselineLength() = 0;
 
  /** Difference in time between the fix timestamp using the correction
   * and the time of the correction data.
   * Units: milliseconds.
+  *
+  * This field is supported only on MDM. On unsupported platforms INT_MAX is returned.
  */
   virtual uint64_t getAgeOfCorrections() = 0;
 

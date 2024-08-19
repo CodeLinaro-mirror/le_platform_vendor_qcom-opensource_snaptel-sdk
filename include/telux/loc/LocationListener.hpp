@@ -155,8 +155,7 @@ public:
  * in the reportMask passed as a paramter to @ref ILocationManager::startDetailedReports or
  * @ref ILocationManager::startDetailedEngineReports.
  *
- * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
- * for this listener API to be invoked.
+ * This callback is supported only on MDM.
  *
  * @param [in] ephemerisInfo - GNSS ephemeris information for a constellation.
  *
@@ -169,6 +168,8 @@ public:
  * This data is generated only via the GNSS SPE engine. To receive these updates,
  * clients need to set the @ref telux::loc::GnssReportType::EXTENDED_DATA
  * bit in the reportMask passed as a parameter to @ref ILocationManager::startDetailedEngineReports.
+ *
+ * This callback is supported only on MDM.
  *
  * @param [in] payload - A blob of the GNSS extended data.
  *

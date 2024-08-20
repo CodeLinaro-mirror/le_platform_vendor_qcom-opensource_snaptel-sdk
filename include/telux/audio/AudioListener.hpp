@@ -153,10 +153,16 @@ class ITranscodeListener : public telux::common::ISDKListener {
  *
  * When audio service becomes unavailable, if the client was waiting on any outstanding
  * response callbacks for APIs that were called just before the SSR, those response
- * callbacks will not be called anymore.
+ * callbacks will not be called anymore. For example, if stream->setVolume(callback) is
+ * called and SSR occurs then the 'callback' will be never invoked.
  *
- * For example, if stream->setVolume(callback) is called and SSR occurs then the 'callback'
- * will be never invoked.
+ * All the stream objects (IAudioVoiceStream/IAudioPlayStream/IAudioCaptureStream/
+ * IAudioLoopbackStream/IAudioToneGeneratorStream) becomes invalid and should not be
+ * used after SSR. When SSR occurs, the implementation cleans up all resources associated
+ * with streams that were created before SSR. Application should create new audio stream.
+ *
+ * The AudioFactory and IAudioManager objects remains valid even after SSR and can be used
+ * like they were used before SSR.
  */
 class IAudioListener : public telux::common::IServiceStatusListener {
  public:

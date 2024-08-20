@@ -626,10 +626,6 @@ shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
 }
 
 shared_ptr<ICv2xRadio> RadioInterface::getCv2xRadio() {
-    if (nullptr == cv2xRadio_ or not cv2xRadio_->isReady()) {
-        cout << "cv2x radio is not ready." << endl;
-        return nullptr;
-    }
     return cv2xRadio_;
 }
 

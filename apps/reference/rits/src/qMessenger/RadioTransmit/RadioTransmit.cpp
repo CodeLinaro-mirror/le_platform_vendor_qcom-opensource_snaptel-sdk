@@ -99,7 +99,8 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
                             };
     if(Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
                 port, false, 0, respCallback)){
-        if(ErrorCode::SUCCESS == cb->getResponse()){
+        auto err = cb->getResponse();
+        if(ErrorCode::SUCCESS == err){
             cout<<"Sps flow created succesfully sid=" << serviceId << endl;
 
             spsFlowInfo = std::make_shared<SpsFlowInfo>();
@@ -110,13 +111,11 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
             }
         }
         else{
-            cout<<"Sps Flow creation fails, future.get\n";
-            //return static_cast<uint8_t>(Status::FAILED);
+            cout<<"Sps Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
         }
     }
     else {
         cout << "Sps Flow creation fails\n";
-        //return static_cast<uint8_t>(Status::FAILED);
     }
 }
 
@@ -146,10 +145,11 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
     EventFlowInfo testEventInfo;
     if(Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, testEventInfo,
                 port, respCallback)){
-        if(ErrorCode::SUCCESS == cb->getResponse()) {
+        auto err = cb->getResponse();
+        if(ErrorCode::SUCCESS == err) {
             cout<<"Event Flow created succesfully\n";
         } else {
-            cout<<"Event Flow creation fails, future.get\n";
+            cout<<"Event Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
         }
     } else {
         cout<<"Event Flow creation fails\n";

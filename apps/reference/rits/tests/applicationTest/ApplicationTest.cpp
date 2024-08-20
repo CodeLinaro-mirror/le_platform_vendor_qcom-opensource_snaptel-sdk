@@ -309,7 +309,6 @@ int reSetupRadio(MessageType msgType) {
         return -1;
     }
 
-    application->clearRadioInstance();
     for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
         if (0 == application->setup(msgType, true)) {
             return 0;

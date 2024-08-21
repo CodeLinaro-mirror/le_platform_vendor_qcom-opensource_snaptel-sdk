@@ -989,7 +989,7 @@ unsigned int id_shift(unsigned int a)
 }
 // Take a line in CSV file and encode its contents into buf and return its length.
 // len parameter just shows the size of buf created by caller.
-int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
+int encode_singleline_fromCSV(char *line, msg_contents *mc, bool bsmLog)
 {
     int i = 0, m = 0;
     wsmp_data_t *wsmpp = (wsmp_data_t*)(mc->wsmp);
@@ -1027,7 +1027,7 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     bsm->suppvehopts = 0;
     bsm_init(bsm);
 
-    if (minLog) {
+    if (!bsmLog) {
         bsm->timestamp_ms = strtoull(tokens[1], NULL, 0);
         bsm->MsgCount = strtoul(tokens[8], NULL, 0);
         bsm->id = id_shift(strtoul(tokens[9], NULL, 0));

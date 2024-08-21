@@ -352,6 +352,10 @@ void receive(MessageType msgType, int index) {
     // will need to make this compatible for multiple rx ports
     int ret;
     gettimeofday(&application->startRxIntervalTime, NULL);
+    // setup thread for post process async verification statistics
+    if (application->configuration.enableAsync) {
+        dynamic_pointer_cast<SaeApplication>(application)->PostProcessingThread();
+    }
     while (!stopThread) {
         if(!simMode) {
             //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
@@ -836,18 +840,18 @@ void transmit(MessageType msgType) {
  */
 void txRecorded(string file) {
     srand(timestamp_now());
-    ifstream configFile(file);
+    ifstream recordFile(file);
     string line;
     bool go = true;
-    bool minLog = false;
+    bool bsmLog = false;
 
 
-    if (configFile.is_open())
+    if (recordFile.is_open())
     {
-        if (getline(configFile, line)) {
-            // check if it is minLog format
-            if (line == MIN_LOG_HEADER || application->configuration.preRecordedMinLog) {
-                minLog = true;
+        if (getline(recordFile, line)) {
+            // check if it is bsm format
+            if (line != LOG_HEADER || application->configuration.preRecordedBsmLog) {
+                bsmLog = true;
             }
         } else {
             cout << "txRecorded - fail to read " << file << endl;
@@ -863,22 +867,30 @@ void txRecorded(string file) {
         uint64_t exp = 0;
 
         while (go and !stopThread) {
-            if (getline(configFile, line))
+            if (getline(recordFile, line))
             {
                 if (application->configuration.eventPorts.size()) {
                     const auto iEvent = rand() % application->configuration.eventPorts.size();
                     auto mc = application->eventContents[iEvent];
-                    auto len = encode_singleline_fromCSV((char *)line.data(), mc.get(), minLog);
+                    auto len = encode_singleline_fromCSV((char *)line.data(), mc.get(), bsmLog);
+                    if (application->configuration.enableSecurity) {
+                        len = application->encodeAndSignMsg(
+                            mc, SecurityService::SignType::ST_CERTIFICATE);
+                    }
                     // event priority is set per packet using traffic class
                     application->eventTransmits[iEvent].transmit(
                         mc->abuf.data, len,
                         application->configuration.eventPriority);
                 }
                 if (application->configuration.spsPorts.size()) {
-                    if (getline(configFile, line)) {
+                    if (getline(recordFile, line)) {
                         const auto iSps = rand() % application->configuration.spsPorts.size();
                         auto mc = application->spsContents[iSps];
-                        auto len = encode_singleline_fromCSV((char*)line.data(),mc.get(), minLog);
+                        auto len = encode_singleline_fromCSV((char*)line.data(),mc.get(), bsmLog);
+                        if (application->configuration.enableSecurity) {
+                            len = application->encodeAndSignMsg(
+                                mc, SecurityService::SignType::ST_AUTO);
+                        }
                         // SPS priority is set when creating the flow
                         application->spsTransmits[iSps].transmit(
                             mc->abuf.data, len,
@@ -911,18 +923,18 @@ void txRecorded(string file) {
  */
 void simTxRecorded(string file)
 {
-    ifstream configFile(file);
+    ifstream recordFile(file);
     string line;
-    if (configFile.is_open())
+    if (recordFile.is_open())
     {
         auto timer = timestamp_now();
         while (!stopThread)
         {
             if (timer + application->configuration.transmitRate < timestamp_now()) {
-                if (getline(configFile, line))
+                if (getline(recordFile, line))
                 {
                     auto mc = application->txSimMsg;
-                    auto len = encode_singleline_fromCSV((char*)line.data(), mc.get(), false);
+                    auto len = encode_singleline_fromCSV((char*)line.data(), mc.get(), true);
                     abuf_put(&mc->abuf, len);
                     application->simTransmit->transmit(mc->abuf.data, len,
                                                        Priority::PRIORITY_UNKNOWN);
@@ -1336,7 +1348,6 @@ int setup(const bool tx, const bool rx,
     if (csv) {
         application->openLogFile(csvFileName);
         // TODO add option for only bsm related log
-        // application->openBsmMinLogFile(csvFileName);
     }
 
     // for sae message configuration. initialize security-related features for qits
@@ -1420,7 +1431,7 @@ int setup(const bool tx, const bool rx,
         return -1;
     }
 
-    if (txSim || (application->configuration.enableTxAlways && !tx && !rx))
+    if (txSim)
     {
         if(application->configuration.driverVerbosity)
             cout << "Starting sim transmit thread\n";

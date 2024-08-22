@@ -358,6 +358,7 @@ The details on how simulation of individual areas can be used and controlled are
 3. :ref:`sim-reference-audio`
 4. :ref:`sim-reference-data`
 5. :ref:`sim-reference-thermal`
+6. :ref:`sim-reference-power`
 
 .. _sim-reference-telephony:
 
@@ -1658,3 +1659,85 @@ Sample input:
 
 - Above, 24 indicates the tzone Id and 126000 indicates the new temperature to be set for a thermal zone.
 - Based on the new temperature, the thermal subsystem will calculate the events for trip and cooling device level.
+
+.. _sim-reference-power:
+
+Power simulation
+~~~~~~~~~~~~~~~~~~~
+
+Overview of Power Simulation
+"""""""""""""""""""""""""""""""
+
+The power simulation framework provides the ability to support for the power management simulation.
+
+.. _fig-power-sim-overview:
+.. figure:: ../../images/simulation_power_overview.png
+  :width: 500
+
+  Power Simulation Framework
+
+Power simulation Abilities
+""""""""""""""""""""""""""""""
+
+1. Provides ability to exercise and control  behavior of the TelSDK APIs for power management.
+2. Currently, only PVM machine is supported.
+3. A client can register as a master or slave. A slave client can register for LOCAL or ALL MACHINES.
+4. Support for suspend and resume events.
+
+Power simulation state change notifications
+"""""""""""""""""""""""""""""""""""""""""""
+
+1. Suspend/Shutdown Triggers
+
++---------------------------------------+-------------------------+-----------------------+
+|            Triggered For              | Slaves on Local Machine | Slaves on All Machine |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on ALL MACHINES    |    RECEIVES SUSPEND     |   RECEIVES SUSPEND    |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on LOCAL MACHINES  |    RECEIVES SUSPEND     |       NO SUSPEND      |
++---------------------------------------+-------------------------+-----------------------+
+
+
+2. Resume Triggers
+
++---------------------------------------+-------------------------+-----------------------+
+|           Triggered For               | Slaves on Local Machine | Slaves on All Machine |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on ALL MACHINES    |    RECEIVES RESUME      |    RECEIVES RESUME    |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on LOCAL MACHINES  |    RECEIVES RESUME      |       NO RESUME       |
++---------------------------------------+-------------------------+-----------------------+
+
+
+If both Machines are in the same state and incoming state request is the same as the machine state, INCOMPATIBLE_STATE is returned.
+However, if LOCAL is in suspend and ALL is in resume, and if incoming state is RESUME on ALL machines, LOCAL machine is resumed.
+There'll be no situation of ALL machines in suspend and LOCAL in resume since this deviates from target behavior.
+
+3. NACK/NOACK behavior
+
+If slave doesn't send ack or sends NACK to acknowledge suspend/resume event notification reception, status sent to MASTER will be NOTREADY.
+Within 10 seconds if master sends a RESUME, SUSPEND/SHUTDOWN is halted else system moves to the suspended/shut down state.
+
+Power simulation support for events
+"""""""""""""""""""""""""""""""""""
+
+The framework supports injection of the machine availability event to notify client via @ref ITcuActivityListener::onMachineUpdate, if the LOCAL machine is available or not.
+
+Sample input:
+
+.. code-block::
+
+ telsdk_event_injector -f power_mgr -e machine_availability <availability>
+ telsdk_event_injector -f power_mgr -e machine_availability AVAILABLE
+
+Valid values for <availability> - UNAVAILABLE/AVAILABLE
+
+
+Additional Notes
+"""""""""""""""""
+
+1. The power manager service, master app and slave apps all run on the same container.
+2. This Framework simulates PVM ONLY behavior. Hence, API behavior is as per PVM ONLY registered clients.
+3. The simulation device on which the framework runs is hardcoded as PVM in the power simulation library. All slaves registering with PVM are treated as a LOCAL machine in the simulation framework.
+4. As of today, suspend and resume are only state change triggers across the processes using the power simulation framework. The host system on which simulation is running is not really suspended when a master client issues suspend.
+5. Modem activity state is a canned response via  JSON configuration file.

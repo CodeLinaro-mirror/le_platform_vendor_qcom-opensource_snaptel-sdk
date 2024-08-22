@@ -694,6 +694,7 @@ bool ApplicationBase::init() {
             }catch(const std::runtime_error& error){
                 fprintf(stderr, "Aerolink init failed: Please check config params \n");
                 fprintf(stderr, "Attempting to close all radio flows\n");
+                prepareForExit();
                 closeAllRadio();
                 exit(0);
             }
@@ -2160,6 +2161,11 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
 
+    // close all flows before re-setup
+    if (true == reSetup) {
+        closeAllRadio();
+    }
+
     if (MessageType::WSA == msgType) {
         spsInfo.periodicityMs = this->configuration.wsaInterval;
     } else {
@@ -2575,36 +2581,29 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
     return -1;
 }
 
-void ApplicationBase::clearRadioInstance() {
-    if(appVerbosity) {
-        cout << "clearRadioInstance" << endl;
-    }
-    eventTransmits.clear();
-    spsTransmits.clear();
-    radioReceives.clear();
-}
-
 void ApplicationBase::closeAllRadio() {
     if(appVerbosity){
         std::cout << "Attempting to close all flows\n";
     }
-    exitApp = true;
+
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
+    eventTransmits.clear();
+
     for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
         this->spsTransmits[i].closeFlow();
     }
+    spsTransmits.clear();
+
     for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
         this->radioReceives[i].closeFlow();
     }
+    radioReceives.clear();
 
-    clearRadioInstance();
-
-    if (this->kinematicsReceive != nullptr) {
-        this->kinematicsReceive->close();
+    if(appVerbosity){
+        std::cout << "Finished closing all flows\n";
     }
-    std::cout << "Finished closing all flows\n";
 }
 
 /**

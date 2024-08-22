@@ -554,11 +554,6 @@ public:
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
 
     /**
-    * Clear radio instance in application.
-    */
-    void clearRadioInstance();
-
-    /**
     * Closes all tx and rx flows from Snaptel SDK.
     */
     void closeAllRadio();

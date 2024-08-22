@@ -1547,6 +1547,31 @@ Call flow to remove and disable software bridge
 12. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
 13. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
 
+Call flow to enable ip passthrough in peer nad
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_enable_ip_pass_through_call_flow.png
+
+1. Client of NAD-1 and NAD-2 requests the vlan manager and data settings manager object.
+   Additionally, NAD-2 also requests the data connection manager object.
+2. The client of NAD-1 registers as listener to get notifications for data call change.
+3. When the subsystem is ready, the client of NAD-1 requests NAD-2's client to establish a VLAN for
+   a LAN network type which is acting as a gateway.
+4. The client of NAD-1 requests to start data call in NAD-2 and may optionally recieve an
+   asynchronous response using a callback. When the data call is connected, TelSDK(NAD-2) notifies
+   its client(NAD-2).
+5. The NAD-1 client requests the NAD-2 client to bind the data call profile id with the vlan id.
+6. A request to enable IP passthrough is being sent from the NAD-1 client to NAD-2. At this point,
+   the client has successfully started a data call and enabled a IP passthrough configuration in
+   NAD-2.
+7. NAD-1 creates vlan for a LAN netowrk type that is connected to the main unit.
+8. NAD-1 creates another vlan for a WAN netowrk type that is connected to the ETH backhaul.
+9. NAD-1 client calls IVlanManager::bindToBackhaul API to bind both LAN and WAN type of vlans and
+   the data call in NAD-2 is routed through the NAD-2 vlan(which is act as gateway), NAD-1 WAN vlan
+   (which is connected to the ETH backhaul) and NAD-1 LAN vlan(which is connected to the main unit).
+10. The client of NAD-1 enables the IP address configuration to its WAN vlan that is connected to
+    the ETH backhaul that allows main unit to access data call running in NAD-2.
+
 C-V2X
 -----
 

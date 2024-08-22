@@ -24,6 +24,7 @@ Data
    get_service_status_and_indication
    get_roaming_status_and_indication
    on_demand_pdn_connectivity
+   enable_ip_passthrough
 
 
 ..

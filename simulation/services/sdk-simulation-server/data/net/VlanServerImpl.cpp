@@ -85,6 +85,9 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
             newConfig["vlanId"] = request->vlan_id();
             newConfig["isAccelerated"] = request->is_accelerated();
             newConfig["priority"] = request->priority();
+            newConfig["createBridge"] = request->create_bridge();
+            newConfig["networkType"] =
+                (DataUtilsStub::convertNetworkTypeToString(request->nw_type()));
             data.stateRootObj[subsystem]["vlanConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
@@ -190,6 +193,9 @@ grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext* context,
             config->set_vlan_id(requestedConfig["vlanId"].asInt());
             config->set_is_accelerated(requestedConfig["isAccelerated"].asBool());
             config->set_priority(requestedConfig["priority"].asInt());
+            config->set_create_bridge(requestedConfig["createBridge"].asBool());
+            config->mutable_nw_type()->set_nw_type(DataUtilsStub::convertNetworkTypeToGrpc(
+                        requestedConfig["networkType"].asString()));
         }
     }
 

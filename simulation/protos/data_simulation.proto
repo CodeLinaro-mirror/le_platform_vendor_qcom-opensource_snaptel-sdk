@@ -183,6 +183,10 @@ service DataFilterManager {
     rpc setBandInterferenceConfig(BandInterferenceConfig) returns (DefaultReply) {}
     rpc requestBandInterferenceConfig(BandInterferenceRequest) returns (BandInterferenceReply) {}
     rpc switchBackHaul(switchBackHaulRequest) returns (DefaultReply) {}
+    rpc getIpPassThroughConfig(getIpptConfigRequest) returns (getIpptConfigReply) {}
+    rpc setIpPassThroughConfig(setIpptConfigRequest) returns (setIpptConfigReply) {}
+    rpc getIpConfig(getIpConfigRequest) returns (getIpConfigReply) {}
+    rpc setIpConfig(setIpConfigRequest) returns (setIpConfigReply) {}
     rpc RegisterOnWwanConnectivityConfigChange(google.protobuf.Empty) returns
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
@@ -353,6 +357,44 @@ enum L2tpProtocol {
     UDP = 0x02;
 }
 
+message Network {
+    enum NetworkType {
+        DUMMY = 0;
+        UNKNOWN = -1;
+        LAN = 1;
+        WAN = 2;
+    }
+    NetworkType nw_type = 1;
+}
+
+message IpptOperation {
+    enum Operation {
+        DISABLE = 0;
+        UNKNOWN = -1;
+        ENABLE  = 1;
+    }
+    Operation ippt_opr = 1;
+}
+
+message IpType {
+   enum IpAssignType {
+        STATIC_IP  = 0;
+        UNKNOWN    = -1;
+        DYNAMIC_IP = 1;
+   }
+   IpAssignType ip_type = 1;
+}
+
+message IpAssign {
+   enum IpAssignOperation {
+        DISABLE     = 0;
+        UNKNOWN     = -1;
+        ENABLE      = 1;
+        RECONFIGURE = 2;
+   }
+   IpAssignOperation ip_assign = 1;
+}
+
 message SlotInfo {
    int32 slot_id = 1;
 }
@@ -393,6 +435,58 @@ message IpAddrInfo {
     string gw_mask = 4;
     string primary_dns_address = 5;
     string secondary_dns_address = 6;
+}
+
+message getIpptConfigRequest {
+    int32 profile_id = 1;
+    int32 vlan_id = 2;
+    int32 slot_id = 3;
+}
+
+message getIpptConfigReply {
+    InterfaceType interface_type = 1;
+    string mac_address = 2;
+    IpptOperation ippt_opr = 3;
+    commonStub.ErrorCode error = 4;
+}
+
+message setIpptConfigRequest {
+    int32 profile_id = 1;
+    int32 vlan_id = 2;
+    int32 slot_id = 3;
+    InterfaceType interface_type = 4;
+    string mac_address = 5;
+    IpptOperation ippt_opr = 6;
+}
+
+message setIpptConfigReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message getIpConfigRequest {
+    InterfaceType interface_type = 1;
+    IpFamilyType ip_family_type  = 2;
+    int32 vlan_id = 3;
+}
+
+message getIpConfigReply {
+    IpType ip_type = 1;
+    IpAssign ip_assign = 2;
+    IpAddrInfo ip_addr_info = 3;
+    commonStub.ErrorCode error = 4;
+}
+
+message setIpConfigRequest {
+    InterfaceType interface_type = 1;
+    IpFamilyType ip_family_type  = 2;
+    int32 vlan_id = 3;
+    IpType ip_type = 4;
+    IpAssign ip_assign = 5;
+    IpAddrInfo ip_addr_info = 6;
+}
+
+message setIpConfigReply {
+    commonStub.ErrorCode error = 1;
 }
 message DataCallStatisticsRequest{
     int32 slot_id = 1;
@@ -625,6 +719,8 @@ message CreateVlanRequest {
     int32 vlan_id = 3;
     bool is_accelerated = 4;
     int32 priority = 5;
+    bool create_bridge = 6;
+    Network nw_type = 7;
 }
 
 message CreateVlanReply {
@@ -647,6 +743,8 @@ message VlanConfig {
     int32 vlan_id = 2;
     bool is_accelerated = 3;
     int32 priority = 4;
+    bool create_bridge = 5;
+    Network nw_type = 6;
 }
 
 message QueryVlanInfoReply {
@@ -893,8 +991,10 @@ message NatConfig {
 message StaticNatEntryRequest {
     int32 profile_id = 1;
     int32 slot_id = 2;
-    OperationType operation_type = 3;
-    NatConfig nat_config = 4;
+    int32 vlan_id = 3;
+    OperationType operation_type = 4;
+    BackhaulPreference backhaul_type = 5;
+    NatConfig nat_config = 6;
 }
 
 message StaticNatRequest {
@@ -904,7 +1004,9 @@ message StaticNatRequest {
 message RequestStaticNatEntriesRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    OperationType operation_type = 3;
+    int32 vlan_id = 3;
+    OperationType operation_type = 4;
+    BackhaulPreference backhaul_type = 5;
 }
 
 message RequestStaticNatEntriesReply {
@@ -1028,21 +1130,24 @@ message RemoveFirewallEntryRequest {
 message EnableDMZRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    BackhaulPreference backhaul_type = 3;
-    string ip_address = 4;
+    int32 vlan_id = 3;
+    BackhaulPreference backhaul_type = 4;
+    string ip_address = 5;
 }
 
 message DisableDmzRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    BackhaulPreference backhaul_type = 3;
-    IpFamilyType ip_family_type = 4;
+    int32 vlan_id = 3;
+    BackhaulPreference backhaul_type = 4;
+    IpFamilyType ip_family_type = 5;
 }
 
 message DMZEntryRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
-    BackhaulPreference backhaul_type = 3;
+    int32 vlan_id = 3;
+    BackhaulPreference backhaul_type = 4;
 }
 
 message RequestDMZEntryReply {

@@ -9,6 +9,7 @@
 #include "VlanManagerStub.hpp"
 #include "common/Logger.hpp"
 #include "common/CommonUtils.hpp"
+#include "libs/data/DataUtilsStub.hpp"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -199,6 +200,9 @@ telux::common::Status VlanManagerStub::createVlan(
     request.set_is_accelerated(vlanConfig.isAccelerated);
     request.set_priority(vlanConfig.priority);
     request.set_interface_type(::dataStub::InterfaceType(vlanConfig.iface));
+    request.set_create_bridge(vlanConfig.createBridge);
+    request.mutable_nw_type()->set_nw_type(DataUtilsStub::convertNetworkTypeToGrpc(
+                vlanConfig.nwType));
     grpc::Status reqStatus = stub_->CreateVlan(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;

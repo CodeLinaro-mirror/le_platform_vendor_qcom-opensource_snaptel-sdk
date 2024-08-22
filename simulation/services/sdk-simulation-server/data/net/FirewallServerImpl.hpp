@@ -74,7 +74,7 @@ private:
         int idx = 0;
         for (idx=0; idx < count; idx++) {
             if (config[idx]["backhaul"].asString() !=
-                DataUtilsStub::convertEnumToBackhaulPrefString(request->backhaul_type())) {
+                    DataUtilsStub::convertEnumToBackhaulPrefString(request->backhaul_type())) {
                 continue;
             }
             if (config[idx]["slotId"].asInt() != request->slot_id()) {
@@ -82,6 +82,39 @@ private:
             }
             if (config[idx]["profileId"].asInt() != request->profile_id()) {
                 continue;
+            }
+            isFound = true;
+            break;
+        }
+        if (isFound) {
+            configIdx = idx;
+        }
+        return isFound;
+    }
+
+    template <typename T>
+    bool isConfigAvailableForBackhaul(std::string subsystem, std::string method,
+            const JsonData& data, const T* request, int& configIdx = 0) {
+        const Json::Value& config = data.stateRootObj[subsystem][method];
+        int count = config.size();
+        bool isFound = false;
+        int idx = 0;
+        for (idx=0; idx < count; idx++) {
+            if (config[idx]["backhaul"].asString() !=
+                    DataUtilsStub::convertEnumToBackhaulPrefString(request->backhaul_type())) {
+                continue;
+            }
+            if (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WWAN) {
+                if (config[idx]["slotId"].asInt() != request->slot_id()) {
+                    continue;
+                }
+                if (config[idx]["profileId"].asInt() != request->profile_id()) {
+                    continue;
+                }
+            } else if (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_ETH) {
+                if (config[idx]["vlanId"].asInt() != request->vlan_id()) {
+                    continue;
+                }
             }
             isFound = true;
             break;

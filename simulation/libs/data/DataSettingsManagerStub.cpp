@@ -6,7 +6,9 @@
 #include "DataSettingsManagerStub.hpp"
 #include "common/Logger.hpp"
 #include "common/CommonUtils.hpp"
+#include "DataUtilsStub.hpp"
 #include <thread>
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -548,6 +550,140 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     }
 
     return status;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughConfig(const IpptParams
+        &ipptParms, IpptConfig &config) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::getIpptConfigRequest request;
+    ::dataStub::getIpptConfigReply response;
+    ClientContext context;
+    request.set_profile_id(ipptParms.profileId);
+    request.set_vlan_id(ipptParms.vlanId);
+    request.set_slot_id(ipptParms.slotId);
+
+    grpc::Status reqStatus = stub_->getIpPassThroughConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " getIpPassThrough request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        config.ipptOpr = DataUtilsStub::convertIpptOprToStruct(response.ippt_opr());
+        config.devConfig.nwInterface =
+            DataUtilsStub::convertInterfaceTypeToStruct(response.interface_type());
+        config.devConfig.macAddr = response.mac_address();
+    }
+
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(const IpptParams
+        &ipptParms, const IpptConfig &config) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::setIpptConfigRequest request;
+    ::dataStub::setIpptConfigReply response;
+    ClientContext context;
+    request.set_profile_id(ipptParms.profileId);
+    request.set_vlan_id(ipptParms.vlanId);
+    request.set_slot_id(ipptParms.slotId);
+    request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(
+                config.devConfig.nwInterface));
+    request.mutable_ippt_opr()->set_ippt_opr(DataUtilsStub::convertIpptOprToGrpc(config.ipptOpr));
+    request.set_mac_address(config.devConfig.macAddr);
+
+    grpc::Status reqStatus = stub_->setIpPassThroughConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setIpPassThrough request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+    }
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(const IpConfigParams &ipConfigParams,
+        IpConfig &ipConfig) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::getIpConfigRequest request;
+    ::dataStub::getIpConfigReply response;
+    ClientContext context;
+    request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(ipConfigParams.ifType));
+    request.mutable_ip_family_type()->set_ip_family_type(
+            DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
+    request.set_vlan_id(ipConfigParams.vlanId);
+
+    grpc::Status reqStatus = stub_->getIpConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " getIpConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+        ipConfig.ipType = DataUtilsStub::convertIpTypeToStruct(response.ip_type());
+        ipConfig.ipOpr  = DataUtilsStub::convertIpAssignToStruct(response.ip_assign());
+        DataUtilsStub::convertIpAddrInfoToStruct(response.ip_addr_info(), ipConfig.ipAddr);
+    }
+
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(const IpConfigParams &ipConfigParams,
+        const IpConfig &ipConfig) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::setIpConfigRequest request;
+    ::dataStub::setIpConfigReply response;
+    ClientContext context;
+    request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(ipConfigParams.ifType));
+    request.set_vlan_id(ipConfigParams.vlanId);
+    request.mutable_ip_type()->set_ip_type(
+            DataUtilsStub::convertIpTypeToGrpc(ipConfig.ipType));
+    request.mutable_ip_assign()->set_ip_assign(
+            DataUtilsStub::convertIpAssignToGrpc(ipConfig.ipOpr));
+    request.mutable_ip_family_type()->set_ip_family_type(
+            DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
+    if ((ipConfig.ipType == telux::data::IpAssignType::STATIC_IP) && (ipConfig.ipOpr
+                == telux::data::IpAssignOperation::DISABLE)) {
+        request.mutable_ip_family_type()->set_ip_family_type(::dataStub::IpFamilyType_Type_IPV4);
+    }
+    auto *ipAddrInfo = request.mutable_ip_addr_info();
+    DataUtilsStub::convertIpAddrInfoToGrpc(ipConfig.ipAddr, ipAddrInfo);
+
+    grpc::Status reqStatus = stub_->setIpConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setIpConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+    }
+    return error;
 }
 
 bool DataSettingsManagerStub::isDeviceDataUsageMonitoringEnabled() {

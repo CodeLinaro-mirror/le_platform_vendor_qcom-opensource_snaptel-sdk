@@ -40,12 +40,21 @@ public:
         telux::common::ResponseCallback callback = nullptr,
         SlotId slotId = DEFAULT_SLOT_ID) override;
 
+    telux::common::Status addStaticNatEntry(const BackhaulInfo &bhInfo, const NatConfig &snatConfig,
+            telux::common::ResponseCallback callback = nullptr) override;
+
     telux::common::Status removeStaticNatEntry(int profileId, const NatConfig &snatConfig,
         telux::common::ResponseCallback callback = nullptr,
         SlotId slotId = DEFAULT_SLOT_ID) override;
 
+    telux::common::Status removeStaticNatEntry(const BackhaulInfo &bhInfo, const NatConfig
+            &snatConfig, telux::common::ResponseCallback callback = nullptr) override;
+
     telux::common::Status requestStaticNatEntries(int profileId,
         StaticNatEntriesCb snatEntriesCb, SlotId slotId = DEFAULT_SLOT_ID) override;
+
+    telux::common::Status requestStaticNatEntries(const BackhaulInfo &bhInfo, StaticNatEntriesCb
+            snatEntriesCb) override;
 
 private:
     std::mutex mtx_;

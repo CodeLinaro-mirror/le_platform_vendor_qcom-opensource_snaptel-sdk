@@ -23,6 +23,18 @@
             "backhaul" : "WWAN",
             "slotId" : 1,
             "profileId" : -1
-        }
+        },
+        "getIpPassThroughConfig" : [
+            {
+                "slotId" : 1,
+                "ipptConfig": [
+                ]
+            },
+            {
+                "slotId" : 2,
+                "ipptConfig": [
+                ]
+            }
+        ]
     }
 }

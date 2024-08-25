@@ -5,6 +5,7 @@
 
 #include "CsvHandler.hpp"
 #include "Logger.hpp"
+#include "FileInfo.hpp"
 #include <fstream>
 
 #define DELIMETER ','

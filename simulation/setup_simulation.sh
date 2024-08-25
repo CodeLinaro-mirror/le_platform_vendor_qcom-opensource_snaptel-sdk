@@ -5,6 +5,7 @@ LIB_DIR=$(cd $(dirname "${BASH_SOURCE[0]}")/../lib && pwd)
 BIN_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 ROOT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}")/../ && pwd)
 
+export DEFAULT_SIM_FILE_PATH=$ROOT_DIR
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIB_DIR/
 export PATH=$BIN_DIR/:$PATH
 export SIMSYSROOT=$ROOT_DIR

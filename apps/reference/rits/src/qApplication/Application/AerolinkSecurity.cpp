@@ -666,6 +666,7 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
     if(createNewSmp(&thrSmp) < 0){
         if(secVerbosity > 7)
             fprintf(stderr,"Unable to create smp for this thread\n");
+        sem_post(&smpListSem);
         return false;
     }
     // No error in smp creation. Add to <thread,smp> map.
@@ -788,7 +789,7 @@ void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
 
-int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
+int AerolinkSecurity::ExtractMsg(const SecurityOpt &opt,
                 const uint8_t * msg,
                 uint32_t msgLen,
                 uint8_t const *payload,
@@ -1116,7 +1117,7 @@ void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
 }
 
 // Verifies a signed message and returns payload length of actual packet
-int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
+int AerolinkSecurity::VerifyMsg(const SecurityOpt &opt) {
     setSecVerbosity(opt.secVerbosity);
     this->enableMisbehavior = opt.enableMbd;
     this->enableConsistency = opt.enableConsistency;
@@ -1149,7 +1150,7 @@ void AerolinkSecurity::signCallback(
 }
 
 // Sign and return signed message
-int AerolinkSecurity::SignMsg(const SecurityOpt opt,
+int AerolinkSecurity::SignMsg(const SecurityOpt &opt,
                               const uint8_t *msg, uint32_t msgLen,
                               uint8_t *signedSpdu, uint32_t &signedSpduLen,
                               SecurityService::SignType t) {

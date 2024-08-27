@@ -394,34 +394,35 @@ uint64_t lastPeriodicity = 100;
 // need to provide pointer to sps transmit
 // need to provide pointer to cong control user data
 void updateSpsTransmitFlow(
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData){
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData) {
     // once the user data is updated, the thread in qits
     // can now schedule a transmission
     // cast void pointer
     // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
-    if(spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
-        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity){
+    if (spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
+        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity) {
         lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
         // update the sps flow with the rounded max ITT that congestionControl calculates
         shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
-        if(spsInfoSharedPtr == nullptr){
+        if (spsInfoSharedPtr == nullptr) {
             std::cerr << "Invalid sps info. Not updating. \n";
             return;
         }
-        SpsFlowInfo* spsInfo = spsInfoSharedPtr.get();
+        SpsFlowInfo *spsInfo = spsInfoSharedPtr.get();
         // congestionControl rounds it already to valid values for sps periodicity
         spsInfo->periodicityMs =
             (congestionControlUserData->congestionControlCalculations->maxITT);
 
         // catch future error here
         try{
-            uint8_t ret = spsTransmit_->updateSpsFlow(*spsInfo);
-            if(ret == static_cast<uint8_t>(Status::FAILED)){
+            Status ret = spsTransmit_->updateSpsFlow(*spsInfo);
+            if (ret == Status::FAILED) {
                 std::cerr << "sps transmit flow update failed\n";
-                std::cerr << "Max itt was: " <<
-                    congestionControlUserData->congestionControlCalculations->maxITT <<"\n";
+                std::cerr << "Max itt was: "
+                          << congestionControlUserData->congestionControlCalculations->maxITT
+                          << "\n";
             }
-        }catch(const std::future_error& e){
+        } catch (const std::future_error &e) {
             std::cout << "Caught future error when updating sps flow\n";
             std::cout << "Error log is: " << e.what() << "\n";
         }
@@ -434,7 +435,8 @@ void onCongestionControlDataReady (
 
     if(congestionControlUserData){
         QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
-        memcpy(&ApplicationBase::congCtrlCbData, congestionControlUserData->congestionControlCalculations.get(),
+        memcpy(&ApplicationBase::congCtrlCbData,
+                congestionControlUserData->congestionControlCalculations.get(),
                 sizeof(CongestionControlCalculations));
         if(!critEvent){
             sem_post(congestionControlUserData->congestionControlSem);

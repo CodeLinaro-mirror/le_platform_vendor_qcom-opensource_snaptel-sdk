@@ -79,7 +79,6 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
 
     if (!ready(category, RadioType::TX)) {
         cout << "Radio Checks on Sps Transmit Event Fail\n";
-        //return static_cast<uint8_t>(Status::FAILED);
     }
     this->category = category;
     this->flowType = "spsFlow";
@@ -91,17 +90,17 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                             std::shared_ptr<ICv2xTxFlow> txEventFlow,
-                            ErrorCode spsError, ErrorCode eventError){
+                            ErrorCode spsError, ErrorCode eventError) {
                                 if (ErrorCode::SUCCESS == spsError) {
                                     this->flow = txSpsFlow;
                                 }
                                 cb->onResponse(spsError);
                             };
-    if(Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
-                port, false, 0, respCallback)){
+    if (Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
+                port, false, 0, respCallback)) {
         auto err = cb->getResponse();
-        if(ErrorCode::SUCCESS == err){
-            cout<<"Sps flow created succesfully sid=" << serviceId << endl;
+        if (ErrorCode::SUCCESS == err) {
+            cout << "Sps flow created succesfully sid=" << serviceId << endl;
 
             spsFlowInfo = std::make_shared<SpsFlowInfo>();
             if (spsFlowInfo) {
@@ -109,12 +108,10 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
                 this->spsPriority = spsInfo.priority;
                 this->spsResSize = spsInfo.nbytesReserved;
             }
+        } else {
+            cout << "Sps Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
         }
-        else{
-            cout<<"Sps Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
-        }
-    }
-    else {
+    } else {
         cout << "Sps Flow creation fails\n";
     }
 }
@@ -122,10 +119,9 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
 RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
                             const TrafficCategory category,
                             const TrafficIpType trafficType, const uint16_t port,
-                            const uint32_t serviceId){
+                            const uint32_t serviceId) {
     if (!this->ready(category, RadioType::TX)) {
         cout << "Radio Checks on Transmit Event fail\n";
-        //return static_cast<uint8_t>(Status::FAILED);;
     }
     this->category = category;
     this->flowType = "eventFlow";
@@ -136,23 +132,23 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
     }
     auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txEventFlow,
-                            ErrorCode eventError){
+                            ErrorCode eventError) {
                                 if (ErrorCode::SUCCESS == eventError) {
                                     this->flow = txEventFlow;
                                 }
                                 cb->onResponse(eventError);
                             };
     EventFlowInfo testEventInfo;
-    if(Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, testEventInfo,
-                port, respCallback)){
+    if (Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, testEventInfo,
+        port, respCallback)) {
         auto err = cb->getResponse();
-        if(ErrorCode::SUCCESS == err) {
-            cout<<"Event Flow created succesfully\n";
+        if (ErrorCode::SUCCESS == err) {
+            cout << "Event Flow created succesfully\n";
         } else {
-            cout<<"Event Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
+            cout << "Event Flow creation fails with err:" << static_cast<uint32_t>(err) << endl;
         }
     } else {
-        cout<<"Event Flow creation fails\n";
+        cout << "Event Flow creation fails\n";
     }
 }
 
@@ -180,7 +176,7 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
 
     this->clientAddress.sin_family = AF_INET;
     this->clientAddress.sin_port = htons(port);
-    if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+    if (inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
         cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
     }
 }
@@ -195,7 +191,7 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress) 
     }
 }
 
-uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
+int8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
     struct timespec ts;
     if (isSim)
     {
@@ -212,7 +208,7 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
 
     if (sock == -1) {
         cout << "Error on transmit, with socket value -1\n";
-        resp = static_cast<uint8_t>(Status::FAILED);
+        return resp;
     }
 
     struct msghdr message = { 0 };
@@ -247,17 +243,17 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     }
 
     auto bytes_sent = sendmsg(sock, &message, 0);
-    if(bytes_sent == bufLen){
+    if (bytes_sent == bufLen) {
         resp = bytes_sent;
-    }else{
+    } else {
         cerr << "Error Sending Data.\n";
         cerr << "Error is: " << strerror(errno) << "\n";
         cout << "Data that should have been sent is: \n";
         print_buffer((uint8_t*)buf, bufLen);
         cout << "\n";
-        resp = -1;
+        return resp;
     }
-    if (resp && (enableCsvLog_ || enableDiagLog)) {
+    if (enableCsvLog_ || enableDiagLog) {
         clock_gettime(CLOCK_MONOTONIC, &ts);
         auto nowMonotonicTime = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
         if (spsFlowInfo) {
@@ -274,87 +270,72 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     return resp;
 }
 
-uint8_t RadioTransmit::updateSpsFlow(const SpsFlowInfo spsInfo) {
-    auto resp = -1;
+Status RadioTransmit::updateSpsFlow(const SpsFlowInfo spsInfo) {
+    auto resp = Status::FAILED;
     auto cv2xRadio = this->getCv2xRadio();
     if (nullptr == cv2xRadio) {
-        return -1;
+        return resp;
     }
     auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
-                            ErrorCode spsError){
+                            ErrorCode spsError) {
                                 if (ErrorCode::SUCCESS == spsError) {
                                     this->flow = txSpsFlow;
                                 }
                                 cb->onResponse(spsError);
                             };
-    if(Status::SUCCESS == cv2xRadio->changeSpsFlowInfo(this->flow, spsInfo, respCallback)){
-        if(ErrorCode::SUCCESS == cb->getResponse()) {
-            resp = static_cast<uint8_t>(Status::SUCCESS);
+    if (Status::SUCCESS == cv2xRadio->changeSpsFlowInfo(this->flow, spsInfo, respCallback)) {
+        if (ErrorCode::SUCCESS == cb->getResponse()) {
+            resp = Status::SUCCESS;
             if (spsFlowInfo) {
                 memcpy(spsFlowInfo.get(), &spsInfo, sizeof(SpsFlowInfo));
             }
-        } else {
-            resp =  static_cast<uint8_t>(Status::FAILED);
         }
-    } else {
-        resp =  static_cast<uint8_t>(Status::FAILED);
     }
     return resp;
 }
 
-uint8_t RadioTransmit::closeFlow() {
-
-    if (isSim)
-    {
+Status RadioTransmit::closeFlow() {
+    if (isSim) {
         const auto ans = close(simSock);
-        if (ans < 0)
-        {
+        if (ans < 0) {
             cout << "Simulation socket failed to close.\n";
-            return ans;
-        }
-        else {
+            return Status::FAILED;
+        } else {
             cout << "Simulation socket closed succesfully.\n";
-            return ans;
+            return Status::SUCCESS;
         }
     }
 
     if (this->flow) {
-        auto resp = -1;
+        auto resp = Status::FAILED;
         auto cv2xRadio = this->getCv2xRadio();
-        if (nullptr == cv2xRadio) {
-            resp = static_cast<uint8_t>(Status::FAILED);
-        } else {
+        if (nullptr != cv2xRadio) {
             auto cb = std::make_shared<CommonCallback>();
             auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
-                                    ErrorCode error){
+                                    ErrorCode error) {
                                         cb->onResponse(error);
                                     };
-            if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
-                if (ErrorCode::SUCCESS == cb->getResponse()){
-                    resp = static_cast<uint8_t>(Status::SUCCESS);
+            if (Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)) {
+                if (ErrorCode::SUCCESS == cb->getResponse()) {
+                    resp = Status::SUCCESS;
                     if (spsFlowInfo) {
                         memset(spsFlowInfo.get(), 0, sizeof(SpsFlowInfo));
                     }
                 }
-                else{
-                    resp = static_cast<uint8_t>(Status::FAILED);
-                }
-            }else{
-                    resp = static_cast<uint8_t>(Status::FAILED);
             }
         }
         this->flow = nullptr;
         cout << "Closing flow of type: " << flowType << "\n";
-        if(resp != static_cast<uint8_t>(Status::FAILED)){
+        if (resp != Status::FAILED) {
             cout << "Tx flow closed.\n";
-        }else{
+        } else {
             cout << "Tx flow not closed correctly.\n";
         }
         return resp;
     }
 
-    return 0;
+    return Status::SUCCESS;
 }
 
 int RadioTransmit::getTxInterval(uint64_t& periodicityMs) {
@@ -366,15 +347,15 @@ int RadioTransmit::getTxInterval(uint64_t& periodicityMs) {
     return res;
 }
 
-Priority RadioTransmit::getSpsPriority(){
+Priority RadioTransmit::getSpsPriority() {
     return this->spsPriority;
 }
 
-uint32_t RadioTransmit::getSpsResSize(){
+uint32_t RadioTransmit::getSpsResSize() {
     return this->spsResSize;
 }
 
-shared_ptr<SpsFlowInfo> RadioTransmit::getSpsFlowInfo(){
+shared_ptr<SpsFlowInfo> RadioTransmit::getSpsFlowInfo() {
     return spsFlowInfo;
 }
 

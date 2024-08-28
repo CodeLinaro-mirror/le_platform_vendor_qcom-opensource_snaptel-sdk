@@ -1578,3 +1578,8 @@ telux::common::Status CallManagerStub::sendRtt(int phoneId, std::string message,
     }
     return status;
 }
+
+telux::common::Status CallManagerStub::configureECallRedial(RedialConfigType config,
+    const std::vector<int> &timeGap, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}

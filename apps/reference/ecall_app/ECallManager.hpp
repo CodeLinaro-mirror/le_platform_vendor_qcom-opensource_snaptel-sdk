@@ -219,6 +219,15 @@ class ECallManager : public LocationListener,
      */
     telux::common::ErrorCode getECallMsdPayload();
 
+    /**
+     * Configure eCall redial parameters for call origination failure or call drop
+     *
+     * @returns status code for configureECallRedial i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status configureECallRedial(int config, std::vector<int> &timeGap);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;

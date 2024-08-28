@@ -102,6 +102,8 @@ public:
         std::shared_ptr<IMakeCallCallback> callback) override;
     telux::common::Status sendRtt(int phoneId,
       std::string message, common::ResponseCallback callback) override;
+    telux::common::Status configureECallRedial(RedialConfigType config,
+        const std::vector<int> &timeGap, common::ResponseCallback callback) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

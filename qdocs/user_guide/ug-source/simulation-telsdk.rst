@@ -1568,6 +1568,7 @@ The following managers are currently available in the simulation:
 10. BridgeManager
 11. VlanManager
 12. DualDataManager
+13. DataControlManager
 
 
 Data APIs Response handling

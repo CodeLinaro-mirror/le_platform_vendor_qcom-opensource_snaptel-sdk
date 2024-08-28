@@ -81,6 +81,8 @@ class DataFactoryImplStub : public DataFactory,
     virtual std::shared_ptr<telux::data::IDualDataManager> getDualDataManager(
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
+    virtual std::shared_ptr<telux::data::IDataControlManager> getDataControlManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
  private:
     DataFactoryImplStub();
     ~DataFactoryImplStub();
@@ -113,6 +115,7 @@ class DataFactoryImplStub : public DataFactory,
     std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IVlanManager>>
         vlanManagerMap_;
     std::weak_ptr<telux::data::IDualDataManager> dualDataManager_;
+    std::weak_ptr<telux::data::IDataControlManager> dataControlManager_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
@@ -126,6 +129,7 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> firewallCallbacks_;
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> dualDataCallbacks_;
+    std::vector<telux::common::InitResponseCb> dataControlCallbacks_;
 };
 
 }  // namespace data

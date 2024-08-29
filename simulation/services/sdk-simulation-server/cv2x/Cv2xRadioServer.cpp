@@ -51,14 +51,9 @@ void Cv2xRadioServer::onStatusChanged(
   if (status.txStatus != telux::cv2x::Cv2xStatusType::ACTIVE &&
       status.txStatus != telux::cv2x::Cv2xStatusType::SUSPENDED) {
     {
-      std::lock_guard<std::mutex> lock(ipFlowMtx_);
-      ipSpsFlows_.clear();
-      ipEvtFlows_.clear();
-    }
-    {
-      std::lock_guard<std::mutex> lock(nonipFlowMtx_);
-      nonipSpsFlows_.clear();
-      nonipEvtFlows_.clear();
+      std::lock_guard<std::mutex> lock(flowMtx_);
+      spsFlows_.clear();
+      evtFlows_.clear();
     }
   }
 }
@@ -204,13 +199,13 @@ grpc::Status Cv2xRadioServer::enableRxMetaDataReport(
 }
 
 ::commonStub::Status Cv2xRadioServer::saveFlowInfo(
-    std::map<int32_t, cv2xStub::FlowInfo> &flows, cv2xStub::FlowInfo &flow,
-    const int32_t max, int32_t &flowId) {
-  if (flows.size() < static_cast<uint32_t>(max)) {
-    for (int32_t id = 0; id < max; ++id) {
+    std::map<uint32_t, cv2xStub::FlowInfo> &flows, cv2xStub::FlowInfo &flow,
+    const uint32_t base, const uint32_t max, int32_t &flowId) {
+  if (flows.size() < max) {
+    for (uint32_t id = base; id < base + max; ++id) {
       if (flows.find(id) == flows.end()) {
         flows[id] = flow;
-        flowId = id;
+        flowId = static_cast<int32_t>(id);
         LOG(INFO, __FUNCTION__, " new flow with id ", id);
         return ::commonStub::Status::SUCCESS;
       }
@@ -221,8 +216,8 @@ grpc::Status Cv2xRadioServer::enableRxMetaDataReport(
 }
 
 ::commonStub::Status Cv2xRadioServer::removeFlowInfo(
-    std::map<int32_t, cv2xStub::FlowInfo> &flows, int32_t flowId) {
-  auto itr = flows.find(flowId);
+    std::map<uint32_t, cv2xStub::FlowInfo> &flows, int32_t flowId) {
+  auto itr = flows.find(static_cast<uint32_t>(flowId));
   if (itr != std::end(flows)) {
     flows.erase(itr);
     return ::commonStub::Status::SUCCESS;
@@ -245,23 +240,15 @@ Cv2xRadioServer::registerFlow(ServerContext *context,
 
   ::commonStub::Status status = ::commonStub::Status::FAILED;
   cv2xStub::FlowInfo flow = *request;
-  if (request->iptype() == TRAFFIC_IP) {
-    std::lock_guard<std::mutex> lock(ipFlowMtx_);
+  {
+    std::lock_guard<std::mutex> lock(flowMtx_);
     if (request->spsport() > 0) {
       status =
-          saveFlowInfo(ipSpsFlows_, flow, SIMULATION_SPS_MAX_NUM_FLOWS, id);
+          saveFlowInfo(spsFlows_, flow, 0, SIMULATION_SPS_MAX_NUM_FLOWS, id);
     } else if (request->eventport() > 0) {
       status =
-          saveFlowInfo(ipEvtFlows_, flow, SIMULATION_NON_SPS_MAX_NUM_FLOWS, id);
-    }
-  } else if (request->iptype() == TRAFFIC_NON_IP) {
-    std::lock_guard<std::mutex> lock(nonipFlowMtx_);
-    if (request->spsport() > 0) {
-      status =
-          saveFlowInfo(nonipSpsFlows_, flow, SIMULATION_SPS_MAX_NUM_FLOWS, id);
-    } else if (request->eventport() > 0) {
-      status = saveFlowInfo(nonipEvtFlows_, flow,
-                            SIMULATION_NON_SPS_MAX_NUM_FLOWS, id);
+          saveFlowInfo(evtFlows_, flow, SIMULATION_EVT_FLOW_BASE,
+              SIMULATION_NON_SPS_MAX_NUM_FLOWS, id);
     }
   }
 
@@ -287,20 +274,12 @@ Cv2xRadioServer::deregisterFlow(ServerContext *context,
   }
 
   ::commonStub::Status status = ::commonStub::Status::FAILED;
-
-  if (request->iptype() == TRAFFIC_IP) {
-    std::lock_guard<std::mutex> lock(ipFlowMtx_);
+  {
+    std::lock_guard<std::mutex> lock(flowMtx_);
     if (request->spsport() > 0) {
-      status = removeFlowInfo(ipSpsFlows_, id);
+      status = removeFlowInfo(spsFlows_, id);
     } else if (request->eventport() > 0) {
-      status = removeFlowInfo(ipEvtFlows_, id);
-    }
-  } else if (request->iptype() == TRAFFIC_NON_IP) {
-    std::lock_guard<std::mutex> lock(nonipFlowMtx_);
-    if (request->spsport() > 0) {
-      status = removeFlowInfo(nonipSpsFlows_, id);
-    } else if (request->eventport() > 0) {
-      status = removeFlowInfo(nonipEvtFlows_, id);
+      status = removeFlowInfo(evtFlows_, id);
     }
   }
 

@@ -67,6 +67,8 @@ public:
    void getDualConnectivityStatus(std::vector<std::string> userInput);
    void getSystemInfo(std::vector<std::string> userInput);
    void requestNetworkInfo(std::vector<std::string> userInput);
+   void requestLteSib16NetworkTimeInfo(std::vector<std::string> userInput);
+   void requestNr5gRrcUtcTimeInfo(std::vector<std::string> userInput);
    void requestRFBandInfo(std::vector<std::string> userInput);
    void getNetworkRejectInfo(std::vector<std::string> userInput);
    void getCallBarringInfo(std::vector<std::string> userInput);

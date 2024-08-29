@@ -190,9 +190,19 @@ bool ServingSystemMenu::init() {
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
              "15", "Set_RF_Band_Preferences", {},
              std::bind(&ServingSystemMenu::setRFBandPref, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> reqSib16NetworkTimeCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "16", "Request_LTE_SIB16_Network_Time_Info", {},
+             std::bind(&ServingSystemMenu::requestLteSib16NetworkTimeInfo, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> reqNr5gRrcUtcTimeCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "17", "Request_NR5G_RRC_UTC_Time_Info", {},
+             std::bind(&ServingSystemMenu::requestNr5gRrcUtcTimeInfo, this,
+                std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "16", "Select_sim_slot", {},
+             "18", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
@@ -200,7 +210,7 @@ bool ServingSystemMenu::init() {
              getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
              getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
              getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
-             setRFBandPrefCommand};
+             setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand};
 
        if (servingSystemMgrs_.size() > 1) {
           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -691,5 +701,35 @@ void ServingSystemMenu::setRFBandPref(std::vector<std::string> userInput) {
       } else {
         std::cout << "\nBuild RF band preferences failed \n";
       }
+   }
+}
+
+void ServingSystemMenu::requestLteSib16NetworkTimeInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestLteSib16NetworkTime(
+         NetworkTimeResponseCallback::networkTimeResponse);
+      if (ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nGet LTE SIB16 network time request sent successfully\n";
+      } else {
+         std::cout << "\nGet LTE SIB16 network time request failed \n";
+      }
+   } else {
+      std::cout << "\nGet LTE SIB16 network time request failed \n";
+   }
+}
+
+void ServingSystemMenu::requestNr5gRrcUtcTimeInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestNr5gRrcUtcTime(
+         NetworkTimeResponseCallback::networkTimeResponse);
+      if (ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nGet NR5G RRC UTC time request sent successfully\n";
+      } else {
+         std::cout << "\nGet NR5G RRC UTC time request failed \n";
+      }
+   } else {
+      std::cout << "\nGet NR5G RRC UTC time request failed \n";
    }
 }

@@ -359,6 +359,7 @@ The details on how simulation of individual areas can be used and controlled are
 4. :ref:`sim-reference-data`
 5. :ref:`sim-reference-thermal`
 6. :ref:`sim-reference-power`
+7. :ref:`sim-reference-sensor`
 
 .. _sim-reference-telephony:
 
@@ -1165,8 +1166,8 @@ The report is represented by a string containing the fields separated by a comma
 
 **The tool to capture data is provided under:**
 
-* ``simulation/record_location.sh``
-* ``simulation/record_location.bat``
+* ``simulation/scripts/record_location.sh``
+* ``simulation/scripts/record_location.bat``
 
 **Client usage:**
 
@@ -1741,3 +1742,164 @@ Additional Notes
 3. The simulation device on which the framework runs is hardcoded as PVM in the power simulation library. All slaves registering with PVM are treated as a LOCAL machine in the simulation framework.
 4. As of today, suspend and resume are only state change triggers across the processes using the power simulation framework. The host system on which simulation is running is not really suspended when a master client issues suspend.
 5. Modem activity state is a canned response via  JSON configuration file.
+
+.. _sim-reference-sensor:
+
+Sensor Simulation
+~~~~~~~~~~~~~~~~~~~~
+
+Overview of Sensor Simulation
+""""""""""""""""""""""""""""""""
+This page and the subpages provide simulation usage information for the sensor
+subsystem that is part of the telux::sensor namespace of the Telematics SDK.
+
+The sensor simulation framework provides the ability to record sensor data from an actual
+telematics device.
+Applications using ISensorClient and ISensorFeatureManager APIs get sensor
+events from this recorded data.
+
+.. _fig-sensor-sim-overview:
+.. figure:: ../../images/simulation_sensor_overview.png
+  :width: 500
+
+  Sensor Simulation Framework
+
+Configuring Sensor API responses
+"""""""""""""""""""""""""""""""""""
+
+The sensor manager, sensor client, and sensor feature manager have JSON configuration files to
+configure responses for each API.
+
+Clients can configure these APIs as follows.
+
+Sensor Manager (``simulation/json/api/sensor/ISensorClient.json``)
+
+Example:
+
+**API command response for selfTest**
+
+.. code-block::
+
+  "selfTest": {
+      "callbackDelay": 400,
+      "error": "SUCCESS",
+      "status": "SUCCESS"
+  },
+
+Sensor client (``simulation/json/api/sensor/ISensorClient.json``)
+
+Example:
+
+**API command response for configure**
+
+.. code-block::
+
+  "configure": {
+      "error": "SUCCESS",
+      "status": "SUCCESS"
+  },
+
+Sensor Feature Manager (``simulation/json/api/sensor/ISensorfeatureManager.json``)
+
+Example:
+
+**API command response for enableFeature**
+
+.. code-block::
+
+  "enableFeature":{
+      "status": "SUCCESS"
+  },
+
+Support for sensor events
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+The following events are supported by SensorClient.
+
+1. Sensor events for multiple configurations
+2. Client configuration update events
+3. Buffered events for sensor feature manager
+
+Format of sensor reports
+"""""""""""""""""""""""""""
+
+Sensor simulation can provide prerecorded/captured data from the target device to clients in the
+form of a CSV file.
+
+**Reports captured via CSV:**
+
+This script records sensor data captured using the recording utility provided for the sensor
+client. By default, this script captures sensor events for UNCALIBRATED_ACCELEROMETER and
+UNCALIBRATED_GYROSCOPE with both ROTATED and UNROTATED configurations enabled at a 104 Hz
+sampling rate.
+
+.. note:: Once captured, sorting has to be done using the utilities provided.
+
+**Data representation:**
+
+1. Each CSV row represents a complete iteration of the sensor event at time interval T.
+
+**Data reporting:**
+
+Sensor events are recorded at 104 Hz with rotated and unrotated data for uncalibrated accelerometer
+and gyroscope clients. On reaching the CSV's EOF, clients can configure if the CSV is replayed via
+the ``sim.sensor.sensor_report_replay`` configuration in ``tel.conf``.
+
+If replay is not selected, the sensor reports are stopped.
+
+**Client usage:**
+
+By default the prerecorded/captured CSV file is stored at:
+
+1. ``${ROOTFS}/data/telux/csv/PRE-RECORDED_SENSOR_DATA.csv`` for sensor client
+2. ``${ROOTFS}/data/telux/csv/PRE-RECORDED_SENSOR_BUFFER_DATA.csv`` for sensor feature manager
+3. Clients can configure the retrieval of reports via ``tel.conf`` by modifying the following fields:
+
+.. code-block::
+
+  sim.sensor.sensor_report_file_name
+  sim.sensor.sensor_buffered_events_file_name
+  sim.sensor.sensor_report_consumption
+  sim.sensor.sensor_report_replay
+
+See the ``tel.conf`` documentation for the usage details of these fields.
+
+
+Recording utility for Sensor Reports
+"""""""""""""""""""""""""""""""""""""""
+
+The recording utility captures sensor reports running on the target device
+so the collected data can be used for off-target SDK simulation.
+
+**Reports supported by the recording utility:**
+
+This script provides sensor data captured using the recording utility provided for the sensor
+client. By default, this script captures sensor events for UNCALIBRATED_ACCELEROMETER and
+UNCALIBRATED_GYROSCOPE with both ROTATED and UNROTATED configurations enabled at a 104 Hz sampling
+rate.
+
+**Data representation:**
+
+Each CSV row represents a complete iteration of the sensor event at time interval T.
+
+The report is represented by a string containing the fields separated by a comma(,).
+
+**The tool to capture data is provided under:**
+
+* ``simulation/scripts/record_and_sort_sensor_data.sh``
+* ``simulation/scripts/record_sensor_data.bat``
+* ``simulation/scripts/sort_sensor_data.ps1``
+
+**Client usage:**
+
+1. Connect the target to the PC.
+
+2. Ensure that adb is available and restart adb as root by running "adb root".
+
+3. On a Linux machine run the record_and_sort_sensor_data script and capture the sorted data in a CSV file.
+
+4. On a windows machine run record_sensor_data batch file from command prompt to capture data in a CSV file.
+   Then use sort_sensor_data scipt in a power shell terminal to sort the captured CSV file.
+
+5. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
+   If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.

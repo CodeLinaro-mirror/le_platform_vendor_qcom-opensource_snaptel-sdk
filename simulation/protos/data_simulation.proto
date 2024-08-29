@@ -405,6 +405,7 @@ message DataCallInputParams {
     IpFamilyType ip_family_type = 3;
     OperationType operation_type = 4;
     int32 client_id = 5;
+    string iface_name = 6;
 }
 
 message GetServiceStatusReply {

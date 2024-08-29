@@ -18,7 +18,8 @@ namespace cv2x {
 
 class Cv2xRxSubscription : public ICv2xRxSubscription {
  public:
-    Cv2xRxSubscription(int sock, const struct sockaddr_in6 &sockAddr, TrafficIpType type);
+    Cv2xRxSubscription(int sock, const struct sockaddr_in6 &sockAddr, TrafficIpType type,
+        const std::shared_ptr<std::vector<uint32_t>> idList);
 
     virtual uint32_t getSubscriptionId() const;
 
@@ -34,10 +35,11 @@ class Cv2xRxSubscription : public ICv2xRxSubscription {
 
     virtual std::shared_ptr<std::vector<uint32_t>> getServiceIDList() const;
 
-    virtual void setServiceIDList(const std::shared_ptr<std::vector<uint32_t>> idList);
-
     virtual ~Cv2xRxSubscription() {
     }
+
+    // deprecated
+    virtual void setServiceIDList(const std::shared_ptr<std::vector<uint32_t>> idList);
 
  protected:
     static std::atomic<uint32_t> Id;

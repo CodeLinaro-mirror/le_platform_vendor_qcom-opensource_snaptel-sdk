@@ -37,7 +37,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -138,14 +138,17 @@ public:
      */
     virtual std::shared_ptr<std::vector<uint32_t>> getServiceIDList() const = 0;
 
+    virtual ~ICv2xRxSubscription() {}
+
     /**
      * Set subscriptions's service ID list
      *
      * @param [in] idList        - the subscriptions's service ID list
+     *
+     * @deprecated Service IDs are set via ICv2xRadio::createRxSubscription and cannot be
+     * modified after that.
      */
     virtual void setServiceIDList(const std::shared_ptr<std::vector<uint32_t>> idList) = 0;
-
-    virtual ~ICv2xRxSubscription() {}
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

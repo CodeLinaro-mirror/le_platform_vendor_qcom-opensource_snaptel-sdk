@@ -50,6 +50,12 @@ service Cv2xRadioService {
     rpc injectVehicleSpeed(UintNum) returns (Cv2xCommandReply) {}
 }
 
+service Cv2xThrottleManagerService {
+    rpc initService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc getServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc setVerificationLoad(UintNum) returns (Cv2xCommandReply) {}
+}
+
 message Cv2xConfigPath {
     string path = 1;
 }
@@ -199,4 +205,12 @@ message IfaceNameReply {
 
 message UintNum {
     uint32 num = 1;
+}
+
+message FilterEvent {
+    uint32 filter = 1;
+}
+
+message SanityEvent {
+    uint32 state = 1;
 }

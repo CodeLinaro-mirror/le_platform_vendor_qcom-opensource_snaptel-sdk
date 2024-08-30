@@ -22,6 +22,7 @@
 
 #include "SimulationServer.hpp"
 #include "cv2x/Cv2xManagerServerImpl.hpp"
+#include "cv2x/Cv2xThrottleManagerServerImpl.hpp"
 #include "cv2x/Cv2xConfigServerImpl.hpp"
 #include "cv2x/Cv2xRadioServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
@@ -125,6 +126,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<Cv2xManagerServerImpl> cv2xRadioMgrService =
         std::make_shared<Cv2xManagerServerImpl>();
     builder.RegisterService(cv2xRadioMgrService.get());
+
+    std::shared_ptr<Cv2xThrottleManagerServerImpl> cv2xThrottleMgrService =
+        std::make_shared<Cv2xThrottleManagerServerImpl>();
+    builder.RegisterService(cv2xThrottleMgrService.get());
 
     std::shared_ptr<Cv2xConfigServerImpl> cv2xConfigService =
         std::make_shared<Cv2xConfigServerImpl>();

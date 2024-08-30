@@ -434,7 +434,6 @@ telux::common::Status Cv2xRadioEvtListener::deregisterListener(
     return listenerMgr_.deRegisterListener(listener);
 }
 
-
 Cv2xRadioSimulation::Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
     pEvtListener_ = std::make_shared<Cv2xRadioEvtListener>();

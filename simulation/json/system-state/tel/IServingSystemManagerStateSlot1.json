@@ -1,14 +1,19 @@
 {
     "IServingSystemManager" :
     {
-        "RATPreference" : "1 2 3", /* Refer telux::tel::RatPrefType  for more details */
-        "ServiceDomainPreference" : 2, /* Refer telux::tel::ServiceDomainPreference for more details*/
+        "RATPreference" : "1 2 3",
+        "_comment_RATPreference" : "Refer telux::tel::RatPrefType  for more details",
+        "ServiceDomainPreference" : 2,
+        "_comment_ServiceDomainPreference" : "Refer telux::tel::ServiceDomainPreference for more details",
         "DcStatus" :
         {
-            "endcAvailability" : 0, /* Refer telux::tel::EndcAvailability for more details */
-            "dcnrRestriction" : 1 /* Refer telux::tel::DcnrRestriction  for more details */
+            "endcAvailability" : 0,
+            "_comment_endcAvailability" : "Refer telux::tel::EndcAvailability for more details",
+            "dcnrRestriction" : 1,
+            "_comment_dcnrRestriction" : "Refer telux::tel::DcnrRestriction  for more details"
         },
-        "NetworkTimeInfo" : /*Refer telux::tel::NetworkTimeInfo for more details */
+        "NetworkTimeInfo" :
+
         {
             "year" : 2024,
             "month" : 1,
@@ -19,27 +24,35 @@
             "dayOfWeek" : 4,
             "timeZone" :10,
             "dstAdj" : 0,
-            "nitzTime" : "2024/01/12,01::10+01"
+            "nitzTime" : "2024/01/12,01::10+01",
+            "_comment_NetworkTimeInfo" : "Refer telux::tel::NetworkTimeInfo for more details"
         },
         "RFBandInfo" :
         {
-            "rFBand" : 1, /*Refer telux::tel::RFBand for more details */
+            "rFBand" : 1,
+            "_comment_rFBand" : "Refer telux::tel::RFBand for more details",
             "channel" : 1,
-            "bandwidth" : 1 /*Refer telux::tel::RFBandWidth for more details */
+            "bandwidth" : 1,
+            "_comment_bandwidth" : "Refer telux::tel::RFBandWidth for more details"
         },
         "ServingSystemInfo" :
         {
-            "rat" : 14, /*Refer telux::tel::RadioTechnology for more details */
-            "domain" : 4 /*Refer telux::tel::ServiceDomain for more details */
+            "rat" : 14,
+            "_comment_rat" : "Refer telux::tel::RadioTechnology for more details",
+            "domain" : 4,
+            "_comment_domain" : "Refer telux::tel::ServiceDomain for more details"
         },
         "NetworkRejectInfo" :
         {
             "ServingSystemInfo" :
             {
-                "rat" : 14, /*Refer telux::tel::RadioTechnology for more details */
-                "domain" : 3 /*Refer telux::tel::ServiceDomain for more details */
+                "rat" : 14,
+                "_comment_rat" : "Refer telux::tel::RadioTechnology for more details",
+                "domain" : 3,
+                "_comment_domain" : "Refer telux::tel::ServiceDomain for more details"
             },
-            "rejectCause" : 15, /*Refer to 3GPP TS 24.008, 3GPP TS 24.301 and 3GPP TS 24.501. */
+            "rejectCause" : 15,
+            "_comment_rejectCause" : "Refer to 3GPP TS 24.008, 3GPP TS 24.301 and 3GPP TS 24.501",
             "mcc" : "311",
             "mnc" : "480"
         },
@@ -48,9 +61,12 @@
             "infoList" :
             [
                  {
-                     "rat" : 14, /*Refer telux::tel::RadioTechnology for more details */
-                     "domain" : 2, /*Refer telux::tel::ServiceDomain for more details */
-                     "callType" : 3 /*Refer to telux::tel::CallsAllowedInCell for more details */
+                     "rat" : 14,
+                     "_comment_rat" : "Refer telux::tel::RadioTechnology for more details",
+                     "domain" : 2,
+                     "_comment_domain" : "Refer telux::tel::ServiceDomain for more details",
+                     "callType" : 3,
+                     "_comment_callType" : "Refer to telux::tel::CallsAllowedInCell for more details"
                  }
             ]
         }

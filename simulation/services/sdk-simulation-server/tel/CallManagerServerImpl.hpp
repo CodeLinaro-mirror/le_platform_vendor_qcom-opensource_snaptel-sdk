@@ -70,6 +70,7 @@ struct CallInfo {
    CallDirection callDirection = CallDirection::NONE;
    std::string remotePartyNumber = "";
    telux::tel::CallEndCause callEndCause = telux::tel::CallEndCause::NORMAL;
+   int sipErrorCode = 0;
    int phoneId;
    bool isRegulatoryeCall = false;
    bool isMultiPartyCall = false;

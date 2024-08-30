@@ -435,8 +435,9 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
             static_cast<std::string>(callInfo.remotePartyNumber));
         callInfo.callEndCause = static_cast<telux::tel::CallEndCause>(
             event.calls(i).call_end_cause());
+        callInfo.sipErrorCode = event.calls(i).sip_error_code();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"callEndCause is ",
-            static_cast<int>(callInfo.callEndCause));
+            static_cast<int>(callInfo.callEndCause), " sipErrorCode is ", callInfo.sipErrorCode);
         int phoneId = event.calls(i).phone_id();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__," phoneId is ", phoneId);
         callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();

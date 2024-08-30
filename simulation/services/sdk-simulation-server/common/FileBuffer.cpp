@@ -43,7 +43,6 @@ void FileBuffer::startBufferingSync() {
         LOG(DEBUG, " Begin Buffering ", fileName_);
     }
 
-    int lineCount = 0;
     std::string line = "";
     // skip the copyright at the beginning
     while (ifs.peek() != EOF) {
@@ -55,6 +54,7 @@ void FileBuffer::startBufferingSync() {
     }
 
     while (true) {
+        int lineCount = 0;
         do {
             if (!line.empty()) {
                 readBuffer_.push_back(line);

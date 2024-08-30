@@ -53,10 +53,15 @@ public:
 
 private:
     int noOfSlots_ = 0;
+    std::mutex mtx_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ListenerManager<IImsSettingsListener>> listenerMgr_;
     std::unique_ptr<::telStub::ImsService::Stub> stub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleImsServiceConfigsChange(::telStub::ImsServiceConfigsChangeEvent event);
     void handleImsSipUserAgentChange(::telStub::ImsSipUserAgentChangeEvent event);
 };

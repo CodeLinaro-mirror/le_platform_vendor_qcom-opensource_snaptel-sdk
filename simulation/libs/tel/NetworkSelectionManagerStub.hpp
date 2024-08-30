@@ -63,10 +63,15 @@ public:
 
 private:
     int phoneId_;
+    std::mutex mtx_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ListenerManager<INetworkSelectionListener>> listenerMgr_;
     std::unique_ptr<::telStub::NetworkSelectionService::Stub> stub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleSelectionModeChanged(::telStub::SelectionModeChangeEvent event);
     void handleNetworkScanResultsChanged(::telStub::NetworkScanResultsChangeEvent event);
 };

@@ -13,6 +13,26 @@ using namespace telux::tel;
 ImsServingSystemManagerStub::ImsServingSystemManagerStub(SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
     phoneId_ = static_cast<int>(slotId);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
+}
+
+void ImsServingSystemManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
 }
 
 telux::common::Status ImsServingSystemManagerStub::init(
@@ -33,34 +53,32 @@ telux::common::Status ImsServingSystemManagerStub::init(
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
+    initCb_ = callback;
     auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
+        [this]() {
+            this->initSync();
         }).share();
     auto status = taskQ_->add(f);
     return status;
 }
 
-void ImsServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) {
+void ImsServingSystemManagerStub::initSync() {
     ::commonStub::GetServiceStatusReply response;
     ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
-    stub_->InitService(&context, request, &response);
-
-    telux::common::ServiceStatus cbStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-    int cbDelay = static_cast<int>(response.delay());
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(callback) {
-        auto f1 = std::async(std::launch::async,
-        [this, cbDelay, cbStatus, callback]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                callback(cbStatus);
-        }).share();
-        taskQ_->add(f1);
+    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " InitService request failed");
+    } else {
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay_ = static_cast<int>(response.delay());
     }
+    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
+        " callback status ", static_cast<int>(cbStatus));
+    setServiceStatus(cbStatus);
 }
 
 ImsServingSystemManagerStub::~ImsServingSystemManagerStub() {
@@ -86,15 +104,7 @@ void ImsServingSystemManagerStub::cleanup() {
 
 telux::common::ServiceStatus ImsServingSystemManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 telux::common::Status ImsServingSystemManagerStub::registerListener(
@@ -353,3 +363,5 @@ void ImsServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
         handleImsPdpStatusInfoChanged(imsPdpStatusInfoChangeEvent);
     }
 }
+
+

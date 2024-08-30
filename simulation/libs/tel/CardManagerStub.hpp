@@ -64,18 +64,18 @@ public:
     ~CardManagerStub();
 
 private:
+    int cbDelay_;
     int slotCount_ = INVALID_SLOT_COUNT;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     telux::common::InitResponseCb initCb_;
-    std::mutex mutex_;
     std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_;
     std::unique_ptr<::telStub::CardService::Stub> stub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
     std::mutex cardManagerMutex_;
     std::vector<int> simSlotIds_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     std::map<int, std::shared_ptr<CardStub>> cardMap_;
-    void invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
-    telux::common::InitResponseCb callback);
     void invokeCallback(telux::common::ResponseCallback callback,
         telux::common::ErrorCode error, int cbDelay );
     void handleEvent(std::string token, std::string event);

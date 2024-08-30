@@ -1,8 +1,6 @@
 {
     "IImsSettingsManager" :
     {
-        "IsSubsystemReady" : "SERVICE_AVAILABLE",
-        "IsSubsystemReadyDelay" : 300,
         "DefaultCallbackDelay" : 400,
         "requestServiceConfig" :
         {

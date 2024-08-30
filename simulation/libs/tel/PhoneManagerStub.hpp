@@ -64,10 +64,14 @@ private:
     std::map<int, int> phoneSlotIdsMap_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::mutex phoneManagerMutex_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::ListenerManager<IPhoneListener>> listenerMgr_;
     std::unique_ptr<::telStub::PhoneService::Stub> phoneStub_;
     std::unique_ptr<::telStub::CardService::Stub> cardStub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void setSubsystemReady(bool status);
     bool waitForInitialization();
     void handleSignalStrengthChanged(::telStub::SignalStrengthChangeEvent event);

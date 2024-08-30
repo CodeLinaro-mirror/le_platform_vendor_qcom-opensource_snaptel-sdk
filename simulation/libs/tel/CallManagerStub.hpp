@@ -36,8 +36,6 @@ public:
 
     telux::common::Status init(telux::common::InitResponseCb callback);
 
-    void initSync(telux::common::InitResponseCb callback);
-
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener
@@ -110,9 +108,14 @@ public:
 
 private:
     int noOfSlots_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::mutex callManagerMutex_;
     std::shared_ptr<telux::common::ListenerManager<ICallListener>> listenerMgr_;
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleEcallEvent(::telStub::ECallInfoEvent event);
     void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);

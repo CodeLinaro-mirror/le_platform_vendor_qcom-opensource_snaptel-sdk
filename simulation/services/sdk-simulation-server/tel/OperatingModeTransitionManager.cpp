@@ -707,13 +707,20 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
         noOfSlots = 2;
     }
     std::shared_ptr<TelephonyNotificationBuilder> notificationBuilder = getBuilder();
+    if (mode == telStub::OperatingMode::FACTORY_TEST ||
+        mode == telStub::OperatingMode::OFFLINE||
+        mode == telStub::OperatingMode::PERSISTENT_LOW_POWER ||
+        mode == telStub::OperatingMode::AIRPLANE ||
+        mode == telStub::OperatingMode::ONLINE) {
+        telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
+        notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
+    }
+
     for (int slotId = 1 ; slotId <= noOfSlots; slotId++){
         if (mode == telStub::OperatingMode::FACTORY_TEST ||
             mode == telStub::OperatingMode::OFFLINE||
             mode == telStub::OperatingMode::PERSISTENT_LOW_POWER ||
             mode == telStub::OperatingMode::AIRPLANE) {
-            telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
-            notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
 
             telStub::ServiceStateChangeEvent serviceStateChangeEvent =
                 TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::OUT_OF_SERVICE);
@@ -738,8 +745,6 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
             std::shared_ptr<Notification> notification = notificationBuilder->build();
             notification->notify();
         } else if (mode == telStub::OperatingMode::ONLINE) {
-            telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
-            notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
 
             ::telStub::SignalStrength cachedSignalStrength = getCachedSS(slotId);
             telStub::SignalStrengthChangeEvent signalStrengthChangeEvent =
@@ -770,17 +775,11 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
 }
 
 void OperatingModeTransitionManager::notifyOperatingMode(telStub::OperatingMode mode) {
-    int noOfSlots = 1;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        noOfSlots = 2;
-    }
     std::shared_ptr<TelephonyNotificationBuilder> notificationBuilder = getBuilder();
-    for (int slotId = 1 ; slotId <= noOfSlots; slotId++){
-        telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
-        notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
-        std::shared_ptr<Notification> notification = notificationBuilder->build();
-        notification->notify();
-    }
+    telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
+    notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
+    std::shared_ptr<Notification> notification = notificationBuilder->build();
+    notification->notify();
 }
 
 std::shared_ptr<BaseState> OperatingModeTransitionManager::getPrevState() {

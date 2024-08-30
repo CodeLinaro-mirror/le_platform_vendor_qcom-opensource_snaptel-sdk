@@ -17,6 +17,7 @@
 #include "libs/common/CommonUtils.hpp"
 #include "LocationReportService.hpp"
 #include "event/EventService.hpp"
+#include "FileInfo.hpp"
 #include <telux/loc/LocationDefines.hpp>
 #include <thread>
 #include <chrono>

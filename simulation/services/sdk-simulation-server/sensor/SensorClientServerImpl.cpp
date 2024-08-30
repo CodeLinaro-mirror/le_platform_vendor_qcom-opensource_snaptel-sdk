@@ -18,6 +18,7 @@
 #include "libs/common/CommonUtils.hpp"
 #include "event/EventService.hpp"
 #include "SensorReportService.hpp"
+#include "FileInfo.hpp"
 
 #define CSV_BATCH_COUNT 1000
 #define SENSOR_CLIENT_API_JSON "api/sensor/ISensorClient.json"

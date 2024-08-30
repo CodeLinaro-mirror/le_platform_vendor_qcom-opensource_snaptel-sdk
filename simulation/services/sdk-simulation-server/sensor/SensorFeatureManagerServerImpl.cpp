@@ -19,6 +19,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include "event/EventService.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
+#include "FileInfo.hpp"
 #include <fstream>
 #include <sstream>
 

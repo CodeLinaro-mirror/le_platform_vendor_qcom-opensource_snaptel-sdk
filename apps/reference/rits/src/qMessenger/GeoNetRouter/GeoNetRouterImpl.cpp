@@ -97,7 +97,8 @@ static void PrintMID(const uint8_t *addr) {
 namespace gn {
     GeoNetRouterImpl *GeoNetRouterImpl::pInstance = nullptr;
 
-    GeoNetRouterImpl::GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener, GnConfig_t config) {
+    GeoNetRouterImpl::GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener,
+                                       const GnConfig_t &config) {
         SequenceNumber_ = 0;
         NeighborCount_ = 0;
         CBFstop_ = false;
@@ -118,7 +119,7 @@ namespace gn {
     }
 
     GeoNetRouterImpl* GeoNetRouterImpl::Instance(std::shared_ptr<ILocationListener> locListener,
-                                                 GnConfig_t config) {
+                                                 const GnConfig_t &config) {
         GeoNetRouterImpl::pInstance = new GeoNetRouterImpl(locListener, config);
         return GeoNetRouterImpl::pInstance;
     }

@@ -184,7 +184,7 @@ public:
     * @param dot2HdrLen - Size of security header
     * @return int - A non-negative integer value upon success or -1 on failure
     */
-    virtual int ExtractMsg(const SecurityOpt opt,
+    virtual int ExtractMsg(const SecurityOpt &opt,
                             const uint8_t * msg,
                             uint32_t msgLen,
                             uint8_t const *payload,
@@ -201,7 +201,7 @@ public:
     * @param type - Sign with certificate or the digest
     * @return int - A non-negative integer value upon success or -1 on failure
     */
-    virtual int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
+    virtual int SignMsg(const SecurityOpt &opt, const uint8_t *msg, uint32_t msgLen,
                         uint8_t *signedSpdu, uint32_t &signedSpduLen,
                         SignType type = SignType::ST_AUTO) = 0;
     /**
@@ -210,7 +210,7 @@ public:
     * @param opt - Struct that contains security-related information
     * @return int - A non-negative integer value upon success or -1 on failure
     */
-    virtual int VerifyMsg(const SecurityOpt opt) = 0;
+    virtual int VerifyMsg(const SecurityOpt &opt) = 0;
 
 /*     virtual int asyncVerify(
         const SecurityOpt opt, void *asyncCbData, void* callBackFunction) = 0; */

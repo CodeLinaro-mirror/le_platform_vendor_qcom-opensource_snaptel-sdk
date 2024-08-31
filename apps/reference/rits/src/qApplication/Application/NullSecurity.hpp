@@ -80,7 +80,7 @@ private:
     static NullSecurity *pInstance;
 public:
     static NullSecurity *Instance(std::string ctxName, uint16_t countryCode);
-    int ExtractMsg(const SecurityOpt opt,
+    int ExtractMsg(const SecurityOpt &opt,
                     const uint8_t * msg,
                     uint32_t msgLen,
                     uint8_t const *payload,
@@ -89,13 +89,13 @@ public:
         std::cout << "NULL security ExtractMsg() " << std::endl;
         return -1;
     }
-    int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen, uint8_t *signedSpdu,
+    int SignMsg(const SecurityOpt &opt, const uint8_t *msg, uint32_t msgLen, uint8_t *signedSpdu,
             uint32_t &signedSpduLen,
             SecurityService::SignType type = SecurityService::SignType::ST_AUTO) {
         std::cout << "NULL security SignMsg()" << std::endl;
         return -1;
     }
-    int VerifyMsg(const SecurityOpt opt){
+    int VerifyMsg(const SecurityOpt &opt) {
         std::cout << "NULL security VerifyMsg() " << std::endl;
         return -1;
     }

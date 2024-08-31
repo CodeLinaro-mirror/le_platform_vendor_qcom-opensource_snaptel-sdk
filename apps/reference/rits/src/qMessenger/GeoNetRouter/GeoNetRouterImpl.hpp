@@ -148,12 +148,12 @@ typedef std::deque<std::shared_ptr<Qelement>> QueueT;
 
 class GeoNetRouterImpl {
 private:
-    GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener, GnConfig_t config);
+    GeoNetRouterImpl(std::shared_ptr<ILocationListener> locListener, const GnConfig_t &config);
     static GeoNetRouterImpl *pInstance;
 
 public:
     static GeoNetRouterImpl* Instance(std::shared_ptr<ILocationListener> locListener,
-            GnConfig_t config);
+            const GnConfig_t &config);
     static void InitDefaultConfig(GnConfig_t &config);
     void InitDefaultGnData(GnData_t &data);
     void SetConfig(const GnConfig_t &config);

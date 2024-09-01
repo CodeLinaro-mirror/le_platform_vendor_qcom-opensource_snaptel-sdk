@@ -5,6 +5,7 @@
 
 #include "ThermalFactoryImplStub.hpp"
 #include "ThermalManagerImplStub.hpp"
+#include "ThermalShutdownManagerImplStub.hpp"
 
 #include <memory>
 
@@ -24,7 +25,8 @@ ThermalFactory &ThermalFactoryImplStub::getInstance() {
 ThermalFactory::ThermalFactory() {
 }
 
-ThermalFactoryImplStub::ThermalFactoryImplStub() {
+ThermalFactoryImplStub::ThermalFactoryImplStub()
+   : thermalShutdownManager_(nullptr) {
 }
 
 std::shared_ptr<IThermalManager> ThermalFactoryImplStub::getThermalManager(
@@ -54,13 +56,17 @@ std::shared_ptr<IThermalManager> ThermalFactoryImplStub::getThermalManager(
  */
 std::shared_ptr<IThermalShutdownManager> ThermalFactoryImplStub::getThermalShutdownManager(
     telux::common::InitResponseCb callback) {
-    return nullptr;
+    if (thermalShutdownManager_ == nullptr) {
+        thermalShutdownManager_ = std::make_shared<ThermalShutdownManagerImplStub>();
+    }
+    return thermalShutdownManager_;
 }
 
 ThermalFactory::~ThermalFactory() {
 }
 
 ThermalFactoryImplStub::~ThermalFactoryImplStub() {
+    thermalShutdownManager_.reset();
 }
 
 }  // end of namespace therm

@@ -28,6 +28,8 @@ class ThermalFactoryImplStub : public ThermalFactory, public telux::common::Fact
     virtual ~ThermalFactoryImplStub();
 
  private:
+    std::shared_ptr<IThermalShutdownManager> thermalShutdownManager_;
+
     ThermalFactoryImplStub();
     std::map<telux::common::ProcType, std::vector<telux::common::InitResponseCb>>
         thermalManagerCallbacks_;

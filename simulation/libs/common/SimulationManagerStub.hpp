@@ -187,7 +187,8 @@ class SimulationManagerStub {
         telux::common::ServiceStatus serviceStatus =
             static_cast<telux::common::ServiceStatus>(response.service_status());
         cbDelay = static_cast<uint32_t>(response.delay());
-        LOG(INFO, __FUNCTION__, ", Init cbDelay:: ", cbDelay);
+        LOG(INFO, __FUNCTION__, ", serviceStatus: ", static_cast<int>(serviceStatus),
+                ", Init cbDelay:: ", cbDelay);
 
         return serviceStatus;
     }

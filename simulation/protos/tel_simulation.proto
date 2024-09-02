@@ -324,6 +324,7 @@ message RttMessageEvent {
     APPSTATE_PUK = 3;
     APPSTATE_SUBSCRIPTION_PERSO = 4;
     APPSTATE_READY = 5;
+    APPSTATE_ILLEGAL = 6;
  }
 
  message CardApp {

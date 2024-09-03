@@ -312,6 +312,8 @@ class LocationInfoEx : public ILocationInfoEx {
     std::vector<float> vrpVel_;
     uint32_t drSolutionStatus_ = 0;
     std::vector<uint16_t> dgnssStationIds_;
+    double baselineLength_ = 0.0;
+    uint64_t ageOfCorrections_ = 0;
 
 public:
 /**
@@ -850,6 +852,17 @@ public:
  */
   virtual std::vector<uint16_t> getDgnssStationIds() override { return dgnssStationIds_; }
 
+ /** Distance between the basestation and the receiver.
+  *  Units: meter.
+ */
+  virtual double getBaselineLength() override { return baselineLength_; }
+
+/** Difference in time between the fix timestamp using the correction
+  * and the time of the correction data.
+  * Units: milliseconds.
+ */
+  virtual uint64_t getAgeOfCorrections() override { return ageOfCorrections_; }
+
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
     void setSpeed(float val) { speed_ = val;}
@@ -945,6 +958,12 @@ public:
     }
     void setDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
         dgnssStationIds_ = dgnssStationIds;
+    }
+    void setBaselineLength(double baselineLength) {
+        baselineLength_ = baselineLength;
+    }
+    void setAgeOfCorrections(uint64_t ageOfCorrections) {
+        ageOfCorrections_ = ageOfCorrections;
     }
 };
 

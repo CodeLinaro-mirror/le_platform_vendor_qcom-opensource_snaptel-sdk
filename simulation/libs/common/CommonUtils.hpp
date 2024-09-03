@@ -100,6 +100,11 @@ class CommonUtils {
     static std::vector<int> convertStringToVector(std::string input);
     static std::string getGrpcPort();
 
+    /**
+     * Print the SDK version in the predefined format to SDK log
+     */
+    static void logSdkVersion();
+
     template<typename T>
     static std::unique_ptr<typename T::Stub> getGrpcStub() {
         return T::NewStub(grpc::CreateChannel(CommonUtils::getGrpcPort(),

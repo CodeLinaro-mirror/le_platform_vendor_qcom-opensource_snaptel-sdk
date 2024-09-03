@@ -56,6 +56,7 @@
 #include "sensor/SensorClientServerImpl.hpp"
 #include "sensor/SensorReportService.hpp"
 #include "tel/SuppServicesManagerServerImpl.hpp"
+#include "platform/DeviceInfoManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -246,6 +247,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SuppServicesManagerServerImpl> suppService =
         std::make_shared<SuppServicesManagerServerImpl>();
     builder.RegisterService(suppService.get());
+
+    std::shared_ptr<DeviceInfoManagerServerImpl> DeviceInfoManagerService =
+        std::make_shared<DeviceInfoManagerServerImpl>();
+    builder.RegisterService(DeviceInfoManagerService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

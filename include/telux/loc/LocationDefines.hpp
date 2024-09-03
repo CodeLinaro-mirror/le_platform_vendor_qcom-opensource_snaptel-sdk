@@ -870,7 +870,11 @@ enum LocationInfoExValidityType {
   /** valid DR Solution status*/
   HAS_SOLUTION_STATUS = (1ULL << 38),
   /** valid dgnssStationId */
-  HAS_DGNSS_STATION_ID = (1ULL<<39)
+  HAS_DGNSS_STATION_ID = (1ULL<<39),
+  /** valid baseline length */
+  HAS_BASE_LINE_LENGTH = (1ULL<<40),
+  /** valid age of correction */
+  HAS_AGE_OF_CORRECTION = (1ULL<<41)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -3080,6 +3084,17 @@ public:
  *  - Other values reserved.
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;
+
+ /** Distance between the basestation and the receiver.
+  *  Units: meter.
+ */
+  virtual double getBaselineLength() = 0;
+
+ /** Difference in time between the fix timestamp using the correction
+  * and the time of the correction data.
+  * Units: milliseconds.
+ */
+  virtual uint64_t getAgeOfCorrections() = 0;
 
 };
 

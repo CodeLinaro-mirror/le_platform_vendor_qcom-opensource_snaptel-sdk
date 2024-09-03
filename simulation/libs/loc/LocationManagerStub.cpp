@@ -768,6 +768,9 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
         ++itr;
     }
     loc->setDgnssStationIds(dgnssStationIds);
+
+    loc->setBaselineLength(std::stod(message[itr++]));
+    loc->setAgeOfCorrections(std::stoull(message[itr++]));
 }
 
 void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,

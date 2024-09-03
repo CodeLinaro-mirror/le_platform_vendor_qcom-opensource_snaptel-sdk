@@ -45,6 +45,29 @@
         "getCallBarringInfo" :
         {
             "status" : "SUCCESS"
+        },
+        "getSmsCapabilityOverNetwork" :
+        {
+            "status" : "SUCCESS"
+        },
+        "getLteCsCapability" :
+        {
+            "status" : "SUCCESS"
+        },
+        "requestRFBandPreferences" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "setRFBandPreferences" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "requestRFBandCapability" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

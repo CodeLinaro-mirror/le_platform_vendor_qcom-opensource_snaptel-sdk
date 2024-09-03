@@ -811,13 +811,18 @@ Update RAT preference and service domain preference
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRatPreferenceChanged
 and telux::tel::IServingSystemListener::onServiceDomainPreferenceChanged
 
-Command: ``telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences>``
+Command: ``telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ,<gsmBands> ,<wcdmaBands> ,<lteBands> ,<nsaBands> ,<saBands>``
 
 **Parameters of event injector command:**
 
 - slotId: valid slotIds are 1 & 2 only
 - serviceDomainPreference: valid integer value is filled as per telux::tel::ServiceDomainPreference
 - ratPreferences: valid integer value is filled as per telux::tel::RatPrefType
+- gsmBands: valid integer value is filled as per telux::tel::GsmRFBand
+- wcdmaBands: valid integer value is filled as per telux::tel:::WcdmaRFBand
+- lteBands: valid integer value is filled as per telux::tel::LteRFBand
+- nsaBands: valid integer value is filled as per telux::tel::NrRFBand
+- saBands: valid integer value is filled as per telux::tel::NrRFBand
 
 example - ratPreferences input is 012 for RAT preference PREF_CDMA_1X , PREF_CDMA_EVDO and PREF_GSM
 
@@ -825,7 +830,7 @@ example - ratPreferences input is 012 for RAT preference PREF_CDMA_1X , PREF_CDM
 
 .. code-block::
 
- telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012
+ telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012 ,1 2 3 ,4 5 6 ,7 8 9 ,10 11 12 ,96 102
 
 Update current system information
 ''''''''''''''''''''''''''''''''''
@@ -833,7 +838,7 @@ Update current system information
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onSystemInfoChanged
 and telux::tel::IServingSystemListener::onDcStatusChanged
 
-Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction>``
+Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability>``
 
 **Parameters of event injector command:**
 
@@ -842,12 +847,15 @@ Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <curre
 - currentServingDomain: valid integer value is filled as per telux::tel::ServiceDomain
 - endcAvailability: valid integer value is filled as per telux::tel::endcAvailability
 - dcnrRestriction: valid integer value is filled as per telux::tel::dcnrRestriction
+- smsRat: valid integer value is filled as per telux::tel::RadioTechnology
+- smsDomain: valid integer value is filled as per telux::tel::SmsDomain
+- lteCapability: valid integer value is filled as per telux::tel::LteCsCapability
 
 **Sample input:**
 
 .. code-block::
 
- telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1
+ telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1 1 1 1
 
 Update network time information
 ''''''''''''''''''''''''''''''''

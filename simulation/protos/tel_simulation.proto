@@ -154,6 +154,16 @@
          (GetNetworkRejectInfoReply) {}
      rpc GetCallBarringInfo (GetCallBarringInfoRequest) returns
          (GetCallBarringInfoReply) {}
+     rpc GetSmsCapabilityOverNetwork (GetSmsCapabilityOverNetworkRequest) returns
+         (GetSmsCapabilityOverNetworkReply) {}
+     rpc GetLteCsCapability (GetLteCsCapabilityRequest) returns
+         (GetLteCsCapabilityReply) {}
+     rpc RequestRFBandPreferences (RequestRFBandPreferencesRequest)
+         returns (RequestRFBandPreferencesReply) {}
+     rpc SetRFBandPreferences (SetRFBandPreferencesRequest)
+         returns (SetRFBandPreferencesReply) {}
+     rpc RequestRFBandCapability (RequestRFBandCapabilityRequest)
+         returns (RequestRFBandCapabilityReply) {}
  }
 
  service NetworkSelectionService {
@@ -258,6 +268,11 @@ message GetCardStateRequest {
      int32 phone_id = 1;
      repeated RatPrefType rat_pref_types = 2;
      ServiceDomainPreference.Pref service_domain_pref = 3;
+     repeated GsmRFBand gsm_pref_bands = 4;
+     repeated WcdmaRFBand wcdma_pref_bands = 5;
+     repeated LteRFBand lte_pref_bands = 6;
+     repeated NrRFBand nsa_pref_bands = 7;
+     repeated NrRFBand sa_pref_bands = 8;
  }
 
  message SystemInfoEvent {
@@ -266,6 +281,9 @@ message GetCardStateRequest {
      ServiceDomainInfo.Domain current_domain = 3;
      EndcAvailability.Status endc_availability = 4;
      DcnrRestriction.Status dcnr_restriction = 5;
+     RadioTechnology sms_rat = 6;
+     SmsDomain sms_domain = 7;
+     LteCsCapability lte_capability = 8;
  }
 
  message NetworkTimeInfoEvent {
@@ -1545,6 +1563,173 @@ message UpdateECallMsdResponse {
      PREF_NR5G_SA = 8;
  }
 
+ enum GsmRFBand {
+    GSM_BAND_0 = 0;
+    GSM_BAND_450 = 1;
+    GSM_BAND_480 = 2;
+    GSM_BAND_750 = 3;
+    GSM_BAND_850 = 4;
+    GSM_BAND_900_EXTENDED = 5;
+    GSM_BAND_900_PRIMARY = 6;
+    GSM_BAND_900_RAILWAYS = 7;
+    GSM_BAND_1800 = 8;
+    GSM_BAND_1900 = 9;
+    GSM_BAND_INVALID = -1;
+}
+
+enum WcdmaRFBand {
+    WCDMA_BAND_0 = 0;
+    WCDMA_BAND_2100 = 1;
+    WCDMA_BAND_PCS_1900 = 2;
+    WCDMA_BAND_DCS_1800 = 3;
+    WCDMA_BAND_1700_US = 4;
+    WCDMA_BAND_850 = 5;
+    WCDMA_BAND_800 = 6;
+    WCDMA_BAND_2600 = 7;
+    WCDMA_BAND_900 = 8;
+    WCDMA_BAND_1700_JAPAN = 9;
+    WCDMA_BAND_1500_JAPAN = 10;
+    WCDMA_BAND_850_JAPAN = 11;
+    WCDMA_BAND_INVALID = -1;
+}
+
+enum LteRFBand {
+    E_UTRA_BAND_0 = 0;
+    E_UTRA_BAND_1 = 1;
+    E_UTRA_BAND_2 = 2;
+    E_UTRA_BAND_3 = 3;
+    E_UTRA_BAND_4 = 4;
+    E_UTRA_BAND_5 = 5;
+    E_UTRA_BAND_6 = 6;
+    E_UTRA_BAND_7 = 7;
+    E_UTRA_BAND_8 = 8;
+    E_UTRA_BAND_9 = 9;
+    E_UTRA_BAND_10 = 10;
+    E_UTRA_BAND_11 = 11;
+    E_UTRA_BAND_12 = 12;
+    E_UTRA_BAND_13 = 13;
+    E_UTRA_BAND_14 = 14;
+    E_UTRA_BAND_17 = 17;
+    E_UTRA_BAND_18 = 18;
+    E_UTRA_BAND_19 = 19;
+    E_UTRA_BAND_20 = 20;
+    E_UTRA_BAND_21 = 21;
+    E_UTRA_BAND_23 = 23;
+    E_UTRA_BAND_24 = 24;
+    E_UTRA_BAND_25 = 25;
+    E_UTRA_BAND_26 = 26;
+    E_UTRA_BAND_27 = 27;
+    E_UTRA_BAND_28 = 28;
+    E_UTRA_BAND_29 = 29;
+    E_UTRA_BAND_30 = 30;
+    E_UTRA_BAND_31 = 31;
+    E_UTRA_BAND_32 = 32;
+    E_UTRA_BAND_33 = 33;
+    E_UTRA_BAND_34 = 34;
+    E_UTRA_BAND_35 = 35;
+    E_UTRA_BAND_36 = 36;
+    E_UTRA_BAND_37 = 37;
+    E_UTRA_BAND_38 = 38;
+    E_UTRA_BAND_39 = 39;
+    E_UTRA_BAND_40 = 40;
+    E_UTRA_BAND_41 = 41;
+    E_UTRA_BAND_42 = 42;
+    E_UTRA_BAND_43 = 43;
+    E_UTRA_BAND_44 = 44;
+    E_UTRA_BAND_46 = 46;
+    E_UTRA_BAND_47 = 47;
+    E_UTRA_BAND_48 = 48;
+    E_UTRA_BAND_49 = 49;
+    E_UTRA_BAND_53 = 53;
+    E_UTRA_BAND_60 = 60;
+    E_UTRA_BAND_66 = 66;
+    E_UTRA_BAND_67 = 67;
+    E_UTRA_BAND_68 = 68;
+    E_UTRA_BAND_70 = 70;
+    E_UTRA_BAND_71 = 71;
+    E_UTRA_BAND_85 = 85;
+    E_UTRA_BAND_106 = 106;
+    E_UTRA_BAND_125 = 125;
+    E_UTRA_BAND_126 = 126;
+    E_UTRA_BAND_127 = 127;
+    E_UTRA_BAND_250 = 250;
+    E_UTRA_BAND_252 = 252;
+    E_UTRA_BAND_253 = 253;
+    E_UTRA_BAND_255 = 255;
+    E_UTRA_BAND_256 = 256;
+    E_UTRA_BAND_INVALID = -1;
+}
+
+enum NrRFBand {
+    NR_BAND_0 = 0;
+    NR_BAND_1 = 1;
+    NR_BAND_2 = 2;
+    NR_BAND_3 = 3;
+    NR_BAND_5 = 5;
+    NR_BAND_7 = 7;
+    NR_BAND_8 = 8;
+    NR_BAND_12 = 12;
+    NR_BAND_13 = 13;
+    NR_BAND_14 = 14;
+    NR_BAND_18 = 18;
+    NR_BAND_20 = 20;
+    NR_BAND_25 = 25;
+    NR_BAND_26 = 26;
+    NR_BAND_28 = 28;
+    NR_BAND_29 = 29;
+    NR_BAND_30 = 30;
+    NR_BAND_34 = 34;
+    NR_BAND_38 = 38;
+    NR_BAND_39 = 39;
+    NR_BAND_40 = 40;
+    NR_BAND_41 = 41;
+    NR_BAND_46 = 46;
+    NR_BAND_47 = 47;
+    NR_BAND_48 = 48;
+    NR_BAND_50 = 50;
+    NR_BAND_51 = 51;
+    NR_BAND_53 = 53;
+    NR_BAND_65 = 65;
+    NR_BAND_66 = 66;
+    NR_BAND_67 = 67;
+    NR_BAND_68 = 68;
+    NR_BAND_70 = 70;
+    NR_BAND_71 = 71;
+    NR_BAND_74 = 74;
+    NR_BAND_75 = 75;
+    NR_BAND_76 = 76;
+    NR_BAND_77 = 77;
+    NR_BAND_78 = 78;
+    NR_BAND_79 = 79;
+    NR_BAND_80 = 80;
+    NR_BAND_81 = 81;
+    NR_BAND_82 = 82;
+    NR_BAND_83 = 83;
+    NR_BAND_84 = 84;
+    NR_BAND_85 = 85;
+    NR_BAND_86 = 86;
+    NR_BAND_89 = 89;
+    NR_BAND_91 = 91;
+    NR_BAND_92 = 92;
+    NR_BAND_93 = 93;
+    NR_BAND_94 = 94;
+    NR_BAND_95 = 95;
+    NR_BAND_96 = 96;
+    NR_BAND_97 = 97;
+    NR_BAND_98 = 98;
+    NR_BAND_99 = 99;
+    NR_BAND_102 = 102;
+    NR_BAND_104 = 104;
+    NR_BAND_105 = 105;
+    NR_BAND_106 = 106;
+    NR_BAND_257 = 257;
+    NR_BAND_258 = 258;
+    NR_BAND_259 = 259;
+    NR_BAND_260 = 260;
+    NR_BAND_261 = 261;
+    NR_BAND_INVALID = -1;
+}
+
  message RequestRATPreferenceReply {
      repeated RatPrefType rat_pref_types = 1;
      commonStub.ErrorCode error = 2;
@@ -2678,6 +2863,89 @@ message GetNetworkRejectInfoRequest {
 
 message GetCallBarringInfoRequest {
     int32 phone_id = 1;
+}
+
+enum SmsDomain {
+   NO_SMS = 0;           /**< Can't receive SMS */
+   SMS_ON_IMS = 1;       /**< SMS is supported over IMS network */
+   SMS_ON_3GPP = 2;      /**< SMS is supported over 3GPP network */
+   UNKNOWN_DOMAIN = -1;  /**< Unknown, when the information is not available */
+};
+
+message GetSmsCapabilityOverNetworkRequest {
+    int32 phone_id = 1;
+}
+
+message GetSmsCapabilityOverNetworkReply {
+    RadioTechnology rat = 1;
+    SmsDomain domain = 2;
+    commonStub.Status status = 3;
+}
+
+enum  LteCsCapability {
+   FULL_SERVICE = 0;        /**< Full service on CS domain is available */
+   CSFB_NOT_PREFERRED = 1;  /**< CSFB is not preferred */
+   SMS_ONLY = 2;            /**< CS registation is for SMS only */
+   LIMITED = 3;             /**< CS registation failed for max attach or tracking area
+                                updating(TAU) attempts */
+   BARRED = 4;              /**< CS domain not available */
+   UNKNOWN_SERVICE = -1;    /**< Unknown, when the information is not available */
+}
+
+message GetLteCsCapabilityRequest {
+    int32 phone_id = 1;
+}
+
+message GetLteCsCapabilityReply {
+    LteCsCapability capability  = 1;
+    commonStub.Status status = 2;
+}
+
+message RequestRFBandPreferencesRequest {
+    int32 phone_id = 1;
+}
+
+message RequestRFBandPreferencesReply {
+    repeated GsmRFBand gsm_pref_bands = 1;
+    repeated WcdmaRFBand wcdma_pref_bands = 2;
+    repeated LteRFBand lte_pref_bands = 3;
+    repeated NrRFBand nsa_pref_bands = 4;
+    repeated NrRFBand sa_pref_bands = 5;
+    commonStub.ErrorCode error = 6;
+    commonStub.Status status = 7;
+    int32 delay = 8;
+    bool is_callback = 9;
+}
+
+message SetRFBandPreferencesRequest {
+    int32 phone_id = 1;
+    repeated GsmRFBand gsm_pref_bands = 2;
+    repeated WcdmaRFBand wcdma_pref_bands = 3;
+    repeated LteRFBand lte_pref_bands = 4;
+    repeated NrRFBand nsa_pref_bands = 5;
+    repeated NrRFBand sa_pref_bands = 6;
+}
+
+message SetRFBandPreferencesReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool is_callback = 4;
+}
+
+message RequestRFBandCapabilityRequest {
+    int32 phone_id = 1;
+}
+
+message RequestRFBandCapabilityReply {
+    repeated GsmRFBand gsm_capability_bands = 1;
+    repeated WcdmaRFBand wcdma_capability_bands = 2;
+    repeated LteRFBand lte_capability_bands = 3;
+    repeated NrRFBand nr_capability_bands = 4;
+    commonStub.ErrorCode error = 5;
+    commonStub.Status status = 6;
+    int32 delay = 7;
+    bool is_callback = 8;
 }
 
 enum ServiceState {

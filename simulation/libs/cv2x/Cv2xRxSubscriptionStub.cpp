@@ -16,11 +16,13 @@ namespace cv2x {
 atomic<uint32_t> Cv2xRxSubscription::Id{0};
 
 Cv2xRxSubscription::Cv2xRxSubscription(
-    int sock, const struct sockaddr_in6 &sockAddr, TrafficIpType type)
+    int sock, const struct sockaddr_in6 &sockAddr, TrafficIpType type,
+    const std::shared_ptr<std::vector<uint32_t>> idList)
    : id_(Cv2xRxSubscription::Id++)
    , sock_(sock)
    , sockAddr_(sockAddr)
-   , ipType_(type) {
+   , ipType_(type)
+   , idList_(idList) {
 }
 
 uint32_t Cv2xRxSubscription::getSubscriptionId() const {
@@ -48,7 +50,7 @@ std::shared_ptr<std::vector<uint32_t>> Cv2xRxSubscription::getServiceIDList() co
 }
 
 void Cv2xRxSubscription::setServiceIDList(const std::shared_ptr<std::vector<uint32_t>> idList) {
-    idList_ = idList;
+    // deprecated, do nothing
 }
 
 void Cv2xRxSubscription::closeSock() {

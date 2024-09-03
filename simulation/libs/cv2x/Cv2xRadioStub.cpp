@@ -844,10 +844,7 @@ void Cv2xRadioSimulation::createRxSubscriptionSync(TrafficIpType ipType, uint16_
         if (telux::common::Status::SUCCESS == status) {
             LOG(DEBUG, __FUNCTION__, " Rx subscription succeeded");
 
-            rxSub = make_shared<Cv2xRxSubscription>(sock, sockAddr, ipType);
-
-            // set SID list when subscription succeed
-            rxSub->setServiceIDList(idList);
+            rxSub = make_shared<Cv2xRxSubscription>(sock, sockAddr, ipType, idList);
 
             // Add to list of subscriptions. This may be unnecessary.
             // TODO: Revisit if this is necessary. We may want to simply keep a count

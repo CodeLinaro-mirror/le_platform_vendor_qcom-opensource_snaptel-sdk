@@ -1584,6 +1584,21 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     callInfo.isMsdTransmitted = false;
     callInfo.isMultiPartyCall = true;
     callInfo.isMpty = true;
+    telStub::RadioTechnology rat;
+    std::vector<telStub::RadioTechnology> psRatList =
+        {telStub::RadioTechnology::RADIO_TECH_NR5G,
+        telStub::RadioTechnology::RADIO_TECH_LTE};
+    if(telux::common::ErrorCode::SUCCESS ==
+        TelUtil::readVoiceRadioTechnologyFromJsonFile(callInfo.phoneId, rat)) {
+        if (std::find(psRatList.begin(), psRatList.end(), rat) != psRatList.end()) {
+            callInfo.callType = CallType::VOICE_IP_CALL;
+        } else {
+            callInfo.callType = CallType::VOICE_CALL;
+        }
+    } else {
+        callInfo.callType = CallType::VOICE_CALL;
+    }
+
     callInfo_ = callInfo;
     auto call = std::make_shared<CallInfo>(callInfo);
     logCallDetails(call);

@@ -203,7 +203,7 @@ int LocationMenu::init() {
                         std::bind(&LocationMenu::configureLeverArm, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Configure blacklist constellation or SVs ", {}, std::bind(
+      ConsoleAppCommand("10", "Configure blacklist constellation or SVs", {}, std::bind(
                         &LocationMenu::configureConstellation, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureRobustLocation = std::make_shared<ConsoleAppCommand>(

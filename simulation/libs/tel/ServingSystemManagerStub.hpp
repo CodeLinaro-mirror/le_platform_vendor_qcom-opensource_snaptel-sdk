@@ -106,7 +106,6 @@ private:
     telux::common::ServiceStatus subSystemStatus_;
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
-    void handleCallBarringInfosChanged (::telStub::CallBarringInfosEvent event);
     void handleSystemInfoChanged(::telStub::SystemInfoEvent event);
     void handleSystemSelectionPreferenceChanged(::telStub::SystemSelectionPreferenceEvent event);
     void handleNetworkTimeChange(::telStub::NetworkTimeInfoEvent event);

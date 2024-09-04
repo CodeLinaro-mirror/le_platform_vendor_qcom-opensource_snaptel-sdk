@@ -83,7 +83,6 @@ public:
     void onServerEvent(google::protobuf::Any event) override;
 
 private:
-    void handleCallBarringUpdate(std::string eventParams);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
     void onEventUpdate(std::string event);
     void handleSystemSelectionPreferenceChanged(std::string eventParams);

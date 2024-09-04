@@ -1490,6 +1490,14 @@ struct GnssDisasterCrisisReport {
      * per the dcReportData.
      */
     uint16_t numValidBits;
+    /**
+     * Pseudo-Random Number validity
+     */
+    bool prnValid;
+    /**
+     * Pseudo-Random Number.
+     */
+    uint8_t prn;
 };
 
 /** Specifies Source of Ephemeris data */

@@ -1215,6 +1215,14 @@ message GnssDisasterCrisisReport {
      * per the dcReportData.
      */
     uint32 num_valid_bits = 3;
+    /**
+     * Pseudo-Random Number validity
+     */
+    bool prn_validity = 4;
+    /**
+     * Pseudo-Random Number, uint8_t value.
+     */
+    uint32 prn = 5;
 }
 
 // Left Shift

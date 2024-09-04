@@ -25,6 +25,7 @@ pkg_check_modules(TELUX_THERM_LIB telux-therm)
 pkg_check_modules(TELUX_LOC_LIB telux-loc)
 pkg_check_modules(TELUX_CONFIG_LIB telux-config)
 pkg_check_modules(TELUX_SEC_CON_LIB telux-sec-con)
+pkg_check_modules(TELUX_SQUISH_LIB telux_squish)
 
 
 if (TELUX_TEL_LIB_FOUND)
@@ -119,6 +120,11 @@ if (TELUX_FOR_EXTERNAL_AP)
         add_definitions(-DTELUX_QTI_EXTERNAL_AP)
     endif (TELUX_QTI_EXTERNAL_AP)
 endif (TELUX_FOR_EXTERNAL_AP)
+
+if (TELUX_SQUISH_LIB_FOUND)
+   set (TELSDK_FEATURE_SQUISH ON)
+   add_definitions(-DTELSDK_FEATURE_SQUISH_ENABLED)
+endif (TELUX_SQUISH_LIB_FOUND)
 
 #For simulation apps, set rpath to CMAKE_INSTALL_LIBDIR for telux stub libraries
 if(BUILD_FOR_SIMULATION)

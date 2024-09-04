@@ -17,7 +17,7 @@ ThermalJsonImpl::~ThermalJsonImpl(){
     LOG(DEBUG, __FUNCTION__);
 }
 
-telux::common::Status ThermalJsonImpl::init() {
+telux::common::Status ThermalJsonImpl::readJsonObjects() {
     LOG(DEBUG, __FUNCTION__, ":: State Json Path: ", THERMAL_STATE_JSON,
             " Api Json Path: ", THERMAL_MANAGER_API_JSON);
 
@@ -38,6 +38,7 @@ telux::common::Status ThermalJsonImpl::init() {
 }
 
 telux::common::ServiceStatus ThermalJsonImpl::initServiceStatus() {
+    readJsonObjects();
     std::string srvStatus = thermMgrApi_["IThermalManager"]["IsSubsystemReady"].asString();
     LOG(DEBUG, __FUNCTION__, ":: SubSystemStatus: ", srvStatus);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -47,6 +48,7 @@ telux::common::ServiceStatus ThermalJsonImpl::initServiceStatus() {
 }
 
 int ThermalJsonImpl::getSubsystemReadyDelay() {
+    readJsonObjects();
     int subSysDelay = thermMgrApi_["IThermalManager"]["IsSubsystemReadyDelay"].asInt();
     LOG(DEBUG, __FUNCTION__, ":: SubSystemDelay: ", subSysDelay);
     return subSysDelay;

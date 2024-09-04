@@ -20,9 +20,9 @@ ThermalGrpcServerImpl::ThermalGrpcServerImpl() {
         LOG(DEBUG, __FUNCTION__, ":: Invalid object ! ");
     }
 
-    auto status = jsonHelper_->init();
+    auto status = jsonHelper_->readJsonObjects();
     if (status != telux::common::Status::SUCCESS) {
-        LOG(DEBUG, __FUNCTION__, ":: Init of thermal zones failed");
+        LOG(DEBUG, __FUNCTION__, ":: reading of json failed");
     }
 }
 

@@ -27,7 +27,7 @@ class ThermalJsonImpl {
         ThermalJsonImpl();
         ~ThermalJsonImpl();
 
-        telux::common::Status init();
+        telux::common::Status readJsonObjects();
 
         telux::common::ServiceStatus initServiceStatus();
         telux::common::ServiceStatus getServiceStatus();

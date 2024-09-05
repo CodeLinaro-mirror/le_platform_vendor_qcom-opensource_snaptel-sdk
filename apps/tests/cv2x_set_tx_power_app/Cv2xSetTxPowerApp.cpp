@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     } while (not inputInRange);
 
     cout << "Desired tx power " << txPower << endl;
-    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }

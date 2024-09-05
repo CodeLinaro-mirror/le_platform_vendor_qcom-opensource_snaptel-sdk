@@ -1059,7 +1059,7 @@ static int startUnicastOBU() {
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Unicast app" << endl;
-    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

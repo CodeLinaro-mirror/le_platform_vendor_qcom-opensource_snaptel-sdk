@@ -138,7 +138,7 @@ void FileSystemTestApp::consoleinit() {
 int main(int argc, char **argv) {
     Status ret = Status::FAILED;
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;

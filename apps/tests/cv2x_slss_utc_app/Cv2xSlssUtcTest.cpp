@@ -220,7 +220,7 @@ static int deregisterUtcReport() {
 int main(int argc, char *argv[]) {
     cout << "Running CV2X SLSS UTC Test APP" << endl;
 
-    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "logd", "dlt"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << endl;
     }

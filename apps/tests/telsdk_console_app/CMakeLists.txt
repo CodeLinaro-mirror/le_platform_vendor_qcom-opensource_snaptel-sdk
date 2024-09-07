@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${telematics-apps_SOURCE_DIR}/common
+    ${telematics-apps_SOURCE_DIR}/common/utils)
+
 if (TELSDK_FEATURE_TEL)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
@@ -105,12 +110,6 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
-)
-
-include_directories(BEFORE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common
-    ${telematics-apps_SOURCE_DIR}/common/utils
 )
 
 # set global variables

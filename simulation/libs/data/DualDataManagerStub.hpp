@@ -38,6 +38,21 @@ public:
     telux::common::ErrorCode getDualDataUsageRecommendation(
         DualDataUsageRecommendation &recommendation) override;
 
+    // API to request DDS switch
+    telux::common::Status requestDdsSwitch(DdsInfo request,
+        telux::common::ResponseCallback callback = nullptr) override;
+
+    // API to request current DDS
+    telux::common::Status requestCurrentDds(RequestCurrentDdsRespCb callback) override;
+
+    // API to configure DDS switch recommendation
+    telux::common::ErrorCode configureDdsSwitchRecommendation(
+        const DdsSwitchRecommendationConfig recommendationConfig) override;
+
+    // API to get current DDS switch recommendation
+    telux::common::ErrorCode getDdsSwitchRecommendation(
+        DdsSwitchRecommendation &ddsSwitchRecommendation) override;
+
     void onEventUpdate(google::protobuf::Any event) override;
     void handleCapabilityChangeEvent(::dataStub::DualDataCapabilityEvent capabilityEvent);
     void handleRecommendationChangeEvent(

@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <iostream>
 #include <memory>
@@ -61,17 +66,29 @@ void ThermalListener::onServiceStatusChange(ServiceStatus status) {
         PRINT_NOTIFICATION << "Service Status : UNAVAILABLE" << std::endl;
     } else if(status == ServiceStatus::SERVICE_AVAILABLE) {
         PRINT_NOTIFICATION << "Service Status : AVAILABLE" << std::endl;
+        std::lock_guard<std::mutex> lock(listenerMtx_);
+        taskCompleted_ = true;
+        std::cout << " Notifying To CommandManager" << std::endl;
+        listenerCv_.notify_all();
     }
 }
 
 void ThermalListener::onShutdownEnabled() {
     std::cout << std::endl;
     printAutoShutdownMode(AutoShutdownMode::ENABLE);
+    std::lock_guard<std::mutex> lock(listenerMtx_);
+    taskCompleted_ = true;
+    std::cout << " Notifying To CommandManager" << std::endl;
+    listenerCv_.notify_all();
 }
 
 void ThermalListener::onShutdownDisabled() {
     std::cout << std::endl;
     printAutoShutdownMode(AutoShutdownMode::DISABLE);
+    std::lock_guard<std::mutex> lock(listenerMtx_);
+    taskCompleted_ = true;
+    std::cout << " Notifying To CommandManager" << std::endl;
+    listenerCv_.notify_all();
 }
 
 void ThermalListener::onImminentShutdownEnablement(uint32_t imminentDuration) {

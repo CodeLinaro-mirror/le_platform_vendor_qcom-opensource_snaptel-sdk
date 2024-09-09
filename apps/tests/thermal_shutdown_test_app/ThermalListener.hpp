@@ -26,12 +26,18 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef THERMALLISTENER_HPP
 #define THERMALLISTENER_HPP
 
 #include <mutex>
 #include <atomic>
+#include <condition_variable>
 
 #include <telux/therm/ThermalDefines.hpp>
 #include <telux/therm/ThermalShutdownListener.hpp>
@@ -46,6 +52,9 @@ public:
    void onShutdownDisabled() override;
    void onImminentShutdownEnablement(uint32_t imminentDuration) override;
    void onServiceStatusChange(ServiceStatus status) override;
+   std::mutex listenerMtx_;
+   std::condition_variable listenerCv_;
+   bool taskCompleted_ = false;
 
    ThermalListener(std::weak_ptr<ThermalCommandMgr> MyThermCmdMgr);
    ~ThermalListener();

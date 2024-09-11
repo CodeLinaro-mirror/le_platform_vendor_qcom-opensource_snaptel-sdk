@@ -195,6 +195,90 @@ To run applications without the docker container:
   2. The path ``<DESTINATION_FOLDER_ROOT_PATH>/data/telux/`` holds all TelSDK simulation related data.
   3. The path ``<DESTINATION_FOLDER_ROOT_PATH>/etc/telux/tel.conf`` holds TelSDK simulation configuration data.
 
+Build and run inside docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build various components of the Simulation framework inside docker
+
+1. Fetch the source code
+
+  .. code-block::
+
+    $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0.r11-rel telux
+    $ cd telux/
+
+2. Build docker development image
+
+  .. code-block::
+
+    $ cd telux/
+    $ ./build_sim.sh docker-development-image <DESTINATION_FOLDER_ROOT_PATH>
+
+    **Note:**
+    1. To build a Docker development image for an Ubuntu version different from the host machine, set the UBUNTU_VERSION variable before running the script.
+    2. For build inside the docker, the DESTINATION_FOLDER_ROOT_PATH can be set to the root directory. For example: ./build_sim.sh all /
+    3. If the host machine is running version 18.04, and Ubuntu 22.04 docker image needs to be created, set the UBUNTU_VERSION variable to 2204
+    4. Currently supported: Ubuntu 18.04, Ubuntu 20.04 and Ubunt 22.04
+
+3. Run docker container
+  .. code-block::
+
+    $ docker run -ti --rm -h telsdk_simulation -v <host-machine-dir>:<docker-contatiner-dir> telsdk-sim-image-develop
+
+    For example:
+    docker run -ti --rm -h telsdk_simulation -v $PWD:/home/docker telsdk-sim-image-develop
+
+4. Set up build dependencies
+
+.. code-block::
+
+  #Install jsoncpp, cmake 3.15.3, gRPC.
+  $ ./build_sim.sh setup <DESTINATION_FOLDER_ROOT_PATH>
+
+5. Build simulation libraries, TelSDK sample apps, and test apps
+
+.. code-block::
+
+  $ ./build_sim.sh all <DESTINATION_FOLDER_ROOT_PATH>
+
+**Note:** All the required TelSDK simulation include files, libs, and binaries get installed in <DESTINATION_FOLDER_ROOT_PATH>
+
+6. Export path
+
+.. code-block::
+
+  $ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
+
+The above script would setup different environment variables like ``PATH, LD_LIBRARY_PATH, PKG_CONFIG_PATH, CC, CXX``, etc.
+
+
+7. To perform a build for user applications using cmake
+
+.. code-block::
+
+  $ cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=<DESTINATION_FOLDER_ROOT_PATH>/include -DCMAKE_INSTALL_PREFIX=<DESTINATION_FOLDER_ROOT_PATH> <APPS_CMAKE_PATH> && make install
+
+
+To run the application inside docker:
+
+1. Export path, if not already done
+
+  .. code-block::
+
+    $ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
+
+2. Start simulation server in the background
+
+  .. code-block::
+
+    $ telsdk_simulation_server &
+
+3. User application can be started or if users wish to run one of the SDK's sample app or test app, then
+
+  .. code-block::
+
+    $ <APP_NAME>
+
 
 ---------------------------------------
 Configuring behavior of the simulation

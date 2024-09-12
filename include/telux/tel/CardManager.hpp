@@ -110,6 +110,29 @@ using EidResponseCallback
     = std::function<void(const std::string &eid, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to requestLastRefreshEvent API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] stage            Card refresh stage @ref telux::tel:RefreshStage
+ * @param [in] mode             Card refresh mode @ref telux::tel:RefreshMode
+ * @param [in] efFiles          List of the elementary file path and identifier
+ * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+ *                              Client provides the session type, application
+ *                              identifier or logical channel number to listen
+ *                              for the corresponding refresh event.
+ * @param [in] error            Return code which indicates whether the operation
+ *                              succeeded or not. @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using refreshLastEventResponseCallback
+    = std::function<void(RefreshStage stage, RefreshMode mode, std::vector<IccFile> efFiles,
+    RefreshParams refreshParams, telux::common::ErrorCode error)>;
+
+/**
  * ICardManager provide APIs for slot count, retrieve slot ids, get card state and get card.
  */
 class ICardManager {
@@ -209,6 +232,200 @@ class ICardManager {
     virtual telux::common::Status cardPowerDown(SlotId slotId,
         telux::common::ResponseCallback callback = nullptr)
         = 0;
+
+    /**
+     * Register and deregister for refresh events from card and optionally allow client to
+     * participate in voting. The client is notified to participate in voting through
+     * @ref telux::tel::ICardListener::onRefreshEvent with
+     * @ref telux::tel::RefreshStage::WAITING_FOR_VOTES. The client must then invoke the
+     * allowCardRefresh API to permit the refresh. For the refresh procedure to continue, all
+     * clients participating in the voting must allow the refresh, if any client disallows it,
+     * the refresh process will fail and be communicated to the card.
+     * The API also allow to register for file change notification triggered due to change in
+     * EFs in the card application.
+     * This API can be invoked multiple times to register with different session types, as
+     * specified in @ref telux::tel::SessionType. If the API is invoked twice with the same
+     * session type, the new values will overwrite the previous ones.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_CARD_REFRESH
+     * and TELUX_TEL_CARD_REFRESH_VOTING permission to successfully invoke this API.
+     *
+     * @param [in] slotId           Slot identifier corresponding to the card which needs to be
+     *                              refreshed.
+     * @param [in] isRegister       If true register for refresh events to be received through
+     *                              @ref telux::tel::ICardListener::onRefreshEvent, otherwise,
+     *                              deregister for refresh events that will not be delivered.
+     * @param [in] doVoting         If true, then participate in voting to allow refresh
+     *                              procedure otherwise do not participate.
+     * @param [in] efFiles          List of the elementary file path and identifier, and
+     *                              this parameter only needs to be set to get refresh events
+     *                              for refresh modes such as @ref telux::tel::RefreshMode::INIT,
+     *                              @ref telux::tel::RefreshMode::FCN and
+     *                              @ref telux::tel::RefreshMode::INIT_FULL_FCN.
+     * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+     *                              Client provides the session type, application
+     *                              identifier or logical channel number to listen
+     *                              for the corresponding refresh event.
+     * @param [in] callback         Optional callback pointer to get the result of
+     *                              setupRefreshConfig
+     *
+     * @returns Status of setupRefreshConfig i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::Status setupRefreshConfig(
+        SlotId slotId, bool isRegister, bool doVoting, std::vector<IccFile> efFiles,
+        RefreshParams refreshParams, common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Allow or disallow the initiation of the card refresh procedure. This function enables
+     * the client to vote on whether it is acceptable to start the refresh procedure. The refresh
+     * will only commence once all registered clients (on HLOS or modem) have voted in favor of
+     * starting.
+     * This API should only be used after the client receives the card refresh notification via
+     * @ref telux::tel::ICardListener::onRefreshEvent, which indicates the stage of waiting for
+     * approval to refresh (@ref telux::tel::RefreshStage::WAITING_FOR_VOTES). This API must be
+     * called within a specified time frame (default is 10 seconds) using allowRefresh(true) after
+     * receiving the notification, otherwise, the modem will consider the refresh as failed, and
+     * the client will be notified of the failure through the card refresh failure notification
+     * via @ref telux::tel::ICardListener::onRefreshEvent and
+     * @ref telux::tel::RefreshStage::ENDED_WITH_FAILURE after the timer in modem expires.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_CARD_REFRESH_VOTING permission to successfully invoke this API.
+     *
+     * @param [in] slotId           Slot identifier corresponding to the card which needs to be
+     *                              refreshed.
+     * @param [in] allowRefresh     If true, allow the SIM refresh otherwise, disallow it.
+     * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+     *                              Client provides the session type, application
+     *                              identifier or logical channel number to listen
+     *                              for the corresponding refresh event.
+     * @param [in] callback         Optional callback pointer to get the result of
+     *                              allowCardRefresh
+     *
+     * @returns Status of allowCardRefresh i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::Status allowCardRefresh(SlotId slotId, bool allowRefresh,
+        RefreshParams refreshParams, common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Indicates that the card refresh procedure is completed from the client application's
+     * perspective to the modem.
+     * This API should only be used after the client receives the card refresh notification
+     * via @ref telux::tel::ICardListener::onRefreshEvent, which indicates the stage of
+     * starting the refresh procedure(@ref telux::tel::RefreshStage::STARTING) and the
+     * client has invalidated the cache or reread the cache for the session type. This API
+     * must be called within a specified time frame (default is 120 seconds) after receiving
+     * the notification, otherwise, the modem will consider the refresh as failed, and the
+     * client will be notified of the failure through the card refresh failure notification
+     * via @ref telux::tel::ICardListener::onRefreshEvent and
+     * @ref telux::tel::RefreshStage::ENDED_WITH_FAILURE after the timer in modem expires.
+     *
+     * Below table describes describes the session type and refresh mode in which the client
+     * needs to call this API after the stage of starting the refresh
+     * (@ref telux::tel::RefreshStage::STARTING).
+     ********************************************************
+     *  Mode  *                          Stage
+     ********************************************************
+     *        *WAIT      *                                  *
+     *        *FOR_VOTES *           STARTING               *
+     ********************************************************
+     * FCN    * Vote if  * Reread the files (EFs) being     *
+     *        * it is OK * refreshed and then invoke the    *
+     *        *    to    * @ref telux::tel::ICardManager    *
+     *        * continue * ::confirmRefreshHandlingCompleted*
+     ********** with the ************************************
+     * Init   * refresh. * Provisioning session: Invalidate *
+     *        *          * all cached values.               *
+     *        *          * Nonprovisioning session: Reread  *
+     *        *          * the files (EFs), and then invoke *
+     *        *          * the @ref telux::tel::ICardManager*
+     *        *          * ::confirmRefreshHandlingCompleted*
+     **********          ************************************
+     * Init + *          * Provisioning session:Invalidate  *
+     * FCN    *          * cached values of files (EFs) in  *
+     *        *          * the FCN list.                    *
+     *        *          * Nonprovisioning session: Reread  *
+     *        *          * the files (EFs) in the FCN list, *
+     *        *          * and then invoke the              *
+     *        *          * @ref telux::tel::ICardManager    *
+     *        *          * ::confirmRefreshHandlingCompleted*
+     **********          ************************************
+     * Init + *          * Provisioning session: Invalidate *
+     * Full   *          * all cached values.               *
+     * FCN    *          * Nonprovisioning session: Reread  *
+     *        *          * the files (EFs), and then invoke *
+     *        *          * the @ref telux::tel::ICardManager*
+     *        *          * ::confirmRefreshHandlingCompleted*
+     **********          ************************************
+     * App    *          * Provisioning session: Invalidate *
+     * reset  *          * all cached values.               *
+     *        *          * Nonprovisioning session: invoke  *
+     *        *          * the @ref telux::tel::ICardManager*
+     *        *          * ::confirmRefreshHandlingCompleted*
+     *        *          * and wait for End Stage.          *
+     *        *          * Provisioning session: Wait for   *
+     *        *          * the application state to be Ready*
+     *        *          * or End Stage.                    *
+     **********          ************************************
+     * 3G     *          * Delete all cached values.        *
+     * session*          * Nonprovisioning session: invoke  *
+     * reset  *          * the @ref telux::tel::ICardManager*
+     *        *          * ::confirmRefreshHandlingCompleted*
+     ********************************************************
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_CARD_REFRESH
+     * permission to successfully invoke this API.
+     *
+     * @param [in] slotId           Slot identifier corresponding to the card which needs to be
+     *                              refreshed.
+     * @param [in] isCompleted      If true, the refresh handling is completed; otherwise, it
+     *                              is not completed due to an error in invalidating the cache
+     *                              or rereading the files.
+     * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+     *                              Client provides the session type, application
+     *                              identifier or logical channel number to listen
+     *                              for the corresponding refresh event.
+     * @param [in] callback         Optional callback pointer to get the result of
+     *                              confirmRefreshHandlingCompleted
+     *
+     * @returns Status of confirmRefreshHandlingCompleted i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId,
+        bool isCompleted, RefreshParams refreshParams,
+        common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Provides ability to retrieve content similar to that previously received on
+     * telux::tel::ICardListener::onRefreshEvent.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_CARD_REFRESH
+     * permission to successfully invoke this API.
+     *
+     * @param [in] slotId           Slot identifier corresponding to the card which needs to be
+     *                              refreshed.
+     * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+     *                              Client provides the session type, application
+     *                              identifier or logical channel number to listen
+     *                              for the corresponding refresh event.
+     * @param [in] callback         Callback function to get the result of request the last event
+     *                              of card refresh.
+     *
+     * @returns Status of requestLastRefreshEvent i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestLastRefreshEvent(SlotId slotId,
+        RefreshParams refreshParams, refreshLastEventResponseCallback callback) = 0;
 
     /**
      * Register a listener for card events.
@@ -450,6 +667,89 @@ class ICardListener : public common::IServiceStatusListener {
      * @param [in] slotId   Slot identifier.
      */
     virtual void onCardInfoChanged(int slotId) {
+    }
+
+    /**
+     * This function is called when a card refresh notification comes from the card.
+     *
+     * @param [in] slotId           Slot identifier.
+     * @param [in] stage            Card refresh stage @ref telux::tel:RefreshStage
+     * @param [in] mode             Card refresh mode @ref telux::tel:RefreshMode
+     * @param [in] efFiles          List of the elementary file path and identifier
+     * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
+     *                              Client provides the session type, application
+     *                              identifier or logical channel number to listen
+     *                              for the corresponding refresh event.
+     *
+     * Below table describes the expected behavior of a client when it receives a refresh
+     * indication after registering for it. The behavior depends on the mode and the stage,
+     * as indicated in the refresh indication.The refresh will only commence once all
+     * registered clients (on HLOS or modem) have voted in favor of starting. On receiving
+     * this refresh stage WAIT_FOR_VOTES, client is expected to call
+     * @ref telux::tel::ICardManager::allowCardRefresh to allow refresh procedure to start.
+     ***************************************************************************************
+     *  Mode  *                          Stage                                             *
+     ***************************************************************************************
+     *        *WAIT      *                                  *                              *
+     *        *FOR_VOTES *           STARTING               *         END SUCCESS          *
+     ************************************************************************************* *
+     * Reset  *          * Delete all cached values. The    * This event might be missing. *
+     *        *          * card is reinitialized and its    * The client should look at    *
+     *        *          * status is updated.               * the card status and          *
+     *        *          *                                  * application status.          *
+     ********** Vote if  *******************************************************************
+     * FCN    * it is OK * Reread the files (EFs) being     * No action is required.       *
+     *        *    to    * refreshed and then invoke the    *                              *
+     *        * continue * @ref telux::tel::ICardManager    *                              *
+     *        * with the * ::confirmRefreshHandlingCompleted*                              *
+     ********** refresh. *******************************************************************
+     * Init   *          * Provisioning session: Invalidate * Provisioning session: Reread *
+     *        *          * all cached values.               * all files (EFs) (if not done *
+     *        *          * Nonprovisioning session: Reread  * when the application state is*
+     *        *          * the files (EFs), and then invoke * back to Ready).              *
+     *        *          * the @ref telux::tel::ICardManager*                              *
+     *        *          * ::confirmRefreshHandlingCompleted*                              *
+     **********          *******************************************************************
+     * Init + *          * Provisioning session:Invalidate  * Provisioning session: Reread *
+     * FCN    *          * cached values of files (EFs) in  * files (EFs) in the FCN list  *
+     *        *          * the FCN list.                    * (if not done when the        *
+     *        *          * Nonprovisioning session: Reread  * application state is back to *
+     *        *          * the files (EFs) in the FCN list, * Ready).                      *
+     *        *          * and then invoke the              *                              *
+     *        *          * @ref telux::tel::ICardManager    *                              *
+     *        *          * ::confirmRefreshHandlingCompleted*                              *
+     **********          *******************************************************************
+     * Init + *          * Provisioning session: Invalidate * Provisioning session: Reread *
+     * Full   *          * all cached values.               * all files (EFs) (if not done *
+     * FCN    *          * Nonprovisioning session: Reread  * when the application state is*
+     *        *          * the files (EFs), and then invoke * back to Ready).              *
+     *        *          * the @ref telux::tel::ICardManager*                              *
+     *        *          * ::confirmRefreshHandlingCompleted*                              *
+     **********          *******************************************************************
+     * App    *          * Provisioning session: Invalidate * Provisioning session: Reread *
+     * reset  *          * all cached values.               * all files (EFs) (if not done *
+     *        *          * Nonprovisioning session: invoke  * when the application state is*
+     *        *          * the @ref telux::tel::ICardManager* back to Ready)               *
+     *        *          * ::confirmRefreshHandlingCompleted* Nonprovisioning session:     *
+     *        *          * and wait for End Stage.          * Reread all files (EFs).      *
+     *        *          * Provisioning session: Wait for   *                              *
+     *        *          * the application state to be Ready*                              *
+     *        *          * or End Stage.                    *                              *
+     **********          *******************************************************************
+     * 3G     *          * Delete all cached values.        * Provisioning session: Reread *
+     * session*          * Nonprovisioning session: invoke  * all of the files (EFs)       *
+     * reset  *          * the @ref telux::tel::ICardManager* discarded when the refresh   *
+     *        *          * ::confirmRefreshHandlingCompleted* was started (if not done when*
+     *        *          *                                  * the application state        *
+     *        *          *                                  * returned to Ready).          *
+     ***************************************************************************************
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual void onRefreshEvent(
+        int slotId, RefreshStage stage, RefreshMode mode, std::vector<IccFile> efFiles,
+        RefreshParams refreshParams) {
     }
 
     virtual ~ICardListener() {

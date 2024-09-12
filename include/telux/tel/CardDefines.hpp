@@ -138,6 +138,102 @@ struct IccResult {
 };
 /** @} */ /* end_addtogroup telematics_card */
 
+/**
+ * Defines structure of elementary file (EF).
+ */
+struct IccFile {
+   uint16_t fileId;               /**< Elementary file identifier */
+   std::string filePath;          /**< File path of the elementary file */
+};
+
+
+/**
+ * Defines session types to route request to correct card on given slot and correct
+ * application within the card.
+ */
+enum class SessionType {
+    PRIMARY = 0,                /**< Accesses the USIM application (for UICC) used to
+                                     acquire cellular service network on primary slot. */
+    SECONDARY = 2,              /**< Accesses the USIM application (for UICC) used to
+                                     acquire cellular service network on secondary slot. */
+    NONPROVISIONING_SLOT_1 = 4, /**< Accesses a nonprovisioning application available on
+                                     the UICC in slot 1. The nonprovisioning application
+                                     can be an ISIM or a USIM currently not used to acquire
+                                     the network. The application is specified using the
+                                     AID, as reported via telux::tel::ICardApp::getAppId.
+                                     For UICC, the modem uses shared logical channels. */
+    NONPROVISIONING_SLOT_2 = 5, /**< Accesses a nonprovisioning application available on
+                                     the UICC in slot 2. The nonprovisioning application
+                                     can be an ISIM or a USIM currently not used to acquire
+                                     the network. The application is specified using the
+                                     AID, as reported via telux::tel::ICardApp::getAppId.
+                                     For UICC, the modem uses shared logical channels. */
+    CARD_ON_SLOT_1 = 6,         /**< Accesses files that are not in any application of the
+                                     card in slot 1. (i.e., to access the global phonebook
+                                     or the EF-DIR). */
+    CARD_ON_SLOT_2 = 7,         /**< Accesses files that are not in any application of the
+                                     card in slot 2. (i.e., to access the global phonebook
+                                     or the EF-DIR). */
+    CHANNEL_ID_SLOT_1 = 8,      /**< Accesses an application available on the UICC in slot 1,
+                                     after opening an exclusive logical channel
+                                     using telux::tel::ICard::openLogicalChannel.
+                                     The channel ID is received in response of
+                                     openLogicalChannel request. */
+    CHANNEL_ID_SLOT_2 = 9,      /**< Accesses an application available on the UICC in slot 2,
+                                     after opening an exclusive logical channel
+                                     using telux::tel::ICard::openLogicalChannel.
+                                     The channel ID is received in response of
+                                     openLogicalChannel request. */
+};
+
+/**
+ * Defines the session type and application identifier for SIM refresh so that routing
+ * to the correct card and the correct application within the card can happen.
+ */
+struct RefreshParams {
+   SessionType sessionType;      /**< Session type */
+   std::string aid;              /**< Application identifier, used for
+                                     telux::tel::SessionType::NONPROVISIONING_SLOT_1 or
+                                     telux::tel::SessionType::NONPROVISIONING_SLOT_2  */
+   std::string channelId;        /**< Logical channel number, used for
+                                     telux::tel::SessionType::CHANNEL_ID_SLOT_1 or
+                                     telux::tel::SessionType::CHANNEL_ID_SLOT_2  */
+};
+
+/**
+ * Defines the stage of the card refresh procedure
+ */
+enum class RefreshStage {
+    UNKNOWN = -1,              /**< Unknown refresh stage */
+    WAITING_FOR_VOTES = 0,     /**< Waiting for the refresh action to be voted on.
+                                    At this stage, the modem is awaiting votes from
+                                    all clients participating in the voting process.*/
+    STARTING = 1,              /**< Refresh procedure starting. */
+    ENDED_WITH_SUCCESS = 2,    /**< Refresh ended successfully */
+    ENDED_WITH_FAILURE = 3     /**< Refresh failed */
+};
+
+/**
+ * Defines the card refresh mode
+ */
+enum class RefreshMode {
+    UNKNOWN = -1,       /**< Unknown refresh mode. */
+    RESET = 0,          /**< Reset the card and complete UICC initialization procedure
+                             is performed. */
+    INIT = 1,           /**< Indicates the initialization of card application.*/
+    INIT_FCN = 2,       /**< Indicates the initialization of card application and the
+                             elementary files(EFs) on the card application has changed. */
+    FCN = 3,            /**< Indicates the elementary files(EFs) on the card application has
+                             changed. */
+    INIT_FULL_FCN = 4,  /**< Combination of both INIT and full FCN, i.e., the card application
+                             is initialized and several elementary files (EFs) have been
+                             changed. */
+    RESET_APP = 5,      /**< Reset UICC application and performs initialization of
+                             application. */
+    RESET_3G = 6        /**< Reset 3G session. This mode is equivalent to INIT_FCN and
+                             additionally some applications procedure are followed at modem. */
+};
+
 }  // End of namespace tel
 
 }  // End of namespace telux

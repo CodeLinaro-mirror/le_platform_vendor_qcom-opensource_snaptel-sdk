@@ -30,7 +30,7 @@
  /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -64,6 +64,7 @@ private:
    void setCardLock(std::vector<std::string> userInput);
    void cardPower(std::vector<std::string> userInput);
    void cardFileMenu(std::vector<std::string> userInput);
+   void cardRefreshMenu(std::vector<std::string> userInput);
    void selectCardSlot(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);

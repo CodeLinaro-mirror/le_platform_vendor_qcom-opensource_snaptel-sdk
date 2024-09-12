@@ -55,6 +55,15 @@ public:
         telux::common::ResponseCallback callback = nullptr) override;
     telux::common::Status cardPowerDown(SlotId slotId,
         telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setupRefreshConfig(
+        SlotId slotId, bool isRegister, bool doVoting, std::vector<IccFile> efFiles,
+        RefreshParams refreshParams, common::ResponseCallback callback) override;
+    telux::common::Status allowCardRefresh(SlotId slotId, bool allowRefresh,
+        RefreshParams refreshParams, telux::common::ResponseCallback callback) override;
+    telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId, bool isCompleted,
+        RefreshParams refreshParams, telux::common::ResponseCallback callback)  override;
+    telux::common::Status requestLastRefreshEvent(SlotId slotId,
+        RefreshParams refreshParams, refreshLastEventResponseCallback callback) override;
     telux::common::Status registerListener(std::shared_ptr<ICardListener> listener) override;
     telux::common::Status removeListener(std::shared_ptr<ICardListener> listener) override;
     void onEventUpdate(google::protobuf::Any event) override;

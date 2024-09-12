@@ -121,6 +121,7 @@ public:
    static std::string getServiceDomainPref(telux::tel::ServiceDomainPreference preference);
    static std::string getServiceDomain(telux::tel::ServiceDomain domain);
    static std::string getRadioTechnology(telux::tel::RadioTechnology radioTech);
+   static std::string getServiceState(telux::tel::ServiceRegistrationState state);
    static std::string getEndcAvailability(telux::tel::EndcAvailability isAvailable);
    static std::string getDcnrRestriction(telux::tel::DcnrRestriction isRestricted);
    static void logNetworkInfo(telux::tel::NetworkTimeInfo info);
@@ -129,6 +130,7 @@ public:
    static void logRFBandInfo(telux::tel::RFBandInfo info);
    static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
    static std::string getSmsDomain(telux::tel::SmsDomain domain);
+   static std::string getNtnSmsStatus(telux::tel::NtnSmsStatus status);
    static std::string getLteCsCapability(telux::tel::LteCsCapability capability);
    static std::string gsmRFBandtoString(telux::tel::GsmRFBand gsmBand);
    static std::string wcdmaRFBandtoString(telux::tel::WcdmaRFBand wcdmaBand);

@@ -94,6 +94,24 @@
                             "rsrq" : 2147483647,
                             "rssnr" : 2147483647
                         }
+                    },
+                    "nb1NtnCellInfo" :
+                    {
+                        "nb1NtnCellIdentity" :
+                        {
+                            "mcc" : "310",
+                            "mnc" : "01",
+                            "ci" : 78849,
+                            "tac" : 702,
+                            "earfcn" : 400
+                        },
+                        "nb1NtnSignalStrengthInfo" :
+                        {
+                            "signalStrength" : 2147483647,
+                            "rsrp" : 2147483647,
+                            "rsrq" : 2147483647,
+                            "rssnr" : 2147483647
+                        }
                     }
                 }
             ]
@@ -129,6 +147,13 @@
             },
             "nr5gSignalStrengthInfo" :
             {
+                "rsrp" : 2147483647,
+                "rsrq" : 2147483647,
+                "rssnr" : 2147483647
+            },
+            "nb1NtnSignalStrengthInfo" :
+            {
+                "signalStrength" : 2147483647,
                 "rsrp" : 2147483647,
                 "rsrq" : 2147483647,
                 "rssnr" : 2147483647

@@ -115,11 +115,24 @@ enum class ServiceDomain {
 };
 
 /**
+ * Defines service registration state for serving RAT.
+ */
+enum class ServiceRegistrationState {
+   UNKNOWN = -1,      /**< Unknown, when the service registration information is not available */
+   NO_SERVICE,        /**< No service. */
+   LIMITED_SERVICE,   /**< Limited service. */
+   IN_SERVICE,        /**< In service. */
+   LIMITED_REGIONAL,  /**< Limited regional service. */
+   POWER_SAVE,        /**< Power save */
+};
+
+/**
  * Defines current serving system information
  */
 struct ServingSystemInfo {
    RadioTechnology rat;    /**< Current serving RAT */
-   ServiceDomain   domain; /**< Current service domain registered on system for the serving RAT */
+   ServiceDomain domain;   /**< Current service domain registered on system for the serving RAT */
+   ServiceRegistrationState state; /**< Current service registration state of the serving RAT */
 };
 
 /**
@@ -142,6 +155,7 @@ enum RatPrefType {
    PREF_LTE,       /**< LTE */
    PREF_TDSCDMA,   /**< TDSCDMA */
    PREF_NR5G,      /**< NR5G in SA or NSA mode */
+   PREF_NB1_NTN,   /**< NB-IoT(NB1) Non Terrestrial Network(NTN) */
    PREF_NR5G_NSA,  /**< NSA mode of NR5G only. SA is not allowed */
    PREF_NR5G_SA    /**< SA mode of NR5G only. NSA is not allowed */
 };
@@ -267,11 +281,24 @@ enum class SmsDomain {
 };
 
 /**
+ * Define SMS service status for NB-IoT(NB1) NTN RAT.
+ */
+enum class NtnSmsStatus {
+   UNKNOWN = -1,  /**< Unknown, when SMS service status for NTN is not available. */
+   NOT_AVAILABLE, /**< SMS service status over CP is not available. */
+   TEMP_FAILURE,  /**< SMS service status over CP is not available temporarily. */
+   AVAILABLE,     /**< SMS service status over CP is available. */
+};
+
+/**
  * Define SMS capability for registered RAT.
  */
 struct SmsCapability {
    RadioTechnology rat;  /**< Current serving RAT */
-   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network */
+   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network,
+                              not applicable for NB1_NTN RAT. */
+   NtnSmsStatus smsStatus;  /**< SMS service status for NB1_NTN RAT, not applicable for other
+                                     RATs. */
 };
 
 /**
@@ -805,11 +832,13 @@ public:
 
    /**
     * Get the SMS capability over IMS/3GPP network for registered radio access technology (RAT).
+    * @note telux::tel::SmsDomain is not applicable for NB-IoT(NB1) NTN, use
+    * telux::tel::NtnSmsStatus for SMS capability on NB-IoT(NB1) NTN.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to successfully invoke this API.
     *
-    * @param [out] smsCapability  SMS capability @ref SmsCapability
+    * @param [out] smsCapability  SMS capability @ref telux::tel::SmsCapability
     *
     * @returns Status of getSmsCapabilityOverNetwork i.e. success or suitable error code.
     *

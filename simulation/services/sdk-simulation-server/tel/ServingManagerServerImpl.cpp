@@ -369,6 +369,9 @@ grpc::Status ServingManagerServerImpl::GetSystemInfo(ServerContext* context,
         (static_cast<telStub::ServiceDomainInfo_Domain>(serviceDomainPreference));
         int rat =  data.stateRootObj[MANAGER]["ServingSystemInfo"]["rat"].asInt();
         response->set_current_rat(static_cast<telStub::RadioTechnology>(rat));
+        int state = data.stateRootObj[MANAGER]["ServingSystemInfo"]\
+            ["registrationState"].asInt();
+        response->set_current_state(static_cast<telStub::ServiceRegistrationState>(state));
     }
     //Create response
     response->set_status(static_cast<commonStub::Status>(data.status));
@@ -561,10 +564,12 @@ grpc::Status ServingManagerServerImpl::GetSmsCapabilityOverNetwork(ServerContext
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
     if(data.status == telux::common::Status::SUCCESS) {
-        int domain =  data.stateRootObj[MANAGER]["SmsCapability"]["domain"].asInt();
+        int domain = data.stateRootObj[MANAGER]["SmsCapability"]["domain"].asInt();
         response->set_domain(static_cast<telStub::SmsDomain>(domain));
-        int rat =  data.stateRootObj[MANAGER]["SmsCapability"]["rat"].asInt();
+        int rat = data.stateRootObj[MANAGER]["SmsCapability"]["rat"].asInt();
         response->set_rat(static_cast<telStub::RadioTechnology>(rat));
+        int smsStatus = data.stateRootObj[MANAGER]["SmsCapability"]["ntnSmsStatus"].asInt();
+        response->set_sms_status(static_cast<telStub::NtnSmsStatus>(smsStatus));
     }
     //Create response
     response->set_status(static_cast<commonStub::Status>(data.status));
@@ -1164,6 +1169,22 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
             currentServingDomain = std::stoi(token);
         }
 
+        // Fetch currentRegistrationState
+        int currentRegistrationState;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if (token == "") {
+            LOG(INFO, __FUNCTION__, " currentRegistrationState not passed");
+            currentRegistrationState = -1;
+        } else {
+            currentRegistrationState = std::stoi(token);
+        }
+        if (currentRegistrationState
+            < (static_cast<int>(telStub::ServiceRegistrationState::REG_UNKNOWN)) ||
+            currentRegistrationState
+            > (static_cast<int>(telStub::ServiceRegistrationState::REG_POWER_SAVE))) {
+            LOG(ERROR, " invalid currentRegistrationState");
+            return;
+        }
         // Fetch endcAvailability
         int endcAvailability;
         token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
@@ -1195,7 +1216,7 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
             smsRat = std::stoi(token);
         }
         if (smsRat < (static_cast<int>(telStub::RadioTechnology ::RADIO_TECH_UNKNOWN)) ||
-            smsRat > (static_cast<int>(telStub::RadioTechnology ::RADIO_TECH_NR5G))) {
+            smsRat > (static_cast<int>(telStub::RadioTechnology ::RADIO_TECH_NB1_NTN))) {
             LOG(ERROR, __FUNCTION__, " Invalid input for SMS radio technology ");
             return;
         }
@@ -1215,6 +1236,21 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
             return;
         }
 
+        // fetch ntnSmsStatus
+        int ntnSmsStatus;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if (token == "") {
+            LOG(INFO, __FUNCTION__, " ntnSmsStatus not passed");
+            ntnSmsStatus = -1; // UNKNOWN
+        } else {
+            ntnSmsStatus = std::stoi(token);
+        }
+        if (ntnSmsStatus < (static_cast<int>(telStub::NtnSmsStatus::SMS_UNKNOWN)) ||
+            ntnSmsStatus > (static_cast<int>(telStub::NtnSmsStatus::SMS_AVAILABLE))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for ntnSmsStatus");
+            return;
+        }
+
         // Fetch LteCapability
         int lteCapability;
         token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
@@ -1230,9 +1266,11 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
             return;
         }
 
-        LOG(INFO, __FUNCTION__, " Rat is ", currentServingRat , " Domain is ", currentServingDomain
-        , " EndcAvailability is ", endcAvailability, " DcnrRestriction is ", dcnrRestriction
-        , " SmsRat is ", smsRat, " SmsDomain is ", smsDomain, " LteCapability is ", lteCapability);
+        LOG(INFO, __FUNCTION__, " Rat is ", currentServingRat , " Domain is ",
+            currentServingDomain, " currentRegistrationState is ", currentRegistrationState,
+            " EndcAvailability is ", endcAvailability, " DcnrRestriction is ", dcnrRestriction,
+            " SmsRat is ", smsRat, " SmsDomain is ", smsDomain, " NtnSmsStatus is ", ntnSmsStatus,
+            " LteCapability is ", lteCapability);
 
         std::string stateJsonPath = (slotId == SLOT_1 ) ?
             "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
@@ -1241,6 +1279,8 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
                 {"IServingSystemManager", "ServingSystemInfo", "rat"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, currentServingDomain,
                 {"IServingSystemManager", "ServingSystemInfo", "domain"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, currentRegistrationState,
+                {"IServingSystemManager", "ServingSystemInfo", "registrationState"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, endcAvailability,
                 {"IServingSystemManager", "DcStatus", "endcAvailability"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, dcnrRestriction,
@@ -1249,6 +1289,8 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
                 {"IServingSystemManager", "SmsCapability", "rat"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, smsDomain,
                 {"IServingSystemManager", "SmsCapability", "domain"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, ntnSmsStatus,
+                {"IServingSystemManager", "SmsCapability", "ntnSmsStatus"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, lteCapability,
                 {"IServingSystemManager", "LteCsCapability"});
 
@@ -1257,12 +1299,15 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
         systemInfoEvent.set_current_rat(static_cast<telStub::RadioTechnology>(currentServingRat));
         systemInfoEvent.set_current_domain
             (static_cast<telStub::ServiceDomainInfo_Domain>(currentServingDomain));
+        systemInfoEvent.set_current_state
+            (static_cast<telStub::ServiceRegistrationState>(currentRegistrationState));
         systemInfoEvent.set_endc_availability
             (static_cast<telStub::EndcAvailability_Status>(endcAvailability));
         systemInfoEvent.set_dcnr_restriction
             (static_cast<telStub::DcnrRestriction_Status>(dcnrRestriction));
         systemInfoEvent.set_sms_rat(static_cast<telStub::RadioTechnology>(smsRat));
         systemInfoEvent.set_sms_domain(static_cast<telStub::SmsDomain>(smsDomain));
+        systemInfoEvent.set_sms_status(static_cast<telStub::NtnSmsStatus>(ntnSmsStatus));
         systemInfoEvent.set_lte_capability
             (static_cast<telStub::LteCsCapability>(lteCapability));
 

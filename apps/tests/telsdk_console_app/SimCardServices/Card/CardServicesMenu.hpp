@@ -65,6 +65,7 @@ private:
    void cardPower(std::vector<std::string> userInput);
    void cardFileMenu(std::vector<std::string> userInput);
    void cardRefreshMenu(std::vector<std::string> userInput);
+   void checkNtnProfileActive(std::vector<std::string> userInput);
    void selectCardSlot(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);

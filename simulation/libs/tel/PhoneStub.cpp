@@ -378,6 +378,35 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                 cellInfoList.emplace_back(nr5gCellInfo);
                 break;
             }
+            case CellType::NB1_NTN: {
+                string nb1NtnMcc = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->mcc();
+                string nb1NtnMnc = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->mnc();
+                int nb1NtnTac = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->tac();
+                int nb1NtnCi = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->ci();
+                int nb1NtnEarfcn = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->earfcn();
+                int nb1NtnSignalStrength = response.mutable_cell_info_list(i)->
+                    mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        signal_strength();
+                int nb1NtnRsrp = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rsrp();
+                int nb1NtnRsrq = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rsrq();
+                int nb1NtnRssnr = response.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rssnr();
+                Nb1NtnSignalStrengthInfo nb1NtnCellSS(nb1NtnSignalStrength, nb1NtnRsrp, nb1NtnRsrq,
+                    nb1NtnRssnr);
+                Nb1NtnCellIdentity nb1NtnCI(nb1NtnMcc, nb1NtnMnc, nb1NtnCi, nb1NtnTac,
+                    nb1NtnEarfcn);
+                auto nb1NtnCellInfo = std::make_shared<Nb1NtnCellInfo>(registered, nb1NtnCI,
+                    nb1NtnCellSS);
+                cellInfoList.emplace_back(nb1NtnCellInfo);
+                break;
+            }
             case CellType::CDMA:
             case CellType::TDSCDMA:
             default:
@@ -480,10 +509,17 @@ telux::common::Status PhoneStub::requestSignalStrength(
             response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
             response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrq(),
             response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rssnr());
+    std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrength
+        = std::make_shared<Nb1NtnSignalStrengthInfo>(
+            response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+                signal_strength(),
+            response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrp(),
+            response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
+            response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr());
     signalStrengthNotify
         = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
             nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
-            nr5gSignalStrength);
+            nr5gSignalStrength, nb1NtnSignalStrength);
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     bool isCallbackNeeded = static_cast<bool>(response.iscallback());

@@ -108,6 +108,9 @@ std::string MyServingSystemHelper::getRatPreference(telux::tel::RatPreference pr
    if(preference[telux::tel::PREF_NR5G_SA]) {
       ratPrefString += " NR5G_SA \n";
    }
+   if (preference[telux::tel::PREF_NB1_NTN]) {
+       ratPrefString += " NB1_NTN \n";
+   }
    return ratPrefString;
 }
 
@@ -192,6 +195,32 @@ std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain do
    return domainString;
 }
 
+std::string MyServingSystemHelper::getServiceState(telux::tel::ServiceRegistrationState state) {
+   std::string stateString = "Unknown";
+   switch(state) {
+      case telux::tel::ServiceRegistrationState::NO_SERVICE:
+         stateString = "No Service";
+         break;
+      case telux::tel::ServiceRegistrationState::LIMITED_SERVICE:
+         stateString = "Limited Service";
+         break;
+      case telux::tel::ServiceRegistrationState::IN_SERVICE:
+         stateString = "In Service";
+         break;
+      case telux::tel::ServiceRegistrationState::LIMITED_REGIONAL:
+         stateString = "Limited Regional Service";
+         break;
+      case telux::tel::ServiceRegistrationState::POWER_SAVE:
+         stateString = "Power Save";
+         break;
+      case telux::tel::ServiceRegistrationState::UNKNOWN:
+      default:
+         stateString = "Unknown";
+         break;
+   }
+   return stateString;
+}
+
 std::string MyServingSystemHelper::getSmsDomain(telux::tel::SmsDomain domain) {
    std::string domainString = " Unknown ";
    switch(domain) {
@@ -211,6 +240,26 @@ std::string MyServingSystemHelper::getSmsDomain(telux::tel::SmsDomain domain) {
          break;
    }
    return domainString;
+}
+
+std::string MyServingSystemHelper::getNtnSmsStatus(telux::tel::NtnSmsStatus status) {
+    std::string smsStatusString = "Unknown";
+    switch (status) {
+        case telux::tel::NtnSmsStatus::NOT_AVAILABLE:
+            smsStatusString = "Not available";
+            break;
+        case telux::tel::NtnSmsStatus::TEMP_FAILURE:
+            smsStatusString = "Temporary failure";
+            break;
+        case telux::tel::NtnSmsStatus::AVAILABLE:
+            smsStatusString = "Available";
+            break;
+        case telux::tel::NtnSmsStatus::UNKNOWN:
+        default:
+            smsStatusString = "Unknown";
+            break;
+    }
+    return smsStatusString;
 }
 
 std::string MyServingSystemHelper::getLteCsCapability(telux::tel::LteCsCapability capability) {
@@ -720,8 +769,15 @@ void MyServingSystemListener::onSmsCapabilityChanged(telux::tel::SmsCapability s
    PRINT_NOTIFICATION << " SMS capability changed."
             << "\n RAT: "
             << MyServingSystemHelper::getRadioTechnology(smsCapability.rat)
-            << "\n SMS Domain: "
-            << MyServingSystemHelper::getSmsDomain(smsCapability.domain);
+            << ((smsCapability.rat != telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+               "\n SMS Domain: " : "")
+            << ((smsCapability.rat != telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+                MyServingSystemHelper::getSmsDomain(smsCapability.domain) : "")
+            << ((smsCapability.rat == telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+               "\n SMS Service status: " : "")
+            << ((smsCapability.rat == telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+                MyServingSystemHelper::getNtnSmsStatus(smsCapability.smsStatus) : "")
+            << std::endl;
 }
 
 void MyServingSystemListener::onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) {

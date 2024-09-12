@@ -371,6 +371,9 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
                 case RATCapability::NR5GSA:
                     simRatCap.capabilities.set(static_cast<int>(RATCapability::NR5GSA));
                     break;
+                case RATCapability::NB1_NTN:
+                    simRatCap.capabilities.set(static_cast<int>(RATCapability::NB1_NTN));
+                    break;
                 default:
                     LOG(ERROR, __FUNCTION__, " Invalid radio capability");
                     break;
@@ -419,6 +422,9 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
                     break;
                 case RATCapability::NR5GSA:
                     deviceRatCap.capabilities.set(static_cast<int>(RATCapability::NR5GSA));
+                    break;
+                case RATCapability::NB1_NTN:
+                    deviceRatCap.capabilities.set(static_cast<int>(RATCapability::NB1_NTN));
                     break;
                 default:
                     LOG(ERROR, " Invalid radio capability");
@@ -684,10 +690,17 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrq(),
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rssnr());
+    std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrength
+        = std::make_shared<Nb1NtnSignalStrengthInfo>(
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+                signal_strength(),
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrp(),
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr());
     signalStrengthNotify
         = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
             nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
-            nr5gSignalStrength);
+            nr5gSignalStrength, nb1NtnSignalStrength);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
@@ -827,6 +840,35 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                 auto nr5gCellInfo = std::make_shared<Nr5gCellInfo>(registered, nr5gCI,
                     nr5gCellSS);
                 cellInfoList.emplace_back(nr5gCellInfo);
+                break;
+            }
+            case CellType::NB1_NTN: {
+                string nb1NtnMcc = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->mcc();
+                string nb1NtnMnc = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->mnc();
+                int nb1NtnTac = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->tac();
+                int nb1NtnCi = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->ci();
+                int nb1NtnEarfcn = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_cell_identity()->earfcn();
+                int nb1NtnSignalStrength = event.mutable_cell_info_list(i)->
+                    mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        signal_strength();
+                int nb1NtnRsrp = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rsrp();
+                int nb1NtnRsrq = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rsrq();
+                int nb1NtnRssnr = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rssnr();
+                Nb1NtnSignalStrengthInfo nb1NtnCellSS(nb1NtnSignalStrength, nb1NtnRsrp, nb1NtnRsrq,
+                     nb1NtnRssnr);
+                Nb1NtnCellIdentity nb1NtnCI(nb1NtnMcc, nb1NtnMnc, nb1NtnCi, nb1NtnTac,
+                     nb1NtnEarfcn);
+                auto nb1NtnCellInfo = std::make_shared<Nb1NtnCellInfo>(registered, nb1NtnCI,
+                    nb1NtnCellSS);
+                cellInfoList.emplace_back(nb1NtnCellInfo);
                 break;
             }
             case CellType::CDMA:

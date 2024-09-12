@@ -58,7 +58,7 @@ This is the main daemon that interacts with all the clients using the Simulation
 
 @subsection injector Event Injector
 
-Event injector allows the users to inject unsolicited events. It is a Linux based command-line utility that injects events into the simulation framework.<br> For example: <i>telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower></i> could be triggered to change the card power state.
+Event injector allows the users to inject unsolicited events. It is a Linux based command-line utility that injects events into the simulation framework.<br> For example: <i>telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower> <isNtnProfileActive></i> could be triggered to change the card power state or to know the Non-terrestrial networks(NTN) profile active status.
 
 
 Syntax for injecting events: <i>telsdk_event_injector -f <filter/subsystem/manager> -e <event> <arguments></i>

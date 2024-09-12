@@ -178,7 +178,7 @@ void MySignalStrengthCallback::signalStrengthResponse(
     }
 
     if (signalStrength->getWcdmaSignalStrength() != nullptr) {
-        if(signalStrength->getWcdmaSignalStrength()->getSignalStrength()
+        if (signalStrength->getWcdmaSignalStrength()->getSignalStrength()
             == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_CB << "WCDMA Signal Strength: "<< "UNAVAILABLE" << std::endl;
         } else {
@@ -254,6 +254,49 @@ void MySignalStrengthCallback::signalStrengthResponse(
 
         PRINT_CB << "5G Signal Level: "
             << signalLevelToString(signalStrength->getNr5gSignalStrength()->getLevel())
+             << std::endl;
+    }
+
+    if (signalStrength->getNb1NtnSignalStrength() != nullptr) {
+        if(signalStrength->getNb1NtnSignalStrength()->getSignalStrength()
+            == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "NB1 NTN Signal Strength: "<< "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "NB1 NTN Signal Strength: "
+                << signalStrength->getNb1NtnSignalStrength()->getSignalStrength()
+                << std::endl;
+        }
+
+        if (signalStrength->getNb1NtnSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "NB1 NTN Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            PRINT_CB << "NB1 NTN Reference Signal Receive Power(in dBm): " << "UNAVAILABLE"
+                << std::endl;
+        } else {
+            PRINT_CB << "NB1 NTN Signal Strength(in dBm): "
+                << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
+            PRINT_CB << "NB1 NTN Reference Signal Receive Power(in dBm): "
+                << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
+        }
+
+        if (signalStrength->getNb1NtnSignalStrength()->getRsrq()
+            == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "NB1 NTN Reference Signal Receive Quality(in dB): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "NB1 NTN Reference Signal Receive Quality(in dB): "
+                << signalStrength->getNb1NtnSignalStrength()->getRsrq() << std::endl;
+        }
+
+        if (signalStrength->getNb1NtnSignalStrength()->getRssnr()
+            == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "NB1 NTN Reference Signal SNR(in dB): " << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "NB1 NTN Reference Signal SNR(in dB): "
+                 << signalStrength->getNb1NtnSignalStrength()->getRssnr() * 0.1 << std::endl;
+        }
+
+        PRINT_CB << "NB1 NTN Signal Level: "
+            << signalLevelToString(signalStrength->getNb1NtnSignalStrength()->getLevel())
              << std::endl;
     }
 }

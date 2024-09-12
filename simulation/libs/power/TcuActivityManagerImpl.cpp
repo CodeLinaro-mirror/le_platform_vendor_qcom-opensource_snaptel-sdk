@@ -285,9 +285,7 @@ telux::common::Status TcuActivityManagerImpl::setModemActivityState(TcuActivityS
 
 telux::common::Status TcuActivityManagerImpl::getMachineName(std::string &machineName) {
     LOG(DEBUG, __FUNCTION__);
-    if(config_.machineName == LOCAL_MACHINE) {
-        machineName = "PVM";
-    }
+    machineName = "PVM";
     return telux::common::Status::SUCCESS;
 }
 

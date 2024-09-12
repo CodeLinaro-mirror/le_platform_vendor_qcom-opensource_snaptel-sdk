@@ -158,6 +158,26 @@ void MyCardListener::onCardInfoChanged(int slotId) {
    }
 }
 
+void MyCardListener::onRefreshEvent(
+    int slotId, telux::tel::RefreshStage stage, telux::tel::RefreshMode mode,
+    std::vector<telux::tel::IccFile> efFiles, telux::tel::RefreshParams config) {
+    int fileNo = 1;
+    std::cout << std::endl << std::endl;
+    PRINT_NOTIFICATION << " onRefreshEvent on slot" << slotId
+        << " ,Refresh Stage is " << refreshStageToString(stage)
+        << " ,Refresh Mode is " << refreshModeToString(mode)
+        << " ,Session Type is " << sessionTypeToString(config.sessionType)
+        << ((!config.aid.empty()) ? " ,AID is " : "")
+        << ((!config.aid.empty()) ? config.aid : "")
+        << ((!config.channelId.empty()) ? " ,Channel id is " : "")
+        << ((!config.channelId.empty()) ? config.channelId : "") << " \n ";
+    for (auto file: efFiles) {
+        std::cout << " EF file" << fileNo << " path is " << file.filePath
+            << " ID is " << file.fileId << "\n";
+        fileNo++;
+    }
+}
+
 // Notify CardManager subsystem status
 void MyCardListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
@@ -173,4 +193,94 @@ void MyCardListener::onServiceStatusChange(telux::common::ServiceStatus status) 
             break;
     }
     PRINT_NOTIFICATION << " Card onServiceStatusChange" << stat << "\n";
+}
+
+std::string MyCardListener::refreshStageToString
+    (telux::tel::RefreshStage stage) {
+   std::string stageString;
+    switch(stage) {
+        case telux::tel::RefreshStage::WAITING_FOR_VOTES:
+            stageString = "Waiting for votes";
+            break;
+        case telux::tel::RefreshStage::STARTING:
+            stageString = "Starting";
+            break;
+        case telux::tel::RefreshStage::ENDED_WITH_SUCCESS:
+            stageString = "Ended with success";
+            break;
+        case telux::tel::RefreshStage::ENDED_WITH_FAILURE:
+            stageString = "Ended with failure";
+            break;
+        default:
+            stageString = "Unknown";
+            break;
+    }
+    return stageString;
+}
+
+std::string MyCardListener::refreshModeToString
+    (telux::tel::RefreshMode mode) {
+   std::string modeString;
+    switch(mode) {
+        case telux::tel::RefreshMode::RESET:
+            modeString = "RESET";
+            break;
+        case telux::tel::RefreshMode::INIT:
+            modeString = "INIT";
+            break;
+        case telux::tel::RefreshMode::INIT_FCN:
+            modeString = "INIT FCN";
+            break;
+        case telux::tel::RefreshMode::FCN:
+            modeString = "FCN";
+            break;
+        case telux::tel::RefreshMode::INIT_FULL_FCN:
+            modeString = "INIT FULL FCN";
+            break;
+        case telux::tel::RefreshMode::RESET_APP:
+            modeString = "Reset Applications";
+            break;
+        case telux::tel::RefreshMode::RESET_3G:
+            modeString = "Reset 3G session";
+            break;
+        default:
+            modeString = "Unknown";
+            break;
+    }
+    return modeString;
+}
+
+std::string MyCardListener::sessionTypeToString
+    (telux::tel::SessionType type) {
+    std::string typeString;
+    switch(type) {
+        case telux::tel::SessionType::PRIMARY:
+            typeString = "PRIMARY";
+            break;
+        case telux::tel::SessionType::SECONDARY:
+            typeString = "SECONDARY";
+            break;
+        case telux::tel::SessionType::NONPROVISIONING_SLOT_1:
+            typeString = "NONPROVISIONING SLOT1";
+            break;
+        case telux::tel::SessionType::NONPROVISIONING_SLOT_2:
+            typeString = "NONPROVISIONING SLOT2";
+            break;
+        case telux::tel::SessionType::CARD_ON_SLOT_1:
+            typeString = "CARD ON SLOT1";
+            break;
+        case telux::tel::SessionType::CARD_ON_SLOT_2:
+            typeString = "CARD ON SLOT2";
+            break;
+        case telux::tel::SessionType::CHANNEL_ID_SLOT_1:
+            typeString = "CHANNEL ID SLOT1";
+            break;
+        case telux::tel::SessionType::CHANNEL_ID_SLOT_2:
+            typeString = "CHANNEL ID SLOT2";
+            break;
+        default:
+            typeString = "Unknown";
+            break;
+    }
+    return typeString;
 }

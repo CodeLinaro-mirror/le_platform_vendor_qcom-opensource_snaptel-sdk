@@ -61,6 +61,12 @@ class MyCardListener : public telux::tel::ICardListener {
 public:
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onCardInfoChanged(int slotId) override;
+   void onRefreshEvent(
+      int slotId, telux::tel::RefreshStage stage, telux::tel::RefreshMode mode,
+      std::vector<telux::tel::IccFile> efFiles, telux::tel::RefreshParams config) override;
+   static std::string refreshStageToString(telux::tel::RefreshStage stage);
+   static std::string refreshModeToString(telux::tel::RefreshMode mode);
+   static std::string sessionTypeToString(telux::tel::SessionType type);
 };
 
 class MyCardPowerResponseCallback {

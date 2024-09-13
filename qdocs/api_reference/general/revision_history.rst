@@ -22,7 +22,7 @@ Revision History
      - Description
 
    * - BA
-     - Aug 2024
+     - Sep 2024
      - Updated documentation for SDK release V1.70.0 changes
    * - AY
      - Jul 2024

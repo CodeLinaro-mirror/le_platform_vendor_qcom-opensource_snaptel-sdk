@@ -2,7 +2,6 @@
    *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
    *  SPDX-License-Identifier: BSD-3-Clause-Clear
 
-
 ==================
 Call Flow Diagrams
 ==================
@@ -246,8 +245,9 @@ Radio and Service state call flow
 Network Selection Manager call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Network selection manager provides APIs to get and set network selection mode, get and set preferred networks and perform
-network scan for availbale networks. Registered listener will get notified for the change in network selection mode.
+Network selection manager provides APIs to get and set network selection mode,
+get and set preferred networks, set dubious cell for LTE and NR network and perform network scan for
+available networks. Registered listener will get notified for the change in network selection mode.
 
 .. figure:: /../images/network_selection_call_flow.png
 
@@ -287,8 +287,14 @@ network scan for availbale networks. Registered listener will get notified for t
 19. Application receives the status i.e. either SUCCESS or other status based on the execution
     of performNetworkScan API.
 20. Network name, MCC, MNC and status of the operator will be received by the application.
-21. Application can deregister a listener there by it would not get notifications.
-22. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+21. The application can set dubious cell list for LTE network..
+22. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
+    setLteDubiousCell API.
+23. The application can set dubious cell list for NR network..
+24. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
+    setNrDubiousCell API.
+25. Application can deregister a listener there by it would not get notifications.
+26. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
 Serving System Manager Call Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1564,13 +1570,28 @@ Call flow to enable ip passthrough in peer nad
 6. A request to enable IP passthrough is being sent from the NAD-1 client to NAD-2. At this point,
    the client has successfully started a data call and enabled a IP passthrough configuration in
    NAD-2.
-7. NAD-1 creates vlan for a LAN netowrk type that is connected to the main unit.
-8. NAD-1 creates another vlan for a WAN netowrk type that is connected to the ETH backhaul.
+7. NAD-1 creates vlan for a LAN network. type that is connected to the main unit.
+8. NAD-1 creates another vlan for a WAN network. type that is connected to the ETH backhaul.
 9. NAD-1 client calls IVlanManager::bindToBackhaul API to bind both LAN and WAN type of vlans and
    the data call in NAD-2 is routed through the NAD-2 vlan(which is act as gateway), NAD-1 WAN vlan
    (which is connected to the ETH backhaul) and NAD-1 LAN vlan(which is connected to the main unit).
 10. The client of NAD-1 enables the IP address configuration to its WAN vlan that is connected to
     the ETH backhaul that allows main unit to access data call running in NAD-2.
+
+Call flow to set data stall parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_set_data_stall_parameters_call_flow.png
+
+1. Application requests a data factory for the data control manager object.
+2. Data factory returns a shared pointer to the data control manager object to the application.
+3. Application requests the current service status of the data control manager returned by the data factory.
+4. Data control manager returns current service status.
+
+   a. If the status returned is SERVICE_UNAVAILABLE (manager is not ready), the application should wait for the init callback provided in step 1.
+   b. Data control manager calls the application callback with the initialization result (success/failure).
+
+5. On success, the application sets data stall parameters for a specific slot ID.
 
 C-V2X
 -----

@@ -1,3 +1,7 @@
+..
+   *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   *  SPDX-License-Identifier: BSD-3-Clause-Clear
+
 .. _telephony:
 
 Telephony
@@ -16,13 +20,14 @@ Telephony
    ../card_services/card_services_app
    ../card_services/sap_api_and_listener
    ../network_selection/network_selection
+   ../smart_network_selection/smart_network_selection
    ../remote_sim/remote_sim_api
    ../remote_sim/remote_sim_reference_apps
    ../sms/send_sms
    ../sms/listen_sms
    ../rsp/remote_sim_provisioning
    ../rsp/rsp_reference_apps
-   
+
 
 ..
    * :ref:`make-call`
@@ -35,6 +40,7 @@ Telephony
    * :ref:`card-services-app`
    * :ref:`sap-api-and-listener`
    * :ref:`network-selection`
+   * :ref:`smart-network-selection`
    * :ref:`remote-sim-api`
    * :ref:`remote-sim-reference-apps`
    * :ref:`send-sms`

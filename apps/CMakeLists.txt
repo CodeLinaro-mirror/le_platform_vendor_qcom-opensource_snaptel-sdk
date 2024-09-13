@@ -26,7 +26,7 @@ pkg_check_modules(TELUX_LOC_LIB telux-loc)
 pkg_check_modules(TELUX_CONFIG_LIB telux-config)
 pkg_check_modules(TELUX_SEC_CON_LIB telux-sec-con)
 pkg_check_modules(TELUX_SQUISH_LIB telux_squish)
-
+pkg_check_modules(TELUX_SATCOM_LIB telux-satcom)
 
 if (TELUX_TEL_LIB_FOUND)
    set (TELSDK_FEATURE_TEL ON)
@@ -125,6 +125,11 @@ if (TELUX_SQUISH_LIB_FOUND)
    set (TELSDK_FEATURE_SQUISH ON)
    add_definitions(-DTELSDK_FEATURE_SQUISH_ENABLED)
 endif (TELUX_SQUISH_LIB_FOUND)
+
+if (TELUX_SATCOM_LIB_FOUND)
+    set (TELSDK_FEATURE_SATCOM ON)
+    add_definitions(-DTELSDK_QMS_SUPPORT_ENABLED)
+endif (TELUX_SATCOM_LIB_FOUND)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 

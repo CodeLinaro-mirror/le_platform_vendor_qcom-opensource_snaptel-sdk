@@ -70,3 +70,8 @@ if (TELSDK_FEATURE_CONNECTION_SECURITY)
     add_subdirectory( cellular_connection_security_app )
     add_subdirectory( wifi_connection_security_app )
 endif (TELSDK_FEATURE_CONNECTION_SECURITY)
+
+if (TELSDK_FEATURE_SATCOM)
+    add_subdirectory( ntn_test_app )
+endif (TELSDK_FEATURE_SATCOM)
+

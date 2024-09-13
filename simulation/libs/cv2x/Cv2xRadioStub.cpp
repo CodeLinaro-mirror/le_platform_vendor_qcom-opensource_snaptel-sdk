@@ -1035,21 +1035,20 @@ telux::common::ErrorCode Cv2xRadioSimulation::initTxSpsFlow(TrafficIpType ipType
 
         // SPS socket initialization succeeded. Create and initialize Event socket.
         if (eventSrcPortValid) {
-            int eventSock                     = -1;
-            struct sockaddr_in6 eventSockAddr = {0};
-            eventStatus = initTxUdpSock(ipType, eventSock, eventSrcPort, eventSockAddr);
-            if (telux::common::Status::SUCCESS == eventStatus) {
-                auto flow = make_shared<Cv2xTxEventFlow>(
-                    spsId, ipType, serviceId, eventSock, eventSockAddr);
-                addFlow<Cv2xTxEventFlow>(flow, eventFlows_);
-                txEventFlow = flow;
-            } else {
-                // event socket init failed, just close created socket, user can still
-                // use the sps socket for Tx data pkts
-                LOG(ERROR, "Error occurred during event socket initialization. close "
-                           "event socket.");
-                return telux::common::ErrorCode::GENERIC_FAILURE;
-            }
+            auto cb = [&txEventFlow, &eventStatus, &ec] (std::shared_ptr<ICv2xTxFlow> flow,
+                telux::common::ErrorCode error) {
+                if (telux::common::ErrorCode::SUCCESS == error) {
+                    txEventFlow = flow;
+                    eventStatus = telux::common::Status::SUCCESS;
+                    ec = telux::common::ErrorCode::SUCCESS;
+                } else {
+                    eventStatus = telux::common::Status::FAILED;
+                    ec = (telux::common::ErrorCode::SUCCESS != ec) ? error : ec;
+                    LOG(ERROR, "Error in registering combine.event flow ", static_cast<int>(ec));
+                }
+            };
+            EventFlowInfo dummyInfo;
+            initTxEventFlow(ipType, serviceId, dummyInfo, eventSrcPort, cb);
         }
     } while (0);
 

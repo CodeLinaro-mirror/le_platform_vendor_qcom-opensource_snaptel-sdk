@@ -111,6 +111,7 @@ bool NAOIpTrigger::enableFilter() {
             //       through a whitelisted filter, even if it is an unexpected packet.
             //       @ref DataRestrictMode
             // ex. mode.filterAutoExit = DataRestrictModeType::ENABLE;
+            mode.filterAutoExit = DataRestrictModeType::DISABLE;
             mode.filterMode = DataRestrictModeType::ENABLE;
 
             if (dataController_->sendSetDataRestrictMode(mode)) {

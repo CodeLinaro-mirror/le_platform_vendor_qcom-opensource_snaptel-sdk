@@ -198,6 +198,8 @@ grpc::Status SuppServicesManagerServerImpl::SetForwardingPref(ServerContext* con
         switch(static_cast<telux::tel::ForwardOperation>(forwardOperation)) {
             case telux::tel::ForwardOperation::REGISTER:
                 newconfig["Number"] = request->forward_req().number();
+                newconfig["SuppServicesStatus"]
+                    = static_cast<int>(telux::tel::SuppServicesStatus::ENABLED);
                 break;
             case telux::tel::ForwardOperation::ACTIVATE:
                 newconfig["SuppServicesStatus"]
@@ -210,13 +212,13 @@ grpc::Status SuppServicesManagerServerImpl::SetForwardingPref(ServerContext* con
             case telux::tel::ForwardOperation::ERASE:
                 newconfig["Number"] = "";
                 newconfig["SuppServicesStatus"]
-                    = static_cast<int>(telux::tel::SuppServicesStatus::UNKNOWN);
+                    = static_cast<int>(telux::tel::SuppServicesStatus::DISABLED);
                 break;
             case telux::tel::ForwardOperation::UNKNOWN:
             default:
                 LOG(ERROR, __FUNCTION__, " Invalid forward operation");
                 newconfig["SuppServicesStatus"]
-                    = static_cast<int>(telux::tel::SuppServicesStatus::UNKNOWN);
+                    = static_cast<int>(telux::tel::SuppServicesStatus::DISABLED);
                 break;
         }
         newconfig["NoReplyTimer"] = request->forward_req().no_reply_timer();
@@ -231,7 +233,20 @@ grpc::Status SuppServicesManagerServerImpl::SetForwardingPref(ServerContext* con
                     newconfig["Number"] = data.stateRootObj[TEL_SUPP_SERVICES_MANAGER]\
                     ["CallForwardingPref"]["ForwardInfoList"][j]["Number"].asString();
                 }
-                LOG(DEBUG, __FUNCTION__, " Number stored or provided: ", newconfig["Number"]);
+                /* user will provide number only when they select "REGISTER" option,
+                   for option "ACTIVATE" or "DEACTIVATE", first check the number from json,
+                   if number is available, then allow for activation or deactivation else
+                   send an error.*/
+                LOG(DEBUG, __FUNCTION__, " Number stored or provided: ", newconfig["Number"],
+                    " ForwardOperation : ", newconfig["ForwardOperation"]);
+                if (newconfig["Number"] == "" &&
+                    (newconfig["ForwardOperation"] == 1 || newconfig["ForwardOperation"] == 2)) {
+                    LOG(ERROR, __FUNCTION__, " Before activating/deactivating supplementary"
+                       " services register it first.");
+                    newconfig["SuppServicesStatus"]
+                        = static_cast<int>(telux::tel::SuppServicesStatus::DISABLED);
+                    data.error = telux::common::ErrorCode::SUPS_FAILURE_CAUSE;
+                }
                 data.stateRootObj[TEL_SUPP_SERVICES_MANAGER]["CallForwardingPref"]\
                     ["ForwardInfoList"][j] = newconfig;
                 reasonFound = true;
@@ -244,15 +259,8 @@ grpc::Status SuppServicesManagerServerImpl::SetForwardingPref(ServerContext* con
             data.stateRootObj[TEL_SUPP_SERVICES_MANAGER]["CallForwardingPref"]\
             ["ForwardInfoList"][currentCount++] = newconfig;
         }
-        // register number first then activate/deactivate supplementary service
-        LOG(DEBUG, __FUNCTION__, " Number stored or provided: ", newconfig["Number"]);
-        LOG(DEBUG, __FUNCTION__, " SuppServicesStatus : ", newconfig["SuppServicesStatus"]);
-        if ((newconfig["Number"].isNull() || newconfig["Number"] == "") &&
-            (newconfig["SuppServicesStatus"] == 1 || newconfig["SuppServicesStatus"] == 2)) {
-            LOG(ERROR, __FUNCTION__, " Error ");
-            data.error = telux::common::ErrorCode::SUPS_FAILURE_CAUSE;
-        }
-       JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
    }
 
     // Create response

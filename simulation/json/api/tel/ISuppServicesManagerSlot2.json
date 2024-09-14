@@ -35,7 +35,7 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
-            "suppSvcProvisionStatus" : -1,
+            "suppSvcProvisionStatus" : 0,
             "_comment_suppSvcProvisionStatus" :
                 " For valid inputs, refer telux::tel::SuppSvcProvisionStatus "
         }

@@ -26,7 +26,8 @@ namespace tel {
 
 class NetworkSelectionManagerStub : public INetworkSelectionManager,
                                     public IEventListener,
-                                    public std::enable_shared_from_this<NetworkSelectionManagerStub> {
+                                    public std::enable_shared_from_this
+                                    <NetworkSelectionManagerStub> {
 public:
     NetworkSelectionManagerStub(int phoneId);
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -56,6 +57,11 @@ public:
 
     telux::common::Status
         requestNetworkSelectionMode(SelectionModeResponseCallback callback) override;
+
+    telux::common::ErrorCode setLteDubiousCell(const LteDubiousCellInfo &lteDubiousCellInfo)
+        override;
+    telux::common::ErrorCode setNrDubiousCell(const NrDubiousCellInfo &nrDubiousCellInfo)
+        override;
 
     void cleanup();
 

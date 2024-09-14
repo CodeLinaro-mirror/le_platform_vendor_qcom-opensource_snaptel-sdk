@@ -177,6 +177,8 @@
          (RequestPreferredNetworksReply) {}
      rpc SetPreferredNetworks (SetPreferredNetworksRequest) returns (SetPreferredNetworksReply) {}
      rpc PerformNetworkScan (PerformNetworkScanRequest) returns (PerformNetworkScanReply) {}
+     rpc SetLteDubiousCell (SetLteDubiousCellRequest) returns (SetLteDubiousCellReply) {}
+     rpc SetNrDubiousCell (SetNrDubiousCellRequest) returns (SetNrDubiousCellReply) {}
  }
 
  service ImsService {
@@ -3463,6 +3465,22 @@ message RequestOirPrefReply {
     commonStub.Status status = 5;
     int32 delay = 6;
     bool is_callback = 7;
+}
+
+message SetLteDubiousCellRequest {
+    uint32 slot_id = 1;
+}
+
+message SetNrDubiousCellRequest {
+    uint32 slot_id = 1;
+}
+
+message SetLteDubiousCellReply {
+     commonStub.ErrorCode error = 1;
+}
+
+message SetNrDubiousCellReply {
+     commonStub.ErrorCode error = 1;
 }
 
 // --- Supp Services end ---

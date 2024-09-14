@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -42,6 +41,7 @@
 #include <memory>
 #include <vector>
 #include <regex>
+#include <bitset>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -145,9 +145,21 @@ bool NetworkMenu::init() {
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "6", "select_sim_slot", {},
       std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
+
+      std::shared_ptr<ConsoleAppCommand> setLteDubiousCellCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "7", "set_lte_dubious_cell", {},
+      std::bind(&NetworkMenu::setLteDubiousCell, this, std::placeholders::_1)));
+
+      std::shared_ptr<ConsoleAppCommand> setNrDubiousCellCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "8", "set_nr_dubious_cell", {},
+      std::bind(&NetworkMenu::setNrDubiousCell, this, std::placeholders::_1)));
+
       std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
          = {getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
-      getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
+      getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand,
+      setLteDubiousCellCommand,setNrDubiousCellCommand};
 
       if (networkManagers_.size() > 1) {
          commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -399,4 +411,219 @@ void NetworkMenu::selectSimSlot(std::vector<std::string> userInput) {
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
    }
+}
+
+void NetworkMenu::setLteDubiousCell(std::vector<std::string> userInput) {
+    std::string slotSelection;
+    char delimiter = '\n';
+
+    telux::tel::LteDubiousCellInfo lteDbCellInfo;
+    telux::tel::DubiousCellInfo dbCellInfo;
+    bool addConfig = false, isInvalid = false;
+    std::string mcc, mnc;
+    unsigned int arfcn = 0, pci = 0, maskInt = 0, cgi = 0;
+    int activeBandInt = 0;
+    telux::tel::RFBand activeBand;
+    telux::tel::DbCellCauseCodeMask mask;
+
+    do {
+        std::cout << "Enter MCC: " << std::endl;
+        std::cin >> mcc;
+        std::cout << std::endl;
+        Utils::validateInput(mcc);
+        dbCellInfo.mcc = mcc;
+
+        std::cout << "Enter MNC: " << std::endl;
+        std::cin >> mnc;
+        std::cout << std::endl;
+        Utils::validateInput(mnc);
+        dbCellInfo.mnc = mnc;
+
+        std::cout << "Enter arfcn: " << std::endl;
+        std::cin >> arfcn;
+        std::cout << std::endl;
+        Utils::validateInput(arfcn);
+        dbCellInfo.arfcn = arfcn;
+
+        std::cout << "Enter pci: " << std::endl;
+        std::cin >> pci;
+        std::cout << std::endl;
+        Utils::validateInput(pci);
+        dbCellInfo.pci = pci;
+
+        isInvalid = false;
+
+        do {
+            std::cout << "Enter active band: (Valid int range 0...19, 40...48, 80...88, 90, 91,"
+                << "120...179, 200...205, 250...301)" << std::endl;
+            std::cin >> activeBandInt;
+            std::cout << std::endl;
+            Utils::validateInput(activeBandInt);
+
+            isInvalid = false;
+
+            if ( ((activeBandInt >= 20)     && (activeBandInt<=39))  ||
+                    ((activeBandInt >= 49)  && (activeBandInt<=79))  ||
+                    (activeBandInt == 89)                            ||
+                    ((activeBandInt >= 92)  && (activeBandInt<=119)) ||
+                    ((activeBandInt >= 180) && (activeBandInt<=199)) ||
+                    ((activeBandInt >= 206) && (activeBandInt<=249))) {
+                std::cout << "Invalid active band, retry .." << std::endl;
+                isInvalid = true;
+            }
+
+            activeBand = static_cast<telux::tel::RFBand>(activeBandInt);
+            dbCellInfo.activeBand = activeBand;
+        } while(isInvalid);
+
+
+        std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
+        std::cin >> maskInt;
+        mask = std::bitset<32>(maskInt);
+        dbCellInfo.causeCodeMask = mask;
+
+        lteDbCellInfo.ciList.emplace_back(dbCellInfo);
+        std::cout << "Do you want to add another dubious cell ? (0-NO, 1-YES)" << std::endl;
+        std::cin >> addConfig;
+
+    } while(addConfig);
+
+    do {
+        std::cout << "Enter cgi: " << std::endl;
+        std::cin >> cgi;
+        std::cout << std::endl;
+        Utils::validateInput(cgi);
+        isInvalid = false;
+
+        if ((cgi < 0) || (cgi > std::numeric_limits<unsigned int>::max())) {
+            std::cout << "Invalid cgi, retry .." << std::endl;
+            isInvalid= true;
+        }
+    } while(isInvalid);
+    lteDbCellInfo.cgi = cgi;
+
+    auto networkManager = networkManagers_[slot_ - 1];
+    auto err = networkManager->setLteDubiousCell(lteDbCellInfo);
+    if (err == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\nSet LTE dubious cell succeed" << std::endl;
+    } else {
+        std::cout << "\nSet LTE dubious cell failed, err: " << Utils::getErrorCodeAsString(err)
+            << std::endl;
+    }
+}
+
+void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
+    std::string slotSelection;
+    char delimiter = '\n';
+
+    telux::tel::NrDubiousCellInfo nrDbCellInfo;
+    telux::tel::DubiousCellInfo dbCellInfo;
+    bool addConfig = false, isInvalid=false;;
+    std::string mcc, mnc;
+    unsigned int arfcn=0, pci=0, maskInt=0, nrScsInt=0;
+    unsigned long long cgi;
+    int activeBandInt=0;
+    telux::tel::RFBand activeBand;
+    telux::tel::DbCellCauseCodeMask mask;
+
+    do {
+        std::cout << "Enter MCC: " << std::endl;
+        std::cin >> mcc;
+        std::cout << std::endl;
+        Utils::validateInput(mcc);
+        dbCellInfo.mcc = mcc;
+
+        std::cout << "Enter MNC: " << std::endl;
+        std::cin >> mnc;
+        std::cout << std::endl;
+        Utils::validateInput(mnc);
+        dbCellInfo.mnc = mnc;
+
+        std::cout << "Enter arfcn: " << std::endl;
+        std::cin >> arfcn;
+        std::cout << std::endl;
+        Utils::validateInput(arfcn);
+        dbCellInfo.arfcn = arfcn;
+
+        std::cout << "Enter pci: " << std::endl;
+        std::cin >> pci;
+        std::cout << std::endl;
+        Utils::validateInput(pci);
+        dbCellInfo.pci = pci;
+
+        isInvalid = false;
+
+        do {
+            std::cout << "Enter active band: (valid int range 0...19, 40...48, 80...88, 90, 91,"
+                << "120...179, 200...205, 250...301)" << std::endl;
+            std::cin >> activeBandInt;
+            std::cout << std::endl;
+            Utils::validateInput(activeBandInt);
+
+            isInvalid = false;
+
+            if ( ((activeBandInt >= 20)     && (activeBandInt<=39))  ||
+                    ((activeBandInt >= 49)  && (activeBandInt<=79))  ||
+                    (activeBandInt == 89)                            ||
+                    ((activeBandInt >= 92)  && (activeBandInt<=119)) ||
+                    ((activeBandInt >= 180) && (activeBandInt<=199)) ||
+                    ((activeBandInt >= 206) && (activeBandInt<=249))) {
+                std::cout << "Invalid active band, retry .." << std::endl;
+                isInvalid = true;
+            }
+
+            activeBand = static_cast<telux::tel::RFBand>(activeBandInt);
+            dbCellInfo.activeBand = activeBand;
+        } while(isInvalid);
+
+
+        std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
+        std::cin >> maskInt;
+        std::cout << std::endl;
+        mask = std::bitset<32>(maskInt);
+        dbCellInfo.causeCodeMask = mask;
+
+        nrDbCellInfo.ciList.emplace_back(dbCellInfo);
+        std::cout << "Do you want to add another dubious cell ? (0-NO, 1-YES)" << std::endl;
+        std::cin >> addConfig;
+        std::cout << std::endl;
+    } while(addConfig);
+
+    do {
+        std::cout << "Enter cgi: " << std::endl;
+        std::cin >> cgi;
+        std::cout << std::endl;
+        Utils::validateInput(cgi);
+        isInvalid = false;
+
+        if ((cgi < 0) || (cgi > std::numeric_limits<unsigned long long>::max())) {
+            std::cout << "Invalid cgi, retry .." << std::endl;
+            isInvalid= true;
+        }
+    } while(isInvalid);
+    nrDbCellInfo.cgi = cgi;
+
+    do {
+        std::cout << "Enter NR subcarrier spacing: (0-SCS_15, 1-SCS_30, 2-SCS_60)"
+            << ", 3-SCS_120, 4-SCS_240" << std::endl;
+        std::cin >> nrScsInt;
+        std::cout << std::endl;
+        Utils::validateInput(nrScsInt);
+        isInvalid = false;
+
+        if ((nrScsInt < 0) || (nrScsInt > 5)) {
+            std::cout << "Invalid sub carrier spacing, retry .." << std::endl;
+            isInvalid= true;
+        }
+    } while(isInvalid);
+    nrDbCellInfo.spacing = static_cast<telux::tel::NrSubcarrierSpacing>(nrScsInt);
+
+    auto networkManager = networkManagers_[slot_ - 1];
+    auto err = networkManager->setNrDubiousCell(nrDbCellInfo);
+    if (err == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\nSet NR dubious cell succeed" << std::endl;
+    } else {
+        std::cout << "\nSet NR dubious cell failed, err: " << Utils::getErrorCodeAsString(err)
+            << std::endl;
+    }
 }

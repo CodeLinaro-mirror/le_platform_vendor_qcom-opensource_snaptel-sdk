@@ -55,6 +55,13 @@ public:
     grpc::Status SetPreferredNetworks(ServerContext* context,
         const ::telStub::SetPreferredNetworksRequest* request,
         telStub::SetPreferredNetworksReply* response) override;
+    grpc::Status SetLteDubiousCell(ServerContext* context,
+            const ::telStub::SetLteDubiousCellRequest* request,
+            ::telStub::SetLteDubiousCellReply* response) override;
+    grpc::Status SetNrDubiousCell(ServerContext* context,
+            const ::telStub::SetNrDubiousCellRequest* request,
+            ::telStub::SetNrDubiousCellReply* response) override;
+
 private:
     void createPreferredNetworkInfo(telux::tel::PreferredNetworkInfo input,
         telStub::PreferredNetworkInfo* output);

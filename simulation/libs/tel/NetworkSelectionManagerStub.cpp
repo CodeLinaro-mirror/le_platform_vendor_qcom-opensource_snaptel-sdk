@@ -404,6 +404,48 @@ telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
     return status;
 }
 
+telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell
+    (const LteDubiousCellInfo &lteDubiousCellInfo) {
+    LOG(DEBUG, __FUNCTION__);
+
+    ::telStub::SetLteDubiousCellRequest request;
+    ::telStub::SetLteDubiousCellReply response;
+    telux::common::ErrorCode err = telux::common::ErrorCode::GENERIC_FAILURE;
+
+    ClientContext context;
+    request.set_slot_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->SetLteDubiousCell(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    err = static_cast<telux::common::ErrorCode>(response.error());
+    return err;
+}
+
+telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell
+    (const NrDubiousCellInfo &nrDubiousCellInfo) {
+    LOG(DEBUG, __FUNCTION__);
+
+    ::telStub::SetNrDubiousCellRequest request;
+    ::telStub::SetNrDubiousCellReply response;
+    telux::common::ErrorCode err = telux::common::ErrorCode::GENERIC_FAILURE;
+
+    ClientContext context;
+    request.set_slot_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->SetNrDubiousCell(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    err = static_cast<telux::common::ErrorCode>(response.error());
+    return err;
+}
+
 void NetworkSelectionManagerStub::onEventUpdate(google::protobuf::Any event) {
     if (event.Is<::telStub::SelectionModeChangeEvent>()) {
         ::telStub::SelectionModeChangeEvent selectionModeChangeEvent;

@@ -684,6 +684,55 @@ void NetworkSelectionManagerServerImpl::handleNetworkScanResultsChanged(std::str
     }
 }
 
+grpc::Status NetworkSelectionManagerServerImpl::SetLteDubiousCell(ServerContext* context,
+    const ::telStub::SetLteDubiousCellRequest* request,
+    ::telStub::SetLteDubiousCellReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = (request->slot_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string subsystem = MANAGER;
+    std::string method = "setLteDubiousCell";
+    JsonData data;
+    Json::Value rootObj;
+
+    auto error =
+        JsonParser::readFromJsonFile(rootObj, apiJsonPath);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    std::string errStr = rootObj[subsystem][method]["error"].asString();
+    auto errCode = CommonUtils::mapErrorCode(errStr);
+    response->set_error(static_cast<commonStub::ErrorCode>(errCode));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NetworkSelectionManagerServerImpl::SetNrDubiousCell(ServerContext* context,
+    const ::telStub::SetNrDubiousCellRequest* request, ::telStub::SetNrDubiousCellReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = (request->slot_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string subsystem = MANAGER;
+    std::string method = "setNrDubiousCell";
+    JsonData data;
+    Json::Value rootObj;
+
+    auto error =
+        JsonParser::readFromJsonFile(rootObj, apiJsonPath);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    std::string errStr = rootObj[subsystem][method]["error"].asString();
+    auto errCode = CommonUtils::mapErrorCode(errStr);
+    response->set_error(static_cast<commonStub::ErrorCode>(errCode));
+
+    return grpc::Status::OK;
+}
+
 void NetworkSelectionManagerServerImpl::triggerChangeEvent(
     ::eventService::EventResponse anyResponse) {
     LOG(DEBUG, __FUNCTION__);

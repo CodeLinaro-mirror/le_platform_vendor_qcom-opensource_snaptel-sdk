@@ -205,6 +205,11 @@ service DataFilterManager {
         (GetDualDataUsageRecommendationReply) {}
   }
 
+  service DataControlManager {
+    rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+    rpc SetDataStallParams(SetDataStallParamsRequest) returns (SetDataStallParamsReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+  }
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
@@ -1283,4 +1288,12 @@ message GetInterfaceBridgeRequest {
 message GetInterfaceBridgeReply {
     int32 bridge_id = 1;
     DefaultReply reply = 2;
+}
+
+message SetDataStallParamsRequest {
+    int32 slot_id = 1;
+}
+
+message SetDataStallParamsReply {
+    commonStub.ErrorCode error = 1;
 }

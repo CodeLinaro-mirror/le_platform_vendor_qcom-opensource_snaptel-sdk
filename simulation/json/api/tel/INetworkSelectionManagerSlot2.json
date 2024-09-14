@@ -28,6 +28,14 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "setLteDubiousCell" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setNrDubiousCell" :
+        {
+            "error" : "SUCCESS"
         }
     }
 }

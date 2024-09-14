@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 
     auto ccsApp = std::make_shared<CellularConnectionSecurityApp>(appName, "cellconsec> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
 
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {

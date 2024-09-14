@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 
     auto sysApp = std::make_shared<SubsystemApp>(appName, "subsys> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
 
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {

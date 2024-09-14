@@ -355,7 +355,7 @@ void Cv2xConfigApp::enforceConfigExpirationCommand() {
 }
 
 int main(int argc, char *argv[]) {
-    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }

@@ -183,7 +183,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     // Setting required secondary groups for SDK file/diag logging
-    vector<string> supplementaryGrps{"system", "diag", "radio", "logd"};
+    vector<string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt"};
     int rc =  Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         LOG(DEBUG, __FUNCTION__, " Adding supplementary groups failed ");

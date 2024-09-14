@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
 
     auto wcsApp = std::make_shared<WiFiConnectionSecurityApp>(appName, "wificonsec> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "gps", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "gps", "logd", "dlt"};
 
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {

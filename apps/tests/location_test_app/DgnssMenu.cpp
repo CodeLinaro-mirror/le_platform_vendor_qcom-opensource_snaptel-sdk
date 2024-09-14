@@ -26,8 +26,8 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -274,17 +274,6 @@ int DgnssMenu::processRtcmFromServer(void) {
       return ret;
    }
 
-   if (ret < 0) {
-      std::cout << "ReadRtcmPacket: recv failed " << ret << std::endl;
-      return ret;
-   }
-
-   ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
-   if (ret < 0) {
-       std::cout << "processRtcmFromServer: recv failed " << ret << std::endl;
-       stop_ = true;
-       return ret;
-   }
    if (append) {
        int totalSize = appendOffset + ret;
        memcpy(truncBuffer + appendOffset, buffer, ret);

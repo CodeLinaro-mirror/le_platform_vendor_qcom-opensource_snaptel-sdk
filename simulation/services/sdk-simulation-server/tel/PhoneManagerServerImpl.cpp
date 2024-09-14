@@ -437,17 +437,23 @@ void PhoneManagerServerImpl::handleVoiceServiceStateChanged(std::string eventPar
 void PhoneManagerServerImpl::handleOperatingModeChanged(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId;
-    telux::common::ErrorCode errorCode = telux::tel::TelUtil::writeOperatingModeToJsonFile(
+    ::telStub::OperatingModeEvent oldOperatingModeEvent;
+    telux::common::ErrorCode errorCode = telux::tel::TelUtil::readOperatingModeEventFromJsonFile(
+        oldOperatingModeEvent);
+    errorCode = telux::tel::TelUtil::writeOperatingModeToJsonFile(
         eventParams, phoneId);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        ::telStub::OperatingModeEvent operatingModeEvent;
-        errorCode = telux::tel::TelUtil::readOperatingModeEventFromJsonFile(operatingModeEvent);
-
+        ::telStub::OperatingModeEvent newOperatingModeEvent;
+        errorCode = telux::tel::TelUtil::readOperatingModeEventFromJsonFile(newOperatingModeEvent);
         if (errorCode == telux::common::ErrorCode::SUCCESS) {
+            if (newOperatingModeEvent.operating_mode() == oldOperatingModeEvent.operating_mode()) {
+                LOG(ERROR, __FUNCTION__, " Current operating mode and new operating mode is same");
+                return;
+            }
             ::eventService::EventResponse anyResponse;
             anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
-            modemMgr_->updateOperatingModeState(operatingModeEvent.operating_mode());
-            anyResponse.mutable_any()->PackFrom(operatingModeEvent);
+            modemMgr_->updateOperatingModeState(newOperatingModeEvent.operating_mode());
+            anyResponse.mutable_any()->PackFrom(newOperatingModeEvent);
             auto f = std::async(std::launch::async, [this, anyResponse]() {
                 this->triggerChangeEvent(anyResponse);
             }).share();

@@ -99,6 +99,7 @@ private:
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
    std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
    telux::tel::VoiceServiceState voiceSrvcState_ = telux::tel::VoiceServiceState::UNKNOWN;
+   int phoneId_ = DEFAULT_PHONE_ID;
 };
 
 class MyCellularCapabilityCallback : public telux::tel::ICellularCapabilityCallback {
@@ -160,7 +161,8 @@ public:
 class MyPhoneHelper {
 public:
    static std::string operatingModeToString(telux::tel::OperatingMode operatingMode);
-   static void printCellInfoDetails(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
+   static void printCellInfoDetails(
+      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
    static std::string eCallOperatingModeToString(telux::tel::ECallMode eCallMode);
    static std::string voiceServiceStateToString(telux::tel::VoiceServiceState vocSrvState);
    static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);

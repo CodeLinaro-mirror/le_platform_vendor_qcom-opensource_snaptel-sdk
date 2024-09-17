@@ -44,6 +44,11 @@ public:
     telux::common::Status requestRoamingMode(uint8_t profileId, OperationType operationType,
         requestRoamingModeResponseCb callback) override;
 
+    telux::common::Status startDataCall(
+        const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr) override;
+    telux::common::Status stopDataCall(
+        const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr) override;
+
     telux::common::Status startDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
         OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") override;

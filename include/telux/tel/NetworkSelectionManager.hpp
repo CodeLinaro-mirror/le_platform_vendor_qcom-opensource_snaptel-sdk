@@ -27,42 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /**
  * @file       NetworkSelectionManager.hpp
  *
@@ -81,6 +49,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
+#include <telux/tel/ServingSystemDefines.hpp>
 
 namespace telux {
 namespace tel {
@@ -220,6 +189,73 @@ struct NetworkModeInfo {
     std::string mcc;  /**< Mobile Country Code (Applicable only for MANUAL selection mode). */
     std::string mnc;  /**< Mobile Network Code (Applicable only for MANUAL selection mode). */
 };
+
+/**
+ * Defines dubious cell cause codes
+ */
+enum DubiousCellCauseCode {
+    DUBIOUS_CELL_CAUSE_CEF = (1 << 0), /**< Connection Establishment Failure */
+    DUBIOUS_CELL_CAUSE_RLF = (1 << 1), /**< Radio Link Failure (RLF) due to poor signal, handover
+                                            failure, hardware issue etc. */
+    DUBIOUS_CELL_CAUSE_PING_PONG = (1 << 2), /**< Device frequently switches between two or more
+                                                  cells due to signal fluctuations, device movement
+                                                  between overlapping cell coverage area etc. */
+    DUBIOUS_CELL_CAUSE_LOW_DATA_RATE_PS = (1 << 3), /**< Cell is experiencing low data rates in the
+                                                         packet-switched (PS) domain due to network
+                                                         congestion, interference etc. */
+    DUBIOUS_CELL_CAUSE_LOW_DATA_RATE_IMS = (1 << 4), /**< Cell is experiencing low data rates in
+                                                          the IP Multimedia Subsystem (IMS) domain
+                                                          due to network congestion, interference
+                                                          etc. */
+};
+
+/**
+ * Bitmask containing dubious cell cause code bits, e.g., a value of 0x20 represents
+ * NAS registration request is rejected. Multiple cause codes are possible.
+ */
+using DbCellCauseCodeMask = std::bitset<32>;
+
+/**
+ * Defines NR subcarrier spacing type
+ */
+enum class NrSubcarrierSpacing {
+    INVALID = -1,
+    SCS_15  = 0, /**< Subcarrier spacing 15kHz */
+    SCS_30  = 1, /**< Subcarrier spacing 30kHz */
+    SCS_60  = 2, /**< Subcarrier spacing 60kHz */
+    SCS_120 = 3, /**< Subcarrier spacing 120kHz */
+    SCS_240 = 4, /**< Subcarrier spacing 240kHz */
+};
+
+/**
+ * Defines dubious cell information
+ */
+struct DubiousCellInfo {
+    std::string mcc;                    /**< Mobile country code */
+    std::string mnc;                    /**< Mobile network code */
+    unsigned int arfcn;                 /**< Absolute radio-frequency channel number */
+    unsigned int pci;                   /**< Physical cell identity */
+    RFBand activeBand;                  /**< Active RF band */
+    DbCellCauseCodeMask causeCodeMask;  /**< Dubious cell cause code bit mask */
+};
+
+/**
+ * Defines NR5G dubious cell information
+ */
+struct NrDubiousCellInfo {
+    std::vector<DubiousCellInfo> ciList;     /**< List of NR dubious cell */
+    unsigned long long cgi = 0;              /**< Global cell ID */
+    NrSubcarrierSpacing spacing;             /**< NR subcarrier spacing */
+};
+
+/**
+ * Defines LTE dubious cell information
+ */
+struct LteDubiousCellInfo {
+    std::vector<DubiousCellInfo> ciList;    /**< List of LTE dubious cell */
+    unsigned int cgi = 0;                   /**< Global cell ID */
+};
+
 /** @} */ /* end_addtogroup telematics_network_selection */
 
 /**
@@ -439,6 +475,48 @@ public:
     */
    virtual telux::common::Status performNetworkScan(NetworkScanInfo info,
       common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Set a list of LTE dubious cells to expedite the detection of data stalls. It overrides the
+    * existing dubious cell list.
+    *
+    * Dubious cell parameters are not persistent over device reboot or subsystem restart (SSR)
+    * updated via @ref INetworkSelectionListener::onServiceStatusChange.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
+    * permission to invoke this API successfully.
+    *
+    * @param [in] lteDubiousCellInfo    LTE dubious cells information.
+    *                                   @ref telux::tel::LteDubiousCellInfo
+    *
+    * @returns Error code which indicates whether the operation succeeded or not.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode setLteDubiousCell(const LteDubiousCellInfo
+           &lteDubiousCellInfo) = 0;
+
+   /**
+    * Set a list of NR dubious cells to expedite the detection of data stalls. It overrides the
+    * existing dubious cell list.
+    *
+    * Dubious cell parameters are not persistent over device reboot or subsystem restart (SSR)
+    * updated via @ref INetworkSelectionListener::onServiceStatusChange.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
+    * permission to invoke this API successfully.
+    *
+    * @param [in] nrDubiousCellInfo    NR dubious cells information.
+    *                                  @ref telux::tel::NrDubiousCellInfo
+    *
+    * @returns Error code which indicates whether the operation succeeded or not.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode setNrDubiousCell(const NrDubiousCellInfo
+           &nrDubiousCellInfo) = 0;
 
    /**
     * Register a listener for specific updates from network access service.

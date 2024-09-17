@@ -553,6 +553,32 @@ enum QosFlowMaskType {
  */
 using QosFlowMask = std::bitset<16>;
 
+/**
+ * Possible DDS switch types.
+ */
+enum class DdsType
+{
+    PERMANENT = 0, /** Permanently switch the DDS SIM slot. For example, in DSDS mode this is
+                       intended to be used when the client wants to stop data activities on the
+                       current DDS SIM slot and start doing data activities on the other SIM slot.
+                       Permanent switch is persistent across reboots. */
+    TEMPORARY = 1, /** Temporarily switch the DDS SIM slot. For example, in DSDS mode this is
+                       intended be used when there is a voice call on the non-DDS SIM slot and the
+                       client wants to temporarily perform data activity on that non-DDS SIM slot,
+                       for the duration of the call. After the call ends, clients should do a
+                       permanent switch back to the original DDS SIM. Temporary switch is not
+                       persistent across reboots.*/
+};
+
+/**
+ * Specifies the DDS switch information.
+ */
+struct DdsInfo
+{
+    DdsType type;   /** Specifies DDS switch type */
+    SlotId slotId;  /** Specifies which slot is the DDS */
+};
+
 /** @} */ /* end_addtogroup telematics_data */
 }
 }

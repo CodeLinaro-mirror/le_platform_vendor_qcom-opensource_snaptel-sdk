@@ -55,7 +55,8 @@ class ServingSystemManagerStub : public IServingSystemManager,
                                  public IEventListener,
                                  public std::enable_shared_from_this<ServingSystemManagerStub> {
 public:
-    ServingSystemManagerStub(int phoneId, telux::common::InitResponseCb callback);
+    ServingSystemManagerStub(int phoneId);
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~ServingSystemManagerStub();
 
     bool isSubsystemReady() override;
@@ -74,6 +75,9 @@ public:
     telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) override;
     telux::tel::DcStatus getDcStatus() override;
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;
+    telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback)
+        override;
+    telux::common::Status requestNr5gRrcUtcTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
     telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
     telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) override;
@@ -93,10 +97,15 @@ public:
 
 private:
     int phoneId_;
+    std::mutex mtx_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ListenerManager<IServingSystemListener>> listenerMgr_;
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleCallBarringInfosChanged (::telStub::CallBarringInfosEvent event);
     void handleSystemInfoChanged(::telStub::SystemInfoEvent event);
     void handleSystemSelectionPreferenceChanged(::telStub::SystemSelectionPreferenceEvent event);

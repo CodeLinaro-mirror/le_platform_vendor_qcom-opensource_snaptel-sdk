@@ -167,7 +167,23 @@ grpc::Status ServingManagerServerImpl::SetRATPreference(ServerContext* context,
                 "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
             int domain = stoi(CommonUtils::readSystemDataValue(stateJsonPath, "0",
                 {"IServingSystemManager", "ServiceDomainPreference"}));
-            this->triggerSystemSelectionPreferenceEvent(phoneId, ratPrefs, domain);
+            std::string gsmBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "gsmBands"});
+            std::vector<int> gsmBands = CommonUtils::convertStringToVector(gsmBandsStr);
+            std::string wcdmaBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "wcdmaBands"});
+            std::vector<int> wcdmaBands = CommonUtils::convertStringToVector(wcdmaBandsStr);
+            std::string lteBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "lteBands"});
+            std::vector<int> lteBands = CommonUtils::convertStringToVector(lteBandsStr);
+            std::string nsaBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "nsaBands"});
+            std::vector<int> nsaBands = CommonUtils::convertStringToVector(nsaBandsStr);
+            std::string saBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "saBands"});
+            std::vector<int> saBands = CommonUtils::convertStringToVector(saBandsStr);
+            this->triggerSystemSelectionPreferenceEvent(phoneId, ratPrefs, domain, gsmBands,
+                wcdmaBands, lteBands, nsaBands, saBands);
         }).share();
     taskQ_->add(f);
 
@@ -240,13 +256,29 @@ grpc::Status ServingManagerServerImpl::SetServiceDomainPreference(ServerContext*
                 "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
             std::string rats = CommonUtils::readSystemDataValue(stateJsonPath, "0",
                 {"IServingSystemManager", "RATPreference"});
-            LOG(DEBUG, __FUNCTION__,"String is ", rats);
+            LOG(DEBUG, __FUNCTION__,"RAT string is ", rats);
             std::vector<int> raTdata = CommonUtils::convertStringToVector(rats);
             std::vector<uint8_t> raTs;
             for(int i : raTdata) {
                 raTs.push_back(static_cast<uint8_t>(i));
             }
-            this->triggerSystemSelectionPreferenceEvent(phoneId, raTs, domain);
+            std::string gsmBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "gsmBands"});
+            std::vector<int> gsmBands = CommonUtils::convertStringToVector(gsmBandsStr);
+            std::string wcdmaBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "wcdmaBands"});
+            std::vector<int> wcdmaBands = CommonUtils::convertStringToVector(wcdmaBandsStr);
+            std::string lteBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "lteBands"});
+            std::vector<int> lteBands = CommonUtils::convertStringToVector(lteBandsStr);
+            std::string nsaBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "nsaBands"});
+            std::vector<int> nsaBands = CommonUtils::convertStringToVector(nsaBandsStr);
+            std::string saBandsStr = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "BandPreference", "saBands"});
+            std::vector<int> saBands = CommonUtils::convertStringToVector(saBandsStr);
+            this->triggerSystemSelectionPreferenceEvent(phoneId, raTs, domain, gsmBands, wcdmaBands,
+                lteBands, nsaBands, saBands);
         }).share();
     taskQ_->add(f);
     //Create response
@@ -263,7 +295,9 @@ grpc::Status ServingManagerServerImpl::SetServiceDomainPreference(ServerContext*
 }
 
 void ServingManagerServerImpl::triggerSystemSelectionPreferenceEvent(int slotId,
-    std::vector<uint8_t> ratPrefs, int domain) {
+    std::vector<uint8_t> ratPrefs, int domain, std::vector<int> gsmBandPrefs,
+    std::vector<int> wcdmaBandPrefs, std::vector<int> lteBandPrefs,
+    std::vector<int> nsaBandPrefs, std::vector<int> saBandPrefs) {
     ::telStub::SystemSelectionPreferenceEvent systemSelectionPreference;
     ::eventService::EventResponse anyResponse;
 
@@ -273,6 +307,21 @@ void ServingManagerServerImpl::triggerSystemSelectionPreferenceEvent(int slotId,
     }
     systemSelectionPreference.set_service_domain_pref
         (static_cast<telStub::ServiceDomainPreference_Pref>(domain));
+    for(auto &g : gsmBandPrefs) {
+         systemSelectionPreference.add_gsm_pref_bands(static_cast<telStub::GsmRFBand>(g));
+    }
+    for(auto &w : wcdmaBandPrefs) {
+         systemSelectionPreference.add_wcdma_pref_bands(static_cast<telStub::WcdmaRFBand>(w));
+    }
+    for(auto &l : lteBandPrefs) {
+         systemSelectionPreference.add_lte_pref_bands(static_cast<telStub::LteRFBand>(l));
+    }
+    for(auto &n : nsaBandPrefs) {
+         systemSelectionPreference.add_nsa_pref_bands(static_cast<telStub::NrRFBand>(n));
+    }
+    for(auto &s: saBandPrefs) {
+         systemSelectionPreference.add_sa_pref_bands(static_cast<telStub::NrRFBand>(s));
+    }
     anyResponse.set_filter("tel_serv_sel_pref");
     anyResponse.mutable_any()->PackFrom(systemSelectionPreference);
     //posting the event to EventService event queue
@@ -491,6 +540,266 @@ grpc::Status ServingManagerServerImpl::GetCallBarringInfo(ServerContext* context
         }
     }
     //Create response
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::GetSmsCapabilityOverNetwork(ServerContext* context,
+    const ::telStub::GetSmsCapabilityOverNetworkRequest* request,
+    telStub::GetSmsCapabilityOverNetworkReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "getSmsCapabilityOverNetwork";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.status == telux::common::Status::SUCCESS) {
+        int domain =  data.stateRootObj[MANAGER]["SmsCapability"]["domain"].asInt();
+        response->set_domain(static_cast<telStub::SmsDomain>(domain));
+        int rat =  data.stateRootObj[MANAGER]["SmsCapability"]["rat"].asInt();
+        response->set_rat(static_cast<telStub::RadioTechnology>(rat));
+    }
+    //Create response
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::GetLteCsCapability(ServerContext* context,
+    const ::telStub::GetLteCsCapabilityRequest* request,
+    telStub::GetLteCsCapabilityReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "getLteCsCapability";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.status == telux::common::Status::SUCCESS) {
+        int capability =  data.stateRootObj[MANAGER]["LteCsCapability"].asInt();
+        response->set_capability
+        (static_cast<telStub::LteCsCapability>(capability));
+    }
+    //Create response
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::RequestRFBandPreferences(ServerContext* context,
+    const ::telStub::RequestRFBandPreferencesRequest* request,
+    telStub::RequestRFBandPreferencesReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "requestRFBandPreferences";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if(data.status == telux::common::Status::SUCCESS) {
+        std::string gsmBandsStr = data.stateRootObj[MANAGER]["BandPreference"]\
+            ["gsmBands"].asString();
+        std::vector<int> gsmBands = CommonUtils::convertStringToVector(gsmBandsStr);
+        std::string wcdmaBandsStr = data.stateRootObj[MANAGER]["BandPreference"]\
+            ["wcdmaBands"].asString();
+        std::vector<int> wcdmaBands = CommonUtils::convertStringToVector(wcdmaBandsStr);
+        std::string lteBandsStr = data.stateRootObj[MANAGER]["BandPreference"]\
+            ["lteBands"].asString();
+        std::vector<int> lteBands = CommonUtils::convertStringToVector(lteBandsStr);
+        std::string nsaBandsStr = data.stateRootObj[MANAGER]["BandPreference"]\
+            ["nsaBands"].asString();
+        std::vector<int> nsaBands = CommonUtils::convertStringToVector(nsaBandsStr);
+        std::string saBandsStr = data.stateRootObj[MANAGER]["BandPreference"]\
+            ["saBands"].asString();
+        std::vector<int> saBands = CommonUtils::convertStringToVector(saBandsStr);
+        for(auto &g : gsmBands) {
+             response->add_gsm_pref_bands(static_cast<telStub::GsmRFBand>(g));
+        }
+        for(auto &w : wcdmaBands) {
+             response->add_wcdma_pref_bands(static_cast<telStub::WcdmaRFBand>(w));
+        }
+        for(auto &l : lteBands) {
+             response->add_lte_pref_bands(static_cast<telStub::LteRFBand>(l));
+        }
+        for(auto &n : nsaBands) {
+             response->add_nsa_pref_bands(static_cast<telStub::NrRFBand>(n));
+        }
+        for(auto &s: saBands) {
+             response->add_sa_pref_bands(static_cast<telStub::NrRFBand>(s));
+        }
+    }
+    //Create response
+    if(data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::SetRFBandPreferences(ServerContext* context,
+    const ::telStub::SetRFBandPreferencesRequest* request,
+    telStub::SetRFBandPreferencesReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "setRFBandPreferences";
+    JsonData data;
+    std::vector<int> gsmBands   = {};
+    std::vector<int> wcdmaBands = {};
+    std::vector<int> lteBands   = {};
+    std::vector<int> saBands    = {};
+    std::vector<int> nsaBands   = {};
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.status == telux::common::Status::SUCCESS) {
+        for (auto &g : request->gsm_pref_bands()) {
+            gsmBands.push_back(static_cast<int>(g));
+        }
+        for (auto &w : request->wcdma_pref_bands()) {
+            wcdmaBands.push_back(static_cast<int>(w));
+        }
+        for (auto &l : request->lte_pref_bands()) {
+            lteBands.push_back(static_cast<int>(l));
+        }
+        for (auto &n : request->nsa_pref_bands()) {
+            nsaBands.push_back(static_cast<int>(n));
+        }
+        for (auto &s : request->sa_pref_bands()) {
+            saBands.push_back(static_cast<int>(s));
+        }
+        std::string gsmBandValue = CommonUtils::convertIntVectorToString(gsmBands);
+        std::string wcdmaBandValue = CommonUtils::convertIntVectorToString(wcdmaBands);
+        std::string lteBandValue = CommonUtils::convertIntVectorToString(lteBands);
+        std::string nsaBandValue = CommonUtils::convertIntVectorToString(nsaBands);
+        std::string saBandValue = CommonUtils::convertIntVectorToString(saBands);
+        data.stateRootObj[MANAGER]["BandPreference"]["gsmBands"]
+            = gsmBandValue;
+        data.stateRootObj[MANAGER]["BandPreference"]["wcdmaBands"]
+            = wcdmaBandValue;
+        data.stateRootObj[MANAGER]["BandPreference"]["lteBands"]
+            = lteBandValue;
+        data.stateRootObj[MANAGER]["BandPreference"]["nsaBands"]
+            = nsaBandValue;
+        data.stateRootObj[MANAGER]["BandPreference"]["saBands"]
+            = saBandValue;
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+    //Create response
+    if(data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    int phoneId = request->phone_id();
+    auto f = std::async(std::launch::async, [this, phoneId, gsmBands,
+                wcdmaBands, lteBands, nsaBands, saBands]() {
+            std::string stateJsonPath = (phoneId == SLOT_1 ) ?
+                "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+            int domain = stoi(CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "ServiceDomainPreference"}));
+            std::string rats = CommonUtils::readSystemDataValue(stateJsonPath, "0",
+                {"IServingSystemManager", "RATPreference"});
+            LOG(DEBUG, __FUNCTION__,"RAT string is ", rats);
+            std::vector<int> raTdata = CommonUtils::convertStringToVector(rats);
+            std::vector<uint8_t> raTs;
+            for(int i : raTdata) {
+                raTs.push_back(static_cast<uint8_t>(i));
+            }
+            this->triggerSystemSelectionPreferenceEvent(phoneId, raTs, domain, gsmBands,
+                wcdmaBands, lteBands, nsaBands, saBands);
+        }).share();
+    taskQ_->add(f);
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::RequestRFBandCapability(ServerContext* context,
+    const ::telStub::RequestRFBandCapabilityRequest* request,
+    telStub::RequestRFBandCapabilityReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "requestRFBandCapability";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if(data.status == telux::common::Status::SUCCESS) {
+        std::string gsmBandsStr = data.stateRootObj[MANAGER]["BandCapability"]\
+            ["gsmBands"].asString();
+        std::vector<int> gsmBands = CommonUtils::convertStringToVector(gsmBandsStr);
+        std::string wcdmaBandsStr = data.stateRootObj[MANAGER]["BandCapability"]\
+            ["wcdmaBands"].asString();
+        std::vector<int> wcdmaBands = CommonUtils::convertStringToVector(wcdmaBandsStr);
+        std::string lteBandsStr = data.stateRootObj[MANAGER]["BandCapability"]\
+            ["lteBands"].asString();
+        std::vector<int> lteBands = CommonUtils::convertStringToVector(lteBandsStr);
+        std::string nrBandsStr = data.stateRootObj[MANAGER]["BandCapability"]\
+            ["nrBands"].asString();
+        std::vector<int> nrBands = CommonUtils::convertStringToVector(nrBandsStr);
+        for(auto &g : gsmBands) {
+             response->add_gsm_capability_bands(static_cast<telStub::GsmRFBand>(g));
+        }
+        for(auto &w : wcdmaBands) {
+             response->add_wcdma_capability_bands(static_cast<telStub::WcdmaRFBand>(w));
+        }
+        for(auto &l : lteBands) {
+             response->add_lte_capability_bands(static_cast<telStub::LteRFBand>(l));
+        }
+        for(auto &n : nrBands) {
+             response->add_nr_capability_bands(static_cast<telStub::NrRFBand>(n));
+        }
+    }
+    //Create response
+    if(data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
 
     return grpc::Status::OK;
@@ -791,6 +1100,16 @@ void ServingManagerServerImpl::handleRfBandInfoUpdateEvent(std::string eventPara
     }
 }
 
+std::vector<int> ServingManagerServerImpl::readBandPreferenceFromEvent(std::string eventParams) {
+    std::vector<int> bandPrefs = {};
+    std::string band = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    while(!band.empty()) {
+       bandPrefs.emplace_back(stoi(band));
+       band = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    }
+    return bandPrefs;
+}
+
 void ServingManagerServerImpl::handleSystemSelectionPreferenceChanged(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__);
     int slotId;
@@ -838,8 +1157,32 @@ void ServingManagerServerImpl::handleSystemSelectionPreferenceChanged(std::strin
             reverseRat = reverseRat/10;
         }
         std::string value = CommonUtils::convertVectorToString(ratPrefs, false);
-
         LOG(INFO, __FUNCTION__, "Rat data for json file  is ", value);
+
+        // Split the event string into parameters( for ... ,gsmBands ,wcdmaBands ,lteBands ...)
+        // based on delimeter as ","
+        std::stringstream ss(eventParams);
+        std::vector<string> params;
+        while (getline(ss, eventParams, ',')) {
+            params.emplace_back(eventParams);
+        }
+        for(std::string str:params) {
+            LOG(DEBUG, __FUNCTION__," Param: ", str);
+        }
+
+        std::vector<int> gsmBandPrefs = readBandPreferenceFromEvent(params[1]);
+        std::vector<int> wcdmaBandPrefs = readBandPreferenceFromEvent(params[2]);
+        std::vector<int> lteBandPrefs = readBandPreferenceFromEvent(params[3]);
+        std::vector<int> nsaBandPrefs = readBandPreferenceFromEvent(params[4]);
+        std::vector<int> saBandPrefs = readBandPreferenceFromEvent(params[5]);
+        std::string gsmBandValue = CommonUtils::convertIntVectorToString(gsmBandPrefs);
+        std::string wcdmaBandValue = CommonUtils::convertIntVectorToString(wcdmaBandPrefs);
+        std::string lteBandValue = CommonUtils::convertIntVectorToString(lteBandPrefs);
+        std::string nsaBandValue = CommonUtils::convertIntVectorToString(nsaBandPrefs);
+        std::string saBandValue = CommonUtils::convertIntVectorToString(saBandPrefs);
+        LOG(INFO, __FUNCTION__, "Band data for json file is: gsm bands ", gsmBandValue,
+            ", wcdma bands ", wcdmaBandValue, ", lte bands ", lteBandValue,
+            ", nsa bands ", nsaBandValue, ", sa bands ", saBandValue);
 
         std::string stateJsonPath = (slotId == SLOT_1 ) ?
             "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
@@ -848,8 +1191,19 @@ void ServingManagerServerImpl::handleSystemSelectionPreferenceChanged(std::strin
                 {"IServingSystemManager", "RATPreference"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, domain,
                 {"IServingSystemManager", "ServiceDomainPreference"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, gsmBandValue,
+                {"IServingSystemManager", "BandPreference", "gsmBands"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, wcdmaBandValue,
+                {"IServingSystemManager", "BandPreference", "wcdmaBands"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, lteBandValue,
+                {"IServingSystemManager", "BandPreference", "lteBands"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, nsaBandValue,
+                {"IServingSystemManager", "BandPreference", "nsaBands"});
+        CommonUtils::writeSystemDataValue<std::string>(stateJsonPath, saBandValue,
+                {"IServingSystemManager", "BandPreference", "saBands"});
 
-        triggerSystemSelectionPreferenceEvent(slotId, ratPrefs, domain);
+        triggerSystemSelectionPreferenceEvent(slotId, ratPrefs, domain, gsmBandPrefs,
+            wcdmaBandPrefs, lteBandPrefs, nsaBandPrefs, saBandPrefs);
     } catch(exception const & ex) {
         LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
     }
@@ -912,8 +1266,54 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
 
         }
 
+        // Fetch smsRat
+        int smsRat;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " smsRat not passed");
+            smsRat = 0; // UNKNOWN
+        } else {
+            smsRat = std::stoi(token);
+        }
+        if (smsRat < (static_cast<int>(telStub::RadioTechnology ::RADIO_TECH_UNKNOWN)) ||
+            smsRat > (static_cast<int>(telStub::RadioTechnology ::RADIO_TECH_NR5G))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for SMS radio technology ");
+            return;
+        }
+
+        // Fetch smsDomain
+        int smsDomain;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " smsDomain not passed");
+            smsDomain = -1; // UNKNOWN
+        } else {
+            smsDomain = std::stoi(token);
+        }
+        if (smsDomain < (static_cast<int>(telStub::SmsDomain::UNKNOWN_DOMAIN)) ||
+            smsDomain > (static_cast<int>(telStub::SmsDomain::SMS_ON_3GPP))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for SMS domain ");
+            return;
+        }
+
+        // Fetch LteCapability
+        int lteCapability;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " lteCapability not passed");
+            lteCapability = -1; // UNKNOWN
+        } else {
+            lteCapability = std::stoi(token);
+        }
+        if (lteCapability < (static_cast<int>(telStub::LteCsCapability::UNKNOWN_SERVICE)) ||
+            lteCapability > (static_cast<int>(telStub::LteCsCapability::BARRED))) {
+            LOG(ERROR, __FUNCTION__, " Invalid input for LTE CS capability ");
+            return;
+        }
+
         LOG(INFO, __FUNCTION__, " Rat is ", currentServingRat , " Domain is ", currentServingDomain
-        , " EndcAvailability is ", endcAvailability, " DcnrRestriction is ", dcnrRestriction);
+        , " EndcAvailability is ", endcAvailability, " DcnrRestriction is ", dcnrRestriction
+        , " SmsRat is ", smsRat, " SmsDomain is ", smsDomain, " LteCapability is ", lteCapability);
 
         std::string stateJsonPath = (slotId == SLOT_1 ) ?
             "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
@@ -926,6 +1326,12 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
                 {"IServingSystemManager", "DcStatus", "endcAvailability"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, dcnrRestriction,
                 {"IServingSystemManager", "DcStatus", "dcnrRestriction"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, smsRat,
+                {"IServingSystemManager", "SmsCapability", "rat"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, smsDomain,
+                {"IServingSystemManager", "SmsCapability", "domain"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, lteCapability,
+                {"IServingSystemManager", "lteCapability"});
 
         ::telStub::SystemInfoEvent systemInfoEvent;
         ::eventService::EventResponse anyResponse;
@@ -938,6 +1344,10 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
             (static_cast<telStub::EndcAvailability_Status>(endcAvailability));
         systemInfoEvent.set_dcnr_restriction
             (static_cast<telStub::DcnrRestriction_Status>(dcnrRestriction));
+        systemInfoEvent.set_sms_rat(static_cast<telStub::RadioTechnology>(smsRat));
+        systemInfoEvent.set_sms_domain(static_cast<telStub::SmsDomain>(smsDomain));
+        systemInfoEvent.set_lte_capability
+            (static_cast<telStub::LteCsCapability>(lteCapability));
         anyResponse.set_filter("tel_serv_sys_info");
         anyResponse.mutable_any()->PackFrom(systemInfoEvent);
         //posting the event to EventService event queue

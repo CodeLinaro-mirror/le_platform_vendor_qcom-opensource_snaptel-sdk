@@ -90,6 +90,7 @@ CongestionControlData ApplicationBase::congestionControlOut;
 sem_t ApplicationBase::congCtrlCbSem;
 shared_ptr<CongestionControlUserData> ApplicationBase::congCtrlCbDataPtr;
 CongestionControlCalculations ApplicationBase::congCtrlCbData;
+v2x_diag_qits_general_data ApplicationBase::generalInfo;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
 FILE* ApplicationBase::csvfp;
@@ -106,6 +107,10 @@ bool ApplicationBase::writeLogFinish;
 bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
 bool ApplicationBase::securityInitialized;
+
+#define EventBitsShift(bits, shift) \
+    (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
+
 std::string getCurrentTimestamp()
 {
     using std::chrono::system_clock;
@@ -165,6 +170,145 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         }
     }
 
+}
+
+unsigned short ApplicationBase::getEventsData(const vehicleeventflags_ut *events) {
+    unsigned short eventsData = 0;
+    eventsData |= EventBitsShift(
+        events->bits.eventAirBagDeployment, event_bits_shift_et::SHIFT_AIRBAGDEPLOYMENT);
+    eventsData |= EventBitsShift(
+        events->bits.eventDisabledVehicle, event_bits_shift_et::SHIFT_DISABLEDVEHICLE);
+    eventsData |= EventBitsShift(
+        events->bits.eventFlatTire, event_bits_shift_et::SHIFT_FLATTIRE);
+    eventsData |= EventBitsShift(
+        events->bits.eventWipersChanged, event_bits_shift_et::SHIFT_WIPERSCHANGED);
+    eventsData |= EventBitsShift(
+        events->bits.eventLightsChanged, event_bits_shift_et::SHIFT_LIGHTSCHANGED);
+    eventsData |= EventBitsShift(
+        events->bits.eventHardBraking, event_bits_shift_et::SHIFT_HARDBRAKING);
+    eventsData |= EventBitsShift(
+        events->bits.eventHazardousMaterials, event_bits_shift_et::SHIFT_HAZARDOUSMATERIALS);
+    eventsData |= EventBitsShift(events->bits.eventStabilityControlactivated,
+        event_bits_shift_et::SHIFT_STABILITYCONTROLACTIVATED);
+    eventsData |= EventBitsShift(
+        events->bits.eventTractionControlLoss, event_bits_shift_et::SHIFT_TRACTIONCONTROLLOSS);
+    eventsData |= EventBitsShift(
+        events->bits.eventABSactivated, event_bits_shift_et::SHIFT_ABSACTIVATED);
+    eventsData |= EventBitsShift(
+        events->bits.eventStopLineViolation, event_bits_shift_et::SHIFT_STOPLINEVIOLATION);
+    eventsData |= EventBitsShift(
+        events->bits.eventHazardLights, event_bits_shift_et::SHIFT_HAZARDLIGHTS);
+    return eventsData;
+}
+
+void ApplicationBase::fillEventsData(v2x_diag_event_bit_t *eventBit,
+    const vehicleeventflags_ut *events) {
+    eventBit->eventAirBagDeployment = events->bits.eventAirBagDeployment;
+    eventBit->eventDisabledVehicle = events->bits.eventDisabledVehicle;
+    eventBit->eventFlatTire = events->bits.eventFlatTire;
+    eventBit->eventWipersChanged = events->bits.eventWipersChanged;
+    eventBit->eventLightsChanged = events->bits.eventLightsChanged;
+    eventBit->eventHardBraking = events->bits.eventHardBraking;
+    eventBit->eventHazardousMaterials = events->bits.eventHazardousMaterials;
+    eventBit->eventStabilityControlactivated = events->bits.eventStabilityControlactivated;
+    eventBit->eventTractionControlLoss = events->bits.eventTractionControlLoss;
+    eventBit->eventABSactivated = events->bits.eventABSactivated;
+    eventBit->eventStopLineViolation = events->bits.eventStopLineViolation;
+    eventBit->eventHazardLights = events->bits.eventHazardLights;
+    eventBit->unused = events->bits.unused;
+}
+
+void ApplicationBase::diagLogPktTxRx(bool isTx, TransmitType txType,
+    const DiagLogData *logData, const bsm_data *bs) {
+    if (!logData) {
+        std::cout << "logData is null" << std::endl;
+        return;
+    }
+
+    if (!bs) {
+        std::cout << "bsm_data is null" << std::endl;
+        return;
+    }
+
+    // fill location and athletic info
+    v2x_diag_bsm_data bsm_info = {0};
+    bsm_info.msg_count = bs->MsgCount;
+    bsm_info.temp_id = bs->id;
+    bsm_info.secmark_ms = bs->secMark_ms;
+    bsm_info.latitude = bs->Latitude;
+    bsm_info.longitude = bs->Longitude;
+    bsm_info.semi_major_dev = bs->SemiMajorAxisAccuracy;
+    bsm_info.speed = bs->Speed;
+    bsm_info.heading = bs->Heading_degrees;
+    bsm_info.long_accel = bs->AccelLon_cm_per_sec_squared;
+    bsm_info.lat_accel = bs->AccelLat_cm_per_sec_squared;
+
+    // fill other general
+    generalInfo.time_stamp_log = timestamp_now();
+    generalInfo.time_stamp_msg = logData->currTime;
+    generalInfo.gnss_time = 0;
+    generalInfo.CPU_Util = (uint32_t)(get_CPU_percentage(logData->monotonicTime) * 100.0);
+    generalInfo.GPS_mode = 0;
+    generalInfo.msg_valid = logData->validPkt;
+    fillEventsData(&(generalInfo.events), &(bs->events));
+    generalInfo.hysterisis = 5;
+    generalInfo.L2_ID = logData->cbr;
+
+    v2x_diag_transmit_type_et msg_type = txType == TransmitType::SPS ? DIAG_SPS : DIAG_EVENT;
+    bool congCtrlPrepared = logData->enableCongCtrl && logData->congCtrlInitialized;
+    if (isTx) {
+        // tx
+        v2x_qits_general_tx_info info = {0};
+        V2X_QITS_GENERAL_TX_PKG *msg = (V2X_QITS_GENERAL_TX_PKG *)((uint32_t *)(&info) + 1);
+        if (congCtrlPrepared) {
+            generalInfo.tracking_error = congCtrlCbData.trackingError ?
+                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+            msg->channel_quality_indication = congCtrlCbData.channData ?
+                (uint32_t)(congCtrlCbData.channData->channQualInd * 100.0) : 0;
+            generalInfo.max_ITT = congCtrlCbData.maxITT;
+        }
+        msg->bsm_data = bsm_info;
+        msg->general_data = generalInfo;
+        msg->tx_interval = logData->txInterval;
+        msg->DCC_random_time = (long unsigned int)0;
+        msg->msg_type = msg_type;
+        utility_->sendLogPacket(&info, PKT_ID_QITS_TX_FLOW);
+    } else {
+        // rx
+        v2x_qits_general_rx_info info = {0};
+        V2X_QITS_GENERAL_RX_PKG *msg = (V2X_QITS_GENERAL_RX_PKG *)((uint32_t *)(&info) + 1);
+        if (congCtrlPrepared) {
+            generalInfo.tracking_error = congCtrlCbData.trackingError ?
+                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+            generalInfo.max_ITT = congCtrlCbData.maxITT;
+            msg->total_RVs = congCtrlCbData.totalRvsInRange;
+            msg->distance_from_RV = bs->distFromRV;
+        }
+        msg->bsm_data = bsm_info;
+        msg->general_data = generalInfo;
+        msg->msg_type = msg_type;
+        utility_->sendLogPacket(&info, PKT_ID_QITS_RX_FLOW);
+    }
+}
+
+void ApplicationBase::diagLogPktGenericInfo() {
+    v2x_qits_general_periodic_info info = {0};
+    V2X_QITS_GENERAL_PERIODIC_PKG *msg = (V2X_QITS_GENERAL_PERIODIC_PKG *)((uint32_t *)(&info) + 1);
+    bool congCtrlPrepared = this->configuration.enableCongCtrl && congCtrlInitialized;
+    if (congCtrlPrepared) {
+        msg->max_ITT = congCtrlCbData.maxITT;
+        msg->vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
+        msg->total_RVs = congCtrlCbData.totalRvsInRange;
+        msg->tracking_error = congCtrlCbData.trackingError;
+    }
+
+    msg->CPU_Util = generalInfo.CPU_Util;
+    msg->L2_ID = generalInfo.L2_ID;
+    msg->events = generalInfo.events;
+
+    utility_->sendLogPacket(&info, PKT_ID_QITS_GENERIC_INFO);
 }
 
 void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
@@ -250,34 +394,35 @@ uint64_t lastPeriodicity = 100;
 // need to provide pointer to sps transmit
 // need to provide pointer to cong control user data
 void updateSpsTransmitFlow(
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData){
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData) {
     // once the user data is updated, the thread in qits
     // can now schedule a transmission
     // cast void pointer
     // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
-    if(spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
-        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity){
+    if (spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
+        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity) {
         lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
         // update the sps flow with the rounded max ITT that congestionControl calculates
         shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
-        if(spsInfoSharedPtr == nullptr){
+        if (spsInfoSharedPtr == nullptr) {
             std::cerr << "Invalid sps info. Not updating. \n";
             return;
         }
-        SpsFlowInfo* spsInfo = spsInfoSharedPtr.get();
+        SpsFlowInfo *spsInfo = spsInfoSharedPtr.get();
         // congestionControl rounds it already to valid values for sps periodicity
         spsInfo->periodicityMs =
             (congestionControlUserData->congestionControlCalculations->maxITT);
 
         // catch future error here
         try{
-            uint8_t ret = spsTransmit_->updateSpsFlow(*spsInfo);
-            if(ret == static_cast<uint8_t>(Status::FAILED)){
+            Status ret = spsTransmit_->updateSpsFlow(*spsInfo);
+            if (ret == Status::FAILED) {
                 std::cerr << "sps transmit flow update failed\n";
-                std::cerr << "Max itt was: " <<
-                    congestionControlUserData->congestionControlCalculations->maxITT <<"\n";
+                std::cerr << "Max itt was: "
+                          << congestionControlUserData->congestionControlCalculations->maxITT
+                          << "\n";
             }
-        }catch(const std::future_error& e){
+        } catch (const std::future_error &e) {
             std::cout << "Caught future error when updating sps flow\n";
             std::cout << "Error log is: " << e.what() << "\n";
         }
@@ -290,7 +435,8 @@ void onCongestionControlDataReady (
 
     if(congestionControlUserData){
         QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
-        memcpy(&ApplicationBase::congCtrlCbData, congestionControlUserData->congestionControlCalculations.get(),
+        memcpy(&ApplicationBase::congCtrlCbData,
+                congestionControlUserData->congestionControlCalculations.get(),
                 sizeof(CongestionControlCalculations));
         if(!critEvent){
             sem_post(congestionControlUserData->congestionControlSem);
@@ -414,153 +560,45 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
 }
 
 ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
-    bool enableCsvLog){
+    bool enableCsvLog, bool enableDiagLog){
+    generalInfo = {0};
+    if (enableDiagLog) {
+        enableDiagLog_ = enableDiagLog;
+        if (!utility_) {
+            utility_ = std::make_shared<QUtils>();
+        }
+        utility_->initDiagLog();
+    }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
+    MsgType = msgType;
+    currVehState = nullptr;
     // set parameters according to config file
-    if (this->loadConfiguration(fileConfiguration)) {
-        return;
-    }
-    exitApp = false;
-    if(configuration.enableL2Filtering) {
-        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
-    }
-
-    // set up kinematics listener
-    if(configuration.enableLocationFixes){
-        if (appVerbosity > 5){
-            std::cout << "Enabling location fixes\n";
-        }
-        appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&locCbFn);
-        locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
-    }
-
-    // setup radio flows
-    this->setup(msgType);
-
-    uint8_t keyGenMethod = NO_KEY_GEN;
-    if(!this->isTx)
-        keyGenMethod = ASYMMETRIC_KEY_GEN;
-
-    // one-time initialization for security ; if any
-    if (this->configuration.enableSecurity == true) {
-    #ifdef AEROLINK
-        try{
-          // LCM Constructor for Aerolink
-          if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
-              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                      configuration.securityContextName,
-                      configuration.securityCountryCode,
-                      configuration.lcmName.c_str(),
-                      std::ref(idChangeData)
-                      ));
-
-              // lcm id change timer thread
-              sem_init(&idChangeData.idSem, 0, 1);
-              if (appVerbosity > 5){
-                  fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                      this->configuration.idChangeInterval/1000.0);
-              }
-              changeIdTimer(this->configuration.idChangeInterval);
-
-          }else{
-              // Non-LCM Constructor for Aerolink
-              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                      configuration.securityContextName,
-                      configuration.securityCountryCode));
-          }
-          ApplicationBase::securityInitialized = true;
-          // set the verbosity of aerolink
-          SecService->setSecVerbosity(this->configuration.secVerbosity);
-          // set the leap seconds
-          int ret = -1;
-          if (kinematicsReceive && appLocListener_) {
-            auto locationInfo = appLocListener_->getLocation();
-            if (locationInfo) {
-                uint8_t leapSeconds = 0;
-                telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                if(stat == Status::FAILED || leapSeconds == 0){
-                    leapSeconds = configuration.leapSeconds;
-                }
-                if (appVerbosity > 5){
-                    printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
-                }
-                ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
-            }
-          }else{
-            ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
-          }
-        }catch(const std::runtime_error& error){
-            fprintf(stderr, "Aerolink init failed: Please check config params \n");
-            fprintf(stderr, "Attempting to close all radio flows\n");
-            closeAllRadio();
-            exit(0);
-        }
-    #else
-        // If no Aerolink security library is specified
-        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-    #endif
-    }
-
-
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
-    cb =
-        [this](bool emergent,
-               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
-            vehicleEventReport(emergent, vehicle_state);
-    };
-
-    if(configuration.enableVehicleDataCallbacks){
-        VehRec.enableVehicleReceive(cb);
-    }
-
-    if (configuration.qMonEnabled) // Add to config
-    {
-        qMon = new QMonitor(*qMonConfig);
-    }
-
-    if(configuration.enableL2FloodingDetect){
-        // if flooding mitigation enabled
-        // if configuration.floodingMitigationEnabled
-        // setup telux security service to get the mvm stats
-        auto& secFactory = SecurityFactory::getInstance();
-        telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
-        caControlMgr = secFactory.getCAControlManager(ec);
-        cacMgrListr = std::make_shared<CaControlManagerListener>();
-        LoadConfig loadConfig = {0};
-        loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
-        ec = caControlMgr->registerListener(cacMgrListr);
-        ec = caControlMgr->startMonitoring(loadConfig);
-    }
+    loadConfiguration(fileConfiguration);
 }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
-            char* fileConfiguration, bool enableCsvLog) {
+            char* fileConfiguration, bool enableCsvLog, bool enableDiagLog) {
+    generalInfo = {0};
+    if (enableDiagLog) {
+        enableDiagLog_ = enableDiagLog;
+        if (!utility_) {
+            utility_ = std::make_shared<QUtils>();
+        }
+        utility_->initDiagLog();
+    }
     enableCsvLog_ = enableCsvLog;
     exitApp = false;
+    currVehState = nullptr;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
 
-    if(configuration.enableL2Filtering) {
-        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
-    }
-
-    // set to no encryption key generation by default
-    uint8_t keyGenMethod = NO_KEY_GEN;
     if (txPort)
     {
         this->simTxSetup(txIpv4, txPort);
         this->isTxSim = true;
-        // default is asymmetric in tx mode
-        keyGenMethod = ASYMMETRIC_KEY_GEN;
     }
     if (rxPort) {
         this->simRxSetup(rxIpv4, rxPort);
@@ -573,8 +611,6 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                 this->simTxSetup(this->configuration.ipv4_dest,
                         this->configuration.tx_port);
                 this->isTxSim = true;
-                // default is asymmetric in tx mode
-                keyGenMethod = ASYMMETRIC_KEY_GEN;
             }else{
                 // turn the flag off so that driver program knows
                 printf("Please provide TX Port and Dest IP in config file\n");
@@ -583,18 +619,14 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             }
         }
     }
-    if (this->configuration.enableSecurity == true) {
-#ifdef AEROLINK
-        SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-#else
-        SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
-#endif
+}
+
+bool ApplicationBase::init() {
+    if(configuration.enableL2Filtering) {
+        cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
 
+    // set up kinematics listener
     if(configuration.enableLocationFixes){
         if (appVerbosity > 5){
             std::cout << "Enabling location fixes\n";
@@ -607,63 +639,182 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         // wait some time for location fixes to come in
         usleep(100000);
     }
+    if (!(isTxSim || isRxSim)) {
+        // setup radio flows
+        if (0 != setup(MsgType)) {
+            printf("radio setup failed\n");
+            return false;
+        }
+        // one-time initialization for security ; if any
+        if (this->configuration.enableSecurity == true) {
+        #ifdef AEROLINK
+            try{
+              // LCM Constructor for Aerolink
+              if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                          configuration.securityContextName,
+                          configuration.securityCountryCode,
+                          configuration.lcmName.c_str(),
+                          std::ref(idChangeData)
+                          ));
+
+                  // lcm id change timer thread
+                  sem_init(&idChangeData.idSem, 0, 1);
+                  if (appVerbosity > 5){
+                      fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
+                          this->configuration.idChangeInterval/1000.0);
+                  }
+                  changeIdTimer(this->configuration.idChangeInterval);
+
+              }else{
+                  // Non-LCM Constructor for Aerolink
+                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                          configuration.securityContextName,
+                          configuration.securityCountryCode));
+              }
+              ApplicationBase::securityInitialized = true;
+              // set the verbosity of aerolink
+              SecService->setSecVerbosity(this->configuration.secVerbosity);
+              // set the leap seconds
+              int ret = -1;
+              if (kinematicsReceive && appLocListener_) {
+                auto locationInfo = appLocListener_->getLocation();
+                if (locationInfo) {
+                    uint8_t leapSeconds = 0;
+                    telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
+                    if(stat == Status::FAILED || leapSeconds == 0){
+                        leapSeconds = configuration.leapSeconds;
+                    }
+                    if (appVerbosity > 5){
+                        printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
+                    }
+                    ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
+                }
+              }else{
+                ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
+              }
+            }catch(const std::runtime_error& error){
+                fprintf(stderr, "Aerolink init failed: Please check config params \n");
+                fprintf(stderr, "Attempting to close all radio flows\n");
+                prepareForExit();
+                closeAllRadio();
+                exit(0);
+            }
+        #else
+            // If no Aerolink security library is specified
+            SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
+                        configuration.securityContextName,
+                        configuration.securityCountryCode));
+        #endif
+        }
+
+        if (configuration.enableL2FloodingDetect) {
+            // if flooding mitigation enabled
+            // if configuration.floodingMitigationEnabled
+            // setup telux security service to get the mvm stats
+            auto& secFactory = SecurityFactory::getInstance();
+            telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
+            caControlMgr = secFactory.getCAControlManager(ec);
+            cacMgrListr = std::make_shared<CaControlManagerListener>();
+            LoadConfig loadConfig = {0};
+            loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
+            ec = caControlMgr->registerListener(cacMgrListr);
+            ec = caControlMgr->startMonitoring(loadConfig);
+        }
+    } else {
+        if (this->configuration.enableSecurity == true) {
+#ifdef AEROLINK
+            SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                         configuration.securityContextName,
+                         configuration.securityCountryCode));
+#else
+            SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
+                         configuration.securityContextName,
+                         configuration.securityCountryCode));
+#endif
+        }
+    }
 
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
-
     cb =
         [this](bool emergent,
-               const current_dynamic_vehicle_state_t* const vehicle_state) {
+               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
             vehicleEventReport(emergent, vehicle_state);
     };
 
-    if(configuration.enableVehicleDataCallbacks){
+    if (configuration.enableVehicleDataCallbacks) {
         VehRec.enableVehicleReceive(cb);
     }
 
-    if (configuration.qMonEnabled) // Add to config
+    if (configuration.qMonEnabled && qMonConfig) // Add to config
     {
-        qMon = new QMonitor(*qMonConfig);
+        qMon = std::make_shared<QMonitor>(*qMonConfig);
     }
+
+    //init messages for sending.
+    if (isTxSim) {
+        if (!initMsg(txSimMsg)) {
+            return false;
+        }
+    }
+    for (auto mc : eventContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+    for (auto mc : spsContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+
+    if (isRxSim) {
+        if (!initMsg(rxSimMsg, true)) {
+            return false;
+        }
+    }
+
+    for (auto mc : receivedContents) {
+        if (!initMsg(mc)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 ApplicationBase::~ApplicationBase() {
+    if (enableDiagLog_ && utility_) {
+        utility_->deInitDiagLog();
+    }
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
     }
-    if (qMon) {
-        delete qMon;
-        if(appVerbosity){
-            std::cout << "Closed qMon\n";
-        }
-    }
-    if (qMonConfig) {
-        delete qMonConfig;
-        std::cout << "Closed qMonConfig\n";
-    }
+
     if (ldm) {
         delete ldm;
         ldm = nullptr;
     }
     {
-         std::unique_lock<std::mutex> loc(stateMtx);
-         exitApp = true;
-         stateCv.notify_all();
-         if(nullptr != this->currVehState){
-             free(currVehState);
-         }
-     }
-     sem_destroy(&rx_sem);
-     sem_destroy(&log_sem);
-
-     {
-        if (nullptr != csvfp) {
-            std::unique_lock<std::mutex> lock(csvMutex);
-            writeMutexCv.wait(lock, []{ return writeLogFinish; });
-            fclose(csvfp);
-            csvfp = nullptr;
+        std::unique_lock<std::mutex> loc(stateMtx);
+        exitApp = true;
+        stateCv.notify_all();
+        if(nullptr != this->currVehState){
+            free(currVehState);
         }
-     }
+    }
+    sem_destroy(&rx_sem);
+    sem_destroy(&log_sem);
+
+    {
+       if (nullptr != csvfp) {
+           std::unique_lock<std::mutex> lock(csvMutex);
+           writeMutexCv.wait(lock, []{ return writeLogFinish; });
+           fclose(csvfp);
+           csvfp = nullptr;
+       }
+    }
 }
 
 void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
@@ -1025,9 +1176,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.preRecordedFile = configs["PreRecordedFile"];
     }
 
-    if (configs.end() != configs.find("preRecordedMinLog")) {
-        istringstream is(configs["preRecordedMinLog"]);
-        is >> boolalpha >> this->configuration.preRecordedMinLog;
+    if (configs.end() != configs.find("preRecordedBsmLog")) {
+        istringstream is(configs["preRecordedBsmLog"]);
+        is >> boolalpha >> this->configuration.preRecordedBsmLog;
     }
 
     if (configs.end() != configs.find("TransmitRateInterval")) {
@@ -1788,7 +1939,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     {
         istringstream is(configs["qMonEnabled"]);
         is >> boolalpha >> this->configuration.qMonEnabled;
-        qMonConfig = new QMonitor::Configuration();
+        qMonConfig = std::make_shared<QMonitor::Configuration>();
     }
     // Add qMonConfig elements here after this line.
     // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
@@ -1976,7 +2127,7 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
     simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
-    txSimMsg = std::make_shared<msg_contents>();
+    txSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
 }
 
@@ -1989,7 +2140,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
     simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
-    rxSimMsg = std::make_shared<msg_contents>();
+    rxSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
 }
 
@@ -2011,6 +2162,11 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     uint8_t i = 0;
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
+
+    // close all flows before re-setup
+    if (true == reSetup) {
+        closeAllRadio();
+    }
 
     if (MessageType::WSA == msgType) {
         spsInfo.periodicityMs = this->configuration.wsaInterval;
@@ -2053,7 +2209,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->spsContents.push_back(mc);
         }
@@ -2092,7 +2248,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->receivedContents.push_back(mc);
         }
@@ -2121,7 +2277,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         // use previous content if re-setup
         if (false == reSetup) {
-            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+            std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>(msg_contents{0});
             abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
             this->eventContents.push_back(mc);
         }
@@ -2279,7 +2435,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         }
 
         if (encLength > 0 && ret > 0) {
-            if(csvfp) {
+            if (csvfp || enableDiagLog_) {
                 currTime = timestamp_now();
 
                 txInterval = currTime - lastTxTime;
@@ -2329,11 +2485,24 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                             cbr = eventTransmits[index].getCBRValue();
                             monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
                         }
-                        // write the log here for this tx now. using tx timestamp made before sendto
-                        writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM,
-                            monotonicTime, 0.0, 0, 0, cbr,
-                            &bs, 0.0, 0, txInterval,
-                            configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
+                        if (csvfp) {
+                            // write the log here for this tx now.
+                            // using tx timestamp made before sendto
+                            writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM,
+                                monotonicTime, 0.0, 0, 0, cbr, &bs, 0.0, 0, txInterval,
+                                configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
+                        }
+                        if (enableDiagLog_) {
+                            DiagLogData logData = {0};
+                            logData.validPkt = validMessage;
+                            logData.currTime = currTime;
+                            logData.cbr = cbr;
+                            logData.monotonicTime = monotonicTime;
+                            logData.txInterval = txInterval;
+                            logData.enableCongCtrl = configuration.enableCongCtrl;
+                            logData.monotonicTime = congCtrlInitialized;
+                            diagLogPktTxRx(true, txType, &logData, &bs);
+                        }
                     }
                 }
             }
@@ -2399,7 +2568,7 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
         signStatIdx[tid]++;
         signStatIdx[tid]%=thrSignLatencies[tid].size();
     }
-    abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
+    abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
     // transmit packet
     return encode_msg_continue(mc.get());
@@ -2414,36 +2583,29 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
     return -1;
 }
 
-void ApplicationBase::clearRadioInstance() {
-    if(appVerbosity) {
-        cout << "clearRadioInstance" << endl;
-    }
-    eventTransmits.clear();
-    spsTransmits.clear();
-    radioReceives.clear();
-}
-
 void ApplicationBase::closeAllRadio() {
     if(appVerbosity){
         std::cout << "Attempting to close all flows\n";
     }
-    exitApp = true;
+
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
+    eventTransmits.clear();
+
     for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
         this->spsTransmits[i].closeFlow();
     }
+    spsTransmits.clear();
+
     for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
         this->radioReceives[i].closeFlow();
     }
+    radioReceives.clear();
 
-    clearRadioInstance();
-
-    if (this->kinematicsReceive != nullptr) {
-        this->kinematicsReceive->close();
+    if(appVerbosity){
+        std::cout << "Finished closing all flows\n";
     }
-    std::cout << "Finished closing all flows\n";
 }
 
 /**
@@ -2757,7 +2919,7 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
  */
 void ApplicationBase::writeLogHeader(FILE *fp) {
     // Writes log header to the csv file pointed by fp.
-    fprintf(fp, MIN_LOG_HEADER);
+    fprintf(fp, LOG_HEADER);
     // TODO add security headers here too
     fprintf(fp, "\n");
 }
@@ -2842,20 +3004,7 @@ void ApplicationBase::writeLog(const uint8_t index,
     }
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // if congestion control enabled, write cong ctrl data to log
-    unsigned short eventsData = 0;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventAirBagDeployment) << 12;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventDisabledVehicle) << 11;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventFlatTire) << 10;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventWipersChanged) << 9;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventLightsChanged) << 8;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHardBraking) << 7;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardousMaterials) <<5;
-    eventsData |= (unsigned short)
-        (1 & bs->events.bits.eventStabilityControlactivated) << 4;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventTractionControlLoss) << 3;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventABSactivated) << 2;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventStopLineViolation) <<1;
-    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardLights) << 12;
+    unsigned short eventsData = getEventsData(&(bs->events));
 
     if (enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation

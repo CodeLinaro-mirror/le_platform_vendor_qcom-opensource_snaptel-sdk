@@ -71,6 +71,7 @@
 #define __RADIO_TRANSMIT_H__
 
 #include "RadioInterface.h"
+#include <telux/common/CommonDefines.hpp>
 #include <vector>
 #include <ifaddrs.h>
 #include <unistd.h>
@@ -168,17 +169,17 @@ public:
     * @param buf a char pointer of the data buffer to be sent.
     * @param bufLen a uint16_t value representing the length of the data buffer.
     * @param priority a enum value representing the priority to be mapped to traffic class.
-    * @return result value 0 on success and 1 on fail.
+    * @return result value is length of transmitted data on success and -1 on fail.
     */
-    uint8_t transmit(const char* buf, const uint16_t bufLen, Priority priority);
+    int8_t transmit(const char* buf, const uint16_t bufLen, Priority priority);
 
     /**
     * Method that transmits data in a buffer based in the constructed flow.
     * @param buf a char pointer of the data buffer to be sent.
     * @param bufLen a uint16_t value representing the length of the data buffer.
-    * @return result value 0 on success and 1 on fail.
+    * @return result Status::SUCCESS on success and Status::FAILED on fail.
     */
-    uint8_t updateSpsFlow(const SpsFlowInfo spsInfo);
+    Status updateSpsFlow(const SpsFlowInfo spsInfo);
     /**
     * Method that returns shared pointer to SpsFlowInfo struct for the Sps Flow.
     * @return shared_ptr<SpsFlowInfo> containing SpsFlowInfo struct for Sps Flow.
@@ -196,9 +197,9 @@ public:
     uint32_t getSpsResSize();
     /**
     * Method that closes flow.
-    * @return result value 0 on success and 1 on fail.
+    * @return result Status::SUCCESS on success and Status::FAILED on fail.
     */
-    uint8_t closeFlow();
+    Status closeFlow();
 
     /**
     * Method that configures ipv6 destination sock for TCP/IP Simulations

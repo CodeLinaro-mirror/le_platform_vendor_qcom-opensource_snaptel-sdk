@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -109,12 +109,13 @@ enum AppType {
  */
 enum AppState {
    APPSTATE_UNKNOWN = 0,            /**< Unknown application state */
-   APPSTATE_DETECTED = 1,           /**< application state detected */
+   APPSTATE_DETECTED = 1,           /**< Application state is detected */
    APPSTATE_PIN = 2,                /**< If PIN1 or UPin is required */
    APPSTATE_PUK = 3,                /**< If PUK1 or Puk for UPin is required */
    APPSTATE_SUBSCRIPTION_PERSO = 4, /**< PersoSubstate should be look at
                                          when application state is assigned to this value */
-   APPSTATE_READY = 5,              /**< application State is ready */
+   APPSTATE_READY = 5,              /**< Application state is ready */
+   APPSTATE_ILLEGAL = 6,            /**< Application state is illegal */
 };
 
 /**

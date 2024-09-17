@@ -7,6 +7,9 @@ include(GNUInstallDirs)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
+configure_file("${CMAKE_SOURCE_DIR}/FileInfo.hpp.in"
+              "${CMAKE_SOURCE_DIR}/FileInfo.hpp" @ONLY)
+
 include_directories(BEFORE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/libs
@@ -17,7 +20,6 @@ include_directories(BEFORE
 )
 
 add_definitions(-DDEFAULT_SIM_CONFIG_FILE_NAME="tel.conf")
-add_definitions(-DDEFAULT_SIM_FILE_PREFIX="${CMAKE_INSTALL_PREFIX}")
 add_definitions(-DDEFAULT_SIM_CONFIG_FILE_PATH="/etc/telux/")
 add_definitions(-DDEFAULT_SIM_CSV_FILE_PATH="/data/telux/csv/")
 add_definitions(-DDEFAULT_JSON_FILE_PATH="/data/telux/json/")

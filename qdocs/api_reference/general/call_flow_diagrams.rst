@@ -275,9 +275,9 @@ network scan for availbale networks. Registered listener will get notified for t
     static 3GPP preferred network list is received by the application asynchronously. Higher
     priority networks appear first in the list. The networks that appear in the 3GPP Preferred
     Networks list get higher priority than the networks in the static 3GPP preferred networks list.
-15. The application can set 3GPP preferred network list and optionally gets asynchronous response using 
-    ResponseCallback. If clear previous networks flag is false then new 3GPP preferred network list is 
-    appended to existing preferred network list. If flag is true then old list is flushed and new 3GPP 
+15. The application can set 3GPP preferred network list and optionally gets asynchronous response using
+    ResponseCallback. If clear previous networks flag is false then new 3GPP preferred network list is
+    appended to existing preferred network list. If flag is true then old list is flushed and new 3GPP
     preferred network list is added.
 16. Application receives the status i.e. either SUCCESS or other status based on the execution
     of setPreferredNetworks API.
@@ -639,7 +639,7 @@ Call flow to register/remove listener for generating basic reports
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/location_manager_basic_reports_callflow.png
-   
+
 
 1. Application requests location factory for location manager object.
 2. Location factory returns ILocationManager object using which application will register or remove a listener.
@@ -1005,7 +1005,7 @@ Start/Stop for data connection manager call flow
 2. Data factory returns shared pointer to data connection manager object to application.
 3. Application request current service status of data connection manager returned by data factory.
 4. Data connection manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Data connection manager calls application callback with initialization result (success/failure).
@@ -1172,13 +1172,13 @@ Create VLAN and Bind it to PDN in data vlan manager call flow
 
 1. Application requests data factory for data IVlanManager object.
    Application can optionally provide callback to be called when manager initialization is completed.
-   
+
    a. If IVlanManager object does not exist, data factory will create new object.
 
 2. Data factory returns shared pointer to IVlanManager object to application.
 3. Application request current service status of vlan manager returned by data factory
 4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1
    b. Vlan manager calls application callback with initialization result (success/failure).
@@ -1229,13 +1229,13 @@ LAN-LAN VLAN Configuration from A7 usecase call flow
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: /../images/data_lan2lan_vlan_config_from_a7.png
-   
+
 1. Application requests data factory for data IVlanManager for local operation object.
    Aplication can optionally provide callback to be called when manager initialization is completed.
 2. Data factory returns shared pointer to local vlan manager object to application.
 3. Application request current service status of local vlan manager returned by data factory.
 4. Vlan manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Vlan manager calls application callback with initialization result (success/failure).
@@ -1301,7 +1301,7 @@ If DMZ is needed:
 29. Data factory returns shared pointer to data connection manager to application.
 30. Application request current service status of data connection manager returned by data factory.
 31. Data connection manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 28.
    b. Data connection manager calls application callback with initialization result (success/failure).
@@ -1314,7 +1314,7 @@ LAN-WAN VLAN Configuration from A7 usecase call flow
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: /../images/data_lan2wan_vlan_config_from_a7.png
-   
+
 1. Application requests data factory for local data vlan manager object.
 2. Data factory returns shared pointer to local vlan manager to application.
 3. Application request current service status of local vlan manager returned by data factory.
@@ -1371,7 +1371,7 @@ Create Static NAT entry in data Static NAT manager call flow
 2. Data factory returns shared pointer to nat manager object to application.
 3. Application request current service status of nat manager returned by data factory.
 4. Nat manager returns current service status.
-  
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Nat manager calls application callback with initialization result (success/failure).
@@ -1413,7 +1413,7 @@ Add Firewall Entry in data Firewall manager call flow
 2. Data factory returns shared pointer to firewall manager object to application.
 3. Application request current service status of data profile manager returned by data factory.
 4. Firewall manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Firewall manager calls application callback with initialization result (success/failure).
@@ -1440,7 +1440,7 @@ Set Firewall DMZ in data Firewall manager call flow
 2. Data factory returns shared pointer to firewall manager object to application.
 3. Application request current service status of firewall manager returned by data factory.
 4. Firewall manager returns current service status.
-  
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Firewall manager calls application callback with initialization result (success/failure).
@@ -1455,13 +1455,13 @@ Socks Enablement in data Socks manager call flow
 .. figure:: /../images/data_enable_disable_Socks_call_flow.png
 
 1. Application requests data factory for data socks manager object.
-   
+
    a. If socks manager object does not exist, data factory will create new object.
 
 2. Data factory returns shared pointer to socks manager object to application.
 3. Application request current service status of socks manager returned by data factory.
 4. Socks manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Socks manager calls application callback with initialization result (success/failure).
@@ -1476,13 +1476,13 @@ L2TP Enablement and Configuration in data L2TP manager call flow
 .. figure:: /../images/data_enable_disable_l2tp_and_create_tunnel_session.png
 
 1. Application requests data factory for data l2tp manager object.
-   
+
    a. If l2tp manager object does not exist, data factory will create new object.
 
 2. Data factory returns shared pointer to l2tp manager object to application.
 3. Application request current service status of l2tp manager returned by data factory.
 4. L2tp manager returns current service status.
-  
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
        provided in step 1.
    b. L2tp manager calls application callback with initialization result (success/failure).
@@ -1512,8 +1512,8 @@ Call flow to add and enable software bridge
 6. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
 7. Optionally, the application gets asynchronous response for addBridge via the application-supplied callback.
 8. If the software bridge management is not enabled already, application requests to enable it, providing an optional asynchronous response callback using enableBridge API.
-   
-   .. note:: 
+
+   .. note::
       Please note that this step affects all the software bridges configured in the system.
 
 9. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
@@ -1528,7 +1528,7 @@ Call flow to remove and disable software bridge
 2. Data factory returns shared pointer to bridgeManager object to application.
 3. Application request current service status of bridge manager returned by data factory.
 4. Bridge manager returns current service status.
-   
+
    a. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
    b. Bridge manager calls application callback with initialization result (success/failure).
@@ -1540,12 +1540,37 @@ Call flow to remove and disable software bridge
 9. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
 10. Optionally, the application gets asynchronous response for removeBridge via the application-supplied callback.
 11. If the software bridge management needs to be disabled, application requests to disable it, providing an optional asynchronous response callback using enableBridge API.
-    
+
     .. note::
        Please note that this step affects all the software bridges configured in the system.
 
 12. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
 13. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
+
+Call flow to enable ip passthrough in peer nad
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_enable_ip_pass_through_call_flow.png
+
+1. Client of NAD-1 and NAD-2 requests the vlan manager and data settings manager object.
+   Additionally, NAD-2 also requests the data connection manager object.
+2. The client of NAD-1 registers as listener to get notifications for data call change.
+3. When the subsystem is ready, the client of NAD-1 requests NAD-2's client to establish a VLAN for
+   a LAN network type which is acting as a gateway.
+4. The client of NAD-1 requests to start data call in NAD-2 and may optionally recieve an
+   asynchronous response using a callback. When the data call is connected, TelSDK(NAD-2) notifies
+   its client(NAD-2).
+5. The NAD-1 client requests the NAD-2 client to bind the data call profile id with the vlan id.
+6. A request to enable IP passthrough is being sent from the NAD-1 client to NAD-2. At this point,
+   the client has successfully started a data call and enabled a IP passthrough configuration in
+   NAD-2.
+7. NAD-1 creates vlan for a LAN netowrk type that is connected to the main unit.
+8. NAD-1 creates another vlan for a WAN netowrk type that is connected to the ETH backhaul.
+9. NAD-1 client calls IVlanManager::bindToBackhaul API to bind both LAN and WAN type of vlans and
+   the data call in NAD-2 is routed through the NAD-2 vlan(which is act as gateway), NAD-1 WAN vlan
+   (which is connected to the ETH backhaul) and NAD-1 LAN vlan(which is connected to the main unit).
+10. The client of NAD-1 enables the IP address configuration to its WAN vlan that is connected to
+    the ETH backhaul that allows main unit to access data call running in NAD-2.
 
 C-V2X
 -----
@@ -1556,7 +1581,7 @@ Retrieve/Update C-V2X Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_config_call_flow.png
-   
+
    **Retrieve/Update C-V2X Configuration Call Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for retrieving or updating C-V2X configuration file using C++ version APIs.
@@ -1585,7 +1610,7 @@ This call flow diagram describes the sequence of steps for retrieving or updatin
 
 
 .. figure:: /../images/cv2x_config_call_flow_c.png
-   
+
    **Retrieve/Update C-V2X Configuration Call Flow - C Version**
 
 This call flow diagram describes the sequence of steps for retrieving or updating C-V2X configuration file using C version APIs.
@@ -1602,9 +1627,9 @@ Start/Stop C-V2X Mode
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_start_stop_call_flow.png
-   
+
    **Start/Stop C-V2X Mode Call Flow - C++ Version**
-   
+
 
 This call flow diagram describes the sequence of steps for starting or stopping C-V2X mode using C++ version APIs.
 Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager. In normal operation, applications do not need to start or stop C-V2X mode. The system is configured by default to start C-V2X mode at boot. We include the call flow below for the sake of completeness.
@@ -1617,7 +1642,7 @@ Application must perform C-V2X radio manager initialization before calling any m
 6. Application is asynchronously notified of the status of the stop request (either SUCCESS or FAILED) via the application-supplied callback.
 
 .. figure:: /../images/cv2x_start_stop_call_flow_c.png
-   
+
    **Start/Stop C-V2X Mode Call Flow - C Version**
 
 This call flow diagram describes the sequence of steps for starting or stopping C-V2X mode using C version APIs.
@@ -1632,7 +1657,7 @@ C-V2X Radio Control Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_radio_ctrl_flow.png
-   
+
    **C-V2X Radio Control Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for overall C-V2X radio control flow using C++ version APIs.
@@ -1652,9 +1677,9 @@ This call flow diagram describes the sequence of steps for overall C-V2X radio c
 8. Application should handle all trappable signals like SIGINT/SIGHUP/SIGTERM, all Tx/Rx flows must be deregistered before exiting.
 
 .. figure:: /../images/cv2x_radio_ctrl_flow_c.png
-   
+
    **C-V2X Radio Control Flow - C Version**
-   
+
 
 This call flow diagram describes the sequence of steps for overall C-V2X radio control flow using C version APIs.
 
@@ -1676,9 +1701,9 @@ C-V2X Radio Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_radio_init_call_flow.png
-   
+
    **C-V2X Radio Initialization Call Flow - C++ Version**
-   
+
 
 This call flow diagram describes the sequence of steps for initializing the ICv2xRadioManager and the ICv2xRadio object using C++ version APIs. Applications must initialize ICv2xRadioManager/ICv2xRadio object and wait for the readiness before calling any other methods on the objects.
 
@@ -1698,9 +1723,9 @@ This call flow diagram describes the sequence of steps for initializing the ICv2
 14. C-V2X radio manager calls application-supplied callback to notify the readiness status of C-V2X radio (either SERVICE_AVAILABLE or SERVICE_FAILED).
 
 .. figure:: /../images/cv2x_radio_init_call_flow_c.png
-   
+
    **C-V2X Radio Initialization Call Flow - C Version**
-   
+
 
 This call flow diagram describes the sequence of steps for initialing C-V2X radio using C version APIs.
 Applications must initialize C-V2X radio and wait for the readiness before calling any other methods of C-V2X radio.
@@ -1713,9 +1738,9 @@ Get C-V2X Status
 ~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_get_status_call_flow.png
-   
+
    **Get C-V2X Status Call Flow - C++ Version**
-   
+
 
 This call flow diagram describes the sequence of steps for getting C-V2X radio status using C++ version APIs.
 Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager.
@@ -1730,7 +1755,7 @@ Application must perform C-V2X radio manager initialization before calling any m
 8. Status of deregistering listener (either SUCCESS or FAILED) will be returned to the application.
 
 .. figure:: /../images/cv2x_get_status_call_flow_c.png
-   
+
    **Get C-V2X Status Call Flow - C**
 
 This call flow diagram describes the sequence of steps for getting C-V2X radio status using C version APIs.
@@ -1751,7 +1776,7 @@ Get C-V2X Capabilities
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_get_capabilities_call_flow.png
-   
+
    **Get C-V2X Capabilities Call Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for getting C-V2X radio capabilities using C++ version APIs.
@@ -1767,13 +1792,13 @@ Application must perform C-V2X radio initialization before calling any methods o
 8. Status of deregistering listener (either SUCCESS or FAILED) will be returned to the application.
 
 .. figure:: /../images/cv2x_get_capabilities_call_flow_c.png
-   
+
    **Get C-V2X Capabilities Call Flow - C**
 
 This call flow diagram describes the sequence of steps for getting C-V2X radio capabilities using C version APIs. Application must perform C-V2X radio initialization and provide C-V2X capabilities callback to get C-V2X radio capabilities update notification.
 
 1. Application requests the initial C-V2X capabilities using v2x_radio_query_parameters method.
-2. Application gets the return value (V2X_STATUS_SUCCESS or V2X_STATUS_FAIL) which indicates if the operation was 
+2. Application gets the return value (V2X_STATUS_SUCCESS or V2X_STATUS_FAIL) which indicates if the operation was
    successfully performed. If it succeeded, C-V2X capabilities are provided via the application-supplied pointer.
 3. Application gets notification of C-V2X capabilities update via application-supplied callback v2x_radio_capabilities_listener.
 
@@ -1782,7 +1807,7 @@ C-V2X Radio RX Subscription
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_radio_rx_sub_call_flow.png
-   
+
    **C-V2X Radio RX Subscription Call Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Rx flows using C++ version APIs.
@@ -1817,7 +1842,7 @@ There are three Rx modes supported for non-IP traffic,
 
 
 .. figure:: /../images/cv2x_radio_rx_sub_call_flow_c.png
-   
+
    **C-V2X Radio RX Subscription Call Flow - C Version**
 
 This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Rx flows using C version APIs.
@@ -1840,7 +1865,7 @@ C-V2X Radio TX Event Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_radio_event_flow_call_flow.png
-   
+
    **C-V2X Radio TX Event Flow Call Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx event flows using C++ version APIs.
@@ -1854,7 +1879,7 @@ Application must perform C-V2X radio initialization before calling any methods o
 6. C-V2X radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
 
 .. figure:: /../images/cv2x_radio_event_flow_call_flow_c.png
-   
+
    **C-V2X Radio TX Event Flow Call Flow - C Version**
 
 This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx event flows using C version APIs.
@@ -1933,7 +1958,7 @@ C-V2X TX Status Report
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/cv2x_tx_report_call_flow.png
-   
+
    **C-V2X TX Status Report Call Flow - C++ Version**
 
 This call flow diagram describes the sequence of steps for getting C-V2X Tx Status report per transport block using C++ version APIs.
@@ -1994,7 +2019,7 @@ Application must perform C-V2X radio initialization before calling any methods o
 12. C-V2X radio sends asynchronous notification via the callback function indication the status of the request.
 
 .. figure:: /../images/cv2x_rx_meta_data_call_flow_c.png
-   
+
    **C-V2X RX Meta Data Call Flow - C Version**
 
 This call flow diagram describes the sequence of steps for enabling C-V2X Rx meta data per packet for non-IP traffic using C version APIs.
@@ -2367,7 +2392,7 @@ Playing a file a specific number of times
 8. The onFilePlayed() is invoked for the 1st file. Every time a file is played, onFilePlayed() callback is called on an instance of the class implementing IPlayListListener to indicate that the file has been played. This is called every time a file is played irrespective of the number of times it will be played.
 9. The onFilePlayed() is invoked for the 2nd file.
 10. When all files have been played completely, onPlaybackFinished() callback is invoked. This marks completion of the repeated playback use case.
-    
+
     i. If an error occurs for example audio stream can not be created or audio sample can not be played, onError() callback is called.
     ii.. Following the onError() callback invocation, onPlaybackStopped() is called to inform application that the playback is terminated.
 
@@ -2389,7 +2414,7 @@ Playing a file indefinitely
 11. When the use case is complete, application calls stopPlayback() to explicitly stop the playback.
 12. Success/failure errorcode is returned to the application to indicate if stopPlayback() could stop playback or not.
 13. When the playback is stopped, onPlaybackStopped() callback is called. This marks completion of the repeated playback use case.
-    
+
     i. If an error occurs for example audio stream can not be created or audio sample can not be played, onError() callback is called.
     ii.. Following the onError() callback invocation, onPlaybackStopped() is called to inform application that the playback is terminated.
 
@@ -2559,12 +2584,12 @@ A machine in this power management framework represents an application processor
       - On getting a successful consolidated acknowledgement from all the slaves for the suspend trigger, the power framework allows the respective machine to suspend. On getting a successful consolidated acknowledgement from all the slaves for the shutdown trigger, the power framework triggers the respective machine shutdown without waiting further.
       - If the slave client sends a NACK to indicate that it is not ready for state transition or fails to acknowledge before the configured time, then the master will get to know via a consolidated acknowledgement / slave acknowledgement status notification.
       - In such failed cases, if the master wants to stop the state transition considering the information in the consolidated acknowledgement, then the master is allowed to trigger a new TCU-activity state change, or else the state transition will proceed after the configured timeout.
- 
+
    - resume trigger:
- 
+
       - Power framework will prevent the respective machine from going into suspend.
       - No acknowledgement will be required from slave clients and the master will not be getting consolidated acknowledgement / slave acknowledgement as machine will be already resumed. 
- 
+
  When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
 
 
@@ -2764,7 +2789,7 @@ Call flow for sensor power control
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/sensor_power_control_call_flow.png
-   
+
 The below points are to be noted for sensor power control
 
 a) Power control is not offered by all sensor manufacturers. If the underlying hardware sensor does
@@ -2808,7 +2833,7 @@ Call flow for EFS restore notification registration and handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/platform_efs_backup_restore_call_flow.png
-   
+
 1. Get the reference to the PlatformFactory, with which we can further acquire other sub-system
    objects.
 2. Prepare an initialization callback method or lambda which will be called by the platform
@@ -2846,7 +2871,7 @@ Call flow of control filesystem for eCall operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/control_filesystem_for_ecall_start_end_call_flow.png
-   
+
 The platform sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
 pre-requisite for any filesystem operations and a valid FilesystemManager object is available.
 
@@ -3090,9 +3115,10 @@ Call flow to register listener and receive reports (Wi-Fi)
 2. An instance of ConnectionSecurityFactory is received by the application.
 3. From the ConnectionSecurityFactory, application request an instance of IWiFiSecurityManager.
 4. An instance of IWiFiSecurityManager is received by the application.
-5. Application registers IWiFiReportListener listener with IWiFiSecurityManager.
-6. Application receives security reports in onReportAvailable() callback method in IWiFiReportListener listener.
-7. When use-case is complete application deregisters IWiFiReportListener listener.
+5. Application waits for the service to become available.
+6. When service is ready, application registers IWiFiReportListener listener with IWiFiSecurityManager.
+7. Application receives security reports in onReportAvailable() callback method in IWiFiReportListener listener.
+8. When use-case is complete application deregisters IWiFiReportListener listener.
 
 WLAN
 ----
@@ -3112,7 +3138,7 @@ Call flow to modify WLAN configuration
 
 5. When the subsystem is ready, application calls IWlanDeviceManager::getStatus to get WLAN enablement status.
 6. Application receives WLAN enablement status.
-   
+
    a. If WLAN is enabled, application calls IWlanDeviceManager::enable(false) to disable WLAN.
    b. Application receives WLAN disablement response and waits for WLAN status indication.
    c. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(false) to indicate WLAN is disabled.

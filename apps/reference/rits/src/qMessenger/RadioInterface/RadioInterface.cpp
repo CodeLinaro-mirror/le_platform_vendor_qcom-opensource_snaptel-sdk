@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -79,6 +79,8 @@
 #define INVALID_CBR_VALUE (255)
 
 shared_ptr<ICv2xRadioManager> RadioInterface::cv2xRadioManager_ = nullptr;
+
+bool RadioInterface::enableDiagLogPacket_ = false;
 
 class Cv2xRadioListener : public ICv2xRadioListener {
 public:
@@ -452,6 +454,10 @@ void RadioInterface::enableCsvLog(bool enable) {
     enableCsvLog_ = enable;
 }
 
+void RadioInterface::enableDiagLog(bool enable) {
+    enableDiagLogPacket_ = enable;
+}
+
 /* set the Global IP addres prefix */
 int RadioInterface::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
     const uint32_t serviceId) {
@@ -620,10 +626,6 @@ shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
 }
 
 shared_ptr<ICv2xRadio> RadioInterface::getCv2xRadio() {
-    if (nullptr == cv2xRadio_ or not cv2xRadio_->isReady()) {
-        cout << "cv2x radio is not ready." << endl;
-        return nullptr;
-    }
     return cv2xRadio_;
 }
 

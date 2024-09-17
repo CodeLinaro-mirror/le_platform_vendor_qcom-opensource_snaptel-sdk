@@ -7,48 +7,78 @@
 #include "NetworkSelectionManagerStub.hpp"
 #include "TelDefinesStub.hpp"
 
-#define DELAY 100
-
 using namespace telux::common;
 using namespace telux::tel;
 
-NetworkSelectionManagerStub::NetworkSelectionManagerStub(int phoneId,
-    telux::common::InitResponseCb callback) {
+NetworkSelectionManagerStub::NetworkSelectionManagerStub(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<::telStub::NetworkSelectionService>();
     phoneId_ = phoneId;
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
-        }).share();
-    taskQ_->add(f);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
 }
 
-void NetworkSelectionManagerStub::initSync(telux::common::InitResponseCb callback) {
+void NetworkSelectionManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
+}
+
+telux::common::Status NetworkSelectionManagerStub::init(
+    telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<INetworkSelectionListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+    stub_ = CommonUtils::getGrpcStub<::telStub::NetworkSelectionService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate network selection service");
+        return telux::common::Status::FAILED;
+    }
+    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
+    initCb_ = callback;
+    auto f = std::async(std::launch::async,
+        [this]() {
+            this->initSync();
+        }).share();
+    auto status = taskQ_->add(f);
+    return status;
+}
+
+void NetworkSelectionManagerStub::initSync() {
     ::commonStub::GetServiceStatusReply response;
     ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
-    stub_->InitService(&context, request, &response);
-
-    telux::common::ServiceStatus cbStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-    int cbDelay = static_cast<int>(response.delay());
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<INetworkSelectionListener>>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
+    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " InitService request failed");
+    } else {
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay_ = static_cast<int>(response.delay());
     }
-    if(callback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        callback(cbStatus);
-    }
+    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
+        " callback status ", static_cast<int>(cbStatus));
+    setServiceStatus(cbStatus);
 }
 
 NetworkSelectionManagerStub::~NetworkSelectionManagerStub() {
@@ -74,15 +104,7 @@ void NetworkSelectionManagerStub::cleanup() {
 
 telux::common::ServiceStatus NetworkSelectionManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 std::future<bool> NetworkSelectionManagerStub::onSubsystemReady() {
@@ -91,7 +113,7 @@ std::future<bool> NetworkSelectionManagerStub::onSubsystemReady() {
     ready_future = std::async(std::launch::async,
     [this]() {
         while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
+            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
         }
     return(isSubsystemReady());});
     return((ready_future));
@@ -380,6 +402,48 @@ telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
     taskQ_->add(f);
     }
     return status;
+}
+
+telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell
+    (const LteDubiousCellInfo &lteDubiousCellInfo) {
+    LOG(DEBUG, __FUNCTION__);
+
+    ::telStub::SetLteDubiousCellRequest request;
+    ::telStub::SetLteDubiousCellReply response;
+    telux::common::ErrorCode err = telux::common::ErrorCode::GENERIC_FAILURE;
+
+    ClientContext context;
+    request.set_slot_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->SetLteDubiousCell(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    err = static_cast<telux::common::ErrorCode>(response.error());
+    return err;
+}
+
+telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell
+    (const NrDubiousCellInfo &nrDubiousCellInfo) {
+    LOG(DEBUG, __FUNCTION__);
+
+    ::telStub::SetNrDubiousCellRequest request;
+    ::telStub::SetNrDubiousCellReply response;
+    telux::common::ErrorCode err = telux::common::ErrorCode::GENERIC_FAILURE;
+
+    ClientContext context;
+    request.set_slot_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->SetNrDubiousCell(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    err = static_cast<telux::common::ErrorCode>(response.error());
+    return err;
 }
 
 void NetworkSelectionManagerStub::onEventUpdate(google::protobuf::Any event) {

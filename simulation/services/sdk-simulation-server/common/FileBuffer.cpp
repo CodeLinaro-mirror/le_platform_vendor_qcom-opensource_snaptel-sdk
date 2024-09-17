@@ -39,20 +39,32 @@ void FileBuffer::startBufferingSync() {
         LOG(ERROR, __FUNCTION__, "Could not open the file: ", fileName_);
         return;
     }
-    if(ifs.good()) {
+    if (ifs.good()) {
         LOG(DEBUG, " Begin Buffering ", fileName_);
     }
-    while(true) {
-        int lineCount = 0;
-        std::string line = "";
-        while(lineCount < threshold_ && ifs.peek() != EOF) {
-            std::getline(ifs, line);
-            if((line.empty()) || (line.find('*') != std::string::npos)) {
-                continue;
-            }
-            readBuffer_.push_back(line);
-            lineCount++;
+
+    std::string line = "";
+    // skip the copyright at the beginning
+    while (ifs.peek() != EOF) {
+        std::getline(ifs, line);
+        // each line of copyright starts with "##"
+        if (!line.empty() && 0 != line.find("##")) {
+            break;
         }
+    }
+
+    while (true) {
+        int lineCount = 0;
+        do {
+            if (!line.empty()) {
+                readBuffer_.push_back(line);
+                lineCount++;
+            }
+            if (ifs.peek() == EOF) {
+                break;
+            }
+            std::getline(ifs, line);
+        } while (lineCount < threshold_);
         if(ifs.peek() == EOF) {
             LOG(DEBUG, " Reached EOF ", fileName_);
             ifs.close();

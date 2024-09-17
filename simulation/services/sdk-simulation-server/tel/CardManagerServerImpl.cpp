@@ -381,11 +381,6 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                     result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"]\
                         [i+recordsize]["sw2"].asInt();
                     LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
-                    result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
-                        ["LinearFixedEFFiles"][i+recordsize]["payload"].asString();
-                    std::string input = rootObj["ICardManager"]["EFs"]["ADF"][index]\
-                        ["LinearFixedEFFiles"][i+recordsize]["data"].asString();
-                    result.data = CommonUtils::convertStringToVector(input);
                 } else {
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
@@ -407,11 +402,6 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                         [i+recordsize]["sw1"].asInt();
                     result.sw2 = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"]\
                         [i+recordsize]["sw2"].asInt();
-                    result.payload = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"]\
-                        [i+recordsize]["payload"].asString();
-                    std::string input = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"]\
-                        [i+recordsize]["data"].asString();
-                    result.data = CommonUtils::convertStringToVector(input);
                 } else {
                     LOG(DEBUG, __FUNCTION__, "Valid AppId not found");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
@@ -429,20 +419,15 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
         telStub::IccResult requestedRecord;
 
         if(error == telux::common::ErrorCode::SUCCESS) {
+            std::string s = "";
             requestedRecord.set_sw1(result.sw1);
             requestedRecord.set_sw2(result.sw2);
-            requestedRecord.set_pay_load(result.payload);
-            for(auto &it : result.data) {
-                requestedRecord.add_data(it);
-            }
+            requestedRecord.set_pay_load(s);
         } else {
             std::string s = "";
             requestedRecord.set_sw1(0);
             requestedRecord.set_sw2(0);
             requestedRecord.set_pay_load(s);
-            for(auto &it : result.data) {
-                requestedRecord.add_data(it);
-            }
         }
         *response->mutable_result() = requestedRecord;
     }
@@ -768,14 +753,6 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
                         result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["TransparentEFFiles"][i]["sw2"].asInt();
                         LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
-                        rootObj["ICardManager"]["EFs"]["ADF"][index]["TransparentEFFiles"]\
-                            [i]["payload"] =
-                        result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
-                            ["TransparentEFFiles"][i]["payload"].asString();
-                        LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
-                        std::string input = rootObj["ICardManager"]["EFs"]["ADF"][index]\
-                            ["TransparentEFFiles"][i]["data"].asString();
-                            result.data = CommonUtils::convertStringToVector(input);
                         break;
                     }
                     i++;
@@ -806,12 +783,6 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
                         result.sw2 = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"][i]\
                             ["sw2"].asInt();
                         LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
-                        result.payload = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"]\
-                            [i]["payload"].asString();
-                        LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
-                        std::string input = rootObj["ICardManager"]["EFs"]\
-                            ["DFTransparentEFRecords"][i]["data"].asString();
-                        result.data = CommonUtils::convertStringToVector(input);
                         break;
                     } else {
                         LOG(DEBUG, __FUNCTION__,"Request failed ");
@@ -834,20 +805,15 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
         response->set_status(static_cast<commonStub::Status>(status));
 
         if(error == telux::common::ErrorCode::SUCCESS) {
+            std::string s = "";
             requestedRecord.set_sw1(result.sw1);
             requestedRecord.set_sw2(result.sw2);
-            requestedRecord.set_pay_load(result.payload);
-            for(auto &it : result.data) {
-                requestedRecord.add_data(it);
-            }
+            requestedRecord.set_pay_load(s);
         } else {
             std::string s = "";
             requestedRecord.set_sw1(0);
             requestedRecord.set_sw2(0);
             requestedRecord.set_pay_load(s);
-            for(auto &it : result.data) {
-                requestedRecord.add_data(it);
-            }
         }
         *response->mutable_result() = requestedRecord;
     }
@@ -1941,8 +1907,8 @@ grpc::Status CardManagerServerImpl::QueryFdnLock(ServerContext* context,
         std::string apiname = "queryFdnLockState";
         CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
             errorCodefromUser, cbDelay );
-        bool state = rootObj["ICardManager"]["setCardLock"]["fdnState"].asBool();
-        bool isAvailable = rootObj["ICardManager"]["setCardLock"]["isPin2Available"].asBool();
+        bool state = rootObj["ICardManager"]["setCardLock"]["isPin2Available"].asBool();
+        bool isAvailable = rootObj["ICardManager"]["setCardLock"]["fdnState"].asBool();
         bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
         response->set_delay(cbDelay);
         response->set_iscallback(iscallback);

@@ -44,6 +44,8 @@
 
 #include <string>
 
+#define DEFAULT_DELAY 100
+
 namespace telux {
 namespace tel {
 

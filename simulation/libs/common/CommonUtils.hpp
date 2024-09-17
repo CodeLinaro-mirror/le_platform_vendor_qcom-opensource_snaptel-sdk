@@ -86,6 +86,8 @@ class CommonUtils {
     static std::vector<std::string> splitString(const std::string &str, char delimiter);
     static std::string getCurrentTimeHHMMSS();
     static int bitwiseXOR(const std::string& str);
+    /* convert hexadecimal value to decimal */
+    static long convertHexToInt(std::string hex);
 
     static void getValues(Json::Value &values, std::string subsystem,
         std::string method, telux::common::Status &status,
@@ -97,6 +99,11 @@ class CommonUtils {
     static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex);
     static std::vector<int> convertStringToVector(std::string input);
     static std::string getGrpcPort();
+
+    /**
+     * Print the SDK version in the predefined format to SDK log
+     */
+    static void logSdkVersion();
 
     template<typename T>
     static std::unique_ptr<typename T::Stub> getGrpcStub() {
@@ -139,6 +146,7 @@ class CommonUtils {
         std::string subsystem, std::string method, JsonData& data);
 
     static std::vector<std::string> splitString(std::string str);
+    static std::string convertIntVectorToString(std::vector<int> integers);
  private:
     static std::string readSystemDataValue(
         Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);

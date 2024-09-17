@@ -1172,7 +1172,7 @@ int main(int argc, char **argv) {
 
     auto cryptApp = std::make_shared<CryptoConsoleApp>(appName, "crpto> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
 
     int ret = Utils::setSupplementaryGroups(supplementaryGrps);
     if (ret < 0) {

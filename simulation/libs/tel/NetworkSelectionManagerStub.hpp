@@ -26,9 +26,11 @@ namespace tel {
 
 class NetworkSelectionManagerStub : public INetworkSelectionManager,
                                     public IEventListener,
-                                    public std::enable_shared_from_this<NetworkSelectionManagerStub> {
+                                    public std::enable_shared_from_this
+                                    <NetworkSelectionManagerStub> {
 public:
-    NetworkSelectionManagerStub(int phoneId, telux::common::InitResponseCb callback);
+    NetworkSelectionManagerStub(int phoneId);
+    telux::common::Status init(telux::common::InitResponseCb callback);
     ~NetworkSelectionManagerStub();
 
     bool isSubsystemReady() override;
@@ -56,16 +58,26 @@ public:
     telux::common::Status
         requestNetworkSelectionMode(SelectionModeResponseCallback callback) override;
 
+    telux::common::ErrorCode setLteDubiousCell(const LteDubiousCellInfo &lteDubiousCellInfo)
+        override;
+    telux::common::ErrorCode setNrDubiousCell(const NrDubiousCellInfo &nrDubiousCellInfo)
+        override;
+
     void cleanup();
 
     void onEventUpdate(google::protobuf::Any event)  override;
 
 private:
     int phoneId_;
+    std::mutex mtx_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ListenerManager<INetworkSelectionListener>> listenerMgr_;
     std::unique_ptr<::telStub::NetworkSelectionService::Stub> stub_;
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleSelectionModeChanged(::telStub::SelectionModeChangeEvent event);
     void handleNetworkScanResultsChanged(::telStub::NetworkScanResultsChangeEvent event);
 };

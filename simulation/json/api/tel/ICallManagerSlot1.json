@@ -4,8 +4,10 @@
         "IsSubsystemReady" : "SERVICE_AVAILABLE",
         "IsSubsystemReadyDelay" : 300,
         "DefaultCallbackDelay" : 400,
-        "configureFailureForRegulatoryECall" : "SUCCESS" /* Valid inputs "SUCCESS" , "T5FAILED" , T6FAILED" , "T7FAILED" etc */ ,
-        "eCallType" : "NGeCall"/* Valid Inputs NGeCall / CSeCall*/ ,
+        "configureFailureForRegulatoryECall" : "SUCCESS",
+        "_comment_configureFailureForRegulatoryECall" : "Valid inputs SUCCESS, T5FAILED, T6FAILED, T7FAILED" ,
+        "eCallType" : "NGeCall" ,
+        "_comment_eCallType" : "Valid Inputs NGeCall or CSeCall",
         "makeCall" :
         {
             "status" : "SUCCESS",

@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -462,7 +462,7 @@ static void signalHandler(int signum) {
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X RX app" << endl;
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

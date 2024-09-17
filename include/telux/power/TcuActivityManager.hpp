@@ -219,9 +219,6 @@ public:
     /**
      * Initiates a TCU-activity state transition.
      *
-     * This API also initiates the relevant internal operation if the platform is configured to
-     * change the modem activity state automatically when the TCU activity state changes.
-     *
      * This API needs to be used cautiously, as it could change the power-state of the system and
      * may affect other processes. For example, if a master sets the SUSPEND state, all SLAVE
      * processes will suspend their activity, allowing the system to suspend.
@@ -324,8 +321,6 @@ public:
 
     /**
      * Initiates a TCU-activity state transition.
-     * If platform is configured to change modem activity state automatically when TCU activity
-     * state is changed, this API initiates the relevant internal operation.
      *
      * This API needs to be used cautiously, as it could change the power-state of the system and
      * may affect other processes.

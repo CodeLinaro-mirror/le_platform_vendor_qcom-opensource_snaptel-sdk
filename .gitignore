@@ -1,4 +1,5 @@
 VersionInfo.hpp
+FileInfo.hpp
 
 # Ignore doxygen generated files
 doxy/api_reference/html

@@ -60,6 +60,8 @@
 #define ECALL_DO_NOT_TRANSMIT_MSD 2
 #define ECALL_T10_TIMER_MIN 60
 #define ECALL_T10_TIMER_MAX 720
+#define CALL_DROP 0
+#define CALL_ORIG 1
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -135,11 +137,16 @@ void ECallApp::init() {
         std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Get_ECall_Msd_Payload", {},
         std::bind(&ECallApp::getECallMsdPayload, this)));
 
+    std::shared_ptr<ConsoleAppCommand> setECallRedialConfigCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Set_ECall_Redial_Config", {},
+        std::bind(&ECallApp::setECallRedialConfig, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
-            setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand};
+            setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
+            setECallRedialConfigCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -600,6 +607,45 @@ void ECallApp::setECallConfig() {
     }
 }
 
+void ECallApp::setECallRedialConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    std::string redialConfig;
+    char delimiter = '\n';
+    int config = 0;
+    std::cout << "Enter ECall redial config : 0 - call drop , 1 - call origination failure ";
+    std::getline(std::cin, redialConfig, delimiter);
+    try {
+        config = std::stoi(redialConfig);
+        std::cout << "ECall redial config is " << config << std::endl;
+        if(config < CALL_DROP || config > CALL_ORIG) {
+            std::cout << "ERROR: Invalid config is entered" << std::endl;
+            return;
+        }
+    } catch (const std::exception &e) {
+        std::cout << "ERROR: invalid input, please enter a valid value. INPUT: "
+            << config << std::endl;
+        return;
+    }
+    std::string timeGapData;
+    std::cout << "Enter time gap between two successive redial attempts in milliseconds with space"
+        << "between the elements for example, input 5000 60000 : ";
+    std::getline(std::cin, timeGapData, delimiter);
+    std::vector<int> timeGap;
+    if (!timeGapData.empty()) {
+        timeGap = Utils::convertStringToVector(timeGapData);
+    } else {
+        std::cout << "ERROR: empty input ";
+    }
+    auto ret = eCallMgr_->configureECallRedial(config, timeGap);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to set eCall configuration" << std::endl;
+        return;
+    }
+}
+
 void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if(!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
@@ -805,7 +851,7 @@ int main(int argc, char **argv) {
     SignalHandler::registerSignalHandler(sigset, cb);
 
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;

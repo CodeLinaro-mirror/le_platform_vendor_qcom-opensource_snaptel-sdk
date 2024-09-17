@@ -282,6 +282,40 @@ public:
     */
    virtual void onRttMessage(int phoneId, std::string message) {}
 
+   /**
+    * This function is called to notify the clients whether eCall will be redialed or not by the
+    * modem along with the reason for the operation.
+    *
+    * Note: In situations where the user does not configure retry eCall parameters using
+    * @ref telux::tel::configureECallRedial, the default eCall retry parameters will be considered
+    * by the modem.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
+    *
+    * @param [in] phoneId - Unique identifier of phone on which eCall redial information is
+    *                       received.
+    * @param [in] info - Indicates eCall redial information
+    *                    1. Modem performs redial of eCall when its origination has failed or
+    *                       it gets dropped before receipt of MSD transmission status.
+    *                       In above situation, the contents of info is as follows:
+    *                       @ref telux::tel::ECallRedialInfo::willECallRedial is true and
+    *                       @ref telux::tel::ECallRedialInfo::reason can either be
+    *                           telux::tel::ReasonType::CALL_ORIG_FAILURE or
+    *                           telux::tel::ReasonType::CALL_DROP.
+    *                    2. Modem does not perform redial when eCall is successfully connected or
+    *                       the number of attempts of redial have been exhausted.
+    *                       In above situation, the contents of info is as follows:
+    *                       @ref telux::tel::ECallRedialInfo::willECallRedial is false and
+    *                       @ref telux::tel::ECallRedialInfo::reason can either be
+    *                           telux::tel::ReasonType::CALL_CONNECTED or
+    *                           telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual void onECallRedial(int phoneId, ECallRedialInfo info) {}
+
    virtual ~ICallListener() {
    }
 };

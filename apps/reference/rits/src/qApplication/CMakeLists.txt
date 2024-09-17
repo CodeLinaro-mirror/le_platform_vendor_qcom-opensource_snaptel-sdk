@@ -28,6 +28,7 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
 endif()
 
 add_library(qapplication ${LIBQAPPLICATION_SOURCES})
+target_link_libraries(qapplication cv2x-diag)
 
 install(TARGETS qapplication
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

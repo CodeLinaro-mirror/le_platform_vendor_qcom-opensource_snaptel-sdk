@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
     auto cryptApp = std::make_shared<CryptoAcceleratorApp>(appName, "crptoaccelerator> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "mvm", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "mvm", "logd", "dlt"};
 
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {

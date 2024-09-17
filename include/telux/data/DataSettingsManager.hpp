@@ -64,31 +64,6 @@ enum class BandPriority {
 };
 
 /**
- * Possible DDS switch types.
- */
-enum class DdsType
-{
-    PERMANENT = 0, /** Permanently switch the DDS SIM Slot. Intended to be used when the client
-                       wants to stop data activities on the current DDS SIM slot and start
-                       doing data activities on the other SIM slot, on a Dual SIM Dual Standby
-                       (DSDS) device. Permanent switch is persistent across reboots. */
-    TEMPORARY = 1, /** Temporarily switch the DDS SIM Slot. This is only to be used when there
-                       is a voice call on the non-DDS SIM slot and the client wants to temporarily
-                       perform data activity on that non-DDS SIM slot, for the duration of the
-                       call. After the call ends, clients should do a permanent switch back to the
-                       original DDS SIM. Temporary switch is not persistent across reboots. */
-};
-
-/**
- * Specifies the DDS switch information.
- */
-struct DdsInfo
-{
-    DdsType type;   /** Specifies DDS switch type */
-    SlotId slotId;  /** Specifies which slot is the DDS */
-};
-
-/**
  * N79 5G/Wlan 5GHz interference avoidance configuration
  */
 struct BandInterferenceConfig {
@@ -311,44 +286,6 @@ public:
      */
     virtual telux::common::Status requestBandInterferenceConfig(
         RequestBandInterferenceConfigResponseCb callback) = 0;
-
-    /**
-     * Allows the client to perform the DDS switch. Client has the option
-     * to either select permanent or temporary switch.
-     *
-     * @param [in] request          Client has to provide the request
-     *                              @ref telux::data::DdsInfo.
-     *
-     * @param [in] callback         Callback to get response for requestDdsSwitch.
-     *                              Possible ErrorCode in @ref telux::common::ResponseCallback:
-     *                              - If the DDS switch is performed succesfully
-     *                                @ref telux::common::ErrorCode::SUCCESS
-     *                              - If the DDS switch request is rejected
-     *                                @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
-     *                                The following scenarios are example of when a switch
-     *                                request will be rejected:
-     *                                    1. Slot1 is permanent DDS and the client attempts to
-     *                                       trigger a permanent DDS switch on slot 1.
-     *                                    2. During an MT/MO voice call and the client attempts
-     *                                       to trigger a permanent DDS switch.
-     *                              - If the DDS switch is allowed but due to some reason DDS
-     *                                switch failed @ref telux::common::ErrorCode::GENERIC_FAILURE
-     *
-     * @returns Status of requestDdsSwitch, i.e., success or suitable status code.
-     *
-     */
-    virtual telux::common::Status requestDdsSwitch(DdsInfo request,
-        telux::common::ResponseCallback callback = nullptr) = 0;
-
-    /**
-     * Request the current DDS slot information
-     *
-     * @param [in] callback      Callback to get response for requestCurrentDds.
-     *
-     * @returns Status of requestCurrentDds, i.e., success or suitable status code.
-     *
-     */
-    virtual telux::common::Status requestCurrentDds(RequestCurrentDdsResponseCb callback) = 0;
 
     /**
      * Allow/Disallow WWAN connectivity.
@@ -612,6 +549,46 @@ public:
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IDataSettingsListener> listener) = 0;
+
+    /**
+     * Allows the client to perform the DDS switch. Client has the option
+     * to either select permanent or temporary switch.
+     *
+     * @param [in] request          Client has to provide the request
+     *                              @ref telux::data::DdsInfo.
+     *
+     * @param [in] callback         Callback to get response for requestDdsSwitch.
+     *                              Possible ErrorCode in @ref telux::common::ResponseCallback:
+     *                              - If the DDS switch is performed successfully
+     *                                @ref telux::common::ErrorCode::SUCCESS
+     *                              - If the DDS switch request is rejected
+     *                                @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+     *                                The following scenarios are examples of when a switch
+     *                                request will be rejected:
+     *                                    1. Slot1 is permanent DDS and the client attempts to
+     *                                       trigger a permanent DDS switch on slot 1.
+     *                                    2. During an MT/MO voice call and the client attempts
+     *                                       to trigger a permanent DDS switch.
+     *                              - If the DDS switch is allowed but due to some reason DDS
+     *                                switch failed @ref telux::common::ErrorCode::GENERIC_FAILURE
+     *
+     * @returns Status of requestDdsSwitch, i.e., success or suitable status code.
+     *
+     * @deprecated Use IDualDataManager::requestDdsSwitch API.
+     */
+    virtual telux::common::Status requestDdsSwitch(DdsInfo request,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request the current DDS slot information.
+     *
+     * @param [in] callback      Callback to get response for requestCurrentDds.
+     *
+     * @returns Status of requestCurrentDds, i.e., success or suitable status code.
+     *
+     * @deprecated Use IDualDataManager::requestCurrentDds API.
+     */
+    virtual telux::common::Status requestCurrentDds(RequestCurrentDdsResponseCb callback) = 0;
 };
 
 /**
@@ -646,6 +623,8 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      * @param [in] currentState      Provides the current DDS status.
      *                               - Slot ID on which the DDS switch occured.
      *                               - DDS switch type @ref telux::data::DdsType.
+     *
+     * @deprecated Use IDualDataListener::onDdsChange indication.
      */
     virtual void onDdsChange(DdsInfo currentState) {}
 

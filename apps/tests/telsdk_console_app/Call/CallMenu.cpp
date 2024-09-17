@@ -745,6 +745,9 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                       ->getCallStateString((*callIterator)->getCallState())
                 << " Call Index: " << (int)(*callIterator)->getCallIndex()
                 << " Call Direction: " << (int)(*callIterator)->getCallDirection()
+                << " Call Type: "
+                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                      ->getCallTypeString((*callIterator)->getCallType())
                 << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
                 << " SlotId: " << (*callIterator)->getPhoneId()
                 << " isMpty: " << (*callIterator)->isMultiPartyCall()

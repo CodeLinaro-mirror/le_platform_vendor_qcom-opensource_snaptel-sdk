@@ -1,35 +1,6 @@
 /*
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "CardManagerStub.hpp"
@@ -44,15 +15,36 @@ namespace telux {
 
 namespace tel {
 
-CardManagerStub::CardManagerStub(telux::common::InitResponseCb callback) {
+CardManagerStub::CardManagerStub() {
     LOG(DEBUG, __FUNCTION__);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
+}
+
+telux::common::Status CardManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<ICardListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
     stub_ = CommonUtils::getGrpcStub<CardService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate card service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
+    initCb_ = callback;
     auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
+        [this]() {
+            this->initSync();
         }).share();
-    taskQ_->add(f);
+    auto status = taskQ_->add(f);
+    return status;
 }
 
 CardManagerStub::~CardManagerStub() {
@@ -69,17 +61,34 @@ void CardManagerStub::cleanup() {
    cardMap_.clear();
 }
 
-void CardManagerStub::initSync(telux::common::InitResponseCb callback) {
+void CardManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(cardManagerMutex_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
+}
+
+void CardManagerStub::initSync() {
     ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
     LOG(DEBUG, __FUNCTION__);
     grpc::Status reqstatus = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     if (reqstatus.ok()) {
-        telux::common::ServiceStatus cbStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-        int cbDelay = static_cast<int>(response.delay());
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay_ = static_cast<int>(response.delay());
         if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             slotCount_ = 1;
             if(telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -100,37 +109,10 @@ void CardManagerStub::initSync(telux::common::InitResponseCb callback) {
                 LOG(DEBUG, __FUNCTION__,"SlotId is ",slotId);
                 cardMap_[slotId]->updateSimStatus();
             }
-            listenerMgr_ = std::make_shared<telux::common::ListenerManager<ICardListener>>();
-            if(!listenerMgr_) {
-                LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-                cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-            }
-        }
-        if(callback) {
-            auto f = std::async(std::launch::async, [this, cbDelay, cbStatus, callback]() {
-                this->invokeInitResponseCallback(cbDelay, cbStatus, callback);
-            }).share();
-            taskQ_->add(f);
-        }
-    } else {
-        if(callback) {
-            auto f = std::async(std::launch::async, [this, callback]() {
-                this->invokeInitResponseCallback(DELAY,
-                    telux::common::ServiceStatus::SERVICE_FAILED, callback);
-            }).share();
-            taskQ_->add(f);
         }
     }
-}
-
-void CardManagerStub::invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
-    telux::common::InitResponseCb callback) {
-    LOG(DEBUG, __FUNCTION__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-
-    if (callback) {
-        callback(cbStatus);
-    }
+    LOG(DEBUG, __FUNCTION__, " Delay ", cbDelay_, " service status ", static_cast<int>(cbStatus));
+    setServiceStatus(cbStatus);
 }
 
 std::future<bool> CardManagerStub::onSubsystemReady() {
@@ -147,15 +129,7 @@ std::future<bool> CardManagerStub::onSubsystemReady() {
 
 telux::common::ServiceStatus CardManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 telux::common::Status CardManagerStub::getSlotIds(std::vector<int> &slotIds) {

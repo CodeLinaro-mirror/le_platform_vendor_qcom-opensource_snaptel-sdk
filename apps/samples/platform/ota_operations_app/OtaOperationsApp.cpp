@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -32,163 +32,219 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * This sample application demonstrates the use of the filesystem manager (IFsManager)
- * to control file system operation for ota client. On filesystem operation response,
- * provided callback will execute.
+/*
+ * This application demonstrates how to execute pre and post OTA operations.
+ * The steps are as follows:
+ *
+ * 1. Get a PlatformFactory instance.
+ * 2. Get a IFsManager instance from the PlatformFactory.
+ * 3. Wait for the file system service to become available.
+ * 4. Register a listener that will receive OTA state updates.
+ * 5. Prepare the device before OTA.
+ * 6. Perform the OTA update.
+ * 7. Do post OTA operations.
+ * 8. If required, sync A and B partitions.
+ * 9. Finally, deregister the listener.
+ *
+ * Usage:
+ * # ./ota_operations_app
  */
 
-#include <future>
-#include <getopt.h>
+#include <errno.h>
+
 #include <iostream>
-#include <condition_variable>
+#include <memory>
+#include <cstdlib>
+#include <future>
 
-#include "../../../common/utils/Utils.hpp"
+#include <telux/common/CommonDefines.hpp>
 #include <telux/platform/PlatformFactory.hpp>
+#include <telux/platform/FsManager.hpp>
+#include <telux/platform/FsListener.hpp>
 
-#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
-
-using namespace telux::common;
-using namespace telux::platform;
-
-class OtaOperationsListener : public IFsListener {
+class OTAOperation : public telux::platform::IFsListener,
+                     public std::enable_shared_from_this<OTAOperation> {
  public:
-    // [6] Receive service status notifications
-    virtual void onServiceStatusChange(ServiceStatus serviceStatus) override {
-        PRINT_NOTIFICATION << "Ota operation service status: ";
-        std::string status;
-        switch (serviceStatus) {
-            case ServiceStatus::SERVICE_AVAILABLE: {
-                status = "Available";
-                break;
-            }
-            case ServiceStatus::SERVICE_UNAVAILABLE: {
-                status = "Unavailable";
-                break;
-            }
-            case ServiceStatus::SERVICE_FAILED: {
-                status = "Failed";
-                break;
-            }
-            default: {
-                status = "Unknown";
-                break;
-            }
+    int init() {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &platformFactory = telux::platform::PlatformFactory::getInstance();
+
+        /* Step - 2 */
+        fsManager_ = platformFactory.getFsManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!fsManager_) {
+            std::cout << "Can't get IFsManager" << std::endl;
+            return -ENOMEM;
         }
-        std::cout << status << std::endl;
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "File system service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = fsManager_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
     }
+
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 9 */
+        status = fsManager_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int prepareForOTA() {
+        telux::common::ErrorCode ec;
+        telux::common::Status status;
+        std::promise<telux::common::ErrorCode> p{};
+
+        /* Step - 5 */
+        status = fsManager_->prepareForOta(telux::platform::OtaOperation::START,
+                [&p](telux::common::ErrorCode errorCode) {
+            p.set_value(errorCode);
+        });
+
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't prepare for OTA, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        ec = p.get_future().get();
+        if (ec != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to prepare for OTA, err " <<
+                static_cast<int>(ec) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int startPostOTAOperations() {
+        telux::common::ErrorCode ec;
+        telux::common::Status status;
+        std::promise<telux::common::ErrorCode> p{};
+
+        /* Step - 7 */
+        status = fsManager_->otaCompleted(telux::platform::OperationStatus::SUCCESS,
+                [&p](telux::common::ErrorCode errorCode) {
+            p.set_value(errorCode);
+        });
+
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't start post OTA operation, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        ec = p.get_future().get();
+        if (ec != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to start post OTA operation, err " <<
+                static_cast<int>(ec) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+    int syncABPartitions() {
+        telux::common::ErrorCode ec;
+        telux::common::Status status;
+        std::promise<telux::common::ErrorCode> p{};
+
+        /* Step - 8 */
+        status = fsManager_->startAbSync([&p](telux::common::ErrorCode errorCode) {
+            p.set_value(errorCode);
+        });
+
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't sync partition, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        ec = p.get_future().get();
+        if (ec != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Failed to sync partition, err " <<
+                static_cast<int>(ec) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
+    }
+
+ private:
+    std::shared_ptr<telux::platform::IFsManager> fsManager_;
 };
 
-int main(int argc, char **argv) {
-    std::cout << "********* Ota operations sample app *********" << std::endl;
+int main(int argc, char *argv[]) {
 
-    // [1] Get platform factory
-    auto &platformFactory = PlatformFactory::getInstance();
+    int ret;
+    std::shared_ptr<OTAOperation> app;
 
-    // [2] Prepare a callback that is invoked when the filesystem sub-system
-    // initialization is complete
-    std::promise<ServiceStatus> p;
-    auto initCb = [&p](ServiceStatus status) {
-        std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
-        p.set_value(status);
-    };
-
-    // [3] Get the filesystem manager
-    std::shared_ptr<IFsManager> fsManager = platformFactory.getFsManager(initCb);
-    if (fsManager == nullptr) {
-        std::cout << "filesystem manager is nullptr" << std::endl;
-        exit(1);
-    }
-    std::cout << "Obtained filesystem manager" << std::endl;
-
-    // [4] Wait until initialization is complete
-    p.get_future().get();
-    if (fsManager->getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Filesystem service not available" << std::endl;
-        exit(1);
-    }
-    std::cout << "Filesystem service is now available" << std::endl;
-
-    // [5] Create the listener object and register as a listener
-    std::shared_ptr<OtaOperationsListener> otaOperationsListener
-        = std::make_shared<OtaOperationsListener>();
-    fsManager->registerListener(otaOperationsListener);
-
-    // [6] Download the new package
-
-    // [7] Prepare for ota start
-    {
-        Status otaStartStatus = Status::FAILED;
-        OtaOperation otaOperation = OtaOperation::START;
-        std::promise<ErrorCode> p;
-
-        std::cout << "Request to prepare for ota start invoked " << std::endl;
-        otaStartStatus = fsManager->prepareForOta(
-            otaOperation, [&p, fsManager](ErrorCode error) { p.set_value(error); });
-
-        if (otaStartStatus != Status::SUCCESS) {
-            std::cout << "Request to prepare for ota start : ";
-            Utils::printStatus(otaStartStatus);
-            exit(1);
-        } else {
-            std::cout << "Request to prepare for ota start successful";
-            ErrorCode error = p.get_future().get();
-            std::cout << "Prepare for ota start with result: " << Utils::getErrorCodeAsString(error)
-                      << std::endl;
-        }
-    }
-    // [8] The client can start the OTA update
-
-    // [9] Once the OTA is complete, indicate the update status to filesystem manager
-    {
-        Status otaEndStatus = Status::FAILED;
-        OperationStatus operationStatus = OperationStatus::SUCCESS;
-        std::promise<ErrorCode> p;
-
-        std::cout << "Request to ota completion for update succeed invoked " << std::endl;
-        otaEndStatus = fsManager->otaCompleted(
-            operationStatus, [&p, fsManager](ErrorCode error) { p.set_value(error); });
-
-        if (otaEndStatus != Status::SUCCESS) {
-            std::cout << "Ota completion for update succeed request : ";
-            Utils::printStatus(otaEndStatus);
-            // Note: If OTA completion result in a failure, the client needs to start
-            //      with prepareForOta
-        } else {
-            std::cout << "Ota completion for update succeed request successful";
-            ErrorCode error = p.get_future().get();
-            std::cout << " ota completed for update succeed with result: "
-                      << Utils::getErrorCodeAsString(error) << std::endl;
-        }
+    try {
+        app = std::make_shared<OTAOperation>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate OTAOperation" << std::endl;
+        return -ENOMEM;
     }
 
-    // [10] If user decides to mirror the filesystem, start AB sync
-    {
-        Status abSyncStatus = Status::FAILED;
-        std::promise<ErrorCode> p;
-
-        std::cout << "Request to start ABSYNC invoked " << std::endl;
-        abSyncStatus
-            = fsManager->startAbSync([&p, fsManager](ErrorCode error) { p.set_value(error); });
-
-        if (abSyncStatus != Status::SUCCESS) {
-            std::cout << "Request to start absync : ";
-            Utils::printStatus(abSyncStatus);
-        } else {
-            std::cout << "Request to start absync successful";
-            ErrorCode error = p.get_future().get();
-            std::cout << "Start absync with result: " << Utils::getErrorCodeAsString(error)
-                      << std::endl;
-        }
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
-    std::cout << "\n\nPress ENTER to exit!!! \n\n";
-    std::cin.ignore();
+    ret = app->prepareForOTA();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
 
-    // [11] Clean-up
-    fsManager->deregisterListener(otaOperationsListener);
-    otaOperationsListener = nullptr;
-    fsManager = nullptr;
+    /* Step - 6 */
+    /* Application specific logic for OTA goes here */
 
+    ret = app->startPostOTAOperations();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
+
+    ret = app->syncABPartitions();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
+
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
+
+    std::cout << "\nOTA operation app exiting" << std::endl;
     return 0;
 }

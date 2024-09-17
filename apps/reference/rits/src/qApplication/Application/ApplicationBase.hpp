@@ -99,6 +99,7 @@
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
 #include "qMonitor.hpp"
+#include "qUtils.hpp"
 #include <telux/sec/CryptoAcceleratorManager.hpp>
 #include <telux/sec/SecurityFactory.hpp>
 #include <telux/sec/CAControlManager.hpp>
@@ -126,12 +127,12 @@
 #define DECODE_FAIL -1
 #define DECODE_SIGNED 1
 
-#define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
-                       "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
-                       "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
-                       "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
-                       "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
-                       "TotalRVs,DistanceFromRV"
+#define LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
+                   "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
+                   "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
+                   "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
+                   "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
+                   "TotalRVs,DistanceFromRV"
 
 using telux::cv2x::Priority;
 using namespace std;
@@ -186,7 +187,7 @@ typedef struct {
     VerifStats* asyncVerifStat;
 } asyncCbData_t;
 
-struct Config{
+struct Config {
     int procPriority = DEFAULT_PROCESS_PRIORITY;
     bool isValid = false;
     int codecVerbosity = 0;
@@ -210,7 +211,7 @@ struct Config{
     bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
-    bool preRecordedMinLog = false;
+    bool preRecordedBsmLog = false;
     bool enableTxAlways = true;
     uint16_t ldmGbTime = 3;
     uint8_t ldmGbTimeThreshold= 5;
@@ -343,6 +344,16 @@ struct Config{
     double overrideSpeed = 0.0;
 };
 
+struct DiagLogData {
+    bool validPkt;
+    uint64_t currTime;
+    uint8_t cbr;
+    uint64_t monotonicTime;
+    uint64_t txInterval;
+    bool enableCongCtrl;
+    bool congCtrlInitialized;
+};
+
 /* Congestion Control CongestionControl Data */
 struct CongCtrlConfig {
     /*
@@ -448,8 +459,8 @@ public:
     int rxCount = 0;
     struct timeval startRxIntervalTime;
     struct timeval endRxIntervalTime;
-    QMonitor* qMon = nullptr;
-    QMonitor::Configuration* qMonConfig = nullptr;
+    std::shared_ptr<QMonitor> qMon = nullptr;
+    std::shared_ptr<QMonitor::Configuration> qMonConfig = nullptr;
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
@@ -462,6 +473,9 @@ public:
     std::map<std::thread::id, std::vector<ResultLoggingStats>> thrResLoggingValues;
 
     virtual ~ApplicationBase();
+
+    /* Initialization */
+    virtual bool init();
 
     /* Method to update the local stored V2X IP rmnet addr */
     int updateCachedV2xIpIfaceAddr();
@@ -486,7 +500,8 @@ public:
     * @param fileConfiguration a char* that contains the file path of the
     * @param msgType application message type .
     */
-    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * Constructs Application with all the specifications of a
@@ -499,8 +514,9 @@ public:
     * @param rxPort a const uint16_t that contains the receive port.
     * @param fileConfiguration a char* that contains the file path of the
     */
-    ApplicationBase(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false);
+    ApplicationBase(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * send  send V2X message.
@@ -536,11 +552,6 @@ public:
      * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmission
      */
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
-
-    /**
-    * Clear radio instance in application.
-    */
-    void clearRadioInstance();
 
     /**
     * Closes all tx and rx flows from Snaptel SDK.
@@ -719,6 +730,7 @@ public:
     bsm_data* bs, double distFromRV, uint32_t RVsInRange,
     uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
     std::condition_variable* writeMutexCv);
+    void diagLogPktGenericInfo();
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
@@ -733,6 +745,7 @@ protected:
     float locPositionDop_ = 0.0;
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
+    bool enableDiagLog_ = false;
     // congestionControl cong ctrl
     static CongestionControlData congestionControlOut;
     CongestionControlCalculations qitsCongControlCalculations;
@@ -744,6 +757,7 @@ protected:
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
     std::condition_variable writeMutexCv;
+    std::shared_ptr<QUtils> utility_ = nullptr;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -754,7 +768,7 @@ protected:
     /**
      * Overloaded function to initialize the message content for transmition.
      */
-    virtual void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
+    virtual bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
     /**
      * Overloaded function to free the message content, counter-part of initMsg.
      */
@@ -794,6 +808,10 @@ protected:
 
     static FILE *csvfp;
     static std::mutex csvMutex;
+    static v2x_diag_qits_general_data generalInfo;
+    static unsigned short getEventsData(const vehicleeventflags_ut *events);
+    static void fillEventsData(v2x_diag_event_bit_t *eventBit, const vehicleeventflags_ut *events);
+    void diagLogPktTxRx(bool isTx, TransmitType txType, const DiagLogData *logData, const bsm_data *bs);
 private:
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;

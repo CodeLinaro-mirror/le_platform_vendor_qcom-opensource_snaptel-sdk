@@ -666,6 +666,7 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
     if(createNewSmp(&thrSmp) < 0){
         if(secVerbosity > 7)
             fprintf(stderr,"Unable to create smp for this thread\n");
+        sem_post(&smpListSem);
         return false;
     }
     // No error in smp creation. Add to <thread,smp> map.
@@ -788,7 +789,7 @@ void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
 
-int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
+int AerolinkSecurity::ExtractMsg(const SecurityOpt &opt,
                 const uint8_t * msg,
                 uint32_t msgLen,
                 uint8_t const *payload,
@@ -1028,25 +1029,27 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics rvKine,
-    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData ,uint8_t sopt_priority, ValidateCallback callBackFunction) {
 
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    int priority = 1;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+    uint8_t aerolinkPriority = (sopt_priority <= 4) ? 0 : 1;
+    if (secVerbosity > 6)
+        printf("Aerolink Priority %d \n",aerolinkPriority);
 
     // Get corresponding smp for this thread
     SecuredMessageParserC* smp;
     smp = getThrSmp(thrId);
     if(smp == nullptr || thrVerifSemPtr == nullptr){
         if(secVerbosity > 4)
-        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+            fprintf(stderr,"Unable to retrieve SMP for this thread\n");
         return -1;
     }
     // async verification
-    result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);
+    result = smp_verifySignaturesAsyncPriority(*smp, aerolinkPriority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -1114,7 +1117,7 @@ void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
 }
 
 // Verifies a signed message and returns payload length of actual packet
-int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
+int AerolinkSecurity::VerifyMsg(const SecurityOpt &opt) {
     setSecVerbosity(opt.secVerbosity);
     this->enableMisbehavior = opt.enableMbd;
     this->enableConsistency = opt.enableConsistency;
@@ -1147,7 +1150,7 @@ void AerolinkSecurity::signCallback(
 }
 
 // Sign and return signed message
-int AerolinkSecurity::SignMsg(const SecurityOpt opt,
+int AerolinkSecurity::SignMsg(const SecurityOpt &opt,
                               const uint8_t *msg, uint32_t msgLen,
                               uint8_t *signedSpdu, uint32_t &signedSpduLen,
                               SecurityService::SignType t) {

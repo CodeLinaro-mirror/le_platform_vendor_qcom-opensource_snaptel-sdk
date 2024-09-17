@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -43,6 +43,7 @@ extern "C" {
 }
 
 #include "SimulationConfigParser.hpp"
+#include "FileInfo.hpp"
 
 /**
  * Check if a file exists.

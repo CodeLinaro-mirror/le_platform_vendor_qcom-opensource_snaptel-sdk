@@ -443,10 +443,17 @@ grpc::Status FirewallServerImpl::EnableDMZ(ServerContext* context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if (!DataUtilsStub::isValidIpv4Address(request->ip_address())) {
+        data.error = telux::common::ErrorCode::INTERNAL;
+        response->set_status(static_cast<commonStub::Status>(data.status));
+        response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+        return grpc::Status::OK;
+    }
+
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
         int idx = 0;
-        bool isFound = isConfigAvailable(subsystem, "dmzConfig", data, request, idx);
+        bool isFound = isConfigAvailableForBackhaul(subsystem, "dmzConfig", data, request, idx);
 
         if (isFound) {
             data.error = telux::common::ErrorCode::NO_EFFECT;
@@ -454,11 +461,18 @@ grpc::Status FirewallServerImpl::EnableDMZ(ServerContext* context,
             const Json::Value& config = data.stateRootObj[subsystem]["dmzConfig"];
             int count = config.size();
             Json::Value newConfig;
+
+            // currently supported backhauls are WWAN, WLAN and ETH
+            if (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WWAN) {
+                newConfig["slotId"] = request->slot_id();
+                newConfig["profileId"] = request->profile_id();
+            } else if (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_ETH) {
+                newConfig["vlanId"] = request->vlan_id();
+            }
+
             newConfig["backhaul"] =
                 DataUtilsStub::convertEnumToBackhaulPrefString(
                     static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
-            newConfig["slotId"] = request->slot_id();
-            newConfig["profileId"] = request->profile_id();
             newConfig["ipAddr"] = request->ip_address();
             data.stateRootObj[subsystem]["dmzConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
@@ -491,7 +505,7 @@ grpc::Status FirewallServerImpl::DisableDMZ(ServerContext* context,
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
         int idx = 0;
-        bool isFound = isConfigAvailable(subsystem, "dmzConfig", data, request, idx);
+        bool isFound = isConfigAvailableForBackhaul(subsystem, "dmzConfig", data, request, idx);
 
         if (isFound) {
             std::string ipFamily = DataUtilsStub::convertIpFamilyEnumToString(
@@ -549,7 +563,7 @@ grpc::Status FirewallServerImpl::RequestDMZEntry(ServerContext* context,
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
         int idx = 0;
-        bool isFound = isConfigAvailable(subsystem, "dmzConfig", data, request, idx);
+        bool isFound = isConfigAvailableForBackhaul(subsystem, "dmzConfig", data, request, idx);
         if (isFound) {
             response->add_dmz_entries(
                 data.stateRootObj[subsystem]["dmzConfig"][idx]["ipAddr"].asString());

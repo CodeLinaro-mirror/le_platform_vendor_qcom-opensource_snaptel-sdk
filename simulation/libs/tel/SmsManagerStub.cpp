@@ -1,35 +1,6 @@
 /*
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <string>
@@ -46,51 +17,74 @@ using namespace telux::common;
 using namespace telux::tel;
 using namespace std;
 
-SmsManagerStub::SmsManagerStub(int phoneId, telux::common::InitResponseCb callback) {
+SmsManagerStub::SmsManagerStub(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<SmsService>();
     phoneId_ = phoneId;
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
-        }).share();
-    taskQ_->add(f);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
 }
 
-void SmsManagerStub::initSync(telux::common::InitResponseCb callback) {
+void SmsManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
+}
+
+telux::common::Status SmsManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<ISmsListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+    stub_ = CommonUtils::getGrpcStub<SmsService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate sms service");
+        return telux::common::Status::FAILED;
+    }
+    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
+    initCb_ = callback;
+    auto f = std::async(std::launch::async,
+        [this]() {
+            this->initSync();
+        }).share();
+    auto status = taskQ_->add(f);
+    return status;
+}
+
+void SmsManagerStub::initSync() {
     LOG(DEBUG, __FUNCTION__);
     ::commonStub::GetServiceStatusReply response;
     ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
-
-    stub_->InitService(&context, request, &response);
-
-    telux::common::ServiceStatus cbStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-    int cbDelay = static_cast<int>(response.delay());
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ = std::make_shared<telux::common::ListenerManager<ISmsListener>>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
+    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " InitService request failed");
+    } else {
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay_ = static_cast<int>(response.delay());
     }
-    if(callback) {
-        this->invokeInitResponseCallback(cbDelay, cbStatus, callback);
-    }
-}
-
-void SmsManagerStub::invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
-    telux::common::InitResponseCb callback) {
-    LOG(DEBUG, __FUNCTION__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-
-    if (callback) {
-        callback(cbStatus);
-    }
+    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
+        " callback status ", static_cast<int>(cbStatus));
+    setServiceStatus(cbStatus);
 }
 
 SmsManagerStub::~SmsManagerStub() {
@@ -103,15 +97,7 @@ void SmsManagerStub::cleanup() {
 
 telux::common::ServiceStatus SmsManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 telux::common::Status SmsManagerStub::registerListener(std::weak_ptr<ISmsListener> listener) {

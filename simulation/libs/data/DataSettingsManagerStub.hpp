@@ -63,6 +63,18 @@ public:
     telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) override;
 
+    telux::common::ErrorCode getIpPassThroughConfig( const IpptParams &ipptParms,
+            IpptConfig &config) override;
+
+    telux::common::ErrorCode setIpPassThroughConfig(const IpptParams &ipptParms,
+            const IpptConfig &config) override;
+
+    telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
+            IpConfig &ipConfig) override;
+
+    telux::common::ErrorCode setIpConfig(const IpConfigParams &ipConfigParams,
+            const IpConfig &ipConfig) override;
+
     bool isDeviceDataUsageMonitoringEnabled() override;
 
     telux::common::Status registerListener(

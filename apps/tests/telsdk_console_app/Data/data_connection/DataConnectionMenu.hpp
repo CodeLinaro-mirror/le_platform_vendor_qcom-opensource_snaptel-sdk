@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -101,6 +101,8 @@ public:
     // Data Connection Management APIs
     void startDataCall(std::vector<std::string> inputCommand);
     void stopDataCall(std::vector<std::string> inputCommand);
+    void startDataCall_V1(std::vector<std::string> inputCommand);
+    void stopDataCall_V1(std::vector<std::string> inputCommand);
     void requestDataCallBitRate(std::vector<std::string> inputCommand);
     void requestDataCallStatistics(std::vector<std::string> inputCommand);
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
@@ -125,6 +127,7 @@ private:
     void requestDataCallList(OperationType operationType, SlotId slotId, DataCallListResponseCb cb);
     bool validateProfile(int slotId, int profileId);
     bool initalizeDPM(SlotId slotId);
+    void getDataCallParams(int &profileId, int &ipFamilyType, int &operationType);
 
     std::map<SlotId, std::shared_ptr<DataListener>> dataListeners_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>>dataConnectionManagerMap_;

@@ -46,6 +46,18 @@
         "switchBackHaul": {
             "error": "SUCCESS",
             "status": "SUCCESS"
+        },
+        "setIpPassThroughConfig": {
+            "error": "SUCCESS"
+        },
+        "setIpConfig": {
+            "error": "SUCCESS"
+        },
+        "getIpPassThroughConfig": {
+            "error": "SUCCESS"
+        },
+        "getIpConfig": {
+            "error": "SUCCESS"
         }
     }
 }

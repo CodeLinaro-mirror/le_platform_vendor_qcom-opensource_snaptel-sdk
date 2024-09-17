@@ -15,6 +15,7 @@
 #include "Cv2xRxSubscriptionStub.hpp"
 #include "Cv2xTxFlowStub.hpp"
 #include "Cv2xTxRxSocketStub.hpp"
+#include <telux/cv2x/Cv2xRxMetaDataHelper.hpp>
 
 #define RPC_FAIL_SUFFIX " RPC Request failed - "
 
@@ -93,9 +94,350 @@ static constexpr unsigned int SIMULATION_MINIMUM_PORT_NUMBER = 1024;
 static std::string DEFAULT_DEST_IP_ADDR = "ff02::1";
 static std::string LO_IPV6_ADDR         = "::1";
 
+static const std::string CV2X_EVENT_FILTER = "cv2x_status";
+static const std::string CV2X_SRC_L2_ID_FILTER = "cv2x_src_l2_id";
+
+static constexpr uint8_t TYPE_LEN         = 1;  // 1 byte for the type, type should be 0 ~ 255
+static constexpr uint8_t LENGTH_INFO_SIZE = 1;  // 1 byte encoding of the Length info
+
+// type definitions
+static constexpr uint8_t TLV_MD_PADDING_TYPE       = 0x0;  // used when some meta data are missing
+static constexpr uint8_t TLV_MD_START_TYPE         = 0xFF;  // START
+static constexpr uint8_t TLV_MD_END_TYPE           = 0x1;  // END
+static constexpr uint8_t TLV_MD_SFN_TYPE           = 0x2;
+static constexpr uint8_t TLV_MD_SUBCH_IDX_TYPE     = 0x3;
+static constexpr uint8_t TLV_MD_DST_ID_TYPE        = 0x4;
+static constexpr uint8_t TLV_MD_RSSI_TYPE          = 0x5;
+static constexpr uint8_t TLV_MD_SCI_TYPE           = 0x6;
+static constexpr uint8_t TLV_MD_PKT_DELAY_EST_TYPE = 0x7;
+static constexpr uint8_t TLV_MD_SUBCH_NUM_TYPE     = 0x8;
+// bytes used by each meta data information
+static constexpr unsigned TLV_MD_START_LEN         = 1;
+static constexpr unsigned TLV_MD_END_LEN           = 1;
+static constexpr unsigned TLV_MD_SFN_LEN           = 2;
+static constexpr unsigned TLV_MD_SUBCH_IDX_LEN     = 1;
+static constexpr unsigned TLV_MD_DST_ID_LEN        = 4;
+static constexpr unsigned TLV_MD_RSSI_LEN          = 2;
+static constexpr unsigned TLV_MD_SCI_LEN           = 4;
+static constexpr unsigned TLV_MD_PKT_DELAY_EST_LEN = 4;
+static constexpr unsigned TLV_MD_SUBCH_NUM_LEN     = 1;
+
+// The minimum meta data should consist the START, END markers,
+// and the time and frequency information: SFN, SubChannelIndex.
+static constexpr unsigned MIN_MD_LEN = TLV_MD_START_LEN + TLV_MD_END_LEN + TLV_MD_SFN_LEN
+                                       + TLV_MD_SUBCH_IDX_LEN + 2 * (TYPE_LEN + LENGTH_INFO_SIZE);
+
+// For just 1 TLV, 3 bytes is needed for type, length, and value
+static constexpr unsigned MIN_TLV_LEN = 3;
+
+/*
+ * getFullRxMetaDataReport - get the received packet's meta data, this is used for
+ *                           the packet which only have meta data
+ *
+ * @payload       - the pointer to the meta data payload
+ * @payloadLength - length
+ * @metaData      - value resulted, it contains the rx meta data information decoded
+ *
+ * Return the length of meta data, or 0 if no meta data presented
+ */
+static unsigned getFullRxMetaDataReport(
+    const uint8_t *payload, uint32_t length, RxPacketMetaDataReport &metaData) {
+    LOG(DEBUG, __FUNCTION__);
+    unsigned metaDataLen = 0;
+    if (nullptr == payload || length < MIN_TLV_LEN) {
+        LOG(ERROR, __FUNCTION__, " Invalid parameter, length: ", static_cast<int>(length));
+        return metaDataLen;
+    }
+
+    auto pl    = payload;
+    auto pEnd  = pl + length - 1;
+    bool found = false;
+    bool parse = true;
+
+    while (parse && pl <= pEnd) {
+        switch (*pl) {
+            case TLV_MD_PADDING_TYPE:
+                pl += TYPE_LEN;
+                break;
+            case TLV_MD_END_TYPE:
+                // END marker found, a valid full meta data is parsed out
+                found = true;
+                parse = false;
+                pEnd  = pl;
+                break;
+            case TLV_MD_DST_ID_TYPE:
+                pl += TYPE_LEN;
+                if (pl + LENGTH_INFO_SIZE + TLV_MD_DST_ID_LEN <= pEnd && *pl == TLV_MD_DST_ID_LEN) {
+                    pl += LENGTH_INFO_SIZE;
+                    // 4 bytes for L2 Destination ID
+                    metaData.l2DestinationId = *(uint32_t *)pl;
+                    metaData.metaDataMask |= RX_L2_DEST_ID;
+
+                    pl += TLV_MD_DST_ID_LEN;
+                } else {
+                    parse = false;
+                }
+                break;
+            case TLV_MD_RSSI_TYPE:
+                pl += TYPE_LEN;
+                if (pl + LENGTH_INFO_SIZE + TLV_MD_RSSI_LEN <= pEnd && *pl == TLV_MD_RSSI_LEN) {
+                    pl += LENGTH_INFO_SIZE;
+                    // 1 byte for both RSSI value
+                    metaData.prxRssi = *pl;
+                    metaData.drxRssi = *(pl + 1);
+                    metaData.metaDataMask |= RX_PRX_RSSI;
+                    metaData.metaDataMask |= RX_DRX_RSSI;
+
+                    pl += TLV_MD_RSSI_LEN;
+                } else {
+                    parse = false;
+                }
+                break;
+            case TLV_MD_SCI_TYPE:
+                pl += TYPE_LEN;
+                if (pl + LENGTH_INFO_SIZE + TLV_MD_SCI_LEN <= pEnd && *pl == TLV_MD_SCI_LEN) {
+                    pl += LENGTH_INFO_SIZE;
+                    // 4 bytes for SCI format1
+                    metaData.sciFormat1Info = *(uint32_t *)pl;
+                    pl += TLV_MD_SCI_LEN;
+                    metaData.metaDataMask |= RX_SCI_FORMAT1;
+                } else {
+                    parse = false;
+                }
+                break;
+            case TLV_MD_PKT_DELAY_EST_TYPE:
+                pl += TYPE_LEN;
+                if (pl + LENGTH_INFO_SIZE + TLV_MD_PKT_DELAY_EST_LEN <= pEnd
+                    && *pl == TLV_MD_PKT_DELAY_EST_LEN) {
+                    pl += LENGTH_INFO_SIZE;
+                    // 4 bytes for packets delay estimation
+                    metaData.delayEstimation = *(uint32_t *)pl;
+                    pl += TLV_MD_PKT_DELAY_EST_LEN;
+                    metaData.metaDataMask |= RX_DELAY_ESTIMATION;
+
+                } else {
+                    parse = false;
+                }
+                break;
+            case TLV_MD_SUBCH_NUM_TYPE:
+                pl += TYPE_LEN;
+                if (pl + LENGTH_INFO_SIZE + TLV_MD_SUBCH_NUM_LEN <= pEnd
+                    && *pl == TLV_MD_SUBCH_NUM_LEN) {
+                    pl += LENGTH_INFO_SIZE;
+                    // 1 byte for subchannel number
+                    metaData.subChannelNum = *pl;
+                    pl += TLV_MD_SUBCH_NUM_LEN;
+                    metaData.metaDataMask |= RX_SUBCHANNEL_NUMBER;
+                } else {
+                    parse = false;
+                }
+                break;
+            default:
+                LOG(DEBUG, __FUNCTION__, " Non recognized type");
+                parse = false;
+        }
+    }
+
+    if (found) {
+        metaDataLen = pEnd - payload + 1;
+    }
+
+    return metaDataLen;
+}
+/*
+ * getTimeFrequency - try to decode the subframe number and subchannel index
+ *
+ * @payload - the pointer to the received packet's data
+ * @payloadLength - received packets length
+ * @metaData - value resulted, it contains the rx meta data information parsed
+ *
+ * Return the length of meta data, or 0 if no meta data presented
+ */
+static unsigned getTimeFrequency(
+    const uint8_t *payload, uint32_t payloadLength, RxPacketMetaDataReport &metaData) {
+    LOG(DEBUG, __FUNCTION__);
+    unsigned metaDataLen = 0;
+    if (nullptr == payload || payloadLength < MIN_MD_LEN) {
+        LOG(ERROR, __FUNCTION__,
+            " Invalid parameter, payloadLength: ", static_cast<int>(payloadLength));
+        return metaDataLen;
+    }
+
+    const uint8_t *pl       = payload;
+    uint16_t sfn            = -1;
+    uint8_t subChannelIndex = -1;
+    // Meta head contains two TLVs: SFN, SubChannelIndex, in between START(0xFF) and END(0x1)
+    if (*pl == TLV_MD_START_TYPE) {
+        pl += TYPE_LEN;
+        // get subframe number
+        if (*pl == TLV_MD_SFN_TYPE) {
+            pl += TYPE_LEN;
+            if (*pl == TLV_MD_SFN_LEN) {
+                pl += LENGTH_INFO_SIZE;
+                sfn = *(uint16_t *)pl;
+                pl += TLV_MD_SFN_LEN;
+                // get subchannel index
+                if (*pl == TLV_MD_SUBCH_IDX_TYPE) {
+                    pl += TYPE_LEN;
+                    if (*pl == TLV_MD_SUBCH_IDX_LEN) {
+                        pl += LENGTH_INFO_SIZE;
+                        subChannelIndex          = *pl++;
+                        metaData.sfn             = sfn;
+                        metaData.subChannelIndex = subChannelIndex;
+
+                        // check if encounter the END
+                        if (*pl == TLV_MD_END_TYPE) {
+                            metaDataLen = MIN_MD_LEN;
+                        } else {
+                            metaDataLen = MIN_MD_LEN - TLV_MD_END_LEN;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // set the validity for SFN and SubChannelIndex together, lack of either
+    // one makes the meta data useless. Both items are needed to match the meta data
+    // to the packet.
+    if (metaDataLen > 0) {
+        metaData.metaDataMask |= RX_SUBFRAME_NUMBER;
+        metaData.metaDataMask |= RX_SUBCHANNEL_INDEX;
+    }
+    return metaDataLen;
+}
+
+void logMetaDataReport(RxPacketMetaDataReport &metaData) {
+    std::stringstream metaStr;
+    if (metaData.metaDataMask & RX_SUBFRAME_NUMBER) {
+        metaStr << " OTA subframe :" << static_cast<int>(metaData.sfn);
+    }
+    if (metaData.metaDataMask & RX_SUBCHANNEL_INDEX) {
+        metaStr << " Subchannel Index:" << static_cast<int>(metaData.subChannelIndex);
+    }
+    if (metaData.metaDataMask & RX_SUBCHANNEL_NUMBER) {
+        metaStr << " subchannel number:" << static_cast<int>(metaData.subChannelNum);
+    }
+    if (metaData.metaDataMask & RX_DELAY_ESTIMATION) {
+        metaStr << " packets delay estimation:" << static_cast<int>(metaData.delayEstimation);
+    }
+    if (metaData.metaDataMask & RX_PRX_RSSI) {
+        metaStr << " RSSI of PRx:" << static_cast<int>(metaData.prxRssi);
+    }
+    if (metaData.metaDataMask & RX_DRX_RSSI) {
+        metaStr << " RSSI of DRx:" << static_cast<int>(metaData.drxRssi);
+    }
+    if (metaData.metaDataMask & RX_L2_DEST_ID) {
+        metaStr << " L2 Destination ID:0x" << std::hex << metaData.l2DestinationId;
+    }
+    if (metaData.metaDataMask & RX_SCI_FORMAT1) {
+        metaStr << " SCI format1:0x" << std::hex << static_cast<int>(metaData.sciFormat1Info);
+    }
+    LOG(DEBUG, __FUNCTION__, metaStr.str());
+}
+
+telux::common::Status Cv2xRxMetaDataHelper::getRxMetaDataInfo(const uint8_t *payload,
+    uint32_t payloadLength, size_t &metaDataLen,
+    std::shared_ptr<std::vector<RxPacketMetaDataReport>> metaDatas) {
+    LOG(DEBUG, __FUNCTION__);
+    metaDataLen = 0;
+    if (nullptr == payload || !metaDatas) {
+        LOG(ERROR, __FUNCTION__, " Invalid parameter");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    auto pl                         = payload;
+    auto plen                       = payloadLength;
+    RxPacketMetaDataReport metaData = {0};
+
+    do {
+        // parse the OTA timing(SFN) and frequency location(SubChannel index) info,
+        // SFN and SubChannel index TLVs are mandatory for every meta data reports.
+        auto tfLen = getTimeFrequency(pl, plen, metaData);
+
+        if ((metaData.metaDataMask & RX_SUBFRAME_NUMBER)
+            && (metaData.metaDataMask & RX_SUBCHANNEL_INDEX)) {
+            pl += tfLen;
+            plen -= tfLen;
+
+            if (tfLen != MIN_MD_LEN) {  // in case no "END" found, continue the parsing
+                auto reportLen = getFullRxMetaDataReport(pl, plen, metaData);
+                if (reportLen == 0) {  // Wrong TLV format, cease parsing
+                    // Not a valid meta data
+                    break;
+                }
+                metaDataLen += reportLen;
+                pl += reportLen;
+                plen -= reportLen;
+            }
+            metaDataLen += tfLen;
+            (*metaDatas).push_back(metaData);
+            logMetaDataReport(metaData);
+        } else {
+            // real payload encountered, not meta data TLVs
+            break;
+        }
+    } while (plen > MIN_MD_LEN);
+
+    return telux::common::Status::SUCCESS;
+}
+
+void Cv2xRadioEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::cv2x::Cv2xStatusEx statusEx;
+    std::vector<std::weak_ptr<ICv2xRadioListener>> listeners;
+
+    statusEx.status = status;
+    listenerMgr_.getAvailableListeners(listeners);
+    for (auto &wp : listeners) {
+        if (auto sp = wp.lock()) {
+            sp->onStatusChanged(status);
+            sp->onStatusChanged(statusEx);
+        }
+    }
+}
+
+void Cv2xRadioEvtListener::onL2AddrChanged(uint32_t newL2Address) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::weak_ptr<ICv2xRadioListener>> listeners;
+    listenerMgr_.getAvailableListeners(listeners);
+    for (auto &wp : listeners) {
+        if (auto sp = wp.lock()) {
+            sp->onL2AddrChanged(newL2Address);
+        }
+    }
+}
+
+void Cv2xRadioEvtListener::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::cv2xStub::Cv2xStatus>()) {
+        ::cv2xStub::Cv2xStatus stubStatus;
+        event.UnpackTo(&stubStatus);
+
+        telux::cv2x::Cv2xStatus cv2xStatus;
+        RPC_TO_CV2X_STATUS(stubStatus, cv2xStatus);
+        onCv2xStatusChange(cv2xStatus);
+    } else if (event.Is<::cv2xStub::UintNum>()) {
+        ::cv2xStub::UintNum srcL2Id;
+        event.UnpackTo(&srcL2Id);
+        onL2AddrChanged(srcL2Id.num());
+    }
+}
+
+telux::common::Status Cv2xRadioEvtListener::registerListener(
+    std::weak_ptr<ICv2xRadioListener> listener) {
+    return listenerMgr_.registerListener(listener);
+}
+
+telux::common::Status Cv2xRadioEvtListener::deregisterListener(
+    std::weak_ptr<ICv2xRadioListener> listener) {
+    return listenerMgr_.deRegisterListener(listener);
+}
+
+
 Cv2xRadioSimulation::Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
-    pEvtListener_ = std::make_shared<Cv2xEvtListener>();
+    pEvtListener_ = std::make_shared<Cv2xRadioEvtListener>();
     taskQ_        = std::make_shared<AsyncTaskQueue<void>>();
     serviceStub_  = CommonUtils::getGrpcStub<::cv2xStub::Cv2xRadioService>();
 
@@ -128,6 +470,12 @@ Cv2xRadioSimulation::Cv2xRadioSimulation() {
 Cv2xRadioSimulation::~Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
     setInitializedStatus(telux::common::Status::FAILED, nullptr);
+    if (pEvtListener_) {
+        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        clientEventManager.deregisterListener(pEvtListener_, filters);
+    }
+
     // close all TCP sockets and remove associated Tx/Rx flows
     closeAllCv2xTcpSockets();
 
@@ -209,7 +557,7 @@ int Cv2xRadioSimulation::getV6AddrByIface(string &ifaceName, struct in6_addr &v6
         } else {
             if (!ifa->ifa_name) {
                 LOG(ERROR, __FUNCTION__, " null ifa name ptr should not happen.");
-                return result;
+                break;
             }
         }
 
@@ -234,7 +582,20 @@ void Cv2xRadioSimulation::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (pEvtListener_) {
+        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
+        res = clientEventManager.registerListener(pEvtListener_, filters);
+        if (res != telux::common::Status::SUCCESS) {
+            setInitializedStatus(res, callback);
+            return;
+        }
+
         res = pEvtListener_->registerListener(shared_from_this());
+        if (res != telux::common::Status::SUCCESS) {
+            setInitializedStatus(res, callback);
+            clientEventManager.deregisterListener(pEvtListener_, filters);
+            return;
+        }
     }
     if (res != telux::common::Status::SUCCESS) {
         setInitializedStatus(res, callback);
@@ -294,35 +655,24 @@ void Cv2xRadioSimulation::onStatusChanged(Cv2xStatus status) {
         /*cv2x radio work only if cv2x status ACTIVE | SUSPEND*/
         setInitializedStatus(common::Status::INVALIDSTATE, nullptr);
     }
-
-    notifyListenersStatusChange(status);
-}
-
-void Cv2xRadioSimulation::notifyListenersStatusChange(Cv2xStatus status) {
-    auto f = std::async(std::launch::async, [this, status]() {
-        telux::cv2x::Cv2xStatusEx statusEx;
-        std::vector<std::weak_ptr<ICv2xRadioListener>> lists;
-
-        statusEx.status = status;
-        radioListenerMgr_.getAvailableListeners(lists);
-        for (auto &wp : lists) {
-            if (auto sp = wp.lock()) {
-                sp->onStatusChanged(status);
-                sp->onStatusChanged(statusEx);
-            }
-        }
-    }).share();
-    taskQ_->add(f);
 }
 
 telux::common::Status Cv2xRadioSimulation::registerListener(
     std::weak_ptr<ICv2xRadioListener> listener) {
-    return radioListenerMgr_.registerListener(listener);
+    auto res = telux::common::Status::FAILED;
+    if (pEvtListener_) {
+        res = pEvtListener_->registerListener(listener);
+    }
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::deregisterListener(
     std::weak_ptr<ICv2xRadioListener> listener) {
-    return radioListenerMgr_.deRegisterListener(listener);
+    auto res = telux::common::Status::FAILED;
+    if (pEvtListener_) {
+        res = pEvtListener_->deregisterListener(listener);
+    }
+    return res;
 }
 
 template <class T>
@@ -494,10 +844,7 @@ void Cv2xRadioSimulation::createRxSubscriptionSync(TrafficIpType ipType, uint16_
         if (telux::common::Status::SUCCESS == status) {
             LOG(DEBUG, __FUNCTION__, " Rx subscription succeeded");
 
-            rxSub = make_shared<Cv2xRxSubscription>(sock, sockAddr, ipType);
-
-            // set SID list when subscription succeed
-            rxSub->setServiceIDList(idList);
+            rxSub = make_shared<Cv2xRxSubscription>(sock, sockAddr, ipType, idList);
 
             // Add to list of subscriptions. This may be unnecessary.
             // TODO: Revisit if this is necessary. We may want to simply keep a count
@@ -1671,12 +2018,20 @@ void Cv2xRadioSimulation::cleanupAllSpsFlows() {
 
 telux::common::Status Cv2xRadioSimulation::setGlobalIPInfo(
     const IPv6AddrType &ipv6Addr, common::ResponseCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+
+    CALL_RPC_AND_RESPOND(serviceStub_->setGlobalIPInfo, request, res, cb, taskQ_);
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::setGlobalIPUnicastRoutingInfo(
     const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+
+    CALL_RPC_AND_RESPOND(serviceStub_->setGlobalIPUnicastRoutingInfo, request, res, cb, taskQ_);
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::requestCapabilities(RequestCapabilitiesCallback cb) {
@@ -1686,7 +2041,26 @@ telux::common::Status Cv2xRadioSimulation::requestCapabilities(RequestCapabiliti
 
 telux::common::Status Cv2xRadioSimulation::requestDataSessionSettings(
     RequestDataSessionSettingsCallback cb) {
-    return telux::common::Status::NOTSUPPORTED;
+    telux::common::Status res = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request;
+    ::cv2xStub::Cv2xCommandReply response;
+    int delay = DEFAULT_DELAY;
+
+    CALL_RPC(serviceStub_->requestDataSessionSettings, request, res, response, delay);
+    if (res == telux::common::Status::SUCCESS && cb && taskQ_) {
+        auto ec = static_cast<telux::common::ErrorCode>(response.error());
+        auto f = std::async(std::launch::async, [this, delay, ec, cb]() {
+            if (delay > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            }
+            DataSessionSettings nonIpSettings;
+            nonIpSettings.mtuValid = true;
+            nonIpSettings.mtu = getCapabilities().linkNonIpMtuBytes;
+            cb(nonIpSettings, ec);
+        }).share();
+        taskQ_->add(f);
+    }
+    return res;
 }
 
 Cv2xRadioCapabilities Cv2xRadioSimulation::getCapabilities() const {

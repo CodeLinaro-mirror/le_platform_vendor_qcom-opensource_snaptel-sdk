@@ -82,7 +82,7 @@ typedef struct ClientSocketInfo{
 class NAOIpTrigger :    public IEventListener ,
                         public enable_shared_from_this<NAOIpTrigger> {
 private:
-
+    bool isUDP_ = false;
     bool isServerRunning_ = false;  /** server status listening client socket */
     std::mutex serverUpdate_ ;      /** required lock to update the server status from different
                                         threads */

@@ -73,6 +73,7 @@
 #ifndef TELUX_COMMON_COMMONDEFINES_HPP
 #define TELUX_COMMON_COMMONDEFINES_HPP
 
+#include <cstdint>
 #include <functional>
 #include "SDKListener.hpp"
 
@@ -185,6 +186,7 @@ enum class ErrorCode {
    DEVICE_IN_USE = 64,                   /**< Operation cannot be performed because the device
                                               is currently in use */
    ABORTED = 65,                         /**< Operation aborted */
+   ALREADY = 66,                         /**< Already registered handler */
    INCOMPATIBLE_STATE = 90,              /**< Operation cannot be performed because the device
                                           is in incompatible state */
    NO_EFFECT = 101,                      /**< Given request had to no effect */
@@ -494,6 +496,70 @@ enum class ProcType {
     LOCAL_PROC = 0, /**< Perform the operation on the processor where the API is invoked.*/
     REMOTE_PROC,    /**< Perform the operation on the application processor other than where the API
                     is invoked. */
+};
+
+/**
+ * Subsystem
+ */
+enum Subsystem {
+    /**
+     * No subsystem.
+     */
+    NONE = 0,
+
+    /**
+     * Application Processor Sub System; runs high-level operating system like Linux.
+     */
+    APSS = (1 << 0),
+
+    /**
+     * Modem Peripheral Sub System; provides access to the cellular network.
+     */
+    MPSS = (1 << 1)
+};
+
+/**
+ * Bitmask of subsystems from @ref telux::common::Subsystem.
+ * Multiple values can be OR'ed together, for example; (APSS | MPSS).
+ */
+using SubsystemTypes = uint32_t;
+
+/**
+ * Defines a subsystem.
+ */
+struct SubsystemInfo {
+    /**
+     * Location of the subsystem w.r.t. where the client is running.
+     * ProcType::LOCAL_PROC if both client and the subsystem are located
+     * on the same system-on-chip (SoC), otherwise ProcType::REMOTE_PROC.
+     */
+    telux::common::ProcType location;
+
+    /**
+     * Subsystem. Refer @ref telux::common::SubsystemTypes for details.
+     */
+    telux::common::SubsystemTypes subsystems;
+};
+
+/**
+ * Functional status. Please refer to the documentation where it is used to interpret
+ * its contextual meaning.
+ */
+enum class OperationalStatus {
+    /**
+     * Current status is unknown.
+     */
+    UNKNOWN = 0,
+
+    /**
+     * Operational; can perform expected tasks.
+     */
+    OPERATIONAL,
+
+    /**
+     * Unavailable; crashed or booting.
+     */
+    UNAVAILABLE
 };
 
 /**

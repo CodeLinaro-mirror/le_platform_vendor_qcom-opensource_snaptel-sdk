@@ -43,6 +43,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -169,7 +170,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     // During the redial(by modem or app) scenario to setup audio session
-    if (call->getCallState() == telux::tel::CallState::CALL_DIALING) {
+    if (call->getCallState() == telux::tel::CallState::CALL_DIALING &&
+        call->getCallType() == telux::tel::CallType::ECALL) {
         if (eCall_ == nullptr) {
             eCall_ = call;
             setECallProgressState(true);
@@ -180,9 +182,13 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
             std::cout << CLIENT_NAME << "eCall ptr is not null\n";
         }
     }
-    if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
+    if (call->getCallState() == telux::tel::CallState::CALL_ENDED &&
+        call->getCallType() == telux::tel::CallType::ECALL) {
         std::cout << CLIENT_NAME << "  Cause of call termination: "
-                  << TelClientUtils::callEndCauseToString(call->getCallEndCause()) << std::endl;
+            << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+            << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+            << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << std::endl;
         if (eCall_ != nullptr) {
             if (eCall_->getCallIndex() == call->getCallIndex()
                 && eCall_->getPhoneId() == call->getPhoneId()) {
@@ -237,6 +243,15 @@ void TelClient::OnMsdUpdateRequest(int phoneId) {
           }
        }
     }
+}
+
+// Notify clients whether redial will be perfomed or not with the reason
+void TelClient::onECallRedial(int phoneId, ECallRedialInfo info) {
+    std::cout << CLIENT_NAME << " eCall redial will"
+              << (info.willECallRedial ? " be performed " : " not be perfomed")
+              << (info.willECallRedial ? " and redial reason is " : " and not redial reason is")
+              << TelClientUtils::eCallRedialReasonToString(info.reason)
+              << std::endl;
 }
 
 // Callback to notify eCall HLAP timers status
@@ -413,6 +428,18 @@ void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, uint32_t ti
     } else {
         std::cout << CLIENT_NAME << "Successfully get ECall HLAP timer is " <<
             timeDuration << std::endl;
+    }
+}
+
+// Callback which provides response to configure ECall redial parameters
+void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME <<
+            "Configuration of ECall Redial parameters failed with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully configured eCall redial parameters" << std::endl;
     }
 }
 
@@ -826,4 +853,19 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
         TelClientUtils::printECallMsdPayload(ss.str());
     }
     return telux::common::ErrorCode::SUCCESS;
+}
+
+telux::common::Status TelClient::configureECallRedial(int config, std::vector<int> &timeGap) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager,  Failed to configure eCall redial"
+            << " configuration " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->configureECallRedial(static_cast<RedialConfigType>(config), timeGap,
+        std::bind(&TelClient::configureECallRedialResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to configure eCall redial configuration" << std::endl;
+        return status;
+    }
+    return telux::common::Status::SUCCESS;
 }

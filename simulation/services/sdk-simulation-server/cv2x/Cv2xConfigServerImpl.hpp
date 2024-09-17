@@ -22,6 +22,7 @@
 #include "protos/proto-src/cv2x_simulation.grpc.pb.h"
 
 #include "event/ServerEventManager.hpp"
+#include "common/AsyncTaskQueue.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
@@ -48,6 +49,7 @@ public:
 
 private:
   std::string path_;
+  telux::common::AsyncTaskQueue<void> taskQ_;
 };
 
 #endif // CV2X_CONFIG_SERVER_HPP

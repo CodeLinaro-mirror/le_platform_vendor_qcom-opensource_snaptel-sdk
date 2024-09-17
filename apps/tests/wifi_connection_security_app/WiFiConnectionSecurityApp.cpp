@@ -1,6 +1,4 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -10,11 +8,10 @@
 #include <telux/common/Version.hpp>
 
 #include "common/utils/Utils.hpp"
-
 #include "WiFiConnectionSecurityApp.hpp"
 
 WiFiConnectionSecurityApp::WiFiConnectionSecurityApp(
-        std::string appName, std::string cursor) : ConsoleApp(appName, cursor) {
+    std::string appName, std::string cursor) : ConsoleApp(appName, cursor) {
 }
 
 WiFiConnectionSecurityApp::~WiFiConnectionSecurityApp() {
@@ -165,6 +162,7 @@ void WiFiConnectionSecurityApp::registerListener() {
         reportListener_ = std::make_shared<WiFiSecurityReportListener>();
     } catch (const std::exception& e) {
         std::cout << "can't allocate WiFiReportListener" << std::endl;
+        return;
     }
 
     ec = wifiConSecMgr_->registerListener(reportListener_);
@@ -191,7 +189,7 @@ void WiFiConnectionSecurityApp::deregisterListener() {
 
     ec = wifiConSecMgr_->deregisterListener(reportListener_);
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "can't register listener, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "can't deregister listener, err " << static_cast<int>(ec) << std::endl;
         return;
     }
 
@@ -205,7 +203,7 @@ void WiFiConnectionSecurityApp::deregisterListener() {
 void WiFiConnectionSecurityApp::getTrustedApList() {
 
     telux::common::ErrorCode ec;
-    std::vector<telux::sec::ApInfo> trustedAPList;
+    std::vector<telux::sec::ApInfo> trustedAPList{};
 
     if (!reportListener_) {
         std::cout << "Listener doesn't exist" << std::endl;
@@ -253,17 +251,53 @@ void WiFiConnectionSecurityApp::removeApFromTrustedList() {
  */
 void WiFiConnectionSecurityApp::init() {
 
-    telux::common::ErrorCode ec;
+    ServiceStatus serviceStatus;
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
 
+    //  Get the ConnectionSecurityFactory and WiFiSecurityManager instances.
     auto &wifiConSecFact = telux::sec::ConnectionSecurityFactory::getInstance();
 
-    wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager(ec);
+    wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager([&](telux::common::ServiceStatus
+        srvStatus) {
+            prom.set_value(srvStatus);
+        });
+
     if (!wifiConSecMgr_) {
-        std::cout <<
-         "can't get IWiFiSecurityManager, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "Failed to get IWiFiSecurityManager " << std::endl;
         return;
     }
 
+    // Wait for the subsystem to be available.
+    serviceStatus = prom.get_future().get();
+    //  Exit the application, if SDK is unable to initialize security subsystems.
+    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Security Subsystems ready" << std::endl;
+    } else {
+        std::cout << "Unable to initialize security subsystem, err: " << static_cast<int>(
+            serviceStatus) << std::endl;
+        return;
+    }
+
+    // Register for service status events
+    auto ec = wifiConSecMgr_->registerListener(shared_from_this());
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Security listener registeration failed, err: " << static_cast<int>(
+            ec) << std::endl;
+    }
+
+    initConsole();
+}
+
+void WiFiConnectionSecurityApp::onServiceStatusChange(telux::common::ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Security service UNAVAILABLE" << std::endl;
+    }
+    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Security service AVAILABLE" << std::endl;
+    }
+}
+
+void WiFiConnectionSecurityApp::initConsole() {
     std::shared_ptr<ConsoleAppCommand> regListener = std::make_shared<
         ConsoleAppCommand>(ConsoleAppCommand("1", "Start listening to security reports", {},
         std::bind(&WiFiConnectionSecurityApp::registerListener, this)));
@@ -306,7 +340,7 @@ int main(int argc, char **argv) {
 
     auto wcsApp = std::make_shared<WiFiConnectionSecurityApp>(appName, "wificonsec> ");
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "gps", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "gps", "logd", "dlt"};
 
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {

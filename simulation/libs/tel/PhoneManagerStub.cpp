@@ -1,35 +1,6 @@
 /*
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <bits/stdc++.h>
@@ -38,24 +9,64 @@
 #include "PhoneManagerStub.hpp"
 #include "common/Logger.hpp"
 
-#define DELAY 100
 using namespace telux::tel;
 
-PhoneManagerStub::PhoneManagerStub(telux::common::InitResponseCb callback) {
+PhoneManagerStub::PhoneManagerStub() {
     LOG(DEBUG, __FUNCTION__);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
+}
+
+telux::common::Status PhoneManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IPhoneListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
     phoneStub_ = CommonUtils::getGrpcStub<PhoneService>();
+    if(!phoneStub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate phone service");
+        return telux::common::Status::FAILED;
+    }
     cardStub_ = CommonUtils::getGrpcStub<CardService>();
+    if(!cardStub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate card service");
+        return telux::common::Status::FAILED;
+    }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    if (callback) {
-        auto fut = std::async(std::launch::async,
-            [this, callback]() {
-                this->initSync(callback);
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
+    initCb_ = callback;
+    auto f = std::async(std::launch::async,
+        [this]() {
+            this->initSync();
         }).share();
-        taskQ_->add(fut);
+    auto status = taskQ_->add(f);
+    return status;
+}
+
+void PhoneManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(phoneManagerMutex_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
     }
 }
 
-void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
+void PhoneManagerStub::initSync() {
     LOG(DEBUG, __FUNCTION__);
     ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
@@ -67,8 +78,9 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
         LOG(DEBUG, __FUNCTION__, " PhoneService init successfully");
         telux::common::ServiceStatus cbStatus =
             static_cast<telux::common::ServiceStatus>(response.service_status());
-        int cbDelay = static_cast<int>(response.delay());
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
+        cbDelay_ = static_cast<int>(response.delay());
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay_,
+            " cbStatus::", static_cast<int>(cbStatus));
         if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             LOG(INFO, __FUNCTION__, " Phone subsystem is ready");
             ClientContext context;
@@ -111,27 +123,13 @@ void PhoneManagerStub::initSync(telux::common::InitResponseCb callback) {
                     }
                 }
             }
-
-            listenerMgr_ = std::make_shared<telux::common::ListenerManager<IPhoneListener>>();
-            if (!listenerMgr_) {
-                LOG(ERROR, __FUNCTION__, " Unable to instantiate ListenerManager");
-                cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-            }
         }
 
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
         bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
             true : false;
         setSubsystemReady(isSubsystemReady);
-
-        if (callback) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            if (callback) {
-                callback(cbStatus);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }
+        setServiceStatus(cbStatus);
     }
 }
 
@@ -164,14 +162,7 @@ void PhoneManagerStub::setSubsystemReady(bool status) {
 
 telux::common::ServiceStatus PhoneManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = phoneStub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 telux::common::Status PhoneManagerStub::registerListener(std::weak_ptr<IPhoneListener> listener) {
@@ -498,10 +489,6 @@ telux::common::Status PhoneManagerStub::setOperatingMode(telux::tel::OperatingMo
 telux::common::Status PhoneManagerStub::requestOperatingMode(
     std::shared_ptr<IOperatingModeCallback> callback) {
     LOG(DEBUG, __FUNCTION__);
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
-        LOG(ERROR, __FUNCTION__, " Phone Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     const ::google::protobuf::Empty request;
     telStub::GetOperatingModeReply response;
     ClientContext context;

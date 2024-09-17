@@ -37,7 +37,7 @@ grpc::Status ImsSettingsManagerServerImpl::InitService(ServerContext* context,
     commonStub::GetServiceStatusReply* response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string filePath = JSON_PATH1;
     telux::common::ErrorCode error =
         JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
@@ -492,3 +492,4 @@ void ImsSettingsManagerServerImpl::onEventUpdate(std::string event) {
         LOG(ERROR, __FUNCTION__, " Event not supported");
     }
 }
+

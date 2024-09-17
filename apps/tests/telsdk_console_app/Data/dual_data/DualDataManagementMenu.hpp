@@ -24,12 +24,19 @@ class DualDataManagementMenu : public ConsoleApp,
     void onInitComplete(telux::common::ServiceStatus status);
 
     // DualData Manager APIs
-    void getDualDataCapibility(std::vector<std::string> &inputCommand);
+    void getDualDataCapability(std::vector<std::string> &inputCommand);
     void getDualDataUsageRecommendation(std::vector<std::string> &inputCommand);
+    void requestDdsSwitch(std::vector<std::string> &inputCommand);
+    void requestCurrentDds(std::vector<std::string> &inputCommand);
+    void configureDdsSwitchRecommendation(std::vector<std::string> &inputCommand);
+    void getDdsSwitchRecommendation(std::vector<std::string> &inputCommand);
 
     void onDualDataCapabilityChange(bool isDualDataCapable);
     void onDualDataUsageRecommendationChange(
         telux::data::DualDataUsageRecommendation recommendation);
+    void onDdsChange(telux::data::DdsInfo currentState) override;
+    void onDdsSwitchRecommendation(
+        const telux::data::DdsSwitchRecommendation ddsSwitchRecommendation) override;
 
     DualDataManagementMenu(std::string appName, std::string cursor);
     ~DualDataManagementMenu();
@@ -38,6 +45,8 @@ class DualDataManagementMenu : public ConsoleApp,
     bool initDualDataManager();
     std::string convertRecommendationToString(
         telux::data::DualDataUsageRecommendation recommendation);
+    void printDdsSwitchRecommendation(
+        const telux::data::DdsSwitchRecommendation ddsSwitchRecommendation);
 
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;

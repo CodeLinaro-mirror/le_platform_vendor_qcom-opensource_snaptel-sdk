@@ -78,11 +78,15 @@
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false);
-    SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
+    SaeApplication(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, MessageType msgType,
+        bool enableCsvLog = false, bool enableDiagLog = false);
     ~SaeApplication();
+
+    /* Initialization */
+    bool init() override;
 
     /**
     * Method that decodes bsm from raw buffer to bsm contents data structure in ldm.
@@ -124,11 +128,12 @@ public:
     int clearGlobalIPv6Prefix(void);
     static std::vector<asyncCbData_t> asyncCbData;
     static bool exitAsync;
-    static void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
-        shared_ptr<ICongestionControlManager> congestionControlManager, QMonitor* qMon,
+    void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
+        shared_ptr<ICongestionControlManager> congestionControlManager,
+        shared_ptr<QMonitor> qMon,
         int secVerbosity, RadioReceive* radioReceive);
     static void postprocessing_cleanup();
-    static void PostProcessingThread();
+    void PostProcessingThread();
 private:
     uint32_t fakeTmpId = 0;
     bool exit_ = false;
@@ -224,13 +229,13 @@ private:
     * @param mc - A shared pointer to the msg_contents struct
     * @param isRx - A flag to indicate if the packet is used for Rx
     */
-    void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false);
+    bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) override;
 
     /**
     * Method to delete and free SAE packet memory in msg_contents struct.
     * @param mc - A shared pointer to the msg_contents struct
     */
-    void freeMsg(std::shared_ptr<msg_contents> mc);
+    void freeMsg(std::shared_ptr<msg_contents> mc) override;
 
     /**
     * Method to setup and fill BSM related information.

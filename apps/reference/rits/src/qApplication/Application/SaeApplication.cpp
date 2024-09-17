@@ -84,7 +84,6 @@ thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
-thread_local int decFail = 0;
 thread_local int encFail = 0;
 thread_local int txSuccess = 0;
 thread_local int signFail = 0;
@@ -97,7 +96,7 @@ static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
 static bool overridePsidCheck = false;
 static bool enableCongCtrl = false;
 static int secVerbosity = 0;
-static QMonitor* qMonPtr;
+static shared_ptr<QMonitor> qMonPtr;
 static RadioReceive* radioReceivePtr;
 static bsm_data bs;
 static std::mutex AsyncMtx;
@@ -107,6 +106,7 @@ static int start_index = 0;
 static std::atomic<int> rxSuccess{0};
 static std::atomic<int> asyncVerifFail{0};
 static std::atomic<int> asyncVerifSuccess{0};
+static std::atomic<int> decFail{0};
 static int asyncCallbackVerifSuccess = 0;
 static int asyncCallbackVerifFail = 0;
 static int prevVerifSuccess = 0;
@@ -120,29 +120,50 @@ static double LogstartTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
 std::vector<asyncCbData_t> SaeApplication::asyncCbData;
 std::vector<std::thread> asyncThreads;
 sem_t verificationSem;
-sem_t bufferClearedSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
-static QUtils* utility;
 static ResultLoggingStats* asyncLogStat ;
 static bool resFileLogging = false;
 
-SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
-    ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
+SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType,
+    bool enableCsvLog, bool enableDiagLog):
+    ApplicationBase(fileConfiguration, msgType, enableCsvLog, enableDiagLog) {
     if (not configuration.isValid) {
         return;
     }
     sem_init(&verificationSem, 0, 0);
-    sem_init(&bufferClearedSem, 0, 0);
     gettimeofday(&currTime, NULL);
     LogstartTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
     prevBatchTimeStamp = LogstartTime;
-    MsgType = msgType;
+    wraInterval = std::chrono::milliseconds::zero();
+
     writeMutexCvSae = &writeMutexCv;
     writeLogFinishSae = &writeLogFinish;
     resFileLogging = configuration.enableVerifResLog;
+}
+
+SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
+        const string rxIpv4, const uint16_t rxPort,
+        char* fileConfiguration, MessageType msgType, bool enableCsvLog, bool enableDiagLog) :
+        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration,
+        enableCsvLog, enableDiagLog) {
+    SaeApplication(fileConfiguration, msgType, enableCsvLog, enableDiagLog);
+}
+
+bool SaeApplication::init() {
+    if (not configuration.isValid) {
+        printf("SaeApplication invalid configuration\n");
+        return false;
+    }
+
+    if (false == ApplicationBase::init()) {
+        printf("SaeApplication initialization failed\n");
+        return false;
+    }
+
     if(configuration.enableAsync){
+        // TODO: These seems only needed when do RX, no need for TX
         overridePsidCheck = configuration.overridePsidCheck;
         enableCongCtrl = configuration.enableCongCtrl;
         secVerbosity = configuration.secVerbosity;
@@ -150,76 +171,13 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bo
         if(radioReceives.size()){
             radioReceivePtr = &radioReceives[0];
         }
-        for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
+        for (int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++) {
             asyncCbData_t tmpData;
-            memset(&tmpData, 0 , sizeof(asyncCbData_t));
             asyncCbData.push_back(tmpData);
         }
-        PostProcessingThread();
     }
-    wraInterval = std::chrono::milliseconds::zero();
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
-}
 
-SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType, bool enableCsvLog) :
-        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration, enableCsvLog) {
-    if (not configuration.isValid) {
-        return;
-    }
-    sem_init(&verificationSem, 0, 0);
-    gettimeofday(&currTime, NULL);
-    LogstartTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
-    prevBatchTimeStamp = LogstartTime;
-    wraInterval = std::chrono::milliseconds::zero();
-    MsgType = msgType;
-    writeMutexCvSae = &writeMutexCv;
-    writeLogFinishSae = &writeLogFinish;
-    resFileLogging = configuration.enableVerifResLog;
-    if(configuration.enableAsync){
-        overridePsidCheck = configuration.overridePsidCheck;
-        enableCongCtrl = configuration.enableCongCtrl;
-        secVerbosity = configuration.secVerbosity;
-        qMonPtr = qMon;
-        for(int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++){
-            asyncCbData_t tmpData;
-            memset(&tmpData, 0 , sizeof(asyncCbData_t));
-            asyncCbData.push_back(tmpData);
-        }
-        PostProcessingThread();
-    }
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
+     return true;
 }
 
 SaeApplication::~SaeApplication() {
@@ -289,7 +247,7 @@ void SaeApplication::printRxStats() {
         ss << std::this_thread::get_id();
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
-        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail.load());
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
@@ -306,7 +264,7 @@ void SaeApplication::printRxStats() {
         int tid = (int)std::stoul(ss.str());
         printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
         printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess.load());
-        printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+        printf("Thread (%08x) decode fails is: %d\n", tid, decFail.load());
         if (configuration.enableSecurity){
             printf("note: verification results may include consistency and relevancy checks\n");
             printf("Thread (%08x) verif fails is: %d\n", tid, syncVerifFail);
@@ -749,6 +707,17 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                         writelog_data.distFromRV, 0, txInterval,
                         configuration.enableCongCtrl, congCtrlInitialized,
                         writeMutexCvSae);
+                if (enableDiagLog_) {
+                    DiagLogData logData = {0};
+                    logData.validPkt = (ret >= 0) ? true : false;
+                    logData.currTime = timestamp;
+                    logData.cbr = cbr;
+                    logData.monotonicTime = monotonicTime;
+                    logData.txInterval = txInterval;
+                    logData.enableCongCtrl = configuration.enableCongCtrl;
+                    logData.monotonicTime = congCtrlInitialized;
+                    diagLogPktTxRx(false, TransmitType::SPS, &logData, &writelog_data.bs);
+                }
             }
         }
     }
@@ -941,7 +910,7 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
 
 void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
     shared_ptr<ICongestionControlManager> congestionControlManager,
-    QMonitor* qMon, int secVerbosity, RadioReceive* radioReceive)
+    shared_ptr<QMonitor> qMon, int secVerbosity, RadioReceive* radioReceive)
 {
     uint64_t monotonicTime = 0;
     uint8_t cbr = 0;
@@ -950,8 +919,9 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
         congCtrlInitialized = true;
     }
     thread::id thrId = std::this_thread::get_id();
-    while(not (exitAsync && (rxSuccess == (asyncVerifFail + asyncVerifSuccess)))){
+    while(not (exitAsync && (rxSuccess == (decFail + asyncVerifFail + asyncVerifSuccess)))){
         sem_wait(&verificationSem);
+
         int i = 0 ;
         for(i = start_index; PostProcessingCbData[i]!=0;++i)
         {
@@ -1019,7 +989,18 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
                         asyncCbData[PostProcessingCbData[i]].RVsInRange,
                         asyncCbData[PostProcessingCbData[i]].txInterval,
                         enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
-
+                    if (enableDiagLog_) {
+                        DiagLogData logData = {0};
+                        logData.validPkt = asyncCbData[PostProcessingCbData[i]].verifSuccess;
+                        logData.currTime = asyncCbData[PostProcessingCbData[i]].timestamp;
+                        logData.cbr = cbr;
+                        logData.monotonicTime = monotonicTime;
+                        logData.txInterval = asyncCbData[PostProcessingCbData[i]].txInterval;
+                        logData.enableCongCtrl = enableCongCtrl;
+                        logData.monotonicTime = congCtrlInitialized;
+                        diagLogPktTxRx(false, TransmitType::SPS, &logData,
+                            &(asyncCbData[PostProcessingCbData[i]].asyncBs));
+                    }
                 }
             }
         }
@@ -1061,7 +1042,7 @@ void SaeApplication::postprocessing_cleanup()
 // thread function to PostProcessingThread
 void SaeApplication::PostProcessingThread()
 {
-    asyncThreads.push_back(std::thread(AsyncPostProcessing,
+    asyncThreads.push_back(std::thread(&SaeApplication::AsyncPostProcessing, this,
         overridePsidCheck, enableCongCtrl,
         congestionControlManager, qMonPtr, secVerbosity,
         radioReceivePtr));
@@ -1088,6 +1069,12 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     sopt.enableRelevance = this->configuration.enableRelevance;
     sopt.enableEnc  = this->configuration.enableEncrypt;
     sopt.secVerbosity = this->configuration.secVerbosity;
+    if(!isRxSim){
+        sopt.priority= (uint8_t)radioReceives[0].priority;
+    }
+    else{
+        sopt.priority = 1;
+    }
     uint32_t dot2HdrLen;
     uint8_t const *payload = NULL;
     uint32_t       payloadLen = 0;
@@ -1274,7 +1261,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                                 thrVerifLatencies.insert(std::pair<std::thread::id,
                                 std::vector<VerifStats>>(tid, tmp));
                                 for(int i = 0 ; i < configuration.verifStatsSize; i++){
-                                    VerifStats tmpVerifStat;
+                                    VerifStats tmpVerifStat = {0};
                                     thrVerifLatencies[tid].push_back(tmpVerifStat);
                                 }
                             }
@@ -1295,10 +1282,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         // returns nonzero value if success, otherwise -1
                         ret = tmpAeroSecurity->asyncVerify(
                                 sopt.rvKine, sopt.misbehaviorStat,
-                                (void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
-                        if (ret == DECODE_FAIL){
-                            asyncVerifFail++;
-                        }
+                                (void *)&(asyncCbData[async_index]), sopt.priority, AsyncCallbackFunction);
                     }
                }
                async_index--;
@@ -1394,7 +1378,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
 /*
  * Initialize the wsmp header, ieee 1609.2 header, and j2735 contents unless WRA/WSA
  */
-void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
+bool SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
     mc->stackId = STACK_ID_SAE;
 
     if (isRx) {
@@ -1412,15 +1396,17 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
         mc->wsmp = (wsmp_data_t*) calloc(1, sizeof(wsmp_data_t));
         if (!mc->wsmp) {
             std::cerr << "calloc wsmp failed" << endl;
-            return;
+            return false;
         }
 
         ((wsmp_data_t*)mc->wsmp)->abp = (abuf_t*) calloc(1, sizeof(abuf_t));
 
         if (!((wsmp_data_t*)mc->wsmp)->abp)
         {
+            free(mc->wsmp);
+            mc->wsmp = nullptr;
             std::cerr << "calloc wsmp asnbuf structure failed" << endl;
-            return;
+            return false;
         }
 
         const auto abuf_ret = abuf_alloc(((wsmp_data_t*)mc->wsmp)->abp,
@@ -1428,22 +1414,25 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 
         if (abuf_ret != WSMP_ABUF_DEFAULT_SIZE)
         {
+            freeMsg(mc);
             std::cerr << "alloc wsmp asn buffer failed" << endl;
-            return;
+            return false;
         }
 
         mc->ieee1609_2data = malloc(sizeof(ieee1609_2_data));
         if (!mc->ieee1609_2data) {
+            freeMsg(mc);
             std::cerr << "alloc ieee1609_2data failed" << endl;
-            return;
+            return false;
         }
         memset(mc->ieee1609_2data, 0, sizeof(ieee1609_2_data));
 
         if (MsgType == MessageType::BSM) {
             mc->j2735_msg = malloc(sizeof(bsm_value_t));
             if (!mc->j2735_msg) {
+                freeMsg(mc);
                 std::cerr << "alloc j2735_msg failed" << endl;
-                return;
+                return false;
             }
             memset(mc->j2735_msg, 0, sizeof(bsm_value_t));
             mc->wsa = 0;
@@ -1452,15 +1441,17 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 #ifdef WITH_WSA
             mc->wsa = malloc(sizeof(SrvAdvMsg_t));
             if (!mc->wsa) {
+                freeMsg(mc);
                 std::cerr << "alloc wsa failed" << endl;
-                return;
+                return false;
             }
             memset(mc->wsa, 0, sizeof(SrvAdvMsg_t));
 
             mc->wra = malloc(sizeof(RoutingAdvertisement_t));
             if (!mc->wra) {
+                freeMsg(mc);
                 std::cerr << "alloc wra failed" << endl;
-                return;
+                return false;
             }
             memset(mc->wra, 0, sizeof(RoutingAdvertisement_t));
 
@@ -1472,6 +1463,8 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 #endif
         }
     }
+
+    return true;
 }
 
 /*
@@ -1487,6 +1480,9 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         }
 
         abuf_free(wsmp->abp);
+        if (wsmp->abp) {
+            free(wsmp->abp);
+        }
         free(mc->wsmp);
         mc->wsmp = nullptr;
     }
@@ -1507,6 +1503,7 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         mc->wsa = nullptr;
     }
 #endif
+
     abuf_free(&(mc->abuf));
 }
 
@@ -1817,12 +1814,14 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
     // for synchronization between Application and Aerolink sides
     // Using the HW TME Random number Generator as the TRNG Source
-    auto app = static_cast<QUtils*>(utility);
-    rng_ret = app->hwTRNGInt(randNumMsgCount);
+    if (!utility_) {
+        utility_ = std::make_shared<QUtils>();
+    }
+    rng_ret = utility_->hwTRNGInt(randNumMsgCount);
     if(rng_ret){
         printf("Failure in Randon Number Generation for Message Count \n");
     }
-    rng_ret = app->hwTRNGInt(randNumMsgId);
+    rng_ret = utility_->hwTRNGInt(randNumMsgId);
     if(rng_ret){
         printf("Failure in Randon Number Generation for Message Id \n");
     }
@@ -1865,15 +1864,24 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 {
     //fill data with values that may not make sense, these data should come from vehicle
     //CAN network
-    bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
     if(criticalState){
         bsm->has_partII = (v2x_bool_t)1;
+        bsm->qty_partII_extensions = (int)1;
         bsm->has_safety_extension = (v2x_bool_t)1;
+        bsm->has_special_extension = (v2x_bool_t)0;
+        bsm->has_supplemental_extension = (v2x_bool_t)0;
+        bsm->TransmissionState = J2735_TRANNY_REVERSE_GEARS;
     }else{
         bsm->has_partII = (v2x_bool_t)0;
         bsm->has_safety_extension = (v2x_bool_t)0;
+        bsm->qty_partII_extensions = (int)0;
+        bsm->has_safety_extension = (v2x_bool_t)0;
+        bsm->has_special_extension = (v2x_bool_t)0;
+        bsm->has_supplemental_extension = (v2x_bool_t)0;
+        bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
     }
-    bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
+
+    bsm->vehsafeopts = 0;
     bsm->events.data = 0;
 
     if(this->currVehState != NULL){

@@ -20,6 +20,7 @@
 
 #include "event/ServerEventManager.hpp"
 #include "event/EventService.hpp"
+#include <thread>
 
 class ImsServingManagerServerImpl final : public telStub::ImsServingSystem::Service,
                                           public IServerEventListener,

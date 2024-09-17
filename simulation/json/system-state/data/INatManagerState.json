@@ -1,6 +1,14 @@
 {
-    "INatManager": {
-        "snatEntries" : [
-        ]
-    }
+    "INatManager": [
+        {
+            "backhaulType": "WWAN",
+            "snatEntries" : [
+            ]
+        },
+        {
+            "backhaulType": "ETH",
+            "snatEntries" : [
+            ]
+        }
+    ]
 }

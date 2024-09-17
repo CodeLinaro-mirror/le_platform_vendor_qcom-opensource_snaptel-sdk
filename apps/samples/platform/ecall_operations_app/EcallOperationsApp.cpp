@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -32,138 +32,171 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * This sample application demonstrates the use of the filesystem manager (IFsManager)
- * to control file system operation for ecall client.
+/*
+ * This application demonstrates how to use the filesystem manager to control
+ * the file system operations for ecall client. The steps are as follows:
+ *
+ * 1. Get a PlatformFactory instance.
+ * 2. Get a IFsManager instance from the PlatformFactory.
+ * 3. Wait for the file system service to become available.
+ * 4. Register a listener that will receive imminent file system events.
+ * 5. Suspend file system operations.
+ * 6. If the file system operations are about to resume, callback is invoked.
+ * 7. Trigger ecall.
+ * 8. When the ecall is finished, resume file system operations.
+ * 9. Finally, deregister the listener.
+ *
+ * Usage:
+ * # ./ecall_operations_app
  */
 
-#include <future>
-#include <getopt.h>
+#include <errno.h>
+
 #include <iostream>
-#include <condition_variable>
+#include <memory>
+#include <cstdlib>
+#include <future>
 
-#include "../../../common/utils/Utils.hpp"
+#include <telux/common/CommonDefines.hpp>
 #include <telux/platform/PlatformFactory.hpp>
+#include <telux/platform/FsManager.hpp>
+#include <telux/platform/FsListener.hpp>
 
-#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
-
-using namespace telux::common;
-using namespace telux::platform;
-
-class EcallOperationListener : public IFsListener {
+class EcallFSPreparer : public telux::platform::IFsListener,
+                        public std::enable_shared_from_this<EcallFSPreparer> {
  public:
-    // [6] Receive service status notifications
-    virtual void onServiceStatusChange(ServiceStatus serviceStatus) override {
-        PRINT_NOTIFICATION << "Ecall operation service status: ";
-        std::string status;
-        switch (serviceStatus) {
-            case ServiceStatus::SERVICE_AVAILABLE: {
-                status = "Available";
-                break;
-            }
-            case ServiceStatus::SERVICE_UNAVAILABLE: {
-                status = "Unavailable";
-                break;
-            }
-            case ServiceStatus::SERVICE_FAILED: {
-                status = "Failed";
-                break;
-            }
-            default: {
-                status = "Unknown";
-                break;
-            }
+    int init() {
+        telux::common::Status status;
+        telux::common::ServiceStatus serviceStatus;
+        std::promise<telux::common::ServiceStatus> p{};
+
+        /* Step - 1 */
+        auto &platformFactory = telux::platform::PlatformFactory::getInstance();
+
+        /* Step - 2 */
+        fsManager_ = platformFactory.getFsManager(
+                [&p](telux::common::ServiceStatus status) {
+            p.set_value(status);
+        });
+
+        if (!fsManager_) {
+            std::cout << "Can't get IFsManager" << std::endl;
+            return -ENOMEM;
         }
-        std::cout << status << std::endl;
+
+        /* Step - 3 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "File system service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        status = fsManager_->registerListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't register listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "Initialization complete" << std::endl;
+        return 0;
     }
 
-    // [9] Receive notification when filesystem operation is about to resumes
-    //     in seconds - timeLetftToStart.
-    virtual void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override {
-        PRINT_NOTIFICATION << "Filesystem operation resumes in seconds: ";
-        std::cout << timeLeftToStart << std::endl;
-        /** On this notification, the client can still suspand the filesystem operation
-         *  and continue the eCall by invoking prepareForEcall API (Step[7]).
-        **/
+    int deinit() {
+        telux::common::Status status;
+
+        /* Step - 9 */
+        status = fsManager_->deregisterListener(shared_from_this());
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't deregister listener, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        return 0;
     }
+
+    int suspendFSOperations() {
+        telux::common::Status status;
+
+        /* Step - 5 */
+        status = fsManager_->prepareForEcall();
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't suspend fs operations, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "FS operations suspended" << std::endl;
+        return 0;
+    }
+
+    int resumeFSoperations() {
+        telux::common::Status status;
+
+        /* Step - 8 */
+        status = fsManager_->eCallCompleted();
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Can't resume fs operations, err " <<
+                static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        std::cout << "FS operations resumed" << std::endl;
+        return 0;
+    }
+
+    /* Step - 6 */
+    void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override {
+        std::cout << "OnFsOperationImminentEvent()" << std::endl;
+        std::cout << "Operations will resume in " << timeLeftToStart << " sec" << std::endl;
+        /* If the ecall will take longer than these many seconds,
+         * application can prepareForEcall API again. */
+    }
+
+ private:
+    std::shared_ptr<telux::platform::IFsManager> fsManager_;
 };
 
-int main(int argc, char **argv) {
-    std::cout << "********* Ecall operation sample app *********" << std::endl;
+int main(int argc, char *argv[]) {
 
-    // [1] Get platform factory
-    auto &platformFactory = PlatformFactory::getInstance();
+    int ret;
+    std::shared_ptr<EcallFSPreparer> app;
 
-    // [2] Prepare a callback that is invoked when the filesystem sub-system
-    // initialization is complete
-    std::promise<ServiceStatus> p;
-    auto initCb = [&p](ServiceStatus status) {
-        std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
-        p.set_value(status);
-    };
-
-    // [3] Get the filesystem manager
-    std::shared_ptr<IFsManager> fsManager = platformFactory.getFsManager(initCb);
-    if (fsManager == nullptr) {
-        std::cout << "filesystem manager is nullptr" << std::endl;
-        exit(1);
-    }
-    std::cout << "Obtained filesystem manager" << std::endl;
-
-    // [4] Wait until initialization is complete
-    p.get_future().get();
-    if (fsManager->getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Filesystem service not available" << std::endl;
-        exit(1);
-    }
-    std::cout << "Filesystem service is now available" << std::endl;
-
-    // [5] Create the listener object and register as a listener
-    std::shared_ptr<EcallOperationListener> ecallOperationListener
-        = std::make_shared<EcallOperationListener>();
-    fsManager->registerListener(ecallOperationListener);
-
-    // [7] Before starting the eCall, prepare the filesystem manager for the eCall
-    // Note: It is recommended to start the eCall even if the request to prepare
-    // for the eCall fails.this API can re-invoke while eCall is ongoing.
-    {
-        Status ecallStartStatus = Status::FAILED;
-        std::cout << "Request to prepare for eCall start invoked " << std::endl;
-
-        ecallStartStatus = fsManager->prepareForEcall();
-
-        if (ecallStartStatus == Status::SUCCESS) {
-            std::cout << "Request to prepare for eCall start successful";
-        } else {
-            std::cout << "Request to prepare for eCall start failed : ";
-            Utils::printStatus(ecallStartStatus);
-        }
+    try {
+        app = std::make_shared<EcallFSPreparer>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate EcallFSPreparer" << std::endl;
+        return -ENOMEM;
     }
 
-    // [8] Initiate the eCall
-
-    // [9] Once the eCall is completed, indicate to the filesystem manager
-    {
-        Status ecallEndStatus = Status::FAILED;
-        std::cout << "eCall completion request being invoked " << std::endl;
-
-        ecallEndStatus = fsManager->eCallCompleted();
-
-        if (ecallEndStatus == Status::SUCCESS) {
-            std::cout << "eCall completion request successful";
-        } else {
-            std::cout << "eCall completion request failed : ";
-            Utils::printStatus(ecallEndStatus);
-        }
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
-    std::cout << "\n\nPress ENTER to exit!!! \n\n";
-    std::cin.ignore();
+    ret = app->suspendFSOperations();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
 
-    // [11] Clean-up
-    fsManager->deregisterListener(ecallOperationListener);
-    ecallOperationListener = nullptr;
-    fsManager = nullptr;
+    /* Step - 7 */
+    /* Application specific logic to start ecall goes here */
 
+    ret = app->resumeFSoperations();
+    if (ret < 0) {
+        app->deinit();
+        return ret;
+    }
+
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
+
+    std::cout << "\nFile system preparer app exiting" << std::endl;
     return 0;
 }

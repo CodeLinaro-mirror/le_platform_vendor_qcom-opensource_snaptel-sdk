@@ -195,6 +195,90 @@ To run applications without the docker container:
   2. The path ``<DESTINATION_FOLDER_ROOT_PATH>/data/telux/`` holds all TelSDK simulation related data.
   3. The path ``<DESTINATION_FOLDER_ROOT_PATH>/etc/telux/tel.conf`` holds TelSDK simulation configuration data.
 
+Build and run inside docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build various components of the Simulation framework inside docker
+
+1. Fetch the source code
+
+  .. code-block::
+
+    $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0.r11-rel telux
+    $ cd telux/
+
+2. Build docker development image
+
+  .. code-block::
+
+    $ cd telux/
+    $ ./build_sim.sh docker-development-image <DESTINATION_FOLDER_ROOT_PATH>
+
+    **Note:**
+    1. To build a Docker development image for an Ubuntu version different from the host machine, set the UBUNTU_VERSION variable before running the script.
+    2. For build inside the docker, the DESTINATION_FOLDER_ROOT_PATH can be set to the root directory. For example: ./build_sim.sh all /
+    3. If the host machine is running version 18.04, and Ubuntu 22.04 docker image needs to be created, set the UBUNTU_VERSION variable to 2204
+    4. Currently supported: Ubuntu 18.04, Ubuntu 20.04 and Ubunt 22.04
+
+3. Run docker container
+  .. code-block::
+
+    $ docker run -ti --rm -h telsdk_simulation -v <host-machine-dir>:<docker-contatiner-dir> telsdk-sim-image-develop
+
+    For example:
+    docker run -ti --rm -h telsdk_simulation -v $PWD:/home/docker telsdk-sim-image-develop
+
+4. Set up build dependencies
+
+.. code-block::
+
+  #Install jsoncpp, cmake 3.15.3, gRPC.
+  $ ./build_sim.sh setup <DESTINATION_FOLDER_ROOT_PATH>
+
+5. Build simulation libraries, TelSDK sample apps, and test apps
+
+.. code-block::
+
+  $ ./build_sim.sh all <DESTINATION_FOLDER_ROOT_PATH>
+
+**Note:** All the required TelSDK simulation include files, libs, and binaries get installed in <DESTINATION_FOLDER_ROOT_PATH>
+
+6. Export path
+
+.. code-block::
+
+  $ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
+
+The above script would setup different environment variables like ``PATH, LD_LIBRARY_PATH, PKG_CONFIG_PATH, CC, CXX``, etc.
+
+
+7. To perform a build for user applications using cmake
+
+.. code-block::
+
+  $ cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=<DESTINATION_FOLDER_ROOT_PATH>/include -DCMAKE_INSTALL_PREFIX=<DESTINATION_FOLDER_ROOT_PATH> <APPS_CMAKE_PATH> && make install
+
+
+To run the application inside docker:
+
+1. Export path, if not already done
+
+  .. code-block::
+
+    $ source <DESTINATION_FOLDER_ROOT_PATH>/bin/setup_simulation.sh
+
+2. Start simulation server in the background
+
+  .. code-block::
+
+    $ telsdk_simulation_server &
+
+3. User application can be started or if users wish to run one of the SDK's sample app or test app, then
+
+  .. code-block::
+
+    $ <APP_NAME>
+
 
 ---------------------------------------
 Configuring behavior of the simulation
@@ -358,6 +442,8 @@ The details on how simulation of individual areas can be used and controlled are
 3. :ref:`sim-reference-audio`
 4. :ref:`sim-reference-data`
 5. :ref:`sim-reference-thermal`
+6. :ref:`sim-reference-power`
+7. :ref:`sim-reference-sensor`
 
 .. _sim-reference-telephony:
 
@@ -570,6 +656,29 @@ Serving system
 Currently, the simulation framework supports the APIs for ``telux::tel::IServingSystemManager`` using the canned response configured in the JSON file: ``simulation/json/api/tel/IServingSystemSlot*.json``, and events are injected through the event-injector utility using the JSON file: ``simulation/json/Events.json``. When using events related to the serving system, refer to ``Events.json`` and look for events under ``tel_serv``.
 
 Performing operations such as setting the RAT mode preference or service domain preference (``telux::tel::IServingSystemManager::setRatPreference`` API or ``telux::tel::IServingSystemManager::setServiceDomainPreference`` API) on the target can have system-level impact, which could alter the response of other APIs within the same class or different classes, such as getting signal strength notifications or change of current serving RAT etc. Currently, this behavior is not implemented, but it will be in future releases.
+
+Supplementary Services
+''''''''''''''''''''''
+
+Details of parameters that can be configured in the simulation framework.
+- "failureCause" : To configure failureCause for supplementary services.
+  Refer ``telux::tel::FailureCause`` for values.
+
+To simulate, No service as a failure cause.
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f json_update -e modify /api/tel/ISuppServicesManagerSlot1.json ISuppServicesManager.failureCause 0x15
+
+- "suppSvcProvisionStatus" : To configure supplementary services provision status.
+  Refer ``telux::tel::SuppSvcProvisionStatus`` for valid values of supplementary services provision status.
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f json_update -e modify /api/tel/ISuppServicesManagerSlot1.json ISuppServicesManager.requestOirPref.suppSvcProvisionStatus 0
 
 Telephony event handling
 """""""""""""""""""""""""
@@ -786,13 +895,18 @@ Update RAT preference and service domain preference
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onRatPreferenceChanged
 and telux::tel::IServingSystemListener::onServiceDomainPreferenceChanged
 
-Command: ``telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences>``
+Command: ``telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ,<gsmBands> ,<wcdmaBands> ,<lteBands> ,<nsaBands> ,<saBands>``
 
 **Parameters of event injector command:**
 
 - slotId: valid slotIds are 1 & 2 only
 - serviceDomainPreference: valid integer value is filled as per telux::tel::ServiceDomainPreference
 - ratPreferences: valid integer value is filled as per telux::tel::RatPrefType
+- gsmBands: valid integer value is filled as per telux::tel::GsmRFBand
+- wcdmaBands: valid integer value is filled as per telux::tel:::WcdmaRFBand
+- lteBands: valid integer value is filled as per telux::tel::LteRFBand
+- nsaBands: valid integer value is filled as per telux::tel::NrRFBand
+- saBands: valid integer value is filled as per telux::tel::NrRFBand
 
 example - ratPreferences input is 012 for RAT preference PREF_CDMA_1X , PREF_CDMA_EVDO and PREF_GSM
 
@@ -800,7 +914,7 @@ example - ratPreferences input is 012 for RAT preference PREF_CDMA_1X , PREF_CDM
 
 .. code-block::
 
- telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012
+ telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012 ,1 2 3 ,4 5 6 ,7 8 9 ,10 11 12 ,96 102
 
 Update current system information
 ''''''''''''''''''''''''''''''''''
@@ -808,7 +922,7 @@ Update current system information
 To simulate IServingSystemManager event - telux::tel::IServingSystemListener::onSystemInfoChanged
 and telux::tel::IServingSystemListener::onDcStatusChanged
 
-Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction>``
+Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability>``
 
 **Parameters of event injector command:**
 
@@ -817,12 +931,15 @@ Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <curre
 - currentServingDomain: valid integer value is filled as per telux::tel::ServiceDomain
 - endcAvailability: valid integer value is filled as per telux::tel::endcAvailability
 - dcnrRestriction: valid integer value is filled as per telux::tel::dcnrRestriction
+- smsRat: valid integer value is filled as per telux::tel::RadioTechnology
+- smsDomain: valid integer value is filled as per telux::tel::SmsDomain
+- lteCapability: valid integer value is filled as per telux::tel::LteCsCapability
 
 **Sample input:**
 
 .. code-block::
 
- telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1
+ telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 16 3 0 1 1 1 1
 
 Update network time information
 ''''''''''''''''''''''''''''''''
@@ -1141,8 +1258,8 @@ The report is represented by a string containing the fields separated by a comma
 
 **The tool to capture data is provided under:**
 
-* ``simulation/record_location.sh``
-* ``simulation/record_location.bat``
+* ``simulation/scripts/record_location.sh``
+* ``simulation/scripts/record_location.bat``
 
 **Client usage:**
 
@@ -1151,6 +1268,9 @@ The report is represented by a string containing the fields separated by a comma
 2. Ensure that adb is available and restart adb as root by running "adb root".
 
 3. Run the record_location script and capture the data in a CSV file.
+
+4. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
+   If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.
 
 
 Additional Notes
@@ -1445,6 +1565,10 @@ The following managers are currently available in the simulation:
 7. NatManager
 8. L2tpManager
 9. FirewallManager
+10. BridgeManager
+11. VlanManager
+12. DualDataManager
+13. DataControlManager
 
 
 Data APIs Response handling
@@ -1465,6 +1589,32 @@ Each manager has its own JSON configuration file present under ``simulation/json
  },
 
 The JSON file holds the default values and could be updated dynamically by the users of the simulation.
+
+Data event handling
+"""""""""""""""""""""""""
+
+Update dual data capability change
+''''''''''''''''''''''''''''''''''
+
+The event injector allows you to inject event for simulating dual data capability change.
+
+*Sample input:*
+
+.. code-block::
+
+  telsdk_event_injector -f dual_data -e capabilityChange 1
+
+
+Update dual data usage recommendation change
+''''''''''''''''''''''''''''''''''''''''''''
+
+The event injector allows you to inject event for simulating dual data usage recommendation change.
+
+*Sample input:*
+
+.. code-block::
+
+  telsdk_event_injector -f dual_data -e recommendationChange ALLOWED
 
 
 Network Interface Configuration
@@ -1603,3 +1753,246 @@ Sample input:
 
 - Above, 24 indicates the tzone Id and 126000 indicates the new temperature to be set for a thermal zone.
 - Based on the new temperature, the thermal subsystem will calculate the events for trip and cooling device level.
+
+.. _sim-reference-power:
+
+Power simulation
+~~~~~~~~~~~~~~~~~~~
+
+Overview of Power Simulation
+"""""""""""""""""""""""""""""""
+
+The power simulation framework provides the ability to support for the power management simulation.
+
+.. _fig-power-sim-overview:
+.. figure:: ../../images/simulation_power_overview.png
+  :width: 500
+
+  Power Simulation Framework
+
+Power simulation Abilities
+""""""""""""""""""""""""""""""
+
+1. Provides ability to exercise and control  behavior of the TelSDK APIs for power management.
+2. Currently, only PVM machine is supported.
+3. A client can register as a master or slave. A slave client can register for LOCAL or ALL MACHINES.
+4. Support for suspend and resume events.
+
+Power simulation state change notifications
+"""""""""""""""""""""""""""""""""""""""""""
+
+1. Suspend/Shutdown Triggers
+
++---------------------------------------+-------------------------+-----------------------+
+|            Triggered For              | Slaves on Local Machine | Slaves on All Machine |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on ALL MACHINES    |    RECEIVES SUSPEND     |   RECEIVES SUSPEND    |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on LOCAL MACHINES  |    RECEIVES SUSPEND     |       NO SUSPEND      |
++---------------------------------------+-------------------------+-----------------------+
+
+
+2. Resume Triggers
+
++---------------------------------------+-------------------------+-----------------------+
+|           Triggered For               | Slaves on Local Machine | Slaves on All Machine |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on ALL MACHINES    |    RECEIVES RESUME      |    RECEIVES RESUME    |
++---------------------------------------+-------------------------+-----------------------+
+|  Slaves registered on LOCAL MACHINES  |    RECEIVES RESUME      |       NO RESUME       |
++---------------------------------------+-------------------------+-----------------------+
+
+
+If both Machines are in the same state and incoming state request is the same as the machine state, INCOMPATIBLE_STATE is returned.
+However, if LOCAL is in suspend and ALL is in resume, and if incoming state is RESUME on ALL machines, LOCAL machine is resumed.
+There'll be no situation of ALL machines in suspend and LOCAL in resume since this deviates from target behavior.
+
+3. NACK/NOACK behavior
+
+If slave doesn't send ack or sends NACK to acknowledge suspend/resume event notification reception, status sent to MASTER will be NOTREADY.
+Within 10 seconds if master sends a RESUME, SUSPEND/SHUTDOWN is halted else system moves to the suspended/shut down state.
+
+Power simulation support for events
+"""""""""""""""""""""""""""""""""""
+
+The framework supports injection of the machine availability event to notify client via @ref ITcuActivityListener::onMachineUpdate, if the LOCAL machine is available or not.
+
+Sample input:
+
+.. code-block::
+
+ telsdk_event_injector -f power_mgr -e machine_availability <availability>
+ telsdk_event_injector -f power_mgr -e machine_availability AVAILABLE
+
+Valid values for <availability> - UNAVAILABLE/AVAILABLE
+
+
+Additional Notes
+"""""""""""""""""
+
+1. The power manager service, master app and slave apps all run on the same container.
+2. This Framework simulates PVM ONLY behavior. Hence, API behavior is as per PVM ONLY registered clients.
+3. The simulation device on which the framework runs is hardcoded as PVM in the power simulation library. All slaves registering with PVM are treated as a LOCAL machine in the simulation framework.
+4. As of today, suspend and resume are only state change triggers across the processes using the power simulation framework. The host system on which simulation is running is not really suspended when a master client issues suspend.
+5. Modem activity state is a canned response via  JSON configuration file.
+
+.. _sim-reference-sensor:
+
+Sensor Simulation
+~~~~~~~~~~~~~~~~~~~~
+
+Overview of Sensor Simulation
+""""""""""""""""""""""""""""""""
+This page and the subpages provide simulation usage information for the sensor
+subsystem that is part of the telux::sensor namespace of the Telematics SDK.
+
+The sensor simulation framework provides the ability to record sensor data from an actual
+telematics device.
+Applications using ISensorClient and ISensorFeatureManager APIs get sensor
+events from this recorded data.
+
+.. _fig-sensor-sim-overview:
+.. figure:: ../../images/simulation_sensor_overview.png
+  :width: 500
+
+  Sensor Simulation Framework
+
+Configuring Sensor API responses
+"""""""""""""""""""""""""""""""""""
+
+The sensor manager, sensor client, and sensor feature manager have JSON configuration files to
+configure responses for each API.
+
+Clients can configure these APIs as follows.
+
+Sensor Manager (``simulation/json/api/sensor/ISensorClient.json``)
+
+Example:
+
+**API command response for selfTest**
+
+.. code-block::
+
+  "selfTest": {
+      "callbackDelay": 400,
+      "error": "SUCCESS",
+      "status": "SUCCESS"
+  },
+
+Sensor client (``simulation/json/api/sensor/ISensorClient.json``)
+
+Example:
+
+**API command response for configure**
+
+.. code-block::
+
+  "configure": {
+      "error": "SUCCESS",
+      "status": "SUCCESS"
+  },
+
+Sensor Feature Manager (``simulation/json/api/sensor/ISensorfeatureManager.json``)
+
+Example:
+
+**API command response for enableFeature**
+
+.. code-block::
+
+  "enableFeature":{
+      "status": "SUCCESS"
+  },
+
+Support for sensor events
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+The following events are supported by SensorClient.
+
+1. Sensor events for multiple configurations
+2. Client configuration update events
+3. Buffered events for sensor feature manager
+
+Format of sensor reports
+"""""""""""""""""""""""""""
+
+Sensor simulation can provide prerecorded/captured data from the target device to clients in the
+form of a CSV file.
+
+**Reports captured via CSV:**
+
+This script records sensor data captured using the recording utility provided for the sensor
+client. By default, this script captures sensor events for UNCALIBRATED_ACCELEROMETER and
+UNCALIBRATED_GYROSCOPE with both ROTATED and UNROTATED configurations enabled at a 104 Hz
+sampling rate.
+
+.. note:: Once captured, sorting has to be done using the utilities provided.
+
+**Data representation:**
+
+1. Each CSV row represents a complete iteration of the sensor event at time interval T.
+
+**Data reporting:**
+
+Sensor events are recorded at 104 Hz with rotated and unrotated data for uncalibrated accelerometer
+and gyroscope clients. On reaching the CSV's EOF, clients can configure if the CSV is replayed via
+the ``sim.sensor.sensor_report_replay`` configuration in ``tel.conf``.
+
+If replay is not selected, the sensor reports are stopped.
+
+**Client usage:**
+
+By default the prerecorded/captured CSV file is stored at:
+
+1. ``${ROOTFS}/data/telux/csv/PRE-RECORDED_SENSOR_DATA.csv`` for sensor client
+2. ``${ROOTFS}/data/telux/csv/PRE-RECORDED_SENSOR_BUFFER_DATA.csv`` for sensor feature manager
+3. Clients can configure the retrieval of reports via ``tel.conf`` by modifying the following fields:
+
+.. code-block::
+
+  sim.sensor.sensor_report_file_name
+  sim.sensor.sensor_buffered_events_file_name
+  sim.sensor.sensor_report_consumption
+  sim.sensor.sensor_report_replay
+
+See the ``tel.conf`` documentation for the usage details of these fields.
+
+
+Recording utility for Sensor Reports
+"""""""""""""""""""""""""""""""""""""""
+
+The recording utility captures sensor reports running on the target device
+so the collected data can be used for off-target SDK simulation.
+
+**Reports supported by the recording utility:**
+
+This script provides sensor data captured using the recording utility provided for the sensor
+client. By default, this script captures sensor events for UNCALIBRATED_ACCELEROMETER and
+UNCALIBRATED_GYROSCOPE with both ROTATED and UNROTATED configurations enabled at a 104 Hz sampling
+rate.
+
+**Data representation:**
+
+Each CSV row represents a complete iteration of the sensor event at time interval T.
+
+The report is represented by a string containing the fields separated by a comma(,).
+
+**The tool to capture data is provided under:**
+
+* ``simulation/scripts/record_and_sort_sensor_data.sh``
+* ``simulation/scripts/record_sensor_data.bat``
+* ``simulation/scripts/sort_sensor_data.ps1``
+
+**Client usage:**
+
+1. Connect the target to the PC.
+
+2. Ensure that adb is available and restart adb as root by running "adb root".
+
+3. On a Linux machine run the record_and_sort_sensor_data script and capture the sorted data in a CSV file.
+
+4. On a windows machine run record_sensor_data batch file from command prompt to capture data in a CSV file.
+   Then use sort_sensor_data scipt in a power shell terminal to sort the captured CSV file.
+
+5. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
+   If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.

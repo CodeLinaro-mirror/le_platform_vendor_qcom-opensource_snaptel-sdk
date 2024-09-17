@@ -1,10 +1,11 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "CsvHandler.hpp"
 #include "Logger.hpp"
+#include "FileInfo.hpp"
 #include <fstream>
 
 #define DELIMETER ','
@@ -49,9 +50,8 @@ Status CsvHandler::readCsv(csvData &data) {
     if(ifs.good()) {
         LOG(DEBUG, "Starting to read csv");
         while(std::getline(ifs, line)) {
-            //skipping empty lines & lines that contains license text
-            if((line.size() != 0) && (line.find('*') == string::npos))
-            {
+            //skipping empty line & lines that contains license text (starts with ##)
+            if (line.size() != 0 && line.find("##") != 0) {
                 break;
             }
         }

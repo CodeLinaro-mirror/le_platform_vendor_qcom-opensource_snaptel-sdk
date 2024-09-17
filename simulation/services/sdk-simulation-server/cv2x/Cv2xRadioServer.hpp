@@ -29,6 +29,7 @@
 static constexpr int32_t SIMULATION_SPS_MAX_NUM_FLOWS = 2u;
 // Max number of Non-SPS flows supported
 static constexpr int32_t SIMULATION_NON_SPS_MAX_NUM_FLOWS = 255u;
+static constexpr uint32_t SIMULATION_EVT_FLOW_BASE = 100u;
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -77,6 +78,15 @@ public:
   grpc::Status disableTxStatusReport(ServerContext *context,
                                      const cv2xStub::UintNum *request,
                                      cv2xStub::Cv2xCommandReply *res);
+  grpc::Status setGlobalIPInfo(ServerContext *context,
+                               const google::protobuf::Empty *request,
+                               ::cv2xStub::Cv2xCommandReply *res);
+  grpc::Status setGlobalIPUnicastRoutingInfo(ServerContext *context,
+                                             const google::protobuf::Empty *request,
+                                             ::cv2xStub::Cv2xCommandReply *res);
+  grpc::Status requestDataSessionSettings(ServerContext *context,
+                                          const google::protobuf::Empty *request,
+                                          ::cv2xStub::Cv2xCommandReply *res);
   grpc::Status injectVehicleSpeed(ServerContext *context,
                                   const cv2xStub::UintNum *request,
                                   cv2xStub::Cv2xCommandReply *res);
@@ -85,20 +95,18 @@ public:
 private:
   void onStatusChanged(telux::cv2x::Cv2xStatus status) override;
   inline ::commonStub::Status
-  saveFlowInfo(std::map<int32_t, cv2xStub::FlowInfo> &flows,
-               cv2xStub::FlowInfo &flow, const int32_t max, int32_t &flowId);
+  saveFlowInfo(std::map<uint32_t, cv2xStub::FlowInfo> &flows,
+               cv2xStub::FlowInfo &flow, const uint32_t base, const uint32_t max, int32_t &flowId);
   inline ::commonStub::Status
-  removeFlowInfo(std::map<int32_t, cv2xStub::FlowInfo> &flows, int32_t flowId);
+  removeFlowInfo(std::map<uint32_t, cv2xStub::FlowInfo> &flows, int32_t flowId);
 
   std::shared_ptr<Cv2xServerEvtListener> evtListener_ = nullptr;
   std::vector<cv2xStub::RxSubscription> rxSubsVec_;
   std::mutex rxSubsMtx_;
-  std::map<int32_t, cv2xStub::FlowInfo> ipSpsFlows_;
-  std::map<int32_t, cv2xStub::FlowInfo> ipEvtFlows_;
-  std::mutex ipFlowMtx_;
-  std::map<int32_t, cv2xStub::FlowInfo> nonipSpsFlows_;
-  std::map<int32_t, cv2xStub::FlowInfo> nonipEvtFlows_;
-  std::mutex nonipFlowMtx_;
+  std::map<uint32_t, cv2xStub::FlowInfo> spsFlows_;
+  std::map<uint32_t, cv2xStub::FlowInfo> evtFlows_;
+  std::mutex flowMtx_;
+
   std::map<uint32_t, bool> txStatusReportEnable_;
   std::mutex txStatusReportMtx_;
 };

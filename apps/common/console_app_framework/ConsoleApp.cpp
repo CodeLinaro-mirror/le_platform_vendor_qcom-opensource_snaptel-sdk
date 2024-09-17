@@ -26,40 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -137,17 +107,62 @@ std::vector<std::string> ConsoleApp::readCommand() {
 
 inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
                        const std::vector<std::string> &inputCommand) {
-   std::string cmdStr = command->getName();
-   std::string inpStr = inputCommand[0];
-   // Function to convert to lowercase
-   std::transform(cmdStr.begin(), cmdStr.end(), cmdStr.begin(), ::tolower);
-   std::transform(inpStr.begin(), inpStr.end(), inpStr.begin(), ::tolower);
+    std::string cmdStr = command->getName();
+    std::string inpStr = inputCommand[0];
+    // Function to convert to lowercase
+    std::transform(cmdStr.begin(), cmdStr.end(), cmdStr.begin(), ::tolower);
+    std::transform(inpStr.begin(), inpStr.end(), inpStr.begin(), ::tolower);
 
-   if(command->getId() == inpStr || cmdStr == inpStr) {
-      if(command->getArguments().size() == (inputCommand.size() - 1)) {
-         return true;
-      }
-   }
+    if(command->getId() == inpStr || cmdStr == inpStr) {
+        if(command->getArguments().size() == (inputCommand.size() - 1)) {
+            return true;
+        }
+    }
+
+    // Tokenize command name to a vector.
+    std::istringstream iss(command->getName());
+
+    // iterate on a stream and store collection of substring into vector of strings
+    std::vector<std::string> commandTokens(std::istream_iterator<std::string>{iss},
+                                        std::istream_iterator<std::string>());
+
+    /**
+     * There can be 3 cases of passing a command.
+     *
+     * 1. Just command name separated by '_'. For example -
+     * Start_Basic_Reports (commandName)
+     * Start_Basic_Reports (inputCommand)
+     * This case is already handled in the above checks.
+     * We also check if the inputID is the same as command ID in the above check.
+     * Later, the argument list is also compared for both the cases.
+     *
+     * 2. We can have space separated commands. For example -
+     * Request terrestrial positioning (commandTokens)
+     * Request terrestrial positioning (inputCommand)
+     * If the vector size is same, we try matching each token of the command name.
+     *
+     * 3. Space separated commands with arguments. For example -
+     * Make Call           (commandTokens)
+     * Make Call <number>  (inputCommand)
+     * So, if the inputCommand size > commandName, we try matching each token of the command name.
+     * Next, we check whether the argument size is the same as the expected size and return.
+     *
+    */
+    if(inputCommand.size() >= commandTokens.size()) {
+        for(size_t i = 0; i < commandTokens.size(); i++) {
+            if(inputCommand[i] != commandTokens[i]) {
+                return false;
+            }
+        }
+        if(inputCommand.size() > commandTokens.size()) {
+            size_t argumentSize = inputCommand.size() - commandTokens.size();
+            if(argumentSize != command->getArguments().size()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
    return false;
 }
 /**

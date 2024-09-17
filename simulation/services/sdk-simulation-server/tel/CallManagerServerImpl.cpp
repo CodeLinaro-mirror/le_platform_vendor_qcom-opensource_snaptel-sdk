@@ -335,9 +335,6 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
             call_.set_call_direction
                     (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
             call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
-            response->set_iscallback(isCallback);
-            response->set_delay(cbDelay);
-            response->set_status(static_cast<commonStub::Status>(status));
             call_.set_call_index(static_cast<int>(callInfo_.index));
             *response->mutable_call() = call_;
             auto f = std::async(std::launch::async,
@@ -382,6 +379,11 @@ grpc::Status CallManagerServerImpl::SetConfig(ServerContext* context,
                 static_cast<int>(config.numType);
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[SLOT_1] = rootObj;
+                if(config.numType == ECallNumType::OVERRIDDEN) {
+                    iseCallNumTypeOverridden_ = true;
+                } else {
+                    iseCallNumTypeOverridden_ = false;
+                }
         }
         if (request->is_overridden_num_valid()) {
                 config.overriddenNum = request->overridden_num();
@@ -688,7 +690,8 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", isTpseCallOverIms = ", static_cast<bool>(call->isTpseCallOverIms),
         ", rttMode = ", static_cast<int>(call->mode),
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
-        ", peerRttCapability = ", static_cast<int>(call->peerRttCapability));
+        ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
+        ", callType = ", static_cast<int>(call->callType));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -978,7 +981,10 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
-            if(info->isRegulatoryeCall) { //emergency call
+            if((info->isRegulatoryeCall) ||
+                (!(info->isRegulatoryeCall) && (!(info->isTpseCallOverIms))
+                && (info->isMsdTransmitted))) {
+                    // regulatory ecall or custom number ecall over CS with MSD
                 LOG(DEBUG, __FUNCTION__);
                 if(ecallStateMachine_ != nullptr) {
                     ecallStateMachine_->onEvent(
@@ -986,7 +992,7 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
                     EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
                     "", phoneId));
                 }
-            } else {  //Voice call
+            } else {  // Custom number eCall over PS or voice call
                 changeCallState(info->phoneId, "CALL_ENDED", info->remotePartyNumber);
             }
             response->set_status(static_cast<commonStub::Status>(status));
@@ -1578,6 +1584,21 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     callInfo.isMsdTransmitted = false;
     callInfo.isMultiPartyCall = true;
     callInfo.isMpty = true;
+    telStub::RadioTechnology rat;
+    std::vector<telStub::RadioTechnology> psRatList =
+        {telStub::RadioTechnology::RADIO_TECH_NR5G,
+        telStub::RadioTechnology::RADIO_TECH_LTE};
+    if(telux::common::ErrorCode::SUCCESS ==
+        TelUtil::readVoiceRadioTechnologyFromJsonFile(callInfo.phoneId, rat)) {
+        if (std::find(psRatList.begin(), psRatList.end(), rat) != psRatList.end()) {
+            callInfo.callType = CallType::VOICE_IP_CALL;
+        } else {
+            callInfo.callType = CallType::VOICE_CALL;
+        }
+    } else {
+        callInfo.callType = CallType::VOICE_CALL;
+    }
+
     callInfo_ = callInfo;
     auto call = std::make_shared<CallInfo>(callInfo);
     logCallDetails(call);
@@ -1694,12 +1715,18 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId) {
 }
 
 std::string CallManagerServerImpl::getRemotePartyNumber(int phoneId) {
-    LOG(DEBUG, __FUNCTION__, "PhoneId ", phoneId);
+    LOG(DEBUG, __FUNCTION__, " PhoneId ", phoneId);
     std::string jsonObjFileName = "";
+    std::string input = "";
+    std::string defaultEcallNumber = "112";
     Json::Value rootObj;
     readJson();
     getJsonForSystemData(phoneId, jsonObjFileName, rootObj);
-    std::string input = rootObj[CALL_MANAGER]["eCallConfig"]["overriddenNum"].asString();
+    if(iseCallNumTypeOverridden_ != true) {
+        input = defaultEcallNumber;
+    } else {
+        input = rootObj[CALL_MANAGER]["eCallConfig"]["overriddenNum"].asString();
+    }
     LOG(DEBUG, __FUNCTION__, " Remote party number is ", input);
     return input;
 }
@@ -1889,15 +1916,18 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(std::shared_ptr<CallInfo>
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_sip_error_code(it->sipErrorCode);
         result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         LOG(DEBUG, __FUNCTION__," Rtt mode: ", static_cast<int>(it->mode),
             " Local capability: ", static_cast<int>(it->localRttCapability),
-            " Peer capability: ", static_cast<int>(it->peerRttCapability));
+            " Peer capability: ", static_cast<int>(it->peerRttCapability),
+            " Call type: ", static_cast<int>(it->callType));
         result->set_mode(static_cast<telStub::RttMode>(it->mode));
         result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
         result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
+        result->set_call_type(static_cast<telStub::CallType>(it->callType));
     }
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
@@ -1953,6 +1983,7 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd() {
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_sip_error_code(it->sipErrorCode);
         result->set_phone_id(it->phoneId);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);

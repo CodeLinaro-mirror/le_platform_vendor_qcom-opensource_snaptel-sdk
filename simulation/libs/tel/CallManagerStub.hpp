@@ -32,9 +32,9 @@ class CallManagerStub : public ICallManager,
                         public std::enable_shared_from_this<CallManagerStub> {
 public:
 
-    CallManagerStub(telux::common::InitResponseCb clientCallback);
+    CallManagerStub();
 
-    void initSync(telux::common::InitResponseCb callback);
+    telux::common::Status init(telux::common::InitResponseCb callback);
 
     telux::common::ServiceStatus getServiceStatus() override;
 
@@ -100,15 +100,22 @@ public:
         std::shared_ptr<IMakeCallCallback> callback) override;
     telux::common::Status sendRtt(int phoneId,
       std::string message, common::ResponseCallback callback) override;
+    telux::common::Status configureECallRedial(RedialConfigType config,
+        const std::vector<int> &timeGap, common::ResponseCallback callback) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;
 
 private:
     int noOfSlots_;
+    telux::common::InitResponseCb initCb_;
+    int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::mutex callManagerMutex_;
     std::shared_ptr<telux::common::ListenerManager<ICallListener>> listenerMgr_;
+    telux::common::ServiceStatus subSystemStatus_;
+    void setServiceStatus(telux::common::ServiceStatus status);
+    void initSync();
     void handleEcallEvent(::telStub::ECallInfoEvent event);
     void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);

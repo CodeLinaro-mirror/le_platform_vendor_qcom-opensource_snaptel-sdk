@@ -117,6 +117,7 @@ void DataConnectionManagerStub::requestConnectedDataCallLists() {
     ClientContext context;
     ::dataStub::CachedDataCallsRequest request;
     ::dataStub::CachedDataCalls response;
+    std::list<telux::data::IpAddrInfo> ipAddrList;
 
     request.set_slot_id(slotId_);
     stub_->requestConnectedDataCallLists(&context, request, &response);
@@ -153,10 +154,10 @@ void DataConnectionManagerStub::requestConnectedDataCallLists() {
 
         bool ipv4Supported = (ipv4Addr.ifAddress.length() == 0)? false : true;
         bool ipv6Supported = (ipv6Addr.ifAddress.length() == 0)? false : true;
-
+        ipAddrList.clear();
         if (ipFamilyType == IpFamilyType::IPV4 || ipFamilyType == IpFamilyType::IPV4V6) {
             if (ipv4Supported) {
-                call->setIpv4Addr(ipv4Addr);
+                ipAddrList.emplace_back(ipv4Addr);
                 call->setDataCallStatus(DataCallStatus::NET_CONNECTED, IpFamilyType::IPV4);
             } else {
                 call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV4);
@@ -165,13 +166,13 @@ void DataConnectionManagerStub::requestConnectedDataCallLists() {
 
         if (ipFamilyType == IpFamilyType::IPV6 || ipFamilyType == IpFamilyType::IPV4V6) {
             if (ipv6Supported) {
-                call->setIpv6Addr(ipv6Addr);
+                ipAddrList.emplace_back(ipv6Addr);
                 call->setDataCallStatus(DataCallStatus::NET_CONNECTED, IpFamilyType::IPV6);
             } else {
                 call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV6);
             }
         }
-
+        call->setIpAddrList(ipAddrList);
         cacheDataCalls_.insert({profileId, call});
     }
 }
@@ -502,6 +503,7 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
     std::string gwv6Address = startEvent.gwv6_address();
     std::string v6dnsPrimaryAddress = startEvent.v6dns_primary_address();
     std::string v6dnsSecondaryAddress = startEvent.v6dns_secondary_address();
+    std::list<telux::data::IpAddrInfo> ipAddrList;
 
     if (slotId != slotId_)
         return;
@@ -547,35 +549,45 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
         ipv4Addr.gwAddress = gwv4Address;
         ipv4Addr.primaryDnsAddress = v4dnsPrimaryAddress;
         ipv4Addr.secondaryDnsAddress = v4dnsSecondaryAddress;
-        ipv6Addr.ifAddress = ipv6Address;
-        ipv6Addr.gwAddress = gwv6Address;
-        ipv6Addr.primaryDnsAddress = v6dnsPrimaryAddress;
-        ipv6Addr.secondaryDnsAddress = v6dnsSecondaryAddress;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
         if (ipFamilyType == IpFamilyType::IPV4 || ipFamilyType == IpFamilyType::IPV4V6) {
             if (ipv4Supported) {
-                call->setIpv4Addr(ipv4Addr);
                 call->setDataCallStatus(DataCallStatus::NET_CONNECTED, IpFamilyType::IPV4);
             } else {
                 call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV4);
             }
-
+            ipAddrList.emplace_back(ipv4Addr);
+            ipAddrList.emplace_back(ipv6Addr);
+            call->setIpAddrList(ipAddrList);
             auto f = std::async(std::launch::async,
                 [this, baseCallPtr]() {
                     invokeDataConnectionListener(baseCallPtr);
                 }).share();
             f.wait();
+        } else {
+            //if it is only IPV6 call, to match the device o/p
+            ipv4Addr.ifAddress = "0.0.0.0";
+            ipv4Addr.gwAddress = "0.0.0.0";
+            ipv4Addr.primaryDnsAddress = "0.0.0.0";
+            ipv4Addr.secondaryDnsAddress = "0.0.0.0";
         }
 
+        ipv6Addr.ifAddress = ipv6Address;
+        ipv6Addr.gwAddress = gwv6Address;
+        ipv6Addr.primaryDnsAddress = v6dnsPrimaryAddress;
+        ipv6Addr.secondaryDnsAddress = v6dnsSecondaryAddress;
+        ipAddrList.clear();
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
         if (ipFamilyType == IpFamilyType::IPV6 || ipFamilyType == IpFamilyType::IPV4V6) {
             if (ipv6Supported) {
-                call->setIpv6Addr(ipv6Addr);
                 call->setDataCallStatus(DataCallStatus::NET_CONNECTED, IpFamilyType::IPV6);
             } else {
                 call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV6);
             }
+            ipAddrList.emplace_back(ipv4Addr);
+            ipAddrList.emplace_back(ipv6Addr);
+            call->setIpAddrList(ipAddrList);
             auto f = std::async(std::launch::async,
                 [this, baseCallPtr]() {
                     invokeDataConnectionListener(baseCallPtr);
@@ -613,6 +625,125 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
         cacheDataCalls_.erase(profileId);
         LOG(DEBUG, __FUNCTION__, " failed to connect datacall");
     }
+}
+
+telux::common::Status DataConnectionManagerStub::startDataCall(
+    const DataCallParams &dataCallParams, DataCallResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (dataCallParams.profileId < MIN_PROFILE_ID &&
+        dataCallParams.profileId > MAX_PROFILE_ID) {
+        LOG(ERROR, __FUNCTION__, " Invalid profile id");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    if (dataCallParams.ipFamilyType != IpFamilyType::IPV4 &&
+        dataCallParams.ipFamilyType != IpFamilyType::IPV6
+        && dataCallParams.ipFamilyType != IpFamilyType::IPV4V6) {
+        LOG(ERROR, __FUNCTION__, " Invalid ip family type");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    if (OperationType::DATA_REMOTE == dataCallParams.operationType) {
+        LOG(ERROR, __FUNCTION__, " Remote operation not supported");
+        return telux::common::Status::NOTSUPPORTED;
+    }
+
+    if (!isSubsystemReady()) {
+        LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    ::dataStub::DefaultReply response;
+    ::dataStub::DataCallInputParams request;
+    ClientContext context;
+
+    request.set_slot_id(slotId_);
+    request.set_profile_id(dataCallParams.profileId);
+    request.mutable_ip_family_type()->set_ip_family_type(
+        (::dataStub::IpFamilyType::Type)dataCallParams.ipFamilyType);
+    request.set_operation_type(
+        (::dataStub::OperationType)dataCallParams.operationType);
+    request.set_client_id(getpid());
+    request.set_iface_name(dataCallParams.interfaceName);
+
+    grpc::Status reqStatus = stub_->StartDatacall(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    std::shared_ptr<DataCallStub> call;
+    std::shared_ptr<IDataCall> baseCallPtr = nullptr;
+
+    do {
+        if (status == telux::common::Status::SUCCESS &&
+            error == telux::common::ErrorCode::SUCCESS) {
+            if (!reqStatus.ok()) {
+                LOG(ERROR, __FUNCTION__, " StartDatacall request failed");
+                error = telux::common::ErrorCode::INTERNAL_ERROR;
+                break;
+            }
+
+            std::lock_guard<std::mutex> lck(mtx_);
+            if (dataCalls_.find(dataCallParams.profileId) != dataCalls_.end()) {
+                LOG(DEBUG, __FUNCTION__, " datacall already exists");
+                baseCallPtr = std::static_pointer_cast<IDataCall>(
+                    dataCalls_[dataCallParams.profileId]);
+                break;
+            } else if (cacheDataCalls_.find(dataCallParams.profileId)
+                != cacheDataCalls_.end()) {
+                LOG(DEBUG, __FUNCTION__, " datacall already exists");
+                baseCallPtr = std::static_pointer_cast<IDataCall>(
+                    cacheDataCalls_[dataCallParams.profileId]);
+                //To handle scenario of datacall ownership, current client would also become owner
+                dataCalls_[dataCallParams.profileId] =
+                    cacheDataCalls_[dataCallParams.profileId];
+                cacheDataCalls_.erase(dataCallParams.profileId);
+                break;
+            }
+
+            LOG(DEBUG, __FUNCTION__, " creating new datacall for profile:",
+                dataCallParams.profileId);
+            call =
+                std::make_shared<telux::data::DataCallStub>("");
+            baseCallPtr =
+                std::static_pointer_cast<IDataCall>(call);
+
+            call->setProfileId(dataCallParams.profileId);
+            call->setSlotId(slotId_);
+            call->setIpFamilyType(dataCallParams.ipFamilyType);
+            // setting to defaults.
+            call->setTechPreference(TechPreference::TP_3GPP);
+            call->setDataBearerTechnology(DataBearerTechnology::LTE);
+            call->setOperationType(dataCallParams.operationType);
+            if (dataCallParams.ipFamilyType == IpFamilyType::IPV4 ||
+                dataCallParams.ipFamilyType == IpFamilyType::IPV4V6) {
+                call->setDataCallStatus(DataCallStatus::NET_CONNECTING, IpFamilyType::IPV4);
+            }
+            if (dataCallParams.ipFamilyType == IpFamilyType::IPV6 ||
+                dataCallParams.ipFamilyType == IpFamilyType::IPV4V6) {
+                call->setDataCallStatus(DataCallStatus::NET_CONNECTING, IpFamilyType::IPV6);
+            }
+
+            dataCalls_[dataCallParams.profileId] = call;
+        }
+    } while(0);
+
+    if (callback && (delay != SKIP_CALLBACK)) {
+        auto f = std::async(std::launch::async,
+        [this, baseCallPtr, error, delay, callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(baseCallPtr, error);
+        }).share();
+        taskQ_->add(f);
+    }
+
+    return status;
 }
 
 telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
@@ -724,6 +855,115 @@ telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
     return status;
 }
 
+telux::common::Status DataConnectionManagerStub::stopDataCall(
+    const DataCallParams &dataCallParams, DataCallResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (dataCallParams.profileId < MIN_PROFILE_ID &&
+        dataCallParams.profileId > MAX_PROFILE_ID) {
+        LOG(ERROR, __FUNCTION__, " Invalid profile id");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    if (dataCallParams.ipFamilyType != IpFamilyType::IPV4
+        && dataCallParams.ipFamilyType != IpFamilyType::IPV6
+        && dataCallParams.ipFamilyType != IpFamilyType::IPV4V6) {
+        LOG(ERROR, __FUNCTION__, " Invalid ip family type");
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    if (OperationType::DATA_REMOTE == dataCallParams.operationType) {
+        LOG(ERROR, __FUNCTION__, " Remote operation not supported");
+        return telux::common::Status::NOTSUPPORTED;
+    }
+
+    if (!isSubsystemReady()) {
+        LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay = DEFAULT_DELAY;
+
+    ::dataStub::DefaultReply response;
+    ::dataStub::DataCallInputParams request;
+    ClientContext context;
+    std::shared_ptr<DataCallStub> call = nullptr;
+    std::shared_ptr<IDataCall> baseCallPtr = nullptr;
+
+    std::lock_guard<std::mutex> lck(mtx_);
+    do {
+        if (dataCalls_.find(dataCallParams.profileId) != dataCalls_.end()) {
+            call = dataCalls_[dataCallParams.profileId];
+        }
+
+        if (call == nullptr) {
+            LOG(DEBUG, __FUNCTION__, " datacall doesn't exist");
+            error = telux::common::ErrorCode::INVALID_OPERATION;
+            break;
+        }
+
+        request.set_slot_id(slotId_);
+        request.set_profile_id(dataCallParams.profileId);
+        request.mutable_ip_family_type()->set_ip_family_type(
+            (::dataStub::IpFamilyType::Type)dataCallParams.ipFamilyType);
+        request.set_operation_type(
+            (::dataStub::OperationType)dataCallParams.operationType);
+        request.set_client_id(getpid());
+
+        grpc::Status reqStatus = stub_->StopDatacall(&context, request, &response);
+
+        error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        delay = static_cast<int>(response.delay());
+
+        if (status == telux::common::Status::SUCCESS) {
+            if (!reqStatus.ok()) {
+                LOG(ERROR, __FUNCTION__, " StopDatacall request failed");
+                error = telux::common::ErrorCode::INTERNAL_ERROR;
+                break;
+            }
+            IpAddrInfo ipv4Addr, ipv6Addr;
+            baseCallPtr =
+                    std::static_pointer_cast<IDataCall>(call);
+
+            if (call) {
+                DataCallEndReason endReason, emptyDataCallEndReason;
+                endReason.type = EndReasonType::CE_CALL_MANAGER_DEFINED;
+                endReason.cmCode = CallManagerReasonCode::CE_CLIENT_END;
+                call->setInterfaceName("");
+                call->setTechPreference(TechPreference::TP_3GPP);
+                call->setDataBearerTechnology(DataBearerTechnology::UNKNOWN);
+                call->setOperationType(dataCallParams.operationType);
+                if ((dataCallParams.ipFamilyType == IpFamilyType::IPV4) ||
+                    (dataCallParams.ipFamilyType == IpFamilyType::IPV4V6)) {
+                    call->setDataCallStatus(DataCallStatus::NET_DISCONNECTING, IpFamilyType::IPV4);
+                }
+
+                if ((dataCallParams.ipFamilyType == IpFamilyType::IPV6) ||
+                    (dataCallParams.ipFamilyType == IpFamilyType::IPV4V6)) {
+                    call->setDataCallStatus(DataCallStatus::NET_DISCONNECTING, IpFamilyType::IPV6);
+                }
+                call->setDataCallEndReason(emptyDataCallEndReason);
+            }
+        }
+    } while (0);
+
+    if (callback) {
+        auto f = std::async(std::launch::async,
+                [this, baseCallPtr, error, delay, callback]() {
+                    if (callback && (delay != SKIP_CALLBACK)) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                        callback(baseCallPtr, error);
+                    }
+                }).share();
+        f.wait();
+    }
+
+    return status;
+}
+
 void DataConnectionManagerStub::handleStopDataCallEvent(
     ::dataStub::StopDataCallEvent stopEvent) {
     LOG(DEBUG, __FUNCTION__);
@@ -733,6 +973,7 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
     IpFamilyType ipFamilyType =
         static_cast<IpFamilyType>(
         DataUtilsStub::convertIpFamilyStringToEnum(stopEvent.ip_family_type()));
+    std::list<telux::data::IpAddrInfo> ipAddrList;
     std::lock_guard<std::mutex> lck(mtx_);
     if (slotId != slotId_)
         return;
@@ -740,7 +981,6 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
     LOG(DEBUG, __FUNCTION__, " disconnecting datacall");
 
     std::shared_ptr<DataCallStub> call;
-    IpAddrInfo ipv4Addr, ipv6Addr;
 
     if (dataCalls_.find(profileId) != dataCalls_.end()) {
         call = dataCalls_[profileId];
@@ -773,8 +1013,8 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
     std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
 
     call->setInterfaceName("");
+    call->setIpAddrList(ipAddrList);
     if ((ipFamilyType == IpFamilyType::IPV4) || (ipFamilyType == IpFamilyType::IPV4V6)) {
-        call->setIpv4Addr(ipv4Addr);
         call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV4);
         auto f = std::async(std::launch::async,
             [this, baseCallPtr]() {
@@ -784,7 +1024,6 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
     }
 
     if ((ipFamilyType == IpFamilyType::IPV6) || (ipFamilyType == IpFamilyType::IPV4V6)) {
-        call->setIpv6Addr(ipv6Addr);
         call->setDataCallStatus(DataCallStatus::NET_NO_NET, IpFamilyType::IPV6);
         auto f = std::async(std::launch::async,
             [this, baseCallPtr]() {
@@ -792,7 +1031,6 @@ void DataConnectionManagerStub::handleStopDataCallEvent(
             }).share();
         f.wait();
     }
-
     if (call->getDataCallStatus() == DataCallStatus::NET_NO_NET) {
         dataCalls_.erase(profileId);
         cacheDataCalls_.erase(profileId);

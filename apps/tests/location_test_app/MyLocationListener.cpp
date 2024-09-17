@@ -247,7 +247,12 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_DGNSS_STATION_ID)) {
       std::cout << "valid dgnss station id" << std::endl;
     }
-
+    if((validityMask & telux::loc::HAS_BASE_LINE_LENGTH)) {
+      std::cout << "valid base station distance" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_AGE_OF_CORRECTION)) {
+      std::cout << "valid age of correction" << std::endl;
+    }
 }
 
 void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
@@ -1370,6 +1375,9 @@ void MyLocationListener::recordLocationInfo(
         recordStream << id << ",";
     }
 
+    recordStream << locationInfo->getBaselineLength() << "," <<
+    locationInfo->getAgeOfCorrections() << ",";
+
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
@@ -1500,6 +1508,10 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
    printDgnssStationIds(locationInfo->getDgnssStationIds());
+   std::cout << "Baseline length : " <<
+       locationInfo->getBaselineLength() << std::endl;
+   std::cout << "Age of corrections : " <<
+       locationInfo->getAgeOfCorrections() << std::endl;
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
@@ -1632,6 +1644,10 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
      printDgnssStationIds(locationInfo->getDgnssStationIds());
+     std::cout << "Baseline length : " <<
+         locationInfo->getBaselineLength() << std::endl;
+     std::cout << "Age of corrections : " <<
+         locationInfo->getAgeOfCorrections() << std::endl;
      std::cout << "*************************************************************" << std::endl;
 
      if(isRecordingEnabled_) {

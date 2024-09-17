@@ -44,6 +44,9 @@ service Cv2xRadioService {
     rpc getIfaceNameFromIpType(IpType) returns (IfaceNameReply) {}
     rpc enableTxStatusReport(UintNum) returns (Cv2xCommandReply) {}
     rpc disableTxStatusReport(UintNum) returns (Cv2xCommandReply) {}
+    rpc setGlobalIPInfo(google.protobuf.Empty) returns (Cv2xCommandReply) {}
+    rpc setGlobalIPUnicastRoutingInfo(google.protobuf.Empty) returns (Cv2xCommandReply) {}
+    rpc requestDataSessionSettings(google.protobuf.Empty) returns (Cv2xCommandReply) {}
     rpc injectVehicleSpeed(UintNum) returns (Cv2xCommandReply) {}
 }
 
@@ -68,6 +71,23 @@ message Cv2xPeakTxPower {
 
 message CoarseUtcTime {
    uint64 utc = 1;
+}
+
+message ConfigEventInfo {
+    enum ConfigSourceType {
+        UNKNOWN = 0;   /**< V2X config file source is unknown */
+        PRECONFIG = 1; /**< V2X config file source is preconfig */
+        SIM_CARD = 2;  /**< V2X config file source is SIM card */
+        OMA_DM = 4;    /**< V2X config file source is OMA-DM */
+    }
+
+    enum ConfigEvent {
+        CHANGED = 0;
+        EXPIRED = 1;
+    }
+
+    ConfigSourceType source = 1;
+    ConfigEvent event = 2;
 }
 
 message Cv2xStatus {

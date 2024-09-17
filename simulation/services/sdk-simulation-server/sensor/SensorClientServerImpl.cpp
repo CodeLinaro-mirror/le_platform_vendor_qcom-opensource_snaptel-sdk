@@ -10,6 +10,9 @@
  */
 
 
+#include <thread>
+#include <chrono>
+
 #include "SensorClientServerImpl.hpp"
 #include "libs/common/SimulationConfigParser.hpp"
 
@@ -18,6 +21,7 @@
 #include "libs/common/CommonUtils.hpp"
 #include "event/EventService.hpp"
 #include "SensorReportService.hpp"
+#include "FileInfo.hpp"
 
 #define CSV_BATCH_COUNT 1000
 #define SENSOR_CLIENT_API_JSON "api/sensor/ISensorClient.json"
@@ -139,7 +143,7 @@ inline bool fileExists(const std::string &csvFile) {
     return f.good();
 }
 
-void SensorClientServerImpl::init() {
+bool SensorClientServerImpl::init() {
     LOG(DEBUG, __FUNCTION__);
     SimulationConfigParser configParser;
     std::string fileName = configParser.getValue("sim.sensor.sensor_report_file_name");
@@ -149,16 +153,18 @@ void SensorClientServerImpl::init() {
             + std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
         if (!fileExists(filePath)) {
             LOG(DEBUG, __FUNCTION__ , " Failed to open CSV");
-            return;
+            return false;
         }
     }
     fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
     fileBuffer_->startBuffering();
+
     bufferingInitialized_ = true;
     std::string replayCsvStr = configParser.getValue("sim.sensor.sensor_report_replay");
     if(replayCsvStr == "TRUE") {
         replayCsv_ = true;
     }
+    return true;
 }
 
 void SensorClientServerImpl::updateStreamRequest() {

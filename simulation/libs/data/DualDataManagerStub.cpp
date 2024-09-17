@@ -251,5 +251,28 @@ void DualDataManagerStub::handleRecommendationChangeEvent(
     }
 }
 
+telux::common::Status DualDataManagerStub::requestDdsSwitch(DdsInfo request,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status DualDataManagerStub::requestCurrentDds(RequestCurrentDdsRespCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode DualDataManagerStub::configureDdsSwitchRecommendation(
+    const DdsSwitchRecommendationConfig recommendationConfig) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode DualDataManagerStub::getDdsSwitchRecommendation(
+    DdsSwitchRecommendation &ddsSwitchRecommendation) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
 } // end of namespace data
 } // end of namespace telux

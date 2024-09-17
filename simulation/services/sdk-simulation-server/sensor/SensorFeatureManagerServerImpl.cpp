@@ -19,6 +19,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include "event/EventService.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
+#include "FileInfo.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -111,8 +112,8 @@ void SensorFeatureManagerServerImpl::handleFeatureEvent(std::string eventParams)
            LOG(INFO, __FUNCTION__, " The featureName not exists");
            return;
         }
-        if(featureStatusMap_[featureName]){
-            LOG(INFO, __FUNCTION__, "Feature Already Enabled");
+        if(!featureStatusMap_[featureName]){
+            LOG(INFO, __FUNCTION__, " Feature not enabled");
             return;
         }
     }
@@ -174,19 +175,35 @@ std::string SensorFeatureManagerServerImpl::readBufferedEventStringFromFile(std:
         LOG(ERROR, __FUNCTION__, "Could not open the file: ", csvFilePath);
         return "";
     }
+
     if(ifs.good()) {
         LOG(DEBUG,__FUNCTION__, " Begin Reading ", csvFilePath);
     }
-    std::string line = "";
-    while(ifs.peek() != EOF){
+    std::string line;
+    // skip the copyright
+    while (ifs.peek() != EOF) {
         std::getline(ifs, line);
-        std::size_t pos = line.find(',');
-        std::string id = line.substr(0, pos);
-        if(std::stoi(id) == eventId){
-            eventFound=true;
+        // each line of copyright starts with "##"
+        if (line.size() != 0 && line.find("##") != 0) {
             break;
         }
     }
+
+    while (false == eventFound) {
+        std::size_t pos = line.find(',');
+        if (pos != std::string::npos) {
+            std::string id = line.substr(0, pos);
+            if(std::stoi(id) == eventId){
+                eventFound = true;
+                break;
+            }
+        }
+        if (ifs.peek() == EOF) {
+            break;
+        }
+        std::getline(ifs, line);
+    }
+
     if(eventFound == false){
        LOG(ERROR, __FUNCTION__, "EventId not Found in file: ", csvFilePath);
        return "";

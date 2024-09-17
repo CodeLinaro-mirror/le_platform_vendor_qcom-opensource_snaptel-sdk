@@ -323,10 +323,10 @@ void MyServingSystemListener::onDcStatusChanged(telux::tel::DcStatus dcStatus) {
 void NetworkTimeResponseCallback::networkTimeResponse(telux::tel::NetworkTimeInfo info,
       telux::common::ErrorCode error) {
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "\n requestNetworkTime is successful.\n Network Time: \n";
+      PRINT_CB << "\n NetworkTime request is successful.\n Network Time: \n";
       MyServingSystemHelper::logNetworkInfo(info);
    } else {
-      PRINT_CB << "\n requestNetworkTime failed, ErrorCode: " << static_cast<int>(error)
+      PRINT_CB << "\n NetworkTime request is failed, ErrorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
@@ -334,6 +334,13 @@ void NetworkTimeResponseCallback::networkTimeResponse(telux::tel::NetworkTimeInf
 void MyServingSystemListener::onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) {
    PRINT_NOTIFICATION << " Network Time information is changed. \n Network Time: \n";
    MyServingSystemHelper::logNetworkInfo(info);
+}
+
+void MyServingSystemListener::onNetworkTimeChanged(telux::tel::RadioTechnology radioTech,
+    telux::tel::NetworkTimeInfo info) {
+    PRINT_NOTIFICATION << " Time information is changed on RAT: " <<
+        MyServingSystemHelper::getRadioTechnology(radioTech) << "\n Network Time: \n";
+    MyServingSystemHelper::logNetworkInfo(info);
 }
 
 void MyServingSystemHelper::logNetworkInfo(telux::tel::NetworkTimeInfo info) {

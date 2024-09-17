@@ -88,22 +88,32 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
 
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
-        Json::Value newSnatEntry;
 
-        int entryIdx = -1;
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["snatEntries"].size();
+        int entryIdx = -1, currentEntryCount = 0, backhaul = 0;
+        auto bh_info = request->static_nat_entry().backhaul_type();
+        if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+            backhaul = WWAN_BH_IDX;
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+            backhaul = ETH_BH_IDX;
+        }
+
+        currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
         bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
+
+        Json::Value newSnatEntry;
         if (!entryExists) {
-            newSnatEntry["profileId"] = request->static_nat_entry().profile_id();
-            newSnatEntry["slotId"] = request->static_nat_entry().slot_id();
+            if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+                newSnatEntry["profileId"] = request->static_nat_entry().profile_id();
+                newSnatEntry["slotId"] = request->static_nat_entry().slot_id();
+            } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+                newSnatEntry["vlanId"] = request->static_nat_entry().vlan_id();
+            }
             newSnatEntry["addr"] = request->static_nat_entry().nat_config().address();
             newSnatEntry["port"] = request->static_nat_entry().nat_config().port();
             newSnatEntry["globalPort"] = request->static_nat_entry().nat_config().global_port();
             newSnatEntry["proto"] = request->static_nat_entry().nat_config().ip_protocol();
-            data.stateRootObj[subsystem]["snatEntries"][currentEntryCount] =
+            data.stateRootObj[subsystem][backhaul]["snatEntries"][currentEntryCount] =
                 newSnatEntry;
-
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             data.error = telux::common::ErrorCode::NO_EFFECT;
@@ -155,10 +165,16 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
 
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["snatEntries"].size();
 
-        int entryIdx = -1;
+        int entryIdx = -1, currentEntryCount = 0, backhaul = 0;
+        auto bh_info = request->static_nat_entry().backhaul_type();
+        if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+            backhaul = WWAN_BH_IDX;
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+            backhaul = ETH_BH_IDX;
+        }
+
+        currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
         bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
         if (entryExists) {
             int newCount = 0;
@@ -169,12 +185,12 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
                 if (entryIdx == index ) {
                     continue;
                 }
-                newRoot[subsystem]["snatEntries"][newCount]
-                    = data.stateRootObj[subsystem]["snatEntries"][index];
+                newRoot[subsystem][backhaul]["snatEntries"][newCount]
+                    = data.stateRootObj[subsystem][backhaul]["snatEntries"][index];
                 newCount++;
             }
-            data.stateRootObj[subsystem]["snatEntries"]
-                = newRoot[subsystem]["snatEntries"];
+            data.stateRootObj[subsystem][backhaul]["snatEntries"]
+                = newRoot[subsystem][backhaul]["snatEntries"];
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             data.error = telux::common::ErrorCode::INTERNAL;
@@ -210,24 +226,45 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
 
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["snatEntries"].size();
-        auto profile_id = request->profile_id();
-        auto slot_id = request->slot_id();
+
+        int currentEntryCount = 0, backhaul = 0, profile_id = -1, slot_id = 1, vlan_id = -1;
+        auto bh_info = request->backhaul_type();
+
+        if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+            backhaul = WWAN_BH_IDX;
+            profile_id = request->profile_id();
+            slot_id = request->slot_id();
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+            backhaul = ETH_BH_IDX;
+            vlan_id = request->vlan_id();
+        }
+
+        currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
 
         int index = 0;
+        bool matched = false;
         for (; index < currentEntryCount; index++) {
             Json::Value requestedNatEntry =
-                data.stateRootObj[subsystem]
-                ["snatEntries"][index];
+                data.stateRootObj[subsystem][backhaul]["snatEntries"][index];
 
-            if ((requestedNatEntry["profileId"] == profile_id) &&
-                (requestedNatEntry["slotId"] == slot_id)) {
+            if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
+                if ((requestedNatEntry["profileId"] == profile_id) &&
+                        (requestedNatEntry["slotId"] == slot_id)) {
+                    matched = true;
+                }
+            } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
+                if (requestedNatEntry["vlanId"] == vlan_id) {
+                    matched = true;
+                }
+            }
+
+            if (matched) {
                 dataStub::NatConfig *nat_config = response->add_nat_config();
                 nat_config->set_address(requestedNatEntry["addr"].asString());
                 nat_config->set_port(requestedNatEntry["port"].asInt());
                 nat_config->set_global_port(requestedNatEntry["globalPort"].asInt());
                 nat_config->set_ip_protocol(requestedNatEntry["proto"].asString());
+                break;
             }
         }
     }

@@ -10,6 +10,7 @@ add_definitions(-DTELUX_TECH_AREA=7)
 set(THERM_SIM_SOURCES
     ThermalFactoryImplStub.cpp
     ThermalManagerImplStub.cpp
+    ThermalShutdownManagerImplStub.cpp
 )
 
 macro(SYSR_INCLUDE_DIR subdir)

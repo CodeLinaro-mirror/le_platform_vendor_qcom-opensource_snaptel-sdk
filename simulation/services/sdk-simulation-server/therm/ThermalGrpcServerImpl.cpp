@@ -19,6 +19,11 @@ ThermalGrpcServerImpl::ThermalGrpcServerImpl() {
     } catch (std::bad_alloc &e) {
         LOG(DEBUG, __FUNCTION__, ":: Invalid object ! ");
     }
+
+    auto status = jsonHelper_->readJsonObjects();
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(DEBUG, __FUNCTION__, ":: reading of json failed");
+    }
 }
 
 ThermalGrpcServerImpl::~ThermalGrpcServerImpl() {
@@ -45,12 +50,6 @@ grpc::Status ThermalGrpcServerImpl::InitService(ServerContext* context,
     if (status != telux::common::Status::SUCCESS) {
         return grpc::Status(grpc::StatusCode::CANCELLED,
                 ":: Could not register indication with EventMgr");
-    }
-
-    status = jsonHelper_->init();
-    if (status != telux::common::Status::SUCCESS) {
-        LOG(DEBUG, __FUNCTION__, ":: Init of thermal zones failed");
-        return grpc::Status(grpc::StatusCode::CANCELLED, ":: json init failed");
     }
 
     telux::common::ServiceStatus srvStatus = jsonHelper_->initServiceStatus();

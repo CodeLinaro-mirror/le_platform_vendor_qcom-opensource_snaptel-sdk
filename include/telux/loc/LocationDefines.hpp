@@ -870,7 +870,11 @@ enum LocationInfoExValidityType {
   /** valid DR Solution status*/
   HAS_SOLUTION_STATUS = (1ULL << 38),
   /** valid dgnssStationId */
-  HAS_DGNSS_STATION_ID = (1ULL<<39)
+  HAS_DGNSS_STATION_ID = (1ULL<<39),
+  /** valid baseline length */
+  HAS_BASE_LINE_LENGTH = (1ULL<<40),
+  /** valid age of correction */
+  HAS_AGE_OF_CORRECTION = (1ULL<<41)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1121,6 +1125,7 @@ struct SvBlackListInfo {
     GnssConstellationType constellation;
     /** sv id for the constellation:
      * 0 means blacklist for all SVIds of a given constellation type
+     * GPS SV id range: 1 to 32
      * GLONASS SV id range: 65 to 96
      * QZSS SV id range: 193 to 197
      * BDS SV id range: 201 to 237
@@ -3074,11 +3079,22 @@ public:
 
 /** List of DGNSS station IDs providing corrections.
  *  Range:
- *  - SBAS -  120 to 158 and 183 to 191
- *  - Monitoring station - 1000-2023 (Station ID biased by 1000)
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
  *  - Other values reserved.
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;
+
+ /** Distance between the basestation and the receiver.
+  *  Units: meter.
+ */
+  virtual double getBaselineLength() = 0;
+
+ /** Difference in time between the fix timestamp using the correction
+  * and the time of the correction data.
+  * Units: milliseconds.
+ */
+  virtual uint64_t getAgeOfCorrections() = 0;
 
 };
 

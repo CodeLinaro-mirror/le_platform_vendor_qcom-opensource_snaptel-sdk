@@ -161,10 +161,73 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
     ::dataStub::StaticNatRequest request;
     ::dataStub::DefaultReply response;
     ClientContext context;
-
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
+    request.mutable_static_nat_entry()->set_backhaul_type(
+            ::dataStub::BackhaulPreference::PREF_WWAN);
     request.mutable_static_nat_entry()->set_profile_id(profileId);
     request.mutable_static_nat_entry()->set_slot_id(slotId);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_port(snatConfig.port);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_global_port(
+        snatConfig.globalPort);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_ip_protocol(
+        DataUtilsStub::protocolToString(snatConfig.proto));
+
+    grpc::Status reqStatus = stub_->AddStaticNatEntry(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " addStaticNatEntry request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhInfo, const NatConfig
+        &snatConfig, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::StaticNatRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
+    if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+                ::dataStub::BackhaulPreference::PREF_WWAN);
+        request.mutable_static_nat_entry()->set_profile_id(bhInfo.profileId);
+        request.mutable_static_nat_entry()->set_slot_id(bhInfo.slotId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+                ::dataStub::BackhaulPreference::PREF_ETH);
+        request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
+    } else {
+        return telux::common::Status::NOTSUPPORTED;
+    }
+
     request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_port(snatConfig.port);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_global_port(
@@ -203,7 +266,7 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
 telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
     const NatConfig &snatConfig, telux::common::ResponseCallback callback,
     SlotId slotId) {
-    LOG(DEBUG, __FUNCTION__);
+     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Nat manager not ready");
@@ -215,8 +278,71 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
     ClientContext context;
 
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
+    request.mutable_static_nat_entry()->set_backhaul_type(
+            ::dataStub::BackhaulPreference::PREF_WWAN);
     request.mutable_static_nat_entry()->set_profile_id(profileId);
     request.mutable_static_nat_entry()->set_slot_id(slotId);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_port(snatConfig.port);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_global_port(
+        snatConfig.globalPort);
+    request.mutable_static_nat_entry()->mutable_nat_config()->set_ip_protocol(
+        DataUtilsStub::protocolToString(snatConfig.proto));
+
+    grpc::Status reqStatus = stub_->RemoveStaticNatEntry(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " removeStaticNatEntry request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &bhInfo, const
+        NatConfig &snatConfig, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::StaticNatRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
+    if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+                ::dataStub::BackhaulPreference::PREF_WWAN);
+        request.mutable_static_nat_entry()->set_profile_id(bhInfo.profileId);
+        request.mutable_static_nat_entry()->set_slot_id(bhInfo.slotId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+                ::dataStub::BackhaulPreference::PREF_ETH);
+        request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
+    } else {
+        return telux::common::Status::NOTSUPPORTED;
+    }
+
     request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_port(snatConfig.port);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_global_port(
@@ -266,8 +392,73 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
+    request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_WWAN);
     request.set_profile_id(profileId);
     request.set_slot_id(slotId);
+
+    grpc::Status reqStatus = stub_->RequestStaticNatEntries(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    status = static_cast<telux::common::Status>(response.reply().status());
+    delay = static_cast<int>(response.reply().delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " requestStaticNatEntries request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+        std::vector<NatConfig> snatEntries;
+        for (int idx = 0; idx < response.nat_config_size(); idx++) {
+            NatConfig obj;
+            obj.addr = response.mutable_nat_config(idx)->address();
+            obj.port = response.mutable_nat_config(idx)->port();
+            obj.globalPort = response.mutable_nat_config(idx)->global_port();
+            obj.proto = DataUtilsStub::stringToProtocol(
+                response.mutable_nat_config(idx)->ip_protocol());
+            snatEntries.push_back(obj);
+        }
+
+        if (snatEntriesCb && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, snatEntries, snatEntriesCb, delay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    snatEntriesCb(snatEntries, error);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::requestStaticNatEntries(const BackhaulInfo &bhInfo,
+        StaticNatEntriesCb snatEntriesCb) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::RequestStaticNatEntriesRequest request;
+    ::dataStub::RequestStaticNatEntriesReply response;
+    ClientContext context;
+
+    request.set_operation_type(::dataStub::OperationType(oprType_));
+    if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+        request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_WWAN);
+        request.set_profile_id(bhInfo.profileId);
+        request.set_slot_id(bhInfo.slotId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
+        request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_ETH);
+        request.set_vlan_id(bhInfo.vlanId);
+    } else {
+        return telux::common::Status::NOTSUPPORTED;
+    }
 
     grpc::Status reqStatus = stub_->RequestStaticNatEntries(&context, request, &response);
 
@@ -307,7 +498,6 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
 
     return status;
 }
-
 
 telux::data::OperationType NatManagerStub::getOperationType() {
     LOG(DEBUG, __FUNCTION__);

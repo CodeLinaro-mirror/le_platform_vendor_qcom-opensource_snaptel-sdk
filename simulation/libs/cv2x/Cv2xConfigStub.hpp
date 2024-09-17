@@ -24,6 +24,19 @@ class AsyncTaskQueue;
 
 namespace cv2x {
 
+class ConfigChangedListener : public telux::common::IEventListener {
+ public:
+    void onEventUpdate(google::protobuf::Any event) override;
+    telux::common::Status registerListener(
+        std::weak_ptr<telux::cv2x::ICv2xConfigListener> listener);
+    telux::common::Status deregisterListener(
+        std::weak_ptr<telux::cv2x::ICv2xConfigListener> listener);
+
+ private:
+    telux::common::ListenerManager<telux::cv2x::ICv2xConfigListener> listenerMgr_;
+    void onConfigChanged(const ConfigEventInfo &info);
+};
+
 class Cv2xConfigStub : public ICv2xConfig {
  public:
     Cv2xConfigStub();
@@ -54,6 +67,7 @@ class Cv2xConfigStub : public ICv2xConfig {
     std::atomic<bool> exiting_;
     std::vector<std::weak_ptr<ICv2xConfigListener>> listeners_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    std::shared_ptr<ConfigChangedListener> configEvtListener_;
 };
 
 }  // namespace cv2x

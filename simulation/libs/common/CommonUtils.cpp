@@ -8,8 +8,9 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-
 #include <jsoncpp/json/json.h>
+#include <telux/common/Version.hpp>
+
 #include "CommonUtils.hpp"
 #include "SimulationConfigParser.hpp"
 
@@ -406,6 +407,33 @@ std::vector<std::string> CommonUtils::splitString(std::string msg) {
         message.push_back(str);
     }
     return message;
+}
+
+long CommonUtils::convertHexToInt(std::string hex) {
+    long value = 0;
+    if (hex.rfind("0x", 0) == 0) {
+        value = std::stol(hex, nullptr, 0);
+    } else {
+        value = std::stol(hex, nullptr, 16);
+    }
+    return value;
+}
+
+std::string CommonUtils::convertIntVectorToString(std::vector<int> integers) {
+  std::stringstream ss;
+  for (std::size_t i = 0; i < integers.size(); i++)
+  {
+          ss << integers[i] << " ";
+  }
+  return ss.str();
+}
+
+void CommonUtils::logSdkVersion() {
+    auto sdkVersion            = telux::common::Version::getSdkVersion();
+    std::string sdkReleaseName = telux::common::Version::getReleaseName();
+    LOG(INFO, "\n Telematics SDK - Release Name: ", telux::common::Version::getReleaseName(),
+        "\n SDK Major Version Major: ", sdkVersion.major, ", Minor: ", sdkVersion.minor,
+        ", Patch: ", sdkVersion.patch, "\nRelease name: ", sdkReleaseName);
 }
 
 }  // namespace common

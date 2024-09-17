@@ -38,6 +38,7 @@
 #include "data/ServingSystemServerImpl.hpp"
 #include "data/DataFilterServerImpl.hpp"
 #include "data/DualDataServerImpl.hpp"
+#include "data/DataControlServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
@@ -55,6 +56,8 @@
 #include "power/PowerManagerServiceImpl.hpp"
 #include "sensor/SensorClientServerImpl.hpp"
 #include "sensor/SensorReportService.hpp"
+#include "tel/SuppServicesManagerServerImpl.hpp"
+#include "platform/DeviceInfoManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -181,6 +184,10 @@ void SimulationServer::startGrpcServer() {
         std::make_shared<DualDataServerImpl>();
     builder.RegisterService(dualDataService.get());
 
+    std::shared_ptr<DataControlServerImpl> dataControlService =
+        std::make_shared<DataControlServerImpl>();
+    builder.RegisterService(dataControlService.get());
+
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);
 
@@ -241,6 +248,14 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<PowerManagerServiceImpl> powerService =
         std::make_shared<PowerManagerServiceImpl>();
     builder.RegisterService(powerService.get());
+
+    std::shared_ptr<DeviceInfoManagerServerImpl> DeviceInfoManagerService =
+        std::make_shared<DeviceInfoManagerServerImpl>();
+    builder.RegisterService(DeviceInfoManagerService.get());
+
+    std::shared_ptr<SuppServicesManagerServerImpl> suppService =
+        std::make_shared<SuppServicesManagerServerImpl>();
+    builder.RegisterService(suppService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

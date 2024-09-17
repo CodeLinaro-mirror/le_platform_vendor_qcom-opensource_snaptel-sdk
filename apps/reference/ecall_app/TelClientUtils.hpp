@@ -85,6 +85,11 @@ public:
      */
     static void printECallMsdPayload(std::string encodedPdu);
 
+    /*
+     * Prints the reason to redial eCall or not.
+     */
+    static std::string eCallRedialReasonToString(ReasonType reason);
+
     TelClientUtils();
     ~TelClientUtils();
 };

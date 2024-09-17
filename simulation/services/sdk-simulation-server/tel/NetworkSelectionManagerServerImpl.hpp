@@ -55,6 +55,13 @@ public:
     grpc::Status SetPreferredNetworks(ServerContext* context,
         const ::telStub::SetPreferredNetworksRequest* request,
         telStub::SetPreferredNetworksReply* response) override;
+    grpc::Status SetLteDubiousCell(ServerContext* context,
+            const ::telStub::SetLteDubiousCellRequest* request,
+            ::telStub::SetLteDubiousCellReply* response) override;
+    grpc::Status SetNrDubiousCell(ServerContext* context,
+            const ::telStub::SetNrDubiousCellRequest* request,
+            ::telStub::SetNrDubiousCellReply* response) override;
+
 private:
     void createPreferredNetworkInfo(telux::tel::PreferredNetworkInfo input,
         telStub::PreferredNetworkInfo* output);
@@ -83,6 +90,9 @@ private:
     void handleNetworkScanResultsChanged(std::string eventParams);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
     void onEventUpdate(std::string event);
+    void triggerNetworkScanResultsEvent(::telStub::NetworkScanResultsChangeEvent event);
+    ::telStub::RadioTechnology converRatTypeToRadioTechnology(::telStub::RatType_Type rat);
+    ::telStub::RadioTechnology converRatPrefTypeToRadioTechnology(::telStub::RatPrefType rat);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 

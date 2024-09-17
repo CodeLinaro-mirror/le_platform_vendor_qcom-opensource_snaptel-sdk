@@ -21,8 +21,22 @@
 namespace telux {
 namespace cv2x {
 
+class Cv2xRadioEvtListener : public telux::common::IEventListener {
+ public:
+    void onEventUpdate(google::protobuf::Any event) override;
+    telux::common::Status registerListener(
+        std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
+    telux::common::Status deregisterListener(
+        std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
+
+ private:
+    telux::common::ListenerManager<telux::cv2x::ICv2xRadioListener> listenerMgr_;
+    void onCv2xStatusChange(telux::cv2x::Cv2xStatus &status);
+    void onL2AddrChanged(uint32_t newL2Address);
+};
+
 class Cv2xRadioSimulation : public ICv2xRadio,
-                            public ICv2xListener,
+                            public ICv2xRadioListener,
                             public std::enable_shared_from_this<Cv2xRadioSimulation> {
  public:
     Cv2xRadioSimulation();
@@ -115,7 +129,6 @@ class Cv2xRadioSimulation : public ICv2xRadio,
     void setInitializedStatus(telux::common::Status status, telux::common::InitResponseCb cb);
     int getV6AddrByIface(string &ifaceName, struct in6_addr &addr);
     void onStatusChanged(cv2x::Cv2xStatus status);
-    void notifyListenersStatusChange(Cv2xStatus status);
     void createRxSubscriptionSync(TrafficIpType ipType, uint16_t port,
         CreateRxSubscriptionCallback cb, shared_ptr<vector<uint32_t>> idList);
     telux::common::Status initRxSock(
@@ -191,8 +204,7 @@ class Cv2xRadioSimulation : public ICv2xRadio,
     std::recursive_mutex tcpSockMutex_;
     std::map<uint32_t, std::shared_ptr<ICv2xTxRxSocket>> tcpSockets_;
 
-    std::shared_ptr<Cv2xEvtListener> pEvtListener_ = nullptr;
-    telux::common::ListenerManager<ICv2xRadioListener> radioListenerMgr_;
+    std::shared_ptr<Cv2xRadioEvtListener> pEvtListener_ = nullptr;
     std::map<uint16_t, std::weak_ptr<ICv2xTxStatusReportListener>> txStatusListeners_;
     std::mutex txStatusMtx_;
     std::unique_ptr<::cv2xStub::Cv2xRadioService::Stub> serviceStub_ = nullptr;

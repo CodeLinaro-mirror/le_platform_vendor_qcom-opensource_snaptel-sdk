@@ -1478,6 +1478,7 @@ message SvBlackListInfo {
     GnssConstellationType constellation = 1;
     /** sv id for the constellation:
      * 0 means blacklist for all SVIds of a given constellation type
+     * GPS SV id range: 1 to 32
      * GLONASS SV id range: 65 to 96
      * QZSS SV id range: 193 to 197
      * BDS SV id range: 201 to 237

@@ -424,17 +424,6 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                 cellInfo->mutable_cell_type()->set_registered(isRegistered);
                 telStub::CellInfo_CellType cellType =
                     static_cast<telStub::CellInfo_CellType>(requestedCell["cellType"].asInt());
-                if (isRegistered) {
-                    if (servingRat == telStub::RadioTechnology::RADIO_TECH_GSM) {
-                        cellType = telStub::CellInfo_CellType_GSM;
-                    } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_UMTS) {
-                        cellType = telStub::CellInfo_CellType_WCDMA;
-                    } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_LTE) {
-                        cellType = telStub::CellInfo_CellType_LTE;
-                    } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_NR5G) {
-                        cellType = telStub::CellInfo_CellType_NR5G;
-                    }
-                }
                 cellInfo->mutable_cell_type()->set_cell_type(
                     static_cast<telStub::CellInfo_CellType>(cellType));
                 switch(cellType) {
@@ -830,17 +819,6 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
             cellInfo->mutable_cell_type()->set_registered(isRegistered);
             telStub::CellInfo_CellType cellType =
                 static_cast<telStub::CellInfo_CellType>(requestedCell["cellType"].asInt());
-            if (isRegistered) {
-                if (servingRat == telStub::RadioTechnology::RADIO_TECH_GSM) {
-                    cellType = telStub::CellInfo_CellType_GSM;
-                } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_UMTS) {
-                    cellType = telStub::CellInfo_CellType_WCDMA;
-                } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_LTE) {
-                    cellType = telStub::CellInfo_CellType_LTE;
-                } else if (servingRat == telStub::RadioTechnology::RADIO_TECH_NR5G) {
-                    cellType = telStub::CellInfo_CellType_NR5G;
-                }
-            }
             cellInfo->mutable_cell_type()->set_cell_type(
                 static_cast<telStub::CellInfo_CellType>(cellType));
             switch(cellType) {
@@ -1324,6 +1302,23 @@ telux::common::ErrorCode TelUtil::readOperatingModeFromJsonFile(telStub::Operati
         ["operatingMode"].asInt();
     mode = static_cast<telStub::OperatingMode>(operatingMode);
     LOG(DEBUG, __FUNCTION__," OperatingMode: ", operatingMode);
+    return error;
+}
+
+telux::common::ErrorCode TelUtil::readRatPreferenceFromJsonFile(int phoneId,
+    std::vector<int> &ratData) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value stateRootObj;
+    std::string jsonfilename;
+    telux::common::ErrorCode error = readFromJsonFile(phoneId, TEL_SERVING_MANAGER, stateRootObj,
+        jsonfilename);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+        return error;
+    }
+    std::string ratPref = stateRootObj[TEL_SERVING_MANAGER]["RATPreference"].asString();
+    ratData = CommonUtils::convertStringToVector(ratPref);
+    LOG(DEBUG, __FUNCTION__," RAT preference: ", ratPref);
     return error;
 }
 
@@ -2007,7 +2002,7 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
     try {
         // Read string to get slotId
         std::string token = EventParserUtil::getNextToken(params[0], DEFAULT_DELIMITER);
-        int phoneId = std::stoi(token);
+        phoneId = std::stoi(token);
         LOG(DEBUG, __FUNCTION__, " PhoneId : ", phoneId);
         if (phoneId < SLOT_1 || phoneId > SLOT_2) {
             LOG(ERROR, " Invalid input for phone id");
@@ -2321,17 +2316,17 @@ telux::common::ErrorCode TelUtil::writeEcallOperatingModeToJsonFile(std::string 
     int &phoneId) {
 
     Json::Value rootObj;
-    std::string jsonfilename = (phoneId == SLOT_1)? PHONE_JSON_STATE_PATH1 : PHONE_JSON_STATE_PATH2;
+    std::string jsonfilename = "";
     try {
         // Read string to get slotId
         std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        int phoneId = std::stoi(token);
+        phoneId = std::stoi(token);
         LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
         if (phoneId < SLOT_1 || phoneId > SLOT_2) {
             LOG(ERROR, " Invalid input for slot id");
             return telux::common::ErrorCode::INVALID_ARGUMENTS;
         }
-
+        jsonfilename = (phoneId == SLOT_1)? PHONE_JSON_STATE_PATH1 : PHONE_JSON_STATE_PATH2;
         // Read string to get eCall mode
         token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         int ecallMode = std::stoi(token);
@@ -2368,12 +2363,14 @@ telux::common::ErrorCode TelUtil::writeEcallOperatingModeToJsonFile(std::string 
 telux::common::ErrorCode TelUtil::writeOperatorInfoToJsonFile(std::string eventParams,
     int &phoneId) {
     Json::Value rootObj;
-    std::string jsonfilename = (phoneId == SLOT_1)? PHONE_JSON_STATE_PATH1 : PHONE_JSON_STATE_PATH2;
+    std::string jsonfilename = "";
     try {
         // Read string to get slotId
         std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        int phoneId = std::stoi(token);
+        phoneId = std::stoi(token);
         LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
+        jsonfilename = (phoneId == SLOT_1)? PHONE_JSON_STATE_PATH1 :
+            PHONE_JSON_STATE_PATH2;
         if (phoneId < SLOT_1 || phoneId > SLOT_2) {
             LOG(ERROR, " Invalid input for slot id");
             return telux::common::ErrorCode::INVALID_ARGUMENTS;

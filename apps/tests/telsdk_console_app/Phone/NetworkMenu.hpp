@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef NETWORKMENU_HPP
@@ -64,6 +63,8 @@ public:
    void setPreferredNetworks(std::vector<std::string> userInput);
    void performNetworkScan(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
+   void setLteDubiousCell(std::vector<std::string> userInput);
+   void setNrDubiousCell(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

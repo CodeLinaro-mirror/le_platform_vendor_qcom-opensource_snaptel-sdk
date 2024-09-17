@@ -7,51 +7,78 @@
 #include "ServingSystemManagerStub.hpp"
 #include "TelDefinesStub.hpp"
 
-#define DELAY 100
-
 using namespace telux::common;
 using namespace telux::tel;
 
-ServingSystemManagerStub::ServingSystemManagerStub(int phoneId,
-    telux::common::InitResponseCb callback) {
+ServingSystemManagerStub::ServingSystemManagerStub(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<::telStub::ServingSystemService>();
     phoneId_ = phoneId;
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
-        }).share();
-    taskQ_->add(f);
+    subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    cbDelay_ = DEFAULT_DELAY;
 }
 
-void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) {
+void ServingSystemManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " Service Status: ", static_cast<int>(status));
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        subSystemStatus_ = status;
+    }
+    if(initCb_) {
+        auto f1 = std::async(std::launch::async,
+        [this, status]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
+                initCb_(status);
+        }).share();
+        taskQ_->add(f1);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Callback is NULL");
+    }
+}
+
+telux::common::Status ServingSystemManagerStub::init(
+    telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IServingSystemListener>>();
+    if(!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+        return telux::common::Status::FAILED;
+    }
+    stub_ = CommonUtils::getGrpcStub<::telStub::ServingSystemService>();
+    if(!stub_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate serving system service");
+        return telux::common::Status::FAILED;
+    }
+    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    if(!taskQ_) {
+        LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
+        return telux::common::Status::FAILED;
+    }
+    initCb_ = callback;
+    auto f = std::async(std::launch::async,
+        [this]() {
+            this->initSync();
+        }).share();
+    auto status = taskQ_->add(f);
+    return status;
+}
+
+void ServingSystemManagerStub::initSync() {
     ::commonStub::GetServiceStatusReply response;
     ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
-    stub_->InitService(&context, request, &response);
-
-    telux::common::ServiceStatus cbStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
-    int cbDelay = static_cast<int>(response.delay());
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        listenerMgr_ =
-            std::make_shared<telux::common::ListenerManager<IServingSystemListener,
-                ServingSystemNotificationMask >>();
-        if(!listenerMgr_) {
-            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
-            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-        }
-        // TODO: Add SSR related changes
-        LOG(DEBUG, __FUNCTION__, " ServingSystemManager is ready");
+    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " InitService request failed");
+    } else {
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay_ = static_cast<int>(response.delay());
     }
-    if(callback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        callback(cbStatus);
-    }
+    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
+        " callback status ", static_cast<int>(cbStatus));
+    setServiceStatus(cbStatus);
 }
 
 ServingSystemManagerStub::~ServingSystemManagerStub() {
@@ -77,15 +104,7 @@ void ServingSystemManagerStub::cleanup() {
 
 telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
-    request.set_phone_id(phoneId_);
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    return serviceStatus;
+    return subSystemStatus_;
 }
 
 std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
@@ -94,7 +113,7 @@ std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
     ready_future = std::async(std::launch::async,
     [this]() {
         while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
+            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
         }
     return(isSubsystemReady());});
     return((ready_future));
@@ -532,6 +551,16 @@ telux::common::Status ServingSystemManagerStub::requestNetworkTime(
     return status;
 }
 
+telux::common::Status ServingSystemManagerStub::requestLteSib16NetworkTime(
+    NetworkTimeResponseCallback callback) {
+    return requestNetworkTime(callback);
+}
+
+telux::common::Status ServingSystemManagerStub::requestNr5gRrcUtcTime(
+    NetworkTimeResponseCallback callback) {
+    return requestNetworkTime(callback);
+}
+
 telux::common::Status ServingSystemManagerStub::requestRFBandInfo(RFBandInfoCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -629,33 +658,217 @@ telux::common::Status ServingSystemManagerStub::getCallBarringInfo
 
 telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
     (SmsCapability &smsCapability) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::GetSmsCapabilityOverNetworkRequest request;
+    ::telStub::GetSmsCapabilityOverNetworkReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetSmsCapabilityOverNetwork(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    smsCapability.domain =
+        static_cast<telux::tel::SmsDomain>(response.domain());
+    smsCapability.rat = static_cast<telux::tel::RadioTechnology>(response.rat());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    return status;
 }
 
 
 telux::common::Status ServingSystemManagerStub::getLteCsCapability
     (LteCsCapability &lteCapability) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::GetLteCsCapabilityRequest request;
+    ::telStub::GetLteCsCapabilityReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetLteCsCapability(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    lteCapability =
+        static_cast<telux::tel::LteCsCapability>(response.capability());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    return status;
 }
 
 telux::common::Status ServingSystemManagerStub::requestRFBandPreferences
     (RFBandPrefCallback callback) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::RequestRFBandPreferencesRequest request;
+    ::telStub::RequestRFBandPreferencesReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->RequestRFBandPreferences(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    std::vector<GsmRFBand> gsmBands     = {};
+    std::vector<WcdmaRFBand> wcdmaBands = {};
+    std::vector<LteRFBand> lteBands     = {};
+    std::vector<NrRFBand> saBands       = {};
+    std::vector<NrRFBand> nsaBands      = {};
+    for (auto &g : response.gsm_pref_bands()) {
+        gsmBands.push_back(static_cast<GsmRFBand>(g));
+    }
+    for (auto &w : response.wcdma_pref_bands()) {
+        wcdmaBands.push_back(static_cast<WcdmaRFBand>(w));
+    }
+    for (auto &l : response.lte_pref_bands()) {
+        lteBands.push_back(static_cast<LteRFBand>(l));
+    }
+    for (auto &n : response.nsa_pref_bands()) {
+        nsaBands.push_back(static_cast<NrRFBand>(n));
+    }
+    for (auto &s : response.sa_pref_bands()) {
+        saBands.push_back(static_cast<NrRFBand>(s));
+    }
+    auto builder                           = std::make_shared<RFBandListBuilder>();
+    telux::common::ErrorCode errCode       = telux::common::ErrorCode::UNKNOWN;
+    std::shared_ptr<IRFBandList> prefBands = builder->addGsmRFBands(gsmBands)
+                                                 .addWcdmaRFBands(wcdmaBands)
+                                                 .addLteRFBands(lteBands)
+                                                 .addNrRFBands(NrType::SA, saBands)
+                                                 .addNrRFBands(NrType::NSA, nsaBands)
+                                                 .build(errCode);
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int cbDelay = static_cast<int>(response.delay());
+    if((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+    auto f = std::async(std::launch::async,
+        [this, cbDelay, prefBands, error, callback]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(prefBands, error);
+            }
+        }).share();
+    taskQ_->add(f);
+    }
+    return status;
 }
 
 telux::common::Status ServingSystemManagerStub::setRFBandPreferences
     (std::shared_ptr<IRFBandList> prefList, common::ResponseCallback callback) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SetRFBandPreferencesRequest request;
+    ::telStub::SetRFBandPreferencesReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    for(auto &g : prefList->getGsmBands()) {
+         request.add_gsm_pref_bands(static_cast<telStub::GsmRFBand>(g));
+    }
+    for(auto &w : prefList->getWcdmaBands()) {
+         request.add_wcdma_pref_bands(static_cast<telStub::WcdmaRFBand>(w));
+    }
+    for(auto &l : prefList->getLteBands()) {
+         request.add_lte_pref_bands(static_cast<telStub::LteRFBand>(l));
+    }
+    for(auto &n : prefList->getNrBands(NrType::NSA)) {
+         request.add_nsa_pref_bands(static_cast<telStub::NrRFBand>(n));
+    }
+    for(auto &s: prefList->getNrBands(NrType::SA)) {
+         request.add_sa_pref_bands(static_cast<telStub::NrRFBand>(s));
+    }
+    grpc::Status reqstatus = stub_->SetRFBandPreferences(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int cbDelay = static_cast<int>(response.delay());
+    if((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+    auto f = std::async(std::launch::async,
+        [this, cbDelay, error, callback]() {
+            if (callback) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }
+        }).share();
+    taskQ_->add(f);
+    }
+    return status;
 }
 
 telux::common::Status ServingSystemManagerStub::requestRFBandCapability
     (RFBandCapabilityCallback callback) {
-    LOG(ERROR, __FUNCTION__ , "Not Supported");
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::RequestRFBandCapabilityRequest request;
+    ::telStub::RequestRFBandCapabilityReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->RequestRFBandCapability(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    std::vector<GsmRFBand> gsmBands     = {};
+    std::vector<WcdmaRFBand> wcdmaBands = {};
+    std::vector<LteRFBand> lteBands     = {};
+    std::vector<NrRFBand> nrBands       = {};
+    for (auto &g : response.gsm_capability_bands()) {
+        gsmBands.push_back(static_cast<GsmRFBand>(g));
+    }
+    for (auto &w : response.wcdma_capability_bands()) {
+        wcdmaBands.push_back(static_cast<WcdmaRFBand>(w));
+    }
+    for (auto &l : response.lte_capability_bands()) {
+        lteBands.push_back(static_cast<LteRFBand>(l));
+    }
+    for (auto &n : response.nr_capability_bands()) {
+        nrBands.push_back(static_cast<NrRFBand>(n));
+    }
+    auto builder                           = std::make_shared<RFBandListBuilder>();
+    telux::common::ErrorCode errCode       = telux::common::ErrorCode::UNKNOWN;
+    std::shared_ptr<IRFBandList> capabilityBands = builder->addGsmRFBands(gsmBands)
+                                                 .addWcdmaRFBands(wcdmaBands)
+                                                 .addLteRFBands(lteBands)
+                                                 .addNrRFBands(NrType::COMBINED, nrBands)
+                                                 .build(errCode);
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int cbDelay = static_cast<int>(response.delay());
+    if((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+    auto f = std::async(std::launch::async,
+        [this, cbDelay, capabilityBands, error, callback]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(capabilityBands, error);
+            }
+        }).share();
+    taskQ_->add(f);
+    }
+    return status;
 }
 
 
@@ -760,6 +973,12 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
     info.rat = static_cast<RadioTechnology>(event.current_rat());
     info.domain = static_cast<ServiceDomain>(event.current_domain());
 
+    SmsCapability smsCapability;
+    smsCapability.rat = static_cast<RadioTechnology>(event.sms_rat());
+    smsCapability.domain = static_cast<SmsDomain>(event.sms_domain());
+
+    LteCsCapability lteCapability = static_cast<LteCsCapability>(event.lte_capability());;
+
     std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(
@@ -772,6 +991,16 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onSystemInfoChanged(info);
+            }
+        }
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onSmsCapabilityChanged(smsCapability);
+            }
+        }
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onLteCsCapabilityChanged(lteCapability);
             }
         }
     } else {
@@ -795,6 +1024,35 @@ void ServingSystemManagerStub::handleSystemSelectionPreferenceChanged
     ServiceDomainPreference domain =
         static_cast<telux::tel::ServiceDomainPreference>(event.service_domain_pref());
 
+    std::vector<GsmRFBand> gsmBands     = {};
+    std::vector<WcdmaRFBand> wcdmaBands = {};
+    std::vector<LteRFBand> lteBands     = {};
+    std::vector<NrRFBand> saBands       = {};
+    std::vector<NrRFBand> nsaBands      = {};
+    for (auto &g : event.gsm_pref_bands()) {
+        gsmBands.push_back(static_cast<GsmRFBand>(g));
+    }
+    for (auto &w : event.wcdma_pref_bands()) {
+        wcdmaBands.push_back(static_cast<WcdmaRFBand>(w));
+    }
+    for (auto &l : event.lte_pref_bands()) {
+        lteBands.push_back(static_cast<LteRFBand>(l));
+    }
+    for (auto &n : event.nsa_pref_bands()) {
+        nsaBands.push_back(static_cast<NrRFBand>(n));
+    }
+    for (auto &s : event.sa_pref_bands()) {
+        saBands.push_back(static_cast<NrRFBand>(s));
+    }
+    auto builder                           = std::make_shared<RFBandListBuilder>();
+    telux::common::ErrorCode errCode       = telux::common::ErrorCode::UNKNOWN;
+    std::shared_ptr<IRFBandList> prefBands = builder->addGsmRFBands(gsmBands)
+                                                 .addWcdmaRFBands(wcdmaBands)
+                                                 .addLteRFBands(lteBands)
+                                                 .addNrRFBands(NrType::SA, saBands)
+                                                 .addNrRFBands(NrType::NSA, nsaBands)
+                                                 .build(errCode);
+
     LOG(DEBUG, __FUNCTION__, " ServiceDomainPreference is  ", static_cast<int>(domain));
 
     std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
@@ -810,6 +1068,12 @@ void ServingSystemManagerStub::handleSystemSelectionPreferenceChanged
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onServiceDomainPreferenceChanged(domain);
+            }
+        }
+
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onRFBandPreferenceChanged(prefBands);
             }
         }
     } else {

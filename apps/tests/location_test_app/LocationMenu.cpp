@@ -203,7 +203,7 @@ int LocationMenu::init() {
                         std::bind(&LocationMenu::configureLeverArm, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Configure blacklist constellation or SVs ", {}, std::bind(
+      ConsoleAppCommand("10", "Configure blacklist constellation or SVs", {}, std::bind(
                         &LocationMenu::configureConstellation, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureRobustLocation = std::make_shared<ConsoleAppCommand>(
@@ -1236,7 +1236,7 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             telux::loc::SvBlackListInfo blackListInfo;
             std::string constellation;
             std::cout << " Enter the constellation : " << std::endl;
-            std::cout << " Enter 2 for GALILEO, 3 for SBAS, 5 for GLONASS " << std::endl;
+            std::cout << " Enter 1 for GPS, 2 for GALILEO, 3 for SBAS, 5 for GLONASS " << std::endl;
             std::cout << " 6 for BEIDOU, 7 for QZSS, 8 for NAVIC : " << std::endl;
             std::getline(std::cin, constellation, delimiter);
             int constellationOption = 2;
@@ -1250,11 +1250,13 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             } else {
                  constellationOption = 2;
             }
-            if(constellationOption < 2 or constellationOption == 4 or  constellationOption > 8) {
+            if(constellationOption < 1 or constellationOption == 4 or  constellationOption > 8) {
                 std::cout << "invalid constellation, enter again." << std::endl;
                 continue;
             }
-            if(constellationOption == 2) {
+            if(constellationOption == 1) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::GPS;
+            } else if(constellationOption == 2) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::GALILEO;
             } else if (constellationOption == 3) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::SBAS;
@@ -2182,7 +2184,8 @@ int main(int argc, char **argv) {
         "Release name: " + sdkReleaseName;
     LocationMenu locationMenu(appName, "location> ");
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd",
+        "dlt", "leprop"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

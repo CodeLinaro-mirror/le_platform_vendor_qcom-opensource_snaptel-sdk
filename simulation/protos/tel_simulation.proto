@@ -288,6 +288,7 @@ message GetCardStateRequest {
      RadioTechnology sms_rat = 6;
      SmsDomain sms_domain = 7;
      LteCsCapability lte_capability = 8;
+     repeated CallBarringInfo barring_infos = 9;
  }
 
  message NetworkTimeInfoEvent {
@@ -1864,11 +1865,6 @@ enum NrRFBand {
  message GetCallBarringInfoReply {
      repeated CallBarringInfo barring_infos = 1;
      commonStub.Status status = 2;
- }
-
- message CallBarringInfosEvent {
-     repeated CallBarringInfo barring_infos = 1;
-     int32 phone_id = 2;
  }
 
  message RequestNetworkTimeRequest {

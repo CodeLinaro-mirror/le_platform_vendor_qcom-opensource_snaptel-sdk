@@ -871,43 +871,9 @@ telux::common::Status ServingSystemManagerStub::requestRFBandCapability
     return status;
 }
 
-
-void ServingSystemManagerStub::handleCallBarringInfosChanged
-    (::telStub::CallBarringInfosEvent event) {
-    LOG(DEBUG, __FUNCTION__);
-    // update CallBarringInfos
-    std::vector<CallBarringInfo> infos = {};
-    for (int i = 0; i < event.barring_infos_size(); i++) {
-        CallBarringInfo info;
-        info.rat = static_cast<telux::tel::RadioTechnology>(
-            event.barring_infos(i).rat());
-        info.domain = static_cast<telux::tel::ServiceDomain>(
-            event.barring_infos(i).domain());
-        info.callType = static_cast<telux::tel::CallsAllowedInCell>(
-            event.barring_infos(i).call_type());
-        infos.emplace_back(info);
-    }
-    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
-    if (listenerMgr_) {
-        listenerMgr_->getAvailableListeners(applisteners);
-        // Notify respective events
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onCallBarringInfoChanged(infos);
-            }
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
-    }
-}
-
 void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
-    if(event.Is<::telStub::CallBarringInfosEvent>()) {
-        ::telStub::CallBarringInfosEvent callBarringInfosChangeEvent;
-        event.UnpackTo(&callBarringInfosChangeEvent);
-        handleCallBarringInfosChanged(callBarringInfosChangeEvent);
-    } else if (event.Is<::telStub::SystemSelectionPreferenceEvent>()) {
+    if (event.Is<::telStub::SystemSelectionPreferenceEvent>()) {
         ::telStub::SystemSelectionPreferenceEvent systemSelectionPreferenceEvent;
         event.UnpackTo(&systemSelectionPreferenceEvent);
         handleSystemSelectionPreferenceChanged(systemSelectionPreferenceEvent);
@@ -979,6 +945,18 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
 
     LteCsCapability lteCapability = static_cast<LteCsCapability>(event.lte_capability());;
 
+    std::vector<CallBarringInfo> infos = {};
+    for (int i = 0; i < event.barring_infos_size(); i++) {
+        CallBarringInfo info;
+        info.rat = static_cast<telux::tel::RadioTechnology>(
+            event.barring_infos(i).rat());
+        info.domain = static_cast<telux::tel::ServiceDomain>(
+            event.barring_infos(i).domain());
+        info.callType = static_cast<telux::tel::CallsAllowedInCell>(
+            event.barring_infos(i).call_type());
+        infos.emplace_back(info);
+    }
+
     std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(
@@ -1001,6 +979,11 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onLteCsCapabilityChanged(lteCapability);
+            }
+        }
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onCallBarringInfoChanged(infos);
             }
         }
     } else {

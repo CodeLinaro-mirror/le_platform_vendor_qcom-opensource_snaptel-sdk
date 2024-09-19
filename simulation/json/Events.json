@@ -181,14 +181,6 @@
         ]
     },
     "tel_serv": {
-        "callBarringUpdate":[
-            "telsdk_event_injector -f tel_serv -e callBarringUpdate <slotId> ,<rat> <domain1> <callType> ,<rat> <domain2> <callType>",
-            "slotId:       valid slotIds are 1 & 2 only.",
-            "rat:          integer, Current serving radio technology. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
-            "domain:       integer, Current service domain registered on system. Refer SDK documentation enum ServiceDomain. For example PS_ONLY = 2",
-            "callType:     integer, Current call allowed type in cell. Refer SDK documentation enum CallsAllowedInCell. For example ALL_CALLS = 3",
-            "example: telsdk_event_injector -f tel_serv -e \"callBarringUpdate 1 ,14 2 3\""
-        ],
         "systemSelectionPreferenceUpdate":[
             "telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate <slotId> <serviceDomainPreference> <ratPreferences> ,<gsmBands> ,<wcdmaBands> ,<lteBands> ,<nsaBands> ,<saBands> ",
             "slotId:        integer, valid slotIds are 1 & 2 only.",
@@ -202,7 +194,7 @@
             "Example: telsdk_event_injector -f tel_serv -e systemSelectionPreferenceUpdate 1 0 012 ,1 2 3 ,4 5 6 ,7 8 9 ,10 11 12 ,96 102 "
         ],
         "systemInfoUpdate":[
-            "telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability>",
+            "telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability> ,<CallAllowedRat_i> <CallAllowedDomain_i> <CallAllowedType_i>",
             "slotId:            integer, valid slotIds are 1 & 2 only." ,
             "currentServingRat: integer, valid currentServingRat Refer for more details telux::tel::RadioTechnology ",
             "currentServingDomain: integer, valid currentServingDomain Refer for more details telux::tel::ServiceDomain",
@@ -210,7 +202,11 @@
             "dcnrRestriction:   integer, valid UNKNOWN = -1, RESTRICTED = 0, UNRESTRICTED = 1 Refer for more details telux::tel::dcnrRestriction",
             "smsRat:  integer, valid smsRat refer for more details telux::tel::RadioTechnology" ,
             "smsDomain:   integer, valid UNKNOWN = -1, NO_SMS = 0, SMS_ON_IMS = 1, SMS_ON_3GPP = 2. Refer for more details telux::tel::SmsDomain",
-            "lteCapability:   integer, refer for more details telux::tel::LteCsCapability"
+            "lteCapability:   integer, refer for more details telux::tel::LteCsCapability",
+            "CallAllowedRat_i:  integer, Current cell radio technology. Refer SDK documentation enum RadioTechnology. For example RADIO_TECH_LTE = 14",
+            "CallAllowedDomain_i:  integer, Current cell service domain registered on system. Valid value is telux::tel::ServiceDomain::CS_ONLY = 1 or telux::tel::ServiceDomain::PS_ONLY = 2",
+            "CallAllowedType_i:  integer, Current call allowed type in cell. Refer SDK documentation enum CallsAllowedInCell. For example ALL_CALLS = 3",
+            "Example: telsdk_event_injector -f tel_serv -e systemInfoUpdate 1 14 3 0 1 14 1 0 ,14 2 3"
         ],
         "networkTimeUpdate":[
             "telsdk_event_injector -f tel_serv -e networkTimeUpdate <slotId> <year> <month> <day> <hour> <minute> <second> <dayOfWeek> <timeZone> <dstAdj> <nitzTime>",

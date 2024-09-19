@@ -23,7 +23,6 @@
 #define NETWORK_REJECTION "networkRejectionUpdate"
 #define SLOT_1 1
 #define SLOT_2 2
-#define CALL_BARRING_UPDATE_EVENT "callBarringUpdate"
 
 ServingManagerServerImpl::ServingManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -805,84 +804,6 @@ grpc::Status ServingManagerServerImpl::RequestRFBandCapability(ServerContext* co
     return grpc::Status::OK;
 }
 
-void ServingManagerServerImpl::handleCallBarringUpdate(std::string eventParams) {
-    LOG(DEBUG, __FUNCTION__);
-
-    // Split the event string into parameters( for phoneId ,BarringInfo1 ,BarringInfo2 ...)
-    // based on delimeter as ","
-    std::stringstream ss(eventParams);
-    std::vector<string> params;
-    while (getline(ss, eventParams, ',')) {
-        params.emplace_back(eventParams);
-    }
-    for(std::string str:params) {
-        LOG(DEBUG, __FUNCTION__," Param: ", str);
-    }
-
-    ::telStub::CallBarringInfosEvent callBarringInfosEvent;
-    ::eventService::EventResponse anyResponse;
-    try {
-        // Read string to get slotId
-        std::string token = EventParserUtil::getNextToken(params[0], DEFAULT_DELIMITER);
-        int phoneId = std::stoi(token);
-        LOG(DEBUG, __FUNCTION__, " PhoneId : ", phoneId);
-        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
-            LOG(ERROR, " Invalid input for phone id");
-            return;
-        }
-
-        Json::Value rootObj;
-        std::string jsonfilename = (phoneId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
-        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
-        if (error != ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
-            return;
-        }
-
-        rootObj[MANAGER] ["CallBarringInfo"]["infoList"].clear();
-        callBarringInfosEvent.set_phone_id(phoneId);
-        int jsonInfoCount = rootObj[MANAGER] ["CallBarringInfo"]["infoList"].size();
-        int newInfoCount = params.size() - 1;
-        LOG(DEBUG, " jsonInfoCount ", jsonInfoCount , " newInfoCount ", newInfoCount);
-
-        for (int i = 1; i <= newInfoCount; i++) {
-            LOG(DEBUG, " Parsing Params:" , params[i]);
-            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-            int rat = std::stoi(token);
-            LOG(DEBUG, __FUNCTION__, " Rat is: ", rat);
-            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-            int domain = std::stoi(token);
-            LOG(DEBUG, __FUNCTION__, " Domain is: ", domain);
-            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-            int callType = std::stoi(token);
-            LOG(DEBUG, __FUNCTION__, " CallType is: ", callType);
-            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["rat"] = rat;
-            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["domain"] = domain;
-            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["callType"] = callType;
-
-            telStub::CallBarringInfo *result = callBarringInfosEvent.add_barring_infos();
-            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
-            result->set_domain
-                (static_cast<telStub::ServiceDomainInfo_Domain>(domain));
-            result->set_call_type
-                (static_cast<telStub::CallsAllowedInCell_Type>(callType));
-        }
-
-        JsonParser::writeToJsonFile(rootObj, jsonfilename);
-        anyResponse.set_filter(telux::tel::TEL_SERVING_SYSTEM_FILTER);
-        anyResponse.mutable_any()->PackFrom(callBarringInfosEvent);
-
-    } catch(exception const & ex) {
-        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
-        return;
-    }
-
-    auto f = std::async(std::launch::async, [this, anyResponse]() {
-            this->triggerChangeEvent(anyResponse);
-    }).share();
-    taskQ_->add(f);
-}
-
 void ServingManagerServerImpl::triggerChangeEvent(::eventService::EventResponse anyResponse) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -905,8 +826,6 @@ void ServingManagerServerImpl::onEventUpdate(std::string event) {
         handleRfBandInfoUpdateEvent(event);
     } else if( NETWORK_REJECTION == token) {
         handleNetworkRejectionUpdateEvent(event);
-    } else if (CALL_BARRING_UPDATE_EVENT == token) {
-        handleCallBarringUpdate(event);
     } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
@@ -1331,11 +1250,9 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, smsDomain,
                 {"IServingSystemManager", "SmsCapability", "domain"});
         CommonUtils::writeSystemDataValue<int>(stateJsonPath, lteCapability,
-                {"IServingSystemManager", "lteCapability"});
+                {"IServingSystemManager", "LteCsCapability"});
 
         ::telStub::SystemInfoEvent systemInfoEvent;
-        ::eventService::EventResponse anyResponse;
-
         systemInfoEvent.set_phone_id(slotId);
         systemInfoEvent.set_current_rat(static_cast<telStub::RadioTechnology>(currentServingRat));
         systemInfoEvent.set_current_domain
@@ -1348,6 +1265,54 @@ void ServingManagerServerImpl::handleSystemInfoUpdateEvent(std::string eventPara
         systemInfoEvent.set_sms_domain(static_cast<telStub::SmsDomain>(smsDomain));
         systemInfoEvent.set_lte_capability
             (static_cast<telStub::LteCsCapability>(lteCapability));
+
+        // Split the event string into parameters( for ... ,BarringInfo1 ,BarringInfo2 ...)
+        // based on delimeter as ","
+        std::stringstream ss(eventParams);
+        std::vector<string> params;
+        while (getline(ss, eventParams, ',')) {
+            params.emplace_back(eventParams);
+        }
+        for(std::string str:params) {
+            LOG(DEBUG, __FUNCTION__," Param: ", str);
+        }
+        Json::Value rootObj;
+        std::string jsonfilename = (slotId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+        if (error != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+            return;
+        }
+        rootObj[MANAGER] ["CallBarringInfo"]["infoList"].clear();
+        int jsonInfoCount = rootObj[MANAGER]["CallBarringInfo"]["infoList"].size();
+        int newInfoCount = params.size() - 1;
+        LOG(DEBUG, " jsonInfoCount ", jsonInfoCount , " newInfoCount ", newInfoCount);
+
+        for (int i = 1; i <= newInfoCount; i++) {
+            LOG(DEBUG, " Parsing Params:" , params[i]);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int rat = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " Rat is: ", rat);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int domain = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " Domain is: ", domain);
+            token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+            int callType = std::stoi(token);
+            LOG(DEBUG, __FUNCTION__, " CallType is: ", callType);
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["rat"] = rat;
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["domain"] = domain;
+            rootObj[MANAGER] ["CallBarringInfo"]["infoList"][i-1]["callType"] = callType;
+
+            telStub::CallBarringInfo *result = systemInfoEvent.add_barring_infos();
+            result->set_rat(static_cast<telStub::RadioTechnology>(rat));
+            result->set_domain
+                (static_cast<telStub::ServiceDomainInfo_Domain>(domain));
+            result->set_call_type
+                (static_cast<telStub::CallsAllowedInCell_Type>(callType));
+        }
+        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+
+        ::eventService::EventResponse anyResponse;
         anyResponse.set_filter("tel_serv_sys_info");
         anyResponse.mutable_any()->PackFrom(systemInfoEvent);
         //posting the event to EventService event queue

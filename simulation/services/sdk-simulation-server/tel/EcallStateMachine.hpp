@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -293,10 +293,6 @@ class PSAPCallback : public telux::common::BaseState {
      * Method invoked by state-machine framework on exiting PSAPCallback
      */
     void onExit() override;
-    /**
-     * To fetch the Ecall Operating Mode
-     */
-    telux::tel::ECallMode getEcallOperatingMode(int phoneId);
 };
 
 /**
@@ -313,17 +309,20 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     std::vector<std::string> result_;
     bool isMsdTransmitted_;
     bool isNGeCall_;
+    bool isALACKConfigEnabled_;
     int phoneId_;
     int callIndex_;
     bool isCustomNumbereCall_;
+    std::string eCallRedialConfig_;
  public:
     /**
      * Constructor for EcallStateMachine
      * @param [in] name - The service, should be type CallManagerServerImpl
      */
     EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
-        std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall, int phoneId
-        , int callIndex, bool isCustomNumberEcall, bool updateInProgress);
+        std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall,
+        bool isALACKConfigEnabled, int phoneId, int callIndex, bool isCustomNumberEcall,
+        std::string eCallRedialConfig, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -390,9 +389,19 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
 
     bool isCustomNumberEcall();
 
+    bool getUserConfiguredALACKParameter();
+
     int getPhoneId();
 
     int getCallIndex();
+
+    std::string getECallRedialConfig();
+
+    int getConfiguredRedialAttempts(std::string config);
+
+    std::vector<int> getConfiguredRedialParameters(std::string config);
+
+    telux::tel::ECallMode getEcallOperatingMode(int phoneId);
 
     bool updateInProgress_;
 

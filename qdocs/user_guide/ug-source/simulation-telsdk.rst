@@ -1,6 +1,6 @@
 .. #=============================================================================
    #
-   #  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   #  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
    #  SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
@@ -584,6 +584,10 @@ Details of parameters that can be configured in the Simulation framework.
 - "eCallType" : To configure service domain for regulatory ECall.
 
   Supported Values: NGeCall , CSeCall.
+
+- "configureECallRedialFailure" : To configure redial failures for regulatory ECall.
+
+  Supported Values: SUCCESS, CALLORIG, CALLDROP.
 
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 

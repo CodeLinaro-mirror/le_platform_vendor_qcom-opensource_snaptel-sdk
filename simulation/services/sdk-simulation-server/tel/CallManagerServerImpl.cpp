@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -55,6 +55,13 @@
 
 #define MSD_VERSION_2 2
 #define MSD_VERSION_3 3
+
+#define MIN_REDIAL_CONFIG 1
+#define MAX_CALLORIG_REDIAL_CONFIG 10
+#define MAX_CALLDROP_REDIAL_CONFIG 2
+
+#define MIN_VALUE_TIMEGAP_UNTIL_INDEX4 4
+#define MIN_VALUE_TIMEGAP_AFTER_INDEX4 5
 
 CallManagerServerImpl::CallManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -345,23 +352,28 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
             isCallback = false;
         }
         // add ecall data to server cache if a new call.
-        if(addNewCallDetails<telStub::MakeECallRequest>(request)) {
-            response->set_error(static_cast<commonStub::ErrorCode>(error));
-            telStub::Call call_;
-            call_.set_call_direction
-                    (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
-            call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
-            call_.set_call_index(static_cast<int>(callInfo_.index));
-            *response->mutable_call() = call_;
-            auto f = std::async(std::launch::async,
-                [this]() {
-                    handleStateMachine(callInfo_.phoneId, callInfo_.index);
-                }).share();
-            taskQ_->add(f);
+        if(!eCallRedialIsOngoing_) {
+            if(addNewCallDetails<telStub::MakeECallRequest>(request)) {
+                response->set_error(static_cast<commonStub::ErrorCode>(error));
+                telStub::Call call_;
+                call_.set_call_direction
+                        (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
+                call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
+                call_.set_call_index(static_cast<int>(callInfo_.index));
+                *response->mutable_call() = call_;
+                auto f = std::async(std::launch::async,
+                    [this]() {
+                        handleStateMachine(callInfo_.phoneId, callInfo_.index);
+                    }).share();
+                taskQ_->add(f);
+            } else {
+                // Send a negative response if eCall is already in progress.
+                response->set_error(commonStub::ErrorCode::OP_IN_PROGRESS);
+            }
         } else {
-            // Send a negative response if eCall is already in progress.
-            response->set_error(commonStub::ErrorCode::OP_IN_PROGRESS);
+            response->set_error(commonStub::ErrorCode::INCOMPATIBLE_STATE);
         }
+
         response->set_status(static_cast<commonStub::Status>(status));
         response->set_iscallback(isCallback);
         response->set_delay(cbDelay);
@@ -1295,15 +1307,10 @@ grpc::Status CallManagerServerImpl::RequestNetworkDeregistration(ServerContext* 
     if(readStatus.ok()) {
         if(ecallStateMachine_ != nullptr) {
             getJsonForSystemData(phoneId, jsonObjFileName, rootObj);
-            HlapTimerStatus T9Status = static_cast<HlapTimerStatus>(
-                rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T9Timer"].asInt());
             HlapTimerStatus T10Status = static_cast<HlapTimerStatus>(
                 rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T10Timer"].asInt());
-            /* To ensure that network deregistration is requested after T9 timer is expired and T10
-             * timer is active.
-             */
-            if((T9Status == HlapTimerStatus::INACTIVE)
-                && (T10Status == HlapTimerStatus::ACTIVE)) {
+            // To ensure that network deregistration is requested when T10 timer is active.
+            if(T10Status == HlapTimerStatus::ACTIVE) {
                 ecallStateMachine_->onEvent(
                 ecallStateMachine_->createTelEvent(
                 EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST,
@@ -1708,17 +1715,19 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId, int
         // custom number eCall
         std::vector<std::string> input = {"SUCCESS"};
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
-            input, callInfo_.isMsdTransmitted, callInfo_.isTpseCallOverIms, phoneId,
-                callIndex, true, false);
+            input, callInfo_.isMsdTransmitted, callInfo_.isTpseCallOverIms, false, phoneId,
+            callIndex, true, "SUCCESS", false);
     } else {
         // Regulatory eCall
         std::vector<std::string> input = parseUserInput();
         bool isNGeCall = getUserConfiguredeCallRat();
-        // std::string remotePartyNumber = getRemotePartyNumber(phoneId);
+        bool isALACKConfigEnabled = getUserConfiguredALACKParameter();
+        // Redial config from user is applicable only during regulatory eCalls.
+        std::string eCallRedialConfig = getUserConfiguredECallRedialConfig();
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
-            input, callInfo_.isMsdTransmitted, isNGeCall, phoneId, callIndex, false,
-            false);
+            input, callInfo_.isMsdTransmitted, isNGeCall, isALACKConfigEnabled, phoneId, callIndex,
+            false, eCallRedialConfig, false);
     }
     if(!ecallStateMachine_) {
         return telux::common::Status::NOMEMORY;
@@ -1761,6 +1770,35 @@ bool CallManagerServerImpl::getUserConfiguredeCallRat() {
     }
     LOG(DEBUG, __FUNCTION__, "CS ecall is configured");
     return false;
+}
+
+bool CallManagerServerImpl::getUserConfiguredALACKParameter() {
+    LOG(DEBUG, __FUNCTION__, " phoneId ", callInfo_.phoneId);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    bool input = false;
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
+        input = rootObj[CALL_MANAGER]["enableALACKWithClearDown"].asBool();
+    }
+    LOG(DEBUG, __FUNCTION__, " input" , input);
+    return input;
+}
+
+std::string CallManagerServerImpl::getUserConfiguredECallRedialConfig() {
+    LOG(DEBUG, __FUNCTION__);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
+        std::string input =rootObj[CALL_MANAGER]["configureECallRedialFailure"].asString();
+        LOG(DEBUG, __FUNCTION__, " ECallRedial config is", input);
+        return input;
+    } else {
+        return "";
+    }
 }
 
 void CallManagerServerImpl::updateEcallHlapTimer(std::string timer,
@@ -1932,6 +1970,113 @@ void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId,
     }
 }
 
+void CallManagerServerImpl::onECallRedial(int phoneId, bool willECallRedial,
+    telux::tel::ReasonType reason) {
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId, " willECallRedial ", willECallRedial,
+        "Redial reason", static_cast<int>(reason));
+    ::telStub::ECallRedialInfoEvent eCallInfoEvent;
+    ::eventService::EventResponse anyResponse;
+    eCallInfoEvent.set_will_ecall_redial(willECallRedial);
+    eCallInfoEvent.set_reason(static_cast<telStub::ReasonType>(reason));
+    eCallInfoEvent.set_phone_id(phoneId);
+    anyResponse.set_filter(TEL_CALL_FILTER);
+    anyResponse.mutable_any()->PackFrom(eCallInfoEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+    if((willECallRedial)  &&
+        ((reason == telux::tel::ReasonType::CALL_ORIG_FAILURE)
+            || (reason == telux::tel::ReasonType::CALL_DROP))) {
+        eCallRedialIsOngoing_ = true;
+        LOG(DEBUG, __FUNCTION__, " Ecall will redial");
+    } else {
+        LOG(DEBUG, __FUNCTION__, " Ecall will not redial ");
+        eCallRedialIsOngoing_ = false;
+    }
+}
+
+grpc::Status CallManagerServerImpl::ConfigureECallRedial(ServerContext* context,
+    const telStub::ConfigureECallRedialRequest* request,
+    telStub::ConfigureECallRedialResponse* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    bool isCallback = true;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    std::vector<int> data;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForSystemData(SLOT_1, jsonfilename, rootObj);
+        for(int d : request->time_gap()) {
+            data.emplace_back(d);
+        }
+        int size = data.size();
+        std::string timeGapInString = "";
+        bool isTimeGapDataAsper3GPP = true;
+        std::vector<int> timeGapAsPer3GPP = {5000, 60000, 60000, 60000, 180000};
+
+        getJsonForApiResponseSlot(SLOT_1, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, "configureECallRedial", status,
+            error, cbDelay );
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_delay(cbDelay);
+        if(request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_ORIG) {
+            if((size < MIN_REDIAL_CONFIG) || (size >= MAX_CALLORIG_REDIAL_CONFIG)) {
+                response->set_error(commonStub::ErrorCode::REQUEST_NOT_SUPPORTED);
+                return grpc::Status::OK;
+            }
+        } else if(request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_DROP) {
+            if((size < MIN_REDIAL_CONFIG) || (size > MAX_CALLDROP_REDIAL_CONFIG)) {
+                response->set_error(commonStub::ErrorCode::REQUEST_NOT_SUPPORTED);
+                return grpc::Status::OK;
+            }
+        } else {
+            return grpc::Status(grpc::StatusCode::INTERNAL, " Incorrect redial config");
+        }
+        for (int i = 0; i < size; i++) {
+            LOG(DEBUG, __FUNCTION__," data recieved from request", static_cast<int>(data.at(i)));
+            if(i <= MIN_VALUE_TIMEGAP_UNTIL_INDEX4) {
+                if(data[i] < timeGapAsPer3GPP[i]) {
+                    isTimeGapDataAsper3GPP = false;
+                    break;
+                }
+            }
+            if(i >= MIN_VALUE_TIMEGAP_AFTER_INDEX4) {
+                if(data[i] < timeGapAsPer3GPP[MIN_VALUE_TIMEGAP_UNTIL_INDEX4]) {
+                    isTimeGapDataAsper3GPP = false;
+                    break;
+                }
+            }
+        }
+        if(isTimeGapDataAsper3GPP) {
+            timeGapInString = CommonUtils::convertIntVectorToString(data);
+            LOG(DEBUG, __FUNCTION__," String value is ", timeGapInString);
+            if(request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_ORIG) {
+                rootObj["ICallManager"]["eCallRedialTimeGap"]["callOrigFailure"] = timeGapInString;
+            } else if(request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_DROP) {
+                rootObj["ICallManager"]["eCallRedialTimeGap"]["callDrop"] = timeGapInString;
+            } else {
+                return grpc::Status(grpc::StatusCode::INTERNAL, "Incorrect redial config");
+            }
+            LOG(DEBUG, __FUNCTION__," String is data  ", timeGapInString);
+            JsonParser::writeToJsonFile(rootObj, jsonfilename);
+            jsonObjSystemStateSlot_[SLOT_1] = rootObj;
+            response->set_error(static_cast<commonStub::ErrorCode>(error));
+        } else {
+            response->set_error(commonStub::ErrorCode::REQUEST_NOT_SUPPORTED);
+        }
+        LOG(DEBUG, __FUNCTION__, "Error is ", static_cast<int>(error));
+    }
+    return readStatus;
+}
+
 std::vector<std::shared_ptr<CallInfo>>
     CallManagerServerImpl::fetchSlotIdCalls(int phoneId) {
     std::vector<std::shared_ptr<CallInfo>> calls;
@@ -2000,10 +2145,31 @@ void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, int index, int pho
 
 void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
     int index) {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId);
     CallState state = Helper::getCallState(action);
-    std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
-    triggerCallInfoChangeEvent(phoneId, call);
+    if((eCallRedialIsOngoing_) && (state == CallState::CALL_DIALING)) {
+        std::unique_lock<std::mutex> lock(mtx);
+        {
+            while(!callEndOperationCompleted_) {
+                cv.wait(lock);
+                if(callEndOperationCompleted_) {
+                    break;
+                }
+            }
+            if(callEndOperationCompleted_) {
+                calls_.emplace_back(redialECallCache_);
+                LOG(DEBUG, __FUNCTION__, " Redial eCall cache is added to call list" );
+            }
+            callEndOperationCompleted_ = false;
+        }
+        std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
+        triggerCallInfoChangeEvent(phoneId, call);
+    } else {
+        LOG(DEBUG, __FUNCTION__, " Ecall is not redialing or call state is not dialing" );
+        std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
+        triggerCallInfoChangeEvent(phoneId, call);
+    }
+
 }
 
 void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
@@ -2035,11 +2201,17 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
+    std::lock_guard<std::mutex> lock(mtx);
+    {
+        callEndOperationCompleted_ = true;
+        cv.notify_all();
+    }
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
     int index, CallState action, int phoneId) {
-    LOG(DEBUG, __FUNCTION__," call Index ", index, " call state is ", static_cast<int>(action) );
+    LOG(DEBUG, __FUNCTION__," callIndex ", index, " callState is ", static_cast<int>(action),
+    "phoneId ", phoneId );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
@@ -2091,6 +2263,12 @@ bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex) {
 
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
         if(call->index == callIndex ) {
+            if(eCallRedialIsOngoing_)
+            {
+                // Save eCall
+                LOG(DEBUG, __FUNCTION__, " Saving ecall cache for next redial");
+                redialECallCache_ = call;
+            }
             return true;
         } else {
             return false;

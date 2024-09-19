@@ -6,6 +6,10 @@
         "_comment_configureFailureForRegulatoryECall" : "Valid inputs SUCCESS, T5FAILED, T6FAILED, T7FAILED" ,
         "eCallType" : "NGeCall" ,
         "_comment_eCallType" : "Valid Inputs NGeCall or CSeCall",
+        "configureECallRedialFailure" : "SUCCESS",
+        "_comment_configureECallRedialFailure" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP",
+        "enableALACKWithClearDown" : "false",
+        "_comment_enableALACKWithClearDown" : "Valid Inputs true, false",
         "makeCall" :
         {
             "status" : "SUCCESS",

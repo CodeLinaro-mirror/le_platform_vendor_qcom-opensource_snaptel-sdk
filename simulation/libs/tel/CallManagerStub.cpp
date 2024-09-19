@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -167,7 +167,7 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
         return telux::common::Status::NOTREADY;
     }
 
-    //Restrict to have only two in progress calls per sub at any instance.
+    //Restrict to have only two in progress calls per sub at an instance.
     //Call can be MO or MT or a conference call
     //Note: Conference supported is not added in simulation.
     int callsInConference = 0;
@@ -400,7 +400,7 @@ void CallManagerStub::onEventUpdate(google::protobuf::Any event) {
     if (event.Is<::telStub::ECallInfoEvent>()) {
         ::telStub::ECallInfoEvent callevent;
         event.UnpackTo(&callevent);
-        handleEcallEvent(callevent);
+        handleECallEvent(callevent);
     } else if(event.Is<::telStub::MsdPullRequestEvent>()) {
         ::telStub::MsdPullRequestEvent callevent;
         event.UnpackTo(&callevent);
@@ -417,8 +417,31 @@ void CallManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::RttMessageEvent callevent;
         event.UnpackTo(&callevent);
         handleRttMessage(callevent);
+    } else if(event.Is<::telStub::ECallRedialInfoEvent>()) {
+        ::telStub::ECallRedialInfoEvent callevent;
+        event.UnpackTo(&callevent);
+        handlECallRedial(callevent);
     } else {
         LOG(DEBUG, __FUNCTION__, "No handling required for other events");
+    }
+}
+
+void CallManagerStub::handlECallRedial(::telStub::ECallRedialInfoEvent event) {
+    int phoneId = event.phone_id();
+    ECallRedialInfo info;
+    info.willECallRedial = event.will_ecall_redial();
+    info.reason = static_cast<telux::tel::ReasonType>(event.reason());
+    std::vector<std::weak_ptr<ICallListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onECallRedial(phoneId, info);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 
@@ -563,8 +586,8 @@ void CallManagerStub::refreshCachedCalls(int phoneId,
         // So we add it to the dropped call list.
         for (auto cachedCall = std::begin(calls_); cachedCall != std::end(calls_);) {
             if ((*cachedCall)->getPhoneId() != phoneId) {
-                // ignore if this function was called for a
-                cachedCall++;  // different slot.
+                // ignore if this function was called for a different slot.
+                cachedCall++;
                 continue;
             }
             auto iter = std::find_if(
@@ -691,7 +714,7 @@ void CallManagerStub::notifyIncomingCall(std::shared_ptr<ICall> call) {
     }
 }
 
-void CallManagerStub::handleEcallEvent(::telStub::ECallInfoEvent event) {
+void CallManagerStub::handleECallEvent(::telStub::ECallInfoEvent event) {
 
     int slotId = event.phone_id();
     HlapTimerEvent action = static_cast<HlapTimerEvent>(event.action());
@@ -752,8 +775,13 @@ void CallManagerStub::handleEcallEvent(::telStub::ECallInfoEvent event) {
             ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE);
         invokeECallMsdTransmissionStatuslisteners(slotId,
             telux::common::ErrorCode::GENERIC_FAILURE);
-    }
-    else {
+    } else if(input == "LL_NACK_DUE_TO_T7_EXPIRY") {
+        invokeECallMsdTransmissionStatuslisteners(slotId,
+            ECallMsdTransmissionStatus::LL_NACK_DUE_TO_T7_EXPIRY);
+    } else if(input == "MSD_AL_ACK_CLEARDOWN") {
+        invokeECallMsdTransmissionStatuslisteners(slotId,
+            ECallMsdTransmissionStatus::MSD_AL_ACK_CLEARDOWN);
+    } else {
         LOG(ERROR, __FUNCTION__, "No supported event ");
     }
 }
@@ -1672,7 +1700,37 @@ telux::common::Status CallManagerStub::sendRtt(int phoneId, std::string message,
 
 telux::common::Status CallManagerStub::configureECallRedial(RedialConfigType config,
     const std::vector<int> &timeGap, common::ResponseCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::ConfigureECallRedialRequest request;
+    ::telStub::ConfigureECallRedialResponse response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    int size = timeGap.size();
+    for (int j = 0; j < size ; j++)
+    {
+        int d = timeGap[j];
+        request.add_time_gap(d);
+    }
+    request.set_config(static_cast<telStub::RedialConfigType>(config));
+    grpc::Status reqstatus = stub_->ConfigureECallRedial(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
 }
 
 telux::common::Status CallManagerStub::restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,

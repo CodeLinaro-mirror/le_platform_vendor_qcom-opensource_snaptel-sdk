@@ -153,17 +153,10 @@ bool ThermalTestApp::init() {
     return true;
 }
 
-Status ThermalTestApp::manageIndication(
+Status ThermalTestApp::manageIndication(telux::common::ProcType procType,
     bool registerInd, telux::therm::ThermalNotificationMask mask) {
 
     Status status = Status::FAILED;
-    telux::common::ProcType procType = getProcType();
-    if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {
-        std::cout << " Invalid Thermal manager for proc type: " << static_cast<int>(procType)
-                  << std::endl;
-        return Status::FAILED;
-    }
-
     if (thermalListenerMap_.find(procType) == thermalListenerMap_.end()) {
         std::cout << " Creating thermal listener for proc type: " << static_cast<int>(procType)
                   << std::endl;
@@ -213,7 +206,7 @@ bool ThermalTestApp::initThermalManager(telux::common::ProcType procType) {
     std::cout << " thermal manager instance returned for proc type:" << static_cast<int>(procType)
               << std::endl;
     thermalManagerMap_.emplace(procType, thermalManager);
-    if (manageIndication(true) != Status::SUCCESS) {
+    if (manageIndication(procType, true) != Status::SUCCESS) {
         return false;
     }
     return true;
@@ -335,16 +328,17 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 
 void ThermalTestApp::controlRegistration(std::vector<std::string> userInput) {
     int operation = -1, type = -1;
+    auto procType = static_cast<telux::common::ProcType>(readAndValidate(PROC_TYPE_MSG, 0, 1));
     operation = readAndValidate(REG_DEREG_MSG, 0, 1);
     type = readAndValidate(REG_TYPE_MSG, 0, 2);
-    (this->*memberFunArr[type])(operation);
+    (this->*memberFunArr[type])(procType, operation);
 }
 
-void ThermalTestApp::handleTripUpdateEvent(bool isRegister) {
+void ThermalTestApp::handleTripUpdateEvent(telux::common::ProcType procType, bool isRegister) {
     telux::therm::ThermalNotificationMask mask;
     Status status = Status::FAILED;
     mask.set(TNT_TRIP_UPDATE);
-    status = manageIndication(isRegister, mask);
+    status = manageIndication(procType, isRegister, mask);
     if (status != Status::SUCCESS) {
         PRINT_RESPONSE_FAILURE;
         return;
@@ -352,11 +346,11 @@ void ThermalTestApp::handleTripUpdateEvent(bool isRegister) {
     PRINT_RESPONSE_SUCCESS;
 }
 
-void ThermalTestApp::handleCdevLevelUpdateEvent(bool isRegister) {
+void ThermalTestApp::handleCdevLevelUpdateEvent(telux::common::ProcType procType, bool isRegister) {
     telux::therm::ThermalNotificationMask mask;
     Status status = Status::FAILED;
     mask.set(TNT_CDEV_LEVEL_UPDATE);
-    status = manageIndication(isRegister, mask);
+    status = manageIndication(procType, isRegister, mask);
     if (status != Status::SUCCESS) {
         PRINT_RESPONSE_FAILURE;
         return;
@@ -364,11 +358,11 @@ void ThermalTestApp::handleCdevLevelUpdateEvent(bool isRegister) {
     PRINT_RESPONSE_SUCCESS;
 }
 
-void ThermalTestApp::handleAllUnSolicitedEvents(bool isRegister) {
+void ThermalTestApp::handleAllUnSolicitedEvents(telux::common::ProcType procType, bool isRegister) {
     telux::therm::ThermalNotificationMask mask;
     Status status = Status::FAILED;
     mask.set();
-    status = manageIndication(isRegister, mask);
+    status = manageIndication(procType, isRegister, mask);
     if (status != Status::SUCCESS) {
         PRINT_RESPONSE_FAILURE;
         return;

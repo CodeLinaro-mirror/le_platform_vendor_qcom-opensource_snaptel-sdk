@@ -430,6 +430,7 @@ class TelClient : public ICallListener,
     std::shared_ptr<EcallScanFailHandler> eCallScanFailHdlrInstance_;
     /** Represents whether ecall initiated is a private ecall. */
     bool isPrivateEcallTriggered;
+    bool isIncomingCallInProgress_;
 };
 
 #endif  // TELCLIENT_HPP

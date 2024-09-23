@@ -62,7 +62,8 @@ TelClient::TelClient()
    , eCall_(nullptr)
    , eCallInprogress_(false)
    , eCallScanFailHdlrInstance_(nullptr)
-   , isPrivateEcallTriggered(false) {
+   , isPrivateEcallTriggered(false)
+   , isIncomingCallInProgress_(false) {
 }
 
 TelClient::~TelClient() {
@@ -170,33 +171,53 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     // During the redial(by modem or app) scenario to setup audio session
-    if (call->getCallState() == telux::tel::CallState::CALL_DIALING &&
-        call->getCallType() == telux::tel::CallType::ECALL) {
-        if (eCall_ == nullptr) {
-            eCall_ = call;
-            setECallProgressState(true);
+    if (call->getCallState() == telux::tel::CallState::CALL_DIALING) {
+        if((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL) ||
+            (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL)) {
+            if (eCall_ == nullptr) {
+                eCall_ = call;
+                setECallProgressState(true);
+                if (callListener_) {
+                    callListener_->onCallConnect(call->getPhoneId());
+                }
+            } else {
+                std::cout << CLIENT_NAME << "eCall ptr is not null\n";
+            }
+        } else {
+            setECallProgressState(false);
             if (callListener_) {
                 callListener_->onCallConnect(call->getPhoneId());
             }
-        } else {
-            std::cout << CLIENT_NAME << "eCall ptr is not null\n";
         }
     }
-    if (call->getCallState() == telux::tel::CallState::CALL_ENDED &&
-        call->getCallType() == telux::tel::CallType::ECALL) {
-        std::cout << CLIENT_NAME << "  Cause of call termination: "
-            << TelClientUtils::callEndCauseToString(call->getCallEndCause())
-            << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
-            << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
-            << std::endl;
-        if (eCall_ != nullptr) {
-            if (eCall_->getCallIndex() == call->getCallIndex()
-                && eCall_->getPhoneId() == call->getPhoneId()) {
-                if (callListener_) {
-                    callListener_->onCallDisconnect();
+    if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
+        if((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL) ||
+            (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL) ||
+            (isIncomingCallInProgress_)) {
+            std::cout << CLIENT_NAME << "  Cause of call termination: "
+                << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+                << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+                << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+                << std::endl;
+            if (eCall_ != nullptr) {
+                if (eCall_->getCallIndex() == call->getCallIndex()
+                    && eCall_->getPhoneId() == call->getPhoneId()) {
+                    if (callListener_) {
+                        callListener_->onCallDisconnect();
+                    }
+                    setECallProgressState(false);
+                    isIncomingCallInProgress_ = false;
+                    eCall_ = nullptr;
                 }
-                setECallProgressState(false);
-                eCall_ = nullptr;
+            }
+        } else {
+           std::cout << CLIENT_NAME << "  Cause of call termination: "
+                << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+                << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+                << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+                << std::endl;
+            if (callListener_) {
+                callListener_->onCallDisconnect();
             }
         }
     }
@@ -632,10 +653,13 @@ telux::common::Status TelClient::answer(
     }
     if (spCall) {
         eCall_ = spCall;
+        // Answer incoming PSAP callback
+        isIncomingCallInProgress_ = true;
         setECallProgressState(true);
         telux::common::Status status = spCall->answer(answerCommandCallback_);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << CLIENT_NAME << "Failed to accept call " << std::endl;
+            isIncomingCallInProgress_ = false;
             setECallProgressState(false);
             eCall_ = nullptr;
             return telux::common::Status::FAILED;

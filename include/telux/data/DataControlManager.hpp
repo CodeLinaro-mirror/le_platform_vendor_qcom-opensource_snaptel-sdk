@@ -83,7 +83,7 @@ public:
      * permission to invoke this API successfully.
      *
      * @param [in]  slotId     Slot ID on which the operation is being performed.
-     * @param [out] params     Data stall parameters. @ref telux::data::DataStallParams
+     * @param [in]  params     Data stall parameters. @ref telux::data::DataStallParams
      *
      * @returns                @ref telux::common::ErrorCode as appropriate.
      *

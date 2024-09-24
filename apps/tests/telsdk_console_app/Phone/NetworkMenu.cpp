@@ -467,7 +467,8 @@ void NetworkMenu::setLteDubiousCell(std::vector<std::string> userInput) {
                     (activeBandInt == 89)                            ||
                     ((activeBandInt >= 92)  && (activeBandInt<=119)) ||
                     ((activeBandInt >= 180) && (activeBandInt<=199)) ||
-                    ((activeBandInt >= 206) && (activeBandInt<=249))) {
+                    ((activeBandInt >= 206) && (activeBandInt<=249)) ||
+                    ((activeBandInt > 301)) ) {
                 std::cout << "Invalid active band, retry .." << std::endl;
                 isInvalid = true;
             }
@@ -476,11 +477,19 @@ void NetworkMenu::setLteDubiousCell(std::vector<std::string> userInput) {
             dbCellInfo.activeBand = activeBand;
         } while(isInvalid);
 
+        do {
+            std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
+            std::cin >> maskInt;
 
-        std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
-        std::cin >> maskInt;
-        mask = std::bitset<32>(maskInt);
-        dbCellInfo.causeCodeMask = mask;
+            isInvalid = false;
+
+            if ( (maskInt < 0) || (maskInt > 15) ) {
+                std::cout << "Invalid dubious cause code, retry .." << std::endl;
+                isInvalid = true;
+            }
+            mask = std::bitset<32>(maskInt);
+            dbCellInfo.causeCodeMask = mask;
+        } while (isInvalid);
 
         lteDbCellInfo.ciList.emplace_back(dbCellInfo);
         std::cout << "Do you want to add another dubious cell ? (0-NO, 1-YES)" << std::endl;
@@ -567,7 +576,8 @@ void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
                     (activeBandInt == 89)                            ||
                     ((activeBandInt >= 92)  && (activeBandInt<=119)) ||
                     ((activeBandInt >= 180) && (activeBandInt<=199)) ||
-                    ((activeBandInt >= 206) && (activeBandInt<=249))) {
+                    ((activeBandInt >= 206) && (activeBandInt<=249)) ||
+                    ((activeBandInt > 301)) ) {
                 std::cout << "Invalid active band, retry .." << std::endl;
                 isInvalid = true;
             }
@@ -577,11 +587,20 @@ void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
         } while(isInvalid);
 
 
-        std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
-        std::cin >> maskInt;
-        std::cout << std::endl;
-        mask = std::bitset<32>(maskInt);
-        dbCellInfo.causeCodeMask = mask;
+        do {
+            std::cout << "Enter dubious cell cause code (0 to 15)" << std::endl;
+            std::cin >> maskInt;
+
+            isInvalid = false;
+
+            if ( (maskInt < 0) || (maskInt > 15) ) {
+                std::cout << "Invalid dubious cause code, retry .." << std::endl;
+                isInvalid = true;
+            }
+            std::cout << std::endl;
+            mask = std::bitset<32>(maskInt);
+            dbCellInfo.causeCodeMask = mask;
+        } while (isInvalid);
 
         nrDbCellInfo.ciList.emplace_back(dbCellInfo);
         std::cout << "Do you want to add another dubious cell ? (0-NO, 1-YES)" << std::endl;
@@ -604,8 +623,8 @@ void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
     nrDbCellInfo.cgi = cgi;
 
     do {
-        std::cout << "Enter NR subcarrier spacing: (0-SCS_15, 1-SCS_30, 2-SCS_60)"
-            << ", 3-SCS_120, 4-SCS_240" << std::endl;
+        std::cout << "Enter NR subcarrier spacing: (0-SCS_15, 1-SCS_30, 2-SCS_60"
+            << ", 3-SCS_120, 4-SCS_240)" << std::endl;
         std::cin >> nrScsInt;
         std::cout << std::endl;
         Utils::validateInput(nrScsInt);

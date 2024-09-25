@@ -22,6 +22,8 @@
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 
+#include "event/ServerEventManager.hpp"
+
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
 using grpc::Server;
@@ -30,6 +32,20 @@ using grpc::ServerContext;
 using grpc::Status;
 
 using ::dataStub::DataConnectionManager;
+
+/**
+ * Throttle information for the corresponding APN
+ */
+struct APNThrottleInfo {
+    std::string apn;                            /**< APN name */
+    std::vector<int> profileIds;                /**< Profile IDs with the same APN */
+    uint32_t ipv4Time;                          /**< Remaining IPv4 throttled time in milliseconds*/
+    uint32_t ipv6Time;                          /**< Remaining IPv6 throttled time in milliseconds*/
+    bool isBlocked;                             /**< Is APN blocked on all plmns */
+    std::string mcc;                            /**< Mobile Country Code */
+    std::string mnc;                            /**< Mobile Network Code */
+};
+
 
 struct DataCallParams {
     int slotId;
@@ -47,7 +63,9 @@ struct DataCallParams {
 };
 
 class DataConnectionServerImpl final:
-    public dataStub::DataConnectionManager::Service {
+    public dataStub::DataConnectionManager::Service,
+    public IServerEventListener,
+    public std::enable_shared_from_this<DataConnectionServerImpl> {
 public:
     DataConnectionServerImpl();
     ~DataConnectionServerImpl();
@@ -84,6 +102,10 @@ public:
         const dataStub::DataCallInputParams* request,
         dataStub::RequestDataCallListReply* response) override;
 
+    grpc::Status RequestThrottledApnInfo(ServerContext* context,
+        const dataStub::SlotInfo* request,
+        dataStub::ThrottleInfoReply* response) override;
+
     grpc::Status CleanUpService(ServerContext* context,
         const ::dataStub::ClientInfo* request,
         ::google::protobuf::Empty* response) override;
@@ -103,6 +125,8 @@ public:
      */
     bool isAnyDataCallActive(SlotId slotId);
 
+    void onEventUpdate(::eventService::UnsolicitedEvent message);
+
 private:
     bool getIpv4Address(const std::string &ifaceName,
         std::string &ipAddress, std::string &gatewayAddress,
@@ -115,9 +139,18 @@ private:
         unsigned int client_id, std::string ifaceName = "");
     void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
         std::string ifaceName);
+    void triggerThrottledApnInfoChangedEvent(dataStub::APNThrottleInfoList* response);
+
 
     void getInactiveInterfaces();
     bool isWwanConnectivityAllowed(int slotId);
+
+    void onEventUpdate(std::string event);
+    void handleThrottleApnEvent(std::string event);
+    bool checkRetryTimeElapsed();
+    bool updateThrottleApnInfo();
+    void startThrottleRetryTimer();
+    void notifyThrottledApnInfoEvent();
 
     void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap,
         bool stopAllCalls = false, const unsigned int& client_id = 0);
@@ -132,6 +165,12 @@ private:
      */
     std::list<std::string> activeNwIfaces_;
     std::list<std::string> inactiveNwIfaces_;
+    std::vector<APNThrottleInfo> apnThrottleInfo_;
+    std::mutex apnThrottleInfoMtx_;
+    std::atomic<bool> timerStarted_;
+    std::future<void> timerFuture_;
+    telux::common::ServiceStatus serviceStatus_ =
+          telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::mutex mtx_;
 };
 

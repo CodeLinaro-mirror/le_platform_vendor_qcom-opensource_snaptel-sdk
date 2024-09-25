@@ -1257,23 +1257,100 @@ telux::common::Status DataConnectionManagerStub::requestThrottledApnInfo(Throttl
     LOG(DEBUG, __FUNCTION__);
 
     if (!isSubsystemReady()) {
-        LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
+        LOG(ERROR, __FUNCTION__, " Data subsystem is not ready");
         return telux::common::Status::NOTREADY;
     }
 
     telux::common::Status status = telux::common::Status::SUCCESS;
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    std::vector<APNThrottleInfo> throttleInfoList{};
+    int delay;
 
-    if (callback) {
-        auto f = std::async(std::launch::async,
-                [this, throttleInfoList, error, callback]() {
-                    callback(throttleInfoList, error);
-                }).share();
-        taskQ_->add(f);
+    ::dataStub::ThrottleInfoReply response;
+    ::dataStub::SlotInfo request;
+    ClientContext context;
+
+    request.set_slot_id(slotId_);
+    grpc::Status reqStatus = stub_->RequestThrottledApnInfo(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(0);
+    status = static_cast<telux::common::Status>(0);
+    delay = static_cast<int>(response.reply().delay());
+
+    LOG(ERROR, __FUNCTION__, " Trigger stub_->RequestThrottledApnInfo has delay of ", delay,
+    " with status: ", response.reply().status());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " RequestThrottledApnInfo request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        std::vector<APNThrottleInfo> apnThrottleInfo;
+        LOG(DEBUG, __FUNCTION__, " throttled_apn_size: ",
+        response.mutable_apn_throttle_info_list()->rep_apn_throttle_info_size());
+        int size = response.mutable_apn_throttle_info_list()->rep_apn_throttle_info_size();
+        for (auto idx = 0; idx < size; idx++) {
+            APNThrottleInfo throttleInfo;
+            auto apn_throttle_info = response.mutable_apn_throttle_info_list()->
+                                     mutable_rep_apn_throttle_info(idx);
+            throttleInfo.apn = apn_throttle_info->apn_name();
+            for (auto pidx = 0; pidx < apn_throttle_info->profile_ids_size(); pidx++) {
+                throttleInfo.profileIds.push_back(apn_throttle_info->profile_ids(pidx));
+            }
+            throttleInfo.ipv4Time  = apn_throttle_info->ipv4time();
+            throttleInfo.ipv6Time  = apn_throttle_info->ipv6time();
+            throttleInfo.isBlocked = apn_throttle_info->is_blocked();
+            throttleInfo.mcc       = apn_throttle_info->mcc();
+            throttleInfo.mnc       = apn_throttle_info->mnc();
+            apnThrottleInfo.push_back(throttleInfo);
+        }
+
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f = std::async(std::launch::async,
+             [this, apnThrottleInfo, error, delay, callback]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    callback(apnThrottleInfo, error);
+               }).share();
+            taskQ_->add(f);
+        }
     }
 
     return status;
+}
+
+void DataConnectionManagerStub::handleThrottledApnInfoChangedEvent
+(::dataStub::APNThrottleInfoList throttleInfoList)
+{
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::shared_ptr<IDataConnectionListener>> applisteners;
+    this->getAvailableListeners(applisteners);
+
+    std::vector<APNThrottleInfo> apnThrottleInfo;
+
+    LOG(DEBUG, __FUNCTION__, " throttled_apn_info_list size: ",
+    throttleInfoList.rep_apn_throttle_info_size());
+    for (auto idx = 0; idx < throttleInfoList.rep_apn_throttle_info_size(); idx++) {
+        APNThrottleInfo throttleInfo;
+        auto apn_throttle_info = throttleInfoList.mutable_rep_apn_throttle_info(idx);
+        throttleInfo.apn = apn_throttle_info->apn_name();
+        for (auto pidx = 0; pidx < apn_throttle_info->profile_ids_size(); pidx++) {
+            throttleInfo.profileIds.push_back(apn_throttle_info->profile_ids(pidx));
+        }
+        throttleInfo.ipv4Time  = apn_throttle_info->ipv4time();
+        throttleInfo.ipv6Time  = apn_throttle_info->ipv6time();
+        throttleInfo.isBlocked = apn_throttle_info->is_blocked();
+        throttleInfo.mcc       = apn_throttle_info->mcc();
+        throttleInfo.mnc       = apn_throttle_info->mnc();
+        apnThrottleInfo.push_back(throttleInfo);
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
+    for (auto &listener : applisteners) {
+        listener->onThrottledApnInfoChanged(apnThrottleInfo);
+    }
+
+    return;
 }
 
 int DataConnectionManagerStub::getSlotId() {

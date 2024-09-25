@@ -34,6 +34,7 @@ service DataConnectionManager {
     rpc RequestDataCallBitRate(DataCallBitRateRequest) returns (RequestDataCallBitRateReply) {}
     rpc SetRoamingMode(SetRoamingModeRequest) returns (DefaultReply) {}
     rpc RequestRoamingMode(RequestRoamingModeRequest) returns (RequestRoamingModeReply) {}
+    rpc RequestThrottledApnInfo(SlotInfo) returns (ThrottleInfoReply) {}
     rpc RegisterOnDataCallInfoChanged(google.protobuf.Empty) returns
         (stream RegisterOnDataCallInfoChangedReply) {}
     rpc DeRegisterOnDataCallInfoChanged(DeRegisterNotificationRequest) returns
@@ -1297,3 +1298,23 @@ message SetDataStallParamsRequest {
 message SetDataStallParamsReply {
     commonStub.ErrorCode error = 1;
 }
+
+message APNThrottleInfoList{
+    repeated APNThrottleInfo rep_apn_throttle_info = 1;
+}
+
+message ThrottleInfoReply{
+    DefaultReply reply = 1;
+    APNThrottleInfoList apn_throttle_info_list = 2;
+}
+
+message APNThrottleInfo{
+    string apn_name = 1;
+    repeated int32 profile_ids = 2;
+    uint32 ipv4time = 3;
+    uint32 ipv6time = 4;
+    bool is_blocked = 5;
+    string mcc = 6;
+    string mnc = 7;
+}
+

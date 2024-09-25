@@ -156,6 +156,10 @@ telux::common::ServiceStatus SensorManagerStub::getServiceStatus() {
 telux::common::Status SensorManagerStub::getAvailableSensorInfo(std::vector<SensorInfo> &info){
     LOG(DEBUG,__FUNCTION__);
     CHECK_SUB_SYSTEM_STATUS();
+    if (sensorInfo_.empty()) {
+        LOG(ERROR, "sensorInfo_ is empty");
+        return telux::common::Status::FAILED;
+    }
     info = sensorInfo_;
     return telux::common::Status::SUCCESS;
 }

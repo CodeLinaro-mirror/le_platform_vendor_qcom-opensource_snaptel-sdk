@@ -406,23 +406,26 @@ void LocationManagerServerImpl::handleDisasterCrisisReport(std::string event) {
     if (errorCode == ErrorCode::SUCCESS) {
         int dctype =  rootNode["disaster_crisis"][0].asInt();
         uint32_t numValidBits =  rootNode["disaster_crisis"][1].asInt();
+        bool prnValid =  rootNode["disaster_crisis"][2].asBool();
+        uint32_t prn =  rootNode["disaster_crisis"][3].asUInt();
         std::vector<uint8_t> data;
-        unsigned size = rootNode["disaster_crisis"].size() - 2;
-
-        for (unsigned i = 0; i < size; ++i) {
-            data.push_back(rootNode["disaster_crisis"][i + 2].asInt());
-            LOG(DEBUG, __FUNCTION__, " DC report Data: ", rootNode["disaster_crisis"][i + 2]);
+        unsigned size = rootNode["disaster_crisis"].size();
+        for (unsigned i = 4; i < size; ++i) {
+            data.push_back(rootNode["disaster_crisis"][i].asInt());
+            LOG(DEBUG, __FUNCTION__, " DC report Data: ", rootNode["disaster_crisis"][i]);
         }
 
         ::locStub::GnssReportDCType type =
               static_cast<::locStub::GnssReportDCType>(dctype);
 
         auto f = std::async(std::launch::async,
-                            [this, type, numValidBits, data](){
+                            [this, type, numValidBits, prnValid, prn, data](){
                                 ::locStub::GnssDisasterCrisisReport report;
                                 ::eventService::EventResponse anyResponse;
                                 report.set_dc_report_type(type);
                                 report.set_num_valid_bits(numValidBits);
+                                report.set_prn_validity(prnValid);
+                                report.set_prn(prn);
                                 report.mutable_dc_report_data()->Add(data.begin(), data.end());
                                 anyResponse.set_filter("loc_mgr");
                                 anyResponse.mutable_any()->PackFrom(report);

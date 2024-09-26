@@ -19,6 +19,13 @@ service DeviceInfoManagerService {
    rpc GetIMEI (google.protobuf.Empty) returns (PlatformImeiInfo) {}
 }
 
+service AntennaManagerService {
+   rpc InitService (google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+   rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+   rpc SetActiveAntenna (google.protobuf.Empty) returns (DefaultReply) {}
+   rpc GetActiveAntenna (google.protobuf.Empty) returns (DefaultReply) {}
+}
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/

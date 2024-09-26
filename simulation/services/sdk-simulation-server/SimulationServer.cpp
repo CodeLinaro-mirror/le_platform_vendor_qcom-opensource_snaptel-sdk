@@ -59,6 +59,7 @@
 #include "tel/SuppServicesManagerServerImpl.hpp"
 #include "platform/DeviceInfoManagerServerImpl.hpp"
 #include "platform/AntennaManagerServerImpl.hpp"
+#include "platform/FsManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -261,6 +262,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<AntennaManagerServerImpl> AntennaManagerService =
         std::make_shared<AntennaManagerServerImpl>();
     builder.RegisterService(AntennaManagerService.get());
+
+    std::shared_ptr<FsManagerServerImpl> FsManagerService =
+        std::make_shared<FsManagerServerImpl>();
+    builder.RegisterService(FsManagerService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

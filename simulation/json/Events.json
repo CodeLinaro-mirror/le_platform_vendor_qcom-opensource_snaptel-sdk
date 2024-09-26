@@ -331,6 +331,22 @@
         "throttle_apn_event" : [
             "telsdk_event_injector -f data_connection -e throttle_apn_event <state>",
             "state:   RESET | START | STOP"
+    },
+    "fs_manager": {
+        "efsBackup":[
+            "telsdk_event_injector -f fs_manager -e efsBackup <eventName> <status>",
+            "eventName:     EFS_BACKUP_START/EFS_BACKUP_END",
+            "status:        SUCCESS/FAILURE"
+        ],
+        "efsRestore":[
+            "telsdk_event_injector -f fs_manager -e efsRestore <eventName> <status>",
+            "eventName:     EFS_RESTORE_START/EFS_RESTORE_END",
+            "status:        SUCCESS/FAILURE"
+        ],
+        "otaAbSync":[
+            "telsdk_event_injector -f fs_manager -e otaAbSync <eventName> <status>",
+            "eventName:     MRC_OTA_START/MRC_OTA_RESUME/MRC_OTA_END/MRC_ABSYNC",
+            "status:        SUCCESS/FAILURE"
         ]
     }
 }

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -541,6 +541,9 @@ public:
     * @returns If true cell is registered or vice-versa.
     */
    virtual bool isRegistered();
+
+   virtual ~CellInfo() {
+   }
 
 protected:
    CellType type_;

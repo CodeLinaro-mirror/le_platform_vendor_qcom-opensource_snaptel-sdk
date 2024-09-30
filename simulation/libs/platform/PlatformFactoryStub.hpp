@@ -20,6 +20,7 @@
 #include "telux/platform/PlatformFactory.hpp"
 #include "DeviceInfoManagerStub.hpp"
 #include "AntennaManagerStub.hpp"
+#include "FsManagerStub.hpp"
 #include "libs/common/Logger.hpp"
 #include "libs/common/FactoryHelper.hpp"
 
@@ -50,6 +51,8 @@ class PlatformFactoryStub : public PlatformFactory,
     std::vector<InitResponseCb> deviceInfoInitCallbacks_;
     std::weak_ptr<hardware::IAntennaManager> antennaManager_;
     std::vector<InitResponseCb> antennaInitCallbacks_;
+    std::weak_ptr<IFsManager> fsManager_;
+    std::vector<InitResponseCb> fsInitCallbacks_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 

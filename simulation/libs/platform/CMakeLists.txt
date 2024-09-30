@@ -15,6 +15,7 @@ set(PLATFORM_TEST_LIB_SOURCES
     PlatformFactoryStub.cpp
     DeviceInfoManagerStub.cpp
     AntennaManagerStub.cpp
+    FsManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

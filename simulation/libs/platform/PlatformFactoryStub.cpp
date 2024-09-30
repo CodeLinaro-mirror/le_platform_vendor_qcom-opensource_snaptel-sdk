@@ -93,8 +93,20 @@ std::shared_ptr<hardware::IAntennaManager> PlatformFactoryStub::getAntennaManage
 
 std::shared_ptr<IFsManager> PlatformFactoryStub::getFsManager(InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-
-    return nullptr;
+    std::function<std::shared_ptr<IFsManager>(InitResponseCb)> createAndInit
+        = [this](telux::common::InitResponseCb initCb) -> std::shared_ptr<IFsManager> {
+        std::shared_ptr<FsManagerStub> manager = std::make_shared<FsManagerStub>();
+        if (telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Fs manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+        " , callback = ", &fsInitCallbacks_);
+    auto manager = getManager<telux::platform::IFsManager>(type, fsManager_,
+        fsInitCallbacks_, callback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<ITimeManager> PlatformFactoryStub::getTimeManager(InitResponseCb callback) {

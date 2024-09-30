@@ -1961,8 +1961,8 @@ telux::common::Status Cv2xRadioSimulation::deregisterTxStatusReportListener(
         if (itr != std::end(txStatusListeners_)) {
             txStatusListeners_.erase(itr);
         } else {
-            LOG(ERROR, __FUNCTION__, " ALREADY ", static_cast<int>(port));
-            return telux::common::Status::ALREADY;
+            LOG(ERROR, __FUNCTION__, " NOSUCH ", static_cast<int>(port));
+            return telux::common::Status::NOSUCH;
         }
     }
 

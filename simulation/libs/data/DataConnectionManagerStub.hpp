@@ -70,6 +70,7 @@ public:
 
     void handleStartDataCallEvent(::dataStub::StartDataCallEvent startEvent);
     void handleStopDataCallEvent(::dataStub::StopDataCallEvent stopEvent);
+    void handleThrottledApnInfoChangedEvent(::dataStub::APNThrottleInfoList throttleInfoList);
 
     telux::common::Status cleanup();
 

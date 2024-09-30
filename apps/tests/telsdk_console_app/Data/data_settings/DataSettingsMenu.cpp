@@ -529,13 +529,12 @@ void DataSettingsMenu::setWwanConnectivityConfig(std::vector<std::string> inputC
 void DataSettingsMenu::requestWwanConnectivityConfig(std::vector<std::string> inputCommand) {
     telux::common::Status retStat = telux::common::Status::SUCCESS;
 
-    std::cout << "Request WWAN Connectivity \n";
+    std::cout << "Request WWAN Connectivity" << std::endl;
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
-    DataUtils::validateInput(slotId, {1, 2});
 
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";

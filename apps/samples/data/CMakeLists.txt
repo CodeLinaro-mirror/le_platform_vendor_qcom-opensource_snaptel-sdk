@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 
 add_subdirectory( data_app )
+add_subdirectory( data_call_app )
 if(NOT BUILD_FOR_SIMULATION)
     add_subdirectory( data_profile_app )
     add_subdirectory( data_filter_app )

@@ -58,6 +58,8 @@ public:
     telux::common::Status requestDataCallList(OperationType type,
         DataCallListResponseCb callback) override;
 
+    telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) override;
+
     telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener)
         override;
     telux::common::Status deregisterListener(std::weak_ptr<IDataConnectionListener> listener)

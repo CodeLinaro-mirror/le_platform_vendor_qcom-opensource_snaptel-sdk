@@ -1252,6 +1252,30 @@ telux::common::Status DataConnectionManagerStub::requestDataCallList(
     return status;
 }
 
+telux::common::Status DataConnectionManagerStub::requestThrottledApnInfo(ThrottleInfoCb callback)
+{
+    LOG(DEBUG, __FUNCTION__);
+
+    if (!isSubsystemReady()) {
+        LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    std::vector<APNThrottleInfo> throttleInfoList{};
+
+    if (callback) {
+        auto f = std::async(std::launch::async,
+                [this, throttleInfoList, error, callback]() {
+                    callback(throttleInfoList, error);
+                }).share();
+        taskQ_->add(f);
+    }
+
+    return status;
+}
+
 int DataConnectionManagerStub::getSlotId() {
     LOG(DEBUG, __FUNCTION__);
     return slotId_;

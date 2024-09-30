@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DATARESPONSECALLBACK_HPP
 #define DATARESPONSECALLBACK_HPP
 
@@ -66,6 +73,9 @@ public:
                                             telux::common::ErrorCode error);
    static void dataCallListResponseCb(const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
                                       telux::common::ErrorCode error);
+   static void requestThrottledApnInfoCb(
+      const std::vector<telux::data::APNThrottleInfo> &throttleInfoList,
+         telux::common::ErrorCode error);
 };
 
 class DataCallStatisticsResponseCb {

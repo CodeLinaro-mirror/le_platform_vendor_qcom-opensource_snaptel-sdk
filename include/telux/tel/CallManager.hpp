@@ -898,7 +898,7 @@ public:
     *     2                                                                    60000
     *     3                                                                    60000
     *     4                                                                    60000
-    *     5 attempt and                                                        18000
+    *     5 attempt and                                                        180000
     *     subsequent attempts
     * ---------------------------------------------------------------------------------------------
     * -----------------------------------------ECALL DROP -----------------------------------------
@@ -927,6 +927,39 @@ public:
         const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr) = 0;
 
    /**
+    * Restart T9 and T10 eCall High Level Application Protocol (HLAP) timers with residual timer
+    * duration. Application is expected to maintain residual timer information and resume the
+    * timers during events like modem reset or transition of device operating mode from low power
+    * mode to online.
+    *
+    * Notes:
+    * 1. Application must restart timer according to eCall operating mode of device.
+    *    T10 eCall HLAP timer must be restarted only when eCall operating mode is
+    *    @ref telux::tel::ECallMode::ECALL_ONLY.
+    * 2. Application must validate the residual timer value before calling the API to prevent
+    *    invalid data being processed.
+    * 3. T9 eCall HLAP timer cannot be restarted after transition of device operating mode from
+    *    low power mode to online.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to invoke this API successfully.
+    *
+    * @param [in] timerId - Represents the timer which is required to be restarted by
+    *                       application. @ref telux::tel::EcallHlapTimerId.
+    * @param [in] duration - Remaining time duration in seconds for the timer to run.
+    * @param [in] callback - Callback function to get the response of the restartECallHlapTimer
+    *                        request.
+    *
+    * @returns Status of restartECallHlapTimer i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
+        int duration, common::ResponseCallback callback = nullptr ) = 0;
+
+   /**
     * Add a listener to listen for incoming call, call info change and eCall MSD
     * transmission status change.
     *
@@ -935,6 +968,7 @@ public:
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     */
+
    virtual telux::common::Status
       registerListener(std::shared_ptr<telux::tel::ICallListener> listener)
       = 0;

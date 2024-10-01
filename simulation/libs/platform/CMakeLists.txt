@@ -16,6 +16,7 @@ set(PLATFORM_TEST_LIB_SOURCES
     DeviceInfoManagerStub.cpp
     AntennaManagerStub.cpp
     FsManagerStub.cpp
+    TimeManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)
@@ -33,6 +34,7 @@ target_link_libraries(${TARGET_PLATFORM_LIBRARY}
     jsoncpp
     telux_protos
     telux_common
+    telux_loc
 )
 
 install(TARGETS ${TARGET_PLATFORM_LIBRARY}

@@ -218,10 +218,12 @@ struct DataCallParams {
  *  - If any client attemp to stop data call and error detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
  *  - If the client tries to start a data call on specific profile id and network interface name and:
- *      - A data call with the same profile ID and a different network interface name or
- *        data call with the same network interface name and a different profile ID exists, an
- *        telux::ErrorCode::INVALID_OPERATION error occurs and onDataCallInfoChanged will not
- *        be called.
+*       - If data call already exists with the same profile ID but a different network interface
+ *        then error will be set to telux::ErrorCode::DEVICE_IN_USE and onDataCallInfoChanged
+ *        will not get called.
+ *      - If data call already exists with the same network interface but different profile ID then
+ *        error will be set to telux::ErrorCode::INVALID_OPERATION and onDataCallInfoChanged will
+ *        not get called.
  *      - Another client has already requested to tear down an existing data call with
  *        the same profile ID and network interface name and this operation is in progress, an
  *        telux::ErrorCode::OP_IN_PROGRESS error occurs and onDataCallInfoChanged will not be

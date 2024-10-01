@@ -30,3 +30,4 @@ RUN pip install supervisor-stdout
 RUN apt-get -y install libasound2-dev
 RUN apt-get -y install alsa alsa-utils alsa-tools
 RUN apt-get -y install pulseaudio pulseaudio-utils
+RUN apt-get -y install libglib2.0-dev

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -289,6 +289,13 @@ public:
     * Note: In situations where the user does not configure retry eCall parameters using
     * @ref telux::tel::configureECallRedial, the default eCall retry parameters will be considered
     * by the modem.
+    *
+    * Behavior of redial:
+    *
+    * ERA-GLONASS eCall - During an eCall redial, when AP sends a call termination request using
+    * @ref telux::tel::ICall::hangup(), modem will terminate any ongoing redials.
+    * European eCall(EU) eCall - During an eCall redial, when AP sends a call termination request
+    * using @ref telux::tel::ICall::hangup(), modem will not terminate any ongoing redials.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to receive this notification.

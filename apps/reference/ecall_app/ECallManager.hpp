@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -102,6 +102,17 @@ class ECallManager : public LocationListener,
      */
     telux::common::Status triggerECall(
         int phoneId, const std::string dialNumber, std::string contentType, std::string acceptInfo);
+
+    /**
+     * This function triggers a self test ERA-GLONASS eCall procedure to the specified phone number
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is
+     *                          performed
+     * @param [in] dialNumber   Phone number to be dialed
+     * @param [in] msdPdu       MSD PDU that will be transmitted at call connect.
+     *
+     */
+    telux::common::Status triggerECall(
+        int phoneId, const std::string dialNumber, std::vector<uint8_t> msdPdu);
 
     /**
      * This function answers an incoming call
@@ -239,6 +250,33 @@ class ECallManager : public LocationListener,
      *
      */
     telux::common::Status configureECallRedial(int config, std::vector<int> &timeGap);
+
+    /**
+     * Get eCall redial parameters for call origination failure and call drop
+     *
+     * @returns error code code for getECallRedialConfig i.e success or suitable
+     * error code.
+     *
+     */
+    telux::common::ErrorCode getECallRedialConfig();
+
+    /**
+     * This function requests to set the value of POST TEST REGISTRATION timer.
+     *
+     * @returns status code for setPostTestRegistrationTimer i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status setPostTestRegistrationTimer(int phoneId, uint32_t timeDuration);
+
+    /**
+     * This function requests to get the value of POST TEST REGISTRATION timer.
+     *
+     * @returns error code for getECallPostTestRegistrationTimer i.e success or suitable
+     * error code.
+     *
+     */
+    telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId);
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1678,4 +1678,24 @@ telux::common::Status CallManagerStub::configureECallRedial(RedialConfigType con
 telux::common::Status CallManagerStub::restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
     int duration, common::ResponseCallback callback ) {
     return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string dialNumber,
+    const std::vector<uint8_t> &msdPdu, MakeCallCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CallManagerStub::updateECallPostTestRegistrationTimer(int phoneId,
+    uint32_t timer, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode CallManagerStub::getECallPostTestRegistrationTimer(int phoneId,
+    uint32_t &timer) {
+    return telux::common::ErrorCode::GENERIC_FAILURE;
+}
+
+telux::common::ErrorCode CallManagerStub::getECallRedialConfig(std::vector<int> &callOrigTimeGap,
+    std::vector<int> &callDropTimeGap)  {
+    return telux::common::ErrorCode::GENERIC_FAILURE;
 }

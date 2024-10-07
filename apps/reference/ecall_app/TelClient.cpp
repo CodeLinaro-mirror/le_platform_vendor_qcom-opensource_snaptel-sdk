@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -39,11 +39,21 @@
  *
  * @brief   TelClient class provides methods to trigger an eCall, update MSD, answer/hangup a call.
  *          It manages the telephony subsystem using Telematics-SDK APIs.
+ *          ERA-GLONASS eCall requirements:
+ *          ECall dial duration - This is the connection establishment time i.e. maximum time IVS
+ *          can take - starting from initial ERA-GLONASS eCall trigger - to connect the call to
+ *          PSAP, including all redial attempts. If the ECALL_DIAL_DURATION expires, the
+ *          expectation is to end the ERA-GLONASS eCall origination process.
+ *          ECall auto answer time - This is the time interval after emergency
+ *          call completion (clear-down) over which IVS stays registered to the network and
+ *          automatically answers to incoming callbacks from PSAP.
  */
 
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
 
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -61,9 +71,18 @@ TelClient::TelClient()
    , callMgr_(nullptr)
    , eCall_(nullptr)
    , eCallInprogress_(false)
+   , isEraglonassEnabled_(false)
    , eCallScanFailHdlrInstance_(nullptr)
    , isPrivateEcallTriggered(false)
-   , isIncomingCallInProgress_(false) {
+   , isIncomingCallInProgress_(false)
+   , isDialDurationTimeOut_(false)
+   , stopDialTimer_(false)
+   , autoAnswerDuration_(0)
+   , isT9TimerActive_(false)
+   , willECallRedial_(false)
+   , disconnectECallInNextAttempt_(false)
+   , clearECall_(false)
+   , isAutoAnswerDurationTimeOut_(false) {
 }
 
 TelClient::~TelClient() {
@@ -129,6 +148,16 @@ bool TelClient::isECallInProgress() {
     return eCallInprogress_;
 }
 
+// Indicates whether an ERAGLONASS mode is enabled
+bool TelClient::isEraGlonassEnabled() {
+    return isEraglonassEnabled_;
+}
+
+// Set the ERAGLONASS mode
+void TelClient::setEraGlonassEnabled(bool isEnabled) {
+    isEraglonassEnabled_ = isEnabled;
+}
+
 void TelClient::setECallProgressState(bool state) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!state) {
@@ -160,6 +189,15 @@ void TelClient::onIncomingCall(std::shared_ptr<ICall> call) {
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
+    if(isEraGlonassEnabled()) {
+        std::cout << CLIENT_NAME <<" isDialDurationTimeOut_: " << isDialDurationTimeOut_
+            << ", isT9TimerActive_: " << isT9TimerActive_ << std::endl;
+        // Incoming PSAP callback must be answered if T9 HLAP timer is ACTIVE or auto answer
+        // dial duration has not expired.
+        if((!isAutoAnswerDurationTimeOut_) && (isT9TimerActive_)) {
+            answer(call->getPhoneId(), shared_from_this());
+        }
+    }
 }
 
 // Callback invoked when a call status changes
@@ -170,23 +208,67 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
+    if(isEraGlonassEnabled()) {
+        std::cout << CLIENT_NAME << " willECallRedial_:" << willECallRedial_<< std::endl;
+    }
     // During the redial(by modem or app) scenario to setup audio session
     if (call->getCallState() == telux::tel::CallState::CALL_DIALING) {
         if((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL) ||
             (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL)) {
             if (eCall_ == nullptr) {
                 eCall_ = call;
-                setECallProgressState(true);
-                if (callListener_) {
-                    callListener_->onCallConnect(call->getPhoneId());
+                if(isEraGlonassEnabled()) {
+                    if(!disconnectECallInNextAttempt_) {
+                        setECallProgressState(true);
+                        if (callListener_) {
+                            callListener_->onCallConnect(call->getPhoneId());
+                        }
+                    } else {
+                        /**
+                         * During ERA-GLONASS eCall redial call states transition from
+                         * OUTGOING -> CALL_ENDED. Call termination request is sent during
+                         * next redial attempt if no relevant eCall was found upon expiry of
+                         * dial duration.
+                         */
+                        std::cout << CLIENT_NAME << "Send ECall termination request" << std::endl;
+                        hangup(call->getPhoneId(), call->getCallIndex());
+                    }
+                } else {
+                    setECallProgressState(true);
+                    if (callListener_) {
+                        callListener_->onCallConnect(call->getPhoneId());
+                    }
                 }
             } else {
                 std::cout << CLIENT_NAME << "eCall ptr is not null\n";
+                if(isEraGlonassEnabled()) {
+                    if(disconnectECallInNextAttempt_) {
+                        /**
+                         * During ERA-GLONASS eCall redial call states transition from
+                         * OUTGOING -> CALL_ENDED. Call termination request is sent during
+                         * next redial attempt if no relevant eCall was found upon expiry of
+                         * dial duration.
+                         */
+                        std::cout << CLIENT_NAME << "Send ECall termination request" << std::endl;
+                        hangup(call->getPhoneId(), call->getCallIndex());
+                    }
+                }
             }
         } else {
             setECallProgressState(false);
             if (callListener_) {
                 callListener_->onCallConnect(call->getPhoneId());
+            }
+        }
+    }
+    if(isEraGlonassEnabled()) {
+        if(call->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
+            // The dial timer must be stop when UE has established connection with PSAP.
+            std::lock_guard<std::mutex> lock(dialDurationMtx_);
+            {
+                stopDialTimer_ = true;
+                std::cout << " Stop dial timer " << stopDialTimer_ << std::endl;
+                dialDurationCv_.notify_all();
             }
         }
     }
@@ -207,7 +289,15 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                     }
                     setECallProgressState(false);
                     isIncomingCallInProgress_ = false;
-                    eCall_ = nullptr;
+                    if(isEraGlonassEnabled()) {
+                        if(!willECallRedial_ || clearECall_) {
+                            // When modem is redialing, eCall_ must not be cleared to ensure
+                            // hangup is sent on valid eCall.
+                            std::cout << CLIENT_NAME << "  clear eCall cache " << std::endl;
+                            eCall_ = nullptr;
+                            clearECall_ = false;
+                        }
+                    }
                 }
             }
         } else {
@@ -273,6 +363,21 @@ void TelClient::onECallRedial(int phoneId, ECallRedialInfo info) {
               << (info.willECallRedial ? " and redial reason is " : " and not redial reason is")
               << TelClientUtils::eCallRedialReasonToString(info.reason)
               << std::endl;
+    if(isEraGlonassEnabled()) {
+        willECallRedial_ = info.willECallRedial;
+        if((!(info.willECallRedial)) &&
+            ((info.reason == telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED)
+            || (info.reason == telux::tel::ReasonType::CALL_CONNECTED))) {
+                // The dial timer must stop when hangup is sent by PSAP or
+                // maximum redial attempts are exhausted.
+                std::lock_guard<std::mutex> lock(dialDurationMtx_);
+                {
+                    stopDialTimer_ = true;
+                    std::cout << " Stop dial timer " << stopDialTimer_ << std::endl;
+                    dialDurationCv_.notify_all();
+                }
+        }
+    }
 }
 
 // Callback to notify eCall HLAP timers status
@@ -310,6 +415,39 @@ void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEve
                        + TelClientUtils::eCallHlapTimerEventToString(timerEvents.t10) + "\n");
     }
     std::cout << CLIENT_NAME << infoStr << std::endl;
+    if(isEraGlonassEnabled()) {
+        if(timerEvents.t9 == HlapTimerEvent::STARTED) {
+            isT9TimerActive_ = true;
+            autoAnswerTimer_ = std::async(std::launch::async, [this] {
+                std::cout << " autoAnswerDuration_: " << autoAnswerDuration_ << std::endl;
+                std::unique_lock<std::mutex> lock(autoAnswerMtx_);
+                {
+                    auto start = std::chrono::steady_clock::now();
+                    auto timeout = std::chrono::minutes(autoAnswerDuration_);
+                    auto predicate = [&] {
+                        if(!isT9TimerActive_) {
+                            std::cout << " T9 Timer is stopped" << std::endl;
+                            return true;
+                        } if(std::chrono::steady_clock::now() - start >= timeout){
+                            isAutoAnswerDurationTimeOut_ = true;
+                            std::cout << "Auto answer Timeout" << std::endl;
+                            return true;
+                        }
+                        return false;
+                    };
+                    while (!autoAnswerCv_.wait_until(lock, start + timeout, predicate)) {
+                        // Loop until the predicate returns true or timeout occurs
+                    }
+                }
+            }).share();
+        } else if((timerEvents.t9 == HlapTimerEvent::STOPPED)
+            || (timerEvents.t9 == HlapTimerEvent::EXPIRED)) {
+                isT9TimerActive_ = false;
+                autoAnswerCv_.notify_all();
+        } else {
+            //Nothing
+        }
+    }
 }
 
 // Callback to notify Telephony subsystem restart
@@ -429,6 +567,18 @@ void TelClient::stopT10TimerResponse(telux::common::ErrorCode error) {
     }
 }
 
+// Callback which provides response for set post test registration timer
+void TelClient::setECallPostTestRegistrationTimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to stop POST TEST REG ECall timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully set POST TEST REG HLAP timer" << std::endl;
+    }
+}
+
+
 // Callback which provides response to set HLAP timer
 void TelClient::setHlapTimerResponse(telux::common::ErrorCode error) {
     if(error != telux::common::ErrorCode::SUCCESS) {
@@ -486,6 +636,35 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     }
     setECallProgressState(true);
     isPrivateEcallTriggered = false;
+    // Get dial duration and redial attempts from user
+    char delimiter = '\n';
+    std::string temp = "";
+    int dialDuration = 5;
+    if (isEraGlonassEnabled()) {
+        std::cout << "Enter dial duration (in minutes): ";
+        std::getline(std::cin, temp, delimiter);
+        if(!temp.empty()) {
+            try {
+                dialDuration = std::stoi(temp);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+            }
+        } else {
+            std::cout << "No input" << std::endl;
+        }
+
+        std::cout << "Enter auto answer timer duration (in minutes): ";
+        std::getline(std::cin, temp, delimiter);
+        if(!temp.empty()) {
+            try {
+                autoAnswerDuration_ = std::stoi(temp);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+            }
+        } else {
+            std::cout << "No input" << std::endl;
+        }
+    }
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -516,13 +695,68 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         ecallInfo.msdTransmissionStatus = telux::tel::ECallMsdTransmissionStatus::FAILURE;
         ecallInfo.eCallNWScanFailed = false;
         eCallDataMap_[phoneId] = ecallInfo;
+        if(isEraGlonassEnabled()) {
+            isDialDurationTimeOut_ = false;
+            stopDialTimer_ = false;
+            willECallRedial_ = false;
+            disconnectECallInNextAttempt_ = false;
+            isT9TimerActive_ = false;
+            isAutoAnswerDurationTimeOut_ = false;
+        }
     } else {
         std::cout << CLIENT_NAME << "Request to make an ECall failed!" << std::endl;
         setECallProgressState(false);
         return telux::common::Status::FAILED;
     }
     callListener_ = callListener;
+    if(isEraGlonassEnabled()) {
+        autoDialDurationTimer_ = std::async(std::launch::async, [this, dialDuration, phoneId] {
+            this->signalForExpiryOfDialDuration(dialDuration);
+            this->autoHangup(phoneId);
+        }).share();
+    }
     return telux::common::Status::SUCCESS;
+}
+
+void TelClient::signalForExpiryOfDialDuration(int dialDuration) {
+    isDialDurationTimeOut_ = false;
+    std::cout << " signalForExpiryOfDialDuration: " << dialDuration << std::endl;
+    std::unique_lock<std::mutex> lock(dialDurationMtx_);
+    auto start = std::chrono::steady_clock::now();
+    auto timeout = std::chrono::minutes(dialDuration);
+    auto predicate = [&] {
+        if(stopDialTimer_) {
+            std::cout << "Timer is stopped" << std::endl;
+            return true;
+        }
+        if(std::chrono::steady_clock::now() - start >= timeout) {
+            isDialDurationTimeOut_ = true;
+            std::cout << "Timeout, exiting redialing send request" << std::endl;
+            return true;
+        }
+        return false;
+    };
+    while (!dialDurationCv_.wait_until(lock, start + timeout, predicate)) {
+        // Loop until the predicate returns true or timeout occurs
+    }
+}
+
+void TelClient::autoHangup(int phoneId) {
+    std::cout << "autoHangup" << std::endl;
+    if( stopDialTimer_) {
+        std::cout << " Exiting as timer is already stopped " << std::endl;
+    } else if(isDialDurationTimeOut_) {
+        std::cout << " Sending auto hangup request " << std::endl;
+        if(eCall_) {
+            hangup(phoneId, eCall_->getCallIndex());
+            clearECall_ = true;
+        }
+        isDialDurationTimeOut_ = false;
+    } else {
+        // In situation when both dial duration timeout and stop dial timer are false
+        // auto hangup request will not be sent.
+        std::cout << " ERROR: Both stop dial timer and dial duration not expired " << std::endl;
+    }
 }
 
 // Initiate a voice eCall procedure to the specified phone number
@@ -568,6 +802,32 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         eCallDataMap_[phoneId] = ecallInfo;
     } else {
         std::cout << CLIENT_NAME << "Request to make a Voice ECall failed!" << std::endl;
+        setECallProgressState(false);
+        return telux::common::Status::FAILED;
+    }
+    callListener_ = callListener;
+    return telux::common::Status::SUCCESS;
+}
+
+// Initiate a self test eCall procedure to the specified phone number.
+telux::common::Status TelClient::startECall(int phoneId, const std::vector<uint8_t> rawData,
+    const std::string dialNumber, std::shared_ptr<CallStatusListener> callListener) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
+                  << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    setECallProgressState(true);
+    // Initiate voice eCall
+    telux::common::Status status = telux::common::Status::FAILED;
+    status = callMgr_->makeECall(phoneId, dialNumber, rawData,
+        std::bind(
+             &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
+    if (status == telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Request to make a self test eCall is sent successfully"
+                  << std::endl;
+    } else {
+        std::cout << CLIENT_NAME << "Request to make a self test eCall failed!" << std::endl;
         setECallProgressState(false);
         return telux::common::Status::FAILED;
     }
@@ -646,6 +906,7 @@ telux::common::Status TelClient::updateTpsEcallOverImsMSD(
 // Answer an incoming call
 telux::common::Status TelClient::answer(
     int phoneId, std::shared_ptr<CallStatusListener> callListener) {
+    std::cout << CLIENT_NAME << "Answer " << std::endl;
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed answer call" << std::endl;
         return telux::common::Status::FAILED;
@@ -664,6 +925,7 @@ telux::common::Status TelClient::answer(
     }
     if (spCall) {
         eCall_ = spCall;
+        std::cout << CLIENT_NAME << "Found a valid call " << std::endl;
         // Answer incoming PSAP callback
         isIncomingCallInProgress_ = true;
         setECallProgressState(true);
@@ -707,13 +969,25 @@ telux::common::Status TelClient::hangup(int phoneId, int callIndex) {
         }
     }
     if (spCall && (numOfCalls == 1)) {
+        std::cout << CLIENT_NAME << "Sending hangup " << std::endl;
         telux::common::Status status = spCall->hangup(hangupCommandCallback_);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << CLIENT_NAME << "Failed to hangup call " << std::endl;
             return telux::common::Status::FAILED;
         }
     } else {
-        std::cout << CLIENT_NAME << "No relevant call found to hangup" << std::endl;
+        if (isEraGlonassEnabled()) {
+            if (willECallRedial_) {
+                std::cout << CLIENT_NAME <<
+                    " ERA-GLONASS eCall redial is perfomed by modem" <<
+                    "so call will get disconnected before next redial."
+                    << std::endl;
+                disconnectECallInNextAttempt_ = true;
+            } else {
+                disconnectECallInNextAttempt_ = false;
+                std::cout << CLIENT_NAME << "No relevant call found to hangup" << std::endl;
+            }
+        }
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
@@ -799,6 +1073,44 @@ telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type,
     return telux::common::Status::SUCCESS;
 }
 
+// Set the value of POST TEST REGISTRATION timer.
+telux::common::Status TelClient::setPostTestRegistrationTimer(int phoneId, uint32_t timeDuration) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME <<
+            "Invalid Call Manager, Failed to send request to set post test registration timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->updateECallPostTestRegistrationTimer(phoneId, timeDuration,
+                            std::bind(&TelClient::setECallPostTestRegistrationTimerResponse, this,
+                            std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME <<
+            "Failed to send request to set post test registration timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+// Get the value of POST TEST REGISTRATION timer.
+telux::common::ErrorCode TelClient::getECallPostTestRegistrationTimer(int phoneId) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
+            << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    uint32_t timer = 0;
+    auto errorCode = callMgr_->getECallPostTestRegistrationTimer(phoneId, timer);
+    if(errorCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << " ECall post test registration timer: " << timer << std::endl;
+    } else {
+        std::cout << CLIENT_NAME
+            << "Failed to get eCall post test registration timer with errorCode "
+            << static_cast<int>(errorCode) << std::endl;
+    }
+    return errorCode;
+}
+
 telux::common::Status TelClient::getECallConfig() {
     if(!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
@@ -814,6 +1126,33 @@ telux::common::Status TelClient::getECallConfig() {
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
+}
+
+// Get eCall redial parameters for call origination failure and call drop.
+telux::common::ErrorCode TelClient::getECallRedialConfig() {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager" << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    std::vector<int> callOrigTimeGap = {};
+    std::vector<int> callDropTimeGap = {};
+    auto errorCode = callMgr_->getECallRedialConfig(callOrigTimeGap, callDropTimeGap);
+    if(errorCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << " Call origination failure redial config values ";
+        for (int value : callOrigTimeGap) {
+            std::cout << value << " ";
+        }
+        std::cout << std::endl;
+        std::cout << " Call drop failure redial config values ";
+        for (int value : callDropTimeGap) {
+            std::cout << value << " ";
+        }
+        std::cout << std::endl;
+    } else {
+        std::cout << CLIENT_NAME << "Failed to get eCall redial configuration"
+            << static_cast<int>(errorCode) << std::endl;
+    }
+    return errorCode;
 }
 
 // Get the value of eCall High Level Application Protocol(HLAP) timer

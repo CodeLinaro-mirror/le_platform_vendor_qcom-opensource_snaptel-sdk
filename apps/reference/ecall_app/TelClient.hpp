@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -89,7 +89,8 @@ class CallStatusListener {
 /** TelClient class provides methods to trigger an eCall, update MSD, answer/hangup a call */
 class TelClient : public ICallListener,
                   public IMakeCallCallback,
-                  public std::enable_shared_from_this<TelClient> {
+                  public std::enable_shared_from_this<TelClient>,
+                  public CallStatusListener {
  public:
     /**
      * Initialize telephony subsystem
@@ -115,6 +116,20 @@ class TelClient : public ICallListener,
     telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
         ECallCategory category, ECallVariant variant, bool transmitMsd,
         std::shared_ptr<CallStatusListener> callListener);
+
+    /**
+     * This function starts a self test ERA-GLONASS eCall to specified number.
+     *
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
+     * @param [in] rawData      Encoded MSD PDU
+     * @param [in] dialNumber   phone number to be dialed
+     * @param [in] callListener pointer to CallStatusListener to notify call status changes
+     *
+     * @returns Status of startECall i.e success or suitable status code.
+     *
+     */
+    telux::common::Status startECall(int phoneId, const std::vector<uint8_t> rawData,
+        const std::string dialNumber, std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function sends MSD for TPS eCall over IMS
@@ -146,7 +161,7 @@ class TelClient : public ICallListener,
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is
      *                          performed
-     * @param [in] rawData      MSD data at call connect
+     * @param [in] msdPdu      MSD data at call connect
      * @param [in] dialNumber   phone number to be dialed
      * @param [in] contentType  Content type for SIP request
      * @param [in] acceptInfo   Accept info for SIP request
@@ -155,7 +170,7 @@ class TelClient : public ICallListener,
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, const std::vector<uint8_t> rawData,
+    telux::common::Status startECall(int phoneId, const std::vector<uint8_t> msdPdu,
         const std::string dialNumber, std::string contentType, std::string acceptInfo,
         std::shared_ptr<CallStatusListener> callListener);
 
@@ -341,6 +356,37 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
+     * Get ECall redial configuration.
+     *
+     * @returns error code for getECallRedialConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::ErrorCode getECallRedialConfig();
+
+    /**
+     * Set the value of POST TEST REGISTRATION timer.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which the operation will be
+     *                         performed
+     * @param [in] duration    timer input in minutes.
+     * @returns status code for setPostTestRegistrationTimer i.e success or suitable
+     * error code.
+     *
+     */
+    telux::common::Status setPostTestRegistrationTimer(int phoneId, uint32_t timeDuration);
+
+    /**
+     * Get the value of POST TEST REGISTRATION timer.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which the operation will be
+     *                         performed.
+     * @returns status error code for getECallPostTestRegistrationTimer i.e success or suitable
+     * error code.
+     *
+     */
+    telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
@@ -354,17 +400,20 @@ class TelClient : public ICallListener,
     void hlapTimerStatusResponse(
         telux::common::ErrorCode error, int phoneId, ECallHlapTimerStatus timersStatus);
     void stopT10TimerResponse(telux::common::ErrorCode error);
+    void setECallPostTestRegistrationTimerResponse(telux::common::ErrorCode error);
     void setHlapTimerResponse(telux::common::ErrorCode error);
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void configureECallRedialResponse(telux::common::ErrorCode error);
     void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
+    void setEraGlonassEnabled(bool isEnabled);
 
     TelClient();
     ~TelClient();
 
  private:
     void setECallProgressState(bool state);
+    bool isEraGlonassEnabled();
     class AnswerCommandCallback : public telux::common::ICommandResponseCallback {
      public:
         void commandResponse(telux::common::ErrorCode error) override;
@@ -395,6 +444,8 @@ class TelClient : public ICallListener,
 
     /** Represents eCall status */
     bool eCallInprogress_;
+    /** Represents ERA-GLONASS eCall is enabled in eCall.conf file. */
+    bool isEraglonassEnabled_;
 
     std::mutex mutex_;
     std::shared_ptr<CallStatusListener> callListener_;
@@ -442,6 +493,60 @@ class TelClient : public ICallListener,
     /** Represents whether ecall initiated is a private ecall. */
     bool isPrivateEcallTriggered;
     bool isIncomingCallInProgress_;
+    /** Represents whether dial duration timer is expired for ERA-GLONASS eCall. */
+    bool isDialDurationTimeOut_;
+    /**
+     * Dial duration timer must be stopped when eCall is successfully able to connect to PSAP
+     * before expiry of dial duration for ERA-GLONASS eCall.
+     * - call state = ACTIVE or
+     * - onECallRedial::ECallRedialInfo::reason = telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED
+     *   signifies modem has exhausted redial retries.
+     * - onECallRedial::ECallRedialInfo::reason == telux::tel::ReasonType::CALL_CONNECTED
+     *   signifies PSAP has terminated eCall.
+     */
+    bool stopDialTimer_;
+    /* It represents duration during which incoming PSAP callback will be answered automatically.*/
+    int autoAnswerDuration_;
+    /* It represents whether T9 HLAP timer is active */
+    bool isT9TimerActive_;
+    /** It represents whether ongoing eCall will redial due to call origination or
+     *  call drop failure.
+     */
+    bool willECallRedial_;
+    /**
+     *  It represents whether ongoing ERA-GLONASS eCall must be disconnected in next redial attempt
+     *  when no eCall is found.
+     *  During successive redial attempts, eCall cache will be cleared by UE. Upon expiry of
+     *  dial duration for eCall no relevant eCall will be found in the UE. This flag
+     *  ensures that during next redial attempt an eCall termination request is sent to UE.
+     *  Example: Modem is redialling eCall due to call origination failure.
+     *  Configured Call Orignation TimeGap = 5, 60, 60, 60, 60 (in seconds)
+     *  Dial duration = 70 seconds
+     *  let's assume duration of redial =  4 seconds
+     *  0th redial       4 seconds
+     *  1st redial       4 + 5 (timeGap) + 4(duration of redial) = 13 seconds
+     *  2nd redial       13 + 60 + 4 = 77 sec --> 70 seconds (Here, eCall cache will be cleared by
+     *                                                    modem, hence hangup request must be
+     *                                                    sent in 3rd redial attempt. )
+     *  3rd redial       77 + 60 + 4 = 141 seconds
+     *  4th redial       141 + 60 + 4 = 205 seconds
+     *  5th redial       205 + 60 + 4 = 269 seconds
+     */
+    bool disconnectECallInNextAttempt_;
+    /* It represents flag to clear eCall cache when ERA-GLONASS eCall terminates upon sending
+     * call termination request from application.
+     */
+    bool clearECall_;
+    /** Represents whether auto answer timer is expired for ERA-GLONASS eCall. */
+    bool isAutoAnswerDurationTimeOut_;
+    std::condition_variable dialDurationCv_;
+    std::condition_variable autoAnswerCv_;
+    std::mutex dialDurationMtx_;
+    std::mutex autoAnswerMtx_;
+    std::shared_future<void> autoDialDurationTimer_;
+    std::shared_future<void> autoAnswerTimer_;
+    void autoHangup(int phoneId);
+    void signalForExpiryOfDialDuration(int dialDuration);
 };
 
 #endif  // TELCLIENT_HPP

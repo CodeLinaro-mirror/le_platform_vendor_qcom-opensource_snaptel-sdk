@@ -331,6 +331,7 @@
         "throttle_apn_event" : [
             "telsdk_event_injector -f data_connection -e throttle_apn_event <state>",
             "state:   RESET | START | STOP"
+        ]
     },
     "fs_manager": {
         "efsBackup":[

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 
@@ -97,20 +97,26 @@ endif (TELSDK_FEATURE_DATA)
 
 if (TELSDK_FEATURE_AUDIO)
     set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/VoiceSession.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioSession.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioHelper.cpp
     )
 endif (TELSDK_FEATURE_AUDIO)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Audio/AudioClient.cpp
    TelSdkConsoleApp.cpp
-   ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-   ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
-   ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
-   ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
-   ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../common/ConfigParser.cpp
+)
+
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/../../common
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils
 )
 
 # set global variables

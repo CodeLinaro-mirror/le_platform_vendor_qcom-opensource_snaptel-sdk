@@ -16,6 +16,23 @@ set(LIBQAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./Monitor/qMonitor.cpp
 
 )
+
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/Ldm
+    ${CMAKE_CURRENT_LIST_DIR}/../qCoder/include
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/KinematicsReceive
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/RadioReceive
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/RadioInterface
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/RadioTransmit
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/VehicleReceive
+    ${CMAKE_CURRENT_LIST_DIR}/../qMessenger/ThrottleManager
+    ${CMAKE_CURRENT_LIST_DIR}/../qApplication/SafetyApps
+    ${CMAKE_CURRENT_LIST_DIR}/../qApplication/Monitor
+    ${CMAKE_CURRENT_LIST_DIR}/../qApplication/Utils
+    ${CMAKE_CURRENT_BINARY_DIR}/json-c
+)
+
 if(DEFINED ENV{AEROLINK_PATH} OR DEFINED WITH_AEROLINK)
     set(LIBQAPPLICATION_SOURCES ${LIBQAPPLICATION_SOURCES}
         ${CMAKE_CURRENT_SOURCE_DIR}/./Application/AerolinkSecurity.cpp)

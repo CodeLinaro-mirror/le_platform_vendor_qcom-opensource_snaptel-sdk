@@ -1,14 +1,14 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_ANTENNA_TEST_APP antenna_test_app)
 
 set(ANTENNA_TEST_APP
     AntennaTestApp.cpp
     MyAntennaListener.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
-    ../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
 )
 
 add_definitions(-DAPP_NAME=\"\\033[1;32mantenna_test_app\\033[0m\")

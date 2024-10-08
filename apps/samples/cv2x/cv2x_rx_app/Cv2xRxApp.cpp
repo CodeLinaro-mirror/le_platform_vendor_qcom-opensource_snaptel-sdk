@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023,2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -81,7 +81,6 @@ int Cv2xRxApp::parseSidList(char* param) {
     char* tok = param;
     char* endptr = NULL;
     int i = 0;
-    int temp_len = 0;
     unsigned int sid = 0;
 
     tok = strtok_r(tok, ",", &saveptr);
@@ -105,7 +104,7 @@ int Cv2xRxApp::parseSidList(char* param) {
     }
 
     cout << "Set Rx SID:";
-    for (int i = 0; i < idVector_.size(); ++i) {
+    for (std::vector<unsigned int>::size_type i = 0; i < idVector_.size(); ++i) {
         cout << " " << idVector_[i];
     }
     cout << endl;

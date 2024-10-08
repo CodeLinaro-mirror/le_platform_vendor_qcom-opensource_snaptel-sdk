@@ -8,16 +8,24 @@ include(FindPkgConfig)
 
 set(TARGET_QITS qits)
 
-if (NOT DEFINED telematics-apps_SOURCE_DIR)
-    set(telematics-apps_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../)
-endif()
-
 include_directories(BEFORE
-    ${telematics-apps_SOURCE_DIR}/common/utils/
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../common/utils/
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qApplication/Application/
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/KinematicsReceive/
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/RadioReceive
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/RadioInterface
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/RadioTransmit
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/VehicleReceive
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qApplication/Ldm
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qCoder/include
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qMessenger/ThrottleManager
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qApplication/SafetyApps
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qApplication/Monitor
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/qApplication/Utils
 )
 set(QITS_SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../common/utils/SignalHandler.cpp
     ApplicationTest.cpp
 )
 

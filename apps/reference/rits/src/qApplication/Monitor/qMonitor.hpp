@@ -41,7 +41,7 @@
 #define QMONITOR_HPP
 
 // System Includes
-#include <json.h>
+#include <json-c/json.h>
 #include <map>
 #include <thread>
 #include <sys/socket.h>

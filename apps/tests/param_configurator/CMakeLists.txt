@@ -1,14 +1,14 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_PARAM_CONFIGURATOR param_configurator)
 
 set(PARAM_CONFIGURATOR_SOURCES
     ConfiguratorMenu.cpp
     ConfiguratorListener.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
-    ../../common/ConfigParser.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/ConfigParser.cpp
 )
 
 macro(SYSR_INCLUDE_DIR subdir)

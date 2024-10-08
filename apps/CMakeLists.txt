@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 project (telematics-apps)
 
@@ -126,12 +126,12 @@ if (TELUX_SQUISH_LIB_FOUND)
    add_definitions(-DTELSDK_FEATURE_SQUISH_ENABLED)
 endif (TELUX_SQUISH_LIB_FOUND)
 
-#For simulation apps, set rpath to CMAKE_INSTALL_LIBDIR for telux stub libraries
-if(BUILD_FOR_SIMULATION)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif(BUILD_FOR_SIMULATION)
-
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+
+#To enable debug symbols, set -DENABLE_DEBUG=ON
+if(ENABLE_DEBUG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+endif()
 
 # build subdirectories
 add_subdirectory( common/console_app_framework )

@@ -7,14 +7,14 @@ pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(TEL_APP_SOURCES
    MakeCall.cpp
-   ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../../common/ConfigParser.cpp
 )
 
 add_executable(${TARGET_TEL_APP} ${TEL_APP_SOURCES})
 
 target_include_directories(${TARGET_TEL_APP} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common)
+    ${CMAKE_CURRENT_LIST_DIR}/../../../common)
 
 target_compile_options(${TARGET_TEL_APP} PRIVATE -std=c++11 -Wall -Werror)
 

@@ -670,7 +670,7 @@ static int createTcpSocket() {
 
 static int parseIPv6Prefix(char *ipPrefix) {
     int i = 0;
-    auto pos = 0, prev = 0;
+    std::string::size_type pos = 0, prev = 0;
     string prefixStr = gGlobalIpPrefix + ":";
     do {
         if (i >= CV2X_IPV6_ADDR_ARRAY_LEN) {

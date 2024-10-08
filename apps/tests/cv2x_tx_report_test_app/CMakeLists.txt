@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_CV2X_TX_REPORT_TEST_APP cv2x_tx_report_test_app)
 
 set(CV2X_TX_REPORT_TEST_SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
     Cv2xTxReportTestApp.cpp
     Report.cpp
 )
@@ -23,7 +23,7 @@ include_directories(BEFORE
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_CV2X_TX_REPORT_TEST_APP} ${CV2X_TX_REPORT_TEST_SOURCES})
 target_link_libraries(${TARGET_CV2X_TX_REPORT_TEST_APP} telux_cv2x pthread)

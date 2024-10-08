@@ -188,6 +188,8 @@ service DataFilterManager {
     rpc setIpPassThroughConfig(setIpptConfigRequest) returns (setIpptConfigReply) {}
     rpc getIpConfig(getIpConfigRequest) returns (getIpConfigReply) {}
     rpc setIpConfig(setIpConfigRequest) returns (setIpConfigReply) {}
+    rpc SetIpPassThroughNatConfig(setIpptNatConfigRequest) returns (setIpptNatConfigReply) {}
+    rpc GetIpPassThroughNatConfig(google.protobuf.Empty) returns (getIpptNatConfigReply) {}
     rpc RegisterOnWwanConnectivityConfigChange(google.protobuf.Empty) returns
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
@@ -495,6 +497,19 @@ message setIpConfigRequest {
     IpType ip_type = 4;
     IpAssign ip_assign = 5;
     IpAddrInfo ip_addr_info = 6;
+}
+
+message setIpptNatConfigRequest {
+    bool enable_nat = 1;
+}
+
+message setIpptNatConfigReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message getIpptNatConfigReply {
+    bool enable_nat = 1;
+    commonStub.ErrorCode error = 2;
 }
 
 message setIpConfigReply {

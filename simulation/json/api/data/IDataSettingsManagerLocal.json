@@ -58,6 +58,12 @@
         },
         "getIpConfig": {
             "error": "SUCCESS"
+        },
+        "getIpPassThroughNatConfig": {
+            "error": "SUCCESS"
+        },
+        "setIpPassThroughNatConfig": {
+            "error": "SUCCESS"
         }
     }
 }

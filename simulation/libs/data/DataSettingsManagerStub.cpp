@@ -616,6 +616,58 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(const I
     return error;
 }
 
+telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughNatConfig(bool &isNatEnabled) {
+    LOG(DEBUG,__FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::google::protobuf::Empty request;
+    ::dataStub::getIpptNatConfigReply response;
+    ClientContext context;
+
+    grpc::Status reqStatus = stub_->GetIpPassThroughNatConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " getIpPassThroughNatConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        isNatEnabled = response.enable_nat();
+    }
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughNatConfig(bool enableNat) {
+    LOG(DEBUG,__FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::setIpptNatConfigRequest request;
+    ::dataStub::setIpptNatConfigReply response;
+    ClientContext context;
+
+    request.set_enable_nat(enableNat);
+
+    grpc::Status reqStatus = stub_->SetIpPassThroughNatConfig(&context, request, &response);
+    auto error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setIpPassThroughNatConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+    }
+    return error;
+}
+
 telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(const IpConfigParams &ipConfigParams,
         IpConfig &ipConfig) {
     LOG(DEBUG,__FUNCTION__);

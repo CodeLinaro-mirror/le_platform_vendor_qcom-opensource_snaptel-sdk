@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_SENSOR_APP sensor_app)
 
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXSENSOR REQUIRED telux-sensor)
 
 add_compile_options(${TELUXSENSOR_CFLAGS})

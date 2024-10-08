@@ -39,7 +39,7 @@
  */
 #include "qMonitor.hpp"
 #include "qMonitorJson.hpp"
-#include <json.h>
+#include <json-c/json.h>
 #include <errno.h>
 #include <string.h>
 #include <string>

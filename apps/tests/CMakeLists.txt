@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
-if(NOT BUILD_FOR_SIMULATION)
-    add_subdirectory( telsdk_console_app )
+add_subdirectory( telsdk_console_app )
+
 if (TELSDK_FEATURE_SQUISH)
     add_subdirectory( squish_test_app )
 endif (TELSDK_FEATURE_SQUISH)
@@ -70,5 +70,3 @@ if (TELSDK_FEATURE_CONNECTION_SECURITY)
     add_subdirectory( cellular_connection_security_app )
     add_subdirectory( wifi_connection_security_app )
 endif (TELSDK_FEATURE_CONNECTION_SECURITY)
-
-endif(NOT BUILD_FOR_SIMULATION)

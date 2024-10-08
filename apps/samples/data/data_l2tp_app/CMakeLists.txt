@@ -7,14 +7,14 @@ pkg_check_modules(TELUXDATA REQUIRED telux-data)
 
 set(DATA_APP_SOURCES
    DataL2tpApp.cpp
-   ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../../common/ConfigParser.cpp
 )
 
 add_executable(${TARGET_DATA_APP} ${DATA_APP_SOURCES})
 
 target_include_directories(${TARGET_DATA_APP} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common)
+    ${CMAKE_CURRENT_LIST_DIR}/../../../common)
 
 target_compile_options(${TARGET_DATA_APP} PRIVATE -std=c++11 -Wall -Werror)
 

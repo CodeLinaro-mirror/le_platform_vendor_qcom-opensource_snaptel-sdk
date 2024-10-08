@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_TELUX_VERSION_APP telux_version_app)
+
+find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(TELUXPLATFORM REQUIRED telux-platform)
 add_compile_options(${TELUXPLATFORM_CFLAGS})
 set(TELUX_VERSION_APP_SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     TeluxVersionApp.cpp
 )
 

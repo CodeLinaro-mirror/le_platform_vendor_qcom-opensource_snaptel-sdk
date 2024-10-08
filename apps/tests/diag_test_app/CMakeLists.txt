@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_DIAG_APP diag_test_app)
 
@@ -7,9 +7,9 @@ set(SOURCES
     DiagFileMethodMenu.cpp
     DiagCallbackMethodMenu.cpp
     DiagUtils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
 )
 
 macro(SYSR_INCLUDE_DIR subdir)
@@ -26,7 +26,7 @@ include_directories(BEFORE
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror  -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_DIAG_APP} ${SOURCES})
 target_link_libraries(${TARGET_DIAG_APP} telux_platform_diag telux_common)

@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 
 set(TARGET_POWER_REF_DAEMON telux_power_refd)
+
+find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(CAN_WRAPPER_LIB libcanwrapper)
 if (CAN_WRAPPER_LIB_FOUND)
@@ -9,7 +11,7 @@ if (CAN_WRAPPER_LIB_FOUND)
 endif (CAN_WRAPPER_LIB_FOUND)
 
 set(TARGET_POWER_REF_DAEMON_SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     common/ConfigParser.cpp
     common/RefAppUtils.cpp
     Event.cpp
@@ -28,7 +30,7 @@ endif (CAN_WRAPPER_LIB_FOUND)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common/utils
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils
 )
 
 # Set global variables

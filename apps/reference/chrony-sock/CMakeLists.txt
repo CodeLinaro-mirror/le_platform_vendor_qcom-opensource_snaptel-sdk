@@ -1,6 +1,10 @@
+cmake_minimum_required(VERSION 3.10.2)
+
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(APP_NAME chrony-sock)
+
+find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(TELUXCOMMON REQUIRED telux-common)
 pkg_checK_modules(TELUXPLATFORM REQUIRED telux-platform)
@@ -16,7 +20,7 @@ set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
               WORLD_EXECUTE WORLD_READ)
 
 set(SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp
     chrony-sock.cpp)
 
 add_executable(${APP_NAME} ${SOURCES})

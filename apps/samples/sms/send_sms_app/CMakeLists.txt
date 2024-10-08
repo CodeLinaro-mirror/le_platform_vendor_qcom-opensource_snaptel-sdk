@@ -7,12 +7,12 @@ pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(SMS_APP_SOURCES
     SendSms.cpp
-    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp)
+    ${CMAKE_CURRENT_LIST_DIR}/../../../common/ConfigParser.cpp)
 
 add_executable (${TARGET_SMS_APP} ${SMS_APP_SOURCES})
 
 target_include_directories(${TARGET_SMS_APP} PRIVATE
-    "${telematics-apps_SOURCE_DIR}/common"
+    ${CMAKE_CURRENT_LIST_DIR}/../../../common
     ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_options(${TARGET_SMS_APP} PRIVATE -std=c++11 -Wall -Werror)

@@ -147,7 +147,12 @@ inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
      * So, if the inputCommand size > commandName, we try matching each token of the command name.
      * Next, we check whether the argument size is the same as the expected size and return.
      *
-    */
+     * 4. If the inputCommand size == commandName but if command expects arguments and input
+     * command doesn't provide arguments, we should return false.
+     * Hangup <index>   (commandName expecting index as argument)
+     * Hangup           (inputCommand didn't provide argument)
+     * This should return false.
+     */
     if(inputCommand.size() >= commandTokens.size()) {
         for(size_t i = 0; i < commandTokens.size(); i++) {
             if(inputCommand[i] != commandTokens[i]) {
@@ -159,6 +164,10 @@ inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
             if(argumentSize != command->getArguments().size()) {
                 return false;
             }
+        }
+        if((inputCommand.size() == commandTokens.size()) &&
+            (command->getArguments().size() >= 1)) {
+            return false;
         }
         return true;
     }

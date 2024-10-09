@@ -27,76 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <bitset>
@@ -1546,6 +1479,60 @@ void MyLocationListener::onLocationSystemInfo(const telux::loc::LocationSystemIn
        info.leapSecondsAfterChange) << std::endl;
 }
 
+void MyLocationConfigListener::onStartInjection(const uint32_t timeInMilliSeconds) {
+    std::cout << std::endl;
+    PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
+    std::cout << "<<< onStartInjection\n" << std::endl;
+    std::cout << "Maximum rate of injection is: (in milliseconds) "
+        << timeInMilliSeconds << std::endl;
+    std::unique_lock<std::mutex> lock(mutex_);
+    enableLocationInjection_ = true;
+    LocationInjectionRate_ = timeInMilliSeconds;
+    cv_.notify_all();
+}
+
+void MyLocationConfigListener::onStopInjection() {
+    std::cout << std::endl;
+    PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
+    std::cout << "<<< onStopInjection\n" << std::endl;
+    std::unique_lock<std::mutex> lock(mutex_);
+    enableLocationInjection_ = false;
+    cv_.notify_all();
+}
+
+void MyLocationConfigListener::waitForInjectionNotification() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    cv_.wait(lock);
+    return;
+}
+
+void MyLocationInjector::onStartInjection(const uint32_t timeInMilliSeconds) {
+    std::cout << std::endl;
+    PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
+    std::cout << "<<< onStartInjection\n" << std::endl;
+    std::cout << "Maximum rate of injection is: (in milliseconds) "
+        << timeInMilliSeconds << std::endl;
+    std::unique_lock<std::mutex> lock(mutex_);
+    enableLocationInjection_ = true;
+    LocationInjectionRate_ = timeInMilliSeconds;
+    cv_.notify_all();
+}
+
+void MyLocationInjector::onStopInjection() {
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
+   std::cout << "<<< onStopInjection\n" << std::endl;
+   std::unique_lock<std::mutex> lock(mutex_);
+   enableLocationInjection_ = false;
+   cv_.notify_all();
+}
+
+void MyLocationInjector::waitForInjectionNotification() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    cv_.wait(lock);
+    return;
+}
+
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
    isDetailedReportFlagEnabled_ = enable;
 }
@@ -1587,4 +1574,24 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
     std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
+}
+
+bool MyLocationConfigListener::getLocationInjectionFlag() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return enableLocationInjection_;
+}
+
+uint32_t MyLocationConfigListener::getLocInjectionRate() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return LocationInjectionRate_;
+}
+
+bool MyLocationInjector::getLocationInjectionFlag() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return enableLocationInjection_;
+}
+
+uint32_t MyLocationInjector::getLocInjectionRate() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return LocationInjectionRate_;
 }

@@ -26,41 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -261,12 +230,76 @@ class ILocationConfigListener {
     /**
      * The API is invoked when there is any update in the Xtra assistance data.
      *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS.
+     *
      * @param [in] xtraStatus - Xtra assistant data's current status, validity
      *                          and whether it is enabled.
      */
     virtual void onXtraStatusUpdate(const XtraStatus xtraStatus) {}
 
+    /**
+     * The API is invoked when the Location service is ready to start receiving the location
+     * reports using the @ref ILocationConfigurator::injectLocationData API.
+     *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_LOC_INJ_REQ.
+     *
+     * @param [in] timeInMilliSeconds - contains the time in milliseconds which represents
+     *                                  the Max rate at which the
+     *                                  @ref LocationConfigurator::injectLocationData API can
+     *                                  be called.
+     */
+    virtual void onStartInjection(const uint32_t timeInMilliSeconds) {}
+
+    /**
+     * The API is invoked to notify the Location service's intent to stop injecting
+     * the location reports using the @ref ILocationConfigurator::injectLocationData API.
+     *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_LOC_INJ_REQ.
+     *
+     */
+    virtual void onStopInjection() {}
+
+    /**
+     * Destructor of ILocationConfigListener
+     */
     virtual ~ILocationConfigListener() {}
+};
+
+/**
+ * @deprecated - Use @ref ILocationConfigListener class.
+ *
+ */
+class ILocationInjectionListener {
+  public:
+    /**
+     * This function is called when the Location service is ready to start receiving the location
+     * reports using the @ref LocationConfigurator::injectLocationData API.
+     *
+     * @deprecated - Use @ref ILocationConfigListener::onStartInjection API.
+     *
+     * @param [in] timeInMillis - contains the time in milliseconds which represents the Max rate of
+     *                            at which the @ref LocationConfigurator::injectLocationData API can
+     *                            be called.
+     */
+    virtual void onStartInjection(const uint32_t timeInMilliSeconds) {}
+
+    /**
+     * This function notifies the Location service's intent to stop injecting the location reports
+     * using the @ref LocationConfigurator::injectLocationData API.
+     *
+     * @deprecated - Use @ref ILocationConfigListener::onStopInjection API.
+     *
+     */
+    virtual void onStopInjection() {}
+
+    /**
+     * Destructor of ILocationInjectionListener
+     */
+    virtual ~ILocationInjectionListener() {}
+
 };
 
 /** @} */ /* end_addtogroup telematics_location */

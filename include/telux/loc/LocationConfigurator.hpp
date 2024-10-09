@@ -26,41 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -778,6 +747,60 @@ public:
 
   virtual telux::common::Status deRegisterListener(LocConfigIndications indicationList,
     std::weak_ptr<ILocationConfigListener> listener) = 0;
+
+/**
+ * This API registers an @ref ILocationInjectionListener listener and will receive notifications
+ * regarding when to start or stop the location report injection using the @ref injectLocationData
+ * API.
+ *
+ * @deprecated - Use @ref ILocationConfigurator::registerListener API.
+ *
+ * @param [in] listener - Pointer of @ref ILocationInjectionListener object.
+ *
+ * @returns Status of registerLocationInjector i.e success or suitable status code.
+ *
+ */
+  virtual telux::common::Status
+        registerLocationInjector(std::weak_ptr<ILocationInjectionListener> listener) = 0;
+
+/**
+ * This API removes a previously registered listener and will also stop receiving notifications
+ * related to location data injection for that particular listener.
+ *
+ * @deprecated - Use @ref ILocationConfigurator::deregisterListener API.
+ *
+ * @param [in] listener - Pointer of @ref ILocationInjectionListener object.
+ *
+ * @returns Status of deregisterLocationInjector i.e success or suitable status code.
+ *
+ *
+ */
+  virtual telux::common::Status
+        deregisterLocationInjector(std::weak_ptr<ILocationInjectionListener> listener) = 0;
+
+/**
+ * Inject best location data
+ *
+ * This API is used to inject the @ref telux::loc::ExternalLocationInfo data into the GNSS engine.
+ *
+ * This API is intended to be invoked after @ref ILocationConfigListener::onStartInjection API
+ * call and is not expected to be invoked after @ref ILocationConfigListener::onStopInjection
+ * API call. To maintain backward compatibility, this API is also intended to be invoked
+ * after @ref ILocationInjectionListener::onStartInjection API  call and is not expected to be
+ * invoked after @ref ILocationInjectionListener::onStopInjection API call.
+ *
+ * If this API is used without meeting the above mentioned pre-requisites, the GNSS engine
+ * might produce low quality GNSS position.
+ *
+ * @param [in] location  @ref telux::loc::ExternalLocationInfo data to be injected.
+ *
+ * @return Status of injectLocationData i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status injectLocationData(const ExternalLocationInfo& location) = 0;
 
 /**
  * Destructor of ILocationConfigurator

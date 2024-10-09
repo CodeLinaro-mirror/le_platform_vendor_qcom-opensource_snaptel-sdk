@@ -1041,6 +1041,32 @@ struct LeverArmParams {
     float upOffset;
 };
 
+/**
+ * Specifies parameters related to External Location information.
+ */
+struct ExternalLocationInfo {
+    /** UTC timestamp elapsed since January 1, 1970, in unit of milliseconds. */
+    uint64_t timestamp;
+    /** Latitude, in unit of degrees, range [-90.0, 90.0]. */
+    double latitude;
+    /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
+    double longitude;
+    /** Horizontal accuracy, in unit of meters.
+     *  The best results are expected when the accuracy is estimated
+     *  with 68% horizontal confidence.
+     */
+    float horizontalAccuracy;
+    /** Altitude, in unit of meters. */
+    double altitude;
+    /** Vertical accuracy, in unit of meters.
+     *  The best results are expected when the accuracy is estimated
+     *  with 68% vertical confidence.
+     */
+    float verticalAccuracy;
+    /** Validity mask of the ExternalLocationInfo fields. */
+    LocationInfoValidity validityMask;
+};
+
 typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
 /** Specify valid fields in GnssMeasurementsData.*/
@@ -1861,7 +1887,10 @@ struct XtraStatus {
 
 /** Enum of all the possible indications invoked by a Location Configurator listener.  */
 enum LocConfigIndicationsType {
-    LOC_CONF_IND_XTRA_STATUS = 0
+    /**< Register to receive Xtra status updates. */
+    LOC_CONF_IND_XTRA_STATUS = 0,
+    /**< Register to receive External location data injection status updates. */
+    LOC_CONF_IND_LOC_INJ_REQ
 };
 
 /** This bitset represents the list of the Location Config Indications selected by the Client. */

@@ -116,6 +116,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDisasterCrisisInfoFlag(false);
       posListener->setEphemerisInfoFlag(false);
       posListener->setLocSystemInfoFlag(false);
+      posListener->setExtendedInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -503,7 +504,8 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
                        " (0- Location\n 1- SV\n 2- NMEA\n 3- DATA\n 4- Measurement\n "
-                       "5- NHzMeasurement\n 6 - DisasterCrisis\n 7- EngineNMEA\n 8- Ephemeris)\n\n";
+                       "5- NHzMeasurement\n 6 - DisasterCrisis\n 7- EngineNMEA\n 8- Ephemeris\n "
+                       "9 - Extended Data) \n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -515,7 +517,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 8) {
+              if(option >= 0 && option <= 9) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -1983,7 +1985,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  8 - Location_system_information " << std::endl;
      std::cout << "  9 - Disaster_Crisis_info_notifications" << std::endl;
      std::cout << "  10 - Engine_NMEA_info_notifications" << std::endl;
-     std::cout << "  11 - Ephemeris_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  11 - Ephemeris_info_notifications" << std::endl;
+     std::cout << "  12 - Extended_information " << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -2015,6 +2018,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableEngineNmeaInfoLogs();
      }  else if(usrInput == "11") {
          LocationMenu::enableEphemerisInfoLogs();
+     } else if(usrInput == "12") {
+         LocationMenu::enableExtendedInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -2106,6 +2111,15 @@ void LocationMenu::enableLocationSystemInfoLogs() {
   } else {
     std::cout << "ERROR: invalid input, please enter 0 or 1\n";
   }
+}
+
+void LocationMenu::enableExtendedInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setExtendedInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
 }
 
 telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engineType) {

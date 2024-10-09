@@ -2217,7 +2217,9 @@ enum GnssReportType {
      * These reports are obtained only from the GNSS(SPE) engine
      * whenever there is an update in the ephemeris information for a constellation.
      */
-    EPHEMERIS         = (1 << 8)
+    EPHEMERIS         = (1 << 8),
+    /** GNSS extended data */
+    EXTENDED_DATA     = (1 << 9)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */

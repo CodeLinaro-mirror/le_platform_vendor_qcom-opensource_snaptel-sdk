@@ -120,6 +120,7 @@ public:
    void enableDisasterCrisisInfoLogs();
    void enableEphemerisInfoLogs();
    void enableEngineNmeaInfoLogs();
+   void enableExtendedInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);

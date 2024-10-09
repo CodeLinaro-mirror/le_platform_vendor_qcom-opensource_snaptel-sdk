@@ -68,6 +68,8 @@ public:
 
    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
 
+   void onGnssExtendedDataInfo(const std::vector<uint8_t>& payload) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
@@ -79,8 +81,8 @@ public:
    void setEphemerisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
    void setEngineNmeaInfoFlag(bool enable);
-
    void setRecordingFlag(bool enable);
+   void setExtendedInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -94,8 +96,9 @@ private:
    bool isEphemerisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    bool isEngineNmeaInfoFlagEnabled_ = false;
-
    bool isRecordingEnabled_ = false;
+   bool isExtendedInfoFlagEnabled_ = false;
+   std::string extendedDataPayload_ = "1,2,3,4,5,6,7,8,9,10";
 
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printNavigationSolutionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

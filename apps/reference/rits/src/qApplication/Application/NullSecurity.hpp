@@ -101,6 +101,7 @@ public:
         return -1;
     }
     void setSecVerbosity(uint8_t verbosity) { };
+    int sspCheck( void* smp, uint8_t const* ssp) {return 0;};
     int idChange() {return 0;};
     int lockIdChange() {return 0;};
     int unlockIdChange() {return 0;};

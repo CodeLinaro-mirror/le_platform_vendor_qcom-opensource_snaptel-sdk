@@ -1620,6 +1620,36 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             }
         }
 
+
+        /*For ssp check */
+        if (configs.find("expectedSspValue") != configs.end()) {
+            char* end;
+            uint8_t num = (uint8_t)std::count(configs["expectedSspValue"].begin(),
+                    configs["expectedSspValue"].end(), ':');
+            if(configs["expectedSspValue"].back() != ':'){
+                num++;
+            }
+            this->configuration.expectedSspLength = num;
+            stream.str(configs["expectedSspValue"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string s;
+                getline(stream, s, ':');
+                if (s.empty()) {
+                    break;
+                }
+                this->configuration.expectedSspValueVect.push_back(s);
+                this->configuration.expectedSsp[i] =
+                        (uint8_t)strtol(
+                                this->configuration.expectedSspValueVect.at(i).c_str(), &end,16);
+            }
+            stream.str("");
+            stream.clear();
+        }
+        else{
+            this->configuration.expectedSspLength = 0;
+        }
+
         if(configs.find("setGenLocation") != configs.end()) {
             istringstream is4(configs["setGenLocation"]);
             is4 >> boolalpha >> configuration.setGenLocation;
@@ -1643,6 +1673,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("overridePsidCheck") != configs.end()) {
             istringstream is4(configs["overridePsidCheck"]);
             is4 >> boolalpha >> configuration.overridePsidCheck;
+        }
+
+        if(configs.find("emergencyVehicleEventTX") != configs.end()) {
+            istringstream is4(configs["emergencyVehicleEventTX"]);
+            is4 >> boolalpha >> configuration.emergencyVehicleEventTX;
         }
 
         /* Signing-related statistics */

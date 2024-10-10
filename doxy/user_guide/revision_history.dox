@@ -86,109 +86,46 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @tdmulrow{1,AQ} @tdmulrowend
-@td Jun 2024 @tdend @tdlast
-\- Remove unsupported simulation framework @tdlastend @trend
-@tr @tdmulrow{1,AP} @tdmulrowend
-@td Oct 2023 @tdend @tdlast
-\- Add support for Diagnostics services
-<br>\- Updated documentation for API reference and user guide for V1.63.0 @tdlastend @trend
-@tr @tdmulrow{1,AN} @tdmulrowend
-@td Sep 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.62.0 @tdlastend @trend
-@tr @tdmulrow{1,AM} @tdmulrowend
-@td Aug 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.61.0 @tdlastend @trend
-@tr @tdmulrow{1,AL} @tdmulrowend
-@td Jul 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.60.0 @tdlastend @trend
-@tr @tdmulrow{1,AK} @tdmulrowend
-@td Jun 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.59.0 @tdlastend @trend
-@tr @tdmulrow{1,AJ} @tdmulrowend
-@td May 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.58.0 @tdlastend @trend
-@tr @tdmulrow{1,AH} @tdmulrowend
-@td Apr 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.57.0 @tdlastend @trend
-@tr @tdmulrow{1,AG} @tdmulrowend
-@td Mar 2023 @tdend @tdlast
-\- Added support for thermal notifications(Trip update, Cdev level change)
-<br>\- Added sample apps for thermal notifications
-<br>\- Updated documentation for API reference and user guide for V1.56.0 @tdlastend @trend
-@tr @tdmulrow{1,AF} @tdmulrowend
-@td Dec 2022 @tdend @tdlast
-\- Added support for Third party service (TPS) eCall over IMS
-<br>\- Added sample apps for crypto accelerator
-@tdlastend @trend
-@tr @tdmulrow{1,AE} @tdmulrowend
-@td Nov 2022 @tdend @tdlast
-\- Add support for WLAN features
-<br>\- Updated documentation for API reference and user guide for V1.54.0 @tdlastend @trend
-@tr @tdmulrow{1,AD} @tdmulrowend
-@td Sep 2022 @tdend @tdlast
-\- Added information of linux group IDs @tdlastend @trend
-@tr @tdmulrow{1,AC} @tdmulrowend
-@td Jul 2022 @tdend @tdlast
-\- Added sample apps for crypto APIs @tdlastend @trend
-@tr @tdmulrow{1,AB} @tdmulrowend
-@td Mar 2022 @tdend @tdlast
-\- Addition of documentation for Call flow of control filesystem for ECALL operation. @tdlastend @trend
-@tr @tdmulrow{25,AA} @tdmulrowend
-@td Jan 2022 @tdend @tdlast
-\- Addition of documentation for sensor self test APIs. @tdlastend @trendcline
-@tr @tdmulrowempty @td Dec 2021 @tdend @tdlast
-\- Addition of documentation for ECALL and OTA operation APIs @tdlastend @trendcline
-@tr @tdmulrowempty @td Nov 2021 @tdend @tdlast
-\- Added support for Xtra feature in location @tdlastend @trendcline
-@tr @tdmulrowempty @td Aug 2021 @tdend @tdlast
-\- Added telsdk data subsystem behavior details during SSR
-<br>\- Updated EFS APIs related information for platform subsystem@tdlastend @trendcline
-@tr @tdmulrowempty @td Jul 2021 @tdend @tdlast \- Updated thermal subsystem readiness flow for new methodology @tdlastend @trendcline
-@tr @tdmulrowempty @td Jun 2021 @tdend @tdlast
-\- Added documentation for remote SIM provisioning APIs
-<br>\- Added documentation for platform subsystem @tdlastend @trendcline
-@tr @tdmulrowempty @td Apr 2021 @tdend @tdlast
-\- Added documentation for sensor subsystem
-<br>\- Added documentation for data serving system features@tdlastend @trendcline
-@tr @tdmulrowempty @td Feb 2021 @tdend @tdlast \- Added documentation for audio subsystem readiness @tdlastend @trendcline
-@tr @tdmulrowempty @td Jan 2021 @tdend @tdlast
-\- Updated data subsystem readiness flow for new methodology
-<br>\- Added documentation for location simulation using stub libraries @tdlastend @trendcline
-@tr @tdmulrowempty @td May 2020 @tdend @tdlast \- Added documentation for L2TP feature @tdlastend @trendcline
-@tr @tdmulrowempty @td Mar 2020 @tdend @tdlast \- Added documentation for robust location APIs in location configurator @tdlastend @trendcline
-@tr @tdmulrowempty @td Feb 2020 @tdend @tdlast \- Added documentation for location configurator @tdlastend @trendcline
-@tr @tdmulrowempty @td Jan 2020 @tdend @tdlast
-\- Added documentation for firewall entry and socks proxy
-<br>\- Updated docs for firewall APIs
-<br>\- Added documentation for software bridge management@tdlastend @trendcline
-@tr @tdmulrowempty @td Nov 2019 @tdend @tdlast
-\- Added documentation for compressed audio format playback on voice path
-<br>\- Added documentation for data networking APIs
-<br>\- Added documentation for audio transcoding APIs @tdlastend @trendcline
-@tr @tdmulrowempty @td Oct 2019 @tdend @tdlast
-\- Update documentation for location concurrent reports and constraint time uncertainty
-<br>\- Added documentation for data filter feature@tdlastend @trendcline
-@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast \- Added documentation for modem config APIs
-<br>\- Added documentation for compressed audio format playback
-<br>\- Added documentation for audio loopback and tone generator APIs
-<br>\- Added documentation for remote SIM feature @tdlastend @trendcline
-@tr @tdmulrowempty @td Jul 2019 @tdend @tdlast
-\- Added documentation for thermal shutdown manager APIs
-<br>\- Updated sample app as per location APIs changes @tdlastend @trendcline
-@tr @tdmulrowempty @td Jun 2019 @tdend @tdlast \- Added audio play, capture and DTMF generation sample apps @tdlastend @trendcline
-@tr @tdmulrowempty @td May 2019 @tdend @tdlast \- Added documentation for TCU activity management feature @tdlastend @trendcline
-@tr @tdmulrowempty @td Mar 2019 @tdend @tdlast \- Added sample app for using thermal manager @tdlastend @trendcline
-@tr @tdmulrowempty @td Jan 2019 @tdend @tdlast \- Added documentation for audio manager and voice call @tdlastend @trendcline
-@tr @tdmulrowempty @td Nov 2018 @tdend @tdlast \- Addition of C-V2X @tdlastend @trendcline
-@tr @tdmulrowempty @td Oct 2018 @tdend @tdlast
-\- Updated steps to build Yocto platform SDK for LE.UM.1.3.2
-<br>\- Added documentation for building Google test@tdlastend @trendcline
-@tr @tdmulrowempty @td Jun 2018 @tdend @tdlast
-\- Added sample apps for various data services
-<br>\- Added instruction for creating platform SDK using CAF @tdlastend @trendcline
-@tr @tdmulrowempty @td Dec 2017 @tdend @tdlast \- Added subscription feature @tdlastend @trendcline
-@tr @tdmulrowempty @td Sep 2017 @tdend @tdlast \- Initial Release @tdlastend @trend
+@tr @tdmulrow{1,AR} @tdmulrowend @td Jun 2024 @tdend @tdlast Remove unsupported simulation framework. Updated documentation for API reference and user guide for V1.63.9. @tdlastend @trend
+@tr @tdmulrow{1,AP} @tdmulrowend @td Oct 2023 @tdend @tdlast Add support for Diagnostics services. Updated documentation for API reference and user guide for V1.63.0. @tdlastend @trend
+@tr @tdmulrow{1,AN} @tdmulrowend @td Sep 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.62.0. @tdlastend @trend
+@tr @tdmulrow{1,AM} @tdmulrowend@td Aug 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.61.0. @tdlastend @trend
+@tr @tdmulrow{1,AL} @tdmulrowend@td Jul 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.60.0. @tdlastend @trend
+@tr @tdmulrow{1,AK} @tdmulrowend@td Jun 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.59.0. @tdlastend @trend
+@tr @tdmulrow{1,AJ} @tdmulrowend@td May 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.58.0. @tdlastend @trend
+@tr @tdmulrow{1,AH} @tdmulrowend@td Apr 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.57.0. @tdlastend @trend
+@tr @tdmulrow{1,AG} @tdmulrowend@td Mar 2023 @tdend @tdlast Added support for thermal notifications(Trip update, Cdev level change). Added sample apps for thermal notifications. Updated documentation for API reference and user guide for V1.56.0. @tdlastend @trend
+@tr @tdmulrow{1,AF} @tdmulrowend@td Dec 2022 @tdend @tdlast Added support for Third party service (TPS) eCall over IMS. Added sample apps for crypto accelerator. @tdlastend @trend
+@tr @tdmulrow{1,AE} @tdmulrowend@td Nov 2022 @tdend @tdlast Add support for WLAN features. Updated documentation for API reference and user guide for V1.54.0. @tdlastend @trend
+@tr @tdmulrow{1,AD} @tdmulrowend@td Sep 2022 @tdend @tdlast Added information of linux group IDs. @tdlastend @trend
+@tr @tdmulrow{1,AC} @tdmulrowend@td Jul 2022 @tdend @tdlast Added sample apps for crypto APIs. @tdlastend @trend
+@tr @tdmulrow{1,AB} @tdmulrowend@td Mar 2022 @tdend @tdlast Addition of documentation for Call flow of control filesystem for ECALL operation. @tdlastend @trend
+@tr @tdmulrow{25,AA} @tdmulrowend@td Jan 2022 @tdend @tdlast Addition of documentation for sensor self test APIs. @tdlastend @trendcline
+@tr @tdmulrowempty @td Dec 2021 @tdend @tdlast Addition of documentation for ECALL and OTA operation APIs. @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2021 @tdend @tdlast Added support for Xtra feature in location. @tdlastend @trendcline
+@tr @tdmulrowempty @td Aug 2021 @tdend @tdlast Added telsdk data subsystem behavior details during SSR. Updated EFS APIs related information for platform subsystem. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jul 2021 @tdend @tdlast Updated thermal subsystem readiness flow for new methodology. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2021 @tdend @tdlast Added documentation for remote SIM provisioning APIs. Added documentation for platform subsystem. @tdlastend @trendcline
+@tr @tdmulrowempty @td Apr 2021 @tdend @tdlast Added documentation for sensor subsystem. Added documentation for data serving system features. @tdlastend @trendcline
+@tr @tdmulrowempty @td Feb 2021 @tdend @tdlast Added documentation for audio subsystem readiness. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2021 @tdend @tdlast Updated data subsystem readiness flow for new methodology. Added documentation for location simulation using stub libraries. @tdlastend @trendcline
+@tr @tdmulrowempty @td May 2020 @tdend @tdlast Added documentation for L2TP feature. @tdlastend @trendcline
+@tr @tdmulrowempty @td Mar 2020 @tdend @tdlast Added documentation for robust location APIs in location configurator. @tdlastend @trendcline
+@tr @tdmulrowempty @td Feb 2020 @tdend @tdlast Added documentation for location configurator. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2020 @tdend @tdlast Added documentation for firewall entry and socks proxy. Updated docs for firewall APIs Added documentation for software bridge management. @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2019 @tdend @tdlast Added documentation for compressed audio format playback on voice path. Added documentation for data networking APIs. Added documentation for audio transcoding APIs. @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2019 @tdend @tdlast Update documentation for location concurrent reports and constraint time uncertainty. Added documentation for data filter feature. @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast Added documentation for modem config APIs Added documentation for compressed audio format playback. Added documentation for audio loopback and tone generator APIs. Added documentation for remote SIM feature. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jul 2019 @tdend @tdlast Added documentation for thermal shutdown manager APIs. Updated sample app as per location APIs changes. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2019 @tdend @tdlast Added audio play, capture and DTMF generation sample apps. @tdlastend @trendcline
+@tr @tdmulrowempty @td May 2019 @tdend @tdlast Added documentation for TCU activity management feature. @tdlastend @trendcline
+@tr @tdmulrowempty @td Mar 2019 @tdend @tdlast Added sample app for using thermal manager @tdlastend. @trendcline
+@tr @tdmulrowempty @td Jan 2019 @tdend @tdlast Added documentation for audio manager and voice call. @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2018 @tdend @tdlast Addition of C-V2X. @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2018 @tdend @tdlast Updated steps to build Yocto platform SDK for LE.UM.1.3.2. Added documentation for building Google test. @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2018 @tdend @tdlast Added sample apps for various data services. Added instruction for creating platform SDK using CAF. @tdlastend @trendcline
+@tr @tdmulrowempty @td Dec 2017 @tdend @tdlast Added subscription feature. @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2017 @tdend @tdlast Initial Release @tdlastend. @trend
 
 @tableend
 @latexonly \rm @endlatexonly

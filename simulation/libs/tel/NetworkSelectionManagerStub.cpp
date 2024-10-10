@@ -404,8 +404,8 @@ telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
     return status;
 }
 
-telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell
-    (const LteDubiousCellInfo &lteDubiousCellInfo) {
+telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell(
+        const std::vector<LteDubiousCell> &lteDbCellList) {
     LOG(DEBUG, __FUNCTION__);
 
     ::telStub::SetLteDubiousCellRequest request;
@@ -425,8 +425,8 @@ telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell
     return err;
 }
 
-telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell
-    (const NrDubiousCellInfo &nrDubiousCellInfo) {
+telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell(
+        const std::vector<NrDubiousCell> &nrDbCellList) {
     LOG(DEBUG, __FUNCTION__);
 
     ::telStub::SetNrDubiousCellRequest request;

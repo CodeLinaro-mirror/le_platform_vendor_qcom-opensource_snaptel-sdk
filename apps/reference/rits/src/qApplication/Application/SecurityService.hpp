@@ -184,7 +184,8 @@ public:
     * @param dot2HdrLen - Size of security header
     * @return int - A non-negative integer value upon success or -1 on failure
     */
-    virtual int ExtractMsg(const SecurityOpt &opt,
+    virtual int ExtractMsg(void* smp,
+                            const SecurityOpt &opt,
                             const uint8_t * msg,
                             uint32_t msgLen,
                             uint8_t const *payload,

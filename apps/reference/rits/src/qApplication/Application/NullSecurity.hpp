@@ -80,7 +80,8 @@ private:
     static NullSecurity *pInstance;
 public:
     static NullSecurity *Instance(std::string ctxName, uint16_t countryCode);
-    int ExtractMsg(const SecurityOpt &opt,
+    int ExtractMsg( void* smp,
+                    const SecurityOpt &opt,
                     const uint8_t * msg,
                     uint32_t msgLen,
                     uint8_t const *payload,

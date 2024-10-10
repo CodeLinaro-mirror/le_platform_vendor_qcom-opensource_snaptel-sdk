@@ -150,7 +150,6 @@ void QMonitor::connectionHandler()
 {
     while (isMonitoring)
     {
-        std::cout << "Starting Listening connection" << std::endl;
         QMClientData cData = {};
         struct sockaddr_in clientAddress;
         unsigned int addrSize = sizeof(clientAddress);

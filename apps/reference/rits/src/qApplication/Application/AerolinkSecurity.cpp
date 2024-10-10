@@ -789,42 +789,44 @@ void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
 
-int AerolinkSecurity::ExtractMsg(const SecurityOpt &opt,
+int AerolinkSecurity::ExtractMsg(
+                void* smp,
+                const SecurityOpt &opt,
                 const uint8_t * msg,
                 uint32_t msgLen,
                 uint8_t const *payload,
                 uint32_t       payloadLen,
                 uint32_t       &dot2HdrLen){
-
-    // Add new smp (if none exists) for this thread
-    std::thread::id thrId = std::this_thread::get_id();
-    try{
-        addNewThrSmp(thrId);
-    }
-    catch (std::exception& e)
-    {
-        if(secVerbosity > 4){
-            print_exception(e);
-        }
-        return -1;
-    }
-    AEROLINK_RESULT result;
-
     // Get corresponding smp for this thread
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
+    // Add new smp (if none exists) for this thread
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        try{
+            addNewThrSmp(thrId);
+        }
+        catch (std::exception& e)
+        {
+            if(secVerbosity > 4){
+                print_exception(e);
+            }
+            return -1;
+        }
+        smp = getThrSmp(thrId);
+    }
+    // return nullptr if still nullptr
     if(smp == nullptr){
         if(secVerbosity > 4)
             fprintf(stderr,"Unable to retreive smp for this thread\n");
         return -1;
     }
 
+    AEROLINK_RESULT result;
     // smp_extract
     PayloadType    spduType, payloadType;
     uint8_t const *externData;
     ExternalDataHashAlg edhAlg;
     result = smp_extract(
-        *smp, msg, msgLen,
+        (*(SecuredMessageParserC*)smp), msg, msgLen,
         &spduType, &payload, &payloadLen, &payloadType,
         &externData, &edhAlg);
     if (result != WS_SUCCESS)
@@ -917,7 +919,6 @@ int AerolinkSecurity::syncVerify(
     }
 
     // smp_verifySignatures
-    //startLatencyTime
     gettimeofday(&currTime, NULL);
     double startLatencyTime =
             (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
@@ -940,7 +941,7 @@ int AerolinkSecurity::syncVerify(
         }
         //Misbehavior detection if enabled
         if(this->enableMisbehavior){
-            mbdCheck(&rvKine, misbehaviorStat);
+            mbdCheck(&rvKine, misbehaviorStat, smp);
         }
 
         // track overall security performance
@@ -961,20 +962,20 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkRelevance
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
-int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
+int AerolinkSecurity::checkConsistencyandRelevancy(void* smp, const SecurityOpt &opt) {
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    std::thread::id thrId = std::this_thread::get_id();
-    addNewThrSmp(thrId);
-    sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
-    //Kinematics hvKine, Kinematics rvKine
-    // Get corresponding smp for this thread
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
-    if(smp == nullptr || thrVerifSemPtr == nullptr){
-        if(secVerbosity > 4)
-        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
-        return -1;
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        addNewThrSmp(thrId);
+        sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+        // Get corresponding smp for this thread
+        smp = getThrSmp(thrId);
+        if(smp == nullptr || thrVerifSemPtr == nullptr){
+            if(secVerbosity > 4)
+            fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+            return -1;
+        }
     }
 
     // set the generation location
@@ -986,7 +987,8 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
             opt.rvKine.latitude, opt.rvKine.longitude, opt.rvKine.elevation);
     }
 
-    result = smp_setGenerationLocation(*smp, opt.rvKine.latitude, opt.rvKine.longitude,
+    result = smp_setGenerationLocation((*(SecuredMessageParserC*)smp),
+            opt.rvKine.latitude, opt.rvKine.longitude,
             opt.rvKine.elevation);
     if (result != WS_SUCCESS)
     {
@@ -1000,7 +1002,7 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
     }
     // smp_checkRelevance
     if(opt.enableRelevance){
-        result = smp_checkRelevance(*smp);
+        result = smp_checkRelevance((*(SecuredMessageParserC*)smp));
         if (result != WS_SUCCESS)
         {
             if(secVerbosity > 4)
@@ -1014,7 +1016,7 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
     }
     // smp_checkConsistency
     if(opt.enableConsistency){
-        result = smp_checkConsistency(*smp);
+        result = smp_checkConsistency((*(SecuredMessageParserC*)smp));
         if(result != WS_SUCCESS){
             if(secVerbosity > 4)
                 fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
@@ -1029,27 +1031,24 @@ int AerolinkSecurity::checkConsistencyandRelevancy(const SecurityOpt opt) {
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics rvKine,
-    MisbehaviorStats* misbehaviorStat,void *asyncCbData ,uint8_t sopt_priority, ValidateCallback callBackFunction) {
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData ,uint8_t sopt_priority,
+    ValidateCallback callBackFunction, SecuredMessageParserC* msgParseContext) {
 
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    std::thread::id thrId = std::this_thread::get_id();
-    addNewThrSmp(thrId);
-    sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
     uint8_t aerolinkPriority = (sopt_priority <= 4) ? 0 : 1;
     if (secVerbosity > 6)
         printf("Aerolink Priority %d \n",aerolinkPriority);
 
-    // Get corresponding smp for this thread
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
-    if(smp == nullptr || thrVerifSemPtr == nullptr){
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to retrieve SMP for this thread\n");
-        return -1;
+    SecuredMessageParserC* smp = msgParseContext;
+    if(smp == nullptr){
+        if(createNewSmp(smp) == -1){
+            return -1;
+        }
     }
     // async verification
-    result = smp_verifySignaturesAsyncPriority(*smp, aerolinkPriority, asyncCbData, callBackFunction);
+    result = smp_verifySignaturesAsyncPriority
+        (*smp, aerolinkPriority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -1057,18 +1056,14 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
-    //Misbehavior detection if enabled
-    if(this->enableMisbehavior){
-        mbdCheck(&rvKine, misbehaviorStat);
-    }
+
     return 1;
 }
 
-void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat) {
+AEROLINK_RESULT AerolinkSecurity::mbdCheck(Kinematics* rvBsmInfo,
+    MisbehaviorStats* misbehaviorStat, SecuredMessageParserC* smp) {
     AEROLINK_RESULT result;
-    std::thread::id thrId = std::this_thread::get_id();
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
+
     if (misbehaviorAppDataPtr == nullptr){
         misbehaviorAppDataPtr = std::make_shared<BsmData>();
     }
@@ -1089,7 +1084,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
                 fprintf(stderr, "Error in checking misbehavior\n");
         }else{
             if(secVerbosity > 4){
-                fprintf(stdout, "Detected Misbehavior Class is %lu\n",
+                fprintf(stdout, "Detected Misbehavior Class is %llu\n",
                 misbehaviorResultPtr->detectedMisbehavior);
             }
         }
@@ -1098,6 +1093,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
             misbehaviorStat->misbehaviorLatency = endLatencyTime-startLatencyTime;
         }
     }
+    return result;
 }
 
 void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {

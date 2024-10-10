@@ -125,17 +125,24 @@ RadioReceive::RadioReceive(const TrafficCategory category,
                             };
     if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb, idList)) {
         auto err = cb->getResponse();
-        if (ErrorCode::SUCCESS == err) {
-            cout<<"Rx Subscription creation succeeds";
+        auto idp = idList.get();
+        if (ErrorCode::SUCCESS != err) {
+            cout<<"Rx Subscription creation fails with err:"
+                << static_cast<uint32_t>(err) << endl;
             if (nullptr != idList) {
                 cout << " for SID: ";
-                auto idp = idList.get();
                 for(int i=0; i < idp->size(); i++)
                     cout << idp->at(i) << ' ';
-                }
-            cout << "\n";
+            }
         } else {
-            cout<<"Rx Subscription creation fails with err:" << static_cast<uint32_t>(err) << endl;
+            if (rVerbosity) {
+                cout<<"Rx Subscription creation succeeds";
+                if (nullptr != idList) {
+                    cout << " for SID: ";
+                    for(int i=0; i < idp->size(); i++)
+                        cout << idp->at(i) << ' ';
+                }
+            }
         }
     } else {
         cout<<"Rx Subscription creation fails.\n";

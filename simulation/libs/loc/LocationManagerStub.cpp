@@ -1322,6 +1322,31 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
             }
         }
         break;
+
+        case telux::loc::GnssReportType::EXTENDED_DATA :
+        if( (reportMask_ & telux::loc::GnssReportType::EXTENDED_DATA) &&
+            (reportMask_ & telux::loc::GnssReportType::LOCATION) &&
+            (sessionMask_ & telux::loc::DETAILED_ENGINE) )
+        {
+            std::vector<uint8_t> payload;
+            // Iterate from the 2nd index to the last index
+            for (size_t rowItr = 2; rowItr < message.size(); ++rowItr) {
+                int number = std::stoi(message[rowItr]);
+                payload.push_back(static_cast<uint8_t>(number));
+            }
+
+            //Send data to clients.
+            for (auto iter = listeners_.begin(); iter != listeners_.end();) {
+                auto spt = (*iter).lock();
+                if (spt != nullptr) {
+                    spt->onGnssExtendedDataInfo(payload);
+                    ++iter;
+                } else {
+                    iter = listeners_.erase(iter);
+                }
+            }
+        }
+        break;
         default :
             LOG(ERROR, __FUNCTION__, " No such report type supported");
             break;

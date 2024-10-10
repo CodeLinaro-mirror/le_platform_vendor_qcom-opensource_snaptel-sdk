@@ -210,8 +210,8 @@ enum DubiousCellCauseCode {
 };
 
 /**
- * Bitmask containing dubious cell cause code bits, e.g., a value of 0x20 represents
- * NAS registration request is rejected. Multiple cause codes are possible.
+ * Bitmask containing dubious cell cause code bits, e.g., a value of 0x10 represents low data rate
+ * in IMS. Multiple cause codes are possible.
  */
 using DbCellCauseCodeMask = std::bitset<32>;
 
@@ -242,8 +242,8 @@ struct DubiousCellInfo {
 /**
  * Defines NR5G dubious cell information
  */
-struct NrDubiousCellInfo {
-    std::vector<DubiousCellInfo> ciList;     /**< List of NR dubious cell */
+struct NrDubiousCell {
+    DubiousCellInfo ci;                      /**< NR dubious cell */
     unsigned long long cgi = 0;              /**< Global cell ID */
     NrSubcarrierSpacing spacing;             /**< NR subcarrier spacing */
 };
@@ -251,8 +251,8 @@ struct NrDubiousCellInfo {
 /**
  * Defines LTE dubious cell information
  */
-struct LteDubiousCellInfo {
-    std::vector<DubiousCellInfo> ciList;    /**< List of LTE dubious cell */
+struct LteDubiousCell {
+    DubiousCellInfo ci;                     /**< LTE dubious cell */
     unsigned int cgi = 0;                   /**< Global cell ID */
 };
 
@@ -486,16 +486,16 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
     * permission to invoke this API successfully.
     *
-    * @param [in] lteDubiousCellInfo    LTE dubious cells information.
-    *                                   @ref telux::tel::LteDubiousCellInfo
+    * @param [in] lteDbCellList         List of LTE dubious cells.
+    *                                   @ref telux::tel::LteDubiousCell
     *
     * @returns Error code which indicates whether the operation succeeded or not.
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   virtual telux::common::ErrorCode setLteDubiousCell(const LteDubiousCellInfo
-           &lteDubiousCellInfo) = 0;
+   virtual telux::common::ErrorCode setLteDubiousCell(const std::vector<LteDubiousCell>
+           &lteDbCellList) = 0;
 
    /**
     * Set a list of NR dubious cells to expedite the detection of data stalls. It overrides the
@@ -507,16 +507,16 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
     * permission to invoke this API successfully.
     *
-    * @param [in] nrDubiousCellInfo    NR dubious cells information.
-    *                                  @ref telux::tel::NrDubiousCellInfo
+    * @param [in] nrDbCellList         List of NR dubious cells.
+    *                                  @ref telux::tel::NrDubiousCell
     *
     * @returns Error code which indicates whether the operation succeeded or not.
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   virtual telux::common::ErrorCode setNrDubiousCell(const NrDubiousCellInfo
-           &nrDubiousCellInfo) = 0;
+   virtual telux::common::ErrorCode setNrDubiousCell(const std::vector<NrDubiousCell>
+           &nrDbCellList) = 0;
 
    /**
     * Register a listener for specific updates from network access service.

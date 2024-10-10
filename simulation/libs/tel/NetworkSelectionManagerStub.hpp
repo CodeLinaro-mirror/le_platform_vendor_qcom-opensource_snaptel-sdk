@@ -58,9 +58,9 @@ public:
     telux::common::Status
         requestNetworkSelectionMode(SelectionModeResponseCallback callback) override;
 
-    telux::common::ErrorCode setLteDubiousCell(const LteDubiousCellInfo &lteDubiousCellInfo)
+    telux::common::ErrorCode setLteDubiousCell(const std::vector<LteDubiousCell> &lteDbCellList)
         override;
-    telux::common::ErrorCode setNrDubiousCell(const NrDubiousCellInfo &nrDubiousCellInfo)
+    telux::common::ErrorCode setNrDubiousCell(const std::vector<NrDubiousCell> &nrDbCellList)
         override;
 
     void cleanup();

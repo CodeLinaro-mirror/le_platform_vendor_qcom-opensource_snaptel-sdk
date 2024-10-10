@@ -65,6 +65,8 @@ public:
    void selectSimSlot(std::vector<std::string> userInput);
    void setLteDubiousCell(std::vector<std::string> userInput);
    void setNrDubiousCell(std::vector<std::string> userInput);
+   void removeAllLteDubiousCell(std::vector<std::string> userInput);
+   void removeAllNrDubiousCell(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

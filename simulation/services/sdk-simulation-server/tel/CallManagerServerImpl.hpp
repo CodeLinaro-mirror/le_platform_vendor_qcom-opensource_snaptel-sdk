@@ -148,9 +148,11 @@ public:
         telStub::ModifyOrRespondToModifyCallReply* response);
     grpc::Status SendRtt(ServerContext* context,
         const telStub::SendRttRequest* request, telStub::SendRttReply* response);
+    grpc::Status updateCalls(ServerContext* context,
+        const telStub::UpdateCurrentCallsRequest* request, ::google::protobuf::Empty* response);
     void startTimer(std::string timer);
     void msdTransmissionStatus(std::string msdtransmision );
-    void changeCallState(int phoneId, std::string callstate, std::string remotepartyNumber);
+    void changeCallState(int phoneId, std::string callstate, int index);
     void expiryTimer(std::string timer);
     void sendEvent(std::string timer, std::string status );
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
@@ -177,14 +179,17 @@ private:
     void handleIncomingCallRequest(std::string eventParams);
     void handleModifyCallRequest(std::string eventParams);
     void handleRttMessageRequest(std::string eventParams);
-    telux::common::Status handleStateMachine(int phoneId);
+    telux::common::Status handleStateMachine(int phoneId, int callIndex);
     void startTimers(std::string timer);
     void triggerTimerExpiry(std::string timer, int phoneId);
     void triggerECallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
-    void triggerCallInfoChangeEvent(std::shared_ptr<CallInfo> call);
+    void triggerCallInfoChangeEvent(int phoneId, std::shared_ptr<CallInfo> call);
+    void triggerCallInfoChange(int phoneId);
     void triggerMsdPullrequestEvent(int phoneId);
-    void triggerCallStateChangeEvent(int phoneId, std::string action, std::string remotepartyNumber);
-    void triggerCallListAfterCallEnd();
+    void triggerCallStateChangeEvent(int phoneId, std::string action,
+        std::string remotepartyNumber);
+    void triggerCallListAfterCallEnd(int phoneId);
+    std::vector<std::shared_ptr<CallInfo>> fetchSlotIdCalls(int phoneId);
     void triggerModifyCallRequestEvent(int phoneId, int callIndex);
     void triggerRttMessageEvent(int phoneId, std::string message);
     bool findAndRemoveMatchingCall(int callIndex);
@@ -199,28 +204,29 @@ private:
     bool match(std::shared_ptr<CallInfo> call, CallInfo callToCompare);
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
     void logCallDetails(std::shared_ptr<CallInfo> call);
-    std::shared_ptr<CallInfo> findCallAndUpdateCallState(std::string remotePartyNumber,
+    std::shared_ptr<CallInfo> findCallAndUpdateCallState(int index,
         CallState callState, int phoneId);
-    std::shared_ptr<CallInfo> findCallAndUpdateRttMode( std::string remotePartyNumber,
-        RttMode mode, int phoneId);
+    std::shared_ptr<CallInfo> findCallAndUpdateRttMode(int index, RttMode mode, int phoneId);
     bool findMatchingCall(CallInfo callToCompare);
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
-    bool find(std::shared_ptr<CallInfo> call, std::string remotePartyNumber, int phoneId);
+    bool find(std::shared_ptr<CallInfo> call, int index, int phoneId);
     void onEventUpdate(std::string event);
     void handleCallMachine();
     void changeCallStateofActiveCalls(CallInfo info);
-    void changeRttModeOfCall(RttMode mode, std::string remotepartyNumber, int phoneId);
+    void changeRttModeOfCall(RttMode mode, int index, int phoneId);
     void resumeBackgroundCalls(int phoneId);
     void hangupWaitingOrBackgroundCalls(int phoneId);
-    void resumeCall(int phoneId, int callIndex);
+    void hangupForegroundgroundCalls(int phoneId);
     void holdCall(int phoneId, int callIndex);
     void swapCalls(int callHoldIndex, int phoneIndex, int callActivateIndex);
+    int getCallIndexOfActiveCall(int phoneId);
+    // Find the lowest unfilled index in the call list.
+    int setCallIndexForNewCall();
     template <typename T>
     bool addNewCallDetails(const T* request) {
         CallInfo callInfo;
-        int size = calls_.size();
         callInfo.phoneId = request->phone_id();
-        callInfo.index = size + 1;
+        callInfo.index = setCallIndexForNewCall();
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
         callInfo.isMultiPartyCall = true;
@@ -290,7 +296,16 @@ private:
         callInfo_ = callInfo;
         auto call = std::make_shared<CallInfo>(callInfo);
         logCallDetails(call);
-        if(!findMatchingCall(callInfo)) {
+        if((makeCallApiType != CallApi::makeVoiceCall )
+            && (makeCallApiType != CallApi::makeRttVoiceCall)) {
+            // Regulatory eCall and custom number eCall over CS and PS allowed only one at a time.
+            // It is a limitation in simulation state handling.
+            if(!findMatchingCall(callInfo)) {
+                calls_.emplace_back(call);
+                return true;
+            }
+        } else {
+            // Voice calls of same remote party number are allowed
             calls_.emplace_back(call);
             return true;
         }

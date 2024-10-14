@@ -105,6 +105,7 @@ public:
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;
+    void updateCurrentCalls();
 
 private:
     int noOfSlots_;
@@ -131,7 +132,8 @@ private:
     void findMatchingCall(int index, std::string remotePartyNumber, int phoneId, int cbDelay,
         std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,
         telux::common::ErrorCode error);
-    bool find(int phoneId, std::shared_ptr<CallStub> call, std::string remotePartyNumber);
+    bool find(int phoneId, std::shared_ptr<CallStub> call, std::string remotePartyNumber,
+        int index);
     void findAndRemoveMatchingCall(int phoneId, int index);
     std::unique_ptr<::telStub::DialerService::Stub> stub_;
     std::vector<std::shared_ptr<CallStub>> calls_;
@@ -139,7 +141,7 @@ private:
     void notifyIncomingCall(std::shared_ptr<ICall> call);
     void notifyCallInfoChange(std::shared_ptr<ICall> call);
     void addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
-    void refreshCachedCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
+    void refreshCachedCalls(int phoneId, std::vector<std::shared_ptr<CallStub>> &latestCalls);
     void notifyAndRemoveDroppedCalls();
     void onEventUpdate(std::string event);
     telux::common::Status dialCall(int phoneId, const std::string &dialNumber,

@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <thread>
+#include <chrono>
+
 #include "common/Logger.hpp"
 #include "DeviceInfoManagerStub.hpp"
 #include "libs/common/CommonUtils.hpp"

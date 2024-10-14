@@ -1376,6 +1376,8 @@ void LocationManagerStub::handleGnssDisasterCrisisReport(
         telux::loc::GnssDisasterCrisisReport report;
         report.dcReportType = static_cast<telux::loc::GnssReportDCType>(dcReport.dc_report_type());
         report.numValidBits = static_cast<uint16_t>(dcReport.num_valid_bits());
+        report.prnValid = static_cast<bool>(dcReport.prn_validity());
+        report.prn = dcReport.prn();
         std::copy(dcReport.dc_report_data().begin(),
                   dcReport.dc_report_data().end(),
                   std::back_inserter(report.dcReportData));

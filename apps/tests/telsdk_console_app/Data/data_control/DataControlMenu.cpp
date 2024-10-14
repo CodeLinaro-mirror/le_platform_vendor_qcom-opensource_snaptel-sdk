@@ -123,9 +123,9 @@ void DataControlMenu::setDataStallParams(
     telux::common::ErrorCode errorCode =
         dataControlManager_->setDataStallParams(slotID, params);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        std::cout << "\nSet dubious cell params succeed" << std::endl;
+        std::cout << "\nSet data stall params succeed" << std::endl;
     } else {
-        std::cout << "\nSet dubious cell params failed, err: "
+        std::cout << "\nSet data stall params failed, err: "
                   << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }

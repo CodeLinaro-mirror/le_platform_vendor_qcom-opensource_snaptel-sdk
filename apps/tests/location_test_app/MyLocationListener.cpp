@@ -1931,6 +1931,12 @@ void MyLocationListener::onGnssDisasterCrisisInfo(
     PRINT_NOTIFICATION << "\n************ Gnss Disaster-Crisis Information *************" << "\n";
     LocationUtils::displayDisasterCrisisReportType(dcReportInfo);
     std::cout << "Disaster-crisis Valid bits: " << dcReportInfo.numValidBits << "\n";
+    if (dcReportInfo.prnValid) {
+         std::cout << "Disaster-crisis prn valid " << "\n";
+         std::cout << "Disaster-crisis prn: " << static_cast<unsigned>(dcReportInfo.prn) << "\n";
+    } else {
+         std::cout << "Disaster-crisis prn Invalid " << "\n";
+    }
     std::cout << "Disaster-crisis Report data: \n";
     for(auto &itr: dcReportInfo.dcReportData) {
         std::cout << (int)itr << ": ";

@@ -1523,7 +1523,8 @@ int setup(const bool tx, const bool rx,
 
 int main(int argc, char** argv) {
 #ifndef SIM_BUILD
-    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm", "dlt", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm",
+                                    "dlt", "spi", "gpio", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;

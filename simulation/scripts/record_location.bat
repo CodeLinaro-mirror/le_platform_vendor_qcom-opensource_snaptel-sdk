@@ -15,11 +15,20 @@
 
 
 @echo off
+IF "%~1"=="" (
+    echo Please provide the path to the CSV file.
+    exit /b 1
+)
+
+set "CsvFilePath=%~1"
+
 for /f "tokens=1-4 delims=/ " %%a in ('date /t') do set year=%%d
 
+(
 echo ##
-echo ## Copyright (c) %year% Qualcomm Innovation Center, Inc. All rights reserved.
+echo ## Copyright ^(c^) %year% Qualcomm Innovation Center, Inc. All rights reserved.
 echo ## SPDX-License-Identifier: BSD-3-Clause-Clear
 echo ##
-adb shell " location_test_app -r | grep '^###' | sed 's/\#\#\#//g' "
-pause
+) > %CsvFilePath%
+
+adb shell " location_test_app -r | grep '^###' | sed 's/\#\#\#//g' " >> %CsvFilePath%

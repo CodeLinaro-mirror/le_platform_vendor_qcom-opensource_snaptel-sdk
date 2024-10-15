@@ -314,6 +314,7 @@ class LocationInfoEx : public ILocationInfoEx {
     std::vector<uint16_t> dgnssStationIds_;
     double baselineLength_ = 0.0;
     uint64_t ageOfCorrections_ = 0;
+    uint8_t leapSecondsUncertainty_;
 
 public:
 /**
@@ -852,7 +853,7 @@ public:
  */
   virtual std::vector<uint16_t> getDgnssStationIds() override { return dgnssStationIds_; }
 
- /** Distance between the basestation and the receiver.
+/** Distance between the basestation and the receiver.
   *  Units: meter.
  */
   virtual double getBaselineLength() override { return baselineLength_; }
@@ -862,6 +863,12 @@ public:
   * Units: milliseconds.
  */
   virtual uint64_t getAgeOfCorrections() override { return ageOfCorrections_; }
+
+/**
+ * Leap seconds uncertainty associated with the PVT report.
+ *
+ */
+  virtual uint8_t getLeapSecondsUncertainty() override { return leapSecondsUncertainty_; }
 
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
@@ -964,6 +971,9 @@ public:
     }
     void setAgeOfCorrections(uint64_t ageOfCorrections) {
         ageOfCorrections_ = ageOfCorrections;
+    }
+    void setLeapSecondsUncertainty(uint8_t leapSecondsUncertainty) {
+        leapSecondsUncertainty_ = leapSecondsUncertainty;
     }
 };
 

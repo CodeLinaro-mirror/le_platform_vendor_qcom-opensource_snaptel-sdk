@@ -1925,14 +1925,15 @@ void LocationMenu::manualInjectLocationData() {
 }
 
 void LocationMenu::autoInjectLocationData() {
+    telux::loc::ExternalLocationInfo info{};
+    populateExternalLocationData(info);
+
     std::thread reportThread = std::thread{[=] {
         while (!(locConfigListener_->getLocationInjectionFlag())) {
             std::cout << "The onStartInjection API is not received! " << std::endl;
             locConfigListener_->waitForInjectionNotification();
         }
         uint32_t rateOfInjection = locConfigListener_->getLocInjectionRate();
-        telux::loc::ExternalLocationInfo info{};
-        populateExternalLocationData(info);
         while (locConfigListener_->getLocationInjectionFlag()) {
             telux::common::Status status = locationConfigurator_->injectLocationData(info);
             if (status == telux::common::Status::SUCCESS) {
@@ -2019,15 +2020,15 @@ void LocationMenu::manualInjectLocationDataLocInj() {
 }
 
 void LocationMenu::autoInjectLocationDataLocInj() {
+    telux::loc::ExternalLocationInfo info{};
+    populateExternalLocationData(info);
+
     std::thread reportThread = std::thread{[=] {
         while (!(locationInjector_->getLocationInjectionFlag())) {
             std::cout << "The onStartInjection API is not received! " << std::endl;
             locationInjector_->waitForInjectionNotification();
         }
         uint32_t rateOfInjection = locationInjector_->getLocInjectionRate();
-        telux::loc::ExternalLocationInfo info{};
-        populateExternalLocationData(info);
-
         while (locationInjector_->getLocationInjectionFlag()) {
             telux::common::Status status = locationConfigurator_->injectLocationData(info);
             if (status == telux::common::Status::SUCCESS) {

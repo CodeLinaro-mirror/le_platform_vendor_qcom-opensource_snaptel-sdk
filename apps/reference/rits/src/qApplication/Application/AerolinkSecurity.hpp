@@ -27,39 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *Redistribution and use in source and binary forms, with or without
- *modification, are permitted (subject to the limitations in the
- *disclaimer below) provided that the following conditions are met:
- *
- *    * Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *
- *    * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *      disclaimer in the documentation and/or other materials provided
- *      with the distribution.
- *
- *    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
- *
- *NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -105,25 +74,33 @@ class AerolinkSecurity : public SecurityService {
                                              uint8_t keyGenMethod);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              char const* lcmName, IDChangeData& idChangeData);
-        int ExtractMsg(const SecurityOpt opt,
+        int ExtractMsg( void* smp,
+                        const SecurityOpt &opt,
                         const uint8_t * msg,
                         uint32_t msgLen,
                         uint8_t const *payload,
                         uint32_t       payloadLen,
                         uint32_t       &dot2HdrLen);
-        int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
+        int SignMsg(const SecurityOpt &opt, const uint8_t *msg, uint32_t msgLen,
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
-        int VerifyMsg(const SecurityOpt opt);
-        int asyncVerify(
-            Kinematics hvKine, Kinematics rvKine,
-            MisbehaviorStats* misbehaviorStat, void* asyncCbData,
-            ValidateCallback callBackFunction);
+        int VerifyMsg(const SecurityOpt &opt);
+        int checkConsistencyandRelevancy(void* smp, const SecurityOpt &opt);
+        int asyncVerify(Kinematics rvKine,
+            MisbehaviorStats* misbehaviorStat,void *asyncCbData,
+            uint8_t priority, ValidateCallback callBackFunction,
+            SecuredMessageParserC* msgParseContext);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;
+        int createNewSmp(SecuredMessageParserC* smpPtr);
+        int createNewSmg(SecuredMessageGeneratorC* smgPtr);
+        AEROLINK_RESULT mbdCheck(Kinematics* rvBsmInfo,
+            MisbehaviorStats* misbehaviorStat,
+            SecuredMessageParserC* smp);
+        void fillBsmDataForMbd(Kinematics* rvBsmData);
         ~AerolinkSecurity() {
             deinit();
         }
@@ -169,17 +146,14 @@ class AerolinkSecurity : public SecurityService {
         SecuredMessageGeneratorC* getThrSmg(std::thread::id thrId);
         sem_t* getThrSmpSem(std::thread::id thrId);
         sem_t* getThrSmgSem(std::thread::id thrId);
-        int createNewSmp(SecuredMessageParserC* smpPtr);
-        int createNewSmg(SecuredMessageGeneratorC* smgPtr);
-        void mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat);
-        void fillBsmDataForMbd(Kinematics* rvBsmData);
+
         // should be unique public encryption keys
         //    AerolinkEncryptionKey const * const recipients_[] = {};
         //    std::set<AerolinkEncryptionKey const *> recipients_;
         std::vector<AerolinkEncryptionKey const *> recipients_;
         uint32_t numRecipients_;
         uint8_t keyGenMethod_;
-        char lcmName_[50];
+        char lcmName_[50] = "\0";
         IDChangeData* idChangeData_;
         bool enableMisbehavior;
         bool enableConsistency;

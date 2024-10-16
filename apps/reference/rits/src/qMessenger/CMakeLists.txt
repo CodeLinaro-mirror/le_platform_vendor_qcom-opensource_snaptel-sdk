@@ -16,9 +16,7 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
 )
 endif()
 add_library(qmessenger ${LIBQMESSENGER_SOURCES})
-
-target_link_libraries(qmessenger ${GLIB_LIBRARIES} telux_cv2x telux_loc v2xcodec v2x_veh)
-
+target_link_libraries(qmessenger v2x_radio)
 install(TARGETS qmessenger
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

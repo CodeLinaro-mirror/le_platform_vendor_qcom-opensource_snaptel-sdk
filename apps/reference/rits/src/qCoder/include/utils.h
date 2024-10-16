@@ -25,7 +25,13 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file utils.h
  * @brief some utility functions.
@@ -59,7 +65,7 @@ uint64_t timestamp_now(void);
  * return current time stamp in microseconds
  * @return long long
  ******************************************************************************/
-uint64_t timestamp_now_ms(void);
+uint64_t timestamp_now_us(void);
 uint64_t calc_timestamp_from_secmark(unsigned int secMark_ms);
 #ifdef __cplusplus
 }

@@ -26,10 +26,8 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -90,6 +88,12 @@ void KinematicsReceive::startDetailsCallback(ErrorCode error){
     }
 }
 
+LocListener::LocListener(){}
+LocListener::~LocListener(){
+    close();
+}
+
+
 KinematicsReceive::KinematicsReceive(){}
 
 shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
@@ -141,7 +145,8 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
     this->interval = interval;
 }
 
-KinematicsReceive::KinematicsReceive(std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval){
+KinematicsReceive::KinematicsReceive(
+    std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval){
     {
         lock_guard<mutex> lk(sync);
         if (!KinematicsReceive::instance) {
@@ -161,10 +166,12 @@ KinematicsReceive::KinematicsReceive(std::vector<std::shared_ptr<ILocationListen
             }
         });
     if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
-        for (auto &locListener_ :locListeners) {
+        for (auto &listener : locListeners) {
             // Registering a listener to get location fixes
-            locationManager_->registerListenerEx(locListener_);
-            locListeners_.push_back(locListener_);
+            if(listener != nullptr){
+                locationManager_->registerListenerEx(listener);
+                locListeners_.push_back(listener);
+            }
         }
         // Starting the reports for fixes
         printf("Creating callback for gnss fixes\n");
@@ -190,11 +197,7 @@ void KinematicsReceive::close(){
     }
 
     for (auto listener : locListeners_) {
-        // Registering a listener to get location fixes
-        LocListener* locListener = dynamic_cast<LocListener*>(listener.get());
-        locListener->close();
         locationManager_->deRegisterListenerEx(listener);
     }
-
     cout << "Location Listeners closed.\n";
 }

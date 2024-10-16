@@ -26,41 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -72,46 +40,24 @@
 
 EtsiApplication::EtsiApplication(char *fileConfiguration, MessageType msgType):
     ApplicationBase(fileConfiguration, msgType) {
-    if (not configuration.isValid) {
-        return;
-    }
-
-    GnConfig_t GnCfg;
-    GeoNetRouterImpl::InitDefaultConfig(GnCfg);
-    memcpy(GnCfg.mid, this->configuration.MacAddr, GN_MID_LEN);
-    GnCfg.StationType = static_cast<gn::ITSStationType>(this->configuration.StationType);
-
-    std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(
-                appLocListener_, GnCfg));
-
-    //std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(nullptr));
-    GnRouter = std::move(gnp);
-    GnRouter->SetLogLevel(4);
-
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
 }
 
 EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration) :
-        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
+    const string rxIpv4, const uint16_t rxPort, char* fileConfiguration) :
+    ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
+}
+
+bool EtsiApplication::init() {
     if (not configuration.isValid) {
-        return;
+        printf("EtsiApplication invalid configuration\n");
+        return false;
     }
+
+    if (false == ApplicationBase::init()) {
+        printf("EtsiApplication initialization failed\n");
+        return false;
+    }
+
 
     GnConfig_t GnCfg;
     GeoNetRouterImpl::InitDefaultConfig(GnCfg);
@@ -120,24 +66,11 @@ EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
 
     std::unique_ptr<GeoNetRouterImpl> gnp(GeoNetRouterImpl::Instance(
                 appLocListener_, GnCfg));
-    GnRouter = std::move(gnp);
 
-    //init messages for sending.
-    if (isTxSim) {
-        initMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        initMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        initMsg(mc);
-    }
-    if (isRxSim) {
-        initMsg(rxSimMsg, true);
-    }
-    for (auto mc : receivedContents) {
-        initMsg(mc, true);
-    }
+    GnRouter = std::move(gnp);
+    GnRouter->SetLogLevel(4);
+
+    return true;
 }
 
 EtsiApplication::~EtsiApplication() {
@@ -160,7 +93,7 @@ EtsiApplication::~EtsiApplication() {
     }
 }
 
-void EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
+bool EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
     mc->stackId = STACK_ID_ETSI;
 
     if (isRx) {
@@ -173,32 +106,37 @@ void EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
         mc->gn = malloc(sizeof(GnData_t));
         if (!mc->gn) {
             std::cerr << "alloc gn failed" << endl;
-            return;
+            return false;
         }
         memset(mc->gn, 0, sizeof(GnData_t));
 
         mc->btp = malloc(sizeof(btp_data_t));
         if (!mc->btp) {
+            freeMsg(mc);
             std::cerr << "alloc btp failed" << endl;
-            return;
+            return false;
         }
         memset(mc->btp, 0, sizeof(btp_data_t));
 
         mc->cam = malloc(sizeof(CAM_t));
         if (!mc->cam) {
+            freeMsg(mc);
             std::cerr << "alloc cam failed" << endl;
-            return;
+            return false;
         }
         memset(mc->cam, 0, sizeof(CAM_t));
 
 
         mc->denm = malloc(sizeof(DENM_t));
         if (!mc->denm) {
+            freeMsg(mc);
             std::cerr << "alloc denm failed" << endl;
-            return;
+            return false;
         }
         memset(mc->denm, 0, sizeof(DENM_t));
     }
+
+    return true;
 }
 
 void EtsiApplication::freeMsg(std::shared_ptr<msg_contents> mc) {

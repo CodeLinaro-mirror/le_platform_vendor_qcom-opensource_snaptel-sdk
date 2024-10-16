@@ -26,41 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -112,6 +80,8 @@ using std::make_shared;
 shared_ptr<ApplicationBase> application = nullptr;
 vector<thread> threads;
 bool csv = false;
+bool enableDiagLog = false;
+int timerFd = -1;
 string csvFileName;
 sem_t cnt_sem;
 auto rxsuccess = 0;
@@ -121,7 +91,6 @@ std::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
-std::condition_variable statusCv;
 bool haltRx = false;
 std::mutex cv2xStatusMtx;
 bool simMode = false;
@@ -130,14 +99,15 @@ bool simMode = false;
 void stopThreads() {
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     if (not stopThread) {
-        cout << "stop threads" << endl;
         stopThread = true;
+        if (timerFd >= 0) {
+            close(timerFd);
+        }
 
         if (application) {
             application->prepareForExit();
              if(application->configuration.enableCongCtrl &&
                     application->congestionControlManager){
-                std::cout << "Deinitializing congestion control library\n";
                 application->congestionControlManager->stopCongestionControl();
             }
             if (application->qMon) {
@@ -163,11 +133,11 @@ void joinThreads() {
 }
 
 /**
- * Initialize timer for transmit
- * @param[in] interval_ms timer interval value in miliseconds
+ * Initialize timer
+ * @param[in] intervalMs timer interval value in miliseconds
  * @return timer's file descriptor if success or -1 on failure.
  */
-int start_tx_timer(uint32_t interval_ms) {
+int startTimerMs(uint32_t intervalMs) {
     int timerfd;
     struct itimerspec its = {0};
 
@@ -177,8 +147,8 @@ int start_tx_timer(uint32_t interval_ms) {
     }
 
     /* Start the timer */
-    its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
+    its.it_value.tv_sec = intervalMs / 1000;
+    its.it_value.tv_nsec = (intervalMs%1000) * 1000000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
@@ -228,14 +198,14 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
         uint64_t exp = 0;
         ssize_t s;
         int ciTimerFd, tshiftTimerFd = 0;
-        ciTimerFd = start_tx_timer(application->configuration.commandInterval);
+        ciTimerFd = startTimerMs(application->configuration.commandInterval);
         if (ciTimerFd == -1) {
             cerr << "Failed to start command interval timer" << endl;
             return;
         }
 
-        tshiftTimerFd = start_tx_timer(application->configuration.tShiftInterval);
-        if (ciTimerFd == -1) {
+        tshiftTimerFd = startTimerMs(application->configuration.tShiftInterval);
+        if (tshiftTimerFd == -1) {
             cerr << "Failed to start t shift timer" << endl;
             return;
         }
@@ -283,6 +253,7 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
                     std::chrono::milliseconds(application->configuration.commandInterval -
                     application->configuration.tShiftInterval*commandIntervalCtr));
             }
+            commandIntervalCtr++;
             // if current interval is now equal to evaluation interval
             if(commandIntervalCtr ==
                     application->configuration.nCommandInterval_0 && !stateOn
@@ -296,23 +267,41 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
                 //reset the counter after we reach evaluation interval
                 commandIntervalCtr = 0;
             }
-            commandIntervalCtr++;
         }
     }).detach();
 }
 
-int reSetupRadio(MessageType msgType) {
+// restart only the necessary flows or subscriptions needed
+int reSetupRadio(MessageType msgType, bool txRestart, bool rxRestart) {
     if (!application) {
         return -1;
     }
 
-    application->clearRadioInstance();
+    // restart flows accordingly
     for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
-        if (0 == application->setup(msgType, true)) {
-            return 0;
+        if(txRestart){
+            if (0 == application->restartTxFlows()) {
+                return 0;
+            }
         }
         if (application->configuration.driverVerbosity) {
-            cout << "radio setup fail, retry later!" << endl;
+            cout << "radio re-setup fail, retry later!" << endl;
+        }
+        std::unique_lock<std::mutex> lck(gTerminateMtx);
+        if (gTerminateCv.wait_for(lck,
+                std::chrono::milliseconds(SETUP_RETRY_INTERVAL_MS),
+                []{return (stopThread == true);})) {
+            break;
+        }
+    }
+    for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
+        if(rxRestart){
+            if (0 == application->restartRxSubs()) {
+                return 0;
+            }
+        }
+        if (application->configuration.driverVerbosity) {
+            cout << "radio re-setup fail, retry later!" << endl;
         }
         std::unique_lock<std::mutex> lck(gTerminateMtx);
         if (gTerminateCv.wait_for(lck,
@@ -345,38 +334,26 @@ void receive(MessageType msgType, int index) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
     }
-    if(application->configuration.enableVerifStatLog){
-        application->initVerifLogging();
-    }
-    if(application->configuration.enableMbdStatLog)
-        application->initMisbehaviorLogging();
 
     // will need to make this compatible for multiple rx ports
     int ret;
-
     gettimeofday(&application->startRxIntervalTime, NULL);
+    // setup thread for post process async verification statistics
+    if (application->configuration.enableAsync) {
+        dynamic_pointer_cast<SaeApplication>(application)->PostProcessingThread();
+    }
     while (!stopThread) {
         if(!simMode) {
-            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
             sem_wait(&cnt_sem);
-            //Check CV2X RX status when only RX is enabled
-            if (!application->configuration.enableTxAlways) {
-                bool restartFlow = false;
-                if (application->radioReceives[index].waitForCv2xToActivate(restartFlow)) {
-                    // break out if return fail
-                    break;
-                }
-                if (restartFlow) {
-                    if (reSetupRadio(msgType)) {
-                        sem_post(&cnt_sem);
-                        break;
-                    }
-                }
-            } else {
-                // if TX is also enabled check the CV2X status in TX only
-                std::unique_lock<std::mutex> lk(cv2xStatusMtx);
-                statusCv.wait(lk, []{return (!haltRx or stopThread);});
-                if (stopThread) {
+            bool restartFlow = false;
+            // Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            // only wait for RX
+            if (application->radioReceives[index].waitForCv2xToActivate(restartFlow)) {
+                // break out if return fail
+                break;
+            }
+            if (restartFlow) {
+                if (reSetupRadio(msgType, false, true)) {
                     sem_post(&cnt_sem);
                     break;
                 }
@@ -409,9 +386,9 @@ void receive(MessageType msgType, int index) {
         printf("Thread (%08x) closing\n", tid);
     }
 
-    // notify other threads to stop
-    stopThreads();
-
+    if(application->configuration.enableVerifResLog){
+        application->writeResultsLogging();
+    }
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -445,8 +422,11 @@ void ldmRx(void) {
     time_t startTime = currTime.tv_sec;
 
     if (nullptr == application) {
-        cerr << "application nullptr" << endl;
+        cerr << "application is nullptr" << endl;
         return;
+    }
+    if(application->configuration.enableVerifResLog){
+        application->initResultsLogging();
     }
     if(application->configuration.enableVerifStatLog){
         application->initVerifLogging();
@@ -619,53 +599,54 @@ void transmitEventMsg() {
     }
     while (!stopThread) {
         //TODO: need provide a proper way to sync the tx/rx threads
-        if (application->pendingTillEmergency() &&
-            application->eventTransmits[0].getCurrentStatus().txStatus ==
-                Cv2xStatusType::ACTIVE) {
+        if(application){
+            if(!application->eventTransmits.empty()){
+                if (application->pendingTillEmergency() &&
+                    application->eventTransmits[0].getCurrentStatus().txStatus ==
+                        Cv2xStatusType::ACTIVE) {
+                    if(nextSchedTxTime == 0){
+                        lastEventTxTime = timestamp_now();
+                        nextSchedTxTime = lastEventTxTime + 100;
+                    }
+                    int ret = application->send(0, TransmitType::EVENT);
+                    if (ret <= 0) {
+                        cerr << "Failed to send critical event message." << endl;
+                    }else{
+                        critEventMsgCtr++;
+                    }
+                    currTimeTmp = timestamp_now();
+                    waitTime = nextSchedTxTime - currTimeTmp; //ms
+                    if(nextSchedTxTime < currTimeTmp){
+                        waitTime = 0;
+                    }
 
-            if(nextSchedTxTime == 0){
-                lastEventTxTime = timestamp_now();
-                nextSchedTxTime = lastEventTxTime + 100;
-            }
-            // std::cout << "Sending event message!\n";
-            int ret = application->send(0, TransmitType::EVENT);
-            if (ret <= 0) {
-                cerr << "Failed to send critical event message." << endl;
-            }else{
-                critEventMsgCtr++;
-            }
-            currTimeTmp = timestamp_now();
-            waitTime = nextSchedTxTime - currTimeTmp; //ms
-            if(nextSchedTxTime < currTimeTmp){
-                waitTime = 0;
-            }
-
-            its.it_value.tv_sec = 0;
-            its.it_value.tv_nsec = (waitTime * 1000000LL);
-            its.it_interval = its.it_value;
-            if(waitTime != 0){
-                if (s = timerfd_settime(tx_timer_fd, 0, &its, NULL) < 0) {
-                    std::cerr << "Error setting time\n";
-                    close(tx_timer_fd);
-                    return;
+                    its.it_value.tv_sec = 0;
+                    its.it_value.tv_nsec = (waitTime * 1000000LL);
+                    its.it_interval = its.it_value;
+                    if(waitTime != 0){
+                        if (s = timerfd_settime(tx_timer_fd, 0, &its, NULL) < 0) {
+                            std::cerr << "Error setting time\n";
+                            close(tx_timer_fd);
+                            return;
+                        }
+                    }
+                    s = read(tx_timer_fd, &exp, sizeof(exp));
+                    if (s == sizeof(uint64_t) && exp > 1) {
+                        timer_misses += (exp-1);
+                        if(application->configuration.driverVerbosity){
+                            cout << "Event TX timer overruns: Total missed: "
+                                << timer_misses << endl;
+                        }
+                    }
+                    // schedule the next tx time based on the first event tx time
+                    nextSchedTxTime = nextSchedTxTime + 100;
                 }
             }
-            s = read(tx_timer_fd, &exp, sizeof(exp));
-            if (s == sizeof(uint64_t) && exp > 1) {
-                timer_misses += (exp-1);
-                if(application->configuration.driverVerbosity){
-                    cout << "Event TX timer overruns: Total missed: "
-                        << timer_misses << endl;
-                }
-            }
-            // schedule the next tx time based on the first event tx time
-            nextSchedTxTime = nextSchedTxTime + 100;
         }
     }
     if (tx_timer_fd != -1) {
         close(tx_timer_fd);
     }
-    cout << "Closing event transmit thread\n";
 }
 
 /**
@@ -710,8 +691,9 @@ void transmit(MessageType msgType) {
             break;
         case MessageType::DENM:
             cerr << "DENM transmit is not supported" << endl;
+            break;
         default:
-            return;
+            break;
     }
 
     /* Logic here changes if congestion control is enabled */
@@ -719,7 +701,7 @@ void transmit(MessageType msgType) {
     // default timer
     int tx_timer_fd = 0;
     if(!application->configuration.enableCongCtrl){
-        tx_timer_fd = start_tx_timer(txInterval);
+        tx_timer_fd = startTimerMs(txInterval);
         if (tx_timer_fd == -1) {
             cerr << "Failed to start Tx timer" << endl;
             return;
@@ -735,41 +717,25 @@ void transmit(MessageType msgType) {
 
             if(!simMode){
                 //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-                auto status = application->spsTransmits[0].getCurrentStatus();
-                if (Cv2xStatusType::ACTIVE != status.txStatus) {
-                    // if both Tx and Rx thread exist, check status in Tx thread
-                    // halt Rx if Tx status is not active because flows may need to restart
-                    {
-                        std::unique_lock<std::mutex> lk(cv2xStatusMtx);
-                        haltRx = true;
-                    }
-                    bool restartFlow = false;
-                    if (application->spsTransmits[0].waitForCv2xToActivate(restartFlow)) {
-                        // break out if return fail
+                bool restartFlow = false;
+                // wait for TX only, don't wait for RX
+                if (application->spsTransmits[0].waitForCv2xToActivate(restartFlow)) {
+                    // break out if return fail
+                    break;
+                }
+                if (restartFlow) {
+                    if (reSetupRadio(msgType, true, false)) {
                         break;
                     }
-                    if (restartFlow) {
-                        if (reSetupRadio(msgType)) {
-                            break;
-                        }
-
-                        {
-                            // notify rx thread to resume
-                            std::lock_guard<std::mutex> lk(cv2xStatusMtx);
-                            haltRx = false;
-                            statusCv.notify_all();
-                        }
-
-                        if(!application->configuration.enableCongCtrl){
-                            close(tx_timer_fd);
-                            tx_timer_fd = start_tx_timer(txInterval);
-                        }
-                        // need to re-set the WSA Tx after the radio instance is re-created
-                        if (MessageType::WSA == msgType
-                            and prepareWsaTx() < 0) {
-                            cerr << "Failed to prepare WSA Tx" << endl;;
-                            break;
-                        }
+                    if(!application->configuration.enableCongCtrl){
+                        close(tx_timer_fd);
+                        tx_timer_fd = startTimerMs(txInterval);
+                    }
+                    // need to re-set the WSA Tx after the radio instance is re-created
+                    if (MessageType::WSA == msgType
+                        and prepareWsaTx() < 0) {
+                        cerr << "Failed to prepare WSA Tx" << endl;;
+                        break;
                     }
                 }
             }
@@ -800,13 +766,6 @@ void transmit(MessageType msgType) {
             }
         }
     }
-    printf("Sending thread stopped\n");
-
-    // notify other threads to stop
-    stopThreads();
-
-    // notify rx thread in case it's waiting for status notification
-    statusCv.notify_all();
 
     if(msgType == MessageType::WSA) {
         clearWsaTxSettings();
@@ -840,25 +799,25 @@ void transmit(MessageType msgType) {
  */
 void txRecorded(string file) {
     srand(timestamp_now());
-    ifstream configFile(file);
+    ifstream recordFile(file);
     string line;
     bool go = true;
-    bool minLog = false;
+    bool bsmLog = false;
 
 
-    if (configFile.is_open())
+    if (recordFile.is_open())
     {
-        if (getline(configFile, line)) {
-            // check if it is minLog format
-            if (line == MIN_LOG_HEADER || application->configuration.preRecordedMinLog) {
-                minLog = true;
+        if (getline(recordFile, line)) {
+            // check if it is bsm format
+            if (line != LOG_HEADER || application->configuration.preRecordedBsmLog) {
+                bsmLog = true;
             }
         } else {
             cout << "txRecorded - fail to read " << file << endl;
             return;
         }
 
-        int tx_timer_fd = start_tx_timer(application->configuration.transmitRate);
+        int tx_timer_fd = startTimerMs(application->configuration.transmitRate);
         if (tx_timer_fd == -1) {
             cerr << "Failed to start record Tx timer" << endl;
             return;
@@ -867,22 +826,30 @@ void txRecorded(string file) {
         uint64_t exp = 0;
 
         while (go and !stopThread) {
-            if (getline(configFile, line))
+            if (getline(recordFile, line))
             {
                 if (application->configuration.eventPorts.size()) {
                     const auto iEvent = rand() % application->configuration.eventPorts.size();
                     auto mc = application->eventContents[iEvent];
-                    auto len = encode_singleline_fromCSV((char *)line.data(), mc.get(), minLog);
+                    auto len = encode_singleline_fromCSV((char *)line.data(), mc.get(), bsmLog);
+                    if (application->configuration.enableSecurity) {
+                        len = application->encodeAndSignMsg(
+                            mc, SecurityService::SignType::ST_CERTIFICATE);
+                    }
                     // event priority is set per packet using traffic class
                     application->eventTransmits[iEvent].transmit(
                         mc->abuf.data, len,
                         application->configuration.eventPriority);
                 }
                 if (application->configuration.spsPorts.size()) {
-                    if (getline(configFile, line)) {
+                    if (getline(recordFile, line)) {
                         const auto iSps = rand() % application->configuration.spsPorts.size();
                         auto mc = application->spsContents[iSps];
-                        auto len = encode_singleline_fromCSV((char*)line.data(),mc.get(), minLog);
+                        auto len = encode_singleline_fromCSV((char*)line.data(),mc.get(), bsmLog);
+                        if (application->configuration.enableSecurity) {
+                            len = application->encodeAndSignMsg(
+                                mc, SecurityService::SignType::ST_AUTO);
+                        }
                         // SPS priority is set when creating the flow
                         application->spsTransmits[iSps].transmit(
                             mc->abuf.data, len,
@@ -900,7 +867,6 @@ void txRecorded(string file) {
             }
         }
 
-
         close(tx_timer_fd);
     }
     else {
@@ -916,18 +882,18 @@ void txRecorded(string file) {
  */
 void simTxRecorded(string file)
 {
-    ifstream configFile(file);
+    ifstream recordFile(file);
     string line;
-    if (configFile.is_open())
+    if (recordFile.is_open())
     {
         auto timer = timestamp_now();
         while (!stopThread)
         {
             if (timer + application->configuration.transmitRate < timestamp_now()) {
-                if (getline(configFile, line))
+                if (getline(recordFile, line))
                 {
                     auto mc = application->txSimMsg;
-                    auto len = encode_singleline_fromCSV((char*)line.data(), mc.get(), false);
+                    auto len = encode_singleline_fromCSV((char*)line.data(), mc.get(), true);
                     abuf_put(&mc->abuf, len);
                     application->simTransmit->transmit(mc->abuf.data, len,
                                                        Priority::PRIORITY_UNKNOWN);
@@ -994,8 +960,33 @@ void runApps(void) {
             print_rvspecs(rvSpecs);
         }
     }
+    delete rvSpecs;
 }
 
+/**
+ * run for periodic logs.
+ */
+void periodicDiagLog(void) {
+    uint64_t exp = 0;
+    ssize_t s;
+    timerFd = startTimerMs(application->configuration.transmitRate);
+    if (timerFd == -1) {
+        cerr << "Failed to start diag log timer" << endl;
+        return;
+    }
+
+    while (!stopThread) {
+        if (not application) {
+            break;
+        }
+        //application->diagLogPktGenericInfo();
+        s = read(timerFd, &exp, sizeof(uint64_t));
+        if (s != sizeof(uint64_t)) {
+            printf("periodicDiagLog error read from timerFd\n");
+        }
+    }
+    return;
+}
 
 void printUse() {
     cout << "Usage: qits [options] <Config File Path>\n";
@@ -1180,6 +1171,9 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
     case 'v':
         print_rv = false;
         break;
+    case 'q':
+        enableDiagLog = true;
+        break;
     default:
         break;
     }
@@ -1199,13 +1193,14 @@ int setup(const bool tx, const bool rx,
         printUse();
         return 0;
     }
-
+#ifndef SIM_BUILD
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
                           << std::to_string(sdkVersion.minor) << "."
                           << std::to_string(sdkVersion.patch) << std::endl <<
                           "Release name: " << sdkReleaseName << std::endl;
+#endif
     sem_init(&cnt_sem, 0, 1);
     MessageType msgType = MessageType::BSM;
 
@@ -1223,12 +1218,12 @@ int setup(const bool tx, const bool rx,
         }
         if (txSim)
             application = make_shared<SaeApplication>(txSimIp, txSimPort, string(""), 0,
-                                                      configFile, msgType, csv);
+                                                      configFile, msgType, csv, enableDiagLog);
         else if (rxSim)
             application = make_shared<SaeApplication>(string(""), 0, rxSimIp, rxSimPort,
-                                                      configFile, msgType, csv);
+                                                      configFile, msgType, csv, enableDiagLog);
         else
-            application = make_shared<SaeApplication>(configFile, msgType, csv);
+            application = make_shared<SaeApplication>(configFile, msgType, csv, enableDiagLog);
         // prevent tx and rx during wsa mode
         if(rx && wsa){
             printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
@@ -1259,8 +1254,9 @@ int setup(const bool tx, const bool rx,
     }
 
     if (not application
-        or not application->configuration.isValid) {
-        cout << "Invalid configuration" << endl;
+        or not application->configuration.isValid
+        or not application->init()) {
+        cout << "Initialization Failed" << endl;
         return -1;
     }
 
@@ -1311,7 +1307,17 @@ int setup(const bool tx, const bool rx,
     if (csv) {
         application->openLogFile(csvFileName);
         // TODO add option for only bsm related log
-        // application->openBsmMinLogFile(csvFileName);
+    }
+
+    // for sae message configuration. initialize security-related features for qits
+    if((rx || rxSim) && (bsm || wsa)){
+        if(application->configuration.enableSecurity){
+            if(application->configuration.enableVerifStatLog){
+                application->initVerifLogging();
+            }
+            if(application->configuration.enableMbdStatLog)
+                application->initMisbehaviorLogging();
+        }
     }
 
     if (rx && !rxSim)
@@ -1384,7 +1390,7 @@ int setup(const bool tx, const bool rx,
         return -1;
     }
 
-    if (txSim || (application->configuration.enableTxAlways && !tx && !rx))
+    if (txSim)
     {
         if(application->configuration.driverVerbosity)
             cout << "Starting sim transmit thread\n";
@@ -1467,11 +1473,17 @@ int setup(const bool tx, const bool rx,
         threads.push_back(thread(runApps));
     }
 
+    if (enableDiagLog) {
+        RadioInterface::enableDiagLog(enableDiagLog);
+        threads.push_back(thread(periodicDiagLog));
+    }
+
     return 0;
 }
 
 int main(int argc, char** argv) {
-    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm"};
+#ifndef SIM_BUILD
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm", "dlt", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
@@ -1480,21 +1492,23 @@ int main(int argc, char** argv) {
     auto uid = getuid();
     if (uid == 0) {
         /*Change running as non-root user*/
-        std::unordered_set<int8_t> newUserCaps{CAP_NET_ADMIN};
+        std::unordered_set<int8_t> newUserCaps{CAP_NET_ADMIN, CAP_SYS_NICE};
         auto changeUser = Utils::changeUser("its", newUserCaps);
         if (telux::common::ErrorCode::SUCCESS != changeUser) {
             cerr << "change user failed " << Utils::getErrorCodeAsString(changeUser) << std::endl;
             //continue even if change to non-root user fail;
         }
     }
+#endif
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGHUP);
     sigaddset(&sigset, SIGINT);
     sigaddset(&sigset, SIGTERM);
+#ifndef SIM_BUILD
     SignalHandlerCb cb = (SignalHandlerCb)signalHandler;
     SignalHandler::registerSignalHandler(sigset, cb);
-
+#endif
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;
@@ -1571,8 +1585,8 @@ int main(int argc, char** argv) {
     }
 
     joinThreads();
-    printf("Deleting application\n");
-    if(!rxSim && !txSim && application) {
+
+    if(!rxSim && !txSim && application){
         application->closeAllRadio();
     }
 

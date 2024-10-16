@@ -27,41 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
  /**
   * @file: RadioReceive.cpp
   *
@@ -70,12 +38,40 @@
   */
 
 #include "RadioReceive.h"
+#include <telux/cv2x/legacy/v2x_radio_api.h>
+
 static int gRxCount = 0;
 void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         this->gRxSub = rxSub;
     }
 };
+
+bool RadioReceive::get_priority_from_received_message(const struct msghdr* message,
+                                               v2x_priority_et* prior) {
+    if (NULL == message || NULL == prior) {
+        fprintf(stderr, "null input\n");
+        return false;
+    }
+    // get ancillary data
+    struct cmsghdr *cmsghp = CMSG_FIRSTHDR(message);
+    if (cmsghp) {
+        // get traffic class
+        int tclass = 0;
+        if (cmsghp->cmsg_level == IPPROTO_IPV6 &&
+            cmsghp->cmsg_type == IPV6_TCLASS) {
+            memcpy(&tclass, CMSG_DATA(cmsghp), sizeof(tclass));
+            *prior = v2x_convert_traffic_class_to_priority((uint16_t)tclass);
+            return true;
+        } else {
+            fprintf(stderr, "unexpected ancillary data\n");
+        }
+    } else {
+        fprintf(stderr, "empty ancillary data here\n");
+    }
+
+    return false;
+}
 
 RadioReceive::RadioReceive(const TrafficCategory category,
                             const TrafficIpType trafficIpType, const uint16_t port,
@@ -96,17 +92,25 @@ RadioReceive::RadioReceive(const TrafficCategory category,
                                 cb->onResponse(error);
                             };
     if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb, idList)) {
-        if (ErrorCode::SUCCESS == cb->getResponse()) {
-            cout<<"Rx Subscription creation succeeds";
+        auto err = cb->getResponse();
+        auto idp = idList.get();
+        if (ErrorCode::SUCCESS != err) {
+            cout<<"Rx Subscription creation fails with err:"
+                << static_cast<uint32_t>(err) << endl;
             if (nullptr != idList) {
                 cout << " for SID: ";
-                auto idp = idList.get();
                 for(int i=0; i < idp->size(); i++)
                     cout << idp->at(i) << ' ';
-                }
-            cout << "\n";
+            }
         } else {
-            cout<<"Rx Subscription creation fails.\n";
+            if (rVerbosity) {
+                cout<<"Rx Subscription creation succeeds";
+                if (nullptr != idList) {
+                    cout << " for SID: ";
+                    for(int i=0; i < idp->size(); i++)
+                        cout << idp->at(i) << ' ';
+                }
+            }
         }
     } else {
         cout<<"Rx Subscription creation fails.\n";
@@ -162,6 +166,15 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
     return;
 }
 
+RadioReceive::~RadioReceive(){}
+
+int RadioReceive::waitForCv2xToActivate(bool& restartFlow) {
+    if (cv2xStatusListener_) {
+        return cv2xStatusListener_->waitForCv2xRxStatus(Cv2xStatusType::ACTIVE, restartFlow);
+    }
+    return -1;
+}
+
 
 uint32_t RadioReceive::receive(const char* buf, int len) {
     uint8_t sourceMac[CV2X_MAC_ADDR_LEN];
@@ -186,6 +199,12 @@ uint32_t RadioReceive::receive(const char* buf, int len,
         socket = this->gRxSub->getSock();
     }
 
+    if(!isSim) {
+        int flag = 1;
+        if (setsockopt(socket, IPPROTO_IPV6, IPV6_RECVTCLASS,&flag, sizeof(flag)) < 0) {
+                        fprintf(stderr, "Setsockopt(IPV6_RECVTCLASS) failed\n");
+        }
+    }
     struct pollfd fd;
     int ret;
     fd.fd = socket;
@@ -224,7 +243,16 @@ uint32_t RadioReceive::receive(const char* buf, int len,
     msgL2SrcAdrr = ntohl(from.sin6_addr.s6_addr32[3]);
 
     if(bytesReceived > 0){
-        if (enableCsvLog_) {
+        if (get_priority_from_received_message(&message, &this->priority)) {
+            if(rVerbosity){
+                cout << "Read  priority in message" << std::endl;
+            }
+        } else {
+            if(rVerbosity){
+                cerr<<"Error in reading priority"<<std::endl;
+            }
+        }
+        if (enableCsvLog_ || enableDiagLogPacket_) {
             clock_gettime(CLOCK_MONOTONIC, &ts);
             lastRxMonotonicTime_ = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
         }
@@ -269,6 +297,26 @@ int RadioReceive::setL2Filters(std::vector<L2FilterInfo> filterList){
         return 0;
     }
     cerr << "Failed to setL2Filters" << endl;
+    return -1;
+}
+
+int RadioReceive::removeL2Filters(std::vector<uint32_t> filterList){
+    promise<ErrorCode> p;
+    auto cv2xRadioMgr = this->getCv2xRadioManager();
+    if (nullptr == cv2xRadioMgr) {
+        return -1;
+    }
+    cv2xRadioMgr->removeL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    if(rVerbosity) {
+        std::cout << "Removing l2 filters\n";
+    }
+    if (ErrorCode::SUCCESS == p.get_future().get()) {
+        if(rVerbosity) {
+            std::cout << "success to setL2Filters" << std::endl ;
+        }
+        return 0;
+    }
+    cerr << "Failed to removeL2Filters" << endl;
     return -1;
 }
 

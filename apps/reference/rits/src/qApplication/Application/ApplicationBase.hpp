@@ -26,41 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *Redistribution and use in source and binary forms, with or without
- *modification, are permitted (subject to the limitations in the
- *disclaimer below) provided that the following conditions are met:
- *
- *    * Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *
- *    * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *      disclaimer in the documentation and/or other materials provided
- *      with the distribution.
- *
- *    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
- *
- *NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -86,6 +54,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <sys/resource.h>
 #include <telux/cv2x/prop/CongestionControlManager.hpp>
 #include <telux/cv2x/prop/V2xPropFactory.hpp>
 #include "v2x_msg.h"
@@ -98,6 +67,7 @@
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
 #include "qMonitor.hpp"
+#include "qUtils.hpp"
 #include <telux/sec/CryptoAcceleratorManager.hpp>
 #include <telux/sec/SecurityFactory.hpp>
 #include <telux/sec/CAControlManager.hpp>
@@ -115,14 +85,22 @@
 #define MAX_PADDING_LEN     1000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
 #define PP_BUFFER_MAX_SIZE 4096
-#define SHARED_BUFFER_MAX_SIZE 1024
+#define SHARED_BUFFER_MAX_SIZE 2048
+#define ASYNC_BATCH_SIZE 500
+#define VERIF_STAT_BATCH_SIZE 2500
+#define DEFAULT_PROCESS_PRIORITY -20
+#define MIN_NICE -20
+#define MAX_NICE 19
+#define DECODE_SUCCESS 0
+#define DECODE_FAIL -1
+#define DECODE_SIGNED 1
 
-#define MIN_LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
-                       "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
-                       "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
-                       "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
-                       "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
-                       "TotalRVs,DistanceFromRV"
+#define LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
+                   "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
+                   "secMark,lat,long,semi_major_dev,speed,heading,longAccel,"\
+                   "latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,"\
+                   "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,"\
+                   "TotalRVs,DistanceFromRV"
 
 using telux::cv2x::Priority;
 using namespace std;
@@ -151,17 +129,37 @@ enum class TxRxType {
     RX
 };
 
+typedef struct {
+    uint64_t timestamp = 0;
+    uint8_t index = 0;
+    double distFromRV = 0.0;
+    bsm_data bs = {0};
+} logData;
+
 typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
 
-
-struct logData{
-    uint64_t timestamp = 0;
-    uint8_t index;
+typedef struct {
+    int indexToData;
+    bool verifSuccess;
+    AsyncCbState AsyncState=FREE;
+    bsm_data asyncBs;
+    uint32_t psid;
+    uint8_t msg_index;
+    uint64_t timestamp;
+    uint32_t l2SrcAddr;
     double distFromRV;
-    bsm_data bs = {0};
-};
+    uint32_t RVsInRange;
+    uint64_t txInterval;
+    double startLatencyTime;
+    double endLatencyTime;
+    Kinematics rvKine;
+    MisbehaviorStats* misbehaviorStat;
+    VerifStats* asyncVerifStat;
+    void* msgParseContext;
+} asyncCbData_t;
 
-struct Config{
+struct Config {
+    int procPriority = DEFAULT_PROCESS_PRIORITY;
     bool isValid = false;
     int codecVerbosity = 0;
     int ldmVerbosity = 0;
@@ -184,7 +182,7 @@ struct Config{
     bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
-    bool preRecordedMinLog = false;
+    bool preRecordedBsmLog = false;
     bool enableTxAlways = true;
     uint16_t ldmGbTime = 3;
     uint8_t ldmGbTimeThreshold= 5;
@@ -236,14 +234,18 @@ struct Config{
     vector<string> sspValueVect;
     vector<string> sspMaskVect;
     bool enableAsync = false;
+    bool enableEncrypt = false;
+    bool setGenLocation = true;
     bool enableConsistency = true;
     bool enableRelevance = true;
-    bool enableEncrypt = false;
+    bool overridePsidCheck = false;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
     bool acceptAll = false;
     bool overrideVerifResult = false;
     int overrideVerifValue = -1;
+    bool fakeRVTempIds = false;
+    uint32_t totalFakeRVTempIds = 500;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;
@@ -256,6 +258,10 @@ struct Config{
     bool enableVerifStatLog = false;
     uint32_t verifStatsSize = 10000;
     string verifStatLogFile = "/tmp/verif_stats.log";
+    /** Verification Results Parameters */
+    bool enableVerifResLog = false;
+    uint32_t verifResLogSize = 10000;
+    string verifResLogFile = "/tmp/verif_results.log";
     /** Signing Stats Parameters */
     bool enableSignStatLog = false;
     uint32_t signStatsSize = 10000;
@@ -307,6 +313,16 @@ struct Config{
     double overrideHead = 0.0;
     double overrideElev = 0.0;
     double overrideSpeed = 0.0;
+};
+
+struct DiagLogData {
+    bool validPkt;
+    uint64_t currTime;
+    uint8_t cbr;
+    uint64_t monotonicTime;
+    uint64_t txInterval;
+    bool enableCongCtrl;
+    bool congCtrlInitialized;
 };
 
 /* Congestion Control CongestionControl Data */
@@ -387,8 +403,6 @@ struct CongCtrlConfig {
     uint8_t spsEnhDelayPerc = 20; //#cv2xMaxITTChangeFreq = 5;
 };
 
-
-
 class CaControlManagerListener : public ICAControlManagerListener {
 public:
     struct CALoad currLoad = {0};
@@ -416,20 +430,23 @@ public:
     int rxCount = 0;
     struct timeval startRxIntervalTime;
     struct timeval endRxIntervalTime;
-    QMonitor* qMon = nullptr;
-    QMonitor::Configuration* qMonConfig = nullptr;
-
-
+    std::shared_ptr<QMonitor> qMon = nullptr;
+    std::shared_ptr<QMonitor::Configuration> qMonConfig = nullptr;
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
     std::map<std::thread::id, int> misbehaviorStatIdx;
+    std::map<std::thread::id, long int> resultLoggingIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
     std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
+    std::map<std::thread::id, std::vector<ResultLoggingStats>> thrResLoggingValues;
 
     virtual ~ApplicationBase();
+
+    /* Initialization */
+    virtual bool init();
 
     /* Method to update the local stored V2X IP rmnet addr */
     int updateCachedV2xIpIfaceAddr();
@@ -454,7 +471,8 @@ public:
     * @param fileConfiguration a char* that contains the file path of the
     * @param msgType application message type .
     */
-    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * Constructs Application with all the specifications of a
@@ -467,8 +485,9 @@ public:
     * @param rxPort a const uint16_t that contains the receive port.
     * @param fileConfiguration a char* that contains the file path of the
     */
-    ApplicationBase(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false);
+    ApplicationBase(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false,
+        bool enableDiagLog = false);
 
     /**
     * send  send V2X message.
@@ -506,11 +525,6 @@ public:
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
 
     /**
-    * Clear radio instance in application.
-    */
-    void clearRadioInstance();
-
-    /**
     * Closes all tx and rx flows from Snaptel SDK.
     */
     void closeAllRadio();
@@ -524,6 +538,16 @@ public:
      * Write verification statistics to file
      */
     void writeVerifLogging();
+
+    /**
+    *   Sets up the verification results vector based on the exisitng threads
+    */
+    void initResultsLogging();
+
+    /**
+     * Write verification results to file
+     */
+    void writeResultsLogging();
 
     /**
     *   Sets up the signing statistics vector based on the exisitng threads
@@ -547,6 +571,8 @@ public:
 
     void printRxStats();
     void printTxStats();
+    int restartRxSubs();
+    int restartTxFlows();
     int setup(MessageType msgType, bool reSetup = false);
     void setupLdm();
     virtual bool pendingTillEmergency();
@@ -668,7 +694,18 @@ public:
     static double overrideSpeed;
     static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
     static bool securityInitialized;
-
+    static int signFail;
+    static int signSuccess;
+    static bool exitApp;
+    static bool writeLogFinish;
+    static void writeLog(const uint8_t index,
+    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
+    uint64_t timestamp, uint32_t psid, uint64_t monotonicTime,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t locTimeMs, uint8_t cbr,
+    bsm_data* bs, double distFromRV, uint32_t RVsInRange,
+    uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
+    std::condition_variable* writeMutexCv);
+    void diagLogPktGenericInfo();
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
@@ -683,16 +720,20 @@ protected:
     float locPositionDop_ = 0.0;
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
+    bool enableDiagLog_ = false;
+    bool badRadioSetup = false;
     // congestionControl cong ctrl
     static CongestionControlData congestionControlOut;
     CongestionControlCalculations qitsCongControlCalculations;
     static sem_t congCtrlCbSem;
     bool congCtrlInitialized = false;
-    bool finishProgram;
+    bool finishProgram = false;
     sem_t programSem;
     current_dynamic_vehicle_state_t* currVehState;
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
+    std::condition_variable writeMutexCv;
+    std::shared_ptr<QUtils> utility_ = nullptr;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -703,7 +744,7 @@ protected:
     /**
      * Overloaded function to initialize the message content for transmition.
      */
-    virtual void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
+    virtual bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
     /**
      * Overloaded function to free the message content, counter-part of initMsg.
      */
@@ -731,16 +772,19 @@ protected:
      */
     unique_ptr<SecurityService> SecService;
 
-   virtual void writeLog(const uint8_t index,
-       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp,
-       uint32_t psid, bsm_data* bs, double distFromRV);
     /**
      * Vehicle Receive object.
      */
     VehicleReceive VehRec;
     std::atomic<bool> criticalState{false};
+
+    static FILE *csvfp;
+    static std::mutex csvMutex;
+    static v2x_diag_qits_general_data generalInfo;
+    static unsigned short getEventsData(const vehicleeventflags_ut *events);
+    static void fillEventsData(v2x_diag_event_bit_t *eventBit, const vehicleeventflags_ut *events);
+    void diagLogPktTxRx(bool isTx, TransmitType txType, const DiagLogData *logData, const bsm_data *bs);
 private:
-    bool exitApp = false;
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;
     std::condition_variable stateCv;
@@ -749,8 +793,6 @@ private:
     std::mutex v2xIpAddrMtx_;
     string v2xIpAddr_;
 
-    static FILE *csvfp;
-    static std::mutex csvMutex;
 
     /* method to retrieve V2X IP rmnet address from the system */
     int getSysV2xIpIfaceAddr(string& ipAddr);
@@ -768,7 +810,7 @@ private:
     void startCongCtrl();
     static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
     // function to write congestion control data to file
-    void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
+    static void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
     CongestionControlCalculations* congestionControlCalculations, bool validPkt,
         uint16_t eventsData);
     // function to write security related data to file

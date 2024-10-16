@@ -253,6 +253,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_AGE_OF_CORRECTION)) {
       std::cout << "valid age of correction" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_LEAP_SECONDS_UNC)) {
+      std::cout << "valid leap seconds uncertainty" << std::endl;
+    }
 }
 
 void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
@@ -1378,6 +1381,8 @@ void MyLocationListener::recordLocationInfo(
     recordStream << locationInfo->getBaselineLength() << "," <<
     locationInfo->getAgeOfCorrections() << ",";
 
+    recordStream << locationInfo->getLeapSecondsUncertainty() << ",";
+
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
@@ -1512,6 +1517,8 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getBaselineLength() << std::endl;
    std::cout << "Age of corrections : " <<
        locationInfo->getAgeOfCorrections() << std::endl;
+   std::cout << "Leap seconds uncertainty : " <<
+       static_cast<unsigned>(locationInfo->getLeapSecondsUncertainty()) << std::endl;
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
@@ -1648,6 +1655,8 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
          locationInfo->getBaselineLength() << std::endl;
      std::cout << "Age of corrections : " <<
          locationInfo->getAgeOfCorrections() << std::endl;
+     std::cout << "Leap seconds uncertainty : " <<
+       static_cast<unsigned>(locationInfo->getLeapSecondsUncertainty()) << std::endl;
      std::cout << "*************************************************************" << std::endl;
 
      if(isRecordingEnabled_) {

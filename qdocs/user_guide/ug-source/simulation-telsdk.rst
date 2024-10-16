@@ -1274,7 +1274,7 @@ The report is represented by a string containing the fields separated by a comma
 
 2. Ensure that adb is available and restart adb as root by running "adb root".
 
-3. Run the record_location script and capture the data in a CSV file.
+3. Run the record_location script and capture the data in a CSV file by passing the file as an argument.
 
 4. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
    If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.

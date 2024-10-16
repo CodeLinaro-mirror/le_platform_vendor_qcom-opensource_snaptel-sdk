@@ -15,8 +15,22 @@
 #       for example:
 #         location_test_app -r FUSED,SPE
 
-echo "##"
-echo "## Copyright (c) $(date +%Y) Qualcomm Innovation Center, Inc. All rights reserved."
-echo "## SPDX-License-Identifier: BSD-3-Clause-Clear"
-echo "##"
-adb shell " location_test_app -r | grep '^###' | sed 's/\#\#\#//g' "
+# Check if the file path is provided
+if [ -z "$1" ]; then
+    echo "Please provide the path to the CSV file."
+    exit 1
+fi
+
+# Define the path to the CSV file
+csv_file="$1"
+
+# Clearing the csv before adding copyrights
+> "$csv_file"
+
+# Adding copyrights to the csv
+echo "##" >> "$csv_file"
+echo "## Copyright (c) $(date +%Y) Qualcomm Innovation Center, Inc. All rights reserved." >> "$csv_file"
+echo "## SPDX-License-Identifier: BSD-3-Clause-Clear" >> "$csv_file"
+echo "##" >> "$csv_file"
+
+adb shell " location_test_app -r | grep '^###' | sed 's/\#\#\#//g' " >> "$csv_file"

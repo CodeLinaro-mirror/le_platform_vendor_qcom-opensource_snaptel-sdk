@@ -27,11 +27,11 @@
  * 14. De-init application on end of usecase.
  *
  * Usage:
- * # In NAD-1: ./data_ip_passthrough_app_nad1 <NAD>
+ * # On NAD-1: ./data_ip_passthrough_app_nad1 <NAD>
  *
  * Example:
- * # In NAD-1: ./data_ip_passthrough_app_nad1 "NAD-1"
- * # In NAD-2: ./data_ip_passthrough_app_nad1 "NAD-2"
+ * # On NAD-1: ./data_ip_passthrough_app_nad1 "NAD-1"
+ * # On NAD-2: ./data_ip_passthrough_app_nad1 "NAD-2"
  */
 
 #include <errno.h>
@@ -63,7 +63,6 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
                       public std::enable_shared_from_this<IpPassThrough> {
  public:
     int initDataSettingsManager(telux::data::OperationType opType) {
-        telux::common::Status status;
         telux::common::ServiceStatus serviceStatus;
         std::promise<telux::common::ServiceStatus> p{};
 

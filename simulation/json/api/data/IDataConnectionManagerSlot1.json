@@ -30,6 +30,10 @@
         "stopDataCall": {
             "error": "SUCCESS",
             "status": "SUCCESS"
+        },
+        "requestThrottledApnInfo": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

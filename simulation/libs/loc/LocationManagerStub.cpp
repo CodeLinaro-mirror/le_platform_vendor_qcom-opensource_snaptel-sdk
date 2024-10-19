@@ -768,9 +768,9 @@ void LocationManagerStub::parseDetailedPvtReports(std::shared_ptr<LocationInfoEx
         ++itr;
     }
     loc->setDgnssStationIds(dgnssStationIds);
-
     loc->setBaselineLength(std::stod(message[itr++]));
     loc->setAgeOfCorrections(std::stoull(message[itr++]));
+    loc->setLeapSecondsUncertainty(std::stoul(message[itr++]));
 }
 
 void LocationManagerStub::setLocationInfoBase(std::shared_ptr<LocationInfoBase> &loc,
@@ -1315,6 +1315,31 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
                 auto spt = (*iter).lock();
                 if (spt != nullptr) {
                     spt->onGnssMeasurementsInfo(gnssMeas);
+                    ++iter;
+                } else {
+                    iter = listeners_.erase(iter);
+                }
+            }
+        }
+        break;
+
+        case telux::loc::GnssReportType::EXTENDED_DATA :
+        if( (reportMask_ & telux::loc::GnssReportType::EXTENDED_DATA) &&
+            (reportMask_ & telux::loc::GnssReportType::LOCATION) &&
+            (sessionMask_ & telux::loc::DETAILED_ENGINE) )
+        {
+            std::vector<uint8_t> payload;
+            // Iterate from the 2nd index to the last index
+            for (size_t rowItr = 2; rowItr < message.size(); ++rowItr) {
+                int number = std::stoi(message[rowItr]);
+                payload.push_back(static_cast<uint8_t>(number));
+            }
+
+            //Send data to clients.
+            for (auto iter = listeners_.begin(); iter != listeners_.end();) {
+                auto spt = (*iter).lock();
+                if (spt != nullptr) {
+                    spt->onGnssExtendedDataInfo(payload);
                     ++iter;
                 } else {
                     iter = listeners_.erase(iter);

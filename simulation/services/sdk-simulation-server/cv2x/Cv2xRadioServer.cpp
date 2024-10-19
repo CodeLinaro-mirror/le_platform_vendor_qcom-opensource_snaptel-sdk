@@ -362,7 +362,7 @@ grpc::Status Cv2xRadioServer::enableTxStatusReport(
       txStatusReportEnable_[port] = true;
     } else {
       LOG(DEBUG, __FUNCTION__, port, " TxStatus already enabled.");
-      res->set_status(::commonStub::Status::FAILED);
+      res->set_status(::commonStub::Status::ALREADY);
       res->set_error(::commonStub::ErrorCode::NO_EFFECT);
     }
   }
@@ -387,6 +387,8 @@ grpc::Status Cv2xRadioServer::disableTxStatusReport(
       txStatusReportEnable_.erase(itr);
     } else {
       LOG(DEBUG, __FUNCTION__, " not found the port num");
+      res->set_status(::commonStub::Status::NOSUCH);
+      res->set_error(::commonStub::ErrorCode::NO_EFFECT);
     }
   }
   return grpc::Status::OK;

@@ -444,6 +444,7 @@ The details on how simulation of individual areas can be used and controlled are
 5. :ref:`sim-reference-thermal`
 6. :ref:`sim-reference-power`
 7. :ref:`sim-reference-sensor`
+8. :ref:`sim-reference-platform`
 
 .. _sim-reference-telephony:
 
@@ -1273,7 +1274,7 @@ The report is represented by a string containing the fields separated by a comma
 
 2. Ensure that adb is available and restart adb as root by running "adb root".
 
-3. Run the record_location script and capture the data in a CSV file.
+3. Run the record_location script and capture the data in a CSV file by passing the file as an argument.
 
 4. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
    If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.
@@ -2002,3 +2003,72 @@ The report is represented by a string containing the fields separated by a comma
 
 5. At the beginning of the generated csv file, the copyright is added automatically. Each line starts with double number sign(##).
    If any new copyright is needed, please follow the same format by adding "##" at the beginning of each line.
+
+.. _sim-reference-platform:
+
+Platform Simulation
+~~~~~~~~~~~~~~~~~~~
+
+Overview of Platform Simulation
+"""""""""""""""""""""""""""""""
+
+This page and the sub-pages provide information about usage of simulation for the Platform
+sub-system that are part of the telux::Platform and telux::Platform::hardware namespaces of
+the Telematics SDK.
+
+.. _fig-platform-sim-overview:
+.. figure:: ../../images/simulation_platform_overview.png
+  :width: 500
+
+  Platform Simulation Framework
+
+Managers Supported
+"""""""""""""""""""
+
+The following managers are currently available in the simulation:
+
+1. DeviceInfoManager
+2. AntennaManager
+3. TimeManager
+4. FsManager
+
+Platform APIs response handling
+""""""""""""""""""""""""""""""
+
+The framework allows responses of each API to be configured using a JSON file.
+
+Each manager has its own JSON configuration file present under ``simulation/json/api/platform/``, For example
+
+**Device Info Manager:** configured via simulation/json/api/platform/IDeviceInfoManager.json has API command response for telux::platform::IDeviceInfoManager::GetPlatformVersion
+
+.. code-block::
+
+ "GetPlatformVersion": {
+        "status": "SUCCESS"
+ },
+
+The JSON file holds the default values and could be updated dynamically by the users of the simulation.
+If the client configures the API behavior to mimic an error scenario by setting the response error code
+to anything other than "SUCCESS", the platform server's response will be modified to simulate the erroneous behavior.
+
+To configure simulation with the static configuration describing the meta build ID, apps build ID and other details, one should refer and update the ``simulation/json/system-info/platform/version_info.json``
+
+Platform event handling
+"""""""""""""""""""""""
+
+Platform events
+'''''''''''''''
+
+The following platform events can be simulated using the telsdk_event_injector.
+
+1. telux::platform::IFsListener::onEfsBackupEvent
+2. telux::platform::IFsListener::onEfsRestoreEvent
+3. telux::qmi::IQmiMrcListener::onOtaABSyncEvent
+4. telux::qmi::IQmiMrcListener::onFsOperationImminentEvent
+
+Sample input:
+
+.. code-block::
+
+ telsdk_event_injector -f fs_manager -e efsBackup <eventName> <status>
+ telsdk_event_injector -f fs_manager -e efsBackup EFS_BACKUP_START SUCCESS

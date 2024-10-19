@@ -19,6 +19,9 @@
 
 #include "telux/platform/PlatformFactory.hpp"
 #include "DeviceInfoManagerStub.hpp"
+#include "AntennaManagerStub.hpp"
+#include "FsManagerStub.hpp"
+#include "TimeManagerStub.hpp"
 #include "libs/common/Logger.hpp"
 #include "libs/common/FactoryHelper.hpp"
 
@@ -33,10 +36,12 @@ class PlatformFactoryStub : public PlatformFactory,
  public:
     static PlatformFactory &getInstance();
 
-    std::shared_ptr<IFsManager> getFsManager(telux::common::InitResponseCb callback = nullptr) override;
-    std::shared_ptr<IDeviceInfoManager> getDeviceInfoManager(InitResponseCb callback = nullptr) override;
+    std::shared_ptr<IFsManager> getFsManager(InitResponseCb callback = nullptr) override;
+    std::shared_ptr<IDeviceInfoManager> getDeviceInfoManager(
+        InitResponseCb callback = nullptr) override;
     std::shared_ptr<ITimeManager> getTimeManager(InitResponseCb callback = nullptr) override;
-    std::shared_ptr<hardware::IAntennaManager> getAntennaManager(InitResponseCb callback = nullptr) override;
+    std::shared_ptr<hardware::IAntennaManager> getAntennaManager(
+        InitResponseCb callback = nullptr) override;
 
  private:
     PlatformFactoryStub();
@@ -45,6 +50,12 @@ class PlatformFactoryStub : public PlatformFactory,
     std::mutex platformFactoryMutex_;
     std::weak_ptr<IDeviceInfoManager> deviceInfoManager_;
     std::vector<InitResponseCb> deviceInfoInitCallbacks_;
+    std::weak_ptr<hardware::IAntennaManager> antennaManager_;
+    std::vector<InitResponseCb> antennaInitCallbacks_;
+    std::weak_ptr<IFsManager> fsManager_;
+    std::vector<InitResponseCb> fsInitCallbacks_;
+    std::weak_ptr<ITimeManager> timeManager_;
+    std::vector<InitResponseCb> timeInitCallbacks_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 

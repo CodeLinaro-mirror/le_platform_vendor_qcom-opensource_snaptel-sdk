@@ -88,7 +88,7 @@ private:
     void sortDatabase(int phoneId, Json::Value newData, int index);
     void handleSelectionModeChanged(std::string eventParams);
     void handleNetworkScanResultsChanged(std::string eventParams);
-    void triggerChangeEvent(::eventService::EventResponse anyResponse);
+    void triggerNetworkSelectionModeEvent(::telStub::SelectionModeChangeEvent event);
     void onEventUpdate(std::string event);
     void triggerNetworkScanResultsEvent(::telStub::NetworkScanResultsChangeEvent event);
     ::telStub::RadioTechnology converRatTypeToRadioTechnology(::telStub::RatType_Type rat);

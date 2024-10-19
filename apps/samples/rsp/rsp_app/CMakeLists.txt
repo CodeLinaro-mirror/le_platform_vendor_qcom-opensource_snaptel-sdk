@@ -8,14 +8,14 @@ pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 set(RSP_APP_SOURCES
    RspApp.cpp
    RspListener.cpp
-   ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+   ${CMAKE_CURRENT_LIST_DIR}/../../../common/utils/Utils.cpp
 )
 
 add_executable(${TARGET_RSP_APP} ${RSP_APP_SOURCES})
 
 target_include_directories(${TARGET_RSP_APP} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common/utils)
+    ${CMAKE_CURRENT_LIST_DIR}/../../../common/utils)
 
 target_compile_options(${TARGET_RSP_APP} PRIVATE -std=c++11 -Wall -Werror)
 

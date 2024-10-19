@@ -158,6 +158,19 @@ struct BitRateInfo {
 };
 
 /**
+ * Throttle information for the corresponding APN
+ */
+struct APNThrottleInfo {
+    std::string apn;                            /**< APN name */
+    std::vector<int> profileIds;                /**< Profile IDs with the same APN */
+    uint32_t ipv4Time;                          /**< Remaining IPv4 throttled time in milliseconds*/
+    uint32_t ipv6Time;                          /**< Remaining IPv6 throttled time in milliseconds*/
+    bool isBlocked;                             /**< Is APN blocked on all plmns */
+    std::string mcc;                            /**< Mobile Country Code */
+    std::string mnc;                            /**< Mobile Network Code */
+};
+
+/**
  * Data call related parameters
  */
 struct DataCallParams {
@@ -205,10 +218,12 @@ struct DataCallParams {
  *  - If any client attemp to stop data call and error detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
  *  - If the client tries to start a data call on specific profile id and network interface name and:
- *      - A data call with the same profile ID and a different network interface name or
- *        data call with the same network interface name and a different profile ID exists, an
- *        telux::ErrorCode::INVALID_OPERATION error occurs and onDataCallInfoChanged will not
- *        be called.
+*       - If data call already exists with the same profile ID but a different network interface
+ *        then error will be set to telux::ErrorCode::DEVICE_IN_USE and onDataCallInfoChanged
+ *        will not get called.
+ *      - If data call already exists with the same network interface but different profile ID then
+ *        error will be set to telux::ErrorCode::INVALID_OPERATION and onDataCallInfoChanged will
+ *        not get called.
  *      - Another client has already requested to tear down an existing data call with
  *        the same profile ID and network interface name and this operation is in progress, an
  *        telux::ErrorCode::OP_IN_PROGRESS error occurs and onDataCallInfoChanged will not be
@@ -320,6 +335,20 @@ using requestDataCallBitRateResponseCb
  */
 using requestRoamingModeResponseCb =
     std::function<void(bool isRoamingEnabled, int profileId, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestThrottledApnInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] throttleInfoList         List of APNThrottleInfo
+ * @param [in] error                    Return code for whether the operation
+ *                                      succeeded or failed
+ */
+using ThrottleInfoCb = std::function<void(
+    const std::vector<APNThrottleInfo> &throttleInfoList,
+    telux::common::ErrorCode error)>;
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -602,6 +631,23 @@ class IDataConnectionManager {
         OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
 
     /**
+     * Request information about APNs that are throttled by the network
+     * Any attempt to start a data call will fail if the respective APN is throttled.
+     *
+     * The provided callback will be invoked with information about all the APNs that are throttled.
+     * It also specifies the time for which the APN is being throttled. Clients should wait until
+     * that timer expires before attempting a data call on that APN. Otherwise, the data call will
+     * be rejected. Any update in the throttled state will be informed via
+     * @ref IDataConnectionListener::onThrottledApnInfoChanged.
+     *
+     * @param [out] callback         Callback with a list of APN throttle information
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) = 0;
+
+    /**
      * Destructor for IDataConnectionManager
      */
     virtual ~IDataConnectionManager(){};
@@ -826,6 +872,18 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      */
     virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
+
+    /**
+     * This function is called when the throttled state changes, such as when a new APN is throttled
+     * or an existing throttled APN is no longer throttled after the timeout.
+     * APNs that are not throttled anymore will not appear in the list of throttled APNs.
+     *
+     * @param [out] throttleInfoList   List of all APN throttle information.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual void onThrottledApnInfoChanged(const std::vector<APNThrottleInfo> &throttleInfoList){};
 
     /**
      * Destructor for IDataConnectionListener

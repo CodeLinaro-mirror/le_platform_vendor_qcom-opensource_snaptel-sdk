@@ -137,6 +137,8 @@ grpc::Status NetworkSelectionManagerServerImpl::SetNetworkSelectionMode(ServerCo
     std::string subsystem = MANAGER;
     std::string method = "setNetworkSelectionMode";
     JsonData data;
+    ::telStub::SelectionModeChangeEvent selectionModeEvent;
+
     telux::common::ErrorCode error =
         CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
@@ -152,6 +154,11 @@ grpc::Status NetworkSelectionManagerServerImpl::SetNetworkSelectionMode(ServerCo
         data.stateRootObj[MANAGER]["NetworkSelectionMode"]["mcc"] = mcc;
         data.stateRootObj[MANAGER]["NetworkSelectionMode"]["mnc"] = mnc;
         JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+
+        selectionModeEvent.set_phone_id(request->phone_id());
+        selectionModeEvent.set_mode(static_cast<telStub::NetworkSelectionMode_Mode>(mode));
+        selectionModeEvent.set_mcc(mcc);
+        selectionModeEvent.set_mnc(mnc);
     }
     //Create response
     if(data.cbDelay != -1) {
@@ -163,6 +170,10 @@ grpc::Status NetworkSelectionManagerServerImpl::SetNetworkSelectionMode(ServerCo
     response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
 
+    auto f = std::async(std::launch::async, [this, selectionModeEvent]() {
+        this->triggerNetworkSelectionModeEvent(selectionModeEvent);
+    }).share();
+    taskQ_->add(f);
     return grpc::Status::OK;
 }
 
@@ -581,11 +592,8 @@ void NetworkSelectionManagerServerImpl::handleSelectionModeChanged(std::string e
     }
 
     if (JsonParser::writeToJsonFile(rootObj, jsonfilename) == telux::common::ErrorCode::SUCCESS) {
-        ::eventService::EventResponse anyResponse;
-        anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
-        anyResponse.mutable_any()->PackFrom(selectionModeEvent);
-        auto f = std::async(std::launch::async, [this, anyResponse]() {
-            this->triggerChangeEvent(anyResponse);
+        auto f = std::async(std::launch::async, [this, selectionModeEvent]() {
+            this->triggerNetworkSelectionModeEvent(selectionModeEvent);
         }).share();
         taskQ_->add(f);
     } else {
@@ -733,10 +741,12 @@ grpc::Status NetworkSelectionManagerServerImpl::SetNrDubiousCell(ServerContext* 
     return grpc::Status::OK;
 }
 
-void NetworkSelectionManagerServerImpl::triggerChangeEvent(
-    ::eventService::EventResponse anyResponse) {
-    LOG(DEBUG, __FUNCTION__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+void NetworkSelectionManagerServerImpl::triggerNetworkSelectionModeEvent(
+    ::telStub::SelectionModeChangeEvent event) {
+    ::eventService::EventResponse anyResponse;
+
+    anyResponse.set_filter(telux::tel::TEL_NETWORK_SELECTION_FILTER);
+    anyResponse.mutable_any()->PackFrom(event);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);

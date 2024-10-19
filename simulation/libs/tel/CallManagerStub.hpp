@@ -102,6 +102,8 @@ public:
       std::string message, common::ResponseCallback callback) override;
     telux::common::Status configureECallRedial(RedialConfigType config,
         const std::vector<int> &timeGap, common::ResponseCallback callback) override;
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
+        int duration, common::ResponseCallback callback ) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

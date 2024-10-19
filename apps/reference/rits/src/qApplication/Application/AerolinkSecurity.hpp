@@ -105,7 +105,8 @@ class AerolinkSecurity : public SecurityService {
                                              uint8_t keyGenMethod);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              char const* lcmName, IDChangeData& idChangeData);
-        int ExtractMsg(const SecurityOpt &opt,
+        int ExtractMsg( void* smp,
+                        const SecurityOpt &opt,
                         const uint8_t * msg,
                         uint32_t msgLen,
                         uint8_t const *payload,
@@ -115,14 +116,22 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
         int VerifyMsg(const SecurityOpt &opt);
-        int checkConsistencyandRelevancy(const SecurityOpt opt);
+        int checkConsistencyandRelevancy(void* smp, const SecurityOpt &opt);
         int asyncVerify(Kinematics rvKine,
-        MisbehaviorStats* misbehaviorStat,void *asyncCbData , uint8_t priority, ValidateCallback callBackFunction);
+            MisbehaviorStats* misbehaviorStat,void *asyncCbData,
+            uint8_t priority, ValidateCallback callBackFunction,
+            SecuredMessageParserC* msgParseContext);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;
+        int createNewSmp(SecuredMessageParserC* smpPtr);
+        int createNewSmg(SecuredMessageGeneratorC* smgPtr);
+        AEROLINK_RESULT mbdCheck(Kinematics* rvBsmInfo,
+            MisbehaviorStats* misbehaviorStat,
+            SecuredMessageParserC* smp);
+        void fillBsmDataForMbd(Kinematics* rvBsmData);
         ~AerolinkSecurity() {
             deinit();
         }
@@ -168,10 +177,7 @@ class AerolinkSecurity : public SecurityService {
         SecuredMessageGeneratorC* getThrSmg(std::thread::id thrId);
         sem_t* getThrSmpSem(std::thread::id thrId);
         sem_t* getThrSmgSem(std::thread::id thrId);
-        int createNewSmp(SecuredMessageParserC* smpPtr);
-        int createNewSmg(SecuredMessageGeneratorC* smgPtr);
-        void mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat);
-        void fillBsmDataForMbd(Kinematics* rvBsmData);
+
         // should be unique public encryption keys
         //    AerolinkEncryptionKey const * const recipients_[] = {};
         //    std::set<AerolinkEncryptionKey const *> recipients_;

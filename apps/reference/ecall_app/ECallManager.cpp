@@ -365,6 +365,21 @@ telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->restartECallHlapTimer(phoneId, id, duration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME
+            << "Failed to send request to restart eCall HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {
     if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;

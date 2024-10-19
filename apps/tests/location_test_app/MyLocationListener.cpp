@@ -253,6 +253,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_AGE_OF_CORRECTION)) {
       std::cout << "valid age of correction" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_LEAP_SECONDS_UNC)) {
+      std::cout << "valid leap seconds uncertainty" << std::endl;
+    }
 }
 
 void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
@@ -1378,6 +1381,8 @@ void MyLocationListener::recordLocationInfo(
     recordStream << locationInfo->getBaselineLength() << "," <<
     locationInfo->getAgeOfCorrections() << ",";
 
+    recordStream << locationInfo->getLeapSecondsUncertainty() << ",";
+
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
@@ -1512,6 +1517,8 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getBaselineLength() << std::endl;
    std::cout << "Age of corrections : " <<
        locationInfo->getAgeOfCorrections() << std::endl;
+   std::cout << "Leap seconds uncertainty : " <<
+       static_cast<unsigned>(locationInfo->getLeapSecondsUncertainty()) << std::endl;
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
@@ -1648,6 +1655,8 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
          locationInfo->getBaselineLength() << std::endl;
      std::cout << "Age of corrections : " <<
          locationInfo->getAgeOfCorrections() << std::endl;
+     std::cout << "Leap seconds uncertainty : " <<
+       static_cast<unsigned>(locationInfo->getLeapSecondsUncertainty()) << std::endl;
      std::cout << "*************************************************************" << std::endl;
 
      if(isRecordingEnabled_) {
@@ -1795,6 +1804,24 @@ void MyLocationListener::onEngineNmeaInfo(telux::loc::LocationAggregationType en
     std::cout << " Nmea String : " << nmea << std::endl;
 }
 
+void MyLocationListener::onGnssExtendedDataInfo(const std::vector<uint8_t>& payload) {
+    PRINT_NOTIFICATION << "\n************ Gnss Extended Information ***********" << std::endl;
+    size_t length = payload.size();
+    std::cout << " Payload len : " << length << std::endl;
+    std::cout << " Payload byte information: ";
+    if(!isExtendedInfoFlagEnabled_) {
+        std::cout << static_cast<unsigned>(payload[0]) << " "
+                  << static_cast<unsigned>(payload[1]) << " "
+                  << static_cast<unsigned>(payload[length - 2]) << " "
+                  << static_cast<unsigned>(payload[length - 1]) << std::endl;
+        return;
+    }
+    for(size_t i = 0; i < length; i++) {
+        std::cout << static_cast<unsigned>(payload[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
 void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      GnssMeasurements &measurementInfo) {
    if(!isMeasurementsInfoFlagEnabled_) {
@@ -1920,6 +1947,14 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
 
    if (isRecordingEnabled_) {
        DETAILED_RECORDING << recordStream.str() << std::endl;
+   }
+
+   //Recording dummy payload for GNSS extended data
+   std::ostringstream extendedDataRecordStream;
+   extendedDataRecordStream << EXTENDED_DATA << "," << extendedDataPayload_;
+
+   if (isRecordingEnabled_) {
+       DETAILED_RECORDING << extendedDataRecordStream.str() << std::endl;
    }
 }
 
@@ -2224,4 +2259,8 @@ void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal g
 
 void MyLocationListener::setRecordingFlag(bool enable) {
    isRecordingEnabled_ = enable;
+}
+
+void MyLocationListener::setExtendedInfoFlag(bool enable) {
+    isExtendedInfoFlagEnabled_ = enable;
 }

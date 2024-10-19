@@ -1,3 +1,7 @@
+..
+   *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   *  SPDX-License-Identifier: BSD-3-Clause-Clear
+
 .. _simulation-data:
 
 Data 
@@ -25,6 +29,7 @@ Data
    get_roaming_status_and_indication
    on_demand_pdn_connectivity
    enable_ip_passthrough
+   set_data_stall_params
 
 
 ..

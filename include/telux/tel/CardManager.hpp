@@ -392,6 +392,8 @@ class ICard {
      * @returns ICardFileHandler
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
+
+    virtual ~ICard() {};
 };
 
 /**

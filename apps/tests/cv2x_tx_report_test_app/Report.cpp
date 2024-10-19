@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -72,6 +72,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include "Report.hpp"
@@ -184,7 +185,7 @@ void Cv2xTxStatusReportListener::writeReportToFile(const TxStatusReport & info) 
     if (not file_) {
         return;
     }
-    fprintf(file_, "%llu, ", Utils::getCurrentTimestamp());
+    fprintf(file_, "%" PRIu64 ", ", Utils::getCurrentTimestamp());
     fprintf(file_, "%u, %u, %s, ", info.port, info.otaTiming, txType2String(info.txType).c_str());
     fprintf(file_, "%s, %.1f, ", rfStatus2String(info.rfInfo[0].status).c_str(),
             static_cast<float>(info.rfInfo[0].power)/10);

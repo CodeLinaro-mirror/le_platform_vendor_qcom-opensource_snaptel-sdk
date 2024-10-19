@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_THERM_SHUTDOWN_MGR_TEST_APP thermal_shutdown_test_app)
 
@@ -7,9 +7,9 @@ set(THERM_SHUTDOWN_MGR_TEST_APP
     ThermalCommandCallback.cpp
     ThermalListener.cpp
     ThermalCommandMgr.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

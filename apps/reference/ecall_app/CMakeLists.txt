@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_ECALL_APP ecall_app)
 
@@ -13,18 +13,18 @@ set(ECALL_APP_SOURCES
     TelClientUtils.cpp
     EcallScanFailHandler.cpp
     MsdProvider.cpp
-    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
-    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/ConfigParser.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp
 )
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common/console_app_framework
-    ${telematics-apps_SOURCE_DIR}/common/utils
-    ${telematics-apps_SOURCE_DIR}/common
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils
+    ${CMAKE_CURRENT_LIST_DIR}/../../common
 )
 
 # set global variables
@@ -37,6 +37,6 @@ target_link_libraries(${TARGET_ECALL_APP} telux_tel telux_loc telux_therm telux_
 # install to target
 install ( TARGETS ${TARGET_ECALL_APP}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
-install ( FILES config_files/eCall.conf
+install ( FILES ${CMAKE_CURRENT_LIST_DIR}/config_files/eCall.conf
           DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )

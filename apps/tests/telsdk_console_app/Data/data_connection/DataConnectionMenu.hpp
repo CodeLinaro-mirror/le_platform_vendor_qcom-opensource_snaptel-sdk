@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * This is a Data Connection Manager Sample Application using Telematics SDK.
  * It is used to demonstrate APIs to start/stop data call, get list of data calls, reset data call
@@ -110,6 +109,7 @@ public:
     void requestRoamingMode(std::vector<std::string> inputCommand);
     void requestTrafficFlowTemplate(std::vector<std::string> inputCommand);
     void requestDataCallList();
+    void requestThrottledApnsInfo();
     void setDefaultProfile();
     void getDefaultProfile();
 

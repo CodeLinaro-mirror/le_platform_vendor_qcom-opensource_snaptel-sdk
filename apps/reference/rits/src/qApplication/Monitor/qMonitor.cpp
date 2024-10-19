@@ -39,7 +39,7 @@
  */
 #include "qMonitor.hpp"
 #include "qMonitorJson.hpp"
-#include <json.h>
+#include <json-c/json.h>
 #include <errno.h>
 #include <string.h>
 #include <string>
@@ -150,7 +150,6 @@ void QMonitor::connectionHandler()
 {
     while (isMonitoring)
     {
-        std::cout << "Starting Listening connection" << std::endl;
         QMClientData cData = {};
         struct sockaddr_in clientAddress;
         unsigned int addrSize = sizeof(clientAddress);

@@ -62,6 +62,8 @@
 #define ECALL_T10_TIMER_MAX 720
 #define CALL_DROP 0
 #define CALL_ORIG 1
+#define T9 5
+#define T10 6
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -141,12 +143,16 @@ void ECallApp::init() {
         std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Set_ECall_Redial_Config", {},
         std::bind(&ECallApp::setECallRedialConfig, this)));
 
+    std::shared_ptr<ConsoleAppCommand> restartECallHlapTimerCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "Restart_ECall_Hlap_Timer", {},
+        std::bind(&ECallApp::restartECallHlapTimer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
             setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
-            setECallRedialConfigCommand};
+            setECallRedialConfigCommand, restartECallHlapTimerCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -603,6 +609,55 @@ void ECallApp::setECallConfig() {
     auto ret = eCallMgr_->setECallConfig(config);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to set eCall configuration" << std::endl;
+        return;
+    }
+}
+
+void ECallApp::restartECallHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    EcallHlapTimerId id = EcallHlapTimerId::UNKNOWN;
+    int duration = 0;
+    char delimiter = '\n';
+    std::string temp = "";
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    std::cout << "Select the timer id to restart eCall HLAP timer \n    \
+        \r\t5 - Timer-id for T9 timer\n  \
+        \r\t6 - Timer-id for T10 timer\n " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            int input = std::stoi(temp);
+            id = static_cast<EcallHlapTimerId>(input);
+            if(input < T9 || input > T10) {
+                std::cout << "ERROR: Invalid timer id is entered" << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << " Enter duration of timer (in seconds) " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            duration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
         return;
     }
 }

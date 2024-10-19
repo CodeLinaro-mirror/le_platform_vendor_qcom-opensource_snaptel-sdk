@@ -129,6 +129,7 @@ public:
     static std::vector<asyncCbData_t> asyncCbData;
     static bool exitAsync;
     void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
+        bool enableMisbehavior, void* asyncSecService,
         shared_ptr<ICongestionControlManager> congestionControlManager,
         shared_ptr<QMonitor> qMon,
         int secVerbosity, RadioReceive* radioReceive);

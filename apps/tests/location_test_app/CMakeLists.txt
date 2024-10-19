@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_LOCATION_TEST_APP location_test_app)
 
@@ -8,10 +8,10 @@ set(LOCATION_TEST_APP_SOURCES
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
     LocationUtils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
-    ../../common/ConfigParser.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/ConfigParser.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -37,6 +37,9 @@ target_link_libraries(${TARGET_LOCATION_TEST_APP} telux_loc telux_common)
 install ( TARGETS ${TARGET_LOCATION_TEST_APP}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
-install ( FILES config_files/OSNMA_MerkleTree.xml
+install ( FILES ${CMAKE_CURRENT_LIST_DIR}/config_files/OSNMA_MerkleTree.xml
+          DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )
+install ( FILES config_files/rtcmConfig.conf
           DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )

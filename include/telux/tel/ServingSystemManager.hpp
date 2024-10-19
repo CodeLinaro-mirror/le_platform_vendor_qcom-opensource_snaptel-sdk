@@ -215,10 +215,21 @@ using RatPreference = std::bitset<16>;
  * @ref IServingSystemListener
  */
 enum ServingSystemNotificationType {
-   SYSTEM_INFO,      /* Represents @ref onSystemInfoChanged() and @ref onDcStatusChanged() */
-   RF_BAND_INFO,     /* Represents @ref onRFBandInfoChanged */
-   NETWORK_REJ_INFO  /* Represents @ref onNetworkRejection */
+   SYSTEM_INFO,      /* Represents @ref telux::tel::IServingSystemListener::onSystemInfoChanged()
+                        and @ref telux::tel::IServingSystemListener::onDcStatusChanged() */
+   RF_BAND_INFO,     /* Represents @ref telux::tel::IServingSystemListener::onRFBandInfoChanged */
+   NETWORK_REJ_INFO, /* Represents @ref telux::tel::IServingSystemListener::onNetworkRejection */
+   LTE_SIB16_NETWORK_TIME, /* Represents @ref
+                              telux::tel::IServingSystemListener::onNetworkTimeChanged takes an
+                              input parameter of LTE for telux::tel::RadioTechnology */
+   NR5G_RRC_UTC_TIME /* Represents @ref telux::tel::IServingSystemListener::onNetworkTimeChanged
+                        takes an input parameter of NR5G for telux::tel::RadioTechnology */
 };
+
+/**
+ * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
+ */
+using ServingSystemNotificationMask = std::bitset<32>;
 
 /**
  * Defines allowed call types supported by the network cell
@@ -479,11 +490,6 @@ class RFBandListBuilder {
     private:
     std::shared_ptr<IRFBandList> rfBandList_;
 };
-
-/**
- * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
- */
-using ServingSystemNotificationMask = std::bitset<32>;
 
 /**
  * This function is called with the response to requestRatPreference API.
@@ -1015,6 +1021,12 @@ public:
    /**
     * This function is called whenever LTE(SIB16) or NR5G RRC(SIB9) UTC time information is
     * changed.
+    *
+    * To receive this notification, client needs to register a listener using @ref
+    * telux::tel::IServingSystemManager::registerListener API by setting the @ref
+    * telux::tel::ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME for LTE or
+    * telux::tel::ServingSystemNotificationType::NR5G_RRC_UTC_TIME for NR5G bit in the
+    * telux::tel::ServingSystemNotificationMask bitmask.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to receive this notification.

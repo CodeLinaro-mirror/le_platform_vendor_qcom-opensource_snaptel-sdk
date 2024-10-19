@@ -427,22 +427,21 @@ void DualDataManagementMenu::printDdsSwitchRecommendation(
         std::cout << std::endl;
     } else {
         std::cout << " Recommendation type : PERMANENT" << std::endl;
-        std::cout << " Cause:" <<
-            ddsSwitchRec.recommendationDetails.permCause ;
+        std::cout << " Cause:" << ddsSwitchRec.recommendationDetails.permCause;
 
-        if(ddsSwitchRec.recommendationDetails.tempCause &
+        if(ddsSwitchRec.recommendationDetails.permCause &
             telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_TEMP_CLEAN_UP) {
             std::cout << " PERM_CAUSE_CODE_TEMP_CLEAN_UP ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
+        if(ddsSwitchRec.recommendationDetails.permCause &
             telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_DATA_SETTING_OFF) {
             std::cout << " PERM_CAUSE_CODE_DATA_SETTING_OFF ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
+        if(ddsSwitchRec.recommendationDetails.permCause &
             telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_PS_INVALID) {
             std::cout << " PERM_CAUSE_CODE_PS_INVALID ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
+        if(ddsSwitchRec.recommendationDetails.permCause &
             telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_INTERNET_NOT_AVAIL) {
             std::cout << " PERM_CAUSE_CODE_INTERNET_NOT_AVAIL ";
         }

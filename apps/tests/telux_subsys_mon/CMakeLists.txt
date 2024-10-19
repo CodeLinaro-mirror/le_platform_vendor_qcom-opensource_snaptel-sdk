@@ -20,9 +20,9 @@ include_directories(BEFORE
 set(SUBSYS_APP_SRCS
     SubsystemApp.cpp
     UserUtils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
-    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp)
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp)
 
 add_executable(${TARGET_SUBSYS_APP} ${SUBSYS_APP_SRCS})
 

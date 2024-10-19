@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_CV2X_INJECT_SPEED cv2x_inject_speed)
 
 set(CV2X_INJECT_SPEED_SOURCES
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     Cv2xInjectSpeed.cpp)
 
 # set global variables

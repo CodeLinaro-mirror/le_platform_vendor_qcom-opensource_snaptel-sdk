@@ -95,17 +95,21 @@ thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
 static bool overridePsidCheck = false;
 static bool enableCongCtrl = false;
+static bool enableMbd = false;
 static int secVerbosity = 0;
 static shared_ptr<QMonitor> qMonPtr;
 static RadioReceive* radioReceivePtr;
 static bsm_data bs;
 static std::mutex AsyncMtx;
+static SecurityService* asyncSecService;
 static std::condition_variable* writeMutexCvSae;
 static int shared_index = 0;
 static int start_index = 0;
 static std::atomic<int> rxSuccess{0};
 static std::atomic<int> asyncVerifFail{0};
 static std::atomic<int> asyncVerifSuccess{0};
+static std::atomic<int> asyncMbdUndetected{0};
+static std::atomic<int> asyncMbdDetected{0};
 static std::atomic<int> decFail{0};
 static int asyncCallbackVerifSuccess = 0;
 static int asyncCallbackVerifFail = 0;
@@ -123,6 +127,7 @@ sem_t verificationSem;
 bool SaeApplication::exitAsync = false;
 bool* writeLogFinishSae;
 static VerifStats* asyncVerifStat;
+static MisbehaviorStats* asyncMbdStat;
 static ResultLoggingStats* asyncLogStat ;
 static bool resFileLogging = false;
 
@@ -139,6 +144,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType,
     wraInterval = std::chrono::milliseconds::zero();
 
     writeMutexCvSae = &writeMutexCv;
+    writeLogFinish = true;
     writeLogFinishSae = &writeLogFinish;
     resFileLogging = configuration.enableVerifResLog;
 }
@@ -163,9 +169,11 @@ bool SaeApplication::init() {
     }
 
     if(configuration.enableAsync){
-        // TODO: These seems only needed when do RX, no need for TX
+        // enabled when doing RX, no need for TX
+        asyncSecService = SecService.get();
         overridePsidCheck = configuration.overridePsidCheck;
         enableCongCtrl = configuration.enableCongCtrl;
+        enableMbd = configuration.enableMbd;
         secVerbosity = configuration.secVerbosity;
         qMonPtr = qMon;
         if(radioReceives.size()){
@@ -173,6 +181,18 @@ bool SaeApplication::init() {
         }
         for (int i = 0; i < SHARED_BUFFER_MAX_SIZE; i++) {
             asyncCbData_t tmpData;
+            #if AEROLINK
+            tmpData.msgParseContext = (SecuredMessageParserC*)calloc(1, sizeof(SecuredMessageParserC));
+            AerolinkSecurity* tmpAeroSecurity =
+                static_cast<AerolinkSecurity*>(asyncSecService);
+            if(tmpAeroSecurity){
+                    if(tmpAeroSecurity->createNewSmp(
+                        (SecuredMessageParserC*)(tmpData.msgParseContext)) <= -1){
+                        printf("Error creating secure message generator for this packet.\n");
+                        return false;
+                    }
+            }
+            #endif
             asyncCbData.push_back(tmpData);
         }
     }
@@ -185,9 +205,13 @@ SaeApplication::~SaeApplication() {
     printf("Total number of received packets: %d\n",totalRxSuccess);
     exit_ = true;
     {
-        if(enableCsvLog_ && writeMutexCvSae && writeLogFinishSae){
+        if(enableCsvLog_ && writeMutexCvSae && ApplicationBase::csvfp){
             std::unique_lock<std::mutex> csvLk(csvMutex);
-            writeMutexCvSae->wait(csvLk, []{ return *writeLogFinishSae; });
+            if(writeLogFinishSae != nullptr){
+                writeMutexCvSae->wait(csvLk, [&]{ return *writeLogFinishSae; });
+            }
+            fclose(ApplicationBase::csvfp);
+            ApplicationBase::csvfp = nullptr;
         }
     }
     // notify the wraThread to exit
@@ -241,7 +265,17 @@ void SaeApplication::printRxStats() {
         exitAsync = true;
         sem_post(&verificationSem);
 
-        for (auto &th : asyncThreads) th.join();
+        for (auto &th : asyncThreads) {
+            if(th.joinable()){
+                if (configuration.appVerbosity) {
+                    std::cout<< "Waiting for async threads to join....\n";
+                }
+                th.join();
+            }
+        }
+        if (configuration.appVerbosity) {
+            std::cout << "Async threads all joined\n";
+        }
 
         std::stringstream ss;
         ss << std::this_thread::get_id();
@@ -253,6 +287,8 @@ void SaeApplication::printRxStats() {
             printf("note: verification results may include consistency and relevancy checks\n");
             printf("Thread (%08x) verif fails is: %d\n", tid, asyncVerifFail.load());
             printf("Thread (%08x) verif success is: %d\n", tid, asyncVerifSuccess.load());
+            printf("Thread (%08x) mbd detected is: %d\n", tid, asyncMbdDetected.load());
+            printf("Thread (%08x) mbd undetected is: %d\n", tid, asyncMbdUndetected.load());
         }
         totalRxSuccess=rxSuccess;
     }
@@ -283,8 +319,8 @@ void SaeApplication::printTxStats() {
     printf("Thread (%08x) tx fails is: %d\n", tid, txFail);
     printf("Thread (%08x) tx successes is: %d\n", tid, txSuccess);
     if (configuration.enableSecurity){
-        printf("Thread (%08x) sign fails is: %d\n", tid, signFail);
-        printf("Thread (%08x) sign success is: %d\n", tid, signSuccess);
+        printf("Thread (%08x) sign fails is: %d\n", tid, ApplicationBase::signFail);
+        printf("Thread (%08x) sign success is: %d\n", tid, ApplicationBase::signSuccess);
     }
     totalTxSuccess+=txSuccess;
     sem_post(&this->log_sem);
@@ -596,9 +632,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                         }
 
                         if(configuration.fakeRVTempIds){
-                           fakeTmpId++;
                            fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
                            bsm->id = fakeTmpId;
+                           fakeTmpId++;
                         }
                         // perform operations on the message if it is an unsigned bsm
                         basicFilterAndSafetyChecks(l2SrcAddr, distFromRV);
@@ -638,9 +674,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                     of the decoded/verified BSM to the cong ctrl library */
                     bsm_value_t* rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
                     if(configuration.fakeRVTempIds){
-                       fakeTmpId++;
                        fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
                        rvBsm->id = fakeTmpId;
+                       fakeTmpId++;
                     }
                     unsigned int rvTmpId = rvBsm->id;
                     congestionControlManager->addCongestionControlData(
@@ -761,8 +797,10 @@ void SaeApplication::prepareForSecurityChecks(bsm_value_t* bsm, SecurityOpt_t* s
                << sopt->rvKine.elevation  << "\n";
     }
     // misbehavior detection parameters
+        asyncMbdStat = nullptr;
     if (configuration.enableMbd) {
-        sopt->enableMbd = configuration.enableMbd;
+        sopt->enableMbd = true;
+        enableMbd = true;
         sopt->rvKine.id = bsm->id;
         sopt->rvKine.dataType = PSID_BSM;
         sopt->rvKine.msgCount = bsm->MsgCount;
@@ -834,6 +872,7 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
 
 //Function to print out running verification stats
 void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
+    //sem_wait(&ApplicationBase::log_sem);
     gettimeofday(&currTime, NULL);
     double currTimeStamp =
             (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
@@ -906,9 +945,11 @@ void SaeApplication::printStats(std::thread::id thrId, int secVerbosity){
     gettimeofday(&currTime, NULL);
     prevTimeStamp =
                     (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+    //sem_post(&ApplicationBase::log_sem);
 }
 
 void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
+    bool enableMisbehavior, void* asyncSecService,
     shared_ptr<ICongestionControlManager> congestionControlManager,
     shared_ptr<QMonitor> qMon, int secVerbosity, RadioReceive* radioReceive)
 {
@@ -919,29 +960,52 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
         congCtrlInitialized = true;
     }
     thread::id thrId = std::this_thread::get_id();
-    while(not (exitAsync && (rxSuccess == (decFail + asyncVerifFail + asyncVerifSuccess)))){
+    while((!exitAsync)){
         sem_wait(&verificationSem);
 
         int i = 0 ;
         for(i = start_index; PostProcessingCbData[i]!=0;++i)
         {
+            if(exitAsync){
+                return;
+            }
             if(asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE){
                 if((asyncCbData[PostProcessingCbData[i]].verifSuccess))
                 {
                     asyncVerifSuccess++;
                     asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-                    if(enableCongCtrl &&
-                        (congestionControlManager != NULL) &&
-                        asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM)
-                    {
-                        congestionControlManager->addCongestionControlData(
-                            asyncCbData[PostProcessingCbData[i]].asyncBs.id,
-                            (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
-                            (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
-                            asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees,
-                            asyncCbData[PostProcessingCbData[i]].asyncBs.Speed,
-                            asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
-                            asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
+                    if(asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM){
+                        if(enableCongCtrl &&
+                            (congestionControlManager != NULL))
+                        {
+                            congestionControlManager->addCongestionControlData(
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.id,
+                                (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
+                                (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.Speed,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
+                        }
+                        #ifdef AEROLINK
+                        if(enableMisbehavior){
+                            if(asyncSecService){
+                                // start time for mbd here
+                                AerolinkSecurity* tmpAeroSecurity =
+                                    static_cast<AerolinkSecurity*>(asyncSecService);
+                                    AEROLINK_RESULT ret = tmpAeroSecurity->mbdCheck(
+                                        &asyncCbData[PostProcessingCbData[i]].rvKine,
+                                        asyncCbData[PostProcessingCbData[i]].misbehaviorStat,
+                                        (SecuredMessageParserC*)
+                                            asyncCbData[PostProcessingCbData[i]].msgParseContext);
+                                if (ret == WS_ERR_MISBEHAVIOR_DETECTED){
+                                    asyncMbdDetected++;
+                                }else{
+                                    asyncMbdUndetected++;
+                                }
+                            }
+                        }
+                        #endif
                     }
                     // log number of received packets per msg
                     if(qMon){
@@ -1044,6 +1108,7 @@ void SaeApplication::PostProcessingThread()
 {
     asyncThreads.push_back(std::thread(&SaeApplication::AsyncPostProcessing, this,
         overridePsidCheck, enableCongCtrl,
+        enableMbd, asyncSecService,
         congestionControlManager, qMonPtr, secVerbosity,
         radioReceivePtr));
 }
@@ -1078,8 +1143,23 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     uint32_t dot2HdrLen;
     uint8_t const *payload = NULL;
     uint32_t       payloadLen = 0;
+    SecuredMessageParserC* smp = nullptr;
+    SecurityService* tmpSecService = SecService.get();
+    if(sopt.enableAsync){
+        if(tmpSecService){
+            AerolinkSecurity* tmpAeroSecurity =
+                static_cast<AerolinkSecurity*>(tmpSecService);
+            if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
+                async_index = SHARED_BUFFER_MAX_SIZE-1;
+                begin_flag = true;
+            }
+            smp = (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext);
+        }
+    }
     // extract the PDU from the secured packet
-    ret = SecService->ExtractMsg(sopt,
+    ret = SecService->ExtractMsg(
+        smp,
+        sopt,
         (uint8_t*)mc->l3_payload,mc->l3_payload_len,
         payload, payloadLen,
         dot2HdrLen);
@@ -1162,8 +1242,8 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
         }
     }
     // prepare verification statistics logging
-   if (configuration.enableVerifStatLog) {
-        if(!configuration.enableAsync){
+    if (configuration.enableVerifStatLog) {
+        if(!configuration.enableAsync) {
             if (thrVerifLatencies[tid].size() >= verifStatIdx[tid]) {
                 sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
             } else {
@@ -1179,18 +1259,21 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     }
     // this will need to be measured in post processing thread
     if (configuration.enableMbdStatLog) {
-        if (thrMisbehaviorLatencies[tid].size() >= misbehaviorStatIdx[tid]) {
-            sopt.misbehaviorStat =
-                &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
-        } else {
-            misbehaviorStatIdx[tid] = 0;
-            sopt.misbehaviorStat =
-                &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        if(!configuration.enableAsync) {
+            if (thrMisbehaviorLatencies[tid].size() >= misbehaviorStatIdx[tid]) {
+                sopt.misbehaviorStat =
+                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+            } else {
+                misbehaviorStatIdx[tid] = 0;
+                sopt.misbehaviorStat =
+                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+            }
+            misbehaviorStatIdx[tid]++;
+            misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
         }
-        misbehaviorStatIdx[tid]++;
-        misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
     } else {
         sopt.misbehaviorStat = nullptr;
+        asyncMbdStat = nullptr;
     }
     if(configuration.enableVerifResLog){
         if(thrResLoggingValues.find(tid) == thrResLoggingValues.end()){
@@ -1226,23 +1309,20 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     }
     else
     {
-        if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
-            async_index = SHARED_BUFFER_MAX_SIZE-1;
-            begin_flag = true;
-        }
         if(async_index >= 0)
         {
             asyncCbData[async_index].indexToData = async_index;
             memcpy(&asyncCbData[async_index].asyncBs, &bs, sizeof(bsm_data));
             if(configuration.fakeRVTempIds){
-               fakeTmpId++;
                fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
                asyncCbData[async_index].asyncBs.id = fakeTmpId;
+               fakeTmpId++;
             }
             asyncCbData[async_index].msg_index = index;
             asyncCbData[async_index].l2SrcAddr = l2SrcAddr;
             asyncCbData[async_index].timestamp = timestamp;
             asyncCbData[async_index].distFromRV = distFromRV;
+            asyncCbData[async_index].psid = PSID_BSM;
 
             //RVsInRange
             //txInterval
@@ -1252,14 +1332,15 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                 if(tmpSecService){
                     AerolinkSecurity* tmpAeroSecurity =
                         static_cast<AerolinkSecurity*>(tmpSecService);
-                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(sopt);
+                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(
+                        (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext), sopt);
                     if(ret != DECODE_FAIL && tmpAeroSecurity){
                         asyncCbData[async_index].asyncVerifStat = nullptr;
                         if(configuration.enableVerifStatLog){
                             if(thrVerifLatencies.find(tid) == thrVerifLatencies.end()){
                                 std::vector<VerifStats> tmp;
                                 thrVerifLatencies.insert(std::pair<std::thread::id,
-                                std::vector<VerifStats>>(tid, tmp));
+                                    std::vector<VerifStats>>(tid, tmp));
                                 for(int i = 0 ; i < configuration.verifStatsSize; i++){
                                     VerifStats tmpVerifStat = {0};
                                     thrVerifLatencies[tid].push_back(tmpVerifStat);
@@ -1276,16 +1357,43 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                             verifStatIdx[tid]++;
                             verifStatIdx[tid]%=thrVerifLatencies[tid].size();
                         }
+                        asyncCbData[async_index].misbehaviorStat = nullptr;
+                        if(configuration.enableMbdStatLog){
+                            if(thrMisbehaviorLatencies.find(tid) == thrMisbehaviorLatencies.end()){
+                                std::vector<MisbehaviorStats> tmp;
+                                thrMisbehaviorLatencies.insert(std::pair<std::thread::id,
+                                std::vector<MisbehaviorStats>>(tid, tmp));
+                                for(int i = 0 ; i < configuration.mbdStatLogListSize; i++){
+                                    MisbehaviorStats tmpMbdStat;
+                                    thrMisbehaviorLatencies[tid].push_back(tmpMbdStat);
+                                }
+                            }
+                            if (thrMisbehaviorLatencies[tid].size() > misbehaviorStatIdx[tid]){
+                                asyncCbData[async_index].misbehaviorStat =
+                                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+                            }else{
+                                misbehaviorStatIdx[tid] = 0;
+                                asyncCbData[async_index].misbehaviorStat =
+                                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+                            }
+                            misbehaviorStatIdx[tid]++;
+                            misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
+                        }
                         gettimeofday(&currTime, NULL);
                         asyncCbData[async_index].startLatencyTime =
                                (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+                        memcpy(&asyncCbData[async_index].rvKine,
+                            &sopt.rvKine, sizeof(Kinematics));
                         // returns nonzero value if success, otherwise -1
                         ret = tmpAeroSecurity->asyncVerify(
                                 sopt.rvKine, sopt.misbehaviorStat,
-                                (void *)&(asyncCbData[async_index]), sopt.priority, AsyncCallbackFunction);
+                                (void *)&(asyncCbData[async_index]), sopt.priority,
+                                AsyncCallbackFunction,
+                                (SecuredMessageParserC*)
+                                    asyncCbData[async_index].msgParseContext);
                     }
-               }
-               async_index--;
+                }
+                async_index--;
             }else{
                 async_index--;
             }

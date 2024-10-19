@@ -104,6 +104,7 @@ const char* get_wall_time(char* result)
 
 double get_CPU_percentage(uint64_t monotonicTime)
 {
+ #if 0
     static uint64_t last_monotonicTime = 0;
     static double percent = 0.0;
     FILE* file;
@@ -119,6 +120,8 @@ double get_CPU_percentage(uint64_t monotonicTime)
         fclose(file);
         last_monotonicTime = monotonicTime;
     }
+#endif
+    static double percent = 0.0;
     return percent;
 }
 
@@ -324,7 +327,7 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
         (bs->SemiMinorAxisAccuracy / 20.0), (bs->SemiMajorAxisOrientation * 0.0054932479), "",
         ((bs->Speed / 50.0) * 3.6), (bs->Heading_degrees * 0.0125),
         (bs->SteeringWheelAngle * 1.5), (bs->AccelLon_cm_per_sec_squared / 100.0),
-        (bs->AccelLat_cm_per_sec_squared / 100.0), (bs->AccelVert_two_centi_gs / 50.0), 
+        (bs->AccelLat_cm_per_sec_squared / 100.0), (bs->AccelVert_two_centi_gs / 50.0),
         (bs->AccelYaw_centi_degrees_per_sec / 100.0),
         bs->brakes.bits.antilock_brake_status, bs->brakes.bits.brake_boost_applied,
         bs->brakes.bits.stability_control_status, bs->brakes.bits.traction_control_status);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -35,6 +35,10 @@ void DataEventListener::onEventUpdate(google::protobuf::Any event) {
             ::dataStub::StopDataCallEvent stopEvent;
             event.UnpackTo(&stopEvent);
             mngr->handleStopDataCallEvent(stopEvent);
+        } else if (event.Is<::dataStub::APNThrottleInfoList>()){
+            ::dataStub::APNThrottleInfoList throttleInfoList;
+            event.UnpackTo(&throttleInfoList);
+            mngr->handleThrottledApnInfoChangedEvent(throttleInfoList);
         }
     }
 }

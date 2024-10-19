@@ -874,7 +874,9 @@ enum LocationInfoExValidityType {
   /** valid baseline length */
   HAS_BASE_LINE_LENGTH = (1ULL<<40),
   /** valid age of correction */
-  HAS_AGE_OF_CORRECTION = (1ULL<<41)
+  HAS_AGE_OF_CORRECTION = (1ULL<<41),
+  /** valid leap second uncertainty */
+  HAS_LEAP_SECONDS_UNC = (1ULL<<42)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -2217,7 +2219,9 @@ enum GnssReportType {
      * These reports are obtained only from the GNSS(SPE) engine
      * whenever there is an update in the ephemeris information for a constellation.
      */
-    EPHEMERIS         = (1 << 8)
+    EPHEMERIS         = (1 << 8),
+    /** GNSS extended data */
+    EXTENDED_DATA     = (1 << 9)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
@@ -3104,6 +3108,11 @@ public:
  */
   virtual uint64_t getAgeOfCorrections() = 0;
 
+/**
+ * Returns the leap seconds uncertainty associated with the PVT report.
+ * Units- seconds
+ */
+  virtual uint8_t getLeapSecondsUncertainty() = 0;
 };
 
 /**

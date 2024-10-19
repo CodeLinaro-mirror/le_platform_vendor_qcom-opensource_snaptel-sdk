@@ -14,6 +14,9 @@ set(PROTO_SRC_DIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}/proto-src)
 set(PLATFORM_TEST_LIB_SOURCES
     PlatformFactoryStub.cpp
     DeviceInfoManagerStub.cpp
+    AntennaManagerStub.cpp
+    FsManagerStub.cpp
+    TimeManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)
@@ -31,6 +34,7 @@ target_link_libraries(${TARGET_PLATFORM_LIBRARY}
     jsoncpp
     telux_protos
     telux_common
+    telux_loc
 )
 
 install(TARGETS ${TARGET_PLATFORM_LIBRARY}

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_AUDIO_CONSOLE_APP audio_console_app)
 
@@ -12,12 +12,12 @@ set(AUDIO_CONSOLE_APP_SOURCES
     ToneMenu.cpp
     TransCodeMenu.cpp
     HpcmMenu.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
-    ../../common/Audio/VoiceSession.cpp
-    ../../common/Audio/AudioSession.cpp
-    ../../common/Audio/AudioHelper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/VoiceSession.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioSession.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioHelper.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

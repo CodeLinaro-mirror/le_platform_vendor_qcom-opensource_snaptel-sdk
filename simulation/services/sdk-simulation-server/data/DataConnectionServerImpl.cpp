@@ -15,6 +15,7 @@
 #include "libs/common/SimulationConfigParser.hpp"
 #include "libs/data/DataUtilsStub.hpp"
 #include "event/EventService.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
 
 
 #define DATA_CONNECTION_API_SLOT1_JSON "api/data/IDataConnectionManagerSlot1.json"
@@ -25,15 +26,124 @@
 
 #define SLOT_2 2
 #define DELIMITER ','
+#define DEFAULT_DELIMITER " "
+#define DATA_CONNECTION "data_connection"
+#define THROTTLE_APN_INFO_TOKEN "throttle_apn_event"
+#define RESET "RESET"
+#define START "START"
+#define STOP "STOP"
 
 DataConnectionServerImpl::DataConnectionServerImpl() {
     LOG(DEBUG, __FUNCTION__);
+    timerStarted_ = false;
     taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
 }
 
 DataConnectionServerImpl::~DataConnectionServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = nullptr;
+    timerStarted_ = false; // Stop the timer incase it is running
+    if (timerFuture_.valid()) {
+        timerFuture_.get(); // Wait for the async task to complete
+    }
+}
+
+void DataConnectionServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
+    if (message.filter() == DATA_CONNECTION) {
+        onEventUpdate(message.event());
+    }
+}
+
+void DataConnectionServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__," Event injected :", event );
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    LOG(DEBUG, __FUNCTION__," Token String is ", token );
+
+    if (token == THROTTLE_APN_INFO_TOKEN) {
+        //INPUT-token: throttle_apn_event
+        //INPUT-event: RESET | START | STOP
+        handleThrottleApnEvent(event);
+    } else {
+        LOG(ERROR, __FUNCTION__," Unknown Token! ");
+    }
+}
+
+void DataConnectionServerImpl::startThrottleRetryTimer() {
+    LOG(DEBUG, __FUNCTION__ );
+    timerStarted_ = true;
+    timerFuture_ = std::async(std::launch::async, [this] {
+        int counter = 0;
+        while (timerStarted_) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            counter++;
+            {
+                std::lock_guard<std::mutex> lock(apnThrottleInfoMtx_);
+                for (auto& info : apnThrottleInfo_) {
+                    if (info.ipv4Time >= 1000) {
+                        info.ipv4Time -= 1000;
+                    } else {
+                        info.ipv4Time = 0;
+                    }
+
+                    if (info.ipv6Time >= 1000) {
+                        info.ipv6Time -= 1000;
+                    } else {
+                        info.ipv6Time = 0;
+                    }
+                }
+            }
+            if (counter % 5 == 0) {
+                this->notifyThrottledApnInfoEvent();
+            }
+            if (checkRetryTimeElapsed()) {
+                timerStarted_ = false;
+                this->notifyThrottledApnInfoEvent();
+            }
+        }
+    });
+}
+
+bool DataConnectionServerImpl::checkRetryTimeElapsed() {
+    std::lock_guard<std::mutex> lock(apnThrottleInfoMtx_);
+    for (const auto& info : apnThrottleInfo_) {
+        if (info.ipv4Time > 0 || info.ipv6Time > 0) {
+            return false;
+        }
+    }
+    apnThrottleInfo_.clear();
+    return true;
+}
+
+void DataConnectionServerImpl::handleThrottleApnEvent(std::string event) {
+    LOG(DEBUG, __FUNCTION__," processing for ", event );
+    if (event == RESET  || event == STOP) {
+        if (timerStarted_) {
+            timerStarted_ = false;
+            if (timerFuture_.valid()) {
+                timerFuture_.get(); // Wait for the async task to complete
+            }
+        }
+
+        if (event == RESET){
+            // reset apnThrottleInfo_
+            updateThrottleApnInfo();
+        }
+
+    } else if(event == START) {
+        if (!timerStarted_) {
+            {
+                std::unique_lock<std::mutex> lock(apnThrottleInfoMtx_);
+                LOG(DEBUG, __FUNCTION__," apnThrottleInfo_.size() ", apnThrottleInfo_.size() );
+                if(apnThrottleInfo_.size() == 0){
+                    lock.unlock();
+                    updateThrottleApnInfo();
+                }
+            }
+            startThrottleRetryTimer();
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__," Unknown event! ");
+    }
 }
 
 grpc::Status DataConnectionServerImpl::InitService(ServerContext* context,
@@ -55,6 +165,12 @@ grpc::Status DataConnectionServerImpl::InitService(ServerContext* context,
         rootObj["IDataConnectionManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
+
+    if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::vector<std::string> filters = {DATA_CONNECTION};
+        auto &serverEventManager = ServerEventManager::getInstance();
+        serverEventManager.registerListener(shared_from_this(), filters);
+    }
 
     response->set_service_status(static_cast<dataStub::ServiceStatus>(status));
     response->set_delay(cbDelay);
@@ -827,6 +943,156 @@ grpc::Status DataConnectionServerImpl::requestConnectedDataCallLists(ServerConte
 
     return grpc::Status::OK;
 }
+
+
+bool DataConnectionServerImpl::updateThrottleApnInfo(){
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = DATA_CONNECTION_API_SLOT1_JSON;
+    std::string stateJsonPath = DATA_CONNECTION_STATE_JSON;
+    std::string subsystem = "IDataConnectionManager";
+    std::string method = "requestThrottledApnInfo";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return false;
+    }
+
+    data.status = static_cast<telux::common::Status>(0);
+    if (data.status == telux::common::Status::SUCCESS){
+        int size = data.stateRootObj[subsystem][method]["apnThrottleInfo"].size();
+        std::lock_guard<std::mutex> lock(apnThrottleInfoMtx_);
+        apnThrottleInfo_.clear();
+        LOG(DEBUG, __FUNCTION__, " Throttled APN info list size: ", size);
+        for (auto idx = 0; idx < size; idx++) {
+            APNThrottleInfo apnThrottleInfo;
+            apnThrottleInfo.apn = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["apnName"].asString();
+            int profile_id_size = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["profileIds"].size();
+            for(auto pidx = 0; pidx < profile_id_size; pidx++)
+            {
+                apnThrottleInfo.profileIds.emplace_back( data.stateRootObj[subsystem][method]
+                ["apnThrottleInfo"][idx]["profileIds"][pidx].asInt());
+            }
+            apnThrottleInfo.ipv4Time = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["ipv4time"].asInt();
+            apnThrottleInfo.ipv6Time = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["ipv6time"].asInt();
+            apnThrottleInfo.isBlocked = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["isBlocked"].asBool();
+            apnThrottleInfo.mcc = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["mcc"].asString();
+            apnThrottleInfo.mnc = data.stateRootObj[subsystem][method]["apnThrottleInfo"]
+                [idx]["mnc"].asString();
+            apnThrottleInfo_.push_back(apnThrottleInfo);
+        }
+    }
+    return true;
+}
+
+grpc::Status DataConnectionServerImpl::RequestThrottledApnInfo(ServerContext* context,
+        const dataStub::SlotInfo* request,dataStub::ThrottleInfoReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->slot_id() == SLOT_2)? DATA_CONNECTION_API_SLOT2_JSON
+        : DATA_CONNECTION_API_SLOT1_JSON;
+    std::string stateJsonPath = DATA_CONNECTION_STATE_JSON;
+    std::string subsystem = "IDataConnectionManager";
+    std::string method = "requestThrottledApnInfo";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    data.status = static_cast<telux::common::Status>(0);
+    if (data.status == telux::common::Status::SUCCESS){
+        std::vector<APNThrottleInfo> throttleInfo;
+
+        {
+            std::lock_guard<std::mutex> lock(apnThrottleInfoMtx_);
+            throttleInfo.assign(apnThrottleInfo_.begin(), apnThrottleInfo_.end());
+        }
+
+        int size = throttleInfo.size();
+        LOG(DEBUG, __FUNCTION__, " Throttled APN info list size: ", size);
+        for (auto itr = throttleInfo.begin(); itr != throttleInfo.end(); itr++) {
+            dataStub::APNThrottleInfo* call = response->mutable_apn_throttle_info_list()
+                ->add_rep_apn_throttle_info();
+            call->set_apn_name(itr->apn);
+
+            for(auto pitr = itr->profileIds.begin(); pitr != itr->profileIds.end(); pitr++)
+            {
+                call->add_profile_ids(*pitr);
+            }
+
+            call->set_ipv4time(itr->ipv4Time);
+            call->set_ipv6time(itr->ipv6Time);
+            call->set_is_blocked(itr->isBlocked);
+            call->set_mcc(itr->mcc);
+            call->set_mnc(itr->mnc);
+        }
+    }
+
+    response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
+    response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->mutable_reply()->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+void DataConnectionServerImpl::notifyThrottledApnInfoEvent(){
+    LOG(DEBUG, __FUNCTION__);
+    dataStub::APNThrottleInfoList apnThrottleInfo;
+    std::vector<APNThrottleInfo> throttleInfo;
+
+    {
+        std::lock_guard<std::mutex> lock(apnThrottleInfoMtx_);
+        throttleInfo.assign(apnThrottleInfo_.begin(), apnThrottleInfo_.end());
+    }
+
+    int size = throttleInfo.size();
+    LOG(DEBUG, __FUNCTION__, " Throttled APN info list size: ", size);
+    for (auto itr = throttleInfo.begin(); itr != throttleInfo.end(); itr++) {
+        dataStub::APNThrottleInfo* call = apnThrottleInfo.add_rep_apn_throttle_info();
+        call->set_apn_name(itr->apn);
+
+        for(auto pitr = itr->profileIds.begin(); pitr != itr->profileIds.end(); pitr++)
+        {
+            call->add_profile_ids(*pitr);
+        }
+
+        call->set_ipv4time(itr->ipv4Time);
+        call->set_ipv6time(itr->ipv6Time);
+        call->set_is_blocked(itr->isBlocked);
+        call->set_mcc(itr->mcc);
+        call->set_mnc(itr->mnc);
+    }
+    triggerThrottledApnInfoChangedEvent(&apnThrottleInfo);
+
+}
+
+
+void DataConnectionServerImpl::triggerThrottledApnInfoChangedEvent(
+    dataStub::APNThrottleInfoList* response) {
+    LOG(DEBUG, __FUNCTION__, " Throttled APN info list size: ",
+        response->rep_apn_throttle_info_size());
+
+    ::eventService::EventResponse anyResponse;
+    anyResponse.set_filter("data_connection");
+    anyResponse.mutable_any()->PackFrom(*response);
+
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
+
+}
+
 
 bool DataConnectionServerImpl::isAnyDataCallActive(SlotId slotId) {
     bool callActive = false;

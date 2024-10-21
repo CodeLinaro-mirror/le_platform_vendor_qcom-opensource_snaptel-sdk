@@ -20,6 +20,7 @@
 #include "net/FirewallManagerStub.hpp"
 #include "net/FirewallEntryImpl.hpp"
 #include "net/BridgeManagerStub.hpp"
+#include "net/QoSManagerStub.hpp"
 
 #include "common/Logger.hpp"
 
@@ -604,6 +605,28 @@ void DataFactoryImplStub::initCompleteNotifier(std::vector<telux::common::InitRe
     for (auto &callback : Callbacks) {
         callback(status);
     }
+}
+
+std::shared_ptr<telux::data::net::IQoSManager> DataFactoryImplStub::getQoSManager(
+        telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::net::IQoSManager>(telux::common::InitResponseCb)>
+        createAndInit
+        = [this](
+              telux::common::InitResponseCb initCb) -> std::shared_ptr<telux::data::net::IQoSManager> {
+        std::shared_ptr<telux::data::net::QoSManagerStub> manager
+            = std::make_shared<telux::data::net::QoSManagerStub>();
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("QoS manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " , callback = ", &qosCallbacks_);
+    auto manager = getManager<telux::data::net::IQoSManager>(
+        type, qosManager_,
+        qosCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 }  // namespace data

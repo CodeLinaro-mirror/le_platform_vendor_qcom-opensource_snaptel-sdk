@@ -18,6 +18,7 @@ set(DATA_STUB_SOURCES
     IpFilterImpl.cpp
     DualDataManagerStub.cpp
     DataControlManagerStub.cpp
+    TrafficFilterImpl.cpp
     net/SocksManagerStub.cpp
     net/NatManagerStub.cpp
     net/L2tpManagerStub.cpp
@@ -25,6 +26,7 @@ set(DATA_STUB_SOURCES
     net/FirewallEntryImpl.cpp
     net/BridgeManagerStub.cpp
     net/VlanManagerStub.cpp
+    net/QoSManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

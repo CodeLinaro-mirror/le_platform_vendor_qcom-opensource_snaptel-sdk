@@ -211,6 +211,11 @@ service DataFilterManager {
     rpc SetDataStallParams(SetDataStallParamsRequest) returns (SetDataStallParamsReply) {}
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
   }
+
+  service QoSManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+  }
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/

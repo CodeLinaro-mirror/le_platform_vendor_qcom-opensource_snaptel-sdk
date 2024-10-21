@@ -359,6 +359,11 @@ enum class Direction {
 using IpProtocol = uint8_t;
 
 /**
+ * Traffic class number
+ */
+using TrafficClass = uint8_t;
+
+/**
  * Default IP Protocol number in IPv4 or IPv6 headers.
  */
 #define IP_PROT_UNKNOWN 0xFF

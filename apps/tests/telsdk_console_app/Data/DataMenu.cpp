@@ -144,12 +144,16 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "14", "Data_Control_Menu",
             {}, std::bind(&DataMenu::dataControlMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> qosManagementMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "15", "QoS_Management_Menu",
+            {}, std::bind(&DataMenu::qosManagementMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand};
+        dataControlMenuCommand, qosManagementMenuCommand};
 
     addCommands(commandsList);
 
@@ -280,7 +284,7 @@ void DataMenu::clientMenu(std::vector<std::string> userInput) {
     if(clientMenu_->init()) {
         clientMenu_->mainLoop();
     }
-    clientMenu_ = nullptr;
+    clientMenu_ = nullptr;    
     ConsoleApp::displayMenu();
 }
 
@@ -301,5 +305,15 @@ void DataMenu::dataControlMenu(std::vector<std::string> userInput) {
         dataControlMenu_->mainLoop();
     }
     dataControlMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::qosManagementMenu(std::vector<std::string> userInput) {
+    qosManagementMenu_ =
+        make_shared<QoSManagementMenu>("QoS Management Menu", "QoS> ");
+    if(qosManagementMenu_->init()) {
+        qosManagementMenu_->mainLoop();
+    }
+    qosManagementMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

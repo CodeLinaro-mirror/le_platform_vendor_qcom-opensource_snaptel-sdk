@@ -94,9 +94,6 @@ static constexpr unsigned int SIMULATION_MINIMUM_PORT_NUMBER = 1024;
 static std::string DEFAULT_DEST_IP_ADDR = "ff02::1";
 static std::string LO_IPV6_ADDR         = "::1";
 
-static const std::string CV2X_EVENT_FILTER = "cv2x_status";
-static const std::string CV2X_SRC_L2_ID_FILTER = "cv2x_src_l2_id";
-
 static constexpr uint8_t TYPE_LEN         = 1;  // 1 byte for the type, type should be 0 ~ 255
 static constexpr uint8_t LENGTH_INFO_SIZE = 1;  // 1 byte encoding of the Length info
 
@@ -382,6 +379,11 @@ telux::common::Status Cv2xRxMetaDataHelper::getRxMetaDataInfo(const uint8_t *pay
     return telux::common::Status::SUCCESS;
 }
 
+
+Cv2xRadioEvtListener::Cv2xRadioEvtListener(std::shared_ptr<Cv2xRadioCapabilities> caps) {
+    caps_ = caps;
+}
+
 void Cv2xRadioEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
     LOG(DEBUG, __FUNCTION__);
     telux::cv2x::Cv2xStatusEx statusEx;
@@ -399,13 +401,41 @@ void Cv2xRadioEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
 
 void Cv2xRadioEvtListener::onL2AddrChanged(uint32_t newL2Address) {
     LOG(DEBUG, __FUNCTION__);
-    std::vector<std::weak_ptr<ICv2xRadioListener>> listeners;
-    listenerMgr_.getAvailableListeners(listeners);
-    for (auto &wp : listeners) {
-        if (auto sp = wp.lock()) {
-            sp->onL2AddrChanged(newL2Address);
+    NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onL2AddrChanged, newL2Address);
+}
+
+void Cv2xRadioEvtListener::onDuplicateAddr(const bool detected) {
+    LOG(DEBUG, __FUNCTION__);
+    NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onMacAddressCloneAttack, detected);
+}
+
+void Cv2xRadioEvtListener::onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo& schedulingInfo) {
+    LOG(DEBUG, __FUNCTION__);
+    cv2x::SpsSchedulingInfo info;
+    info.spsId       = static_cast<uint8_t>(schedulingInfo.spsid());
+    info.utcTime     = schedulingInfo.utctime();
+    info.periodicity = schedulingInfo.periodicity();
+    NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onSpsSchedulingChanged, info);
+}
+
+void Cv2xRadioEvtListener::onCapabilitiesChange(const ::cv2xStub::RadioCapabilites& caps) {
+    LOG(DEBUG, __FUNCTION__);
+    auto poolSize = caps.pools_size();
+    if (not caps_) {
+        return;
+    }
+    if (poolSize > 0) {
+        caps_->txPoolIdsSupported.clear();
+        for (int i = 0; i < poolSize; ++i) {
+            auto rpcPool = caps.pools(i);
+            cv2x::TxPoolIdInfo pool;
+            pool.poolId  = static_cast<uint8_t>(rpcPool.poolid());
+            pool.minFreq = static_cast<uint16_t>(rpcPool.minfreq());
+            pool.maxFreq = static_cast<uint16_t>(rpcPool.maxfreq());
+            caps_->txPoolIdsSupported.emplace_back(pool);
         }
     }
+    NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onCapabilitiesChanged, *caps_);
 }
 
 void Cv2xRadioEvtListener::onEventUpdate(google::protobuf::Any event) {
@@ -417,10 +447,22 @@ void Cv2xRadioEvtListener::onEventUpdate(google::protobuf::Any event) {
         telux::cv2x::Cv2xStatus cv2xStatus;
         RPC_TO_CV2X_STATUS(stubStatus, cv2xStatus);
         onCv2xStatusChange(cv2xStatus);
-    } else if (event.Is<::cv2xStub::UintNum>()) {
-        ::cv2xStub::UintNum srcL2Id;
+    } else if (event.Is<::cv2xStub::SrcL2Id>()) {
+        ::cv2xStub::SrcL2Id srcL2Id;
         event.UnpackTo(&srcL2Id);
-        onL2AddrChanged(srcL2Id.num());
+        onL2AddrChanged(srcL2Id.id());
+    } else if (event.Is<::cv2xStub::MacAddrCloneAttach>()) {
+        ::cv2xStub::MacAddrCloneAttach deuplicateAddr;
+        event.UnpackTo(&deuplicateAddr);
+        onDuplicateAddr(!!deuplicateAddr.detected());
+    } else if (event.Is<::cv2xStub::SpsSchedulingInfo>()) {
+        ::cv2xStub::SpsSchedulingInfo schedulingInfo;
+        event.UnpackTo(&schedulingInfo);
+        onSpsScheduleInfo(schedulingInfo);
+    } else if (event.Is<::cv2xStub::RadioCapabilites>()) {
+        ::cv2xStub::RadioCapabilites caps;
+        event.UnpackTo(&caps);
+        onCapabilitiesChange(caps);
     }
 }
 
@@ -436,41 +478,43 @@ telux::common::Status Cv2xRadioEvtListener::deregisterListener(
 
 Cv2xRadioSimulation::Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
-    pEvtListener_ = std::make_shared<Cv2xRadioEvtListener>();
     taskQ_        = std::make_shared<AsyncTaskQueue<void>>();
     serviceStub_  = CommonUtils::getGrpcStub<::cv2xStub::Cv2xRadioService>();
+    caps_ = std::make_shared<Cv2xRadioCapabilities>();
+    if (caps_) {
+        caps_->linkIpMtuBytes          = SIMULATION_LINK_IP_MTU_BYTES;
+        caps_->linkNonIpMtuBytes       = SIMULATION_LINK_NON_IP_MTU_BYTES;
+        caps_->maxSupportedConcurrency = SIMULATION_SUPPORTED_CONCURRENCY_MODE;
 
-    dummyCap_.linkIpMtuBytes          = SIMULATION_LINK_IP_MTU_BYTES;
-    dummyCap_.linkNonIpMtuBytes       = SIMULATION_LINK_NON_IP_MTU_BYTES;
-    dummyCap_.maxSupportedConcurrency = SIMULATION_SUPPORTED_CONCURRENCY_MODE;
+        caps_->nonIpTxPayloadOffsetBytes = SIMULATION_TX_PAYLOAD_OFFSET_BYTES;
+        caps_->nonIpRxPayloadOffsetBytes = SIMULATION_RX_PAYLOAD_OFFSET_BYTES;
 
-    dummyCap_.nonIpTxPayloadOffsetBytes = SIMULATION_TX_PAYLOAD_OFFSET_BYTES;
-    dummyCap_.nonIpRxPayloadOffsetBytes = SIMULATION_RX_PAYLOAD_OFFSET_BYTES;
+        caps_->periodicitiesSupported.set(static_cast<int>(Periodicity::PERIODICITY_100MS));
+        caps_->periodicities.push_back(static_cast<uint64_t>(100));
 
-    dummyCap_.periodicitiesSupported.set(static_cast<int>(Periodicity::PERIODICITY_100MS));
-    dummyCap_.periodicities.push_back(static_cast<uint64_t>(100));
+        caps_->maxNumAutoRetransmissions = SIMULATION_MAX_NUM_AUTO_RETRANSMISSIONS;
+        caps_->layer2MacAddressSize      = SIMULATION_LAYER_2_MAC_ADDRESS_SIZE;
 
-    dummyCap_.maxNumAutoRetransmissions = SIMULATION_MAX_NUM_AUTO_RETRANSMISSIONS;
-    dummyCap_.layer2MacAddressSize      = SIMULATION_LAYER_2_MAC_ADDRESS_SIZE;
+        caps_->prioritiesSupported.set(static_cast<int>(Priority::MOST_URGENT));
+        caps_->prioritiesSupported.set(static_cast<int>(Priority::PRIORITY_2));
 
-    dummyCap_.prioritiesSupported.set(static_cast<int>(Priority::MOST_URGENT));
-    dummyCap_.prioritiesSupported.set(static_cast<int>(Priority::PRIORITY_2));
+        caps_->maxNumSpsFlows    = SIMULATION_SPS_MAX_NUM_FLOWS;
+        caps_->maxNumNonSpsFlows = SIMULATION_NON_SPS_MAX_NUM_FLOWS;
 
-    dummyCap_.maxNumSpsFlows    = SIMULATION_SPS_MAX_NUM_FLOWS;
-    dummyCap_.maxNumNonSpsFlows = SIMULATION_NON_SPS_MAX_NUM_FLOWS;
-
-    dummyCap_.maxTxPower = SIMULATION_CV2X_MAX_TX_POWER;
-    dummyCap_.minTxPower = SIMULATION_CV2X_MIN_TX_POWER;
-    TxPoolIdInfo dummy{0, SIMULATION_CV2X_MIN_FREQ, SIMULATION_CV2X_MAX_FREQ};
-    dummyCap_.txPoolIdsSupported.emplace_back(dummy);
-    dummyCap_.isUnicastSupported = 1;
+        caps_->maxTxPower = SIMULATION_CV2X_MAX_TX_POWER;
+        caps_->minTxPower = SIMULATION_CV2X_MIN_TX_POWER;
+        TxPoolIdInfo dummy{0, SIMULATION_CV2X_MIN_FREQ, SIMULATION_CV2X_MAX_FREQ};
+        caps_->txPoolIdsSupported.emplace_back(dummy);
+        caps_->isUnicastSupported = 1;
+    }
+    pEvtListener_ = std::make_shared<Cv2xRadioEvtListener>(caps_);
 }
 
 Cv2xRadioSimulation::~Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
     setInitializedStatus(telux::common::Status::FAILED, nullptr);
     if (pEvtListener_) {
-        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER, CV2X_EVENT_RADIO_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.deregisterListener(pEvtListener_, filters);
     }
@@ -581,7 +625,7 @@ void Cv2xRadioSimulation::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (pEvtListener_) {
-        std::vector<std::string> filters = {CV2X_EVENT_FILTER, CV2X_SRC_L2_ID_FILTER};
+        std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER, CV2X_EVENT_RADIO_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         res = clientEventManager.registerListener(pEvtListener_, filters);
         if (res != telux::common::Status::SUCCESS) {
@@ -632,9 +676,11 @@ void Cv2xRadioSimulation::init(telux::common::InitResponseCb callback) {
         if (ipMtu <= 0 || nonIpMtu <= 0) {
             LOG(DEBUG, __FUNCTION__, " fail to get Mtu");
             status = telux::common::Status::FAILED;
+        } else if (not caps_) {
+            status = telux::common::Status::FAILED;
         } else {
-            dummyCap_.linkIpMtuBytes    = getMTU(ipIpface);
-            dummyCap_.linkNonIpMtuBytes = getMTU(nonIpIface);
+            caps_->linkIpMtuBytes    = getMTU(ipIpface);
+            caps_->linkNonIpMtuBytes = getMTU(nonIpIface);
         }
 
         if (delay >= 0) {
@@ -2033,8 +2079,11 @@ telux::common::Status Cv2xRadioSimulation::setGlobalIPUnicastRoutingInfo(
 }
 
 telux::common::Status Cv2xRadioSimulation::requestCapabilities(RequestCapabilitiesCallback cb) {
-    cb(dummyCap_, telux::common::ErrorCode::SUCCESS);
-    return telux::common::Status::SUCCESS;
+    auto res = caps_ ? telux::common::Status::SUCCESS : telux::common::Status::FAILED;
+    if (res == telux::common::Status::SUCCESS) {
+        cb(*caps_, telux::common::ErrorCode::SUCCESS);
+    }
+    return res;
 }
 
 telux::common::Status Cv2xRadioSimulation::requestDataSessionSettings(
@@ -2062,7 +2111,11 @@ telux::common::Status Cv2xRadioSimulation::requestDataSessionSettings(
 }
 
 Cv2xRadioCapabilities Cv2xRadioSimulation::getCapabilities() const {
-    return dummyCap_;
+    if (caps_) {
+        return *caps_;
+    }
+    Cv2xRadioCapabilities dummyCap;
+    return dummyCap;
 }
 
 int Cv2xRadioSimulation::getMTU(std::string interfaceName) {

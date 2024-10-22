@@ -23,6 +23,7 @@ namespace cv2x {
 
 class Cv2xRadioEvtListener : public telux::common::IEventListener {
  public:
+    Cv2xRadioEvtListener(std::shared_ptr<Cv2xRadioCapabilities> caps);
     void onEventUpdate(google::protobuf::Any event) override;
     telux::common::Status registerListener(
         std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
@@ -33,6 +34,10 @@ class Cv2xRadioEvtListener : public telux::common::IEventListener {
     telux::common::ListenerManager<telux::cv2x::ICv2xRadioListener> listenerMgr_;
     void onCv2xStatusChange(telux::cv2x::Cv2xStatus &status);
     void onL2AddrChanged(uint32_t newL2Address);
+    void onDuplicateAddr(const bool detected);
+    void onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo& schedulingInfo);
+    void onCapabilitiesChange(const ::cv2xStub::RadioCapabilites& caps);
+    std::shared_ptr<Cv2xRadioCapabilities> caps_ = nullptr;
 };
 
 class Cv2xRadioSimulation : public ICv2xRadio,
@@ -184,7 +189,7 @@ class Cv2xRadioSimulation : public ICv2xRadio,
     void cleanupAllSpsFlows();
     int getMTU(std::string interfaceName);
 
-    Cv2xRadioCapabilities dummyCap_;
+    std::shared_ptr<Cv2xRadioCapabilities> caps_ = nullptr;
     std::map<TrafficIpType, std::string> ifaces_;
     std::mutex mutex_;
     std::condition_variable initializedCv_;

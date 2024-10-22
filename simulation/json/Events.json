@@ -359,5 +359,44 @@
             "eventName:     MRC_OTA_START/MRC_OTA_RESUME/MRC_OTA_END/MRC_ABSYNC",
             "status:        SUCCESS/FAILURE"
         ]
+    },
+    "cv2x_radio_manager": {
+        "status" : [
+            "telsdk_event_injector -f cv2x_radio_manager -e status <rxStatus> <txStatus> <rxCause> <txCause>",
+            "rxStatus: string, cv2x rx status, either 1 of valid strings: inactive, active or suspended",
+            "txStatus: string,  cv2x tx status, either 1 of valid strings: inactive, active or suspended",
+            "rxCause:  integer, rxStatus inactive/suspended reason, not required if rxStatus is active",
+            "txCause:  integer, txStatus inactive/suspended reason, not required if txStatus is active"
+        ],
+        "slss_rx_info" : [
+            "telsdk_event_injector -f cv2x_radio_manager -e slss_rx_info <slssid> <incoverage> <pattern> <rsrp> <selected>",
+            "slssid:     integer, equal or more than 0",
+            "incoverage: bool,  valid values: 0 or 1",
+            "pattern:    integer,  0-OFFSET_IND_1, 1-OFFSET_IND_2, 2-OFFSET_IND_3, 3-ODD_RESERVED, 4-EVEN_RESERVED, 5-UNKNOWN",
+            "rsrp:       integer,  end user reponsiblity make sure valid value input",
+            "selected:   bool,  valid values: 0 or 1"
+        ]
+    },
+    "cv2x_radio": {
+        "src_l2_id" : [
+            "telsdk_event_injector -f cv2x_radio -e src_l2_id"
+        ],
+        "mac_addr_clone_attack" : [
+            "telsdk_event_injector -f cv2x_radio -e mac_addr_clone_attack <detected>",
+            "detected:  bool,  valid values: 0 or 1"
+        ],
+        "sps_schedule_change" : [
+            "telsdk_event_injector -f cv2x_radio -e sps_schedule_change <spsid> <utctime> <periodicity>",
+            "spsid:       integer, sps id, end user reponsiblity input legal value",
+            "utctime:     integer64, new specduling utc time",
+            "periodicity: integer,  periodicity, end user reponsiblity input legal value"
+        ],
+        "capabilities" : [
+            "telsdk_event_injector -f cv2x_radio -e capabilities <minFreqPool0> <maxFreqPool0> <optionalMinFreqPool1> <optionalMaxFreqPool1>",
+            "minFreqPool0:         integer, minimum EARFCN of pool 0, end user reponsiblity input legal value",
+            "maxFreqPool0:         integer, maxmum  EARFCN of pool 0, end user reponsiblity input legal value",
+            "optionalMinFreqPool1: integer, optional, Minimum EARFCN of pool 1, end user reponsiblity input legal value",
+            "optionalMaxFreqPool1: integer, optional, Maxmum  EARFCN of pool 1, end user reponsiblity input legal value"
+        ]
     }
 }

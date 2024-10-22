@@ -12,13 +12,6 @@
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/Logger.hpp"
 
-static const std::string RADIO_ROOT = "ICv2xRadio";
-static const std::string RADIO_API_JSON = "api/cv2x/ICv2xRadio.json";
-static const std::string RADIO_STATE_JSON = "system-state/cv2x/ICv2xRadio.json";
-
-static const std::string CV2X_EVENT_FILTER = "cv2x_status";
-static const std::string CV2X_SRC_L2_ID_FILTER = "cv2x_src_l2_id";
-
 Cv2xRadioServer::Cv2xRadioServer() {
   LOG(DEBUG, __FUNCTION__);
   evtListener_ = Cv2xServerEvtListener::getInstance();
@@ -26,13 +19,15 @@ Cv2xRadioServer::Cv2xRadioServer() {
 
 Cv2xRadioServer::~Cv2xRadioServer() {
   LOG(DEBUG, __FUNCTION__);
+  std::vector<std::string> filters = {CV2X_EVENT_RADIO_FILTER};
+  ServerEventManager::getInstance().deregisterListener(evtListener_, filters);
 }
 
 void Cv2xRadioServer::init(
     std::weak_ptr<telux::cv2x::ICv2xListener> self) {
   LOG(DEBUG, __FUNCTION__);
   if (evtListener_) {
-    std::vector<std::string> filters = {CV2X_EVENT_FILTER};
+    std::vector<std::string> filters = {CV2X_EVENT_RADIO_FILTER};
     ServerEventManager::getInstance().registerListener(evtListener_, filters);
 
     evtListener_->registerListener(self);
@@ -298,17 +293,15 @@ grpc::Status Cv2xRadioServer::updateSrcL2Info(
   Cv2xServerUtil::apiJsonReader(RADIO_API_JSON, RADIO_ROOT, "updateSrcL2Info",
                                 res);
   if (::commonStub::Status::SUCCESS == res->status()) {
-      // Initialize random seed
-      std::srand(std::time(0));
-      // Generate random number with 24 bits
-      cv2xStub::UintNum srcL2Id;
-      srcL2Id.set_num(static_cast<uint32_t>(std::rand() % 0x1000000));
-
-      ::eventService::EventResponse srcL2IdChangeInd;
-      srcL2IdChangeInd.set_filter(CV2X_SRC_L2_ID_FILTER);
-      srcL2IdChangeInd.mutable_any()->PackFrom(srcL2Id);
-      // posting the event to EventService event queue
-      EventService::getInstance().updateEventQueue(srcL2IdChangeInd);
+      if (evtListener_) {
+          ::eventService::EventResponse srcL2IdChangeInd;
+          evtListener_->handleSrcL2IdUpdateInject("", srcL2IdChangeInd);
+          srcL2IdChangeInd.set_filter(CV2X_EVENT_RADIO_FILTER);
+          // posting the event to EventService event queue
+          EventService::getInstance().updateEventQueue(srcL2IdChangeInd);
+      } else {
+          res->set_status(::commonStub::Status::NOMEMORY);
+      }
   }
   return grpc::Status::OK;
 }

@@ -1206,27 +1206,13 @@ grpc::Status CallManagerServerImpl::UpdateECallMsd(ServerContext* context,
                          */
                         ((callInfo_.isTpseCallOverIms) &&
                          (updateECallMsdApiType == updateECallRawMsd))) {
-                            if(updateMsdRequestReceived_ != false) {
-                                //Reset the request after it is handled by state machine..
-                                updateMsdRequestReceived_ = false;
-                                ecallStateMachine_->onEvent(
-                                ecallStateMachine_->createTelEvent(
-                                EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP,
-                                "NGeCall", phoneId));
-                            }
+                            ecallStateMachine_->onEvent(
+                            ecallStateMachine_->createTelEvent(
+                            EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP,
+                            "NGeCall", phoneId));
                     }
                 } else {
                     // CS eCall
-                    if(callInfo_.isRegulatoryeCall) {
-                        if(updateMsdRequestReceived_ != false) {
-                            // Reset the request after it is handled by state machine.
-                            updateMsdRequestReceived_ = false;
-                        }
-                    } else {
-                        /* MSD update for a custom number eCall is triggered without MSD update
-                         * request from PSAP
-                         */
-                    }
                     ecallStateMachine_->onEvent(
                     ecallStateMachine_->createTelEvent(
                     EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP, "CSeCall", phoneId));
@@ -1666,7 +1652,6 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
             return;
         }
     }
-    updateMsdRequestReceived_ = true;
     if(ecallStateMachine_ != nullptr) {
         if(!(ecallStateMachine_->isEcallMSDUpdateInProgress())) {
             auto f = std::async(std::launch::async, [this, phoneId]() {

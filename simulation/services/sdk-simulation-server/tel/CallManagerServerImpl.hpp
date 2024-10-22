@@ -168,7 +168,6 @@ private:
     std::map <int, std::string> jsonObjApiResponseFileName_;
     std::mutex callManagerMutex_;
     std::shared_ptr<EcallStateMachine> ecallStateMachine_;
-    bool updateMsdRequestReceived_ = false;
     bool iseCallNumTypeOverridden_ = false;
     grpc::Status readJson();
     void getJsonForSystemData (int phoneId, std::string& jsonfilename, Json::Value& rootObj );

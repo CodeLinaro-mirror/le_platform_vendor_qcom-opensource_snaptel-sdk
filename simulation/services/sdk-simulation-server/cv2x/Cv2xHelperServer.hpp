@@ -45,7 +45,7 @@ public:
   Cv2xServerEvtListener();
   static const std::shared_ptr<Cv2xServerEvtListener> &getInstance();
 
-  void onEventUpdate(::eventService::UnsolicitedEvent event);
+  void onEventUpdate(::eventService::UnsolicitedEvent event) override;
   cv2xStub::Cv2xStatus getCv2xStatus();
   telux::common::Status
   registerListener(std::weak_ptr<telux::cv2x::ICv2xListener> l);

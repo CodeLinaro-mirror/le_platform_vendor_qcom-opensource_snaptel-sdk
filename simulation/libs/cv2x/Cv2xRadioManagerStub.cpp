@@ -108,7 +108,6 @@ void Cv2xRadioManagerStub::initSync(telux::common::InitResponseCb callback) {
     const ::google::protobuf::Empty request;
     ::cv2xStub::GetServiceStatusReply response;
     int delay = DEFAULT_DELAY;
-    status    = status;
 
     if (pEvtListener_) {
         std::vector<std::string> filters = {CV2X_EVENT_FILTER};
@@ -121,6 +120,9 @@ void Cv2xRadioManagerStub::initSync(telux::common::InitResponseCb callback) {
         lock_guard<mutex> cvLock(mutex_);
         serviceStatus_ = static_cast<telux::common::ServiceStatus>(response.status());
         initializedCv_.notify_all();
+    }
+    if (status == telux::common::Status::FAILED) {
+        LOG(DEBUG, __FUNCTION__, "Fail to init Cv2xRadioManagerStub");
     }
 
     if (callback && (delay != SKIP_CALLBACK)) {

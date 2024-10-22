@@ -82,6 +82,16 @@
             "path:                    path to the json file containing disaster and crisis report, for example: system-info/loc/ILocationManager.json"
         ]
     },
+    "throttle_mgr": {
+        "filter_update":[
+            "telsdk_event_injector -f throttle_mgr -e filter_update <filterNumber>",
+            "filterNumber: new verification filter"
+        ],
+        "sanity_update":[
+            "telsdk_event_injector -f throttle_mgr -e sanity_update <sanityState>",
+            "sanityState: true if in good state, otherwise false"
+        ]
+    },
     "sensor_feature": {
         "sensor_event":[
             "telsdk_event_injector -f sensor_feature -e sensor_event <featureName> <eventId>",

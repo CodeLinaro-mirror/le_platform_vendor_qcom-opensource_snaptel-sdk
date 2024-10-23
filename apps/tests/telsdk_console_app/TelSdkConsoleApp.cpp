@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,6 +63,7 @@ extern "C" {
 #include "Rsp/RspMenu.hpp"
 #include "ImsSettings/ImsSettingsMenu.hpp"
 #include "ImsServingSystem/ImsServingSystemMenu.hpp"
+#include "ApSimProfile/ApSimProfileMenu.hpp"
 #include "TelSdkConsoleApp.hpp"
 
 #include "../../common/utils/Utils.hpp"
@@ -113,10 +114,14 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> imsaMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "IMS_Serving_System", {},
             std::bind(&TelSdkConsoleApp::imsServingSystemMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> apSimProfileMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "12", "AP_Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::apSimProfileMenu,
+               this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
              dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand,
-             imsaMenuCommand};
+             imsaMenuCommand, apSimProfileMenuCommand};
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
@@ -254,6 +259,19 @@ void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) 
     ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
     if (imsaMenu.init()) {
        imsaMenu.mainLoop();
+    }
+    TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
+}
+
+void TelSdkConsoleApp::apSimProfileMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
+    ApSimProfileMenu apSimProfileMenu("AP Sim Profile Management Menu",
+        "ap_sim_profile_management> ");
+    if (apSimProfileMenu.init()) {
+        apSimProfileMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else

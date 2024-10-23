@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       TelSdkConsoleApp.hpp
  *
@@ -72,6 +78,7 @@ private:
    void rspMenu(std::vector<std::string> userInput);
    void imsSettingsMenu(std::vector<std::string> userInput);
    void imsServingSystemMenu(std::vector<std::string> userInput);
+   void apSimProfileMenu(std::vector<std::string> userInput);
 };
 
 #endif  // TELSDKCONSOLEAPP_HPP

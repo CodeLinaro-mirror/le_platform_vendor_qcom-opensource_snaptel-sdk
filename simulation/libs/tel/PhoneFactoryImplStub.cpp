@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1161,6 +1161,11 @@ std::shared_ptr<ISuppServicesManager> PhoneFactoryImplStub::getSuppServicesManag
         LOG(ERROR, __FUNCTION__, " Supp Svc Manager is initialized, Callback is NULL");
     }
     return suppSvcManagerMap_[slotId];
+}
+
+std::shared_ptr<IApSimProfileManager> PhoneFactoryImplStub::getApSimProfileManager(
+    telux::common::InitResponseCb callback) {
+    return nullptr;
 }
 
 }  // namespace tel

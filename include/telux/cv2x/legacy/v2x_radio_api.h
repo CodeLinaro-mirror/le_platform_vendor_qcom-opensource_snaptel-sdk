@@ -79,6 +79,7 @@
 #include <netpacket/packet.h>
 #include <stdint.h>
 #include <sys/socket.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #include "v2x_common.pb.h"

@@ -240,7 +240,7 @@ static void install_signal_handler()
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Get Status APP" << endl;
 
-    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

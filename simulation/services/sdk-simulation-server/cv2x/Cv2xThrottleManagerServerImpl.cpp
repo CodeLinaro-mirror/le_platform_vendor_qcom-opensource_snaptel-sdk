@@ -60,6 +60,7 @@ Cv2xThrottleManagerServerImpl::initService(ServerContext *context,
   }
   res->set_status(static_cast<::commonStub::ServiceStatus>(serviceStatus_));
   res->set_delay(cbDelay);
+  taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
   return grpc::Status::OK;
 }
 

@@ -14,8 +14,6 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-static const std::string CV2X_EVENT_FILTER = "cv2x_status";
-
 namespace telux {
 namespace cv2x {
 
@@ -34,6 +32,17 @@ void Cv2xEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
     }
 }
 
+
+void Cv2xEvtListener::onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo& rcpSlssUe) {
+    LOG(DEBUG, __FUNCTION__);
+    cv2x::SyncRefUeInfo cv2xUeInfo;
+    cv2x::Cv2xRadioHelper::rpcSlssInfoToSlssInfo(rcpSlssUe, cv2xUeInfo);
+
+    cv2x::SlssRxInfo info;
+    info.ueInfo.push_back(cv2xUeInfo);
+    NOTIFY_LISTENER(listenerMgr_, ICv2xListener, onSlssRxInfoChanged, info);
+}
+
 void Cv2xEvtListener::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     if (event.Is<::cv2xStub::Cv2xStatus>()) {
@@ -43,6 +52,10 @@ void Cv2xEvtListener::onEventUpdate(google::protobuf::Any event) {
         telux::cv2x::Cv2xStatus cv2xStatus;
         RPC_TO_CV2X_STATUS(stubStatus, cv2xStatus);
         onCv2xStatusChange(cv2xStatus);
+    } else if (event.Is<::cv2xStub::SyncRefUeInfo>()) {
+        ::cv2xStub::SyncRefUeInfo rcpSlssUe;
+        event.UnpackTo(&rcpSlssUe);
+        onSlssRxInfoChange(rcpSlssUe);
     }
 }
 
@@ -78,7 +91,7 @@ Cv2xRadioManagerStub::~Cv2xRadioManagerStub() {
     initializedCv_.notify_all();
 
     if (pEvtListener_) {
-        std::vector<std::string> filters = {CV2X_EVENT_FILTER};
+        std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.deregisterListener(pEvtListener_, filters);
     }
@@ -110,7 +123,7 @@ void Cv2xRadioManagerStub::initSync(telux::common::InitResponseCb callback) {
     int delay = DEFAULT_DELAY;
 
     if (pEvtListener_) {
-        std::vector<std::string> filters = {CV2X_EVENT_FILTER};
+        std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.registerListener(pEvtListener_, filters);
     }
@@ -290,11 +303,7 @@ telux::common::Status Cv2xRadioManagerStub::getSlssRxInfo(GetSlssRxInfoCallback 
                 SyncRefUeInfo refInfo;
 
                 for (auto ueInfo : response.info()) {
-                    refInfo.slssId     = ueInfo.slssid();
-                    refInfo.inCoverage = ueInfo.incoverage();
-                    refInfo.pattern  = static_cast<telux::cv2x::SlssSyncPattern>(ueInfo.pattern());
-                    refInfo.rsrp     = ueInfo.rsrp();
-                    refInfo.selected = ueInfo.selected();
+                    cv2x::Cv2xRadioHelper::rpcSlssInfoToSlssInfo(ueInfo, refInfo);
                     info.ueInfo.push_back(refInfo);
                 }
             }

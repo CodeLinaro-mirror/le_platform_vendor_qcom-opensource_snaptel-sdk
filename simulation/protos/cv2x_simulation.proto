@@ -116,8 +116,11 @@ message Cv2xStatus {
         DISABLED = 9;
         NO_GNSS = 10;
         INVALID_LICENSE = 11;
-        NO_DATA_CALL = 12;
-        CAUSE_UNKNOWN = 13;
+        NOT_READY = 12;
+        NTN = 13;
+
+        NO_DATA_CALL = 14;
+        CAUSE_UNKNOWN = 15;
     }
 
     StatusType  rxStatus = 1;
@@ -213,4 +216,28 @@ message FilterEvent {
 
 message SanityEvent {
     uint32 state = 1;
+}
+
+message SrcL2Id {
+    uint32 id = 1;
+}
+
+message MacAddrCloneAttach {
+    bool detected = 1;
+}
+
+message SpsSchedulingInfo {
+    uint32 spsId = 1;
+    uint64 utcTime = 2;
+    uint32 periodicity = 3;
+}
+
+message TxPoolIdInfo {
+    uint32 poolId = 1;
+    uint32 minFreq = 2;
+    uint32 maxFreq = 3;
+}
+
+message RadioCapabilites {
+    repeated TxPoolIdInfo pools = 1;
 }

@@ -18,13 +18,46 @@
 #include "libs/common/Logger.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 
-static const std::string RADIO_ROOT = "ICv2xRadio";
-static const std::string RADIO_STATE_JSON = "system-state/cv2x/ICv2xRadio.json";
+#define SET_MEMBER(st,member,type,token) st.member(static_cast<type>(token))
 
-static const std::string CV2X_MGR_API_JSON = "api/cv2x/ICv2xManager.json";
-static const std::string CV2X_MGR_NODE = "ICv2xManager";
+#define PARSE_STR_SET_STRUCT(str,st,member,type) \
+{ \
+    std::string strToken = EventParserUtil::getNextToken(str, " "); \
+    if (not strToken.empty()) { \
+        try { \
+            auto token = std::stoi(strToken); \
+            SET_MEMBER(st, member, type, token); \
+        } catch (exception const &ex) { \
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what()); \
+            return false; \
+        } \
+    } else { \
+        LOG(DEBUG, __FUNCTION__, " strToken is empty."); \
+        return false; \
+   } \
+}
 
-static const std::string CV2X_EVENT_FILTER = "cv2x_status";
+#define VALIDATE_STR_SET_STRUCT(str,st,member,type,validation) \
+{ \
+    std::string strToken = EventParserUtil::getNextToken(str, " "); \
+    if (not strToken.empty()) { \
+        try { \
+            auto token = std::stoi(strToken); \
+            if (validation(token)) { \
+                SET_MEMBER(st, member, type, token); \
+            } else { \
+                LOG(ERROR, __FUNCTION__, " token is invalid."); \
+                return false; \
+            } \
+        } catch (exception const &ex) { \
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what()); \
+            return false; \
+        } \
+    } else { \
+        LOG(DEBUG, __FUNCTION__, " strToken is empty."); \
+        return false; \
+   } \
+}
 
 telux::common::ErrorCode
 Cv2xServerUtil::stateJasonRead(std::string stateCfgFile, Json::Value &data) {
@@ -52,6 +85,13 @@ cv2xStub::Cv2xStatus_StatusType Cv2xServerUtil::strToStatus(std::string str) {
 Cv2xServerEvtListener::Cv2xServerEvtListener() {
   LOG(DEBUG, __FUNCTION__);
   readDefaultStatus();
+  injectEvtHdls_[CV2X_STATUS_EVENT]         = std::bind(&Cv2xServerEvtListener::OnCv2xStatusChange,
+      this, std::placeholders::_1, std::placeholders::_2);
+  injectEvtHdls_[SLSS_RX_INFO_EVT]          = handleSlssRxInfoInject;
+  injectEvtHdls_[SRC_L2_ID_EVT]             = handleSrcL2IdUpdateInject;
+  injectEvtHdls_[SPS_SCHEDULE_CHANGE_EVT]   = handleSpsScheduleInject;
+  injectEvtHdls_[MAC_ADDR_CLONE_ATTACK_EVT] = handleMacCloneAttackInject;
+  injectEvtHdls_[RADIO_CAPABILITIES_EVT]    = handleCapabilitiesInject;
 }
 
 void Cv2xServerEvtListener::readDefaultStatus() {
@@ -129,42 +169,27 @@ bool Cv2xServerEvtListener::stringToStatus(std::string &str,
 bool Cv2xServerEvtListener::stringToCause(std::string &str,
                                           cv2xStub::Cv2xStatus &result,
                                           bool rx) {
-  std::string strToken = EventParserUtil::getNextToken(str, " ");
-  int token;
-
-  if (not strToken.empty()) {
-    try {
-      token = std::stoi(strToken);
-    } catch (exception const &ex) {
-      LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
-      return false;
-    }
+  if (rx) {
+      VALIDATE_STR_SET_STRUCT(str,result,set_rxcause,::cv2xStub::Cv2xStatus_Cause,
+          ::cv2xStub::Cv2xStatus_Cause_IsValid);
   } else {
-    LOG(DEBUG, __FUNCTION__, " strToken is empty.");
-    return false;
+      VALIDATE_STR_SET_STRUCT(str,result,set_txcause,::cv2xStub::Cv2xStatus_Cause,
+          ::cv2xStub::Cv2xStatus_Cause_IsValid);
   }
-
-  if (cv2xStub::Cv2xStatus_Cause_IsValid(token)) {
-    if (rx) {
-      result.set_rxcause(static_cast<cv2xStub::Cv2xStatus_Cause>(token));
-    } else {
-      result.set_txcause(static_cast<cv2xStub::Cv2xStatus_Cause>(token));
-    }
-    return true;
-  } else {
-    LOG(DEBUG, __FUNCTION__, " causecode is not in range ", token);
-  }
-  return false;
+  return true;
 }
 
-void Cv2xServerEvtListener::OnCv2xStatusChange(std::string str) {
-  bool update = false;
+bool Cv2xServerEvtListener::OnCv2xStatusChange(std::string str,
+  ::eventService::EventResponse& ind) {
+  bool hasUpdate = false;
   bool needRxCause = false;
   bool needTxCause = false;
   cv2xStub::Cv2xStatus tmpStatus;
   LOG(DEBUG, __FUNCTION__, str);
 
   do {
+    tmpStatus.set_rxcause(::cv2xStub::Cv2xStatus_Cause::Cv2xStatus_Cause_CAUSE_UNKNOWN);
+    tmpStatus.set_txcause(::cv2xStub::Cv2xStatus_Cause::Cv2xStatus_Cause_CAUSE_UNKNOWN);
     if (not stringToStatus(str, tmpStatus, needRxCause, true)) {
       break;
     }
@@ -182,35 +207,144 @@ void Cv2xServerEvtListener::OnCv2xStatusChange(std::string str) {
         break;
       }
     }
-    update = true;
+    hasUpdate = true;
   } while (0);
 
-  if (update) {
+  if (hasUpdate) {
     {
       std::lock_guard<std::mutex> lock(statusMtx_);
       stubStatus_ = tmpStatus;
     }
     notifyListeners(tmpStatus);
-    ::eventService::EventResponse statusChangeInd;
-    statusChangeInd.set_filter(CV2X_EVENT_FILTER);
-    statusChangeInd.mutable_any()->PackFrom(tmpStatus);
-    // posting the event to EventService event queue
-    auto &eventImpl = EventService::getInstance();
-    eventImpl.updateEventQueue(statusChangeInd);
+
+    ind.mutable_any()->PackFrom(tmpStatus);
   } else {
     LOG(INFO, __FUNCTION__, " Cv2x status assume no change");
   }
+  return hasUpdate;
 }
+
+bool Cv2xServerEvtListener::handleMacCloneAttackInject(std::string str,
+    ::eventService::EventResponse& ind) {
+    LOG(DEBUG, __FUNCTION__);
+    ::cv2xStub::MacAddrCloneAttach detected;
+
+    PARSE_STR_SET_STRUCT(str, detected, set_detected, bool);
+
+    ind.mutable_any()->PackFrom(detected);
+    return true;
+}
+
+bool Cv2xServerEvtListener::handleSlssRxInfoInject(std::string str,
+    ::eventService::EventResponse& ind) {
+    LOG(DEBUG, __FUNCTION__);
+    ::cv2xStub::SyncRefUeInfo slssUe;
+
+    PARSE_STR_SET_STRUCT(str, slssUe, set_slssid, uint32_t);
+    PARSE_STR_SET_STRUCT(str, slssUe, set_incoverage, bool);
+    VALIDATE_STR_SET_STRUCT(str, slssUe, set_pattern, ::cv2xStub::SyncRefUeInfo_SlssSyncPattern,
+        ::cv2xStub::SyncRefUeInfo_SlssSyncPattern_IsValid);
+    PARSE_STR_SET_STRUCT(str, slssUe, set_rsrp, uint32_t);
+    PARSE_STR_SET_STRUCT(str, slssUe, set_selected, bool);
+
+    ind.mutable_any()->PackFrom(slssUe);
+    return true;
+}
+
+bool Cv2xServerEvtListener::handleSpsScheduleInject(std::string str,
+    ::eventService::EventResponse& ind) {
+    LOG(DEBUG, __FUNCTION__);
+    ::cv2xStub::SpsSchedulingInfo scheduleInfo;
+    PARSE_STR_SET_STRUCT(str, scheduleInfo, set_spsid, uint32_t);
+    PARSE_STR_SET_STRUCT(str, scheduleInfo, set_utctime, uint64_t);
+    PARSE_STR_SET_STRUCT(str, scheduleInfo, set_periodicity, uint32_t);
+
+    ind.mutable_any()->PackFrom(scheduleInfo);
+    return true;
+}
+
+bool Cv2xServerEvtListener::handleSrcL2IdUpdateInject(std::string str,
+    ::eventService::EventResponse& ind) {
+    LOG(DEBUG, __FUNCTION__);
+    // Initialize random seed
+    std::srand(std::time(0));
+    // Generate random number with 24 bits
+    ::cv2xStub::SrcL2Id srcL2Id;
+    srcL2Id.set_id(static_cast<uint32_t>(std::rand() % 0x1000000));
+
+    ind.mutable_any()->PackFrom(srcL2Id);
+    return true;
+}
+
+bool Cv2xServerEvtListener::handleCapabilitiesInject(std::string str,
+    ::eventService::EventResponse& ind) {
+    LOG(DEBUG, __FUNCTION__);
+    ::cv2xStub::RadioCapabilites radioCaps;
+    ::cv2xStub::TxPoolIdInfo pool;
+
+    SET_MEMBER(pool,set_poolid, uint32_t, 0);
+    PARSE_STR_SET_STRUCT(str, pool, set_minfreq, uint32_t);
+    PARSE_STR_SET_STRUCT(str, pool, set_maxfreq, uint32_t);
+    if (pool.minfreq() > 0 && pool.minfreq() < 0x00FFFF &&
+        pool.maxfreq() > 0 && pool.maxfreq() < 0x00FFFF) {
+        ::cv2xStub::TxPoolIdInfo* uePool = radioCaps.add_pools();
+        if (uePool) {
+            uePool->set_poolid(pool.poolid());
+            uePool->set_minfreq(pool.minfreq());
+            uePool->set_maxfreq(pool.maxfreq());
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
+    if (str.length() >= 3) {
+        LOG(DEBUG, __FUNCTION__, str);
+        SET_MEMBER(pool,set_poolid, uint32_t, 1);
+        PARSE_STR_SET_STRUCT(str, pool, set_minfreq, uint32_t);
+        PARSE_STR_SET_STRUCT(str, pool, set_maxfreq, uint32_t);
+        if (pool.minfreq() > 0 && pool.minfreq() < 0x00FFFF &&
+            pool.maxfreq() > 0 && pool.maxfreq() < 0x00FFFF) {
+            ::cv2xStub::TxPoolIdInfo* uePool = radioCaps.add_pools();
+            if (uePool) {
+                uePool->set_poolid(pool.poolid());
+                uePool->set_minfreq(pool.minfreq());
+                uePool->set_maxfreq(pool.maxfreq());
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    ind.mutable_any()->PackFrom(radioCaps);
+    return true;
+}
+
 
 void Cv2xServerEvtListener::onEventUpdate(
     ::eventService::UnsolicitedEvent message) {
-  LOG(DEBUG, __FUNCTION__, message.filter());
-  if (message.filter() == CV2X_EVENT_FILTER) {
-    auto event = message.event();
-    LOG(DEBUG, __FUNCTION__, " message.event ", event);
-    if (not event.empty()) {
-      OnCv2xStatusChange(event);
-    }
+  bool hasUpdate = false;
+  ::eventService::EventResponse ind;
+  auto event = message.event();
+
+  LOG(DEBUG, __FUNCTION__, message.filter(), " ", event);
+  if (event.empty()) {
+      return;
+  }
+
+  std::string strToken = EventParserUtil::getNextToken(event, " ");
+  if (injectEvtHdls_.find(strToken) != injectEvtHdls_.end()) {
+      hasUpdate = injectEvtHdls_[strToken](event, ind);
+  } else {
+      LOG(DEBUG, __FUNCTION__, " no handler for ", strToken);
+  }
+
+  if (hasUpdate) {
+      // posting the event to EventService event queue
+      ind.set_filter(message.filter());
+      EventService::getInstance().updateEventQueue(ind);
   }
 }
 
@@ -250,7 +384,7 @@ Cv2xManagerServerImpl::Cv2xManagerServerImpl() {
   LOG(DEBUG, __FUNCTION__);
   evtListener_ = Cv2xServerEvtListener::getInstance();
   if (evtListener_) {
-    std::vector<std::string> filters = {CV2X_EVENT_FILTER};
+    std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER};
     auto &serverEventManager = ServerEventManager::getInstance();
     serverEventManager.registerListener(evtListener_, filters);
   }
@@ -259,7 +393,7 @@ Cv2xManagerServerImpl::Cv2xManagerServerImpl() {
 Cv2xManagerServerImpl::~Cv2xManagerServerImpl() {
   LOG(DEBUG, __FUNCTION__);
   if (evtListener_) {
-    std::vector<std::string> filters = {CV2X_EVENT_FILTER};
+    std::vector<std::string> filters = {CV2X_EVENT_RADIO_MGR_FILTER};
     auto &serverEventManager = ServerEventManager::getInstance();
     serverEventManager.deregisterListener(evtListener_, filters);
   }
@@ -307,8 +441,8 @@ Cv2xManagerServerImpl::stopCv2x(ServerContext *context,
   LOG(DEBUG, __FUNCTION__);
   Cv2xServerUtil::apiJsonReader(CV2X_MGR_API_JSON, CV2X_MGR_NODE, "stopCv2x",
                                 res);
-
-  evtListener_->OnCv2xStatusChange("inactive inactive 2 2");
+  ::eventService::EventResponse dummy;
+  evtListener_->OnCv2xStatusChange("inactive inactive 2 2", dummy);
   return grpc::Status::OK;
 }
 

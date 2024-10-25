@@ -17,7 +17,6 @@
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/Logger.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
-#include "libs/cv2x/Cv2xRadioHelperStub.hpp"
 
 static const std::string CV2X_CFG_API_JSON = "api/cv2x/ICv2xConfig.json";
 static const std::string CV2X_CFG_ROOT = "ICv2xConfig";
@@ -32,7 +31,7 @@ Cv2xConfigServerImpl::initService(ServerContext *context,
                                   const google::protobuf::Empty *request,
                                   cv2xStub::GetServiceStatusReply *res) {
     LOG(DEBUG, __FUNCTION__);
-    int cbDelay = DEFAULT_DELAY;
+    int cbDelay = 0;
     telux::common::ServiceStatus serviceStatus =
         telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;

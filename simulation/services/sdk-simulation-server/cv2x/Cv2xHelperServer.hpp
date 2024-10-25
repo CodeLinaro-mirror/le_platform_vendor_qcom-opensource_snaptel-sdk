@@ -16,6 +16,25 @@
 #include "libs/common/CommonUtils.hpp"
 #include "libs/common/JsonParser.hpp"
 
+const std::string CV2X_MGR_API_JSON = "api/cv2x/ICv2xManager.json";
+const std::string CV2X_MGR_NODE = "ICv2xManager";
+
+const std::string RADIO_STATE_JSON = "system-state/cv2x/ICv2xRadio.json";
+const std::string RADIO_API_JSON = "api/cv2x/ICv2xRadio.json";
+const std::string RADIO_ROOT = "ICv2xRadio";
+
+const std::string CV2X_EVENT_RADIO_MGR_FILTER = "cv2x_radio_manager";
+const std::string CV2X_STATUS_EVENT           = "status";
+const std::string SLSS_RX_INFO_EVT            = "slss_rx_info";
+
+const std::string CV2X_EVENT_RADIO_FILTER   = "cv2x_radio";
+const std::string SRC_L2_ID_EVT             = "src_l2_id";
+const std::string SPS_SCHEDULE_CHANGE_EVT   = "sps_schedule_change";
+const std::string MAC_ADDR_CLONE_ATTACK_EVT = "mac_addr_clone_attack";
+const std::string RADIO_CAPABILITIES_EVT    = "capabilities";
+
+using InjectEvtHandler = std::function<bool (std::string, ::eventService::EventResponse&)>;
+
 class Cv2xServerUtil {
 public:
   static cv2xStub::Cv2xStatus_StatusType strToStatus(std::string str);
@@ -51,7 +70,8 @@ public:
   registerListener(std::weak_ptr<telux::cv2x::ICv2xListener> l);
   telux::common::Status
   deregisterListener(std::weak_ptr<telux::cv2x::ICv2xListener> l);
-  void OnCv2xStatusChange(std::string str);
+  bool OnCv2xStatusChange(std::string str, ::eventService::EventResponse& ind);
+  static bool handleSrcL2IdUpdateInject(std::string str, ::eventService::EventResponse& ind);
   void readDefaultStatus();
 
 private:
@@ -60,9 +80,15 @@ private:
   bool stringToCause(std::string &str, cv2xStub::Cv2xStatus &result, bool rx);
   void notifyListeners(cv2xStub::Cv2xStatus &stub);
 
+  static bool handleMacCloneAttackInject(std::string str, ::eventService::EventResponse& ind);
+  static bool handleSlssRxInfoInject(std::string str, ::eventService::EventResponse& ind);
+  static bool handleSpsScheduleInject(std::string str, ::eventService::EventResponse& ind);
+  static bool handleCapabilitiesInject(std::string str, ::eventService::EventResponse& ind);
+
   cv2xStub::Cv2xStatus stubStatus_;
   std::mutex statusMtx_;
   telux::common::ListenerManager<telux::cv2x::ICv2xListener> listenerMgr_;
+  std::map<std::string, InjectEvtHandler> injectEvtHdls_;
 };
 
 #endif

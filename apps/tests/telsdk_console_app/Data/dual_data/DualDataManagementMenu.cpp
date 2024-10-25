@@ -70,7 +70,6 @@ bool DualDataManagementMenu::init() {
             requestCurrentDds, configureDdsSwitchRecommendation, getDdsSwitchRecommendation};
         addCommands(commandsList);
     }
-    ConsoleApp::displayMenu();
     return true;
 }
 
@@ -113,6 +112,20 @@ void DualDataManagementMenu::onInitComplete(telux::common::ServiceStatus status)
     std::lock_guard<std::mutex> lock(mtx_);
     subSystemStatusUpdated_ = true;
     cv_.notify_all();
+}
+
+bool DualDataManagementMenu::displayMenu() {
+    bool retVal = true;
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
+        dualDataManager_->getServiceStatus()) {
+        std::cout << "\nDual Data Manager is ready " << std::endl;
+    }
+    else {
+        std::cout << "\nDual Data Manager is not ready " << std::endl;
+        retVal = false;;
+    }
+    ConsoleApp::displayMenu();
+    return retVal;
 }
 
 void DualDataManagementMenu::getDualDataCapability(std::vector<std::string> &inputCommand) {

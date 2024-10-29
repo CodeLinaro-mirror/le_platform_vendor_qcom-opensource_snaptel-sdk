@@ -71,17 +71,10 @@ bool PowerGrpcClient::waitForInitialization() {
     ClientContext context{};
     int cbDelay;
     grpc::Status reqStatus;
-    ::powerStub::MachineName machine_Name;
-    std::string machName = std::get<2>(clientConfig_);
-    if(machName == telux::power::ALL_MACHINES) {
-        machine_Name = ::powerStub::MachineName::MACH_ALL;
-    } else {
-        machine_Name = ::powerStub::MachineName::MACH_LOCAL;
-    }
-
     request.set_clienttype(std::get<0>(clientConfig_));
     request.set_clientname(std::get<1>(clientConfig_));
-    request.set_machinename(machine_Name);
+    std::string machName = std::get<2>(clientConfig_);
+    request.set_machinename(machName);
 
     reqStatus = stub_->InitService(&context, request, &response);
     if (!reqStatus.ok()) {

@@ -31,7 +31,17 @@ grpc::Status PowerManagerServiceImpl::InitService(ServerContext* context,
     telux::power::ClientType clientType =
         static_cast<telux::power::ClientType>(request->clienttype());
     std::string clientName = request->clientname();
-    ::powerStub::MachineName machineName = request->machinename();
+    ::powerStub::MachineName machineName;
+    std::string mach_name = request->machinename();
+    if((mach_name == "ALL_MACHINES")) {
+        machineName = ::powerStub::MachineName::MACH_ALL;
+    } else if ((mach_name == "LOCAL_MACHINE") || (mach_name == "PVM")) {
+        machineName = ::powerStub::MachineName::MACH_LOCAL;
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unsupported Machine");
+        response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
+        return grpc::Status::OK;
+    }
 
     Json::Value rootNode;
     telux::common::ErrorCode errorCode

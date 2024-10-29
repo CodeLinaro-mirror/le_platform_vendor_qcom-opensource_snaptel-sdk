@@ -36,7 +36,7 @@ enum MachineName {
 message PowerClientConnect {
     int32 clienttype = 1;
     string clientname = 2;
-    MachineName machinename = 3;
+    string machinename = 3;
 }
 
 enum TcuState {

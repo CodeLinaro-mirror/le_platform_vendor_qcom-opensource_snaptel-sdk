@@ -77,12 +77,9 @@
 
 #ifndef PB_V2X_KINEMATICS_DATA_TYPES_PB_H_INCLUDED
 #define PB_V2X_KINEMATICS_DATA_TYPES_PB_H_INCLUDED
-#include <pb.h>
 
-/* @@protoc_insertion_point(includes) */
-#if PB_PROTO_HEADER_VERSION != 30
-#error Regenerate this file with the current version of nanopb generator.
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,27 +170,6 @@ typedef struct /** @cond */_v2x_GNSSstatus_t/** @endcond */ {
 } v2x_GNSSstatus_t;
 
 /**
-  Defines supported GNSS fix generation rates (such as 1 Hz, 5 Hz, 10 Hz).
- */
-typedef struct /** @cond */_v2x_gnss_fix_rates_supported_list_t/** @endcond */ {
-    uint32_t qty_rates_supported;
-    /**< Specify whether the listing or discovery of the supported rates is
-         supported.
-
-         @values
-         - 0 - Not supported
-         - 1 - Supported @tablebulletend */
-
-    pb_size_t rates_supported_hz_array_count;
-    /**< Number of supported rates. */
-
-    uint32_t rates_supported_hz_array[32];
-    /**< Array of data rates supported by the API. */
-
-/* @@protoc_insertion_point(struct:v2x_gnss_fix_rates_supported_list_t) */
-} v2x_gnss_fix_rates_supported_list_t;
-
-/**
   Defines client initialization.
  */
 typedef struct /** @cond */_v2x_init_t/** @endcond */ {
@@ -207,80 +183,6 @@ typedef struct /** @cond */_v2x_init_t/** @endcond */ {
 } v2x_init_t;
 
 /**
-  Defines Kinematics features supported by the hardware.
- */
-typedef struct /** @cond */_v2x_kinematics_capabilities_t_feature_flags_t/** @endcond */ {
-    bool has_3_axis_gyro;
-    /**< Specifies whether the hardware supports 3-axis gyro.
-
-         @values
-         - 0 - Not supported
-         - 1 - Supported @tablebulletend */
-
-    bool has_3_axis_accelerometer;
-    /**< Specifies whether the hardware supports the 3-axis accelerometer.
-
-         @values
-         - 0 - Not supported
-         - 1 - Supported @tablebulletend */
-
-    bool has_imu_supplemented_dead_reckoning;
-    /**< Specifies whether a dead reckoning (DR) solution is available and
-         enabled or only GNSS is the result.
-
-         @values
-         - 0 - GNSS is available
-         - 1 - DR is available @tablebulletend */
-
-    bool has_yaw_rate_sensor;
-    /**< Specifies whether the IMU includes a yaw rate sensor.
-
-         @values
-         - 0 - Does not include sensor
-         - 1 - Includes sensor @tablebulletend */
-
-    bool used_vehicle_speed;
-    /**< Specifies whether the DR algorithm uses the vehicle speed sensor.
-
-         @values
-         - 0 - Does not use sensor
-         - 1 - Uses sensor @tablebulletend */
-
-    bool used_single_wheel_ticks;
-    /**< Specifies whether the DR algorithm uses the single wheel ticks.
-
-         @values
-         - 0 - Does not use ticks
-         - 1 - Uses ticks @tablebulletend */
-
-    bool used_front_differential_wheel_ticks;
-    /**< Specifies whether the DR algorithm uses two front differential wheel
-         ticks.
-
-         @values
-         - 0 - Does not use ticks
-         - 1 - Uses ticks @tablebulletend */
-
-    bool used_rear_differential_wheel_ticks;
-    /**< Specifies whether the DR algorithm uses two rear differential wheel
-         ticks.
-
-         @values
-         - 0 - Does not use ticks
-         - 1 - Uses ticks @tablebulletend */
-
-    bool used_vehicle_dynamic_model;
-    /**< Specifies whether the DR algorithm uses vehicle dynamic model
-         factoring in differential ticks, steering, and so on.
-
-         @values
-         - 0 - Does not use factoring
-         - 1 - Uses factoring @tablebulletend */
-
-/* @@protoc_insertion_point(struct:v2x_kinematics_capabilities_t_feature_flags_t) */
-} v2x_kinematics_capabilities_t_feature_flags_t;
-
-/**
   Defines the rate type.
  */
 typedef struct /** @cond */_v2x_rates_t/** @endcond */ {
@@ -292,23 +194,6 @@ typedef struct /** @cond */_v2x_rates_t/** @endcond */ {
 
 /* @@protoc_insertion_point(struct:v2x_rates_t) */
 } v2x_rates_t;
-
-/**
-  Returned via v2x_kinematics_get_capabilities() for the client to discover the
-  lower level function that this system supports.
- */
-typedef struct /** @cond */_v2x_kinematics_capabilities_t/** @endcond */ {
-    v2x_kinematics_capabilities_t_feature_flags_t feature_flags;
-    /**< Features supported by the API. */
-
-    uint32_t max_fix_rate_supported_hz;
-    /**< Highest rate platform that supports GNSS fix generation (in Hz). */
-
-    v2x_gnss_fix_rates_supported_list_t rates_list;
-    /**< Supported fix rates. @newpagetable */
-
-/* @@protoc_insertion_point(struct:v2x_kinematics_capabilities_t) */
-} v2x_kinematics_capabilities_t;
 
 /**
   Contains a standardized set of parameters that are used for ITS applications.
@@ -617,17 +502,6 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
 #define v2x_location_fix_t_velocity_confidence_tag 24
 #define v2x_location_fix_t_elevation_confidence_tag 25
 #define v2x_location_fix_t_leap_seconds_tag      26
-
-/* Struct field encoding specification for nanopb */
-extern const pb_field_t v2x_gnss_fix_rates_supported_list_t_fields[3];
-extern const pb_field_t v2x_kinematics_capabilities_t_fields[4];
-extern const pb_field_t v2x_kinematics_capabilities_t_feature_flags_t_fields[10];
-extern const pb_field_t v2x_GNSSstatus_t_fields[6];
-extern const pb_field_t v2x_location_fix_t_fields[27];
-extern const pb_field_t v2x_rates_t_fields[3];
-extern const pb_field_t v2x_init_t_fields[3];
-extern const pb_field_t v2x_msg_t_enable_fixes_tag_fields[1];
-extern const pb_field_t v2x_msg_t_disable_fixes_tag_fields[1];
 
 /* Maximum encoded size of messages (where known) */
 #define v2x_gnss_fix_rates_supported_list_t_size 198

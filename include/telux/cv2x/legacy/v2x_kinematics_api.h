@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -104,19 +104,6 @@ typedef void (*v2x_kinematics_rate_notification_listener_t)(v2x_status_enum_type
     @newpage
  */
 typedef void (*v2x_kinematics_set_rate_callback_t)(v2x_status_enum_type status, void *context);
-
-/**
-    User-defined callback function called upon completion of a
-    v2x_kinematics_get_capabilities() operation.
-
-    @datatypes
-    #v2x_kinematics_capabilities_t
-
-    @param[in] cap      Pointer to the capabilities supported by the API.
-    @param[in] context  Pointer to the application context from which
-                        %v2x_kinematics_get_capabilities() was called.
- */
-typedef void (*v2x_kinematics_get_capability_callback_t)(v2x_kinematics_capabilities_t *cap, void *context);
 
 /**
     User-defined listener function for kinematics data.
@@ -239,30 +226,6 @@ v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x
         v2x_kinematics_set_rate_callback_t cb,
         void *context);
 /** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
-
-/** @ingroup v2x_deprecated_kinematics
-    Obsolete. This function is not supported and will be removed in the future.
-
-    Request from the API for the current capabilities. If DR is in use, the
-    request includes supported rates, and so on.
-
-    @datatypes
-    #v2x_kinematics_handle_t \n
-    #v2x_kinematics_get_capability_callback_t
-
-    @param[in] handle   Handle number to use with subsequent calls.
-                        If there is an error in initialization, the value is -1.
-    @param[in] cb       Callback function called upon completion of the
-                        request.
-    @param[in] context  Pointer to the application context for use with the
-                        callbacks, which can help the caller code.
-
-    @return
-    Indication of success or failure from #v2x_status_enum_type. @newpage
- */
-v2x_status_enum_type v2x_kinematics_get_capabilities(v2x_kinematics_handle_t handle,
-        v2x_kinematics_get_capability_callback_t cb,
-        void *context);
 
 /** @addtogroup telematics_cv2x_c_kinematics
 @{ */

@@ -136,28 +136,10 @@ enum class PlayerState {
  * set defaults here. An application can get/set volume/mute before calling startPlayback().
  */
 AudioPlayerImpl::AudioPlayerImpl(std::shared_ptr<IAudioManager> audioManager) {
-    ChannelVolume channelVolume{};
 
-    audioManager_ = audioManager;
-
-    applyCachedVolume_        = false;
-    cachedVolume_.dir         = StreamDirection::RX;
-    channelVolume.vol         = 1.0;
-    channelVolume.channelType = ChannelType::LEFT;
-    cachedVolume_.volume.push_back(channelVolume);
-    channelVolume.vol         = 1.0;
-    channelVolume.channelType = ChannelType::RIGHT;
-    cachedVolume_.volume.push_back(channelVolume);
-
-    applyCachedMute_          = false;
-    cachedVolumeOnMute_.dir   = StreamDirection::RX;
-    channelVolume.vol         = 1.0;
-    channelVolume.channelType = ChannelType::LEFT;
-    cachedVolumeOnMute_.volume.push_back(channelVolume);
-    channelVolume.vol         = 1.0;
-    channelVolume.channelType = ChannelType::RIGHT;
-    cachedVolumeOnMute_.volume.push_back(channelVolume);
-
+    audioManager_      = audioManager;
+    applyCachedVolume_ = false;
+    applyCachedMute_   = false;
     cachedDevices_.resize(0);
     lastUsedDevices_.resize(0);
 }
@@ -642,7 +624,7 @@ telux::common::ErrorCode AudioPlayerImpl::reinitAudioStream(uint32_t curFileIdx)
                 audioPlayStream_->deRegisterListener(shared_from_this());
             } catch (const std::bad_weak_ptr &e) {
                 LOG(ERROR, __FUNCTION__, " can't deregister for play events");
-                /* Don't treate fatal */
+                /* Don't treat as fatal */
             }
         }
         deinitAudioStream();
@@ -778,6 +760,9 @@ telux::common::ErrorCode AudioPlayerImpl::initAudioStream(StreamConfig streamCon
             lastUsedDevices_ = {};
         }
 
+        /* Cache mask for currently playing stream so that volume can be applied correctly */
+        curChannelTypeMask_ = streamConfig.channelTypeMask;
+
         /*
          * Cached attributes must be applied before releasing streamMtx_ to avoid
          * race between player thread trying to set cached attribute and application
@@ -797,8 +782,10 @@ telux::common::ErrorCode AudioPlayerImpl::initAudioStream(StreamConfig streamCon
             }
         }
 
-        if (applyCachedMute_) {
-            ec = updateMute(streamLock);
+        /* If the stream was originally muted, then mute it else skip
+         * setting mute state since it is already unmuted. */
+        if (applyCachedMute_ && isStreamMuted_) {
+            ec = updateMute(isStreamMuted_, streamLock);
             if (ec != telux::common::ErrorCode::SUCCESS) {
                 return ec;
             }
@@ -1397,7 +1384,7 @@ telux::common::ErrorCode AudioPlayerImpl::registerForSSREvent() {
         return telux::common::ErrorCode::INVALID_STATE;
     }
 
-    if (status != telux::common::Status::SUCCESS) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
         ec = telux::common::CommonUtils::toErrorCode(status);
         LOG(ERROR, __FUNCTION__, " can't register ssrcb, err ", static_cast<int>(ec));
         if (isCompressed_) {
@@ -1556,12 +1543,36 @@ telux::common::ErrorCode AudioPlayerImpl::updateVolume(
 
     bool waitResult = false;
     telux::common::Status status;
+    StreamVolume streamVol{};
+    ChannelVolume channelVolume{};
     SetVolumeResponseListener listener(streamMtx_);
 
     auto responseCb = std::bind(
         &SetVolumeResponseListener::setVolumeComplete, &listener, std::placeholders::_1);
 
-    status = audioPlayStream_->setVolume(volume, responseCb);
+    /* Based on the number of channels currently playing stream has, set channels for volume */
+    switch (curChannelTypeMask_) {
+        case telux::audio::ChannelType::LEFT:
+            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.channelType = telux::audio::ChannelType::LEFT;
+            streamVol.volume.emplace_back(channelVolume);
+            break;
+        case telux::audio::ChannelType::RIGHT:
+            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.channelType = telux::audio::ChannelType::RIGHT;
+            streamVol.volume.emplace_back(channelVolume);
+            break;
+        default:
+            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.channelType = telux::audio::ChannelType::LEFT;
+            streamVol.volume.emplace_back(channelVolume);
+            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.channelType = telux::audio::ChannelType::RIGHT;
+            streamVol.volume.emplace_back(channelVolume);
+    }
+    streamVol.dir = StreamDirection::RX;
+
+    status = audioPlayStream_->setVolume(streamVol, responseCb);
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " can't set volume");
         return telux::common::CommonUtils::toErrorCode(status);
@@ -1585,16 +1596,6 @@ telux::common::ErrorCode AudioPlayerImpl::updateVolume(
         return telux::common::ErrorCode::CANCELLED;
     }
 
-    if (listener.errorCode == telux::common::ErrorCode::SUCCESS) {
-        /*
-         * If the volume is set, cache it so that it can be applied to all
-         * the new streams if the current stream on which it is currently
-         * applied is closed and a new one is created.
-         */
-        cachedVolume_      = volume;
-        applyCachedVolume_ = true;
-    }
-
     return listener.errorCode;
 }
 
@@ -1615,21 +1616,39 @@ telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
              */
             cachedVolume_      = volume;
             applyCachedVolume_ = true;
-
-            /*
-             * If the stream is muted and then volume is set, audio will be heard
-             * from the speaker. Therefore, don't apply cached mute state.
-             */
-            applyCachedMute_ = false;
             return telux::common::ErrorCode::SUCCESS;
         }
 
         ec = updateVolume(volume, streamLock);
         if (ec == telux::common::ErrorCode::SUCCESS) {
-            applyCachedMute_ = false;
+            /*
+             * If the volume is set, cache it so that it can be applied to all
+             * the new streams if the current stream on which it is currently
+             * applied is closed and a new one is created.
+             */
+            cachedVolume_      = volume;
+            applyCachedVolume_ = true;
         }
         return ec;
     }
+}
+
+/*
+ *  Sets volume to the given level.
+ */
+telux::common::ErrorCode AudioPlayerImpl::setVolume(float volumeLevel) {
+    ChannelVolume channelVolume{};
+    StreamVolume streamVolume{};
+
+    channelVolume.vol         = volumeLevel;
+    channelVolume.channelType = telux::audio::ChannelType::LEFT;
+    streamVolume.volume.emplace_back(channelVolume);
+
+    channelVolume.vol         = volumeLevel;
+    channelVolume.channelType = telux::audio::ChannelType::RIGHT;
+    streamVolume.volume.emplace_back(channelVolume);
+
+    return setVolume(streamVolume);
 }
 
 /*
@@ -1646,16 +1665,22 @@ void GetVolumeResponseListener::getVolumeComplete(
 
     if (errorCode != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " can't get volume");
-    }
-    {
-        std::lock_guard<std::mutex> streamLock(streamMutex_);
-        volumeFetched.dir         = StreamDirection::RX;
+    } else {
+        /* If the stream was mono the 0th element will contain volume level.
+         * If the stream was stereo both 0th and 1st element will have same
+         * level. Therefore, just use 0th element. */
         channelVolume.vol         = volume.volume[0].vol;
         channelVolume.channelType = ChannelType::LEFT;
         volumeFetched.volume.push_back(channelVolume);
         channelVolume.vol         = volume.volume[0].vol;
         channelVolume.channelType = ChannelType::RIGHT;
         volumeFetched.volume.push_back(channelVolume);
+    }
+    volumeFetched.dir = StreamDirection::RX;
+
+    {
+        std::lock_guard<std::mutex> streamLock(streamMutex_);
+
         this->volume        = volumeFetched;
         this->errorCode     = errorCode;
         this->responseReady = true;
@@ -1682,7 +1707,7 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
         if (!isStreamOpened_) {
             /*
              * Either stream was not created at all or the getVolume() is called
-             * just after deleting the last stream but before creating a new stream.
+             * just after deleting the last stream but before creating the next stream.
              */
             LOG(DEBUG, __FUNCTION__, " no stream");
 
@@ -1700,19 +1725,6 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
             channelVolume.vol         = 1.0;
             channelVolume.channelType = ChannelType::RIGHT;
             volume.volume.push_back(channelVolume);
-            volume.dir = StreamDirection::RX;
-            return telux::common::ErrorCode::SUCCESS;
-        }
-
-        if (isStreamMuted_) {
-            if (applyCachedVolume_) {
-                /* Application muted the stream and then set volume */
-                volume     = cachedVolume_;
-                volume.dir = StreamDirection::RX;
-                return telux::common::ErrorCode::SUCCESS;
-            }
-            /* Application did not set volume previously, just muted the stream */
-            volume     = cachedVolumeOnMute_;
             volume.dir = StreamDirection::RX;
             return telux::common::ErrorCode::SUCCESS;
         }
@@ -1748,32 +1760,41 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
 }
 
 /*
- *  Helper to set mute state to the given state.
+ * Retrieves the current volume.
  */
-telux::common::ErrorCode AudioPlayerImpl::updateMute(std::unique_lock<std::mutex> &streamLock) {
-    StreamVolume newVolume{};
-    ChannelVolume channelVolume{};
-    bool waitResult = false;
-    telux::common::Status status;
-    SetVolumeResponseListener listener(streamMtx_);
+telux::common::ErrorCode AudioPlayerImpl::getVolume(float &volumeLevel) {
+    telux::common::ErrorCode ec;
+    StreamVolume volume{};
 
-    if (isStreamMuted_) {
-        channelVolume.vol         = 0.0;
-        channelVolume.channelType = ChannelType::LEFT;
-        newVolume.volume.push_back(channelVolume);
-        channelVolume.vol         = 0.0;
-        channelVolume.channelType = ChannelType::RIGHT;
-        newVolume.volume.push_back(channelVolume);
-    } else {
-        newVolume = cachedVolumeOnMute_;
+    ec = getVolume(volume);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        return ec;
     }
 
-    auto responseCb = std::bind(
-        &SetVolumeResponseListener::setVolumeComplete, &listener, std::placeholders::_1);
+    volumeLevel = volume.volume[0].vol;
+    return telux::common::ErrorCode::SUCCESS;
+}
 
-    status = audioPlayStream_->setVolume(newVolume, responseCb);
+/*
+ *  Helper to set mute state to the given state.
+ */
+telux::common::ErrorCode AudioPlayerImpl::updateMute(
+    bool enable, std::unique_lock<std::mutex> &streamLock) {
+
+    bool waitResult = false;
+    StreamMute streamMute{};
+    telux::common::Status status;
+    SetMuteResponseListener listener(streamMtx_);
+
+    auto responseCb
+        = std::bind(&SetMuteResponseListener::setMuteComplete, &listener, std::placeholders::_1);
+
+    streamMute.enable = enable;
+    streamMute.dir    = StreamDirection::RX;
+
+    status = audioPlayStream_->setMute(streamMute, responseCb);
     if (status != telux::common::Status::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't set mute");
+        LOG(ERROR, __FUNCTION__, " can't set mute state");
         return telux::common::CommonUtils::toErrorCode(status);
     }
 
@@ -1795,25 +1816,32 @@ telux::common::ErrorCode AudioPlayerImpl::updateMute(std::unique_lock<std::mutex
         return telux::common::ErrorCode::CANCELLED;
     }
 
-    return telux::common::ErrorCode::SUCCESS;
+    return listener.errorCode;
+}
+
+/*
+ *  Receives async response for the setMute().
+ */
+SetMuteResponseListener::SetMuteResponseListener(std::mutex &streamMtx)
+   : streamMutex_(streamMtx) {
+}
+void SetMuteResponseListener::setMuteComplete(telux::common::ErrorCode errorCode) {
+    if (errorCode != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " can't set mute state");
+    }
+    {
+        std::lock_guard<std::mutex> streamLock(streamMutex_);
+        this->errorCode     = errorCode;
+        this->responseReady = true;
+        this->cv.notify_one();
+    }
 }
 
 /*
  *  Mute/Unmute the audio stream.
  */
 telux::common::ErrorCode AudioPlayerImpl::setMute(bool enable) {
-
-    bool waitResult = false;
-    telux::common::Status status;
-    StreamVolume newVolume{};
-    ChannelVolume channelVolume{};
-    SetVolumeResponseListener setVolumeListener(streamMtx_);
-    GetVolumeResponseListener getVolumeListener(streamMtx_);
-
-    auto responseCbSet = std::bind(
-        &SetVolumeResponseListener::setVolumeComplete, &setVolumeListener, std::placeholders::_1);
-    auto responseCbGet = std::bind(&GetVolumeResponseListener::getVolumeComplete,
-        &getVolumeListener, std::placeholders::_1, std::placeholders::_2);
+    telux::common::ErrorCode ec;
 
     {
         std::unique_lock<std::mutex> streamLock(streamMtx_);
@@ -1821,113 +1849,18 @@ telux::common::ErrorCode AudioPlayerImpl::setMute(bool enable) {
         if (!isStreamOpened_) {
             isStreamMuted_   = enable;
             applyCachedMute_ = true;
-            if (applyCachedVolume_) {
-                cachedVolumeOnMute_ = cachedVolume_;
-            }
             return telux::common::ErrorCode::SUCCESS;
         }
 
-        status = audioPlayStream_->getVolume(StreamDirection::RX, responseCbGet);
-        if (status != telux::common::Status::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " can't get mute state");
-            return telux::common::CommonUtils::toErrorCode(status);
-        }
-
-        waitResult
-            = getVolumeListener.cv.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS), [&] {
-                  return (
-                      getVolumeListener.responseReady || hasSsrOccurred_ || hasUserRequestedStop_);
-              });
-
-        if (!waitResult) {
-            LOG(ERROR, __FUNCTION__, " timed out");
-            return telux::common::ErrorCode::OPERATION_TIMEOUT;
-        }
-
-        if (hasSsrOccurred_) {
-            LOG(ERROR, __FUNCTION__, " ssr occurred");
-            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-        }
-
-        if (hasUserRequestedStop_) {
-            LOG(ERROR, __FUNCTION__, " user stopped");
-            return telux::common::ErrorCode::CANCELLED;
-        }
-
-        if (getVolumeListener.errorCode != telux::common::ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " failed to get mute state");
-            return getVolumeListener.errorCode;
-        }
-
-        if (enable) {
-            /* Mute the given stream */
-            channelVolume.vol         = 0.0;
-            channelVolume.channelType = ChannelType::LEFT;
-            newVolume.volume.push_back(channelVolume);
-            channelVolume.vol         = 0.0;
-            channelVolume.channelType = ChannelType::RIGHT;
-            newVolume.volume.push_back(channelVolume);
-        } else {
-            /* Unmute the given stream */
-            if (applyCachedVolume_) {
-                /* Last operation by application was set volume */
-                newVolume = cachedVolume_;
-            } else if (applyCachedMute_) {
-                /* Last operation by application was set mute */
-                newVolume = cachedVolumeOnMute_;
-            } else {
-                /* Volume and mute were never set */
-                channelVolume.vol         = 1.0;
-                channelVolume.channelType = ChannelType::LEFT;
-                newVolume.volume.push_back(channelVolume);
-                channelVolume.vol         = 1.0;
-                channelVolume.channelType = ChannelType::RIGHT;
-                newVolume.volume.push_back(channelVolume);
-            }
-        }
-        newVolume.dir = StreamDirection::RX;
-
-        status = audioPlayStream_->setVolume(newVolume, responseCbSet);
-        if (status != telux::common::Status::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " can't set mute");
-            return telux::common::CommonUtils::toErrorCode(status);
-        }
-
-        waitResult
-            = setVolumeListener.cv.wait_for(streamLock, std::chrono::seconds(TIME_10_SECONDS), [&] {
-                  return (
-                      setVolumeListener.responseReady || hasSsrOccurred_ || hasUserRequestedStop_);
-              });
-
-        if (!waitResult) {
-            LOG(ERROR, __FUNCTION__, " timed out");
-            return telux::common::ErrorCode::OPERATION_TIMEOUT;
-        }
-
-        if (hasSsrOccurred_) {
-            LOG(ERROR, __FUNCTION__, " ssr occurred");
-            return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
-        }
-
-        if (hasUserRequestedStop_) {
-            LOG(ERROR, __FUNCTION__, " user stopped");
-            return telux::common::ErrorCode::CANCELLED;
-        }
-
-        if (setVolumeListener.errorCode == telux::common::ErrorCode::SUCCESS) {
-            if (enable) {
-                /* Cache what was volume level before muting the stream */
-                cachedVolumeOnMute_ = getVolumeListener.volume;
-                isStreamMuted_      = true;
-            } else {
-                /* Cache what is volume level after unmuting the stream */
-                cachedVolumeOnMute_ = newVolume;
-                isStreamMuted_      = false;
-            }
+        ec = updateMute(enable, streamLock);
+        if (ec == telux::common::ErrorCode::SUCCESS) {
+            /* If the mute state is set, cache it so that it can be applied to all
+             * the new streams if the current stream on which it is currently
+             * applied is closed and a new one is created. */
+            isStreamMuted_   = enable;
             applyCachedMute_ = true;
         }
-
-        return setVolumeListener.errorCode;
+        return ec;
     }
 }
 

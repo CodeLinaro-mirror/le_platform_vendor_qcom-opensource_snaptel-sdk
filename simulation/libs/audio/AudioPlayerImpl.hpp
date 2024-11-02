@@ -44,6 +44,30 @@ class SetVolumeResponseListener {
     std::mutex &streamMutex_;
 };
 
+class GetMuteResponseListener {
+ public:
+    GetMuteResponseListener(std::mutex &streamMtx);
+    bool responseReady = false;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void getMuteComplete(StreamMute mute, telux::common::ErrorCode errorCode);
+
+ private:
+    std::mutex &streamMutex_;
+};
+
+class SetMuteResponseListener {
+ public:
+    SetMuteResponseListener(std::mutex &streamMtx);
+    bool responseReady = false;
+    telux::common::ErrorCode errorCode;
+    std::condition_variable cv;
+    void setMuteComplete(telux::common::ErrorCode errorCode);
+
+ private:
+    std::mutex &streamMutex_;
+};
+
 class GetDeviceResponseListener {
  public:
     GetDeviceResponseListener(std::mutex &streamMtx);
@@ -83,6 +107,8 @@ class AudioPlayerImpl : public IAudioPlayer,
 
     telux::common::ErrorCode stopPlayback() override;
 
+    telux::common::ErrorCode setVolume(float volumeLevel) override;
+    telux::common::ErrorCode getVolume(float &volumeLevel) override;
     telux::common::ErrorCode setVolume(StreamVolume volume) override;
     telux::common::ErrorCode getVolume(StreamVolume &volume) override;
 
@@ -134,6 +160,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     bool isStreamMuted_         = false;
     uint32_t bufferSize_        = 0;
     long contentOffset_         = 0;
+    ChannelTypeMask curChannelTypeMask_;
 
     StreamVolume cachedVolume_;
     StreamVolume cachedVolumeOnMute_;
@@ -174,7 +201,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode adjustFileAndState();
     telux::common::ErrorCode updateVolume(
         StreamVolume volume, std::unique_lock<std::mutex> &streamLock);
-    telux::common::ErrorCode updateMute(std::unique_lock<std::mutex> &streamLock);
+    telux::common::ErrorCode updateMute(bool enable, std::unique_lock<std::mutex> &streamLock);
     telux::common::ErrorCode updateDevice(
         std::vector<DeviceType> devices, std::unique_lock<std::mutex> &streamLock);
 

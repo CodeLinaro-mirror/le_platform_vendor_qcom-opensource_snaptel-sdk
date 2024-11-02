@@ -514,12 +514,17 @@ class IAudioStream {
    /**
     * Sets the volume level of the audio device.
     *
-    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::RX.
+    * For @ref StreamType::VOICE_CALL and @ref StreamType::PLAY, direction must be
+    * @ref StreamDirection::RX. For @ref StreamType::CAPTURE, direction must be
+    * @ref StreamDirection::TX.
+    *
+    * If the stream was created with ChannelType::LEFT, ChannelType::LEFT must be
+    * specified in StreamVolume. If the stream was created with ChannelType::RIGHT,
+    * ChannelType::RIGHT must be specified in StreamVolume. If the stream contains
+    * both channels, both channels must be given in StreamVolume.
     *
     * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
     * @ref StreamType::CAPTURE only.
-    *
-    * Direction of the stream is ignored.
     *
     * @param [in] volume   Specifies the volume level and the stream's direction
     *
@@ -534,12 +539,17 @@ class IAudioStream {
    /**
     * Gets the current volume level of the audio device.
     *
-    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::RX.
+    * For @ref StreamType::VOICE_CALL and @ref StreamType::PLAY, direction must be
+    * @ref StreamDirection::RX. For @ref StreamType::CAPTURE, direction must be
+    * @ref StreamDirection::TX.
+    *
+    * If the stream was created with ChannelType::LEFT, ChannelType::LEFT must be
+    * specified in StreamVolume. If the stream was created with ChannelType::RIGHT,
+    * ChannelType::RIGHT must be specified in StreamVolume. If the stream contains
+    * both channels, both channels must be given in StreamVolume.
     *
     * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
     * @ref StreamType::CAPTURE only.
-    *
-    * Direction of the stream is ignored.
     *
     * @param [in] dir      Direction of the stream associated with the device
     *
@@ -560,8 +570,6 @@ class IAudioStream {
     * For @ref StreamType::VOICE_CALL, the stream must be started using
     * @ref IAudioVoiceStream::startAudio() before setting the mute state.
     *
-    * Direction of the stream is ignored.
-    *
     * @param [in] mute     Defines the stream is to be muted or unmuted
     *
     * @param [in] callback Optional, invoked to confirm if the stream is muted/unmuted
@@ -580,8 +588,6 @@ class IAudioStream {
     *
     * For @ref StreamType::VOICE_CALL, the stream must be started using
     * @ref IAudioVoiceStream::startAudio() before reading the mute state.
-    *
-    * Direction of the stream is ignored.
     *
     * @param [in] dir      Direction of the stream
     *

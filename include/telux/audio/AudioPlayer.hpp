@@ -213,24 +213,22 @@ class IAudioPlayer {
    /**
     * Sets the volume level of the audio stream.
     *
-    * Note - direction set in the StreamVolume is not used.
-    *
-    * @param[in] volume Specifies the volume level to set
+    * @param[in] volumeLevel Specifies the volume level (0.0 to 1.0) to set
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS if the given volume is set,
     *          otherwise, an appropriate error code.
     */
-   virtual telux::common::ErrorCode setVolume(StreamVolume volume) = 0;
+   virtual telux::common::ErrorCode setVolume(float volumeLevel) = 0;
 
    /**
     * Retrieves the current volume level of the audio stream.
     *
-    * @param[out] volume, Current volume
+    * @param[out] volumeLevel, Current volume level (0.0 to 1.0)
     *
     * @returns @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved,
     *          otherwise, an appropriate error code.
     */
-   virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;
+   virtual telux::common::ErrorCode getVolume(float &volumeLevel) = 0;
 
    /**
     * Mutes or unmutes the audio.
@@ -271,6 +269,35 @@ class IAudioPlayer {
     *          otherwise, an appropriate error code.
     */
    virtual telux::common::ErrorCode getDevice(std::vector<DeviceType> &devices) = 0;
+
+   /**
+    * Sets the volume level of the audio stream.
+    *
+    * Note - direction set in the StreamVolume is not used. Volume level for both
+    * channels should be passed and must have same value.
+    *
+    * @param[in] volume Specifies the volume level (0.0 to 1.0) to set
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the given volume is set,
+    *          otherwise, an appropriate error code.
+    *
+    * @deprecated Use @ref setVolume(float vol) instead.
+    */
+   virtual telux::common::ErrorCode setVolume(StreamVolume volume) = 0;
+
+   /**
+    * Retrieves the current volume level of the audio stream.
+    *
+    * Note - Returns volume level for both channels even if the stream is mono.
+    *
+    * @param[out] volume, Current volume level (0.0 to 1.0)
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS if the volume is retrieved,
+    *          otherwise, an appropriate error code.
+    *
+    * @deprecated Use @ref getVolume(float &vol) instead.
+    */
+   virtual telux::common::ErrorCode getVolume(StreamVolume &volume) = 0;
 
     /**
      * Destructor of the IAudioPlayer.

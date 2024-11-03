@@ -660,6 +660,7 @@ Performing operations such as setting the RAT mode preference or service domain 
 
 Supplementary Services
 ''''''''''''''''''''''
+For reference, the default supported values for the call forward reason on initial launch are UNCONDITIONAL and BUSY. For other reasons (refer to ``telux::tel::ForwardReason``), use the ``telux::tel::ISuppServicesManager::setForwardingPref`` API to update the call forward reason information. Then, get the expected response by using the ``telux::tel::ISuppServicesManager::requestForwardingPref`` API.
 
 Details of parameters that can be configured in the simulation framework.
 - "failureCause" : To configure failureCause for supplementary services.

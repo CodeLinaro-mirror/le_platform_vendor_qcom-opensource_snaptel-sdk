@@ -40,6 +40,13 @@ namespace telux {
 namespace tel {
 
 
+struct UserRefreshParam {
+    bool isRegister = false;
+    bool doVoting = false;
+    std::vector<IccFile> efFiles;
+    RefreshParams refreshParams;
+};
+
 class CardManagerStub : public ICardManager,
                         public IEventListener,
                         public std::enable_shared_from_this<CardManagerStub> {
@@ -82,6 +89,9 @@ private:
     telux::common::ServiceStatus subSystemStatus_;
     std::mutex cardManagerMutex_;
     std::vector<int> simSlotIds_;
+    pid_t myPid_;
+    std::vector<UserRefreshParam> userRefreshParams_;
+
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     std::map<int, std::shared_ptr<CardStub>> cardMap_;
@@ -90,6 +100,13 @@ private:
     void handleEvent(std::string token, std::string event);
     void invokelisteners (int slotId);
     void handleCardInfoChanged(::telStub::cardInfoChange event);
+    void handleRefreshEvent(::telStub::RefreshEvent event);
+    void setRpcRefreshParams(::telStub::RefreshParams* refreshs,
+        const RefreshParams refreshParams);
+    void convertRefreshParams(const RefreshParams userParams, RefreshParams& refreshParams);
+    SlotId getSlotBySessionType(telux::tel::SessionType st);
+    void findRefreshParams(const RefreshParams& refreshParams, bool& isRegister, bool* doVoting,
+        std::vector<IccFile>* efFiles);
 };
 
 } // end of namespace tel

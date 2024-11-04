@@ -731,6 +731,47 @@ The event injector allows you to inject event for subscription information chang
 
   telsdk_event_injector -f tel_sub -e subscriptionInfoChanged 1 Carrier-1 8984653739 89010020000011293999 310 11 310018984653739 ffffffffffffffff ffffffffffffffff
 
+Update sim refresh event
+'''''''''''''''''''''''''''''
+
+The event injector allows you to inject event for sim refresh notification.
+
+Sample: ``telsdk_event_injector -f tel_card -e simRefresh <mode> <fileId> <filePath> <sessionId> <aid> <channelId>``
+
+- **mode:** An integer representing valid sim refresh mode. The supported types are:-
+ - RESET - 0
+ - INIT - 1
+ - INIT_FCN - 2
+ - FCN - 3
+ - INIT_FULL_FCN - 4
+ - RESET_APP - 5
+ - RESET_3G - 6
+
+- **fildId:** An integer representing Elementary file ID in card.
+
+- **filePath:** An string representing Elementary file path.
+
+- **sessionId:** An integer representing session type. The supported types are:-
+0-PRIMARY, 2-SECONDARY, 4-NONPROVISIONING_SLOT1, 5-NONPROVISIONING_SLOT2, 6-CARD_ON_SLOT1, 7-CARD_ON_SLOT2, 8-CHANNEL_ID_SLOT1, 9-CHANNEL_ID_SLOT2
+ - PRIMARY - 0
+ - SECONDARY -2
+ - NONPROVISIONING_SLOT1 - 4
+ - NONPROVISIONING_SLOT2 - 5
+ - CARD_ON_SLOT1 - 6
+ - CARD_ON_SLOT2 - 7
+ - CHANNEL_ID_SLOT1 - 8
+ - CHANNEL_ID_SLOT2 - 9
+
+- **aid:** An string representing AID (Application Identifier), applicable for NONPROVISIONING_SLOT1 and NONPROVISIONING_SLOT2 session types.
+
+- **channelId:** An string representing channelId for this session, applicable for CHANNEL_ID_SLOT_1 and CHANNEL_ID_SLOT_2 session types.
+
+**Sample input:**
+
+.. code-block::
+
+ telsdk_event_injector -f tel_card -e simRefresh 3 28486 3F007FFF 0"
+
 Update cell information list
 '''''''''''''''''''''''''''''
 

@@ -250,6 +250,13 @@ public:
     * Needs to be implemented.
     */
     virtual void deinit() = 0;
+    /**
+    * Method to check SSP during public vehicle emergency event.
+    * @param
+    * @return int - Reports -1 on failure, else success.
+    */
+    virtual int sspCheck(void* smp, uint8_t const* ssp) = 0;
+
 protected:
     /**
     * Virtual method to setup and initialize security instance.

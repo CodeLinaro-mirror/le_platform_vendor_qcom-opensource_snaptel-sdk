@@ -1234,9 +1234,39 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                     }
 
                     // perform operations on the message if it is an unsigned bsm
-                   basicFilterAndSafetyChecks(l2SrcAddr, distFromRV);
-                   fillLoggingData(bsm, &bs);
-                   prepareForSecurityChecks(bsm,&sopt);
+                    basicFilterAndSafetyChecks(l2SrcAddr, distFromRV);
+                    fillLoggingData(bsm, &bs);
+                    prepareForSecurityChecks(bsm,&sopt);
+
+                    // SSP Check if the BSM is from a public vehicle with emergency event
+                    if((bsm->has_special_extension) && (bsm->vehicleAlerts.lightsUse) &&
+                       (bsm->vehicleAlerts.sirenUse) && (bsm->vehicleAlerts.multi) &&
+                       (configuration.expectedSspLength))
+                    {
+                        uint8_t const* ssp;
+                        ret = SecService->sspCheck(smp,ssp);
+                        if (ret == DECODE_FAIL) {
+                            if (appVerbosity > 4)
+                                printf("Error decoding SSP \n ");
+                            return -1;
+                        }
+                        // First byte of the ssp should be 0x01 as per the specification J2945/J3161
+                        // Bits 1-8: Version number. Set to one for this version
+                        // of the specification (00000001).
+                        if(ssp[0] != configuration.expectedSsp[0])
+                        {
+                            fprintf(stderr,"Invalid SSP Version Present \n");
+                            return -1;
+                        }
+                        // Second byte of the ssp should be 0x80 as per the specification J2945/J3161
+                        // Bits 9-15: SSP activity bits with bit 9 set to 1
+                        // (bit 16 is reserved for future use)(10000000)
+                        if(ssp[1] != configuration.expectedSsp[1])
+                        {
+                            fprintf(stderr,"Invalid Entity Activity Detected \n");
+                            return -1;
+                        }
+                    }
                 }
             }
         }
@@ -1983,10 +2013,37 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
         bsm->has_partII = (v2x_bool_t)0;
         bsm->has_safety_extension = (v2x_bool_t)0;
         bsm->qty_partII_extensions = (int)0;
-        bsm->has_safety_extension = (v2x_bool_t)0;
         bsm->has_special_extension = (v2x_bool_t)0;
         bsm->has_supplemental_extension = (v2x_bool_t)0;
         bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
+
+        if((configuration.emergencyVehicleEventTX))
+        {
+            /* Setting the BSM fields for simulating the Public Vehicle Emergency Event from
+             * TX Device
+             ASN.1 Representation:
+             EmergencyDetails ::= SEQUENCE {
+              notUsed SSPindex,
+                -- always set to 0 and carries no meaning;
+                -- legacy field maintained for backward compatibility
+              sirenUse SirenInUse,
+              lightsUse LightbarInUse,
+              multi MultiVehicleResponse,
+              events PrivilegedEvents OPTIONAL,
+              responseType ResponseType OPTIONAL,
+              ...
+             }
+             *
+             */
+            bsm->has_partII = (v2x_bool_t)1;
+            bsm->qty_partII_extensions = (int)1;
+            bsm->has_special_extension = (v2x_bool_t)1;
+            bsm->vehicleAlerts.sspRights = 0 ;
+            bsm->vehicleAlerts.sirenUse = J2735_SIREN_IN_USE;
+            bsm->vehicleAlerts.lightsUse = J2735_LIGHTS_IN_USE;
+            bsm->vehicleAlerts.multi = J2735_MULTIVEHICLE_AVAILABLE;
+            bsm->specvehopts |= SPECIAL_VEH_EXT_OPTION_EMERGENCY_DETAILS;
+        }
     }
 
     bsm->vehsafeopts = 0;

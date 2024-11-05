@@ -839,7 +839,51 @@ int AerolinkSecurity::ExtractMsg(
     return 0;
 }
 
+int AerolinkSecurity::sspCheck(void* smp, uint8_t const* ssp){
+    // Get corresponding smp for this thread
+    // Add new smp (if none exists) for this thread
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        try{
+            addNewThrSmp(thrId);
+        }
+        catch (std::exception& e)
+        {
+            if(secVerbosity > 4){
+                print_exception(e);
+            }
+            return -1;
+        }
+        smp = getThrSmp(thrId);
+    }
+    // return nullptr if still nullptr
+    if(smp == nullptr){
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to retreive smp for this thread\n");
+        return -1;
+    }
 
+    AEROLINK_RESULT result;
+    //SSP Check
+    uint32_t len = 0;
+    //Get the SSP from the signer certificate present in the SPDU
+    result = smp_getServiceSpecificPermissions((*(SecuredMessageParserC*)smp), &ssp, &len);
+
+    if (result != WS_SUCCESS)
+    {
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to get SSP (%s)\n", ws_errid(result));
+        return -1;
+    }
+    //Check the length of the SSP
+    if(len < 2)
+    {
+        fprintf(stderr,"No valid SSP Found in the SPDU \n");
+        return -1;
+    }
+
+    return 0;
+}
 // A function to verify a signed packet that can handle multi-threading:
 //   smp_extract
 //   smp_checkRelevance

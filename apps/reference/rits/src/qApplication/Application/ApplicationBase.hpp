@@ -271,6 +271,10 @@ struct Config {
     bool enableConsistency = true;
     bool enableRelevance = true;
     bool overridePsidCheck = false;
+    bool emergencyVehicleEventTX = false;
+    vector<string> expectedSspValueVect;
+    uint8_t expectedSsp[31];
+    uint32_t expectedSspLength = 0;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
     bool acceptAll = false;

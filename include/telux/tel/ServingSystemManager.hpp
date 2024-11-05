@@ -386,6 +386,18 @@ struct NetworkTimeInfo {
 };
 
 /**
+ * Defines network registration reject information
+ */
+struct NetworkRejectInfo {
+    ServingSystemInfo rejectSrvInfo; /**< Serving system information where the registration is
+                                          rejected.*/
+    uint8_t rejectCause;             /**< Reject cause values as specified in 3GPP TS 24.008,
+                                          3GPP TS 24.301 and 3GPP TS 24.501. */
+    std::string mcc;                 /**< Mobile Country Code for rejection*/
+    std::string mnc;                 /**< Mobile Network Code for rejection*/
+};
+
+/**
  * 16 bit mask that denotes which of the radio access technology mode preference
  * defined in RatPrefType enum are used to set or get RAT preference.
  */
@@ -398,7 +410,8 @@ using RatPreference = std::bitset<16>;
  */
 enum ServingSystemNotificationType {
    SYSTEM_INFO,      /* Represents @ref onSystemInfoChanged() and @ref onDcStatusChanged() */
-   RF_BAND_INFO      /* Represents @ref onRFBandInfoChanged */
+   RF_BAND_INFO,     /* Represents @ref onRFBandInfoChanged */
+   NETWORK_REJ_INFO  /* Represents @ref onNetworkRejection */
 };
 
 /**
@@ -765,6 +778,23 @@ public:
     *
     */
    virtual void onRFBandInfoChanged(RFBandInfo bandInfo) {
+   }
+
+   /**
+    * This function is called when network registration rejection occurs.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::NETWORK_REJ_INFO bit in the bitmask.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] rejectInfo       @ref NetworkRejectInfo
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onNetworkRejection(NetworkRejectInfo rejectInfo) {
    }
 
    /**

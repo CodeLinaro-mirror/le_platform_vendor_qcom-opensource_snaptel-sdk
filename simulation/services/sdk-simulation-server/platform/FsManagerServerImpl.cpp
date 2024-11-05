@@ -589,7 +589,13 @@ grpc::Status FsManagerServerImpl::PrepareForOta(ServerContext* context,
         otaSession_ = true;
         updateSystemStateJson();
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("SUCCESS")));
-    } else if (fsEventName == "MRC_OTA_RESUME" && otaSession_ && fsEventsMap_[fsEventName]) {
+    // The OTA RESUME is allowed in case of below scenarios:
+    // 1. When OTA START is true and reboot happens, OTA RESUME and otaSession_ will be set to true
+    // 2. When there is no otaSession_ in progress.
+    } else if ((fsEventName == "MRC_OTA_RESUME") &&
+        ((otaSession_ && fsEventsMap_[fsEventName]) || (!otaSession_))) {
+        fsEventsMap_["MRC_OTA_RESUME"] = true;
+        otaSession_ = true;
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("SUCCESS")));
     } else {
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("FAILED")));

@@ -368,21 +368,23 @@ enum class RadioTechnology {
    RADIO_TECH_IWLAN,    /**< Network type is TD IWLAN */
    RADIO_TECH_LTE_CA,   /**< Network type is LTE CA */
    RADIO_TECH_NR5G,     /**< Network type is NR5G */
+   RADIO_TECH_NB1_NTN,  /**< Network type is NB-IoT(NB1) Non Terrestrial Network(NTN) */
 };
 
 /**
  * Defines all available RAT capabilities for each subscription
  */
 enum class RATCapability {
-   AMPS,
-   CDMA,
-   HDR,
-   GSM,
-   WCDMA,
-   LTE,
-   TDS,
-   NR5G,   /**< NR5G NSA mode */
-   NR5GSA, /**< NR5G SA mode */
+   AMPS,     /**< AMPS mode */
+   CDMA,     /**< CDMA mode */
+   HDR,      /**< HDR mode */
+   GSM,      /**< GSM mode */
+   WCDMA,    /**< WCDMA mode */
+   LTE,      /**< LTE mode */
+   TDS,      /**< TD-SCDMA mode */
+   NR5G,     /**< NR5G NSA mode */
+   NR5GSA,   /**< NR5G SA mode */
+   NB1_NTN,  /**< NB-IoT(NB1) Non Terrestrial Network(NTN) mode */
 };
 
 using RATCapabilitiesMask = std::bitset<16>;

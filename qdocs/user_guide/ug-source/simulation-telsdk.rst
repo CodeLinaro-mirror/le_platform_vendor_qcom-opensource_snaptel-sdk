@@ -54,7 +54,7 @@ This is the main daemon that interacts with all the clients using the Simulation
 Event Injector
 ~~~~~~~~~~~~~~
 
-Event injector allows the users to inject unsolicited events. It is a Linux based command-line utility that injects events into the simulation framework. For example: ``telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower>`` could be triggered to change the card power state.
+Event injector allows the users to inject unsolicited events. It is a Linux based command-line utility that injects events into the simulation framework. For example: ``telsdk_event_injector -f tel_card -e cardInfoChanged <slotId> <cardPower> <isNtnProfileActive>`` could be triggered to change the card power state or Non-terrestrial networks(NTN) profile active status.
 
 
 Syntax for injecting events: ``telsdk_event_injector -f <filter/subsystem/manager> -e <event> <arguments>``
@@ -747,6 +747,7 @@ Sample: ``telsdk_event_injector -f tel_phone -e cellInfoListUpdate <slotId> ,<ce
  - LTE - 3
  - WCDMA - 4
  - NR5G - 6
+ - NB1_NTN - 7
  - (CDMA and TDSCDMA are not supported)
 
 - **isRegistered:** An integer indicating whether the cell is registered or not. Valid values are 1 (registered) or 0 (not registered).
@@ -759,7 +760,7 @@ Refer below for configuring different cells with their respective attributes in 
 
 - **WCDMA cell info:**
 
- - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-PSC> <p6-UARFCN> <p7-Signal Strength> <p8-Bit Error Rate>
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-LAC> <p4-CID> <p5-PSC> <p6-UARFCN> <p7-Signal Strength> <p8-Bit Error Rate> <p9-ECIO> <p10-RSCP>
 
 - **LTE cell info:**
 
@@ -769,13 +770,17 @@ Refer below for configuring different cells with their respective attributes in 
 
  - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-CI> <p4-PCI> <p5-TAC> <p6-ARFCN> <p7-RSRP> <p8-RSRQ> <p9-RSSNR>
 
+- **NB1_NTN cell info:**
+
+ - <cellType> <isRegistered> <p1-MCC> <p2-MNC> <p3-CI> <p4-TAC> <p5-EARFCN> <p6-Signal Strength> <p7-RSRP> <p8-RSRQ> <p9-RSSNR>
+
 Please note that CDMA and TDSCDMA are deprecated.
 
 **Sample input:**
 
 .. code-block::
 
- telsdk_event_injector -f tel_phone -e "cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300"
+ telsdk_event_injector -f tel_phone -e "cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5,4 0 311 00 70 81 10 1 30 3 -10 -54,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11,6 0 313 00 10 20 30 40 -50 15 300,7 0 314 00 10 13 14 23 -50 -5 200"
 
 Update signal strength information
 '''''''''''''''''''''''''''''''''''
@@ -808,6 +813,8 @@ Refer below for configuring different RAT signal strength with their respective 
 
  - p1 - Signal Strength
  - p2 - Bit Error Rate
+ - p3 - ECIO
+ - p4 - RSCP
 
 - **NR5G:** Use the following parameters:
 
@@ -815,13 +822,20 @@ Refer below for configuring different RAT signal strength with their respective 
  - p2 - RSRQ
  - p3 - RSSNR
 
+- **NB1_NTN:** Use the following parameters:
+
+ - p1 - Signal Strength
+ - p2 - RSRP
+ - p3 - RSRQ
+ - p4 - RSSNR
+
 Please note that CDMA and TDSCDMA are deprecated.
 
 **Sample input:**
 
 .. code-block::
 
- telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 ,LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300"
+ telsdk_event_injector -f tel_phone -e "signalStrengthUpdate 1 ,GSM 28 3 ,WCDMA 29 6 -10 -54, LTE 23 -50 -5 200 13 11 ,NR5G -50 15 300,NB1_NTN 23 -50 -5 200"
 
 Trigger an incoming call
 '''''''''''''''''''''''''
@@ -925,17 +939,19 @@ To simulate IServingSystemManager event - telux::tel::IServingSystemListener::on
 telux::tel::IServingSystemListener::onDcStatusChanged, telux::tel::IServingSystemListener::onSmsCapabilityChanged,
 telux::tel::IServingSystemListener::onLteCsCapabilityChanged and telux::tel::IServingSystemListener::onCallBarringInfoChanged
 
-Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <lteCapability> ,<CallAllowedRat_i> <CallAllowedDomain_i> <CallAllowedType_i>``
+Command: ``telsdk_event_injector -f tel_serv -e systemInfoUpdate <slotId> <currentServingRat> <currentServingDomain> <currentRegistrationState> <endcAvailability> <dcnrRestriction> <smsRat> <smsDomain> <ntnSmsStatus> <lteCapability> ,<CallAllowedRat_i> <CallAllowedDomain_i> <CallAllowedType_i>``
 
 **Parameters of event injector command:**
 
 - slotId: valid slotIds are 1 & 2 only
 - currentServingRat: valid integer value is filled as per telux::tel::RadioTechnology
 - currentServingDomain: valid integer value is filled as per telux::tel::ServiceDomain
+- currentRegistrationState: valid integer value is filled as per telux::tel::ServiceRegistrationState
 - endcAvailability: valid integer value is filled as per telux::tel::endcAvailability
 - dcnrRestriction: valid integer value is filled as per telux::tel::dcnrRestriction
 - smsRat: valid integer value is filled as per telux::tel::RadioTechnology
 - smsDomain: valid integer value is filled as per telux::tel::SmsDomain
+- ntnSmsStatus: valid integer value is filled as per telux::tel::NtnSmsStatus
 - lteCapability: valid integer value is filled as per telux::tel::LteCsCapability
 - CallAllowedRat_i:  valid integer value is filled as per telux::tel::RadioTechnology
 - CallAllowedDomain_i:  valid integer is telux::tel::ServiceDomain::CS_ONLY = 1 or telux::tel::ServiceDomain::PS_ONLY = 2.

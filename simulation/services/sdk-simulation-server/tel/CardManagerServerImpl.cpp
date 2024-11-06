@@ -2008,6 +2008,23 @@ commonStub::ErrorCode CardManagerServerImpl::findmatchingrecordDF (Json::Value r
     }
     return error;
 }
+
+grpc::Status CardManagerServerImpl::IsNtnProfileActive(ServerContext* context,
+    const ::telStub::IsNtnProfileActiveRequest* request,
+    telStub::IsNtnProfileActiveReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = request->phone_id();
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        bool state = rootObj["ICardManager"]["isNtnProfileActive"]["state"].asBool();
+        response->set_is_ntn_profile_active(state);
+    }
+    return readStatus;
+}
+
 void CardManagerServerImpl::onEventUpdate(std::string event) {
     std::string token;
     LOG(DEBUG, __FUNCTION__,"String is ", event );
@@ -2061,6 +2078,21 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
+    // Fetch ntn profile active status
+    int isNtnProfileActive;
+    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if (token == "") {
+        LOG(INFO, __FUNCTION__,
+            "isNtnProfileActive not passed, assuming ntn profile is not active");
+        isNtnProfileActive = false;
+    } else {
+        try {
+            isNtnProfileActive = std::stoi(token);
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, " isNtnProfileActive : ", isNtnProfileActive);
     getJsonForSystemData(slotId, jsonfilename, rootObj);
     bool cardpower = static_cast<bool>(input);
     LOG(DEBUG, __FUNCTION__, "The fetched card power state id is: ", cardpower);
@@ -2083,12 +2115,17 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
     } else {
          LOG(DEBUG, __FUNCTION__, "No change in card state ");
     }
+    // write ntn profile active status
+    rootObj["ICardManager"]["isNtnProfileActive"]["state"] = isNtnProfileActive;
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+    jsonObjSystemStateSlot_[slotId] = rootObj;
 
     ::telStub::cardInfoChange cardInfoChangeEvent;
     ::eventService::EventResponse anyResponse;
 
     cardInfoChangeEvent.set_phone_id(slotId);
     cardInfoChangeEvent.set_card_power(cardpower);
+    cardInfoChangeEvent.set_is_ntn_profile_active(isNtnProfileActive);
     anyResponse.set_filter("tel_card");
     anyResponse.mutable_any()->PackFrom(cardInfoChangeEvent);
     //posting the event to EventService event queue

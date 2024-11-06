@@ -94,6 +94,7 @@ enum class CellType {
    WCDMA = 4,
    TDSCDMA = 5,
    NR5G = 6,
+   NB1_NTN = 7,
 };
 
 /**
@@ -523,6 +524,59 @@ private:
 };
 
 /**
+ * Nb1NtnCellIdentity class provides methods to get the mobile country code, mobile network code,
+ * cell identity, tracking area code and E-UTRA absolute radio frequency(RF) channel number.
+ */
+class Nb1NtnCellIdentity {
+public:
+   Nb1NtnCellIdentity(std::string mcc, std::string mnc, int ci, int tac, int earfcn);
+
+   /**
+    * Get the mobile country code.
+    *
+    * @returns mcc value.
+    *
+    */
+   const std::string getMobileCountryCode();
+
+   /**
+    * Get the mobile network code.
+    *
+    * @returns mnc value.
+    *
+    */
+   const std::string getMobileNetworkCode();
+
+   /**
+    * Get the cell identity.
+    *
+    * @returns Cell identity.
+    */
+   const int getIdentity();
+
+   /**
+    * Get the tracking area code.
+    *
+    * @returns Tracking area code.
+    */
+   const int getTrackingAreaCode();
+
+   /**
+    * Get the E-UTRA absolute radio frequency(RF) channel number.
+    *
+    * @returns E-UTRA absolute radio frequency(RF) channel number.
+    */
+   const int getEarfcn();
+
+private:
+   std::string mcc_;
+   std::string mnc_;
+   int ci_;
+   int tac_;
+   int earfcn_;
+};
+
+/**
  * CellInfo class provides cell info type and checks whether the current cell is registered
  * or not.
  */
@@ -747,6 +801,39 @@ public:
 private:
    Nr5gCellIdentity id_;
    Nr5gSignalStrengthInfo ssInfo_;
+};
+
+/**
+ * Nb1NtnCellInfo class provides methods to get cell type, cell registration status, cell
+ * identity and signal strength information.
+ */
+class Nb1NtnCellInfo : public CellInfo {
+public:
+   /**
+    * Nb1NtnCellInfo constructor.
+    * @param [in] registered - Registration status of the cell.
+    * @param [in] id - NB1 NTN cell identity class.
+    * @param [in] ssInfo - NB1 NTN cell signal strength.
+    */
+   Nb1NtnCellInfo(int registered, Nb1NtnCellIdentity id, Nb1NtnSignalStrengthInfo ssInfo);
+
+   /**
+    * Get NB1 NTN cell identity information.
+    *
+    * @returns Nb1NtnCellIdentity.
+    */
+   Nb1NtnCellIdentity getCellIdentity();
+
+   /**
+    * Get NB1 NTN cell signal strength information.
+    *
+    * @returns Nb1NtnSignalStrengthInfo.
+    */
+   Nb1NtnSignalStrengthInfo getSignalStrengthInfo();
+
+private:
+   Nb1NtnCellIdentity id_;
+   Nb1NtnSignalStrengthInfo ssInfo_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

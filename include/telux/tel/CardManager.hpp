@@ -610,7 +610,17 @@ class ICard {
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
 
-    virtual ~ICard() {};
+   /**
+    * Checks whether the NTN profile is activated on a given slot.
+    *
+    * @returns If true NTN profile is activated or else not-activated.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual bool isNtnProfileActive() = 0;
+
+   virtual ~ICard() {};
 };
 
 /**

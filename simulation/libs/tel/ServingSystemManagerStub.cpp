@@ -153,6 +153,8 @@ telux::common::Status ServingSystemManagerStub::registerListener(
             mask.set(ServingSystemNotificationType::SYSTEM_INFO);
             mask.set(ServingSystemNotificationType::RF_BAND_INFO);
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+            mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
+            mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
         }
         // TODO: Update client mask for post SSR
         // Register for default notifications
@@ -214,6 +216,9 @@ telux::common::Status ServingSystemManagerStub::registerListener(
                 return status;
             }
         }
+        /* In simulation, TEL_SERVING_SYSTEM_NETWORK_TIME is considered for
+           ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
+           ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence registration is not required. */
     } while(0);
     return status;
 }
@@ -250,6 +255,8 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
             mask.set(ServingSystemNotificationType::SYSTEM_INFO);
             mask.set(ServingSystemNotificationType::RF_BAND_INFO);
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+            mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
+            mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
         }
         // TODO: Update client mask for SSR
         // De-register optional indications
@@ -306,6 +313,10 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
                 return status;
             }
         }
+        /* In simulation, TEL_SERVING_SYSTEM_NETWORK_TIME is considered for
+           ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
+           ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence de-registration is not
+           required. */
     } while(0);
     return status;
 }
@@ -502,6 +513,7 @@ telux::common::Status ServingSystemManagerStub::getSystemInfo(ServingSystemInfo 
     }
     sysInfo.domain = static_cast<telux::tel::ServiceDomain>(response.current_domain());
     sysInfo.rat = static_cast<telux::tel::RadioTechnology>(response.current_rat());
+    sysInfo.state = static_cast<telux::tel::ServiceRegistrationState>(response.current_state());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
@@ -676,6 +688,7 @@ telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
     smsCapability.domain =
         static_cast<telux::tel::SmsDomain>(response.domain());
     smsCapability.rat = static_cast<telux::tel::RadioTechnology>(response.rat());
+    smsCapability.smsStatus = static_cast<telux::tel::NtnSmsStatus>(response.sms_status());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
@@ -938,10 +951,12 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
     ServingSystemInfo info;
     info.rat = static_cast<RadioTechnology>(event.current_rat());
     info.domain = static_cast<ServiceDomain>(event.current_domain());
+    info.state = static_cast<ServiceRegistrationState>(event.current_state());
 
     SmsCapability smsCapability;
     smsCapability.rat = static_cast<RadioTechnology>(event.sms_rat());
     smsCapability.domain = static_cast<SmsDomain>(event.sms_domain());
+    smsCapability.smsStatus = static_cast<NtnSmsStatus>(event.sms_status());
 
     LteCsCapability lteCapability = static_cast<LteCsCapability>(event.lte_capability());;
 

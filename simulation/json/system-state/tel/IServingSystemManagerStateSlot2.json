@@ -40,7 +40,10 @@
             "rat" : 14,
             "_comment_rat" : "Refer telux::tel::RadioTechnology for more details",
             "domain" : 4,
-            "_comment_domain" : "Refer telux::tel::ServiceDomain for more details"
+            "_comment_domain" : "Refer telux::tel::ServiceDomain for more details",
+            "registrationState" : 2,
+            "_comment_registrationState" : "Refer telux::tel::ServiceRegistrationState
+                                            for more details"
         },
         "NetworkRejectInfo" :
         {
@@ -75,7 +78,9 @@
             "rat" : 14,
             "_comment_rat" : "Refer telux::tel::RadioTechnology for more details",
             "domain" : 2,
-            "_comment_domain" : "Refer telux::tel::SmsDomain for more details"
+            "_comment_domain" : "Refer telux::tel::SmsDomain for more details",
+            "ntnSmsStatus" : 0,
+            "_comment_ntnSmsStatus" : "Refer telux::tel::NtnSmsStatus for more details"
         },
         "LteCsCapability" : 0,
         "_comment_LteCsCapability" : "Refer telux::tel::LteCsCapability for more details",

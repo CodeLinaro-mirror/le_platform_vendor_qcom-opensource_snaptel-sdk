@@ -89,7 +89,7 @@ class CdmaSignalStrengthInfo;
 class WcdmaSignalStrengthInfo;
 class TdscdmaSignalStrengthInfo;
 class Nr5gSignalStrengthInfo;
-
+class Nb1NtnSignalStrengthInfo;
 /**
  * Defines all the signal levels that SignalStrength class can return
  * where level 1 is low and level 5 is high.
@@ -104,7 +104,8 @@ enum class SignalStrengthLevel {
 };
 
 /**
- * SignalStrength class provides access to LTE, GSM, CDMA, WCDMA, TDSCDMA signal strengths.
+ * SignalStrength class provides access to LTE, GSM, CDMA, WCDMA, TDSCDMA, NR5G and NB-IoT(NB1)
+ * NTN signal strengths.
  */
 class SignalStrength {
 public:
@@ -113,7 +114,8 @@ public:
                   std::shared_ptr<CdmaSignalStrengthInfo> cdmaSignalStrengthInfo,
                   std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrengthInfo,
                   std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
-                  std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo);
+                  std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo,
+                  std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrengthInfo);
    /**
     * Gives LTE signal strength instance.
     *
@@ -167,6 +169,14 @@ public:
     */
    std::shared_ptr<Nr5gSignalStrengthInfo> getNr5gSignalStrength();
 
+  /**
+    * Gives NB-IoT(NB1) NTN signal strength instance.
+    *
+    * @returns Pointer to NB-IoT(NB1) NTN signal strength instance that can be used to get
+    * NB-IoT(NB1) NTN dbm, signal level values.
+    */
+   std::shared_ptr<Nb1NtnSignalStrengthInfo> getNb1NtnSignalStrength();
+
 private:
    std::shared_ptr<LteSignalStrengthInfo> lteSS_;
    std::shared_ptr<GsmSignalStrengthInfo> gsmSS_;
@@ -174,6 +184,7 @@ private:
    std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSS_;
    std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSS_;
    std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSS_;
+   std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSS_;
 };
 
 /**
@@ -514,6 +525,62 @@ public:
    const int getReferenceSignalSnr() const;
 
 private:
+   int rsrp_;
+   int rsrq_;
+   int rssnr_;
+};
+
+/**
+ * NB-IoT(NB1) NTN signal strength class provides methods to get details of NB-IoT(NB1) NTN
+ * signals like dbm, signal level, reference signal receive quality and reference signal-to-noise
+ * ratio and signal strength.
+ */
+class Nb1NtnSignalStrengthInfo {
+public:
+   Nb1NtnSignalStrengthInfo(int signalStrength, int rsrp, int rsrq, int rssnr);
+   /**
+    * Get signal level in the range.
+    *
+    * @returns Signal levels indicates the quality of signal being received by
+    * the device.
+    */
+   const SignalStrengthLevel getLevel() const;
+
+   /**
+    * Get the signal strength in dBm.
+    * (Valid value range [-140, -44] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns NB1 NTN dBm value.
+    */
+   const int getDbm() const;
+
+   /**
+    * Get the NB1 NTN signal strength.
+    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns NB1 NTN signal strength.
+    */
+   const int getSignalStrength() const;
+
+   /**
+    * Get NB1 NTN reference signal receive quality in dB.
+    * (Valid value range [-20, -3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns NB1 NTN reference signal receive quality.
+    */
+   const int getRsrq() const;
+
+   /**
+    * Get NB1 NTN reference signal signal-to-noise ratio, multiply by 0.1 to get SNR in dB.
+    * (Valid value range [-200, +300] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (-200 = -20.0 dB, +300 = 30dB).
+    *
+    * @returns NB1 NTN  signal-to-noise ratio.
+    */
+   const int getRssnr() const;
+
+private:
+   int signalStrength_;
    int rsrp_;
    int rsrq_;
    int rssnr_;

@@ -248,7 +248,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       std::cout
          << "Available RAT mode preferences: \n"
             "(0 - CDMA_1X\n 1 - CDMA_EVDO\n 2 - GSM\n 3 - WCDMA\n 4 - LTE\n 5 - TDSCDMA\n" <<
-            "6 - NR5G_COMBINED\n 7 - NR5G_NSA\n 8 - NR5G_SA\n) \n\n";
+            " 6 - NR5G_COMBINED\n 7 - NB1_NTN\n 8 - NR5G_NSA\n 9 - NR5G_SA\n) \n\n";
       std::cout
          << "Enter RAT mode preferences\n(For example: enter 2,4 to prefer GSM & LTE mode): ";
       std::getline(std::cin, preference, delimiter);
@@ -262,7 +262,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       }
 
       for(auto &opt : options) {
-         if(opt >= 0 && opt <= 8) {
+         if(opt >= 0 && opt <= 9) {
             try {
                pref.set(opt);
             } catch(const std::exception &e) {
@@ -332,8 +332,9 @@ void ServingSystemMenu::getSystemInfo(std::vector<std::string> userInput) {
       if(status == telux::common::Status::SUCCESS) {
          std::cout << "\n getSystemInfo is successful"
             << "\n Serving RAT is " << MyServingSystemHelper::getRadioTechnology(sysInfo.rat)
-            << "\n Service domain is "
-               << MyServingSystemHelper::getServiceDomain(sysInfo.domain)
+            << "\n Service domain is"
+            << MyServingSystemHelper::getServiceDomain(sysInfo.domain)
+            << "\n Service state is " << MyServingSystemHelper::getServiceState(sysInfo.state)
             << std::endl;
       } else {
          std::cout << "\n getSystemInfo failed, status: " << static_cast<int>(status);
@@ -461,8 +462,14 @@ void ServingSystemMenu::getSmsCapability(std::vector<std::string> userInput) {
          std::cout << "\n getSmsCapability is successful"
             << "\n RAT: "
             << MyServingSystemHelper::getRadioTechnology(smsCapability.rat)
-            << "\n SMS Domain: "
-            << MyServingSystemHelper::getSmsDomain(smsCapability.domain)
+            << ((smsCapability.rat != telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+                "\n SMS Domain: " : "")
+            << ((smsCapability.rat != telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+                MyServingSystemHelper::getSmsDomain(smsCapability.domain) : "")
+            << ((smsCapability.rat == telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+               "\n SMS Service status: " : "")
+            << ((smsCapability.rat == telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN) ?
+                MyServingSystemHelper::getNtnSmsStatus(smsCapability.smsStatus) : "")
             << std::endl;
       } else {
          std::cout << "\n getSmsCapability failed, status: " << static_cast<int>(status);

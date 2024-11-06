@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -413,6 +384,55 @@ const int32_t Nr5gCellIdentity::getTrackingAreaCode() {
 
 const int32_t Nr5gCellIdentity::getArfcn() {
    return arfcn_;
+}
+
+/**
+ * NB1 NTN CellInfo implementation
+ */
+Nb1NtnCellInfo::Nb1NtnCellInfo(
+    int registered, Nb1NtnCellIdentity id, Nb1NtnSignalStrengthInfo ssInfo)
+   : id_(id)
+   , ssInfo_(ssInfo) {
+    registered_ = registered;
+    type_       = CellType::NB1_NTN;
+}
+
+Nb1NtnCellIdentity Nb1NtnCellInfo::getCellIdentity() {
+    return id_;
+}
+
+Nb1NtnSignalStrengthInfo Nb1NtnCellInfo::getSignalStrengthInfo() {
+    return ssInfo_;
+}
+
+Nb1NtnCellIdentity::Nb1NtnCellIdentity(
+    std::string mcc, std::string mnc, int ci, int tac, int earfcn)
+   : mcc_(mcc)
+   , mnc_(mnc)
+   , ci_(ci)
+   , tac_(tac)
+   , earfcn_(earfcn) {
+}
+
+// NB1 NTN cell info
+const std::string Nb1NtnCellIdentity::getMobileCountryCode() {
+    return mcc_;
+}
+
+const std::string Nb1NtnCellIdentity::getMobileNetworkCode() {
+    return mnc_;
+}
+
+const int Nb1NtnCellIdentity::getIdentity() {
+    return ci_;
+}
+
+const int Nb1NtnCellIdentity::getTrackingAreaCode() {
+    return tac_;
+}
+
+const int Nb1NtnCellIdentity::getEarfcn() {
+    return earfcn_;
 }
 
 }  // end of namespace tel

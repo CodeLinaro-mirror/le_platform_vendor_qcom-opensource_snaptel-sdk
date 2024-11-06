@@ -240,6 +240,37 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5gRssnr : ",
             data.stateRootObj[TEL_PHONE_MANAGER]\
             ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rssnr"].asInt());
+        // NB1 NTN signal strength
+        if (servingRat == telStub::RadioTechnology::RADIO_TECH_NB1_NTN) {
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+                set_signal_strength(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt());
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+                data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["rsrp"].asInt());
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+                data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["rsrq"].asInt());
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+                data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["rssnr"].asInt());
+        } else {
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+                set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()
+                ->set_rsrp(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()
+                ->set_rsrq(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()
+                ->set_rssnr(INVALID_SIGNAL_STRENGTH_VALUE);
+       }
+       LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
+           data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+           ["signalstrength"].asInt(), " nb1NtnRsrp: ",  data.stateRootObj[TEL_PHONE_MANAGER]\
+           ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rsrp"].asInt(), " nb1NtnRsrq: ",
+           data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+           ["rsrq"].asInt(), " nb1NtnRssnr: ",  data.stateRootObj[TEL_PHONE_MANAGER]\
+           ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssnr"].asInt());
         response->set_phone_id(phoneId);
     } else {
         LOG(ERROR, __FUNCTION__, " Unable to fetch signal strength");
@@ -541,6 +572,42 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                             ["rssnr"].asInt());
                         break;
                     }
+                    case telStub::CellInfo_CellType_NB1_NTN: {
+                        // cell identity
+                        cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                            set_mcc(requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]\
+                            ["mcc"].asString());
+                        cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                            set_mnc(requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]\
+                            ["mnc"].asString());
+                        cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                            set_ci(requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]\
+                            ["ci"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                            set_tac(requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]\
+                            ["tac"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                            set_earfcn(requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]\
+                            ["earfcn"].asInt());
+                        // signal strength
+                        cellInfo->mutable_nb1_ntn_cell_info()->
+                            mutable_nb1_ntn_signal_strength_info()->
+                            set_signal_strength(requestedCell["nb1NtnCellInfo"]\
+                            ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->
+                            mutable_nb1_ntn_signal_strength_info()->
+                            set_rsrp(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                            ["rsrp"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->
+                            mutable_nb1_ntn_signal_strength_info()->
+                            set_rsrq(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                            ["rsrq"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->
+                            mutable_nb1_ntn_signal_strength_info()->
+                            set_rssnr(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                            ["rssnr"].asInt());
+                        break;
+                    }
                     case telStub::CellInfo_CellType_CDMA:
                     case telStub::CellInfo_CellType_TDSCDMA:
                     default:
@@ -782,6 +849,39 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"].asInt(), " nr5gRssnr: ",
         stateRootObj[TEL_PHONE_MANAGER]\
         ["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rssnr"].asInt());
+    // nb1 ntn signal strength
+    if (servingRat == telStub::RadioTechnology::RADIO_TECH_NB1_NTN) {
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+            set_signal_strength(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt());
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rsrp"].asInt());
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rsrq"].asInt());
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rssnr"].asInt());
+    } else {
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+            set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+    }
+    LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
+            signal_strength(), " rsrp: ",
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
+            rsrp(), " rssnr: ",
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
+            rssnr(), " rsrq: ",
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
+            rsrq());
     event.set_phone_id(phoneId);
     return error;
 }
@@ -933,6 +1033,34 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
                         ["rsrq"].asInt());
                     cellInfo->mutable_nr5g_cell_info()->mutable_nr5g_signal_strength_info()->
                         set_rssnr(requestedCell["nr5gCellInfo"]["nr5gSignalStrengthInfo"]\
+                        ["rssnr"].asInt());
+                    break;
+                }
+                case telStub::CellInfo_CellType_NB1_NTN: {
+                    // cell identity
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->set_mcc(
+                        requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]["mcc"].asString());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->set_mnc(
+                        requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]["mnc"].asString());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->set_ci(
+                        requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]["ci"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->set_tac(
+                        requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]["tac"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_cell_identity()->
+                        set_earfcn(
+                        requestedCell["nb1NtnCellInfo"]["nb1NtnCellIdentity"]["earfcn"].asInt());
+                    // signal strength
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        set_signal_strength(requestedCell["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        set_rsrp(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                        ["rsrp"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        set_rsrq(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                        ["rsrq"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        set_rssnr(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
                         ["rssnr"].asInt());
                     break;
                 }
@@ -1227,6 +1355,35 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_nr5g_signal_strength_info()->rsrp(), " nr5gRsrq: ",
         signalStrength.mutable_nr5g_signal_strength_info()->rsrq(), " nr5gRssnr: ",
         signalStrength.mutable_nr5g_signal_strength_info()->rssnr());
+    // NB1 NTN signal strength
+    if (servingRat == telStub::RadioTechnology::RADIO_TECH_NB1_NTN) {
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->
+            set_signal_strength(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt());
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rsrp"].asInt());
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rsrq"].asInt());
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rssnr"].asInt());
+    } else {
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->
+            set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+    }
+    LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->signal_strength(), " nb1NtnRsrp: ",
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->rsrp(), " nb1NtnRsrq: ",
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->rsrq(), " nb1NtnRssnr: ",
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->rssnr());
     return error;
 }
 
@@ -1363,6 +1520,14 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
         event.signal_strength().nr5g_signal_strength_info().rsrq();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rssnr"] =
         event.signal_strength().nr5g_signal_strength_info().rssnr();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["signalStrength"] =
+        event.signal_strength().nb1_ntn_signal_strength_info().signal_strength();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rsrp"] =
+        event.signal_strength().nb1_ntn_signal_strength_info().rsrp();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rsrq"] =
+        event.signal_strength().nb1_ntn_signal_strength_info().rsrq();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssnr"] =
+        event.signal_strength().nb1_ntn_signal_strength_info().rssnr();
     return JsonParser::writeToJsonFile(rootObj, jsonfilename);
 }
 
@@ -1974,6 +2139,61 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["rsrq"] = rsrq;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]\
                     ["rssnr"] = rssnr;
+            } else if(rat == "NB1_NTN") {
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int signalStrength = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rsrp = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rsrq = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rssnr = std::stoi(token);
+                LOG(DEBUG, __FUNCTION__, " signalStrength ", signalStrength, " rsrp: ", rsrp,
+                    " rsrq: ", rsrq, " rssnr: ", rssnr);
+
+                if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_NB1_NTN)) {
+                    int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["signalStrength"].asInt();
+                    notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                        telStub::RadioTechnology::RADIO_TECH_NB1_NTN,
+                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+                    if (!notify) { // if any one field changes, need to notify
+                                   // skip next field check
+                        oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                            ["nb1NtnSignalStrengthInfo"]["rsrp"].asInt();
+                        notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                            telStub::RadioTechnology::RADIO_TECH_NB1_NTN,
+                            telStub::SignalStrengthMeasurementType::RSRP, oldValue, rsrp);
+                        if (!notify) { // if any one field changes for particular RAT, need to
+                                  // notify, skip next field check
+                            oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                                ["nb1NtnSignalStrengthInfo"]["rsrq"].asInt();
+                            notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                                telStub::RadioTechnology::RADIO_TECH_NB1_NTN,
+                                telStub::SignalStrengthMeasurementType::RSRQ, oldValue, rsrq);
+                        }
+                        if (!notify) { // if any one field changes for particular RAT, need to
+                                  // notify, skip next field check
+                            oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                                ["nb1NtnSignalStrengthInfo"]["rssnr"].asInt();
+                            notify = checkSignalStrengthCriteriaAndNotify(phoneId,
+                                telStub::RadioTechnology::RADIO_TECH_NB1_NTN,
+                                telStub::SignalStrengthMeasurementType::SNR, oldValue, rssnr);
+                        }
+                   }
+                }
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+                    ["signalStrength"] = signalStrength;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+                    ["rsrp"] = rsrp;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+                    ["rsrq"] = rsrq;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+                    ["rssnr"] = rssnr;
             } else {
                 LOG(ERROR, " Invalid or deprecated RAT");
             }
@@ -2019,7 +2239,7 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
         rootObj[TEL_PHONE_MANAGER] ["cellInfo"]["cellList"].clear();
         int jsonCellCount = rootObj[TEL_PHONE_MANAGER] ["cellInfo"]["cellList"].size();
         int newCellCount = params.size() - 1;
-        LOG(DEBUG, " jsonCellCount ", jsonCellCount , " newCellCount", newCellCount);
+        LOG(DEBUG, " jsonCellCount ", jsonCellCount , " newCellCount ", newCellCount);
 
         for (int i = 1; i <= newCellCount; i++) {
             LOG(DEBUG, " Parsing Params:" , params[i]);
@@ -2028,7 +2248,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
             LOG(DEBUG, __FUNCTION__, " Cell Type is: ", cell);
             ::telStub::CellInfo_CellType cellType = static_cast<::telStub::CellInfo_CellType>(cell);
             if (cell < (static_cast<int>(::telStub::CellInfo_CellType::CellInfo_CellType_GSM)) ||
-                cell > (static_cast<int>(::telStub::CellInfo_CellType::CellInfo_CellType_NR5G))) {
+                cell > (static_cast<int>(::telStub::CellInfo_CellType::CellInfo_CellType_NB1_NTN)))
+            {
                 LOG(ERROR, __FUNCTION__, " Invalid input for cell type");
                 return telux::common::ErrorCode::INVALID_ARGUMENTS;
             }
@@ -2230,6 +2451,49 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
 
                     break;
                 }
+                case ::telStub::CellInfo_CellType::CellInfo_CellType_NB1_NTN:
+                {
+                    std::string mcc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    std::string mnc = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int ci = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int tac = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int earfcn = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int signalStrength = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rsrp = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rsrq = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssnr = std::stoi(token);
+
+                    LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " ci:", ci, " tac:", tac,
+                        " earfcn:", earfcn, " signalStrength:", signalStrength
+                        , "rsrp:", rsrp, "rsrq:", rsrq, "rssnr:", rssnr);
+
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnCellIdentity"]["mcc"] = mcc;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnCellIdentity"]["mnc"] = mnc;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnCellIdentity"]["ci"] = ci;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnCellIdentity"]["tac"] = tac;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnCellIdentity"]["earfcn"] = earfcn;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["signalStrength"] = signalStrength;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["rsrp"] = rsrp;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["rsrq"] = rsrq;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["rssnr"] = rssnr;
+                    break;
+                 }
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_CDMA:
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_TDSCDMA:
                 default:
@@ -2472,6 +2736,18 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(int phoneI
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_nr5g_signal_strength_info()->set_rssnr(
             strength.nr5g_signal_strength_info().rssnr());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_nb1_ntn_signal_strength_info()->set_signal_strength(
+            strength.nb1_ntn_signal_strength_info().signal_strength());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_nb1_ntn_signal_strength_info()->set_rsrp(
+            strength.nb1_ntn_signal_strength_info().rsrp());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_nb1_ntn_signal_strength_info()->set_rsrq(
+            strength.nb1_ntn_signal_strength_info().rsrq());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            strength.nb1_ntn_signal_strength_info().rssnr());
     return signalStrengthChangeEvent;
 }
 
@@ -2508,6 +2784,14 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthWithDefaultValue
     signalStrengthChangeEvent.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->
         set_rsrq(INVALID_SIGNAL_STRENGTH_VALUE);
     signalStrengthChangeEvent.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->
+        set_rssnr(INVALID_SIGNAL_STRENGTH_VALUE);
+    signalStrengthChangeEvent.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+        set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
+    signalStrengthChangeEvent.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+        set_rsrp(INVALID_SIGNAL_STRENGTH_VALUE);
+    signalStrengthChangeEvent.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
+        set_rsrq(INVALID_SIGNAL_STRENGTH_VALUE);
+    signalStrengthChangeEvent.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
         set_rssnr(INVALID_SIGNAL_STRENGTH_VALUE);
     return signalStrengthChangeEvent;
 }
@@ -2581,6 +2865,8 @@ telStub::RATCapability TelUtil::convertRATCapStringToEnum(std::string radioCap) 
         return telStub::RATCapability::NR5G;
     } else if (radioCap == "NR5GSA") {
         return telStub::RATCapability::NR5GSA;
+    } else if (radioCap == "NB1_NTN") {
+        return telStub::RATCapability::NB1_NTN;
     } else {
         LOG(ERROR, " Invalid radio capability");
     }

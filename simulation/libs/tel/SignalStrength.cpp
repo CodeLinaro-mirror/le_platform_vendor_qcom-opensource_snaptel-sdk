@@ -99,6 +99,16 @@
 #define MIN_NR5G_RSSNR_LEVEL -230
 #define MAX_NR5G_RSSNR_LEVEL 400
 
+// NB1 NTN constants
+#define MAX_NB1_NTN_RSSNR_LEVEL 300
+#define MIN_NB1_NTN_RSSNR_LEVEL -200
+#define MIN_NB1_NTN_SIGNAL_STRENGTH 0
+#define MAX_NB1_NTN_SIGNAL_STRENGTH 31
+#define MIN_NB1_NTN_RSRP -140
+#define MAX_NB1_NTN_RSRP -44
+#define MIN_NB1_NTN_RSRQ -20
+#define MAX_NB1_NTN_RSRQ -3
+
 namespace telux {
 
 namespace tel {
@@ -194,6 +204,30 @@ std::map<SignalStrengthLevel, int> nr5gRssnrLevelMap {
    {SignalStrengthLevel::LEVEL_5, 300},
 };
 
+std::map<SignalStrengthLevel, int> nb1NtnRsrpLevelMap {
+   {SignalStrengthLevel::LEVEL_1, -140},
+   {SignalStrengthLevel::LEVEL_2, -100},
+   {SignalStrengthLevel::LEVEL_3, -90},
+   {SignalStrengthLevel::LEVEL_4, -80},
+   {SignalStrengthLevel::LEVEL_5, -70},
+};
+
+std::map<SignalStrengthLevel, int> nb1NtnRssnrLevelMap {
+   {SignalStrengthLevel::LEVEL_1, -200},
+   {SignalStrengthLevel::LEVEL_2, -30},
+   {SignalStrengthLevel::LEVEL_3, 10},
+   {SignalStrengthLevel::LEVEL_4, 45},
+   {SignalStrengthLevel::LEVEL_5, 130},
+};
+
+std::map<SignalStrengthLevel, int> nb1NtnLevelMap {
+   {SignalStrengthLevel::LEVEL_1, 0},
+   {SignalStrengthLevel::LEVEL_2, 5},
+   {SignalStrengthLevel::LEVEL_3, 7},
+   {SignalStrengthLevel::LEVEL_4, 9},
+   {SignalStrengthLevel::LEVEL_5, 12},
+};
+
 // clang-format on
 
 inline SignalStrengthLevel calculateLevel(int val, std::map<SignalStrengthLevel, int> levelMap) {
@@ -219,14 +253,16 @@ SignalStrength::SignalStrength(std::shared_ptr<LteSignalStrengthInfo> lteSignalS
                                std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrengthInfo,
                                std::shared_ptr<CdmaSignalStrengthInfo> cdmaSignalStrengthInfo,
                                std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrengthInfo,
-                                std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
-                               std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo)
+                               std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
+                               std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo,
+                               std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrengthInfo)
    : lteSS_(lteSignalStrengthInfo)
    , gsmSS_(gsmSignalStrengthInfo)
    , cdmaSS_(cdmaSignalStrengthInfo)
    , wcdmaSS_(wcdmaSignalStrengthInfo)
    , tdscdmaSS_(tdscdmaSignalStrengthInfo)
-   , nr5gSS_(nr5gSignalStrengthInfo) {
+   , nr5gSS_(nr5gSignalStrengthInfo)
+   , nb1NtnSS_(nb1NtnSignalStrengthInfo) {
    LOG(DEBUG, "Signal Strength Constructor");
 }
 
@@ -252,6 +288,10 @@ std::shared_ptr<TdscdmaSignalStrengthInfo> SignalStrength::getTdscdmaSignalStren
 
 std::shared_ptr<Nr5gSignalStrengthInfo> SignalStrength::getNr5gSignalStrength() {
    return nr5gSS_;
+}
+
+std::shared_ptr<Nb1NtnSignalStrengthInfo> SignalStrength::getNb1NtnSignalStrength() {
+    return nb1NtnSS_;
 }
 
 LteSignalStrengthInfo::LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp, int lteRsrq,
@@ -575,6 +615,71 @@ const SignalStrengthLevel Nr5gSignalStrengthInfo::getLevel() const {
       return rsrpLevel;
 
    return SignalStrengthLevel::LEVEL_UNKNOWN;
+}
+
+Nb1NtnSignalStrengthInfo::Nb1NtnSignalStrengthInfo(
+    int nb1NtnSignalStrength, int nb1NtnRsrp, int nb1NtnRsrq, int nb1NtnRssnr) {
+
+    LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", nb1NtnSignalStrength,
+        " RSRP: ", nb1NtnRsrp, " RSRQ: ", nb1NtnRsrq, " RSSNR: ", nb1NtnRssnr);
+    signalStrength_
+        = inRange(nb1NtnSignalStrength, MIN_NB1_NTN_SIGNAL_STRENGTH, MAX_NB1_NTN_SIGNAL_STRENGTH);
+    rsrp_  = inRange(nb1NtnRsrp, MIN_NB1_NTN_RSRP, MAX_NB1_NTN_RSRP);
+    rsrq_  = inRange(nb1NtnRsrq, MIN_NB1_NTN_RSRQ, MAX_NB1_NTN_RSRQ);
+    rssnr_ = inRange(nb1NtnRssnr, MIN_NB1_NTN_RSSNR_LEVEL, MAX_NB1_NTN_RSSNR_LEVEL);
+    LOG(DEBUG, __FUNCTION__, " After range check, Signal Strength: ", signalStrength_,
+        " RSRP: ", rsrp_, " RSRQ: ", rsrq_, " RSSNR: ", rssnr_);
+}
+
+const int Nb1NtnSignalStrengthInfo::getSignalStrength() const {
+    return signalStrength_;
+}
+
+const int Nb1NtnSignalStrengthInfo::getRsrq() const {
+    return rsrq_;
+}
+
+const int Nb1NtnSignalStrengthInfo::getRssnr() const {
+    return rssnr_;
+}
+
+const int Nb1NtnSignalStrengthInfo::getDbm() const {
+    return rsrp_;
+}
+
+const SignalStrengthLevel Nb1NtnSignalStrengthInfo::getLevel() const {
+
+    SignalStrengthLevel rsrpLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
+    if ((rsrp_ >= MIN_NB1_NTN_RSRP) && (rsrp_ <= MAX_NB1_NTN_RSRP)) {
+        rsrpLevel = calculateLevel(rsrp_, nb1NtnRsrpLevelMap);
+    }
+
+    SignalStrengthLevel rsnrLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
+    if ((rssnr_ >= MIN_NB1_NTN_RSSNR_LEVEL) && (rssnr_ <= MAX_NB1_NTN_RSSNR_LEVEL)) {
+        rsnrLevel = calculateLevel(rssnr_, nb1NtnRssnrLevelMap);
+    }
+
+    // Valid values are (0-63, 99) as defined in TS 36.331
+    SignalStrengthLevel sigStrengthLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
+    if ((signalStrength_ >= MIN_NB1_NTN_SIGNAL_STRENGTH)
+        && (signalStrength_ <= MAX_NB1_NTN_SIGNAL_STRENGTH)) {
+        sigStrengthLevel = calculateLevel(rssnr_, nb1NtnRssnrLevelMap);
+    }
+
+    // Give preference to rsrpLevel
+    if (rsrpLevel != SignalStrengthLevel::LEVEL_UNKNOWN
+        && rsnrLevel != SignalStrengthLevel::LEVEL_UNKNOWN) {
+        return (rsrpLevel > rsnrLevel ? rsrpLevel : rsnrLevel);
+    }
+
+    if (rsnrLevel != SignalStrengthLevel::LEVEL_UNKNOWN)
+        return rsnrLevel;
+
+    if (rsrpLevel != SignalStrengthLevel::LEVEL_UNKNOWN)
+        return rsrpLevel;
+
+    // if we don't have valid rsrp and rssnr values use signal strength level
+    return sigStrengthLevel;
 }
 
 }  // end of namespace tel

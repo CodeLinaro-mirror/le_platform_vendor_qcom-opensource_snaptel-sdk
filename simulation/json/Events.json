@@ -29,6 +29,15 @@
             "slotId:       valid slotIds are 1 & 2 only.",
             "cardPower:    valid 1-Power ON, 0-Power OFF.",
             "isNtnProfileActive: valid isNtnProfileActive are 0 - not active and 1 - active only."
+        ],
+        "simRefresh":[
+            "telsdk_event_injector -f tel_card -e simRefresh <mode> <fileId> <filePath> <sessionId> <aid> <channelId>",
+            "mode:      0-RESET, 1-INIT, 2-INIT_FCN, 3-FCN, 4- INIT_FULL_FCN, 5-RESET_APP, 6-RESET_3G.",
+            "fileId:    Elementary file id in SIM.",
+            "filePath:  Elementary file path.",
+            "sessionId: 0-PRIMARY, 2-SECONDARY, 4-NONPROVISIONING_SLOT1, 5-NONPROVISIONING_SLOT2, 6-CARD_ON_SLOT1, 7-CARD_ON_SLOT2, 8-CHANNEL_ID_SLOT1, 9-CHANNEL_ID_SLOT2",
+            "aid:       AID (Application Identifier) applicable for NONPROVISIONING session type.",
+            "channelId: Channel Identifier applicable for Channel_ID session type."
         ]
     },
     "tel_sms": {

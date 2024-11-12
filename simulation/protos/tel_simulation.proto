@@ -40,6 +40,10 @@
      rpc exchangeSimIO(exchangeSimIORequest) returns (exchangeSimIOReply) {}
      rpc requestEid(requestEidRequest) returns (requestEidReply) {}
      rpc IsNtnProfileActive(IsNtnProfileActiveRequest) returns (IsNtnProfileActiveReply) {}
+     rpc setupRefreshConfig(RefreshConfigReq) returns (TelCommonReply) {}
+     rpc allowCardRefresh(AllowCardRefreshReq) returns (TelCommonReply) {}
+     rpc confirmRefreshHandlingCompleted(ConfirmRefreshHandlingCompleteReq) returns (TelCommonReply) {}
+     rpc requestLastRefreshEvent(RequestLastRefreshEventReq) returns (RequestLastRefreshEventResp) {}
  }
 
  service SubscriptionService {
@@ -215,6 +219,12 @@
  /*******************************************************************
   * Messages Definition                                             *
   *******************************************************************/
+
+message TelCommonReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+}
 
 message GetCardStateRequest {
      int32 phone_id = 1;
@@ -700,6 +710,94 @@ message RttMessageEvent {
  message IsNtnProfileActiveReply {
     bool is_ntn_profile_active = 1;
  }
+
+enum SessionType {
+    PRIMARY = 0;
+    SECONDARY = 2;
+    NONPROVISIONING_SLOT_1 = 4;
+    INIT_NONPROVISIONING_SLOT_2 = 5;
+    CARD_ON_SLOT_1 = 6;
+    CARD_ON_SLOT_2 = 7;
+    CHANNEL_ID_SLOT_1 = 8;
+    CHANNEL_ID_SLOT_2 = 9;
+}
+
+message RefreshParams {
+    SessionType sessionType = 1;
+    string aid = 2;
+    string channelId = 3;
+}
+
+message IccFile {
+    uint32 fileId = 1;
+    string filePath = 2;
+}
+
+enum RefreshStage {
+    WAITING_FOR_VOTES = 0;
+    STARTING = 1;
+    ENDED_WITH_SUCCESS = 2;
+    ENDED_WITH_FAILURE = 3;
+    REFRESH_STAGE_UNKNOWN = -1;
+}
+
+enum RefreshMode {
+    RESET = 0;
+    INIT = 1;
+    INIT_FCN = 2;
+    FCN = 3;
+    INIT_FULL_FCN = 4;
+    RESET_APP = 5;
+    RESET_3G = 6;
+    RESH_MODE_UNKNOWN = -1;
+}
+
+message RefreshConfigReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool isRegister = 3;
+    bool doVoting = 4;
+    repeated IccFile efFiles = 5;
+    RefreshParams refreshs = 6;
+}
+
+message AllowCardRefreshReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool allowRefresh = 3;
+    RefreshParams refreshs = 4;
+}
+
+message ConfirmRefreshHandlingCompleteReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool isCompleted = 3;
+    RefreshParams refreshs = 4;
+}
+
+message RequestLastRefreshEventReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    RefreshParams refreshs = 3;
+}
+
+message  RequestLastRefreshEventResp {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    RefreshStage stage =4;
+    RefreshMode mode = 5;
+    repeated IccFile efFiles = 6;
+    RefreshParams refreshs = 7;
+}
+
+message RefreshEvent {
+    int32 phone_id = 1;
+    RefreshStage stage =2;
+    RefreshMode mode = 3;
+    repeated IccFile efFiles = 4;
+    RefreshParams refreshs = 5;
+}
 
 // --- SmsService ---
 

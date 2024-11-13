@@ -374,6 +374,14 @@
             "status:        SUCCESS/FAILURE"
         ]
     },
+    "subsystem_manager": {
+        "subsystem_status":[
+            "telsdk_event_injector -f subsystem_manager -e subsystem_status <SUBSYSTEM> <PROC_TYPE> <STATUS>",
+            "SUBSYSTEM:     integer, valid 0-NONE, 1-APSS, 2-MPSS",
+            "PROC_TYPE:     integer, valid 0-LOCAL_PROC, 1-REMOTE_PROC",
+            "STATUS:        SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED"
+        ]
+    },
     "cv2x_radio_manager": {
         "status" : [
             "telsdk_event_injector -f cv2x_radio_manager -e status <rxStatus> <txStatus> <rxCause> <txCause>",

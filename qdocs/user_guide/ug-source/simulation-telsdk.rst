@@ -2088,6 +2088,7 @@ The following managers are currently available in the simulation:
 2. AntennaManager
 3. TimeManager
 4. FsManager
+5. SubsystemManager
 
 Platform APIs response handling
 """"""""""""""""""""""""""""""
@@ -2122,6 +2123,7 @@ The following platform events can be simulated using the telsdk_event_injector.
 2. telux::platform::IFsListener::onEfsRestoreEvent
 3. telux::qmi::IQmiMrcListener::onOtaABSyncEvent
 4. telux::qmi::IQmiMrcListener::onFsOperationImminentEvent
+5. telux::platform::ISubsystemListener::onStateChange
 
 Sample input:
 

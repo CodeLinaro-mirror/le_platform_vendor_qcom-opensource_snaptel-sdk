@@ -78,6 +78,9 @@ void ServingSystemManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
         " callback status ", static_cast<int>(cbStatus));
+    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+        true : false;
+    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
@@ -102,37 +105,34 @@ void ServingSystemManagerStub::cleanup() {
     stub_->CleanUpService(&context, request, &response);
 }
 
-telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {
-    LOG(DEBUG, __FUNCTION__);
-    return subSystemStatus_;
-}
-
-std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-    [this]() {
-        while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
-        }
-    return(isSubsystemReady());});
-    return((ready_future));
+void ServingSystemManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(mtx_);
+    ready_ = status;
+    cv_.notify_all();
 }
 
 bool ServingSystemManagerStub::isSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
+    return ready_;
+}
 
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
+bool ServingSystemManagerStub::waitForInitialization() {
+    std::unique_lock<std::mutex> cvLock(mtx_);
+    while (!isSubsystemReady()) {
+        cv_.wait(cvLock);
     }
+    return isSubsystemReady();
+}
+
+std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
+    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return f;
+}
+
+telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {
+    LOG(DEBUG, __FUNCTION__);
+    return subSystemStatus_;
 }
 
 telux::common::Status ServingSystemManagerStub::registerListener(
@@ -339,8 +339,8 @@ telux::tel::DcStatus ServingSystemManagerStub::getDcStatus() {
         static_cast<telux::tel::EndcAvailability>(response.endc_availability());
         dcStatus.dcnrRestriction =
             static_cast<telux::tel::DcnrRestriction>(response.dcnr_restriction());
-        LOG(DEBUG, __FUNCTION__, "endcAvailability is ",
-            static_cast<int>(dcStatus.endcAvailability) , "dcnrRestriction is ",
+        LOG(DEBUG, __FUNCTION__, " endcAvailability is ",
+            static_cast<int>(dcStatus.endcAvailability) , " dcnrRestriction is ",
             static_cast<int>(dcStatus.dcnrRestriction));
     }
     return dcStatus;

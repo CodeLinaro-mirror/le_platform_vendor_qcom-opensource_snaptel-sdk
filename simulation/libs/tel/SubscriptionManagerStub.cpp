@@ -111,18 +111,18 @@ void SubscriptionManagerStub::initSync() {
             telux::common::ServiceStatus cardMgrStatus =
                 static_cast<telux::common::ServiceStatus>(response.service_status());
             if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                LOG(INFO, __FUNCTION__, "Card Manager subsystem is ready");
+                LOG(INFO, __FUNCTION__, " Card Manager subsystem is ready");
                 if(telux::common::DeviceConfig::isMultiSimSupported()) {
                     numSlots = 2;
                 }
-                LOG(DEBUG, __FUNCTION__, " slot count from the card manager", numSlots);
+                LOG(DEBUG, __FUNCTION__, " slot count from the card manager: ", numSlots);
                 for(int id = FIRST_SIM_SLOT_ID; id < (FIRST_SIM_SLOT_ID + numSlots); id++) {
                     //check for card state and create the subscription object only
                     //if the card is available
                     telux::common::Status status = createSubscriptionAndNotify(id);
                     if(status != telux::common::Status::SUCCESS) {
                         LOG(ERROR, __FUNCTION__, " unable to update subscription",
-                            "map on slot ", id);
+                            " map on slot ", id);
                         servicestatus = telux::common::ServiceStatus::SERVICE_FAILED;
                         break;
                     }
@@ -135,8 +135,11 @@ void SubscriptionManagerStub::initSync() {
             }
         }
     }
-    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay_, " cbStatus::",
+    LOG(DEBUG, __FUNCTION__, " cbDelay:: ", cbDelay_, " cbStatus:: ",
         static_cast<int>(servicestatus));
+    bool isSubsystemReady = (servicestatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+        true : false;
+    setSubsystemReady(isSubsystemReady);
     setServiceStatus(servicestatus);
 }
 
@@ -155,7 +158,7 @@ telux::common::Status SubscriptionManagerStub::getState(CardState &cardState, in
     }
     state = response.card_state();
     cardState = static_cast<telux::tel::CardState>(state);
-    LOG(DEBUG, __FUNCTION__, "Card state is", static_cast<int>(cardState));
+    LOG(DEBUG, __FUNCTION__, " Card state is ", static_cast<int>(cardState));
     return telux::common::Status::SUCCESS;
 }
 
@@ -178,11 +181,11 @@ telux::common::Status SubscriptionManagerStub::getAppInfo(std::vector<CardAppSta
             CardAppStatus appstatus;
             apptype = response.mutable_card_apps(i)->app_type();
             appstatus.appType = static_cast<telux::tel::AppType>(apptype);
-            LOG(DEBUG, __FUNCTION__,"appType " , static_cast<int>(appstatus.appType));
+            LOG(DEBUG, __FUNCTION__," appType " , static_cast<int>(appstatus.appType));
 
             appstate = response.mutable_card_apps(i)->app_state();
             appstatus.appState = static_cast<telux::tel::AppState>(appstate);
-            LOG(DEBUG, __FUNCTION__,"appState " , static_cast<int>(appstatus.appState));
+            LOG(DEBUG, __FUNCTION__," appState " , static_cast<int>(appstatus.appState));
             apps.emplace_back(appstatus);
         }
     }
@@ -349,21 +352,38 @@ telux::common::Status SubscriptionManagerStub::fetchSubscription(int slotId,
 
     LOG(DEBUG, __FUNCTION__, " Carrier name is ",carrierName
     ," Phone number is ",number, " iccid is ", iccId , " mcc is ",
-    mcc , " mnc is ",mnc , " imsi is ",imsi, " gid1 is ",gid1 , "gid2 is ",gid2);
+    mcc , " mnc is ",mnc , " imsi is ",imsi, " gid1 is ",gid1 , " gid2 is ",gid2);
 
     return telux::common::Status::SUCCESS;
 }
 
+void SubscriptionManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(subscriptionManagerMutex_);
+    ready_ = status;
+    subMgrInitCV_.notify_all();
+}
+
+bool SubscriptionManagerStub::isSubsystemReady() {
+    LOG(DEBUG, __FUNCTION__);
+    return ready_;
+}
+
+bool SubscriptionManagerStub::waitForInitialization() {
+    LOG(DEBUG, __FUNCTION__);
+    std::unique_lock<std::mutex> lock(subscriptionManagerMutex_);
+    while (!isSubsystemReady()) {
+        LOG(DEBUG, __FUNCTION__, " Waiting for Subscription Manager to get ready ");
+        subMgrInitCV_.wait(lock);
+    }
+    return isSubsystemReady();
+}
+
 std::future<bool> SubscriptionManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-        [this]() {
-            while (!isSubsystemReady()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
-            }
-            return(isSubsystemReady());});
-    return((ready_future));
+    auto future = std::async(
+        std::launch::async, [&] { return waitForInitialization(); });
+    return future;
 }
 
 telux::common::ServiceStatus SubscriptionManagerStub::getServiceStatus() {
@@ -374,10 +394,6 @@ telux::common::ServiceStatus SubscriptionManagerStub::getServiceStatus() {
 telux::common::Status SubscriptionManagerStub::registerListener(
     std::weak_ptr<ISubscriptionListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if(getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOG(ERROR, __FUNCTION__, " SubscriptionManager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         status = listenerMgr_->registerListener(listener);
@@ -391,10 +407,6 @@ telux::common::Status SubscriptionManagerStub::registerListener(
 telux::common::Status SubscriptionManagerStub::removeListener(
     std::weak_ptr<ISubscriptionListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
-        LOG(ERROR, __FUNCTION__, " SubscriptionManager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         std::vector<std::weak_ptr<ISubscriptionListener>> applisteners;
@@ -409,21 +421,6 @@ telux::common::Status SubscriptionManagerStub::removeListener(
     return status;
 }
 
-bool SubscriptionManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
-    }
-}
 std::shared_ptr<ISubscription> SubscriptionManagerStub::getSubscription(int slotId,
     telux::common::Status *status) {
     LOG(DEBUG, __FUNCTION__, " slotId: ", slotId);
@@ -493,7 +490,7 @@ void SubscriptionManagerStub::handleCardInfoChanged(::telStub::cardInfoChange ev
 
 void SubscriptionManagerStub::handleSubscriptionInfoChanged(::telStub::SubscriptionEvent event) {
     int slotId = event.phone_id();
-    LOG(DEBUG, __FUNCTION__, "The fetched slot id is: ", slotId);
+    LOG(DEBUG, __FUNCTION__, " The fetched slot id is: ", slotId);
     createSubscriptionAndNotify(slotId);
 }
 

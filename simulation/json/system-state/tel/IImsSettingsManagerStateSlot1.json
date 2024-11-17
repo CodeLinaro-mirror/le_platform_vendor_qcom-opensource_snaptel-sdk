@@ -16,6 +16,8 @@
         {
             "sipUserAgent" : "",
             "_comment_sipUserAgent" : "Indicates the configured Sip UserAgent. Default, it is not configured."
-        }
+        },
+        "ImsVonrEnable": false,
+        "_comment_ImsVonrEnable" : "Indicates the status of IMS voice over NR service. Default, it is disabled."
     }
 }

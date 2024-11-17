@@ -369,6 +369,94 @@ telux::common::Status ImsSettingsManagerStub::setSipUserAgent(SlotId slotId,
     return status;
 }
 
+telux::common::Status
+    ImsSettingsManagerStub::requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = static_cast<int>(slotId);
+    if (phoneId <= 0 || phoneId > noOfSlots_) {
+        LOG(DEBUG, __FUNCTION__, " Invalid PhoneId");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Ims Settings Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::RequestVonrRequest request;
+    ::telStub::RequestVonrReply response;
+    ClientContext context;
+    request.set_phone_id(slotId);
+
+    grpc::Status reqstatus = stub_->RequestVonr(&context, request, &response);
+
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+    bool vonrEnabled = static_cast<bool>(response.enable());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int delay = static_cast<int>(response.delay());
+
+    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async,
+            [this, slotId, vonrEnabled, error, callback, delay]() {
+            if (callback) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(slotId, vonrEnabled, error);
+            } else {
+                LOG(ERROR, __FUNCTION__, " Callback is null");
+            }
+        }).share();
+        taskQ_->add(f1);
+    }
+    return status;
+}
+
+telux::common::Status ImsSettingsManagerStub::toggleVonr(SlotId slotId,
+    bool isEnable, common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = static_cast<int>(slotId);
+    if (phoneId <= 0 || phoneId > noOfSlots_) {
+        LOG(DEBUG, __FUNCTION__, " Invalid PhoneId");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Ims Settings Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SetVonrRequest request;
+    ::telStub::SetVonrReply response;
+    ClientContext context;
+
+    request.set_phone_id(slotId);
+    request.set_enable(isEnable);
+
+    grpc::Status reqstatus = stub_->SetVonr(&context, request, &response);
+
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int delay = static_cast<int>(response.delay());
+
+    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async,
+            [this, error, callback, delay]() {
+            if (callback) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(error);
+            }
+        }).share();
+        taskQ_->add(f1);
+    }
+    return status;
+}
+
 void ImsSettingsManagerStub::handleImsServiceConfigsChange(
     ::telStub::ImsServiceConfigsChangeEvent event) {
     LOG(INFO, __FUNCTION__);

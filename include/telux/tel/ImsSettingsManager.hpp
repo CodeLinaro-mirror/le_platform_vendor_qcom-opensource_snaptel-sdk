@@ -102,7 +102,7 @@ struct ImsServiceConfig {
  * @param [in] config         Indicates which configuration is valid and whether the configuration
  *                            is enabled or disabled. @ref ImsServiceConfig.
  * @param [in] error          Return code which indicates whether the operation
- *                            succeeded or not @ErrorCode.
+ *                            succeeded or not @ref telux::common::ErrorCode.
  *
  */
 using ImsServiceConfigCb
@@ -117,11 +117,30 @@ using ImsServiceConfigCb
  * @param [in] slotId         Slot for which the IMS service configuration is intended.
  * @param [in] sipUserAgent   Indicates the configured Sip UserAgent.
  * @param [in] error          Return code which indicates whether the operation
- *                            succeeded or not @ErrorCode.
+ *                            succeeded or not @ref telux::common::ErrorCode.
  *
  */
 using ImsSipUserAgentConfigCb
    = std::function<void(SlotId slotId, std::string sipUserAgent, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in the response to requestVonrStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] slotId         Logical slot for which the status of the IMS voice over NR
+ *                            service is requested.
+ * @param [in] isEnable       Indicates the IMS voice over NR service is enabled or
+ *                            disabled.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not @ref telux::common::ErrorCode.
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using ImsVonrStatusCb
+   = std::function<void(SlotId slotId, bool isEnable, telux::common::ErrorCode error)>;
 
 /**
  * @brief      ImsSettingsManager allows IMS settings. For example enabling or disabling
@@ -207,6 +226,49 @@ public:
     */
    virtual telux::common::Status setServiceConfig(SlotId slotId,
       ImsServiceConfig config, common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Enable or disable IMS voice over NR service. If voice over NR is disabled, then
+    * the UE will fallback to use voice over LTE if the network supports it.
+    * For voice over NR/LTE, ensure that voImsEnabled in telux::tel::ImsServiceConfig
+    * is turned on.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_IMS_SETTINGS
+    * permission to invoke this API successfully.
+    *
+    * @param [in] slotId         Logical slot for toggling IMS voice over NR service.
+    * @param [in] isEnable       Indicates whether the IMS voice over NR service is enabled
+    *                            or disabled. If voice over NR is disabled, then IMS voice
+    *                            over LTE is enabled
+    * @param [in] callback       Callback function to get the response for toggling IMS voice
+    *                            over NR service.
+    *
+    * @returns Status of toggleVonr i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status toggleVonr(SlotId slotId,
+      bool isEnable, common::ResponseCallback callback = nullptr) = 0;
+
+
+   /**
+    * Request the status of the IMS voice over NR service.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_IMS_SETTINGS
+    * permission to invoke this API successfully.
+    *
+    * @param [in] slotId      Logical slot for which the IMS voice over NR service is requested.
+    * @param [in] callback    Callback function to get the response of request IMS
+    *                         voice over NR service.
+    *
+    * @returns Status of requestVonrStatus i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) = 0;
 
    /**
     * Register a listener for specific events in the IMS settings subsystem.

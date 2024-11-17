@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,7 +59,8 @@ public:
     void setImsServiceConfig(std::vector<std::string> userInput);
     void setImsUserAgentConfig(std::vector<std::string> userInput);
     void requestImsUserAgentConfig(std::vector<std::string> userInput);
-
+    void requestImsVonr(std::vector<std::string> userInput);
+    void setImsVonr(std::vector<std::string> userInput);
 
 private:
     // Member variable to keep the Listener object alive till application ends.

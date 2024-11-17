@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -125,10 +125,19 @@ bool ImsSettingsMenu::init() {
         (ConsoleAppCommand("4", "Get_ImsUserAgent_Configuration",
         {}, std::bind(&ImsSettingsMenu::requestImsUserAgentConfig, this,
         std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getImsVonr
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Request_IMS_VoNR_Status",
+        {}, std::bind(&ImsSettingsMenu::requestImsVonr, this,
+        std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setImsVonr
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Toggle_VoNR",
+        {}, std::bind(&ImsSettingsMenu::setImsVonr, this, std::placeholders::_1)));
+
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListImsSettingsMenu
         = { getImsServiceConfig, setImsServiceConfig,
-            setImsUserAgentConfig, getImsUserAgentConfig };
+            setImsUserAgentConfig, getImsUserAgentConfig,
+            getImsVonr, setImsVonr };
 
     addCommands(commandsListImsSettingsMenu);
     ConsoleApp::displayMenu();
@@ -277,6 +286,67 @@ void ImsSettingsMenu::setImsUserAgentConfig(std::vector<std::string> userInput) 
           std::cout << "ERROR - Failed to send set IMS user agent request, Status:"
                     << static_cast<int>(status) << "\n";
           Utils::printStatus(status);
+      }
+   } else {
+      std::cout << "ERROR - ImsSettingsManger is null \n";
+   }
+}
+
+void ImsSettingsMenu::requestImsVonr(std::vector<std::string> userInput) {
+   if (imsSettingsMgr_) {
+      SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+      if (DeviceConfig::isMultiSimSupported()) {
+         slotId = static_cast<SlotId>(Utils::getValidSlotId());
+      }
+      Status status = imsSettingsMgr_->requestVonrStatus(slotId,
+         MyImsSettingsCallback::onRequestImsVonr);
+      if (status == Status::SUCCESS) {
+         std::cout << "IMS VoNR request sent successfully \n";
+      } else {
+         std::cout << "ERROR - Failed to send IMS VoNR request,"
+                   << "Status:" << static_cast<int>(status) << "\n";
+         Utils::printStatus(status);
+      }
+   } else {
+      std::cout << "ERROR - ImsSettingsManger is null \n";
+   }
+}
+
+void ImsSettingsMenu::setImsVonr(std::vector<std::string> userInput) {
+   if (imsSettingsMgr_) {
+      SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+      if (DeviceConfig::isMultiSimSupported()) {
+         slotId = static_cast<SlotId>(Utils::getValidSlotId());
+      }
+
+      std::string enableSelection = "";
+      char delimiter = '\n';
+      bool enable = false;
+
+      std::cout << "Enable/Disable IMS VoNR(1 - Enable, 0 - Disable) :";
+      std::getline(std::cin, enableSelection, delimiter);
+      if (enableSelection.empty()) {
+         std::cout << " Enable/Disable selection is empty \n";
+         return;
+      }
+      try {
+         enable = std::stoi(enableSelection);
+         if (enable != 0 && enable != 1) {
+            std::cout << "Invalid input " << std::endl;
+            return;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+         return;
+      }
+      Status status = imsSettingsMgr_->toggleVonr(slotId, enable,
+         MyImsSettingsCallback::onResponseCallback);
+      if (status == Status::SUCCESS) {
+         std::cout << "Set IMS VoNR request sent successfully \n";
+      } else {
+         std::cout << "ERROR - Failed to send set IMS VoNR request, Status:"
+                   << static_cast<int>(status) << "\n";
+         Utils::printStatus(status);
       }
    } else {
       std::cout << "ERROR - ImsSettingsManger is null \n";

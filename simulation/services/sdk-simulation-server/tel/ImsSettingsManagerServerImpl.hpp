@@ -46,6 +46,12 @@ public:
     grpc::Status SetSipUserAgent(ServerContext* context,
         const ::telStub::SetSipUserAgentRequest* request,
         telStub::SetSipUserAgentReply* response) override;
+    grpc::Status RequestVonr(ServerContext* context,
+        const ::telStub::RequestVonrRequest* request,
+        telStub::RequestVonrReply* response) override;
+    grpc::Status SetVonr(ServerContext* context,
+        const ::telStub::SetVonrRequest* request,
+        telStub::SetVonrReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;

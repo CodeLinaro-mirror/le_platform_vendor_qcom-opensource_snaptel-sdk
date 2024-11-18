@@ -62,7 +62,7 @@ void AntennaManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent ev
     }
 }
 
-/* Get Notification for THERM_TRIP_FILTER or THERM_CDEV_FILTER or SSR*/
+/* Get Notification for SSR*/
 void AntennaManagerServerImpl::onEventUpdate(std::string event) {
     LOG(DEBUG, __FUNCTION__, ":: The antenna manager event: ", event);
     std::string token;

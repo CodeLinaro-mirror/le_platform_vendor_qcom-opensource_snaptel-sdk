@@ -12,6 +12,8 @@
 #include "telux/platform/DeviceInfoListener.hpp"
 #include "common/AsyncTaskQueue.hpp"
 #include "common/ListenerManager.hpp"
+#include "SimulationManagerStub.hpp"
+#include "event-manager/ClientEventManager.hpp"
 #include "protos/proto-src/platform_simulation.grpc.pb.h"
 
 using grpc::Channel;
@@ -26,8 +28,13 @@ using namespace telux::common;
 
 class DeviceInfoManagerStub : public IDeviceInfoManager,
                               public IDeviceInfoListener,
+                              public IEventListener,
+                              public SimulationManagerStub<DeviceInfoManagerService>,
                               public std::enable_shared_from_this<DeviceInfoManagerStub> {
  public:
+
+    using SimulationManagerStub::init;
+
     DeviceInfoManagerStub();
 
     /**
@@ -37,33 +44,31 @@ class DeviceInfoManagerStub : public IDeviceInfoManager,
     telux::common::Status registerListener(std::weak_ptr<IDeviceInfoListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<IDeviceInfoListener> listener) override;
     ~DeviceInfoManagerStub();
-
-    /**
-     * Overridden from IDeviceInfoManager
-     */
     telux::common::Status getPlatformVersion(PlatformVersion &pv) override;
     telux::common::Status getIMEI(std::string &imei) override;
 
-    /**
-     * Internal function to initialize connection to Device Info management.
-     */
-    telux::common::Status init(InitResponseCb initCb);
+    telux::common::Status initSyncComplete(
+            telux::common::ServiceStatus srvcStatus) override;
+
+ protected:
+    telux::common::Status init() override;
+    void cleanup() override;
+    void setInitCbDelay(uint32_t cbDelay) override;
+    uint32_t getInitCbDelay() override;
+    void notifyServiceStatus(telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status registerDefaultIndications();
 
  private:
-    /**
-     * Internal method to set the status of Device Info management services
-     */
-    void setServiceStatus(ServiceStatus cbStatus, int cbDelay);
-    void cleanup();
-    void initSync();
-
+    uint32_t cbDelay_ = 0;
     std::shared_ptr<telux::common::ListenerManager<IDeviceInfoListener>> listenerMgr_;
     std::mutex mutex_;
-    ServiceStatus serviceStatus_;
-    bool isInitsyncTriggered_ = false;
-    telux::common::InitResponseCb initCb_;
     telux::common::AsyncTaskQueue<void> taskQ_;
-    std::unique_ptr<::platformStub::DeviceInfoManagerService::Stub> stub_;
+    ClientEventManager &clientEventMgr_;
+
+    void createListener();
+    void onEventUpdate(google::protobuf::Any event);
+    void handleSSREvent(google::protobuf::Any event);
+    void onDmsServiceStatusChange(telux::common::ServiceStatus srvcStatus);
 };
 
 }  // end of namespace platform

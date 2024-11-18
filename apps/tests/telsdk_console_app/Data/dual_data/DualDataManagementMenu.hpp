@@ -23,6 +23,8 @@ class DualDataManagementMenu : public ConsoleApp,
     // Initialization Callback
     void onInitComplete(telux::common::ServiceStatus status);
 
+    bool displayMenu();
+
     // DualData Manager APIs
     void getDualDataCapability(std::vector<std::string> &inputCommand);
     void getDualDataUsageRecommendation(std::vector<std::string> &inputCommand);

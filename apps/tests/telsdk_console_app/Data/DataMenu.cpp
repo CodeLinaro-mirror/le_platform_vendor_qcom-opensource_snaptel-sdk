@@ -72,8 +72,13 @@ bool DataMenu::initializeSDK() {
         "data_profile> ");
     bool dpmSubSystemStatus = dataProfileMenu_->init();
 
+    // Instantiate Dual Data Manager
+    dualDataManagementMenu_ = std::make_shared<DualDataManagementMenu>(
+        "Dual Data Manager Menu", "dual_data> ");
+    bool dualDataSubSystemStatus = dualDataManagementMenu_->init();
+
     // Check if the SDK is able to initialize data subsystems
-    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
+    if ((dcmSubSystemStatus) && (dpmSubSystemStatus) && (dualDataSubSystemStatus)) {
         endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
@@ -284,17 +289,19 @@ void DataMenu::clientMenu(std::vector<std::string> userInput) {
     if(clientMenu_->init()) {
         clientMenu_->mainLoop();
     }
-    clientMenu_ = nullptr;    
+    clientMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
 void DataMenu::dualDataManagementMenu(std::vector<std::string> userInput) {
-    dualDataManagementMenu_ =
-        make_shared<DualDataManagementMenu>("Dual Data Management Menu", "dual_data> ");
-    if(dualDataManagementMenu_->init()) {
-        dualDataManagementMenu_->mainLoop();
+    if(dualDataManagementMenu_) {
+        if (dualDataManagementMenu_->displayMenu()) {
+            dualDataManagementMenu_->mainLoop();
+        }
     }
-    dualDataManagementMenu_ = nullptr;
+    else {
+        std::cout << "Error in creating dual data manager menu" << std::endl;
+    }
     ConsoleApp::displayMenu();
 }
 

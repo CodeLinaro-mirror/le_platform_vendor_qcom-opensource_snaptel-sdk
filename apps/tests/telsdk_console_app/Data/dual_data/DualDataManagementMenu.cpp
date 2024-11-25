@@ -330,13 +330,8 @@ void DualDataManagementMenu::configureDdsSwitchRecommendation(
         std::cout << "DDS recommendation based on (1-Throughput, 2-Latency): ";
         std::cin >> type;
         DataUtils::validateInput(type, {1, 2});
-        if(type) {
-            ddsSwitchRecommendationConfig.recommBasis =
-                telux::data::DDSRecommendationBasis::THROUGHPUT;
-        } else {
-            ddsSwitchRecommendationConfig.recommBasis =
-                telux::data::DDSRecommendationBasis::LATENCY;
-        }
+        ddsSwitchRecommendationConfig.recommBasis =
+            static_cast<telux::data::DDSRecommendationBasis>(type);
     }
 
     telux::common::ErrorCode retStat =

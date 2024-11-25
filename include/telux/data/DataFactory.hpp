@@ -53,7 +53,7 @@
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
-
+#include <telux/data/net/TetherManager.hpp>
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
 #include <telux/data/net/VlanManager.hpp>
@@ -311,6 +311,19 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::net::INetworkSettingManager> getNetworkSettingManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb
         clientCallback = nullptr) = 0;
+
+    /**
+     * Get Tether Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              TetherManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of ITetherManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::ITetherManager> getTetherManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

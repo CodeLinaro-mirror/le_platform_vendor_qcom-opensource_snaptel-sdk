@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -139,7 +139,8 @@ void LocationConfiguratorStub::handleXtraUpdateEvent(::locStub::XtraStatusEvent 
     uint32_t enable= xtraEvent.enable();
     uint32_t validity= xtraEvent.validity();
     uint32_t dataStatus=xtraEvent.datastatus();
-    invokeXtraStatusUpdate(enable,dataStatus,validity);
+    uint32_t consent = xtraEvent.consent();
+    invokeXtraStatusUpdate(enable,dataStatus,validity,consent);
 }
 
 void LocationConfiguratorStub::handleGnssConstellationUpdateEvent(::locStub::GnssUpdateEvent
@@ -893,6 +894,7 @@ telux::common::Status LocationConfiguratorStub::requestXtraStatus(GetXtraStatusC
         }
         xtraStatus.xtraValidForHours = static_cast<int>(
             response.xtra_status().xtra_valid_for_hours());
+        xtraStatus.userConsent = static_cast<int>(response.xtra_status().consent());
     } else {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
@@ -1006,7 +1008,7 @@ void LocationConfiguratorStub::getAvailableListeners(uint32_t indication,
 }
 
 void LocationConfiguratorStub::invokeXtraStatusUpdate(uint32_t enable,
-    uint32_t dataStatus, uint32_t validHours) {
+    uint32_t dataStatus, uint32_t validHours, uint32_t consent) {
     uint32_t indication =
             static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
     XtraStatus xtraStatus;
@@ -1022,6 +1024,7 @@ void LocationConfiguratorStub::invokeXtraStatusUpdate(uint32_t enable,
                 break;
     }
     xtraStatus.xtraValidForHours = validHours;
+    xtraStatus.userConsent = consent;
     std::vector<std::weak_ptr<ILocationConfigListener>> retList {};
     getAvailableListeners(indication, retList);
     if(!retList.empty()) {
@@ -1092,6 +1095,35 @@ telux::common::Status LocationConfiguratorStub::configureOsnma(bool enable,
     telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
     int cbDelay =DEFAULT_CALLBACK_DELAY;
     ::grpc::Status reqstatus = stub_->ConfigureOsnma(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (callback && (cbDelay != SKIP_CALLBACK)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }
+    }).share();
+    taskQ_.add(f);
+    return status;
+}
+
+telux::common::Status LocationConfiguratorStub::provideConsentForXtra(bool userConsent,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::XtraConsentRequest request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    request.set_consent(userConsent);
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->ProvideXtraConsent(&context, request, &response);
     if(reqstatus.ok()) {
         status = static_cast<telux::common::Status>(response.status());
         errorCode = static_cast<telux::common::ErrorCode>(response.error());

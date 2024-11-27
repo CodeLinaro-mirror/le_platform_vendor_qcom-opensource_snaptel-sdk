@@ -141,8 +141,14 @@ void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     LOG(DEBUG, __FUNCTION__);
     uint32_t enable = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
         {"ILocationConfigurator", "XtraParams", "enable"}));
-    uint32_t dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+    uint32_t dataStatus;
+    if(xtraConsent_) {
+        dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+            {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+    } else {
+        //If Xtra consent is false, Data status is Unknown.
+        dataStatus = 0;
+    }
     uint32_t validHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
         {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
     LOG(DEBUG, __FUNCTION__,enable,dataStatus,validHours);
@@ -152,6 +158,7 @@ void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     xtraEvent.set_enable(enable);
     xtraEvent.set_validity(validHours);
     xtraEvent.set_datastatus(dataStatus);
+    xtraEvent.set_consent(xtraConsent_);
     anyResponse.set_filter("loc_config");
     anyResponse.mutable_any()->PackFrom(xtraEvent);
     //posting the event to EventService event queue
@@ -671,9 +678,14 @@ grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus (ServerContext* c
     response->mutable_xtra_status()->set_xtra_valid_for_hours(
         std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
             {"ILocationConfigurator", "XtraParams", "xtraValidForHours"})));
-    response->mutable_xtra_status()->set_xtra_data_status(
-        std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-            {"ILocationConfigurator", "XtraParams", "xtraDataStatus"})));
+    if(xtraConsent_) {
+        response->mutable_xtra_status()->set_xtra_data_status(
+            std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "XtraParams", "xtraDataStatus"})));
+    } else {
+        response->mutable_xtra_status()->set_xtra_data_status(0);
+    }
+    response->mutable_xtra_status()->set_consent(xtraConsent_);
     return grpc::Status::OK;
 }
 
@@ -693,6 +705,20 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureOsnma (ServerContext* cont
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(enable),
             {"ILocationConfigurator", "configureOsnma", "enable"});
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status LocationConfiguratorServerImpl::ProvideXtraConsent (ServerContext* context,
+    const locStub::XtraConsentRequest* request, locStub::LocManagerCommandReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    apiJsonReader("provideConsentForXtra", response);
+    bool consent = request->consent();
+    xtraConsent_ = consent;
+    if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(consent),
+            {"ILocationConfigurator", "provideXtraConsent", "consent"});
     }
     return grpc::Status::OK;
 }

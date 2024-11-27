@@ -107,6 +107,7 @@ public:
    void deRegisterConfigListener(std::vector<std::string> userInput);
    void injectMerkleTreeInformation(std::vector<std::string> userInput);
    void configureOsnma(std::vector<std::string> userInput);
+   void provideConsentForXtra(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();

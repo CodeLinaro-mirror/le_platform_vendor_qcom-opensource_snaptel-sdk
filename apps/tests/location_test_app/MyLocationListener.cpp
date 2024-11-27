@@ -2250,6 +2250,7 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
     std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
+    std::cout << "Xtra Feature Consent: " << xtraStatus.userConsent << "\n";
 }
 
 void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask){

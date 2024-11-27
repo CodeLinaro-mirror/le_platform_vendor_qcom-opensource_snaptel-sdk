@@ -64,6 +64,7 @@ service LocationConfiguratorService {
     rpc InjectMerkleTree (google.protobuf.Empty) returns (LocManagerCommandReply) {}
     rpc ConfigureOsnma (ConfigureOsnmaRequest) returns (LocManagerCommandReply) {}
     rpc RegisterListener (RegisterListenerRequest) returns (LocManagerCommandReply) {}
+    rpc ProvideXtraConsent(XtraConsentRequest) returns (LocManagerCommandReply) {}
 }
 
 service DgnssService {
@@ -134,6 +135,7 @@ message XtraStatusEvent {
     int32 enable = 1;
     int32 validity = 2;
     int32 dataStatus = 3;
+    int32 consent = 4;
 }
 
 message GnssUpdateEvent {
@@ -1862,6 +1864,8 @@ message XtraStatus {
      * For all other XtraDataStatus, this field will be set to 0.
      */
     uint32 xtra_valid_for_hours = 3;
+    /** User consent to avail the Xtra assistance service. */
+    bool consent = 4;
 }
 
 message RequestXtraStatusReply {
@@ -1884,6 +1888,10 @@ message InjectMerkleTreeReply {
 
 message ConfigureOsnmaRequest {
     bool enable = 1;
+}
+
+message XtraConsentRequest {
+    bool consent = 1;
 }
 
 message ConfigureOsnmaReply {

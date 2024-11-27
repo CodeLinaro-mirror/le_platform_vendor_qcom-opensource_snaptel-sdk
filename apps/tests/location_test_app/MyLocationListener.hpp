@@ -132,6 +132,8 @@ private:
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
    void printGnssEphemerisCommonData(const telux::loc::GnssEphCommon &commonData);
+   void printGpsQzssExtendedEphemerisData(const telux::loc::GpsQzssExtEphemeris &extEphData);
+   void printBdsExtendedEphemerisData(const telux::loc::BdsExtEphemeris &extEphData);
    void printEphSrc(telux::loc::GnssEphSource ephSrc);
    void printEphAct(telux::loc::GnssEphAction ephAct);
    void printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData);

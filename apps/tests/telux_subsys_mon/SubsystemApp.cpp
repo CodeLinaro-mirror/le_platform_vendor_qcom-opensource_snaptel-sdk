@@ -75,13 +75,24 @@ void SubsystemApp::registerListener() {
 void SubsystemApp::getSubsystemsToMonitor(
         std::vector<telux::common::SubsystemInfo> &listOfSubsystems) {
 
-    bool yes;
-    bool local;
+    bool yes, local;
     telux::common::SubsystemInfo subsysInfo{};
 
     yes = userUtils_.getYesNoFromUser("Monitor MPSS");
     if (yes) {
         subsysInfo.subsystems = telux::common::Subsystem::MPSS;
+        local = userUtils_.getLocalRemoteFromUser();
+        if (local) {
+            subsysInfo.location = telux::common::ProcType::LOCAL_PROC;
+        } else {
+            subsysInfo.location = telux::common::ProcType::REMOTE_PROC;
+        }
+        listOfSubsystems.push_back(subsysInfo);
+    }
+
+    yes = userUtils_.getYesNoFromUser("Monitor APSS");
+    if (yes) {
+        subsysInfo.subsystems = telux::common::Subsystem::APSS;
         local = userUtils_.getLocalRemoteFromUser();
         if (local) {
             subsysInfo.location = telux::common::ProcType::LOCAL_PROC;

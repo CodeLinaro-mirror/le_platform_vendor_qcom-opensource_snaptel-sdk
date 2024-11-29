@@ -12,6 +12,7 @@
 
 #include <thread>
 #include <chrono>
+#include <sys/sysinfo.h>
 
 #include "SensorClientServerImpl.hpp"
 #include "libs/common/SimulationConfigParser.hpp"
@@ -135,6 +136,9 @@ grpc::Status SensorClientServerImpl::InitService(ServerContext* context,
     }
     response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
     response->set_delay(cbDelay);
+    std::vector<std::string> filters = {"sensor_mgr"};
+    auto &serverEventManager = ServerEventManager::getInstance();
+    serverEventManager.registerListener(shared_from_this(), filters);
     return grpc::Status::OK;
 }
 
@@ -164,6 +168,14 @@ bool SensorClientServerImpl::init() {
     if(replayCsvStr == "TRUE") {
         replayCsv_ = true;
     }
+
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE,0});
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE,0});
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::ALL,0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE,0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE,0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::ALL,0});
+
     return true;
 }
 
@@ -293,26 +305,24 @@ grpc::Status SensorClientServerImpl::GetSensorInfo(ServerContext* context,
 }
 
 grpc::Status SensorClientServerImpl::Activate(ServerContext* context,
-    const google::protobuf::Empty* request,
+    const sensorStub::ActivateRequest* request,
     sensorStub::SensorClientCommandReply* response){
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("activate", response);
     if (response->status() == ::commonStub::Status::SUCCESS) {
+        ::sensorStub::SensorType sensorType = request->sensor_type();
+        if(sensorType == ::sensorStub::SensorType::ACCEL) {
+            activeAccelCount_++;
+        } else {
+            activeGyroCount_++;
+        }
         updateStreamRequest();
     }
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::SelfTest(ServerContext* context,
-    const google::protobuf::Empty* request,
-    sensorStub::SensorClientCommandReply* response){
-    LOG(DEBUG, __FUNCTION__);
-    apiJsonReader("selfTest", response);
-    return grpc::Status::OK;
-}
-
 grpc::Status SensorClientServerImpl::Deactivate(ServerContext* context,
-    const google::protobuf::Empty* request,
+    const sensorStub::DeactivateRequest* request,
     sensorStub::SensorClientCommandReply* response){
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("deactivate", response);
@@ -321,6 +331,12 @@ grpc::Status SensorClientServerImpl::Deactivate(ServerContext* context,
             auto &SensorReportService = SensorReportService::getInstance();
             size_t clientSize = SensorReportService.getClientsForFilter("SENSOR_REPORTS");
             LOG(DEBUG, __FUNCTION__, " Client size: ", clientSize);
+            ::sensorStub::SensorType sensorType = request->sensor_type();
+            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+                activeAccelCount_--;
+            } else {
+                activeGyroCount_--;
+            }
             if(clientSize == 0) {
                 SimulationConfigParser configParser;
                 std::string stopStreamStr =
@@ -342,6 +358,76 @@ grpc::Status SensorClientServerImpl::SensorUpdateRotationMatrix(ServerContext* c
     return grpc::Status::OK;
 }
 
+grpc::Status SensorClientServerImpl::SelfTest (ServerContext* context,
+    const sensorStub::SelfTestRequest* request, sensorStub::SelfTestResponse* response) {
+    LOG(DEBUG, __FUNCTION__);
+    ::sensorStub::SelfTestType selfTestType = request->selftest_type();
+    telux::sensor::SelfTestType selfTest_Type;
+    if(selfTestType == ::sensorStub::SelfTestType::SelfTest_Positive) {
+        selfTest_Type = telux::sensor::SelfTestType::POSITIVE;
+    } else if(selfTestType == ::sensorStub::SelfTestType::SelfTest_Negative) {
+        selfTest_Type = telux::sensor::SelfTestType::NEGATIVE;
+    } else {
+        selfTest_Type = telux::sensor::SelfTestType::ALL;
+    }
+    ::sensorStub::SensorType sensorType = request->sensor_type();
+    bool isActive = false;
+    if((sensorType == ::sensorStub::SensorType::ACCEL) && (activeAccelCount_ > 0)) {
+        isActive = true;
+    } else if ((sensorType == ::sensorStub::SensorType::GYRO) && (activeGyroCount_ > 0)) {
+        isActive = true;
+    }
+    telux::common::ErrorCode errorCode;
+    telux::common::Status status;
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, SENSOR_CLIENT_API_JSON);
+    int cbDelay = rootNode["ISensorClient"]["selfTest"]["callbackDelay"].asInt();
+    response->set_delay(cbDelay);
+    std::string statusStr = rootNode["ISensorClient"]["selfTest"]["status"].asString();
+    status = CommonUtils::mapStatus(statusStr);
+    response->set_status(static_cast<::commonStub::Status>(status));
+    std::string errorStr = rootNode["ISensorClient"]["selfTest"]["error"].asString();
+    errorCode = CommonUtils::mapErrorCode(errorStr);
+
+    if(status == telux::common::Status::SUCCESS) {
+        if((errorCode != telux::common::ErrorCode::SUCCESS) &&
+            (errorCode != telux::common::ErrorCode::INFO_UNAVAILABLE)) {
+            errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+        }
+        uint64_t timestamp;
+        if(!isActive) {
+            response->set_selftest_result(::sensorStub::Sensor_Idle);
+            // Calculating Boot time stamp in ns.
+            CommonUtils::calculateBootTimeStamp(timestamp);
+            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+                accelSelfTestCache_[selfTest_Type] = timestamp;
+            } else {
+                gyroSelfTestCache_[selfTest_Type] = timestamp;
+            }
+        } else {
+            response->set_selftest_result(::sensorStub::Sensor_Busy);
+            // If sensor session is active and this is the first self test.
+            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+                timestamp = accelSelfTestCache_[selfTest_Type];
+            } else {
+                timestamp = gyroSelfTestCache_[selfTest_Type];
+            }
+            if(timestamp == 0) {
+                CommonUtils::calculateBootTimeStamp(timestamp);
+                if(sensorType == ::sensorStub::SensorType::ACCEL) {
+                    accelSelfTestCache_[selfTest_Type] = timestamp;
+                } else {
+                    gyroSelfTestCache_[selfTest_Type] = timestamp;
+                }
+                errorCode = telux::common::ErrorCode::INFO_UNAVAILABLE;
+            }
+        }
+        response->set_timestamp(timestamp);
+        response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
+    }
+    return grpc::Status::OK;
+}
+
 void SensorClientServerImpl::apiJsonReader(
     std::string apiName, sensorStub::SensorClientCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
@@ -354,4 +440,49 @@ void SensorClientServerImpl::apiJsonReader(
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
+}
+
+void SensorClientServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event){
+    LOG(DEBUG, __FUNCTION__);
+    if (event.filter() == "sensor_mgr") {
+        std::string eventStr = event.event();
+        std::string token = EventParserUtil::getNextToken(eventStr, DEFAULT_DELIMITER);
+        if (token == "") {
+            LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+            return;
+        }
+        handleEvent(token,eventStr);
+    }
+}
+
+void SensorClientServerImpl::handleEvent(std::string token , std::string event) {
+    LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
+    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
+    if (token == "selfTestFailed") {
+        triggerSelfTestFailedEvent(event);
+    }
+}
+
+void SensorClientServerImpl::triggerSelfTestFailedEvent(std::string event) {
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t mask = 0;
+    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, " sensor mask is not passed");
+        return;
+    } else {
+        try {
+            mask = std::stoul(token);
+        } catch (std::exception& ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    ::sensorStub::SelfTestFailedEvent selfTestFailedEvent;
+    ::eventService::EventResponse anyResponse;
+    selfTestFailedEvent.set_sensor_mask(mask);
+    anyResponse.set_filter("sensor_mgr");
+    anyResponse.mutable_any()->PackFrom(selfTestFailedEvent);
+    //posting the event to EventService event queue
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }

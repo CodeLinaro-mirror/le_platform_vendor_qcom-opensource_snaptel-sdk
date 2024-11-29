@@ -24,8 +24,8 @@
             "error" : "SUCCESS"
         },
         "selfTest":{
-            "callbackDelay": 100,
             "status": "SUCCESS",
+            "callbackDelay": 400,
             "error" : "SUCCESS"
         },
         "sensorUpdateRotationMatrix": {

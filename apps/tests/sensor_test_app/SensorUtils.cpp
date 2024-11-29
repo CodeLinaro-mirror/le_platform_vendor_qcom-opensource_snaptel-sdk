@@ -247,3 +247,11 @@ void SensorUtils::printTcuActivityState(telux::power::TcuActivityState state) {
         std::cout << " ERROR: Invalid TCU-activity state notified" << std::endl;
     }
 }
+
+std::string SensorUtils::sensorResultTypeToString(SensorResultType sensorResultType) {
+    switch(sensorResultType) {
+        case SensorResultType::HISTORICAL : return "HISTORICAL";
+        case SensorResultType::CURRENT    : return "CURRENT";
+        default : return "UNKNOWN";
+    }
+}

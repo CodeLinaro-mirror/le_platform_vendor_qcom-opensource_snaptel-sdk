@@ -27,10 +27,10 @@ service SensorClientService {
     rpc Configure (google.protobuf.Empty) returns (SensorClientCommandReply) {}
     rpc GetConfiguration (google.protobuf.Empty) returns (SensorClientCommandReply) {}
     rpc GetSensorInfo (google.protobuf.Empty) returns (SensorClientCommandReply) {}
-    rpc Activate (google.protobuf.Empty) returns (SensorClientCommandReply) {}
-    rpc Deactivate (google.protobuf.Empty) returns (SensorClientCommandReply) {}
-    rpc SelfTest (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc Activate (ActivateRequest) returns (SensorClientCommandReply) {}
+    rpc Deactivate (DeactivateRequest) returns (SensorClientCommandReply) {}
     rpc SensorUpdateRotationMatrix (google.protobuf.Empty) returns (SensorClientCommandReply) {}
+    rpc SelfTest (SelfTestRequest) returns (SelfTestResponse) {}
 }
 
 service EventDispatcherService {
@@ -77,6 +77,19 @@ message GetFeatureListReply {
     string list = 3;
 }
 
+enum SensorType {
+    ACCEL = 0;
+    GYRO = 1;
+}
+
+message ActivateRequest {
+    SensorType sensor_type = 1;
+}
+
+message DeactivateRequest {
+    SensorType sensor_type = 1;
+}
+
 message StartReportsEvent {
     string sensor_report = 1;
 }
@@ -100,4 +113,32 @@ message SensorInfo {
 
 message SensorInfoResponse {
     repeated SensorInfo sensor_info = 1;
+}
+
+enum SelfTestType {
+    SelfTest_Positive = 0;
+    SelfTest_Negative = 1;
+    SelfTest_All = 2;
+}
+
+enum SelfTestResult {
+    Sensor_Busy = 0;
+    Sensor_Idle = 1;
+}
+
+message SelfTestRequest {
+    SelfTestType selftest_type = 1;
+    SensorType sensor_type = 2;
+}
+
+message SelfTestResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    SelfTestResult selftest_result = 4;
+    uint64 timestamp = 5;
+}
+
+message SelfTestFailedEvent {
+    int32 sensor_mask = 1;
 }

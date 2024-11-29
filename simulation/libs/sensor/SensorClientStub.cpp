@@ -75,6 +75,15 @@ SensorClientStub::SensorClientStub(SensorInfo sensorInfo, std::shared_ptr<::sens
     updateSensorSamplingMap();
 }
 
+void SensorClientStub::init() {
+    LOG(DEBUG,__FUNCTION__);
+    auto myself = shared_from_this();
+    myself_ = myself;
+    std::vector<std::string> filters = {"sensor_mgr"};
+    auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+    clientEventManager.registerListener(myself_, filters);
+}
+
 void SensorClientStub::updateSensorSamplingMap(){
     LOG(DEBUG,__FUNCTION__);
     sensorSamplingMap_[12] = 8;
@@ -210,7 +219,11 @@ SensorConfiguration SensorClientStub::getConfiguration(){
 }
 
 telux::common::Status SensorClientStub::activate(){
-    LOG(DEBUG, sensorLogPrefix_, "Request to activate");
+    LOG(DEBUG, sensorLogPrefix_, " Request to activate");
+    if(sensorSessionActive_) {
+        LOG(DEBUG, sensorLogPrefix_, " Sensor session already active");
+        return telux::common::Status::NOTALLOWED;
+    }
     if (isConfigurationRequired_) {
         LOG(INFO, sensorLogPrefix_, "Configuration of sensor necessary before activation...");
         SensorConfiguration configuration;
@@ -242,9 +255,19 @@ telux::common::Status SensorClientStub::activate(){
     auto &sensorReportListener = telux::common::SensorReportListener::getInstance();
     sensorReportListener.registerListener(shared_from_this(), filters);
     telux::common::Status status = telux::common::Status::FAILED;
+
+    ::sensorStub::ActivateRequest request;
     ::sensorStub::SensorClientCommandReply response;
-    const ::google::protobuf::Empty request;
     ClientContext context;
+    ::sensorStub::SensorType sensorType;
+    if(sensorInfo_.type == SensorType::ACCELEROMETER ||
+        sensorInfo_.type == SensorType::ACCELEROMETER_UNCALIBRATED) {
+        sensorType = ::sensorStub::SensorType::ACCEL;
+    } else {
+        sensorType = ::sensorStub::SensorType::GYRO;
+    }
+    request.set_sensor_type(sensorType);
+
     ::grpc::Status reqstatus = stub_->Activate(&context, request, &response);
     if(reqstatus.ok()) {
         status = static_cast<telux::common::Status>(response.status());
@@ -260,13 +283,27 @@ telux::common::Status SensorClientStub::activate(){
 
 telux::common::Status SensorClientStub::deactivate(){
     LOG(DEBUG, sensorLogPrefix_, "Request to deactivate");
+    if(!sensorSessionActive_) {
+        LOG(DEBUG, sensorLogPrefix_, " Sensor session already inactive");
+        return telux::common::Status::NOTALLOWED;
+    }
     std::vector<std::string> filters = {"SENSOR_REPORTS"};
     auto &sensorReportListener = telux::common::SensorReportListener::getInstance();
     sensorReportListener.deregisterListener(shared_from_this(), filters);
     telux::common::Status status = telux::common::Status::FAILED;
+
+    ::sensorStub::DeactivateRequest request;
     ::sensorStub::SensorClientCommandReply response;
-    const ::google::protobuf::Empty request;
     ClientContext context;
+    ::sensorStub::SensorType sensorType;
+    if(sensorInfo_.type == SensorType::ACCELEROMETER ||
+        sensorInfo_.type == SensorType::ACCELEROMETER_UNCALIBRATED) {
+        sensorType = ::sensorStub::SensorType::ACCEL;
+    } else {
+        sensorType = ::sensorStub::SensorType::GYRO;
+    }
+    request.set_sensor_type(sensorType);
+
     ::grpc::Status reqstatus = stub_->Deactivate(&context, request, &response);
     if(reqstatus.ok()) {
         status = static_cast<telux::common::Status>(response.status());
@@ -296,25 +333,6 @@ telux::common::Status SensorClientStub::deregisterListener(
     return listenerMgr_->deRegisterListener(listener);
 }
 
-SelfTestType SensorClientStub::updateSelfTestType(SelfTestType selfTestType) {
-    SelfTestType sensorSelfTestType = SelfTestType::POSITIVE;
-    switch (selfTestType) {
-        case SelfTestType::POSITIVE: {
-            sensorSelfTestType = SelfTestType::POSITIVE;
-            break;
-        }
-        case SelfTestType::NEGATIVE: {
-            sensorSelfTestType = SelfTestType::NEGATIVE;
-            break;
-        }
-        default: {
-            LOG(WARNING, "Unhandled self test type, using default value");
-            break;
-        }
-    }
-    return sensorSelfTestType;
-}
-
 telux::common::Status SensorClientStub::selfTest(
     SelfTestType selfTestType, SelfTestResultCallback cb){
     LOG(DEBUG, sensorLogPrefix_, __FUNCTION__);
@@ -322,29 +340,104 @@ telux::common::Status SensorClientStub::selfTest(
         LOG(ERROR, sensorLogPrefix_, "Callback cannot be nullptr");
         return telux::common::Status::INVALIDPARAM;
     }
-    SelfTestType sensorSelfTestType = updateSelfTestType(selfTestType);
-    LOG(INFO, sensorLogPrefix_, "Invoking sensor self test: ",
-    static_cast<uint32_t>(sensorSelfTestType));
-    const ::google::protobuf::Empty request;
-    ::sensorStub::SensorClientCommandReply response;
+    ::sensorStub::SelfTestRequest request;
+    ::sensorStub::SelfTestResponse response;
     ClientContext context;
-    telux::common::Status status = telux::common::Status::FAILED;
-    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
-    int cbDelay = DEFAULT_CALLBACK_DELAY;
-    ::grpc::Status reqstatus = stub_->SelfTest(&context, request, &response);
-    if(reqstatus.ok()) {
-        status = static_cast<telux::common::Status>(response.status());
-        errorCode = static_cast<telux::common::ErrorCode>(response.error());
-        cbDelay = static_cast<int>(response.delay());
-    } else {
-        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    ::sensorStub::SelfTestType selfTest_Type;
+    if(selfTestType == telux::sensor::SelfTestType::POSITIVE) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_Positive;
+    } else if(selfTestType == telux::sensor::SelfTestType::NEGATIVE) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_Negative;
+    } else if(selfTestType == telux::sensor::SelfTestType::ALL) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_All;
     }
-    if (status == telux::common::Status::SUCCESS) {
-        if (cb && (cbDelay != SKIP_CALLBACK)) {
+    request.set_selftest_type(selfTest_Type);
+    ::sensorStub::SensorType sensorType;
+    if(sensorInfo_.type == SensorType::ACCELEROMETER ||
+        sensorInfo_.type == SensorType::ACCELEROMETER_UNCALIBRATED) {
+        sensorType = ::sensorStub::SensorType::ACCEL;
+    } else {
+        sensorType = ::sensorStub::SensorType::GYRO;
+    }
+    request.set_sensor_type(sensorType);
+
+    grpc::Status reqStatus = stub_->SelfTest(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+        return telux::common::Status::FAILED;
+    }
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    if(status == telux::common::Status::SUCCESS) {
+        telux::common::ErrorCode errorCode =
+            static_cast<telux::common::ErrorCode>(response.error());
+        ::sensorStub::SelfTestResult selfTestResult = response.selftest_result();
+        if(selfTestResult == ::sensorStub::SelfTestResult::Sensor_Busy) {
+            errorCode = telux::common::ErrorCode::DEVICE_IN_USE;
+        }
+        int cbDelay = static_cast<int>(response.delay());
+        auto f = std::async(std::launch::async, [=]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
                 cb(errorCode);
-        }
+        }).share();
+        taskQ_.add(f);
     }
+
+    return status;
+}
+
+telux::common::Status SensorClientStub::selfTest(SelfTestType selfTestType,
+    SelfTestExResultCallback cb) {
+    LOG(DEBUG, sensorLogPrefix_, __FUNCTION__);
+    if (!cb) {
+        LOG(ERROR, sensorLogPrefix_, "Callback cannot be nullptr");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    ::sensorStub::SelfTestRequest request;
+    ::sensorStub::SelfTestResponse response;
+    ClientContext context;
+    ::sensorStub::SelfTestType selfTest_Type;
+    if(selfTestType == telux::sensor::SelfTestType::POSITIVE) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_Positive;
+    } else if(selfTestType == telux::sensor::SelfTestType::NEGATIVE) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_Negative;
+    } else if(selfTestType == telux::sensor::SelfTestType::ALL) {
+        selfTest_Type = ::sensorStub::SelfTestType::SelfTest_All;
+    }
+    request.set_selftest_type(selfTest_Type);
+    ::sensorStub::SensorType sensorType;
+    if(sensorInfo_.type == SensorType::ACCELEROMETER ||
+        sensorInfo_.type == SensorType::ACCELEROMETER_UNCALIBRATED) {
+        sensorType = ::sensorStub::SensorType::ACCEL;
+    } else {
+        sensorType = ::sensorStub::SensorType::GYRO;
+    }
+    request.set_sensor_type(sensorType);
+
+    grpc::Status reqStatus = stub_->SelfTest(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+        return telux::common::Status::FAILED;
+    }
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    if(status == telux::common::Status::SUCCESS) {
+        telux::common::ErrorCode errorCode =
+            static_cast<telux::common::ErrorCode>(response.error());
+        SelfTestResultParams selfTestResultParams;
+        ::sensorStub::SelfTestResult selfTestResult = response.selftest_result();
+        if(selfTestResult == ::sensorStub::SelfTestResult::Sensor_Busy) {
+            selfTestResultParams.sensorResultType_ = SensorResultType::HISTORICAL;
+        } else {
+            selfTestResultParams.sensorResultType_ = SensorResultType::CURRENT;
+        }
+        selfTestResultParams.timestamp_ = response.timestamp();
+        int cbDelay = static_cast<int>(response.delay());
+        auto f = std::async(std::launch::async, [=]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                cb(errorCode, selfTestResultParams);
+        }).share();
+        taskQ_.add(f);
+    }
+
     return status;
 }
 
@@ -458,6 +551,11 @@ void SensorClientStub::onEventUpdate(google::protobuf::Any event) {
         ::sensorStub::StreamingStoppedEvent streamingStoppedEvent;
         event.UnpackTo(&streamingStoppedEvent);
         handleStreamingStoppedEvent();
+    } else if (event.Is<::sensorStub::SelfTestFailedEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " SelfTestFailed update");
+        ::sensorStub::SelfTestFailedEvent selfTestFailedEvent;
+        event.UnpackTo(&selfTestFailedEvent);
+        handleSelfTestFailedEvent(selfTestFailedEvent);
     }
 }
 
@@ -465,6 +563,34 @@ void SensorClientStub::handleStreamingStoppedEvent() {
     LOG(DEBUG, __FUNCTION__);
     auto f = std::async(std::launch::async, [this]() { deactivate(); }).share();
     taskQ_.add(f);
+}
+
+void SensorClientStub::handleSelfTestFailedEvent(
+    ::sensorStub::SelfTestFailedEvent &selfTestFailedEvent) {
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t mask = selfTestFailedEvent.sensor_mask();
+    if ((mask & telux::sensor::SelfTestFail::ACCEL)
+        && (sensorInfo_.type == SensorType::ACCELEROMETER
+            || sensorInfo_.type == SensorType::ACCELEROMETER_UNCALIBRATED)) {
+        notifySelfTestFailedEvent();
+    } else if ((mask & telux::sensor::SelfTestFail::GYRO)
+               && (sensorInfo_.type == SensorType::GYROSCOPE
+                   || sensorInfo_.type == SensorType::GYROSCOPE_UNCALIBRATED)) {
+        notifySelfTestFailedEvent();
+    }
+}
+
+void SensorClientStub::notifySelfTestFailedEvent() {
+    LOG(ERROR, sensorLogPrefix_, __FUNCTION__);
+     if (listenerMgr_) {
+        std::vector<std::weak_ptr<ISensorEventListener>> listeners;
+        listenerMgr_->getAvailableListeners(listeners);
+        for (auto &wp : listeners) {
+            if (auto sp = wp.lock()) {
+                sp->onSelfTestFailed();
+            }
+        }
+    }
 }
 
 void SensorClientStub::notifySensorEvent(std::shared_ptr<std::vector<SensorEvent>> events) {

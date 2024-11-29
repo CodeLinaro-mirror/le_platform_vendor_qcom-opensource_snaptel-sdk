@@ -49,6 +49,7 @@
 #include <telux/sensor/SensorClient.hpp>
 
 #include "common/ListenerManager.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
 #include "common/event-manager/ClientEventManager.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "libs/common/CommandCallbackManager.hpp"
@@ -63,6 +64,11 @@ using sensorStub::SensorClientService;
 
 namespace telux{
 namespace sensor{
+
+enum SelfTestFail {
+    ACCEL = (1 << 0),
+    GYRO = (1 << 1)
+};
 
 class SensorClientStub: public ISensorClient,
                         public IEventListener,
@@ -80,6 +86,8 @@ class SensorClientStub: public ISensorClient,
     telux::common::Status selfTest(SelfTestType selfTestType, SelfTestResultCallback cb) override;
     telux::common::Status registerListener(std::weak_ptr<ISensorEventListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<ISensorEventListener> listener) override;
+    telux::common::Status selfTest(SelfTestType selfTestType, SelfTestExResultCallback cb) override;
+    void init();
     void onEventUpdate(google::protobuf::Any event) override;
 
   private:
@@ -90,10 +98,11 @@ class SensorClientStub: public ISensorClient,
     void notifyConfigurationUpdate(SensorConfiguration configuration);
     float updateSamplingRate(float sampleRate);
     uint32_t updateBatchCount(uint32_t batchCount);
-    SelfTestType updateSelfTestType(SelfTestType selfTestType);
     void batchSensorEvents(std::vector<std::string> message);
     void parseRequest(::sensorStub::StartReportsEvent startEvent);
     void handleStreamingStoppedEvent();
+    void handleSelfTestFailedEvent(::sensorStub::SelfTestFailedEvent &selfTestFailedEvent);
+    void notifySelfTestFailedEvent();
     void notifySensorEvent(std::shared_ptr<std::vector<SensorEvent>> events);
     void parseSensorEvents(std::vector<std::vector<std::string>> events, uint32_t count);
     void updateSensorSamplingMap();
@@ -117,6 +126,7 @@ class SensorClientStub: public ISensorClient,
     std::map<uint64_t, uint64_t> sensorSamplingMap_;
     uint64_t sampleCountFromMap_;
     bool firstSample_ = true;
+    std::weak_ptr<telux::sensor::SensorClientStub> myself_;
 };
 
 

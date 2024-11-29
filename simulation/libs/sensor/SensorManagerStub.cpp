@@ -178,6 +178,9 @@ telux::common::Status SensorManagerStub::getSensorClient(
         SensorInfo &sensorInfo = getSensorInfo(name);
         LOG(DEBUG, "Creating the sensor client for sensor: ", name);
         sensor = std::make_shared<SensorClientStub>(sensorInfo, stub_);
+        if (sensor) {
+            std::dynamic_pointer_cast<SensorClientStub>(sensor)->init();
+        }
         return telux::common::Status::SUCCESS;
     } catch (std::invalid_argument *e) {
         LOG(ERROR, "Unable to initialize sensor: ", e->what());

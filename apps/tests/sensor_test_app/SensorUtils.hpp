@@ -116,6 +116,7 @@ class SensorUtils {
     }
     static void printSensorEvent(
         SensorType type, SensorEvent &s, float samplingRate, std::string &tag);
+    static std::string sensorResultTypeToString(SensorResultType sensorResultType);
     static void printSensorFeatureBufferedEvent(SensorEvent &s);
     static bool isUncalibratedSensor(SensorType type);
     static void printSensorFeatureInfo(SensorFeature feature);

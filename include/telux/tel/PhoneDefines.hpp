@@ -91,9 +91,8 @@ enum class CallType {
    UNKNOWN = -1,       /**< Unknown; information is not available */
    VOICE_CALL,         /**< Normal voice call or TPS eCall */
    VOICE_IP_CALL,      /**< Normal Voice over IP (VoIP) call or TPS eCall over IP */
-   EMERGENCY_CALL,     /**< Non-automotive emergency call */
+   EMERGENCY_CALL,     /**< Non-automotive emergency call, automotive eCall or NGeCall */
    EMERGENCY_IP_CALL,  /**< Non-automotive emergency Voice over IP (VoIP) call */
-   ECALL               /**< Normal automotive eCall or NGeCall */
 };
 
 /**

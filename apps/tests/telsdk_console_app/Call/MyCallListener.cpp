@@ -204,8 +204,6 @@ std::string MyCallListener::getCallTypeString(telux::tel::CallType type) {
          return std::string("Emergency call");
       case telux::tel::CallType::EMERGENCY_IP_CALL:
          return std::string("Emergency IP call");
-      case telux::tel::CallType::ECALL:
-         return std::string("Automotive emergency call");
       default:
          return std::string("unknown");
    }

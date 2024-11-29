@@ -1258,14 +1258,13 @@ telux::common::ErrorCode TelUtil::readVoiceRadioTechnologyFromJsonFile(int phone
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
         return error;
     }
-    telStub::RadioTechnology servingRat;
     telStub::ServiceDomainInfo_Domain servingDomain;
-    error = TelUtil::readSystemInfoFromJsonFile(phoneId, servingRat, servingDomain);
+    error = TelUtil::readSystemInfoFromJsonFile(phoneId, rat, servingDomain);
     if (error != ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Reading System Info failed" );
         return error;
     }
-    LOG(DEBUG, __FUNCTION__," RAT is :", static_cast<int>(servingRat));
+    LOG(DEBUG, __FUNCTION__," RAT is :", static_cast<int>(rat));
     return error;
 }
 

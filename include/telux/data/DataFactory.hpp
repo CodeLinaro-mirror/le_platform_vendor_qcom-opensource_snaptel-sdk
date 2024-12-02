@@ -27,9 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -91,6 +90,7 @@
 #include <telux/data/net/SocksManager.hpp>
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
+#include <telux/data/KeepAliveManager.hpp>
 
 namespace telux {
 namespace data {
@@ -288,6 +288,21 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr)
         = 0;
+
+    /**
+     * Gets the KeepAlive manager instance.
+     *
+     * @param [in] slotId           Unique identifier for the SIM slot
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              KeepAlive manager @ref telux::common::InitResponseCb
+     *
+     * @returns IKeepAliveManager instance.
+     *
+     */
+    virtual std::shared_ptr<telux::data::IKeepAliveManager> getKeepAliveManager(
+        SlotId slotId = DEFAULT_SLOT_ID,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

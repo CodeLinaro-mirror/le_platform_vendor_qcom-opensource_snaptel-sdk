@@ -199,6 +199,9 @@ service DataFilterManager {
     rpc enableSocks(EnableSocksRequest) returns (DefaultReply) {}
   }
 
+  service KeepAliveManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+  }
   service DualDataManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
     rpc GetDualDataCapability(google.protobuf.Empty) returns (GetDualDataCapabilityReply) {}

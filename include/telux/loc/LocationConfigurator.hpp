@@ -254,31 +254,39 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
         telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
-  * This API blacklists some constellations or subset of SVs from the constellation from being used
-  * by the GNSS engine on modem. For multiple invocations of this API, client should wait for the
-  * command to finish, e.g.: via ResponseCallback recieved before issuing a second
-  * configureConstellations command. This API call is not incremental and the new settings will
-  * completely overwrite the previous call.
-  * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
-  * constellations NOTSUPPORTED status will be returned.
-  * If SBAS is disabled via NV in modem, then it cannot be enabled.
-  * When resetToDefault is false then the list is expected to contain the constellations or SVs
-  * that should be blacklisted. An empty list could be specified to allow all constellations/SVs
-  * (i.e. none will be blacklisted) in determining the fix.
-  * When resetToDefault is set to true, the device will revert to the default list of SV/
-  * constellations to be blacklisted.
-  *
-  * @param [in] list - specify the set of constellations and SVs that should not be used
-  *                    by the GNSS engine on modem. Constellations and SVs not specified
-  *                    in blacklistedSvList could get used by the GNSS engine on modem.
-  *
-  * @param [in] callback - Optional callback to get the response of configure constellations.
-  *
-  * @param [in] resetToDefault - when set to true, the device will revert to the default list of
-  *                              SV/constellation to be blacklisted. When set to false, list will
-  *                              be inspected to determine what should be blacklisted.
-  *
-  */
+ * This API blacklists some constellations or subset of SVs from the constellation from being used
+ * by the GNSS standard position engine (SPE).
+ * Supported constellations for this API are GPS, GLONASS, QZSS, BEIDOU, GALILEO, SBAS and NAVIC.
+ * For other constellations NOTSUPPORTED status will be returned.
+ * For SBAS, SVs are not used in positioning by the GNSS standard position engine (SPE) by
+ * default. Blacklisting SBAS SV only blocks SBAS data demodulation and will not disable SBAS
+ * cross-correlation detection algorithms as they are necessary for optimal GNSS standard
+ * position engine (SPE) performance.
+ * When resetToDefault is false then the list is expected to contain the constellations or SVs
+ * that should be blacklisted. An empty list could be specified to allow all constellations/SVs
+ * (i.e. none will be blacklisted) in determining the fix.
+ * When resetToDefault is set to true, the device will revert to the default list of SV/
+ * constellations to be blacklisted.
+ * For multiple invocations of this API, client should wait for the command to finish, e.g.: via
+ * ResponseCallback received before issuing a second configureConstellations command. Behavior is
+ * not defined if client issues a second request of configureConstellations without waiting for
+ * the finish of the previous configureConstellations request. This API call is not incremental
+ * and the new settings will completely overwrite the previous call.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] list - specify the set of constellations and SVs that should not be used
+ *                    by the GNSS engine on modem. Constellations and SVs not specified
+ *                    in blacklistedSvList could get used by the GNSS engine on modem.
+ *
+ * @param [in] callback - Optional callback to get the response of configure constellations.
+ *
+ * @param [in] resetToDefault - when set to true, the device will revert to the default list of
+ *                              SV/constellation to be blacklisted. When set to false, list will
+ *                              be inspected to determine what should be blacklisted.
+ *
+ */
 
 
   virtual telux::common::Status configureConstellations(const SvBlackList& list,

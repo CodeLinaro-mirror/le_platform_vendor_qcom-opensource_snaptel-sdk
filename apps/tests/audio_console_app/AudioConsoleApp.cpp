@@ -28,7 +28,6 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
  * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -58,6 +57,7 @@ extern "C" {
 #include "ToneMenu.hpp"
 #include "TransCodeMenu.hpp"
 #include "HpcmMenu.hpp"
+#include "RepeatedPlaybackMenu.hpp"
 
 #include "AudioConsoleApp.hpp"
 #include "../../common/utils/Utils.hpp"
@@ -165,10 +165,15 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Hpcm", {},
         std::bind(&AudioConsoleApp::hpcmMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> repeatedPlaybackMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "Repeated Playback", {},
+        std::bind(&AudioConsoleApp::repeatedPlaybackMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
     = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
         toneMenuCommand, transCodeMenuCommand, getCalStatusCommand,
-        getSupportedStreamsCommand, getSupportedDevicesCommand , hpcmMenuCommand};
+        getSupportedStreamsCommand, getSupportedDevicesCommand , hpcmMenuCommand,
+        repeatedPlaybackMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ");
     voiceMenu_->init();
@@ -184,6 +189,9 @@ void AudioConsoleApp::initConsole() {
     transCodeMenu_->init();
     hpcmMenu_ = std::make_shared<HpcmMenu>("Hpcm menu", "hpcm> ", audioManager_);
     hpcmMenu_->init();
+    repeatedPlaybackMenu_ = std::make_shared<RepeatedPlaybackMenu>("RepeatedPlayback menu",
+            "repeatedPlayback> ");
+    repeatedPlaybackMenu_->init();
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -222,6 +230,11 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
 void AudioConsoleApp::hpcmMenu(std::vector<std::string> userInput) {
     hpcmMenu_->displayMenu();
     hpcmMenu_->mainLoop();
+}
+
+void AudioConsoleApp::repeatedPlaybackMenu(std::vector<std::string> userInput) {
+    repeatedPlaybackMenu_->displayMenu();
+    repeatedPlaybackMenu_->mainLoop();
 }
 
 void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
@@ -344,6 +357,7 @@ void AudioConsoleApp::cleanup() {
     toneMenu_->cleanup();
     transCodeMenu_->cleanup();
     hpcmMenu_->cleanup();
+    repeatedPlaybackMenu_->cleanup();
 }
 
 void AudioConsoleApp::setSystemReady() {
@@ -368,6 +382,9 @@ void AudioConsoleApp::setSystemReady() {
     }
     if (hpcmMenu_) {
         hpcmMenu_->setSystemReady();
+    }
+    if (repeatedPlaybackMenu_) {
+        repeatedPlaybackMenu_->setSystemReady();
     }
 }
 

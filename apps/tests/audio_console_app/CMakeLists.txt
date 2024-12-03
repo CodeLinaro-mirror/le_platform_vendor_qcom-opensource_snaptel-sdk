@@ -12,6 +12,7 @@ set(AUDIO_CONSOLE_APP_SOURCES
     ToneMenu.cpp
     TransCodeMenu.cpp
     HpcmMenu.cpp
+    RepeatedPlaybackMenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp

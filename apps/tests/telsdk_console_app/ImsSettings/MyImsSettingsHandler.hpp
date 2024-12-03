@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,6 +47,8 @@ public:
     static void onResponseCallback(telux::common::ErrorCode error);
     static void onRequestImsSipUserAgentConfig(SlotId slotId,
         std::string sipUserAgent, telux::common::ErrorCode errorCode);
+    static void onRequestImsVonr(SlotId slotId,
+        bool isEnable, telux::common::ErrorCode errorCode);
 };
 
 #endif  // MYIMSSETTINGSHANDLER_HPP

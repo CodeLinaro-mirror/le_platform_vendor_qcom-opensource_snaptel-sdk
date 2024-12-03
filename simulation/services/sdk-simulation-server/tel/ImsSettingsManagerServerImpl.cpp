@@ -315,6 +315,77 @@ void ImsSettingsManagerServerImpl::triggerImsServiceConfigsChange(int slotId,
     }
 }
 
+grpc::Status ImsSettingsManagerServerImpl::RequestVonr(ServerContext* context,
+    const ::telStub::RequestVonrRequest* request,
+    telStub::RequestVonrReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = IMS_SETTINGS_MANAGER;
+    std::string method = "requestVonr";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if (data.status == telux::common::Status::SUCCESS) {
+        bool enable = data.stateRootObj[IMS_SETTINGS_MANAGER]["ImsVonrEnable"]
+           .asBool();
+        LOG(DEBUG, __FUNCTION__, " IMS VoNR enable: ", enable);
+        response->set_enable(enable);
+    }
+    // Create response
+    if (data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ImsSettingsManagerServerImpl::SetVonr(ServerContext* context,
+    const ::telStub::SetVonrRequest* request,
+    telStub::SetVonrReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId = request->phone_id();
+    std::string apiJsonPath = (slotId == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = IMS_SETTINGS_MANAGER;
+    std::string method = "setVonr";
+    JsonData data;
+    std::string prevSipUserAgent = "";
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if (data.status == telux::common::Status::SUCCESS) {
+        data.stateRootObj[IMS_SETTINGS_MANAGER]["ImsVonrEnable"] =
+            request->enable();
+        LOG(DEBUG, __FUNCTION__, " IMS VoNR enable: ", request->enable());
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+    // Create response
+    if (data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+    response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
 
 void ImsSettingsManagerServerImpl::handleImsServiceConfigsChange(std::string eventParams) {
     LOG(INFO, __FUNCTION__);

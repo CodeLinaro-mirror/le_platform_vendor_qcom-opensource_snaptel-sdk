@@ -109,3 +109,18 @@ void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(SlotId slotId,
     }
 }
 
+void MyImsSettingsCallback::onRequestImsVonr(SlotId slotId,
+    bool isEnable, telux::common::ErrorCode errorCode) {
+    std::cout << " Request IMS VoNR response received on slotId "
+              << static_cast<int>(slotId) << "\n";
+    if (errorCode != telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Request failed with errorCode: " << static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
+    } else {
+       if (isEnable) {
+           PRINT_CB << "VoNR is enabled \n";
+       } else {
+           PRINT_CB << "VoNR is disabled \n";
+       }
+    }
+}

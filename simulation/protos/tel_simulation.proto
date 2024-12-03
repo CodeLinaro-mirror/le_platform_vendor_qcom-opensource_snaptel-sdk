@@ -197,6 +197,8 @@
      rpc SetServiceConfig (SetServiceConfigRequest) returns (SetServiceConfigReply) {}
      rpc SetSipUserAgent (SetSipUserAgentRequest) returns (SetSipUserAgentReply) {}
      rpc RequestSipUserAgent (RequestSipUserAgentRequest) returns (RequestSipUserAgentReply) {}
+     rpc RequestVonr (RequestVonrRequest) returns (RequestVonrReply) {}
+     rpc SetVonr (SetVonrRequest) returns (SetVonrReply) {}
  }
 
  service SuppServicesService {
@@ -3183,6 +3185,30 @@ message VoiceRadioTechnologyChangeEvent {
  }
 
  message SetSipUserAgentReply {
+     commonStub.ErrorCode error = 1;
+     commonStub.Status status = 2;
+     int32 delay = 3;
+     bool is_callback = 4;
+ }
+
+ message RequestVonrRequest {
+     int32 phone_id = 1;
+ }
+
+ message RequestVonrReply {
+     bool enable = 1;
+     commonStub.ErrorCode error = 2;
+     commonStub.Status status = 3;
+     int32 delay = 4;
+     bool is_callback = 5;
+ }
+
+ message SetVonrRequest {
+     int32 phone_id = 1;
+     bool enable = 2;
+ }
+
+ message SetVonrReply {
      commonStub.ErrorCode error = 1;
      commonStub.Status status = 2;
      int32 delay = 3;

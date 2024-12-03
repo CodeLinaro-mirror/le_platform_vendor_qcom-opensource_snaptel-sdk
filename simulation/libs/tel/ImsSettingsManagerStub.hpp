@@ -46,6 +46,9 @@ public:
         std::string userAgent, telux::common::ResponseCallback callback = nullptr) override;
     telux::common::Status setServiceConfig(SlotId slotId,
         ImsServiceConfig config, telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) override;
+    telux::common::Status toggleVonr(SlotId slotId,
+        bool isEnable, common::ResponseCallback callback = nullptr) override;
     void onServiceStatusChange(telux::common::ServiceStatus status);
 
     void cleanup();

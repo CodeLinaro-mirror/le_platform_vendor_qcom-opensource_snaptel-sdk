@@ -21,6 +21,16 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "requestVonr" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "setVonr" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

@@ -13,6 +13,7 @@
 #include "ServingSystemManagerStub.hpp"
 #include "DualDataManagerStub.hpp"
 #include "DataControlManagerStub.hpp"
+#include "KeepAliveManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/VlanManagerStub.hpp"
@@ -468,6 +469,27 @@ std::shared_ptr<telux::data::IDataControlManager> DataFactoryImplStub::getDataCo
     auto manager
         = getManager<telux::data::IDataControlManager>(type,
             dataControlManager_, dataControlCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
+std::shared_ptr<telux::data::IKeepAliveManager> DataFactoryImplStub::getKeepAliveManager(
+    SlotId slotId, telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IKeepAliveManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [slotId](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IKeepAliveManager> {
+            std::shared_ptr<telux::data::KeepAliveManagerStub> manager
+                = std::make_shared<telux::data::KeepAliveManagerStub>(slotId);
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("KeepAlive manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &keepAliveCallbacks_);
+    auto manager
+        = getManager<telux::data::IKeepAliveManager>(type,
+            KeepAliveManager_, keepAliveCallbacks_, clientCallback, createAndInit);
     return manager;
 }
 

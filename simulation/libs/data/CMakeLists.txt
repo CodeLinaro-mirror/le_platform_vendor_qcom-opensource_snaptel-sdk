@@ -19,6 +19,7 @@ set(DATA_STUB_SOURCES
     DualDataManagerStub.cpp
     DataControlManagerStub.cpp
     TrafficFilterImpl.cpp
+    KeepAliveManagerStub.cpp
     net/SocksManagerStub.cpp
     net/NatManagerStub.cpp
     net/L2tpManagerStub.cpp

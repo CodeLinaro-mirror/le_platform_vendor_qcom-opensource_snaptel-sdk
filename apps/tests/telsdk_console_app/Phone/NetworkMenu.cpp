@@ -467,8 +467,8 @@ void NetworkMenu::setLteDubiousCell(std::vector<std::string> userInput) {
         isInvalid = false;
 
         do {
-            std::cout << "Enter active band: (Valid int range 0...19, 40...48, 80...88, 90, 91,"
-                << "120...179, 200...205, 250...301)" << std::endl;
+            std::cout << "Enter band: (Valid int range corresponds to RFBand 0...19, 40...48, "
+                << "80...88, 90, 91, 120...179, 200...205, 250...301)" << std::endl;
             std::cin >> activeBandInt;
             std::cout << std::endl;
             Utils::validateInput(activeBandInt);
@@ -482,7 +482,7 @@ void NetworkMenu::setLteDubiousCell(std::vector<std::string> userInput) {
                     ((activeBandInt >= 180) && (activeBandInt<=199)) ||
                     ((activeBandInt >= 206) && (activeBandInt<=249)) ||
                     ((activeBandInt > 301)) ) {
-                std::cout << "Invalid active band, retry .." << std::endl;
+                std::cout << "Invalid RFBand, retry .." << std::endl;
                 isInvalid = true;
             }
 
@@ -576,8 +576,8 @@ void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
         isInvalid = false;
 
         do {
-            std::cout << "Enter active band: (valid int range 0...19, 40...48, 80...88, 90, 91,"
-                << "120...179, 200...205, 250...301)" << std::endl;
+            std::cout << "Enter band: (Valid int range corresponds to RFBand 0...19, 40...48, "
+                << "80...88, 90, 91, 120...179, 200...205, 250...301)" << std::endl;
             std::cin >> activeBandInt;
             std::cout << std::endl;
             Utils::validateInput(activeBandInt);
@@ -591,7 +591,7 @@ void NetworkMenu::setNrDubiousCell(std::vector<std::string> userInput) {
                     ((activeBandInt >= 180) && (activeBandInt<=199)) ||
                     ((activeBandInt >= 206) && (activeBandInt<=249)) ||
                     ((activeBandInt > 301)) ) {
-                std::cout << "Invalid active band, retry .." << std::endl;
+                std::cout << "Invalid RFBand, retry .." << std::endl;
                 isInvalid = true;
             }
 

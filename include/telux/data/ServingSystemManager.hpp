@@ -155,6 +155,19 @@ enum class NrIconType {
 };
 
 /**
+ * @brief LTE attach failure information.
+ */
+struct LteAttachFailureInfo {
+    /* PLMN ID that was rejected during the attach */
+    std::vector<uint8_t> plmnId;
+
+    DataCallEndReason rejectReason;
+
+    /* Primary PLMN for the shared network */
+    std::vector<uint8_t> primaryPlmnId;
+};
+
+/**
  * This function is called in response to requestServiceStatus API.
  *
  * The callback can be invoked from multiple different threads.
@@ -372,6 +385,15 @@ public:
     * This API supports the auto-suppress feature.
     */
    virtual void onNrIconTypeChanged(NrIconType type) {};
+
+   /**
+    * This function is called whenever LTE attach failed.
+    *
+    * @param [in] type      @ref LteAttachFailureInfo
+    *
+    * This API supports the auto-suppress feature.
+    */
+   virtual void onLteAttachFailure(const telux::data::LteAttachFailureInfo info) {};
 
    /**
     * Destructor of IServingSystemListener

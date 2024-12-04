@@ -7,8 +7,6 @@
 #include <telux/common/DeviceConfig.hpp>
 #include "common/event-manager/ClientEventManager.hpp"
 
-#define DELAY 100
-
 using namespace telux::common;
 
 namespace telux {
@@ -108,25 +106,43 @@ void CardManagerStub::initSync() {
             }
             }
             for (auto slotId:simSlotIds_) {
-                LOG(DEBUG, __FUNCTION__,"SlotId is ",slotId);
+                LOG(DEBUG, __FUNCTION__," SlotId is ",slotId);
                 cardMap_[slotId]->updateSimStatus();
             }
         }
     }
     LOG(DEBUG, __FUNCTION__, " Delay ", cbDelay_, " service status ", static_cast<int>(cbStatus));
+    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+        true : false;
+    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
-std::future<bool> CardManagerStub::onSubsystemReady() {
+void CardManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(cardManagerMutex_);
+    ready_ = status;
+    cardManagerInitCV_.notify_all();
+}
+
+bool CardManagerStub::isSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-    [this]() {
-        while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
-        }
-    return(isSubsystemReady());});
-    return((ready_future));
+    return ready_;
+}
+
+bool CardManagerStub::waitForInitialization() {
+    LOG(INFO, __FUNCTION__);
+    std::unique_lock<std::mutex> lock(cardManagerMutex_);
+    if (!isSubsystemReady()) {
+        cardManagerInitCV_.wait(lock);
+    }
+    return isSubsystemReady();
+}
+
+std::future<bool> CardManagerStub::onSubsystemReady() {
+    auto future
+        = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return future;
 }
 
 telux::common::ServiceStatus CardManagerStub::getServiceStatus() {
@@ -715,10 +731,6 @@ void CardManagerStub::findRefreshParams(const RefreshParams& refreshParams, bool
 
 telux::common::Status CardManagerStub::registerListener(std::shared_ptr<ICardListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if(getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         status = listenerMgr_->registerListener(listener);
@@ -731,10 +743,6 @@ telux::common::Status CardManagerStub::registerListener(std::shared_ptr<ICardLis
 
 telux::common::Status  CardManagerStub::removeListener(std::shared_ptr<ICardListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if(getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
         std::vector<std::weak_ptr<ICardListener>> applisteners;
@@ -747,22 +755,6 @@ telux::common::Status  CardManagerStub::removeListener(std::shared_ptr<ICardList
         }
     }
     return status;
-}
-
-bool CardManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
-    }
 }
 
 void CardManagerStub::onEventUpdate(google::protobuf::Any event) {
@@ -780,7 +772,7 @@ void CardManagerStub::onEventUpdate(google::protobuf::Any event) {
 
 void CardManagerStub::handleCardInfoChanged(::telStub::cardInfoChange event) {
     int slotId = event.phone_id();
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", slotId);
+    LOG(DEBUG, __FUNCTION__, " The Slot id is: ", slotId);
     invokelisteners(slotId);
 }
 

@@ -91,6 +91,9 @@ class DataFactoryImplStub : public DataFactory,
         SlotId slotId = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
+    virtual std::shared_ptr<IDataLinkManager> getDataLinkManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
  private:
     DataFactoryImplStub();
     ~DataFactoryImplStub();

@@ -583,6 +583,11 @@ std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataS
     }
 }
 
+std::shared_ptr<IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
+    telux::common::InitResponseCb clientCallback) {
+    return nullptr;
+}
+
 void DataFactoryImplStub::initCompleteNotifierWithSlotId(
     std::map<SlotId, std::vector<telux::common::InitResponseCb>>& initCbs,
     telux::common::ServiceStatus status, SlotId slotId) {

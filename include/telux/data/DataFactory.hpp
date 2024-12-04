@@ -53,6 +53,7 @@
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
+#include <telux/data/DataLinkManager.hpp>
 
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
@@ -324,6 +325,18 @@ class DataFactory {
      */
     virtual std::shared_ptr<telux::data::IKeepAliveManager> getKeepAliveManager(
         SlotId slotId = DEFAULT_SLOT_ID,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+   /**
+     * Get Data Link Manager
+     * For hypervisor-based platforms, IDataLinkManager is supported only in the primary/host VM.
+     *
+     *  @param [in] clientCallback    Optional callback to get the initialization status of
+     *                               IDataLinkManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IDataLinkManager
+     *
+     */
+    virtual std::shared_ptr<IDataLinkManager> getDataLinkManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

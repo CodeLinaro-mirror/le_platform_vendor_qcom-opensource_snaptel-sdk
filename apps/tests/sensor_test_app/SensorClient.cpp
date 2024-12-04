@@ -139,7 +139,9 @@ SensorClient::~SensorClient() {
         stop_ = true;
         cv_.notify_one();
     }
-    deactivate();
+    if (activated_) {
+        deactivate();
+    }
     sensor_ = nullptr;
     if (workerThread_) {
         workerThread_->join();

@@ -234,7 +234,6 @@ private:
             (makeCallApiType == CallApi::makeECallWithRawMsd) ||
             (makeCallApiType == CallApi::makeECallWithoutMsd)) {
             callInfo.isRegulatoryeCall = true;
-            callInfo.callType = CallType::ECALL;
         } else {
             callInfo.isRegulatoryeCall = false;
         }
@@ -282,6 +281,9 @@ private:
                     callInfo.callType = CallType::VOICE_CALL;
                 }
             }
+        }
+        if (callInfo.isRegulatoryeCall){
+            callInfo.callType = CallType::EMERGENCY_CALL;
         }
         if(makeCallApiType == CallApi::makeRttVoiceCall) {
             callInfo.mode = RttMode::FULL;

@@ -1087,9 +1087,8 @@ message RttMessageEvent {
 enum CallType {
    VOICE_CALL = 0;         /**< Normal voice call or TPS eCall */
    VOICE_IP_CALL = 1;      /**< Normal Voice over IP (VoIP) call or TPS eCall over IP */
-   EMERGENCY_CALL = 2;     /**< Non-Automotive Emergency Call */
+   EMERGENCY_CALL = 2;     /**< Non-automotive emergency call, automotive eCall or NGeCall */
    EMERGENCY_IP_CALL = 3;  /**< Non-Automotive Emergency Voice over IP (VoIP) Call */
-   ECALL = 4;              /**< Automotive normal eCall or NGeCall */
    UNKNOWN_CALL = -1;      /**< Unknown, when the information is not available */
 }
 

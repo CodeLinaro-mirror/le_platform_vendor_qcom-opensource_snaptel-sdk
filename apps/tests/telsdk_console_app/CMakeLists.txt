@@ -26,6 +26,7 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    SimCardServices/Card/CardServicesMenu.cpp
    SimCardServices/Card/MyCardListener.cpp
    SimCardServices/Card/CardFileMenu.cpp
+   SimCardServices/Card/CardRefreshMenu.cpp
    SimCardServices/SapCard/SapCardServicesMenu.cpp
    SimCardServices/SapCard/MySapCardListener.cpp
 

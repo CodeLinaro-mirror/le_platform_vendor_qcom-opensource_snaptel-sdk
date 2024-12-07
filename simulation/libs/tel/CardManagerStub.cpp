@@ -297,6 +297,28 @@ telux::common::Status CardManagerStub::cardPowerDown(SlotId slotId,
     return status;
 }
 
+telux::common::Status CardManagerStub::setupRefreshConfig(
+    SlotId slotId, bool isRegister, bool doVoting, std::vector<IccFile> efFiles,
+    RefreshParams refreshParams, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+
+telux::common::Status CardManagerStub::allowCardRefresh(SlotId slotId,
+    bool allowRefresh, RefreshParams refreshParams, telux::common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CardManagerStub::confirmRefreshHandlingCompleted(SlotId slotId,
+    bool isCompleted, RefreshParams refreshParams, telux::common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CardManagerStub::requestLastRefreshEvent(SlotId slotId,
+    RefreshParams refreshParams, refreshLastEventResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
 telux::common::Status CardManagerStub::registerListener(std::shared_ptr<ICardListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     if(getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {

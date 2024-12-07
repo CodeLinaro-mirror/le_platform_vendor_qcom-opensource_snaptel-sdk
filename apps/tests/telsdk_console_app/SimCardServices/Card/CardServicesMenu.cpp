@@ -44,6 +44,7 @@
 
 #include "CardServicesMenu.hpp"
 #include "CardFileMenu.hpp"
+#include "CardRefreshMenu.hpp"
 
 #define SIM_CARD_POWER_UP 1
 #define SIM_CARD_POWER_DOWN 0
@@ -242,15 +243,19 @@ bool CardServicesMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "14", "Card_File_Handler", {},
             std::bind(&CardServicesMenu::cardFileMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> cardRefreshMenuCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "15", "Card_Refresh_Menu", {},
+            std::bind(&CardServicesMenu::cardRefreshMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("15", "Select_card_slot", {},
+      ConsoleAppCommand("16", "Select_card_slot", {},
                         std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
          queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
-         cardPowerCommand, cardFileHandlerMenuCommand};
+         cardPowerCommand, cardFileHandlerMenuCommand, cardRefreshMenuCommand};
 
    if (cards_.size() > 1) {
        commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -873,6 +878,14 @@ void CardServicesMenu::cardFileMenu(std::vector<std::string> userInput) {
    CardFileMenu cardFileMenu("Card File Menu", "CardFile> ");
    if (cardFileMenu.init()) {
        cardFileMenu.mainLoop();
+   }
+   ConsoleApp::displayMenu();
+}
+
+void CardServicesMenu::cardRefreshMenu(std::vector<std::string> userInput) {
+   CardRefreshMenu cardRefreshMenu("Card Refresh Menu", "CardRefresh> ");
+   if (cardRefreshMenu.init()) {
+       cardRefreshMenu.mainLoop();
    }
    ConsoleApp::displayMenu();
 }

@@ -169,14 +169,16 @@ void ServingSystemListener::onLteAttachFailure(const telux::data::LteAttachFailu
         << ", Code: " << DataUtils::callEndReasonCode(info.rejectReason) << std::endl;
     std::cout << " PLMN:";
     for (unsigned int i = 0; i < info.plmnId.size(); ++i) {
-        std::cout << std::setfill('0') << std::setw(2) << std::hex << info.plmnId[i];
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(
+            info.plmnId[i]);
     }
     std::cout << std::endl;
 
     if (info.primaryPlmnId.size()) {
         std::cout << " Primary PLMN:";
         for (unsigned  int i = 0; i < info.primaryPlmnId.size(); ++i) {
-            std::cout << std::setfill('0') << std::setw(2) << std::hex << info.primaryPlmnId[i];
+            std::cout << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(
+                info.primaryPlmnId[i]);
         }
         std::cout << std::endl;
     }

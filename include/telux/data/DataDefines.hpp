@@ -201,6 +201,7 @@ struct ProfileParams {
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
     ApnTypes apnTypes;                                       /**< APN Types ref @ApnMaskType */
+    bool clatEnabled = false;                                /**< Enable or disable CLAT */
 };
 
 /**

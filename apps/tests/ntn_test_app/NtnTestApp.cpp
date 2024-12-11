@@ -103,6 +103,10 @@ void NtnTestApp::onDataAck(ErrorCode err, TransactionId id) {
     }
 }
 
+void NtnTestApp::onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
+    std::cout << "onCellularCoverageAvailable = " << isCellularCoverageAvailable << std::endl;
+}
+
 void NtnTestApp::getServiceStatus(std::vector<std::string> inputCommand) {
     std::cout << "getServiceStatus = " << toString(ntnMgr_->getServiceStatus()) << std::endl;
 }
@@ -224,6 +228,14 @@ void NtnTestApp::getNtnState(std::vector<std::string> inputCommand) {
     std::cout << "getNtnState: " << toString(state) << std::endl;
 }
 
+void NtnTestApp::enableCellularScan(std::vector<std::string> inputCommand) {
+    bool flag = false;
+    std::cout << "Enter 1 to enable or 0 to disable cellular scan: \n";
+    std::cin >> flag;
+    auto err = ntnMgr_->enableCellularScan(flag);
+    std::cout << "enableCellularScan errno = " << Utils::getErrorCodeAsString(err) << std::endl;
+}
+
 void NtnTestApp::consoleInit() {
     std::shared_ptr<ConsoleAppCommand> isNtnSupportedCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "isNtnSupported", {},
@@ -246,10 +258,14 @@ void NtnTestApp::consoleInit() {
     std::shared_ptr<ConsoleAppCommand> abortDataCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "7", "abortData", {}, std::bind(&NtnTestApp::abortData, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> enableCellularScanCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "8", "enableCellularScan", {}, std::bind(&NtnTestApp::enableCellularScan,
+            this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsNtn
         = {isNtnSupportedCmd, enableNtnCmd, getNtnStateCmd,
-            getNtnCapabilitiesCmd, updateSflCmd, sendDataCmd, abortDataCmd};
+            getNtnCapabilitiesCmd, updateSflCmd, sendDataCmd, abortDataCmd, enableCellularScanCmd};
     ConsoleApp::addCommands(commandsNtn);
     ConsoleApp::displayMenu();
 }

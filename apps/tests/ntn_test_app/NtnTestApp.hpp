@@ -35,6 +35,7 @@ class NtnTestApp : public INtnListener,
     void onSignalStrengthChange(SignalStrength newStrength);
     void onServiceStatusChange(ServiceStatus status);
     void onDataAck(ErrorCode err, TransactionId id);
+    void onCellularCoverageAvailable(bool isCellularCoverageAvailable);
     void getServiceStatus(std::vector<std::string> inputCommand);
     void isNtnSupported(std::vector<std::string> inputCommand);
     void enableNtn(std::vector<std::string> inputCommand);
@@ -43,12 +44,10 @@ class NtnTestApp : public INtnListener,
     void getNtnCapabilities(std::vector<std::string> inputCommand);
     void updateSystemSelectionSpecifiers(std::vector<std::string> inputCommand);
     void getNtnState(std::vector<std::string> inputCommand);
+    void enableCellularScan(std::vector<std::string> inputCommand);
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::satcom::INtnManager> ntnMgr_ = nullptr;
 
- private:
-    NtnTestApp(NtnTestApp const &)            = delete;
-    NtnTestApp &operator=(NtnTestApp const &) = delete;
 };
 
 #endif  // NTNTESTAPP_HPP

@@ -2702,6 +2702,8 @@ struct XtraStatus {
      * For all other XtraDataStatus, this field will be set to 0.
      */
     uint32_t xtraValidForHours;
+    /** User consent to avail the Xtra assistance service. */
+    bool userConsent;
 };
 
 /** Enum of all the possible indications invoked by a Location Configurator listener.  */

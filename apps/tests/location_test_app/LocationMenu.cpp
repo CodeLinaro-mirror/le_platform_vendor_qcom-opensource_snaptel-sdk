@@ -348,6 +348,11 @@ int LocationMenu::init() {
            "Configure OSNMA", {}, std::bind(&LocationMenu::
                configureOsnma, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> xtraConsent =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("43",
+           "Xtra Consent", {}, std::bind(&LocationMenu::
+               provideConsentForXtra, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
         = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -361,7 +366,7 @@ int LocationMenu::init() {
         requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
         configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
-        injectMerkleTreeInformation, configureOsnma};
+        injectMerkleTreeInformation, configureOsnma, xtraConsent};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1913,6 +1918,30 @@ void LocationMenu::configureOsnma(std::vector<std::string> userInput) {
             "Configure OSNMA");
         telux::common::Status status = locationConfigurator_->configureOsnma(
             enable, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::provideConsentForXtra(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        std::string option;
+        std::cout << "Provide Xtra consent (y/n): ";
+        std::getline(std::cin, option, delimiter);
+        bool userConsent = false;
+        if(option == "Y" || option == "y") {
+            userConsent = true;
+        } else {
+            userConsent = false;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Xtra Consent");
+        telux::common::Status status = locationConfigurator_->provideConsentForXtra(
+            userConsent, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
         if (status != telux::common::Status::SUCCESS) {
             std::cout << __FUNCTION__ << " Command Failed" << std::endl;

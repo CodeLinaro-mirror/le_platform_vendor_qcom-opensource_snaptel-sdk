@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -720,6 +720,29 @@ public:
   telux::common::Status configureOsnma(bool enable,
     telux::common::ResponseCallback callback = nullptr) override;
 
+/**
+ * This API allows the client to indicate the end user intent (Opt-In or Opt-Out)
+ * to allow use of GNSS Xtra assistance service. When the client sets the end user intent
+ * to false (Opted-Out), the Xtra assistance service will be disabled.
+ *
+ * The consent will remain effective across power cycles, until this API is called with a
+ * different value.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONSENT permission to
+ * invoke this API successfully.
+ *
+ * @param [in] userConsent - true indicates user's intent to opt-in for Xtra assistance service,
+ *                           false indicates user's intent to opt-out of Xtra assistance service.
+ *
+ * @param [in] callback - Optional callback to get the response of provideConsentForXtra.
+ *
+ * @returns Status of provideConsentForXtra i.e. success or suitable status code.
+ *
+ */
+
+  telux::common::Status provideConsentForXtra(bool userConsent,
+    telux::common::ResponseCallback callback = nullptr) override;
+
     LocationConfiguratorStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -737,7 +760,7 @@ public:
 private:
   void getAvailableListeners(uint32_t indication,
     std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
-  void invokeXtraStatusUpdate(uint32_t enable,uint32_t dataStatus,uint32_t validHours);
+  void invokeXtraStatusUpdate(uint32_t enable,uint32_t dataStatus,uint32_t validHours,uint32_t consent);
   void invokeGnssConstellationUpdate(uint32_t enabledMask);
   bool xtraEnabled_;
   uint32_t registrationMask_ = 0;

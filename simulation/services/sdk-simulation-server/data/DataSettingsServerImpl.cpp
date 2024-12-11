@@ -663,6 +663,76 @@ grpc::Status DataSettingsServerImpl::getIpPassThroughConfig(ServerContext* conte
     return grpc::Status::OK;
 }
 
+grpc::Status DataSettingsServerImpl::GetIpPassThroughNatConfig(ServerContext* context,
+        const google::protobuf::Empty *request, dataStub::getIpptNatConfigReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "getIpPassThroughNatConfig";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " failed, code: ", static_cast<int>(error));
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        auto isNatEnabled =
+            data.stateRootObj[subsystem][method]["natEnable"].asBool();
+
+        LOG(DEBUG, __FUNCTION__, " isNatEnabled: ", isNatEnabled);
+        response->set_enable_nat(isNatEnabled);
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    return grpc::Status::OK;
+}
+
+grpc::Status DataSettingsServerImpl::SetIpPassThroughNatConfig(ServerContext* context,
+        const dataStub::setIpptNatConfigRequest* request,
+        dataStub::setIpptNatConfigReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "setIpPassThroughNatConfig";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " failed, code: ", static_cast<int>(error));
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        auto isNatEnabled =
+            data.stateRootObj[subsystem]["getIpPassThroughNatConfig"]["natEnable"].asBool();
+
+        if (isNatEnabled == request->enable_nat()) {
+            LOG(DEBUG, __FUNCTION__, " No change in NAT config");
+            data.error = telux::common::ErrorCode::NO_EFFECT;
+            response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+            return grpc::Status::OK;
+        }
+
+        LOG(DEBUG, __FUNCTION__, " isNatEnabled: ", isNatEnabled);
+        data.stateRootObj[subsystem]["getIpPassThroughNatConfig"]["natEnable"] =
+            request->enable_nat();
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    return grpc::Status::OK;
+}
+
 grpc::Status DataSettingsServerImpl::getIpConfig(ServerContext* context,
         const dataStub::getIpConfigRequest* request, dataStub::getIpConfigReply* response) {
 

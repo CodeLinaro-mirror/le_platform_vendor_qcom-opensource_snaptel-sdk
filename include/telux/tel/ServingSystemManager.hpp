@@ -155,9 +155,9 @@ enum RatPrefType {
    PREF_LTE,       /**< LTE */
    PREF_TDSCDMA,   /**< TDSCDMA */
    PREF_NR5G,      /**< NR5G in SA or NSA mode */
-   PREF_NB1_NTN,   /**< NB-IoT(NB1) Non Terrestrial Network(NTN) */
    PREF_NR5G_NSA,  /**< NSA mode of NR5G only. SA is not allowed */
-   PREF_NR5G_SA    /**< SA mode of NR5G only. NSA is not allowed */
+   PREF_NR5G_SA,   /**< SA mode of NR5G only. NSA is not allowed */
+   PREF_NB1_NTN    /**< NB-IoT(NB1) Non Terrestrial Network(NTN) */
 };
 
 /**

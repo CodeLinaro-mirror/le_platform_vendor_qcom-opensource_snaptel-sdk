@@ -8,6 +8,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <sys/sysinfo.h>
 #include <jsoncpp/json/json.h>
 #include <telux/common/Version.hpp>
 
@@ -190,6 +191,8 @@ ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
         return ErrorCode::CLIENT_IDS_EXHAUSTED;
     } else if (errorCode == "NOTSUPPORTED"){
         return ErrorCode::NOT_SUPPORTED;
+    } else if (errorCode == "INFO_UNAVAILABLE"){
+        return ErrorCode::INFO_UNAVAILABLE;
     }
 
     return ErrorCode::INTERNAL_ERR;
@@ -355,6 +358,22 @@ std::string CommonUtils::getCurrentTimeHHMMSS() {
     nowSs << std::put_time(&tm, "%H%M%S") << '.' << ms.count()/10;
 
     return nowSs.str();
+}
+
+void CommonUtils::calculateBootTimeStamp(uint64_t &timestamp) {
+    // Get the current time in nanoseconds
+    auto now = std::chrono::system_clock::now();
+    auto nowNs = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto epoch = nowNs.time_since_epoch();
+    auto nowNsCount = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
+
+    // Get the system uptime in seconds
+    struct sysinfo info;
+    sysinfo(&info);
+    auto uptimeNs = std::chrono::nanoseconds(info.uptime * 1000000000LL);
+
+    // Calculate the boot time in nanoseconds since epoch
+    timestamp = nowNsCount - uptimeNs.count();
 }
 
 int CommonUtils::bitwiseXOR(const std::string& str) {

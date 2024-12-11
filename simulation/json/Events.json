@@ -109,6 +109,14 @@
             "eventId           Integer, valid event Id are available from csv data file"
         ]
     },
+    "sensor_mgr": {
+        "selfTestFailed":[
+            "telsdk_event_injector -f sensor_mgr -e selfTestFailed <sensorMask>",
+            "sensorMask         Integer mask to represent self test failure for multiple sensors.",
+                               "Accelerometer = (1 << 0)",
+                               "Gyroscope = (1 << 1)"
+        ]
+    },
     "audio": {
         "ssr":[
             "telsdk_event_injector -f audio -e ssr <serviceStatus>",

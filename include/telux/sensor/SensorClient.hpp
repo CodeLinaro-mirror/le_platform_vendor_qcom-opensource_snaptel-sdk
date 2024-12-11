@@ -1,35 +1,7 @@
 /*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -62,9 +34,24 @@ namespace sensor {
 
 /**
  * This function is invoked when a result for a self-test initiated using
+ * @ref telux::sensor::ISensorClient::selfTest is performed.
+ *
+ * @param [in] result - Errorcode depicting result of the self test - @ref telux::common::ErrorCode
+ *        [in] selfTestResultParams - Struct to represent the result of sensor self test via
+ *                                    @ref telux::sensor::SelfTestResultParams
+ *
+ */
+using SelfTestExResultCallback = std::function<void (telux::common::ErrorCode result,
+    telux::sensor::SelfTestResultParams selfTestResultParams) >;
+
+/**
+ * This function is invoked when a result for a self-test initiated using
  * @ref telux::sensor::ISensorClient::selfTest is available.
  *
  * @param [in] result The result of the self test - @ref telux::common::ErrorCode
+ *
+ * @deprecated This callback is no longer supported.
+ * Use @ref telux::sensor::SelfTestExResultCallback.
  *
  */
 using SelfTestResultCallback = std::function<void(telux::common::ErrorCode result)>;
@@ -110,6 +97,19 @@ class ISensorEventListener : public telux::common::ISDKListener {
      *
      */
     virtual void onConfigurationUpdate(SensorConfiguration configuration) {
+    }
+
+    /**
+     * This API is invoked to notify a failed self-test that was triggered internally
+     * by the sensor service.
+     * For self-test explicitly requested via @ref telux::sensor::ISensorClient::selfTest API,
+     * results will be delivered via @ref SelfTestExResultCallback.
+     *
+     * On platforms with Access control enabled, the client needs to have TELUX_SENSOR_DATA_READ
+     * permission for this listener API to be invoked.
+     *
+     */
+    virtual void onSelfTestFailed() {
     }
 
     /**
@@ -221,9 +221,16 @@ class ISensorClient {
     /**
      * Initiate self test on this sensor
      *
-     * If there are active data acquisition sessions corresponding to this sensor, these
-     * will be paused and the self test is initiated. Once the self test is complete the sensor data
-     * sessions will be restored.
+     * If there are no active data acquistion sessions corresponding to this sensor,
+     * the @ref SensorResultType will be set to @ref CURRENT and
+     * the self test will be performed for a given @ref SelfTestType.
+     *
+     * If there are active data acquisition sessions corresponding to this sensor,
+     * the @ref SensorResultType will be set to @ref HISTORICAL and the result will correspond
+     * to the previous self test performed for a given @ref SelfTestType.
+     *
+     * In case the self test for this sensor couldn't be performed for a given @ref SelfTestType,
+     * the callback is invoked with @ref telux::common::ErrorCode::INFO_UNAVAILABLE.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_PRIVILEGED_OPS
      * permission to invoke this API successfully.
@@ -234,11 +241,11 @@ class ISensorClient {
      *
      * @returns status of the request - @ref telux::common::Status. Note that the result of the self
      *          test done by the sensor is provided via the callback - @ref
-     *          telux::sensor::SelfTestResultCallback
+     *          telux::sensor::SelfTestExResultCallback
      *
      */
-    virtual telux::common::Status selfTest(
-        SelfTestType selfTestType, SelfTestResultCallback cb) = 0;
+    virtual telux::common::Status selfTest(SelfTestType selfTestType,
+        SelfTestExResultCallback cb) = 0;
 
     /**
      * Register a listener for sensor related events
@@ -294,6 +301,34 @@ class ISensorClient {
      *
      */
     virtual telux::common::Status disableLowPowerMode() = 0;
+
+    /**
+     * Initiate self test on this sensor
+     *
+     * If there are no active data acquistion sessions corresponding to this sensor,
+     * the self test will be performed based on the @ref SelfTestType passed.
+     *
+     * If there are active data acquisition sessions corresponding to this sensor,
+     * the self test will not be performed and the callback will be invoked with
+     * @ref telux::common::ErrorCode::DEVICE_IN_USE.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_PRIVILEGED_OPS
+     * permission to invoke this API successfully.
+     *
+     * @param[in]   selfTestType - The type of self test to be performed - @ref
+     *                             telux::sensor::SelfTestType
+     * @param[in]   cb - Callback to get the result of the self test initiated
+     *
+     * @returns status of the request - @ref telux::common::Status. Note that the result of the self
+     *          test done by the sensor is provided via the callback - @ref
+     *          telux::sensor::SelfTestResultCallback
+     *
+     * @deprecated This API is no longer supported.
+     * Use @ref selfTest(SelfTestType selfTestType, SelfTestExResultCallback cb) API instead.
+     *
+     */
+    virtual telux::common::Status selfTest(
+        SelfTestType selfTestType, SelfTestResultCallback cb) = 0;
 };
 
 // Note that the class ISensor is an alias for ISensorClient and ISensor would deprecated and

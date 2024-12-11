@@ -85,6 +85,7 @@ class CommonUtils {
     static telux::common::ErrorCode toErrorCode(telux::common::Status status);
     static std::vector<std::string> splitString(const std::string &str, char delimiter);
     static std::string getCurrentTimeHHMMSS();
+    static void calculateBootTimeStamp(uint64_t &timestamp);
     static int bitwiseXOR(const std::string& str);
     /* convert hexadecimal value to decimal */
     static long convertHexToInt(std::string hex);

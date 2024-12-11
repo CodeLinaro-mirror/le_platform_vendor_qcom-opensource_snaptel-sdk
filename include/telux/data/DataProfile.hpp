@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -90,7 +90,7 @@ public:
 
    DataProfile(int id, const std::string &name, const std::string &apn, const std::string &username,
                const std::string &password, IpFamilyType ipFamilyType, TechPreference techPref,
-               AuthProtocolType authType, ApnTypes apnTypes);
+               AuthProtocolType authType, ApnTypes apnTypes, bool clatEnabled);
 
    /**
     * Get profile identifier.
@@ -164,6 +164,11 @@ public:
     */
    ApnTypes getApnTypes();
 
+   /*
+    * Check if CLAT is enabled.
+    */
+   bool isClatEnabled();
+
    /**
     * Get the text related informative representation of this object.
     *
@@ -182,6 +187,7 @@ private:
    TechPreference techPref_;
    AuthProtocolType authType_;
    ApnTypes apnTypes_;
+   bool clatEnabled_;
 };
 
 /** @} */ /* end_addtogroup telematics_data */

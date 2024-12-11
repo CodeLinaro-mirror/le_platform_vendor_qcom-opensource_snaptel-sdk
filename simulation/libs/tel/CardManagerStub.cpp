@@ -328,12 +328,6 @@ void CardManagerStub::setRpcRefreshParams(::telStub::RefreshParams* refreshs,
     } else {
         LOG(WARNING, __FUNCTION__, " ignore aid as ssType ", static_cast<int>(ssType));
     }
-    if (refreshParams.sessionType == tel::SessionType::CHANNEL_ID_SLOT_1 ||
-        refreshParams.sessionType == tel::SessionType::CHANNEL_ID_SLOT_2) {
-        refreshs->set_channelid(refreshParams.channelId);
-    } else {
-        LOG(WARNING, __FUNCTION__, " ignore channelid as ssType ", static_cast<int>(ssType));
-    }
 }
 
 void CardManagerStub::convertRefreshParams(const RefreshParams userParams,
@@ -342,10 +336,6 @@ void CardManagerStub::convertRefreshParams(const RefreshParams userParams,
     if (userParams.sessionType == tel::SessionType::NONPROVISIONING_SLOT_1 ||
         userParams.sessionType == tel::SessionType::NONPROVISIONING_SLOT_2) {
         refreshParams.aid = userParams.aid;
-    }
-    if (userParams.sessionType == tel::SessionType::CHANNEL_ID_SLOT_1 ||
-        userParams.sessionType == tel::SessionType::CHANNEL_ID_SLOT_2) {
-        refreshParams.channelId = refreshParams.channelId;
     }
 }
 
@@ -367,7 +357,6 @@ telux::common::Status CardManagerStub::setupRefreshConfig(
         ", doVoting ", static_cast<int>(doVoting),
         ", refreshParams.sessionType ", static_cast<int>(refreshParams.sessionType),
         ", refreshParams.aid ", refreshParams.aid,
-        ", refreshParams.channelId ", refreshParams.channelId,
         ", efFiles.size ", efFiles.size());
 
     if (slotId < DEFAULT_SLOT_ID || slotId > MAX_SLOT_ID) {
@@ -417,8 +406,7 @@ telux::common::Status CardManagerStub::setupRefreshConfig(
         bool hasMatchedEntry = false;
         for (auto it = userRefreshParams_.begin(); it != userRefreshParams_.end(); ++it) {
             if ((it->refreshParams.sessionType == refreshParams.sessionType) &&
-                (it->refreshParams.aid == refreshParams.aid) &&
-                (it->refreshParams.channelId == refreshParams.channelId)) {
+                (it->refreshParams.aid == refreshParams.aid)) {
                 hasMatchedEntry = true;
                 if (isRegister) {
                     it->isRegister = isRegister;
@@ -456,8 +444,7 @@ telux::common::Status CardManagerStub::allowCardRefresh(SlotId slotId,
     LOG(DEBUG, __FUNCTION__, " slotId ", static_cast<int>(slotId),
         ", allowRefresh ", static_cast<int>(allowRefresh),
         ", refreshParams.sessionType ", static_cast<int>(refreshParams.sessionType),
-        ", refreshParams.aid ", refreshParams.aid,
-        ", refreshParams.channelId ", refreshParams.channelId);
+        ", refreshParams.aid ", refreshParams.aid);
 
     if (slotId != getSlotBySessionType(refreshParams.sessionType)) {
         LOG(ERROR, __FUNCTION__, " conflict slotId and sessionType");
@@ -505,8 +492,7 @@ telux::common::Status CardManagerStub::confirmRefreshHandlingCompleted(SlotId sl
     LOG(DEBUG, __FUNCTION__, " slotId ", static_cast<int>(slotId),
         ", isCompleted ", static_cast<int>(isCompleted),
         ", refreshParams.sessionType ", static_cast<int>(refreshParams.sessionType),
-        ", refreshParams.aid ", refreshParams.aid,
-        ", refreshParams.channelId ", refreshParams.channelId);
+        ", refreshParams.aid ", refreshParams.aid);
 
     if (slotId != getSlotBySessionType(refreshParams.sessionType)) {
         LOG(ERROR, __FUNCTION__, " conflict slotId and sessionType");
@@ -552,8 +538,7 @@ telux::common::Status CardManagerStub::requestLastRefreshEvent(SlotId slotId,
     ClientContext context;
     LOG(DEBUG, __FUNCTION__, " slotId ", static_cast<int>(slotId),
         ", refreshParams.sessionType ", static_cast<int>(refreshParams.sessionType),
-        ", refreshParams.aid ", refreshParams.aid,
-        ", refreshParams.channelId ", refreshParams.channelId);
+        ", refreshParams.aid ", refreshParams.aid);
 
     if (slotId != getSlotBySessionType(refreshParams.sessionType)) {
         LOG(ERROR, __FUNCTION__, " conflict slotId and sessionType");
@@ -597,8 +582,7 @@ telux::common::Status CardManagerStub::requestLastRefreshEvent(SlotId slotId,
         if (response.has_refreshs()) {
             ::telStub::RefreshParams* respRefreshs = request.mutable_refreshs();
             respRefreshParams.sessionType = static_cast<SessionType>(respRefreshs->sessiontype());
-            respRefreshParams.aid         = respRefreshs->aid();
-            respRefreshParams.channelId   = respRefreshs->channelid();
+            respRefreshParams.aid         = respRefreshs->aid();;
         }
 
         auto f = std::async(std::launch::async,
@@ -621,12 +605,11 @@ void CardManagerStub::handleRefreshEvent(::telStub::RefreshEvent event) {
     }
     refreshParams.sessionType = static_cast<SessionType>(event.refreshs().sessiontype());
     refreshParams.aid = event.refreshs().aid();
-    refreshParams.channelId = event.refreshs().channelid();
     SlotId slotId = getSlotBySessionType(refreshParams.sessionType);
 
     LOG(DEBUG, __FUNCTION__, " slotId ", static_cast<int>(slotId),
         ", sessionType ", static_cast<int>(refreshParams.sessionType),
-        ", aid ", refreshParams.aid, ", channelId ", refreshParams.channelId);
+        ", aid ", refreshParams.aid);
 
     /*2. Need to check whether the refreshParams match with the setupConfig*/
     bool isRegistered = false;
@@ -687,13 +670,11 @@ SlotId CardManagerStub::getSlotBySessionType(telux::tel::SessionType st) {
         case telux::tel::SessionType::PRIMARY:
         case telux::tel::SessionType::NONPROVISIONING_SLOT_1:
         case telux::tel::SessionType::CARD_ON_SLOT_1:
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_1:
             return SLOT_ID_1;
             break;
         case telux::tel::SessionType::SECONDARY:
         case telux::tel::SessionType::NONPROVISIONING_SLOT_2:
         case telux::tel::SessionType::CARD_ON_SLOT_2:
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_2:
             return SLOT_ID_2;
             break;
         default:
@@ -705,13 +686,12 @@ SlotId CardManagerStub::getSlotBySessionType(telux::tel::SessionType st) {
 
 void CardManagerStub::findRefreshParams(const RefreshParams& refreshParams, bool& isRegister,
     bool* doVoting, std::vector<IccFile>* efFiles) {
-    RefreshParams sessionAidCid;
-    convertRefreshParams(refreshParams, sessionAidCid);
+    RefreshParams sessionAid;
+    convertRefreshParams(refreshParams, sessionAid);
 
     for (auto it = userRefreshParams_.begin(); it != userRefreshParams_.end(); ++it) {
-        if ((it->refreshParams.sessionType == sessionAidCid.sessionType) &&
-            (it->refreshParams.aid == sessionAidCid.aid) &&
-            (it->refreshParams.channelId == sessionAidCid.channelId)) {
+        if ((it->refreshParams.sessionType == sessionAid.sessionType) &&
+            (it->refreshParams.aid == sessionAid.aid)) {
             LOG(DEBUG, __FUNCTION__, " found matched entry");
             isRegister = it->isRegister;
             if (doVoting) {

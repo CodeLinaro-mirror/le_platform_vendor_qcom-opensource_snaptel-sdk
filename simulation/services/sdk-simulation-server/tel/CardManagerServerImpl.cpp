@@ -2197,18 +2197,12 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     if (slotId < DEFAULT_SLOT_ID || slotId > MAX_SLOT_ID) {
         return false;
     }
-    std::string aid, channelId;
+    std::string aid;
     if (sessionId == static_cast<int>(telux::tel::SessionType::NONPROVISIONING_SLOT_1) ||
         sessionId == static_cast<int>(telux::tel::SessionType::NONPROVISIONING_SLOT_2)) {
         aid = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     } else {
         LOG(DEBUG, __FUNCTION__, " ignore aid as session type is ", sessionId);
-    }
-    if (sessionId == static_cast<int>(telux::tel::SessionType::CHANNEL_ID_SLOT_1) ||
-        sessionId == static_cast<int>(telux::tel::SessionType::CHANNEL_ID_SLOT_2)) {
-        channelId = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    } else {
-        LOG(DEBUG, __FUNCTION__, " ignore channelId as session type is ", sessionId);
     }
 
     RefreshEventAndPending newRefreshEvt;
@@ -2230,8 +2224,8 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
              true, false);
     }
     LOG(DEBUG, __FUNCTION__, " slotId ", slotId, ", stage ", stage,  ", mode ", mode,
-        ", fileId ", fileId,  ", filePath ", filePath,
-        ", sessionId ", sessionId, ", aid ", aid, ", channelId ", channelId);
+        ", fileId ", fileId,  ", filePath ", filePath,", sessionId ", sessionId,
+        ", aid ", aid);
 
     newRefreshEvt.refreshEvent.set_phone_id(slotId);
     newRefreshEvt.refreshEvent.set_stage(static_cast<::telStub::RefreshStage>(stage));
@@ -2249,7 +2243,6 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     if (refreshs) {
         refreshs->set_sessiontype(ssType);
         refreshs->set_aid(aid);
-        refreshs->set_channelid(channelId);
     }
 
     notification.mutable_any()->PackFrom(newRefreshEvt.refreshEvent);
@@ -2518,7 +2511,6 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         ::telStub::RefreshParams* refreshs = response->mutable_refreshs();
         refreshs->set_sessiontype(request->refreshs().sessiontype());
         refreshs->set_aid(request->refreshs().aid());
-        refreshs->set_channelid(request->refreshs().channelid());
     } while (0);
 
     response->set_error(static_cast<commonStub::ErrorCode>(error));
@@ -2597,12 +2589,10 @@ int CardManagerServerImpl::getSlotBySessionType(telux::tel::SessionType st) {
         case telux::tel::SessionType::PRIMARY:
         case telux::tel::SessionType::NONPROVISIONING_SLOT_1:
         case telux::tel::SessionType::CARD_ON_SLOT_1:
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_1:
             return SLOT_1;
         case telux::tel::SessionType::SECONDARY:
         case telux::tel::SessionType::NONPROVISIONING_SLOT_2:
         case telux::tel::SessionType::CARD_ON_SLOT_2:
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_2:
             return SLOT_2;
         default:
             LOG(ERROR, __FUNCTION__, " invalid sessionType ", static_cast<int>(st));
@@ -2640,16 +2630,14 @@ bool CardManagerServerImpl::clientSimRefreshInfoPresent(
     for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
         it != vector.end();) {
         if (it->clientId == entry.clientId && it->phoneId == entry.phoneId &&
-            it->sessionAidCid.sessionType == entry.sessionAidCid.sessionType &&
-            it->sessionAidCid.aid == entry.sessionAidCid.aid &&
-            it->sessionAidCid.channelId == entry.sessionAidCid.channelId) {
+            it->sessionAid.sessionType == entry.sessionAid.sessionType &&
+            it->sessionAid.aid == entry.sessionAid.aid) {
             return true;
         }
         ++it;
     }
     LOG(DEBUG, __FUNCTION__, " not found. phoneId ", entry.phoneId, ", sessionType",
-        static_cast<int>(entry.sessionAidCid.sessionType), " aid ", entry.sessionAidCid.aid,
-        " channelId ", entry.sessionAidCid.channelId);
+        static_cast<int>(entry.sessionAid.sessionType), " aid ", entry.sessionAid.aid);
     return false;
 }
 
@@ -2660,9 +2648,8 @@ telux::common::ErrorCode CardManagerServerImpl::updateClientSimRefresh(
     for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
         it != vector.end();) {
         if (it->clientId == usrPref.clientId && it->phoneId == usrPref.phoneId &&
-            it->sessionAidCid.sessionType == usrPref.sessionAidCid.sessionType &&
-            it->sessionAidCid.aid == usrPref.sessionAidCid.aid &&
-            it->sessionAidCid.channelId == usrPref.sessionAidCid.channelId) {
+            it->sessionAid.sessionType == usrPref.sessionAid.sessionType &&
+            it->sessionAid.aid == usrPref.sessionAid.aid) {
             found = true;
             if (not enable) {
                 vector.erase(it);
@@ -2691,12 +2678,11 @@ template <typename T>
 void CardManagerServerImpl::getClientInfoFromRpc(const T* rpcMsg, clientSimRefreshPref& client) {
     client.clientId = rpcMsg->identifier();
     client.phoneId  = rpcMsg->phone_id();
-    client.sessionAidCid.sessionType = static_cast<telux::tel::SessionType>(
+    client.sessionAid.sessionType = static_cast<telux::tel::SessionType>(
         rpcMsg->refreshs().sessiontype());
-    client.sessionAidCid.aid =  rpcMsg->refreshs().aid();
-    client.sessionAidCid.channelId = rpcMsg->refreshs().channelid();
+    client.sessionAid.aid =  rpcMsg->refreshs().aid();
 
     LOG(DEBUG, __FUNCTION__, " phoneId ", client.phoneId, ", sessionType ",
-        static_cast<uint32_t>(client.sessionAidCid.sessionType),
-        ", aid ", client.sessionAidCid.aid, ", channelId ", client.sessionAidCid.aid);
+        static_cast<uint32_t>(client.sessionAid.sessionType),
+        ", aid ", client.sessionAid.aid);
 }

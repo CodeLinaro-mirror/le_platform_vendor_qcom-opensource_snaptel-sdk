@@ -194,6 +194,25 @@ public:
     virtual telux::common::Status setPeerModeChangeRequestStatus(LinkModeChangeStatus status) = 0;
 
     /**
+     * Bring up or bring down the ethernet link.
+     * The Ethernet data link can be brought up by the client once the peer entity is ready to
+     * establish the ethernet data connection. To prevent packet loss, it's recommended to set the
+     * ethernet data link state to UP after peer entity initialization.
+     *
+     * Clients are notified about ethernet link state changes by using
+     * @ref IDataLinkListener::onEthDataLinkStateChange
+     *
+     * On platforms with access control enabled, the caller needs to have the TELUX_DATA_LINK_CONFIG
+     * permission to successfully invoke this API.
+     *
+     * @param [in] ethLinkState               ethernet link state info.
+     *
+     * @return ErrorCode of setEthDataLinkState, i.e., OPERATION_NOT_ALLOWED/SUCCESS or applicable
+     *                                              error code
+     */
+    virtual telux::common::ErrorCode setEthDataLinkState(LinkState ethLinkState) = 0;
+
+    /**
      * Registers with the Data Link Manager as a listener for service statuses and other events.
      *
      * @param [in] listener    Pointer to the IDataLinkListener object that processes the
@@ -272,6 +291,16 @@ class IDataLinkListener : public telux::common::ISDKListener {
      */
     virtual void onEthModeChangeTransactionStatus(EthModeType ethModeType,
         LinkModeChangeStatus status) {}
+
+    /**
+     * Notifies clients about ethernet data link state changes.
+     *
+     * On platforms with access control enabled, the caller needs to have the TELUX_DATA_LINK_INFO
+     * permission to receive this event.
+     *
+     * @param [in] ethLinkState          current ethernet link state
+     */
+    virtual void onEthDataLinkStateChange(LinkState ethLinkState) {}
 
     /**
      * Destructor for IDataLinkListener

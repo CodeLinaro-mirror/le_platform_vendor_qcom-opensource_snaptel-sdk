@@ -84,14 +84,14 @@ class DataFactoryImplStub : public DataFactory,
     virtual std::shared_ptr<telux::data::IDataControlManager> getDataControlManager(
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
+    virtual std::shared_ptr<telux::data::IDataLinkManager> getDataLinkManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
     virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<telux::data::IKeepAliveManager> getKeepAliveManager(
         SlotId slotId = DEFAULT_SLOT_ID,
-        telux::common::InitResponseCb clientCallback = nullptr) override;
-
-    virtual std::shared_ptr<IDataLinkManager> getDataLinkManager(
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
  private:
@@ -127,6 +127,7 @@ class DataFactoryImplStub : public DataFactory,
         vlanManagerMap_;
     std::weak_ptr<telux::data::IDualDataManager> dualDataManager_;
     std::weak_ptr<telux::data::IDataControlManager> dataControlManager_;
+    std::weak_ptr<telux::data::IDataLinkManager> dataLinkManager_;
     std::weak_ptr<telux::data::net::IQoSManager> qosManager_;
 	std::weak_ptr<telux::data::IKeepAliveManager> KeepAliveManager_;
 
@@ -143,6 +144,7 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> dualDataCallbacks_;
     std::vector<telux::common::InitResponseCb> dataControlCallbacks_;
+    std::vector<telux::common::InitResponseCb> dataLinkCallbacks_;
     std::vector<telux::common::InitResponseCb> qosCallbacks_;
 	std::vector<telux::common::InitResponseCb> keepAliveCallbacks_;
 };

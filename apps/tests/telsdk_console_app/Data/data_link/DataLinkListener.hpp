@@ -17,6 +17,7 @@ public:
     void onEthModeChangeRequest(telux::data::EthModeType ethModeType) override;
     void onEthModeChangeTransactionStatus(telux::data::EthModeType ethModeType,
         telux::data::LinkModeChangeStatus status) override;
+    void onEthDataLinkStateChange(telux::data::LinkState linkState) override;
 
     static std::string ethModeTypeToString(telux::data::EthModeType ethModeType);
     static std::string linkModeChangeStatusToString(telux::data::LinkModeChangeStatus status);

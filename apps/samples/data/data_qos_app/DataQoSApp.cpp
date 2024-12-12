@@ -22,8 +22,7 @@
  * Example use cases as per different data paths in system:
  * 1. VLAN-based downlink traffic, tethered to apps software path
  * 2. VLAN-based uplink traffic, tethered to the apps software path
- * 3.  i. IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
- *    ii. VLAN-based downlink traffic, tethered to the WAN hardware accelerated path
+ * 3. IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
  * 4. IPv4-based uplink traffic, tethered to the WAN hardware accelerated path
  * 5. IPv4-based uplink traffic, from apps to the WAN path
  *
@@ -126,9 +125,8 @@ bool DataQoSApp::initDataConnectionManager() {
       telux::common::ServiceStatus subSystemStatus = dcmProm.get_future().get();
 
       if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-         std::cout << " *** Data Connection Manager is ready *** " << std::endl;
          std::shared_ptr<telux::data::IDataConnectionListener> dcmListener =  shared_from_this();
-         std::cout << " *** Data Connection Manager is ready 22 *** " << std::endl;
+         std::cout << " *** Data Connection Manager is ready *** " << std::endl;
          telux::common::Status status =
             dataConnectionManager_->registerListener(dcmListener);
 
@@ -221,16 +219,14 @@ bool DataQoSApp::startAndWaitForDataCall() {
 bool DataQoSApp::createAndWaitForVlan(int vlanId, bool isAccelerated, int pcp) {
    if(initVlanManager()) {
       std::promise<telux::common::ErrorCode> vlanProm;
-      auto respCb = [&vlanProm](bool isAccelerated, telux::common::ErrorCode error) {
+      auto respCb = [&vlanProm, &vlanId, &pcp](bool isAccelerated, telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
+         std::cout << "VLAN ID: "  << vlanId << ", PCP: "<< pcp <<", IPA HW acceleration: "
+                  << (isAccelerated ? " enabled" : " not enabled") << std::endl;
          std::cout << "CALLBACK: "
                   << "createVlan Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error) << std::endl;
-         if (error == telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Acceleration "
-                  << (isAccelerated ? "is allowed" : "is not allowed") << "\n";
-         }
          vlanProm.set_value(error);
       };
 
@@ -356,9 +352,15 @@ bool DataQoSApp::createDownLinkTrafficClass(int trafficClass, telux::data::net::
 uint32_t DataQoSApp::addVlanPcpQoSFilter(int trafficClass, telux::data::Direction direction,
    telux::data::net::DataPath dataPath, int vlanId, int pcp) {
    telux::data::TrafficFilterBuilder tfBuilder;
-   tfBuilder.setDirection(direction).
-   setVlanList({vlanId}, telux::data::FieldType::DESTINATION).
-   setDataPath(dataPath).setPCP(pcp);
+   tfBuilder.setDirection(direction).setDataPath(dataPath).setPCP(pcp);
+
+   // In the downlink direction, the field type of VLAN is expected to be of the destination.
+   // For uplink, it is supposed to be the source.
+   if(direction == telux::data::Direction::DOWNLINK) {
+      tfBuilder.setVlanList({vlanId}, telux::data::FieldType::DESTINATION);
+   } else {
+      tfBuilder.setVlanList({vlanId}, telux::data::FieldType::SOURCE);
+   }
 
    // Configure QoS filter
    telux::data::net::QoSFilterConfig qosFilterConfig = {0};
@@ -391,6 +393,9 @@ uint32_t DataQoSApp::addVlanQoSFilter(int trafficClass, telux::data::Direction d
    telux::data::net::DataPath dataPath, int vlanId) {
    telux::data::TrafficFilterBuilder tfBuilder;
    tfBuilder.setDirection(direction).setDataPath(dataPath);
+
+   // In the downlink direction, the field type of VLAN is expected to be of the destination.
+   // For uplink, it is supposed to be the source.
    if(direction == telux::data::Direction::DOWNLINK) {
       tfBuilder.setVlanList({vlanId}, telux::data::FieldType::DESTINATION);
    } else {
@@ -424,7 +429,7 @@ uint32_t DataQoSApp::addVlanQoSFilter(int trafficClass, telux::data::Direction d
 // Add IPv4 based QoS filter
 uint32_t DataQoSApp::addIPv4QoSFilter(int trafficClass, telux::data::Direction direction,
    telux::data::net::DataPath dataPath, int protocol, std::string srcIPv4, int destPort,
-   int srcPort) {
+   int srcPort, int pcp) {
 
    telux::data::TrafficFilterBuilder tfBuilder;
    tfBuilder.setDirection(direction).
@@ -437,7 +442,9 @@ uint32_t DataQoSApp::addIPv4QoSFilter(int trafficClass, telux::data::Direction d
    if(srcPort != -1) {
       tfBuilder.setPort(srcPort, telux::data::FieldType::SOURCE);
    }
-
+   if(pcp != -1) {
+      tfBuilder.setPCP(pcp);
+   }
    // Configure QoS filter
    telux::data::net::QoSFilterConfig qosFilterConfig = {0};
    // traffic class
@@ -565,24 +572,23 @@ bool DataQoSApp::createTCAndAddQoSFilterForULTetheredToAppsSWPath() {
    return true;
 }
 
-// 3.  i. IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
-//    ii. VLAN-based downlink traffic, tethered to the WAN hardware accelerated path
+// 3. IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
 bool DataQoSApp::createTCAndAddQoSFilterForDLTetheredToWanHWAccPath() {
    std::cout <<
    "\n\n3.  Tethered to the WAN downlink hardware accelerated path:\n"
    "        Steps:\n"
-   "        - Pre-requisite: VLAN created with below attributes\n"
+   "        Pre-requisite: VLAN created with below attributes\n"
    "             ID = 18\n"
    "             HW Acceleration = True\n"
-   "             PCP not set (Internally PCP = 0)\n"
+   "             PCP = 6\n"
    "        - Bind VLAN-18 to default WWAN Backhaul\n"
    "        - Bring-up data call\n"
    "        - Create traffic class\n"
    "             TC ID = 1\n"
    "             BW Config {min = 5Mbps, max = 10Mbps}\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
-   "             Direction = DOWNLINK\n\n"
-   "\n      i)  IPv4-based downlink traffic, tethered to the WAN hardware accelerated path:\n"
+   "             Direction = DOWNLINK\n"
+   "        - IPv4-based downlink traffic, tethered to the WAN hardware accelerated path:\n"
    "        - Add IP based QoS filter\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
    "             Direction = DOWNLINK\n"
@@ -591,7 +597,7 @@ bool DataQoSApp::createTCAndAddQoSFilterForDLTetheredToWanHWAccPath() {
    "             Destination port = 30044\n"
    "             Protocol = TCP (6 as per IANA)\n"
    "             Source port = 8080\n";
-   std::cout << "\n\nPress ENTER to execute use case 3. i \n\n";
+   std::cout << "\n\nPress ENTER to execute use case 3 \n\n";
    std::cin.ignore();
    // Bring-up data call
    if(!startAndWaitForDataCall()){
@@ -607,6 +613,7 @@ bool DataQoSApp::createTCAndAddQoSFilterForDLTetheredToWanHWAccPath() {
    // Note: For DOWNLINK IP-based filter, any reduced combination from the 5-tuple can be provided.
    int handle;
    char * ip = std::getenv("TETHERED_TO_WAN_HW_DL_SOURCE_IP");
+   // For example, using 142.250.132.100 as the remote server IP if not provided.
    std::string sourceIp = (ip == NULL ? "142.250.132.100" : std::string(ip));
    if(handle = addIPv4QoSFilter(1, telux::data::Direction::DOWNLINK,
       telux::data::net::DataPath::TETHERED_TO_WAN_HW, 6, sourceIp, 30044, 8080)) {
@@ -624,39 +631,7 @@ bool DataQoSApp::createTCAndAddQoSFilterForDLTetheredToWanHWAccPath() {
    } else {
       return false;
    }
-
-   std::cout <<
-   "\n    ii) VLAN-based downlink traffic, tethered to the WAN hardware accelerated path:\n"
-   "      Steps:\n"
-   "       - Add VLAN based QoS filter\n"
-   "             Data path = TETHERED_TO_WAN_HW\n"
-   "             Direction = DOWNLINK\n"
-   "             VLAN IDs = [18]\n";
-   std::cout << "\n\nPress ENTER to execute use case 3. ii \n\n";
-   std::cin.ignore();
-   // Create VLAN
-   // Note: All vlan configuration as prerequisite added in
-   //       "./qos_sample_app -v"  i.e. configureVLANs()
-
-   // Create traffic class not needed as using same traffic class created above.
-   // Add VLAN based QoS filter
-   if(handle = addVlanQoSFilter(1, telux::data::Direction::DOWNLINK,
-      telux::data::net::DataPath::TETHERED_TO_WAN_HW, 18)) {
-      // Get QoS filter
-      std::shared_ptr<telux::data::net::IQoSFilter> qosFilterInfo;
-      telux::common::ErrorCode errorCode = dataQoSManager_->getQosFilter(handle, qosFilterInfo);
-      if (errorCode == telux::common::ErrorCode::SUCCESS) {
-         std::cout << " Request QoS filter is successful." << std::endl;
-         std::cout << qosFilterInfo->toString() << std::endl;
-         return true;
-      } else {
-         std::cout << " Get QoS filter has failed. ErrorCode: " << static_cast<int>(errorCode)
-         << std::endl;
-         return false;
-      }
-   } else {
-      return false;
-   }
+   return true;
 }
 
 // 4. IPv4-based uplink traffic, tethered to the WAN hardware accelerated path
@@ -667,11 +642,11 @@ bool DataQoSApp::createTCAndAddQoSFilterForULTetheredToWanHWAccPath() {
    "       - Pre-requisite: VLAN created with below attributes\n"
    "             ID = 18\n"
    "             HW Acceleration = True\n"
-   "             PCP not set (Internally PCP = 0)\n"
+   "             PCP = 6\n"
    "       - Bind VLAN-18 to default WWAN Backhaul\n"
    "       - Bring-up data call\n"
    "       - Create traffic class\n"
-   "             TC ID = 1\n"
+   "             TC ID = 2\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
    "             Direction = UPLINK\n"
    "       - Add IP based QoS filter\n"
@@ -679,7 +654,8 @@ bool DataQoSApp::createTCAndAddQoSFilterForULTetheredToWanHWAccPath() {
    "             Direction = UPLINK\n"
    "             Source IP = <Public IP> from IDataCall object\n"
    "             Destination port = 8081\n"
-   "             Protocol = TCP (6 as per IANA)\n";
+   "             Protocol = TCP (6 as per IANA)\n"
+   "             PCP = 6\n";
 
    std::cout << "\n\nPress ENTER to execute use case 4 \n\n";
    std::cin.ignore();
@@ -689,15 +665,15 @@ bool DataQoSApp::createTCAndAddQoSFilterForULTetheredToWanHWAccPath() {
    }
 
    // Create traffic class for uplink traffic
-   if(!createUplinkTrafficClass(1, telux::data::net::DataPath::TETHERED_TO_WAN_HW)) {
+   if(!createUplinkTrafficClass(2, telux::data::net::DataPath::TETHERED_TO_WAN_HW)) {
       return false;
    }
 
    // Create traffic filter (IP based)
    // Note: For UPLINK IP-based filter involving modem, source IP, protocol, and one field
    // from destination ip or destination port is mandatory.
-   if(int handle = addIPv4QoSFilter(1, telux::data::Direction::UPLINK,
-      telux::data::net::DataPath::TETHERED_TO_WAN_HW, 6, rmnetIp_, 8081)) {
+   if(int handle = addIPv4QoSFilter(2, telux::data::Direction::UPLINK,
+      telux::data::net::DataPath::TETHERED_TO_WAN_HW, 6, rmnetIp_, 8081, -1, 6)) {
       // Get QoS filter
       std::shared_ptr<telux::data::net::IQoSFilter> qosFilterInfo;
       telux::common::ErrorCode errorCode = dataQoSManager_->getQosFilter(handle, qosFilterInfo);
@@ -722,8 +698,8 @@ bool DataQoSApp::createTCAndAddQoSFilterForULAppsToWanPath() {
    "       Steps:\n"
    "       - Bring-up data call\n"
    "       - Create traffic class\n"
-   "             TC ID = 2\n"
-   "             Data path = TETHERED_TO_WAN_HW\n"
+   "             TC ID = 3\n"
+   "             Data path = APPS_TO_WAN\n"
    "             Direction = UPLINK\n"
    "       - Add IP based QoS filter\n"
    "             Data path = APPS_TO_WAN\n"
@@ -739,12 +715,12 @@ bool DataQoSApp::createTCAndAddQoSFilterForULAppsToWanPath() {
    }
 
    // Create traffic class for uplink
-   if(!createUplinkTrafficClass(2, telux::data::net::DataPath::TETHERED_TO_WAN_HW)) {
+   if(!createUplinkTrafficClass(3, telux::data::net::DataPath::APPS_TO_WAN)) {
       return false;
    }
 
    // Create traffic filter (IP based)
-   if(int handle = addIPv4QoSFilter(2, telux::data::Direction::UPLINK,
+   if(int handle = addIPv4QoSFilter(3, telux::data::Direction::UPLINK,
       telux::data::net::DataPath::APPS_TO_WAN, 17, rmnetIp_, 8080)) {
       // Get QoS filter
       std::shared_ptr<telux::data::net::IQoSFilter> qosFilterInfo;
@@ -807,7 +783,7 @@ void DataQoSApp::printUseCases() {
    "        - Pre-requisite: VLAN created with below attributes\n"
    "             ID = 18\n"
    "             HW Acceleration = True\n"
-   "             PCP not set (Internally PCP = 0)\n"
+   "             PCP = 6\n"
    "        - Bind VLAN-18 to default WWAN Backhaul\n"
    "        - Bring-up data call\n"
    "        - Create traffic class\n"
@@ -815,21 +791,14 @@ void DataQoSApp::printUseCases() {
    "             BW Config {min = 5Mbps, max = 10Mbps}\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
    "             Direction = DOWNLINK\n\n"
-   "\n    i)  IPv4-based downlink traffic, tethered to the WAN hardware accelerated path: \n"
+   "\n     IPv4-based downlink traffic, tethered to the WAN hardware accelerated path: \n"
    "        - Add IP based QoS filter\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
    "             Direction = DOWNLINK\n"
    "             Source IP = Remote server\n"
    "             Destination port = 30044\n"
    "             Protocol = TCP (6 as per IANA)\n"
-   "             Source port = 8080\n"
-   "\n    ii) VLAN-based downlink traffic, tethered to the WAN hardware accelerated path:\n"
-   "        Steps:\n"
-   "       - Add VLAN based QoS filter\n"
-   "             TC ID = 1\n"
-   "             Data path = TETHERED_TO_WAN_HW\n"
-   "             Direction = DOWNLINK\n"
-   "             VLAN IDs = [18]\n";
+   "             Source port = 8080\n";
 
    std::cout <<
    "\n\n4. IPv4-based uplink traffic, tethered to the WAN hardware accelerated path:\n"
@@ -837,11 +806,11 @@ void DataQoSApp::printUseCases() {
    "       - Pre-requisite: VLAN created with below attributes\n"
    "             ID = 18\n"
    "             HW Acceleration = True\n"
-   "             PCP not set (Internally PCP = 0)\n"
+   "             PCP = 6\n"
    "       - Bind VLAN-18 to default WWAN Backhaul\n"
    "       - Bring-up data call\n"
    "       - Create traffic class\n"
-   "             TC ID = 1\n"
+   "             TC ID = 2\n"
    "             Data path = TETHERED_TO_WAN_HW\n"
    "             Direction = UPLINK\n"
    "       - Add IP based QoS filter\n"
@@ -856,8 +825,8 @@ void DataQoSApp::printUseCases() {
    "    Steps:\n"
    "       - Bring-up data call\n"
    "       - Create traffic class\n"
-   "             TC ID = 2\n"
-   "             Data path = TETHERED_TO_WAN_HW\n"
+   "             TC ID = 3\n"
+   "             Data path = APPS_TO_WAN\n"
    "             Direction = UPLINK\n"
    "       - Add IP based QoS filter\n"
    "             Data path = APPS_TO_WAN\n"
@@ -889,12 +858,11 @@ void DataQoSApp::runUseCase(int useCase) {
       break;
 
       case 3:
-         // 3.  i.  IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
-         //     ii. VLAN-based downlink traffic, tethered to the WAN hardware accelerated path
+         // 3. IPv4-based downlink traffic, tethered to the WAN hardware accelerated path
          if(createTCAndAddQoSFilterForDLTetheredToWanHWAccPath()) {
-            std::cout << "\nSuccessful 3. i, ii IPv4, VLAN based downlink traffic, QoS filter \n\n";
+            std::cout << "\nSuccessful 3. IPv4 based downlink traffic, QoS filter \n\n";
          } else {
-            std::cout << "\nerror in 3.  i, ii IPv4, VLAN based downlink traffic, QoS filter \n\n";
+            std::cout << "\nerror in 3. IPv4  based downlink traffic, QoS filter \n\n";
          }
       break;
       case 4:
@@ -925,9 +893,9 @@ void DataQoSApp::runUseCase(int useCase) {
             std::cout << "\n\nerror in 2. VLAN-based uplink traffic, QoS filter \n\n";
          }
          if(createTCAndAddQoSFilterForDLTetheredToWanHWAccPath()) {
-            std::cout << "\nSuccessful 3. i, ii IPv4, VLAN based downlink traffic, QoS filter \n\n";
+            std::cout << "\nSuccessful 3. IPv4 based downlink traffic, QoS filter \n\n";
          } else {
-            std::cout << "\nerror in 3. i, ii IPv4, VLAN based downlink traffic, QoS filter \n\n";
+            std::cout << "\nerror in 3. IPv4  based downlink traffic, QoS filter \n\n";
          }
          if(createTCAndAddQoSFilterForULTetheredToWanHWAccPath()) {
             std::cout << "\nSuccessful 4. IPv4-based uplink traffic, QoS filter \n\n";
@@ -1129,29 +1097,29 @@ void DataQoSApp::printHelp() {
 void DataQoSApp::consoleInit() {
    std::shared_ptr<ConsoleAppCommand> configureVLANs
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Configure_VLANs", {}, std::bind(&DataQoSApp::configureVLANs, this)));
+         "1", "Prerequisite Configure_VLANs", {}, std::bind(&DataQoSApp::configureVLANs, this)));
    std::shared_ptr<ConsoleAppCommand> clearVlanConfigs
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "2", "Clear_VLAN_Configuration", {}, std::bind(&DataQoSApp::clearVlanConfigs, this)));
    std::shared_ptr<ConsoleAppCommand> createTCAndAddQoSFilterForDLTetheredToAppsSWPath
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Create_TC_And_Add_QoS_Filter_For_DL_Tethered_To_Apps_SW_Path", {},
+         "3", "Use case 1 Create_TC_And_Add_QoS_Filter_For_DL_Tethered_To_Apps_SW_Path", {},
          std::bind(&DataQoSApp::createTCAndAddQoSFilterForDLTetheredToAppsSWPath, this)));
    std::shared_ptr<ConsoleAppCommand> createTCAndAddQoSFilterForULTetheredToAppsSWPath
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Create_TC_And_Add_QoS_Filter_For_UL_Tethered_To_Apps_SW_Path", {},
+         "4", "Use case 2 Create_TC_And_Add_QoS_Filter_For_UL_Tethered_To_Apps_SW_Path", {},
          std::bind(&DataQoSApp::createTCAndAddQoSFilterForULTetheredToAppsSWPath, this)));
    std::shared_ptr<ConsoleAppCommand> createTCAndAddQoSFilterForDLTetheredToWanHWAccPath
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Create_TC_And_Add_QoS_Filter_For_DL_Tethered_To_Wan_HW_Acc_Path", {},
+         "5", "Use case 3 Create_TC_And_Add_QoS_Filter_For_DL_Tethered_To_Wan_HW_Acc_Path", {},
          std::bind(&DataQoSApp::createTCAndAddQoSFilterForDLTetheredToWanHWAccPath, this)));
     std::shared_ptr<ConsoleAppCommand> createTCAndAddQoSFilterForULTetheredToWanHWAccPath
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Create_TC_And_Add_QoS_Filter_For_UL_Tethered_To_Wan_HW_Acc_Path", {},
+         "6", "Use case 4 Create_TC_And_Add_QoS_Filter_For_UL_Tethered_To_Wan_HW_Acc_Path", {},
          std::bind(&DataQoSApp::createTCAndAddQoSFilterForULTetheredToWanHWAccPath, this)));
     std::shared_ptr<ConsoleAppCommand> createTCAndAddQoSFilterForULAppsToWanPath
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "7", "Create_TC_And_Add_QoS_Filter_For_UL_Apps_To_Wan_Path", {},
+         "7", "Use case 5 Create_TC_And_Add_QoS_Filter_For_UL_Apps_To_Wan_Path", {},
          std::bind(&DataQoSApp::createTCAndAddQoSFilterForULAppsToWanPath, this)));
 
     std::shared_ptr<ConsoleAppCommand> cleanupCmd
@@ -1186,8 +1154,8 @@ bool DataQoSApp::configureVLANs() {
       return false;
    }
 
-   // use case 4
-   if(!createAndWaitForVlan(18, true)) {
+   // use case 3, 4
+   if(!createAndWaitForVlan(18, true, 6)) {
       return false;
    }
 

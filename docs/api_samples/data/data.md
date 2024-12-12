@@ -19,3 +19,4 @@ Data {#data}
 * @subpage get_service_status_and_indication
 * @subpage get_roaming_status_and_indication
 * @subpage on_demand_pdn_connectivity
+* @subpage create_traffic_class_and_add_qos_filter

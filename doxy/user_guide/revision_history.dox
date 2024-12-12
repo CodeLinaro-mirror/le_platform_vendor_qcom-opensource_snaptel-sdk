@@ -86,6 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AT} @tdmulrowend @td Dec 2024 @tdend @tdlast Updated documentation for API reference and user guide for V1.63.10. @tdlastend @trend
 @tr @tdmulrow{1,AR} @tdmulrowend @td Jun 2024 @tdend @tdlast Remove unsupported simulation framework. Updated documentation for API reference and user guide for V1.63.9. @tdlastend @trend
 @tr @tdmulrow{1,AP} @tdmulrowend @td Oct 2023 @tdend @tdlast Add support for Diagnostics services. Updated documentation for API reference and user guide for V1.63.0. @tdlastend @trend
 @tr @tdmulrow{1,AN} @tdmulrowend @td Sep 2023 @tdend @tdlast Updated documentation for API reference and user guide for V1.62.0. @tdlastend @trend

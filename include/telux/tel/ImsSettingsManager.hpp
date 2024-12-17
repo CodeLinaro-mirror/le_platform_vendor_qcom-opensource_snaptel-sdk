@@ -29,7 +29,7 @@
 
 /**
  * @file       ImsSettingsManager.hpp
- * @brief      ImsSettingsManager allows to set or get IMS service conﬁguration parameters.
+ * @brief      ImsSettingsManager allows to set or get IMS service configuration parameters.
  *             For example to enable or disable the IMS service, VOIMS service.
  *
  */

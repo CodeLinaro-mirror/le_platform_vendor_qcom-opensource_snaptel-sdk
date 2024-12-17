@@ -78,14 +78,12 @@ void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
     server_ = std::make_shared<TCPServer<kaproto>>(serverWorker_, port, ipaddr);
     serverWorker_->setServer(server_);
     serverThread_ = std::thread{&KeepAliveTestApp::startServerThread, this};
+    serverThread_.detach();
 }
 
 void KeepAliveTestApp::stopTCPServer(std::vector<std::string> inputCommand) {
     if(server_) {
         server_->disconnect();
-        if(serverThread_.joinable()){
-            serverThread_.join();
-        }
         server_ = nullptr;
     }
 }
@@ -148,19 +146,14 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
     client_ = std::make_shared<TCPClient<kaproto>>(clientWorker_, serverPort, serverIpAddr,
         clientPort, clientIpAddr);
     clientThread_ = std::thread{&KeepAliveTestApp::startClientThread, this};
-
+    clientThread_.detach();
 }
 
 void KeepAliveTestApp::stopTCPClient(std::vector<std::string> inputCommand) {
     if(client_) {
         client_->disconnect();
-        if(clientThread_.joinable()) {
-            clientThread_.join();
-        }
         client_ = nullptr;
     }
-    std::cin.clear(); // Clear error flags
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 void KeepAliveTestApp::enableTCPMonitor(std::vector<std::string> inputCommand) {
@@ -446,6 +439,11 @@ int main(int argc, char ** argv) {
         // or maybe just set a flag, and let the main thread to decide
         // when to exit.
         if(myKeepAliveTestApp) {
+            //cleanup server/client thread
+            std::cout << APP_NAME << " Cleanup server/client" << std::endl;
+            myKeepAliveTestApp->stopTCPClient({});
+            myKeepAliveTestApp->stopTCPServer({});
+
             std::cout << APP_NAME << " deregisterForUpdates" << std::endl;
             myKeepAliveTestApp->deregisterForUpdates();
 

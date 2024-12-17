@@ -38,8 +38,8 @@ class TCPServer {
     {}
 
     ~TCPServer() { disconnect(); }
-    bool startServer()
-    {
+
+    bool startServer() {
         receivedStopServer_ = false;
         struct sockaddr *sockAddr = NULL;
         struct sockaddr *clientAddr = NULL;
@@ -125,18 +125,21 @@ class TCPServer {
 
         return false;
     }
-    void sendMessage(T *msg)
-    {
-        if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T))
-        {
-            std::cout << " send : "<< std::string(strerror(errno));
-            worker_->onDisconnect();
-            close(socket_);
+
+    void sendMessage(T *msg) {
+        if(socket_) {
+            if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T)) {
+                std::cout << " send : "<< std::string(strerror(errno));
+                worker_->onDisconnect();
+                close(socket_);
+                socket_ = 0;
+            }
+        } else {
+            std::cout << " Socket is not connected " << std::endl;
         }
     }
 
-    void disconnect()
-    {
+    void disconnect() {
         std::cout << " Stopping TCP Server " << std::endl;
         receivedStopServer_ = true;
         if(listenSocket_) {
@@ -175,8 +178,8 @@ class TCPServer {
     struct sockaddr_in6 v6ServerAddr_;
     struct sockaddr_in v4ClientAddr_;
     struct sockaddr_in6 v6ClientAddr_;
-    int listenSocket_;
-    int socket_;
+    int listenSocket_ = 0;
+    int socket_ = 0;
     std::atomic<bool> receivedStopServer_ = {false};
 };
 

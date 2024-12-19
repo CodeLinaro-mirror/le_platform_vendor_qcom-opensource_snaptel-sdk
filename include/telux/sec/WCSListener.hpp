@@ -21,9 +21,12 @@ namespace sec {
  * @{ */
 
 /**
- *  Receives security analysis reports for the Wi-Fi APs detected while
- *  scanning for APs in the vicinity and provides a listener for deauthentication
- *  attacks.
+ * Receives security analysis reports for the Wi-Fi APs detected while
+ * scanning for APs in the vicinity and provides a listener for deauthentication
+ * attacks.
+ * It is recommended that the client should not perform any blocking/sleeping operation
+ * from within methods in this class to ensure all the information is provided for attack scans.
+ * Also the implementation should be thread safe.
  */
 class IWiFiReportListener : public telux::common::ISDKListener {
 
@@ -52,9 +55,11 @@ class IWiFiReportListener : public telux::common::ISDKListener {
     virtual void onDeauthenticationAttack(DeauthenticationInfo deauthenticationInfo) { }
 
     /**
-     * Gets user confirmation that the given AP is trusted. This is called only once
+     * Gets user's confirmation that the given AP is trusted. This is called only once
      * when the device connects to this AP for the first time. If the application
      * trusts the given AP, it should set 'isTrusted' to true, otherwise it should be set to false.
+     * This information is critical for attack scans and without the user's input security analysis
+     * reports will be blocked.
      *
      * Once the user confirms that an AP is trusted, this information is saved internally
      * and used later to detect threats like evil twin attacks.

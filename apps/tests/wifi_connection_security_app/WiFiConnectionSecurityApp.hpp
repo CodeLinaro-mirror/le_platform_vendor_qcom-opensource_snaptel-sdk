@@ -60,12 +60,12 @@ class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener {
 
     void setTrustAPSelection(bool trust);
 
- private:
     bool trustGivenAP_{false};
     bool trustAPSelectionMade_{false};
-    bool promptUserForTrustingAP_{false};
     std::mutex trustMutex_;
     std::condition_variable trustCV_;
+ private:
+    bool promptUserForTrustingAP_{false};
 };
 
 class WiFiConnectionSecurityApp : public ConsoleApp,

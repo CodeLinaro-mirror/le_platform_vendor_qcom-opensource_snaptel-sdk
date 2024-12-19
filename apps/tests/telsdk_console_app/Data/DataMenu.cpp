@@ -150,11 +150,16 @@ void DataMenu::init() {
             "15", "Network_Setting_Menu",
             {}, std::bind(&DataMenu::networkSettingMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> tetherMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "16", "Tether_Menu",
+            {}, std::bind(&DataMenu::tetherMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand, networkSettingMenuCommand};
+        dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand};
 
     addCommands(commandsList);
 
@@ -316,6 +321,16 @@ void DataMenu::networkSettingMenu(std::vector<std::string> userInput) {
         networkSettingMenu_->mainLoop();
     }
     networkSettingMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::tetherMenu(std::vector<std::string> userInput) {
+    tetherMenu_ =
+        make_shared<TetherMenu>("Tether Control Menu", "tether> ");
+    if(tetherMenu_->init()) {
+        tetherMenu_->mainLoop();
+    }
+    tetherMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 

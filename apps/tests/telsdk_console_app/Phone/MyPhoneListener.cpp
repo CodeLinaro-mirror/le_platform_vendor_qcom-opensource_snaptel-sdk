@@ -447,10 +447,11 @@ void MyPhoneListener::onVoiceServiceStateChanged(
     int phoneId, const std::shared_ptr<telux::tel::VoiceServiceInfo> &srvInfo) {
     if (srvInfo) {
         auto voiceSrvState = srvInfo->getVoiceServiceState();
-        if (voiceSrvcState_ != voiceSrvState) {
-            voiceSrvcState_ = voiceSrvState;
-            PRINT_NOTIFICATION << "\n\nonVoiceServiceStateChanged: State: "
-                               << MyPhoneHelper::voiceServiceStateToString(voiceSrvState);
+        if (voiceSrvcState_[phoneId-1] != voiceSrvState) {
+            voiceSrvcState_[phoneId-1] = voiceSrvState;
+            std::cout << "\n";
+            PRINT_NOTIFICATION << "onVoiceServiceStateChanged: PhoneId = " << phoneId
+                << ", State: " << MyPhoneHelper::voiceServiceStateToString(voiceSrvState);
             if (srvInfo->isEmergency()) {
                 std::cout << ", Phone is in EMERGENCY_ONLY mode" <<
                 ", Radio Technology: " <<

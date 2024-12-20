@@ -97,7 +97,8 @@ private:
    std::string radioStateToString(telux::tel::RadioState radioState);
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
    std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
-   telux::tel::VoiceServiceState voiceSrvcState_ = telux::tel::VoiceServiceState::UNKNOWN;
+   std::vector<telux::tel::VoiceServiceState> voiceSrvcState_ =
+       {telux::tel::VoiceServiceState::UNKNOWN, telux::tel::VoiceServiceState::UNKNOWN};
 };
 
 class MyCellularCapabilityCallback : public telux::tel::ICellularCapabilityCallback {

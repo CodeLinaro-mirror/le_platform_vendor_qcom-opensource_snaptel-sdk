@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -116,8 +116,9 @@ struct IPv6Info {
 
     TrafficClass mask = 0;
     FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of
-                            packets between a source and destination, requiring special
-                             handling by intermediate IPv6 routers.*/
+                             packets between a source and destination, requiring special
+                             handling by intermediate IPv6 routers.
+                             Note: FlowLabel is currently ignored in the firewall configuration */
     uint8_t natEnabled = 0;
 };
 

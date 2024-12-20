@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -530,11 +530,11 @@ void MyPhoneListener::onVoiceServiceStateChanged(
     int phoneId, const std::shared_ptr<telux::tel::VoiceServiceInfo> &srvInfo) {
     if (srvInfo) {
         auto voiceSrvState = srvInfo->getVoiceServiceState();
-        if (voiceSrvcState_ != voiceSrvState && phoneId_ != phoneId) {
-            voiceSrvcState_ = voiceSrvState;
-            phoneId_ = phoneId;
-            PRINT_NOTIFICATION << "\n\nonVoiceServiceStateChanged: State: "
-                               << MyPhoneHelper::voiceServiceStateToString(voiceSrvState);
+        if (voiceSrvcState_[phoneId-1] != voiceSrvState) {
+            voiceSrvcState_[phoneId-1] = voiceSrvState;
+            std::cout << "\n";
+            PRINT_NOTIFICATION << "onVoiceServiceStateChanged: PhoneId = " << phoneId
+                << ", State: " << MyPhoneHelper::voiceServiceStateToString(voiceSrvState);
             if (srvInfo->isEmergency()) {
                 std::cout << ", Phone is in EMERGENCY_ONLY mode" <<
                 ", Radio Technology: " <<

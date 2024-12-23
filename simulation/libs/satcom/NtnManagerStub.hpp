@@ -43,13 +43,15 @@ class NtnManagerStub : public INtnManager, public INtnListener {
         std::vector<SystemSelectionSpecifier> &params) override;
     NtnState getNtnState() override;
     telux::common::ErrorCode getSignalStrength(SignalStrength &signalStrength) override;
+    telux::common::ErrorCode enableCellularScan(bool enable) override;
 
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) override;
     void onDataAck(telux::common::ErrorCode err, telux::satcom::TransactionId id) override;
     void onSignalStrengthChange(telux::satcom::SignalStrength newStrength) override;
     void onCapabilitiesChange(telux::satcom::NtnCapabilities capabilities) override;
     void onNtnStateChange(telux::satcom::NtnState state) override;
-    void onQmsServiceStatusChange(ServiceStatus status);
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onCellularCoverageAvailable(bool isCellularCoverageAvailable) override;
 
  private:
     std::mutex mtx_;

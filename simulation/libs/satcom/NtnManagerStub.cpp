@@ -91,7 +91,7 @@ telux::common::ServiceStatus NtnManagerStub::getServiceStatus() {
     return subSystemStatus_;
 }
 
-void NtnManagerStub::onQmsServiceStatusChange(ServiceStatus status) {
+void NtnManagerStub::onServiceStatusChange(ServiceStatus status) {
     LOG(DEBUG, __FUNCTION__);
     if (listenerMgr_) {
         std::vector<std::weak_ptr<INtnListener>> listeners;
@@ -99,7 +99,7 @@ void NtnManagerStub::onQmsServiceStatusChange(ServiceStatus status) {
         LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners.size());
         for (auto &wp : listeners) {
             if (auto sp = wp.lock()) {
-                LOG(DEBUG, "Ntn Manager: invoking onQmsServiceStatusChange");
+                LOG(DEBUG, "Ntn Manager: invoking onServiceStatusChange");
                 sp->onServiceStatusChange(status);
             }
         }
@@ -150,6 +150,11 @@ telux::common::Status NtnManagerStub::sendData(uint8_t *data, uint32_t size, boo
     return telux::common::Status::NOTSUPPORTED;
 }
 
+telux::common::ErrorCode NtnManagerStub::enableCellularScan(bool enable) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
 void NtnManagerStub::onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
     LOG(DEBUG, __FUNCTION__);
 }
@@ -167,6 +172,10 @@ void NtnManagerStub::onCapabilitiesChange(telux::satcom::NtnCapabilities capabil
 }
 
 void NtnManagerStub::onNtnStateChange(telux::satcom::NtnState state) {
+    LOG(DEBUG, __FUNCTION__);
+}
+
+void NtnManagerStub::onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
     LOG(DEBUG, __FUNCTION__);
 }
 

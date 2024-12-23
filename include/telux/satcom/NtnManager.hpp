@@ -12,12 +12,16 @@
  *          NtnManager class provides following capabilities:
  *          - enable/disable NTN mode
  *          - send/receive non-IP data over NTN network
- *          - configure BPLMN scan
+ *          - enable/disable cellular terrestrial network scan while NTN is active
  *          - configure system selection specifiers
  *          - monitor NTN state
  *          - monitor NTN service availability
  *          - monitor NTN network capabilities
  *          - monitor signal strength of the NTN network
+ *
+ *          @note
+ *          Only once instance of this manager can be active throughout the system. Creating
+ *          multiple instances of NtnManager within one or more processes is undefined behavior.
  *
  */
 
@@ -110,7 +114,7 @@ class INtnManager {
     /**
      * Checks if NTN mode is supported on this device.
      *
-     * @param [out] isSupported indicates if NTN mode is supported or not.
+     * @param [out] isSupported True, if NTN mode is supported, false in all other cases
      *
      * @returns Error code which indicates whether operation succeeded or not.
      *
@@ -124,7 +128,7 @@ class INtnManager {
      * Enable or disable NTN mode. Enabling NTN will result into modem disabling the
      * TN (terrestrial network). Disabling NTN will result into modem enabling the TN.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_OPS
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_CONFIG
      * permission to invoke this API successfully.
      *
      * @note If isEmergency is set to true, the NTN network can be used for both emergency and
@@ -134,7 +138,7 @@ class INtnManager {
      * while calling the @ref telux::satcom::sendData API.
      *
      * @param [in] enable       Enable/Disable NTN mode.
-     * @param [in] isEmergency  if this NTN connection can be used for emergency purposes.
+     * @param [in] isEmergency  True, if this NTN connection can be used for emergency purposes.
      * @param [in] iccid        Integrated Circuit Card Identification (ICCID) of the SIM to be used
      *                          for NTN. @ref telux::tel::ISubscription::getIccId can be used to
      *                          get the ICCID of the SIM to be used for NTN.
@@ -160,7 +164,7 @@ class INtnManager {
      * telux::satcom::onDataAck listener to get the delivery status (L2 ack/timeout) of the packet.
      * The transaction Id returned can be used to map messages to their respective acknowledgements.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_OPS
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_DATA
      * permission to invoke this API successfully.
      *
      * @param [in]  data Data to be sent over the NTN network.
@@ -184,7 +188,7 @@ class INtnManager {
      * This API has no effect on already transmitted packets. All the aborted packets will have
      * corresponding @onDataAck called with appropriate error.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_OPS
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_DATA
      * permission to invoke this API successfully.
      *
      * @returns Error code which indicates whether operation succeeded or not.
@@ -228,7 +232,7 @@ class INtnManager {
      * This API shall be called only before calling @ref enableNtn, otherwise it will not have any
      * effect.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_OPS
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_CONFIG
      * permission to invoke this API successfully.
      *
      * @param [in]  params SFL list.
@@ -244,7 +248,7 @@ class INtnManager {
         = 0;
 
     /**
-     * This API returns current NTN state. For further details on NTN states,
+     * Returns current NTN state. For further details on NTN states,
      * refer to @NtnState
      *
      * @returns Current NTN state.
@@ -253,6 +257,26 @@ class INtnManager {
      *             could break backwards compatibility.
      */
     virtual NtnState getNtnState() = 0;
+
+    /**
+     * Enable/disable background cellular scanning. If the background cellular scanning
+     * is enabled, the modem will scan for the availability of TN networks while in the NTN mode.
+     * The modem will run this scan periodically and the result will be communicated by
+     * @ref telux::satcom::INtnManager::onCellularCoverageAvailable. The modem will not perform the
+     * NTN to TN switch on its own. It is up to the client to decide whether to switch to TN mode
+     * or not based on the result of the scan.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param[in] enable True, to enable cellular scan.
+     *
+     * @returns Error code which indicates whether operation succeeded or not.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode enableCellularScan(bool enable) = 0;
 
     /**
      * Register with NtnManager as listener for receiving service status, NTN state changes
@@ -370,6 +394,21 @@ class INtnListener : public telux::common::ISDKListener {
      *             could break backwards compatibility.
      */
     virtual void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
+    }
+
+    /**
+     * This function is called when the modem scans for the cellular coverage and has a result
+     * available. This API only indicates if ANY cellular coverage is available. It does not specify
+     * whether this cell would provide full service vs limited service only.
+     *
+     * Cellular coverage is enabled by calling @ref telux::satcom::INtnManager::enableCellularScan.
+     *
+     * @param [in] isCellularCoverageAvailable Flag indicating availability of cellular coverage.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
     }
 
     /**

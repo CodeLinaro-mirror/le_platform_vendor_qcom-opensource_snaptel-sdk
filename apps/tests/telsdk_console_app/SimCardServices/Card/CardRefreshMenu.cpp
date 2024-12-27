@@ -40,9 +40,7 @@ void CardRefreshResponseCallback::RefreshLastEventResponseCb(
             << " ,Session Type is "
             << MyCardListener::sessionTypeToString(config.sessionType)
             << ((!config.aid.empty()) ? " ,AID is " : "")
-            << ((!config.aid.empty()) ? config.aid : "")
-            << ((!config.channelId.empty()) ? " ,Channel id is " : "")
-            << ((!config.channelId.empty()) ? config.channelId : "") << " \n ";
+            << ((!config.aid.empty()) ? config.aid : "") << " \n ";
         for (auto file: efFiles) {
             std::cout << " EF file" << fileNo << " path is " << file.filePath
                 << " ID is " << file.fileId << "\n";
@@ -162,14 +160,13 @@ telux::tel::RefreshParams CardRefreshMenu::enterRefreshParams
     telux::tel::RefreshParams config = {};
     std::cout << "Enter Card Refresh session type(0 - PRIMARY, 2 - SECONDARY,\n"
         << "4 - NONPROVISIONING_SLOT_1, 5 - NONPROVISIONING_SLOT_2,\n"
-        << "6 - CARD_ON_SLOT_1, 7 - CARD_ON_SLOT_2,\n"
-        << "8 - CHANNEL_ID_SLOT_1, 9 - CHANNEL_ID_SLOT_2): ";
+        << "6 - CARD_ON_SLOT_1, 7 - CARD_ON_SLOT_2):";
     std::cin >> type;
     Utils::validateInput(type);
     if(type == static_cast<int>(telux::tel::SessionType::PRIMARY) ||
         type == static_cast<int>(telux::tel::SessionType::SECONDARY) ||
         (type >= static_cast<int>(telux::tel::SessionType::NONPROVISIONING_SLOT_1) &&
-        type <= static_cast<int>(telux::tel::SessionType::CHANNEL_ID_SLOT_2))) {
+        type <= static_cast<int>(telux::tel::SessionType::CARD_ON_SLOT_2))) {
         config.sessionType = static_cast<telux::tel::SessionType>(type);
     } else {
         std::cout << "Invalid session type input, try again" << std::endl;
@@ -179,10 +176,6 @@ telux::tel::RefreshParams CardRefreshMenu::enterRefreshParams
         config.sessionType == telux::tel::SessionType::NONPROVISIONING_SLOT_2) {
         std::cout << "Enter AID: ";
         std::getline(std::cin, config.aid, delimiter);
-    } else if (config.sessionType == telux::tel::SessionType::CHANNEL_ID_SLOT_1 ||
-        config.sessionType == telux::tel::SessionType::CHANNEL_ID_SLOT_2) {
-        std::cout << "Enter channel ID: ";
-        std::getline(std::cin, config.channelId, delimiter);
     }
 
     return config;

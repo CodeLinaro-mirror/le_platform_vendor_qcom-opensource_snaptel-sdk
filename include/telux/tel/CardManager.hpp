@@ -120,8 +120,8 @@ using EidResponseCallback
  * @param [in] efFiles          List of the elementary file path and identifier
  * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
  *                              Client provides the session type, application
- *                              identifier or logical channel number to listen
- *                              for the corresponding refresh event.
+ *                              identifier to listen for the corresponding refresh
+ *                              event.
  * @param [in] error            Return code which indicates whether the operation
  *                              succeeded or not. @ref ErrorCode
  *
@@ -264,8 +264,8 @@ class ICardManager {
      *                              @ref telux::tel::RefreshMode::INIT_FULL_FCN.
      * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
      *                              Client provides the session type, application
-     *                              identifier or logical channel number to listen
-     *                              for the corresponding refresh event.
+     *                              identifier to listen for the corresponding refresh
+     *                              event.
      * @param [in] callback         Optional callback pointer to get the result of
      *                              setupRefreshConfig
      *
@@ -300,8 +300,8 @@ class ICardManager {
      * @param [in] allowRefresh     If true, allow the SIM refresh otherwise, disallow it.
      * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
      *                              Client provides the session type, application
-     *                              identifier or logical channel number to listen
-     *                              for the corresponding refresh event.
+     *                              identifier to listen for the corresponding refresh
+     *                              event.
      * @param [in] callback         Optional callback pointer to get the result of
      *                              allowCardRefresh
      *
@@ -389,8 +389,8 @@ class ICardManager {
      *                              or rereading the files.
      * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
      *                              Client provides the session type, application
-     *                              identifier or logical channel number to listen
-     *                              for the corresponding refresh event.
+     *                              identifier to listen for the corresponding refresh
+     *                              event.
      * @param [in] callback         Optional callback pointer to get the result of
      *                              confirmRefreshHandlingCompleted
      *
@@ -414,8 +414,8 @@ class ICardManager {
      *                              refreshed.
      * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
      *                              Client provides the session type, application
-     *                              identifier or logical channel number to listen
-     *                              for the corresponding refresh event.
+     *                              identifier to listen for the corresponding refresh
+     *                              event.
      * @param [in] callback         Callback function to get the result of request the last event
      *                              of card refresh.
      *
@@ -688,8 +688,8 @@ class ICardListener : public common::IServiceStatusListener {
      * @param [in] efFiles          List of the elementary file path and identifier
      * @param [in] refreshParams    Session type @ref telux::tel::RefreshParams.
      *                              Client provides the session type, application
-     *                              identifier or logical channel number to listen
-     *                              for the corresponding refresh event.
+     *                              identifier to listen for the corresponding refresh
+     *                              event.
      *
      * Below table describes the expected behavior of a client when it receives a refresh
      * indication after registering for it. The behavior depends on the mode and the stage,

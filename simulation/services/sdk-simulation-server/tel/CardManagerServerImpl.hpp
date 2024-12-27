@@ -51,7 +51,7 @@ enum CardRefreshStage {
 struct clientSimRefreshPref {
     uint32_t clientId;
     int phoneId;
-    telux::tel::RefreshParams sessionAidCid;
+    telux::tel::RefreshParams sessionAid;
 };
 
 struct RefreshEventAndPending {

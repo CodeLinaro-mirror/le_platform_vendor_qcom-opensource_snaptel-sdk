@@ -720,14 +720,12 @@ enum SessionType {
     INIT_NONPROVISIONING_SLOT_2 = 5;
     CARD_ON_SLOT_1 = 6;
     CARD_ON_SLOT_2 = 7;
-    CHANNEL_ID_SLOT_1 = 8;
-    CHANNEL_ID_SLOT_2 = 9;
+    SESSION_TYPE_UNKNOWN = -1;
 }
 
 message RefreshParams {
     SessionType sessionType = 1;
     string aid = 2;
-    string channelId = 3;
 }
 
 message IccFile {

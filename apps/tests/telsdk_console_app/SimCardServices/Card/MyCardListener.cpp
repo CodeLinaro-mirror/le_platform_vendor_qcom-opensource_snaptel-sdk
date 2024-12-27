@@ -168,9 +168,7 @@ void MyCardListener::onRefreshEvent(
         << " ,Refresh Mode is " << refreshModeToString(mode)
         << " ,Session Type is " << sessionTypeToString(config.sessionType)
         << ((!config.aid.empty()) ? " ,AID is " : "")
-        << ((!config.aid.empty()) ? config.aid : "")
-        << ((!config.channelId.empty()) ? " ,Channel id is " : "")
-        << ((!config.channelId.empty()) ? config.channelId : "") << " \n ";
+        << ((!config.aid.empty()) ? config.aid : "") << " \n ";
     for (auto file: efFiles) {
         std::cout << " EF file" << fileNo << " path is " << file.filePath
             << " ID is " << file.fileId << "\n";
@@ -271,12 +269,6 @@ std::string MyCardListener::sessionTypeToString
             break;
         case telux::tel::SessionType::CARD_ON_SLOT_2:
             typeString = "CARD ON SLOT2";
-            break;
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_1:
-            typeString = "CHANNEL ID SLOT1";
-            break;
-        case telux::tel::SessionType::CHANNEL_ID_SLOT_2:
-            typeString = "CHANNEL ID SLOT2";
             break;
         default:
             typeString = "Unknown";

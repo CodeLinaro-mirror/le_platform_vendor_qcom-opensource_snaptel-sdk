@@ -182,6 +182,14 @@ void WiFiConnectionSecurityApp::deregisterListener() {
 
     telux::common::ErrorCode ec;
 
+    {
+        std::lock_guard<std::mutex> lock(reportListener_->trustMutex_);
+        reportListener_->trustGivenAP_ = false;
+        reportListener_->trustAPSelectionMade_ = true;
+        /* Unblock callback thread by sending false before deregistration.*/
+        reportListener_->trustCV_.notify_all();
+    }
+
     if (!reportListener_) {
         std::cout << "Listener doesn't exist" << std::endl;
         return;

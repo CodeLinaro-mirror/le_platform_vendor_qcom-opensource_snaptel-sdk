@@ -1,6 +1,6 @@
 /*
 *
-*   Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*   Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *   SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -9,6 +9,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <string>
+#include <iomanip>
+#include <ios>
+#include <sstream>
 
 #include "NtnTestApp.hpp"
 #include <telux/satcom/SatcomFactory.hpp>
@@ -72,9 +75,21 @@ std::string NtnTestApp::toString(ServiceStatus status) {
 
 void NtnTestApp::onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
     std::cout << "**** onIncomingData *****" << std::endl;
-    for (uint32_t i = 0; i < size; ++i) {
-        std::cout << "data[" << i << "] = " << data[i] << std::endl;
+
+    std::cout << "===Printing raw data===\n";
+    for(uint32_t i = 0; i < size; ++i)
+        std::cout << std::setfill('0') << std::hex << std::setw(2) << (uint32_t)data[i] << " ";
+    std::cout << "\n===End of raw data===\n";
+    std::cout << "===Printing data in ascii format (unprintable characters are printed as -)===\n";
+    for(uint32_t i = 0; i < size; ++i) {
+        if (!isprint((unsigned char)data[i]))
+        {
+            std::cout << "-";
+        } else {
+            std::cout << data[i];
+        }
     }
+    std::cout << "\n===End of data in ascii format===\n";
     std::cout << "*************************" << std::endl;
 }
 
@@ -124,38 +139,64 @@ void NtnTestApp::isNtnSupported(std::vector<std::string> inputCommand) {
 
 void NtnTestApp::enableNtn(std::vector<std::string> inputCommand) {
 
-    bool enable, emergency;
+    bool enable, emergency = false;
     std::string iccid;
     std::cout << "Enter 0 to disable and 1 to enable NTN: ";
     std::cin >> enable;
-    std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
-    std::cin >> emergency;
-    std::cout << "Enter iccid: ";
-    std::cin >> iccid;
+    if (enable) {
+        std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
+        std::cin >> emergency;
+        std::cout << "Enter iccid: ";
+        std::cin >> iccid;
+    }
     std::cout
         << "enableNtn errorno = " <<
         Utils::getErrorCodeAsString(ntnMgr_->enableNtn(enable, emergency, iccid)) << std::endl;
 }
 
-void NtnTestApp::sendData(std::vector<std::string> inputCommand) {
-    size_t size = 0;
-    int num;
+void NtnTestApp::sendDataString(std::vector<std::string> inputCommand) {
     bool isEmergency;
+    std::string str;
 
     std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
     std::cin >> isEmergency;
-    std::cout << "Enter number of integers to be sent: ";
-    std::cin >> size;
+    std::cout << "Enter string to be sent (max size 255): ";
+    std::cin >> str;
 
     std::vector<uint8_t> data;
-    for (size_t i = 0; i < size; ++i) {
-        std::cout << "Enter integer(0-255): ";
-        std::cin >> num;
-        data.push_back(num);
+    for (char c : str) {
+        data.push_back((uint8_t) c);
     }
     TransactionId tId;
-    std::cout << "Sending data of size : " << size * sizeof(uint8_t) << std::endl;
-    auto err = ntnMgr_->sendData(data.data(), size, isEmergency, tId);
+    std::cout << "Sending data of size(in bytes) : " << data.size() << std::endl;
+    auto err = ntnMgr_->sendData(data.data(), str.size(), isEmergency, tId);
+    std::cout << "sendData status = " << static_cast<int>(err) << std::endl;
+    std::cout << "sendData tId = " << tId << std::endl;
+}
+
+void NtnTestApp::sendDataRaw(std::vector<std::string> inputCommand) {
+    bool isEmergency;
+    std::string str;
+
+    std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
+    std::cin >> isEmergency;
+    std::cout << "Enter raw data to be sent: ";
+    std::cin >> str;
+
+    std::vector<uint8_t> data;
+    std::istringstream ss(str);
+    std::string buffer;
+
+    while((ss >> std::setw(2) >> buffer)) {
+        unsigned u;
+        std::istringstream ss2 (buffer);
+        ss2 >> std::setbase(16) >> u;
+        data.push_back((uint8_t)u);
+    }
+
+    TransactionId tId;
+    std::cout << "Sending data of size(in bytes) : " << data.size() << std::endl;
+    auto err = ntnMgr_->sendData(data.data(), data.size(), isEmergency, tId);
     std::cout << "sendData status = " << static_cast<int>(err) << std::endl;
     std::cout << "sendData tId = " << tId << std::endl;
 }
@@ -252,20 +293,26 @@ void NtnTestApp::consoleInit() {
     std::shared_ptr<ConsoleAppCommand> updateSflCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "updateSFL", {},
             std::bind(&NtnTestApp::updateSystemSelectionSpecifiers, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> sendDataCmd
+    std::shared_ptr<ConsoleAppCommand> sendDataStringCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "6", "sendData", {}, std::bind(&NtnTestApp::sendData, this, std::placeholders::_1)));
+            "6", "sendData(string)", {}, std::bind(&NtnTestApp::sendDataString,
+            this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> sendDataRawCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "7", "sendData(raw)", {}, std::bind(&NtnTestApp::sendDataRaw,
+            this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> abortDataCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "7", "abortData", {}, std::bind(&NtnTestApp::abortData, this, std::placeholders::_1)));
+            "8", "abortData", {}, std::bind(&NtnTestApp::abortData, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> enableCellularScanCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "8", "enableCellularScan", {}, std::bind(&NtnTestApp::enableCellularScan,
+            "9", "enableCellularScan", {}, std::bind(&NtnTestApp::enableCellularScan,
             this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsNtn
         = {isNtnSupportedCmd, enableNtnCmd, getNtnStateCmd,
-            getNtnCapabilitiesCmd, updateSflCmd, sendDataCmd, abortDataCmd, enableCellularScanCmd};
+            getNtnCapabilitiesCmd, updateSflCmd, sendDataStringCmd, sendDataRawCmd, abortDataCmd,
+            enableCellularScanCmd};
     ConsoleApp::addCommands(commandsNtn);
     ConsoleApp::displayMenu();
 }
@@ -332,7 +379,6 @@ std::shared_ptr<NtnTestApp> init() {
 static void signalHandler(int signum) {
     std::unique_lock<std::mutex> lock(mutex);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
-    cv.notify_all();
 }
 
 NtnTestApp::NtnTestApp()
@@ -358,11 +404,7 @@ int main(int argc, char **argv) {
     signal(SIGINT, signalHandler);
     myNtnTestApp->consoleInit();
     myNtnTestApp->mainLoop();
-    std::unique_lock<std::mutex> lock(mutex);
-    std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
-    cv.wait(lock);
     myNtnTestApp->deregisterForUpdates();
-    myNtnTestApp = nullptr;
 
     std::cout << "Exiting application..." << std::endl;
     return 0;

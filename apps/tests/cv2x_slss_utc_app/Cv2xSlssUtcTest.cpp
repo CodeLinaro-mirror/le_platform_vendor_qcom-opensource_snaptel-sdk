@@ -1,7 +1,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -128,8 +128,8 @@ static int initCv2x() {
 
     {
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return (gExit || statusUpdate); });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv.wait(lck, [&] { return statusUpdate; });
+        if (gExit || telux::common::ServiceStatus::SERVICE_AVAILABLE !=
             cv2xRadioMgrStatus) {
             cerr << "CV2X Radio Manager initialization failed" << endl;
             return EXIT_FAILURE;
@@ -150,10 +150,10 @@ static int injectUtc() {
     };
     if (Status::SUCCESS == gCv2xRadioMgr->injectCoarseUtcTime(gInjectUtc, injectUtcCb)) {
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return (gExit || getResponse); });
+        cv.wait(lck, [&] { return getResponse; });
     }
 
-    if (ErrorCode::SUCCESS != response) {
+    if (gExit || ErrorCode::SUCCESS != response) {
         cerr << "Failed to inject UTC" << endl;
         return EXIT_FAILURE;
     }
@@ -182,7 +182,7 @@ static int registerUtcReport() {
     if (gTimeMgr) {
         // wait for utc manager to be ready
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&statusUpdated] { return (statusUpdated || gExit); });
+        cv.wait(lck, [&statusUpdated] { return statusUpdated; });
     }
 
     if (gExit) {

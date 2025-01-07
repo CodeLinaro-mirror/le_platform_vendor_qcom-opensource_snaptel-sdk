@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -391,7 +391,7 @@ int main(int argc, char *argv[]) {
     if (timeManager) {
         // wait for utc manager to be ready
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&statusUpdated] { return (statusUpdated || gExit); });
+        cv.wait(lck, [&statusUpdated] { return statusUpdated; });
     }
 
     if (gExit) {

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1106,10 +1106,16 @@ int AerolinkSecurity::asyncVerify(
 
     SecuredMessageParserC* smp = msgParseContext;
     if(smp == nullptr){
+        // attempt to create a new smp
         if(createNewSmp(smp) == -1){
             return -1;
         }
+        // smp still not valid
+        if(smp == nullptr){
+            return -1;
+        }
     }
+
     // async verification
     result = smp_verifySignaturesAsyncPriority
         (*smp, aerolinkPriority, asyncCbData, callBackFunction);
@@ -1126,7 +1132,7 @@ int AerolinkSecurity::asyncVerify(
 
 AEROLINK_RESULT AerolinkSecurity::mbdCheck(Kinematics* rvBsmInfo,
     MisbehaviorStats* misbehaviorStat, SecuredMessageParserC* smp) {
-    AEROLINK_RESULT result;
+    AEROLINK_RESULT result = WS_ERR_BAD_ARGS;
 
     if (misbehaviorAppDataPtr == nullptr){
         misbehaviorAppDataPtr = std::make_shared<BsmData>();
@@ -1156,6 +1162,7 @@ AEROLINK_RESULT AerolinkSecurity::mbdCheck(Kinematics* rvBsmInfo,
             misbehaviorStat->timestamp = endLatencyTime-startTime;
             misbehaviorStat->misbehaviorLatency = endLatencyTime-startLatencyTime;
         }
+        return result;
     }
     return result;
 }

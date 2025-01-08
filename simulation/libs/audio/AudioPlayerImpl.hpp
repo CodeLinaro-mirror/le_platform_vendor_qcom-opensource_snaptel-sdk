@@ -23,7 +23,7 @@ class GetVolumeResponseListener {
  public:
     GetVolumeResponseListener(std::mutex &streamMtx);
     bool responseReady = false;
-    StreamVolume volume;
+    float volumeLevel;
     telux::common::ErrorCode errorCode;
     std::condition_variable cv;
     void getVolumeComplete(StreamVolume volume, telux::common::ErrorCode errorCode);
@@ -109,8 +109,6 @@ class AudioPlayerImpl : public IAudioPlayer,
 
     telux::common::ErrorCode setVolume(float volumeLevel) override;
     telux::common::ErrorCode getVolume(float &volumeLevel) override;
-    telux::common::ErrorCode setVolume(StreamVolume volume) override;
-    telux::common::ErrorCode getVolume(StreamVolume &volume) override;
 
     telux::common::ErrorCode setMute(bool enable) override;
     telux::common::ErrorCode getMute(bool &enable) override;
@@ -162,8 +160,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     long contentOffset_         = 0;
     ChannelTypeMask curChannelTypeMask_;
 
-    StreamVolume cachedVolume_;
-    StreamVolume cachedVolumeOnMute_;
+    float cachedVolumeLevel_;
     std::vector<DeviceType> cachedDevices_;
     std::vector<DeviceType> lastUsedDevices_;
     std::FILE *curFile_;
@@ -200,7 +197,7 @@ class AudioPlayerImpl : public IAudioPlayer,
     telux::common::ErrorCode setFormatAndOffset(AudioFormat audioFormat);
     telux::common::ErrorCode adjustFileAndState();
     telux::common::ErrorCode updateVolume(
-        StreamVolume volume, std::unique_lock<std::mutex> &streamLock);
+        float volumeLevel, std::unique_lock<std::mutex> &streamLock);
     telux::common::ErrorCode updateMute(bool enable, std::unique_lock<std::mutex> &streamLock);
     telux::common::ErrorCode updateDevice(
         std::vector<DeviceType> devices, std::unique_lock<std::mutex> &streamLock);

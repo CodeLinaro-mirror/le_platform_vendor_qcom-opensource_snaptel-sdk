@@ -161,8 +161,11 @@ int main(int argc, char *argv[]) {
         cv.wait(lck);
     }
 
-    if (gCv2xRadio and gCv2xListener) {
-        gCv2xRadio->deregisterListener(gCv2xListener);
+    if (gCv2xRadio) {
+        if (gCv2xListener) {
+            gCv2xRadio->deregisterListener(gCv2xListener);
+        }
+        gCv2xRadio = nullptr;
     }
 
     return EXIT_SUCCESS;

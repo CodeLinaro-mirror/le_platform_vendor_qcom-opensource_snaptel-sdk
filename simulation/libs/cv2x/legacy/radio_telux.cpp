@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -602,21 +602,23 @@ static std::shared_ptr<ICv2xRadioManager> get_and_init_radio_mgr() {
         cv2x_mgr_status_updated = true;
         state_g.service_status  = status;
 
-        if (state_g.cv2x_listener == nullptr) {
-            state_g.cv2x_listener = make_shared<Cv2xListener>();
-            // consider cv2x manager init fail
-            if (not state_g.cv2x_listener) {
-                state_g.service_status = ServiceStatus::SERVICE_FAILED;
-                LOGE("%s: Error instantiating cv2x listener\n", __FUNCTION__);
-            }
-        }
-
         state_g.cv2x_mgr_init_cv.notify_all();
     };
     auto radio_mgr = factory.getCv2xRadioManager(cb);
     if (not radio_mgr) {
         LOGE("Failed to acquire Cv2xRadioManager\n");
         return nullptr;
+    }
+
+    if (state_g.cv2x_listener == nullptr) {
+        state_g.cv2x_listener = make_shared<Cv2xListener>();
+        // consider cv2x manager init fail
+        if (not state_g.cv2x_listener) {
+            state_g.service_status = ServiceStatus::SERVICE_FAILED;
+            LOGE("%s: Error instantiating cv2x listener\n", __FUNCTION__);
+            return nullptr;
+        }
+        radio_mgr->registerListener(state_g.cv2x_listener);
     }
 
     std::unique_lock<std::mutex> lc(state_g.cv2x_mgr_init_mutex);
@@ -775,13 +777,6 @@ static void add_tx_flow(int sock, const shared_ptr<ICv2xTxFlow> &tx_flow) {
 static void add_sps_cb(uint32_t sps_id, v2x_per_sps_reservation_calls_t *cb) {
     lock_guard<mutex> lock(state_g.container_mutex);
     state_g.sps_callback_map[sps_id] = cb;
-}
-
-static void erase_all_flows() {
-    lock_guard<mutex> lock(state_g.container_mutex);
-    state_g.sps_callback_map.clear();
-    state_g.sock_to_rx_map.clear();
-    state_g.sock_to_tx_map.clear();
 }
 
 void v2x_show_all_sessions(FILE *fd) {
@@ -1043,11 +1038,10 @@ static void cv2x_status_listener(const Cv2xStatusEx &status) {
         or ((state_g.cv2x_status.status.txStatus == Cv2xStatusType::ACTIVE
                 or state_g.cv2x_status.status.txStatus == Cv2xStatusType::SUSPENDED)
             and status.status.txStatus == Cv2xStatusType::INACTIVE)) {
-        LOGD("V2X status transitioned to inactive, erasing flows\n");
+        LOGD("V2X status transitioned to inactive\n");
         if (state_g.radio) {
             state_g.radio->deregisterListener(state_g.radio_listener);
         }
-        erase_all_flows();
     }
 
     state_g.cv2x_status = status;
@@ -1271,14 +1265,6 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks_p
         return -EINVAL;
     }
 
-    state_g.radio_mgr = get_and_init_radio_mgr();
-    if (not state_g.radio_mgr) {
-        LOGE("%s: Failed to acquire Cv2xRadioManager\n", __FUNCTION__);
-        return -EPERM;
-    }
-
-    auto radio_status = set_and_init_radio(DEFAULT_TRAFFIC_CATEGORY);
-
     state_g.callbacks = callbacks_p;
     state_g.mode      = mode;  // Accept requested mode until we can verify capabilities
     state_g.context   = ctx_p;
@@ -1286,6 +1272,14 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks_p
         = 0;  // Really only used for sim platform. Real modem does not care
     state_g.rx_portnum     = V2X_RX_WILDCARD_PORTNUM;
     state_g.service_status = ServiceStatus::SERVICE_AVAILABLE;
+
+    state_g.radio_mgr = get_and_init_radio_mgr();
+    if (not state_g.radio_mgr) {
+        LOGE("%s: Failed to acquire Cv2xRadioManager\n", __FUNCTION__);
+        return -EPERM;
+    }
+
+    auto radio_status = set_and_init_radio(DEFAULT_TRAFFIC_CATEGORY);
 
     // Request the initial status of v2x mode and synchronize result callback
     promise<ErrorCode> p;
@@ -1302,13 +1296,7 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks_p
     auto error = p.get_future().get();
     if (ErrorCode::SUCCESS == error) {
         // Update event based on the latest status state
-        state_g.event = convert_status_to_event(state_g.cv2x_status.status);
-        LOGI("Status changed to %s\n", V2xEventType2String[state_g.event].c_str());
-
-        if (state_g.callbacks and state_g.callbacks->v2x_radio_status_listener) {
-            /**< CB made whenever status changes */
-            state_g.callbacks->v2x_radio_status_listener(state_g.event, state_g.context);
-        }
+        cv2x_status_listener(state_g.cv2x_status);
     } else {
         LOGE("%s: Failed to obtain Cv2x status\n", __FUNCTION__);
         return -EPERM;
@@ -1324,7 +1312,6 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks_p
         return -EPERM;
     }
 
-    state_g.radio_mgr->registerListener(state_g.cv2x_listener);
     state_g.radio_listener = make_shared<RadioListener>();
     if (not state_g.radio_listener) {
         LOGE("%s: Error instantiating radio listener\n", __FUNCTION__);
@@ -1420,7 +1407,19 @@ v2x_status_enum_type v2x_radio_set_macphy(
  */
 v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle) {
     v2x_status_enum_type result = V2X_STATUS_SUCCESS;
-
+    LOGI("%s\n", __FUNCTION__);
+    if (state_g.radio) {
+        if (state_g.radio_listener) {
+            state_g.radio->deregisterListener(state_g.radio_listener);
+        }
+        state_g.radio = nullptr;
+    }
+    if (state_g.radio_mgr) {
+        if (state_g.cv2x_listener) {
+            state_g.radio_mgr->deregisterListener(state_g.cv2x_listener);
+        }
+        state_g.radio_mgr = nullptr;
+    }
     return result;
 }
 

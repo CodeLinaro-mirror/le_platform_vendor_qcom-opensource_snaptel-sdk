@@ -34,6 +34,7 @@ target_link_libraries(${TARGET_SENSOR_LIBRARY}
     jsoncpp
     telux_protos
     telux_common
+    telux_power
 )
 
 install(TARGETS ${TARGET_SENSOR_LIBRARY}

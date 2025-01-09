@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -90,7 +90,7 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
         std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs);
     ~SensorFeatureControlMenu();
     telux::common::ServiceStatus init(bool shouldInitConsole);
-    void onTcuActivityStateUpdate(TcuActivityState state) override;
+    void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
     void cleanup();
     void parseArgs(int argc, char **argv);
 

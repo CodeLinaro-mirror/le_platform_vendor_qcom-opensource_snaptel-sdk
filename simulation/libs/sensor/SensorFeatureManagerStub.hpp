@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -15,19 +15,24 @@
 
 #include <vector>
 #include <mutex>
+#include <grpcpp/grpcpp.h>
+#include <telux/power/TcuActivityDefines.hpp>
+#include <telux/power/PowerFactory.hpp>
+#include <telux/power/TcuActivityManager.hpp>
+#include <telux/power/TcuActivityListener.hpp>
 
 #include "telux/sensor/SensorFeatureManager.hpp"
 #include "common/event-manager/ClientEventManager.hpp"
 #include "common/AsyncTaskQueue.hpp"
-
-#include <grpcpp/grpcpp.h>
 #include "protos/proto-src/sensor_simulation.grpc.pb.h"
 
 using sensorStub::SensorFeatureManagerService;
+using namespace telux::power;
 
 namespace telux{
 namespace sensor{
 class SensorFeatureManagerStub :public ISensorFeatureManager,
+                                public ITcuActivityListener,
                                 public IEventListener,
                                 public std::enable_shared_from_this<SensorFeatureManagerStub> {
     public:
@@ -44,6 +49,7 @@ class SensorFeatureManagerStub :public ISensorFeatureManager,
       ~SensorFeatureManagerStub();
       void cleanup();
       void onEventUpdate(google::protobuf::Any event) override;
+      void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
 
     private:
       void initSync(telux::common::InitResponseCb callback);
@@ -53,12 +59,16 @@ class SensorFeatureManagerStub :public ISensorFeatureManager,
         std::shared_ptr<std::vector<SensorEvent>> events, bool isLast);
       void parseBufferedEvent(std::string eventString,
         std::shared_ptr<std::vector<SensorEvent>> &events, std::string &sensorName);
+      void initTcuPowerManager();
+      bool getSystemState();
       std::unique_ptr<::sensorStub::SensorFeatureManagerService::Stub> stub_;
       std::vector<std::weak_ptr<ISensorFeatureEventListener>> listeners_;
       telux::common::AsyncTaskQueue<void> taskQ_;
       telux::common::ServiceStatus serviceStatus_;
       std::weak_ptr<telux::sensor::SensorFeatureManagerStub> myself_;
       std::mutex mutex_;
+      bool isSystemSuspended_ = false;
+      std::shared_ptr<ITcuActivityManager> tcuActivityMgr_;
 };
 }
 

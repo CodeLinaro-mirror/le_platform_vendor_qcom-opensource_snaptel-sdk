@@ -214,7 +214,7 @@ void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
                 std::cout << "AP Type: "
                     << WlanUtils::getWlanApType(netCfg.info.apType) << std::endl;
                 std::cout << "AP Radio: "
-                    << WlanUtils::apRadioTypeToString(netCfg.info.apRadio) << std::endl;
+                    << WlanUtils::RadioTypeToString(netCfg.info.apRadio) << std::endl;
                 std::cout << "AP SSID: " << netCfg.ssid << std::endl;
                 std::cout << "AP is Visible: "
                     << ((netCfg.isVisible)? "Yes":"No") << std::endl;

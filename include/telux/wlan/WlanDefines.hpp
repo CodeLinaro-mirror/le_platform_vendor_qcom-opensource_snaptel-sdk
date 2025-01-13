@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef WLANDEFINES_HPP
-#define WLANDEFINES_HPP
+#ifndef TELUX_WLAN_WLANDEFINES_HPP
+#define TELUX_WLAN_WLANDEFINES_HPP
 
 #include <string>
 #include <vector>
@@ -72,6 +72,18 @@ enum class StaInterfaceStatus {
 };
 
 /**
+ * Station Connection Status
+ */
+enum class StaConnectionStatus {
+    UNKNOWN              = 0,           /**< Station connection status is unknown              */
+    SUCCESS              = 1,           /**< Station connection attempt was successful         */
+    INCORRECT_PSK        = 2,           /**< Station connection attempt failed with incorrect
+                                             password/passkey */
+    AP_NOT_FOUND         = 3,           /**< Station connection attempt failed with AP not in
+                                             range */
+};
+
+/**
  * AP Info - captures ap type (private/guest)
  */
 struct ApInfo {
@@ -102,12 +114,13 @@ struct ApStatus {
  * Station Status
  */
 struct StaStatus {
-    Id                  id;              /**< Station Id                       */
-    std::string         name;            /**< Network interface name           */
-    std::string         ipv4Address;     /**< Public IP V4 address             */
-    std::string         ipv6Address;     /**< Public IP V6 address             */
-    std::string         macAddress;      /**< MAC address                      */
-    StaInterfaceStatus  status;          /**< Interface status                 */
+    Id                  id;               /**< Station Id                       */
+    std::string         name;             /**< Network interface name           */
+    std::string         ipv4Address;      /**< Public IP V4 address             */
+    std::string         ipv6Address;      /**< Public IP V6 address             */
+    std::string         macAddress;       /**< MAC address                      */
+    StaInterfaceStatus  status;           /**< Interface status                 */
+    StaConnectionStatus connectionStatus; /**< Station connection status        */
 };
 
 /**
@@ -145,4 +158,4 @@ enum class ServiceOperation {
 }
 }
 
-#endif  // WLANDEFINES_HPP
+#endif // TELUX_WLAN_WLANDEFINES_HPP

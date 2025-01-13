@@ -32,9 +32,10 @@ public:
    static std::string getWlanDeviceName(telux::wlan::HwDeviceType device);
    static std::string getWlanApType(telux::wlan::ApType apType);
    static std::string getWlanId(telux::wlan::Id id);
-   static std::string getStaConnectionStatus(telux::wlan::StaInterfaceStatus status);
+   static std::string getStaInterfaceStatus(telux::wlan::StaInterfaceStatus status);
+   static std::string getStaConnectionStatus(telux::wlan::StaConnectionStatus status);
    static std::string apAccessToString(telux::wlan::ApInterworking interworking);
-   static std::string apRadioTypeToString(telux::wlan::BandType radio);
+   static std::string RadioTypeToString(telux::wlan::BandType radio);
    static std::string apSecurityModeToString(telux::wlan::SecMode mode);
    static std::string apSecurityAuthToString(telux::wlan::SecAuth auth);
    static std::string apSecurityEncryptToString(telux::wlan::SecEncrypt encrypt);
@@ -42,6 +43,9 @@ public:
    static void printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus);
    static void printDeviceInfo(std::vector<telux::wlan::DeviceInfo>& info);
    static void printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoConfig);
+   static void printNetworkConfigs(
+      std::vector<telux::wlan::StaNetworkConfigInfo> networkConfigsInfo);
+   static void printScanResult(const telux::wlan::StaScanResult &staScanResult);
    static std::string apElementInfoAccessTypeToString(telux::wlan::NetAccessType accessType);
    static telux::wlan::Id convertIntToWlanId(int id);
    static telux::wlan::ApType convertIntToApType(int type);

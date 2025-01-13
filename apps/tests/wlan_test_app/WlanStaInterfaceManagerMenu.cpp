@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "WlanStaInterfaceManagerMenu.hpp"
@@ -86,12 +57,42 @@ void WlanStaInterfaceManagerMenu::showMenu() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "get_status", {},
             std::bind(&WlanStaInterfaceManagerMenu::getStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> startScan
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "start_scan", {},
+            std::bind(&WlanStaInterfaceManagerMenu::startScan, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addNetworkConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "add_network_config", {},
+            std::bind(&WlanStaInterfaceManagerMenu::addNetworkConfig, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeNetworkConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "remove_network_config", {},
+            std::bind(&WlanStaInterfaceManagerMenu::removeNetworkConfig, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getNetworkConfigs
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "get_network_configs", {},
+            std::bind(&WlanStaInterfaceManagerMenu::getNetworkConfigs, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> connect
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "connect", {},
+            std::bind(&WlanStaInterfaceManagerMenu::connect, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> disconnect
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "disconnect", {},
+            std::bind(&WlanStaInterfaceManagerMenu::disconnect, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> manageStaService
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "manage_service", {},
-            std::bind(&WlanStaInterfaceManagerMenu::manageStaService, this, std::placeholders::_1)));
+            std::bind(&WlanStaInterfaceManagerMenu::manageStaService, this,
+                std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, manageStaService};
+            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, startScan,
+            addNetworkConfig, removeNetworkConfig, getNetworkConfigs, connect, disconnect,
+            manageStaService};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -232,6 +233,140 @@ void WlanStaInterfaceManagerMenu::getStatus(std::vector<std::string> userInput) 
     }
 }
 
+
+void WlanStaInterfaceManagerMenu::startScan(std::vector<std::string> userInput) {
+    std::cout << "Start scan for nearby APs" << std::endl;
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->startScan(telux::wlan::Id::PRIMARY);
+
+    std::cout << "\nStart scan Response"
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+
+}
+
+void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> userInput) {
+    std::cout << "Add Network Config entry" << std::endl;
+
+    telux::wlan::StaNetworkConfigEntry staNetConfigEntry = {};
+    std::string ssid = "";
+    std::cout << "Enter SSID (Without Quotes): ";
+    std::cin >> ssid;
+    Utils::validateInput(ssid);
+    staNetConfigEntry.ssid = ssid;
+
+    std::string passPhrase = "";
+    std::cout << "Enter passphrase (Without Quotes): ";
+    std::cin >> passPhrase;
+    Utils::validateInput(passPhrase);
+    staNetConfigEntry.passPhrase = passPhrase;
+
+    int userResp = 0;
+    std::cout << "Enter STA operational band type \
+                    (1- 2.4GHz, 2- 5 GHz, 3- 6GHz): ";
+    std::cin >> userResp;
+    WlanUtils::validateInput(userResp, {1, 2, 3});
+    std::cout << std::endl;
+    telux::wlan::ApNetConfig apNetConfig = {};
+    if(userResp == 1) {
+        staNetConfigEntry.band = telux::wlan::BandType::BAND_2GHZ;
+    } else if (userResp == 2) {
+        staNetConfigEntry.band = telux::wlan::BandType::BAND_5GHZ;
+    } else {
+        staNetConfigEntry.band = telux::wlan::BandType::BAND_6GHZ;
+    }
+
+    char delimiter = '\n';
+    std::string priority;
+    std::cout << "Enter priority (optional) : ";
+    std::getline(std::cin, priority, delimiter);
+
+    if (!priority.empty()) {
+        try {
+            staNetConfigEntry.priority = std::stoi(priority);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: "<< e.what() << std::endl;
+            return;
+        }
+    }
+
+    std::cout << "Enter BSSID (optional) : ";
+    std::getline(std::cin, staNetConfigEntry.bssid, delimiter);
+
+    telux::common::ErrorCode retCode = wlanStaInterfaceManager_->addNetworkConfig(
+        telux::wlan::Id::PRIMARY, staNetConfigEntry);
+    std::cout << "\nAdd Network config Response"
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+
+}
+
+void WlanStaInterfaceManagerMenu::removeNetworkConfig(std::vector<std::string> userInput){
+    std::cout << "Remove network config entry" << std::endl;
+
+    telux::wlan::NetworkId networkId;
+    std::cout << "Enter NetworkId : ";
+    std::cin >> networkId;
+    Utils::validateInput(networkId);
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->removeNetworkConfig(telux::wlan::Id::PRIMARY, networkId);
+
+    std::cout << "\nRemove network config Response"
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanStaInterfaceManagerMenu::getNetworkConfigs(std::vector<std::string> userInput) {
+    std::cout << "Get Saved network block entries." << std::endl;
+
+    std::vector<telux::wlan::StaNetworkConfigInfo> networkConfigInfo;
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->getNetworkConfigs(telux::wlan::Id::PRIMARY, networkConfigInfo);
+
+    std::cout << "\nGet network configs Response"
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if(retCode == telux::common::ErrorCode::SUCCESS) {
+        WlanUtils::printNetworkConfigs(networkConfigInfo);
+    }
+}
+
+void WlanStaInterfaceManagerMenu::connect(std::vector<std::string> userInput) {
+    std::cout << "Connect to External AP" << std::endl;
+
+    telux::wlan::NetworkId networkId;
+    std::cout << "Enter NetworkId : ";
+    std::cin >> networkId;
+    Utils::validateInput(networkId);
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->connect(telux::wlan::Id::PRIMARY, networkId);
+
+    std::cout << "\nConnecting to External AP with NetworkId: " << networkId
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanStaInterfaceManagerMenu::disconnect(std::vector<std::string> userInput) {
+    std::cout << "Disconnect from External AP" << std::endl;
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->disconnect(telux::wlan::Id::PRIMARY);
+
+    std::cout << "\nDisconnecting from External AP"
+            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << ". ErrorCode: " << static_cast<int>(retCode)
+            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
 void WlanStaInterfaceManagerMenu::manageStaService(std::vector<std::string> userInput) {
 
     std::cout << "\nManage Station Service" << std::endl;
@@ -248,6 +383,12 @@ void WlanStaInterfaceManagerMenu::onStationStatusChanged(
     std::vector<telux::wlan::StaStatus> status) {
     PRINT_NOTIFICATION << " ** Wlan onStationStatusChange **\n";
     WlanUtils::printStaStatus(status);
+}
+
+void WlanStaInterfaceManagerMenu::onScanResultUpdated(
+    const telux::wlan::StaScanResult &staScanResult) {
+    PRINT_NOTIFICATION << " ** Wlan onScanResultUpdated **\n";
+    WlanUtils::printScanResult(staScanResult);
 }
 
 void WlanStaInterfaceManagerMenu::onStationBandChanged(telux::wlan::BandType radio) {

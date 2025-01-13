@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -108,6 +108,10 @@ std::string TelClientUtils::eCallMsdTransmissionStatusToString(
             return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
         case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
             return std::string("OUTBAND MSD TRANSMISSION FAILURE");
+        case telux::tel::ECallMsdTransmissionStatus::LL_NACK_DUE_TO_T7_EXPIRY:
+            return std::string("LL_NACK_DUE_TO_T7_EXPIRY");
+        case telux::tel::ECallMsdTransmissionStatus::MSD_AL_ACK_CLEARDOWN:
+            return std::string("MSD_AL_ACK_CLEARDOWN");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

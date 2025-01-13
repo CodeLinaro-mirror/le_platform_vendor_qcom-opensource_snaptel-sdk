@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -53,6 +53,8 @@
 #include "../event/EventService.hpp"
 #include "../../../libs/tel/Helper.hpp"
 #include "TelUtil.hpp"
+#include <mutex>
+#include <condition_variable>
 
 namespace telux {
 namespace tel {
@@ -150,12 +152,16 @@ public:
         const telStub::SendRttRequest* request, telStub::SendRttReply* response);
     grpc::Status updateCalls(ServerContext* context,
         const telStub::UpdateCurrentCallsRequest* request, ::google::protobuf::Empty* response);
+    grpc::Status ConfigureECallRedial(ServerContext* context,
+        const telStub::ConfigureECallRedialRequest* request,
+        telStub::ConfigureECallRedialResponse* response);
     void startTimer(std::string timer);
     void msdTransmissionStatus(std::string msdtransmision );
     void changeCallState(int phoneId, std::string callstate, int index);
     void expiryTimer(std::string timer);
     void sendEvent(std::string timer, std::string status );
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
+    void onECallRedial(int phoneId, bool willECallRedial, telux::tel::ReasonType reason);
 
 private:
     Json::Value rootObjSystemStateSlot1_;
@@ -195,10 +201,16 @@ private:
     void updateEcallHlapTimer(std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();
     bool getUserConfiguredeCallRat();
+    std::string getUserConfiguredECallRedialConfig();
     std::string getRemotePartyNumber(int phoneId);
     std::string fetchNextToken(std::string& inputString, std::string delimiter);
     std::vector<std::shared_ptr<CallInfo>> calls_;
     CallInfo callInfo_;
+    std::shared_ptr<CallInfo> redialECallCache_ = nullptr;
+    bool eCallRedialIsOngoing_ = false;
+    bool callEndOperationCompleted_ = false;
+    std::condition_variable cv;
+    std::mutex mtx;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool match(std::shared_ptr<CallInfo> call, CallInfo callToCompare);
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
@@ -221,6 +233,7 @@ private:
     int getCallIndexOfActiveCall(int phoneId);
     // Find the lowest unfilled index in the call list.
     int setCallIndexForNewCall();
+    bool getUserConfiguredALACKParameter();
     template <typename T>
     bool addNewCallDetails(const T* request) {
         CallInfo callInfo;

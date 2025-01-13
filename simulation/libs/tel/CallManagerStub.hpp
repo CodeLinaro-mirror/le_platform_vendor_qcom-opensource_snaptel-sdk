@@ -1,7 +1,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -119,11 +119,12 @@ private:
     telux::common::ServiceStatus subSystemStatus_;
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
-    void handleEcallEvent(::telStub::ECallInfoEvent event);
+    void handleECallEvent(::telStub::ECallInfoEvent event);
     void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);
     void handleModifyCallRequest(::telStub::ModifyCallRequestEvent event);
     void handleRttMessage(::telStub::RttMessageEvent event);
+    void handlECallRedial(::telStub::ECallRedialInfoEvent event);
     void invokeECallHlapTimerEventlisteners(int phoneId,
         ECallHlapTimerEvents timersStatus);
     void invokeECallMsdTransmissionStatuslisteners(int phoneId,

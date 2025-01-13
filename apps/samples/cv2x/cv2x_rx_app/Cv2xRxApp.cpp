@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -381,7 +381,10 @@ void Cv2xRxApp::deregisterFlow() {
 }
 
 void Cv2xRxApp::deinit() {
-    deregisterFlow();
+    if (cv2xRadio_) {
+        deregisterFlow();
+        cv2xRadio_ = nullptr;
+    }
     if (buf_) {
         free(buf_);
         buf_ = nullptr;
@@ -475,24 +478,26 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (EXIT_SUCCESS != app.init()) {
-        return EXIT_FAILURE;
-    }
-
-    if (EXIT_SUCCESS != app.registerFlow()) {
-        return EXIT_FAILURE;
-    }
-
-    cout << "start receiving..." << endl;
-    while (not gExiting) {
-        int len = 0;
-        if (EXIT_SUCCESS != app.sampleRx(len)) {
+    do {
+        if (EXIT_SUCCESS != app.init()) {
             break;
         }
 
-        // send back received packets if Rx mode is specific SID
-        app.sampleTx(len);
-    }
+        if (EXIT_SUCCESS != app.registerFlow()) {
+            break;
+        }
+
+        cout << "start receiving..." << endl;
+        while (not gExiting) {
+            int len = 0;
+            if (EXIT_SUCCESS != app.sampleRx(len)) {
+                break;
+            }
+
+            // send back received packets if Rx mode is specific SID
+            app.sampleTx(len);
+        }
+    } while(0);
 
     app.deinit();
 

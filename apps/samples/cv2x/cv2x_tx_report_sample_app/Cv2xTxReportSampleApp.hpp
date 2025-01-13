@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CV2XTXREPORTSAMPLEAPP_HPP
 #define CV2XTXREPORTSAMPLEAPP_HPP
 
@@ -57,19 +64,18 @@ private:
 
     Cv2xTxStatusReportApp();
 
-    int registerTxFlow();
+    int registerTxFlow(std::shared_ptr<ICv2xRadio> &radio);
 
-    int deregisterTxFlow();
+    int deregisterTxFlow(std::shared_ptr<ICv2xRadio> &radio);
 
     int fillTxBuffer(char* buf, uint16_t length);
 
     int sampleTx(int sock, char* buf, uint16_t length);
 
-    int createTxReportListener();
+    int createTxReportListener(std::shared_ptr<ICv2xRadio> &radio);
 
-    int deleteTxReportListener();
+    int deleteTxReportListener(std::shared_ptr<ICv2xRadio> &radio);
 
-    std::shared_ptr<ICv2xRadioManager> cv2xRadioManager_ = nullptr;
     std::shared_ptr<ICv2xRadio> radio_ = nullptr;
     std::shared_ptr<ICv2xTxStatusReportListener> txReportListener_ = nullptr;
     std::shared_ptr<ICv2xTxFlow> txFlow_ = nullptr;

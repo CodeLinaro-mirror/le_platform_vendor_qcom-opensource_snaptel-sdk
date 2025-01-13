@@ -26,41 +26,14 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file: Cv2xTxApp.cpp
  *
@@ -119,7 +92,6 @@ enum class TxFlowType {
     Combine
 };
 
-static std::shared_ptr<telux::cv2x::ICv2xRadio> gCv2xRadio;
 static Cv2xStatus gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
 static shared_ptr<ICv2xTxFlow> gSpsFlow = nullptr;
@@ -366,8 +338,7 @@ static int parseOpts(int argc, char *argv[]) {
     return rc;
 }
 
-static int createTxFlow(void)
-{
+static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
     if (gFlowType == TxFlowType::SpsOnly || gFlowType == TxFlowType::Combine) {
         SpsFlowInfo spsInfo;
         spsInfo.priority = Priority::PRIORITY_2;
@@ -376,7 +347,7 @@ static int createTxFlow(void)
         auto createEvtFlow = (gFlowType == TxFlowType::Combine) ? true : false;
 
         resetCallbackPromise();
-        if(Status::SUCCESS != gCv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
+        if(Status::SUCCESS != radio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
                                                          TX_SERVICE_ID,
                                                          spsInfo,
                                                          SPS_PORT_NUM,
@@ -391,7 +362,7 @@ static int createTxFlow(void)
 
         resetCallbackPromise();
         if (gSpsFlow) {
-            if (Status::SUCCESS != gCv2xRadio->requestSpsFlowInfo(
+            if (Status::SUCCESS != radio->requestSpsFlowInfo(
                                     gSpsFlow, requestSpsFlowInfoCallback)
                 || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
                 cerr << "Failed to request for sps flow info" << endl;
@@ -401,7 +372,7 @@ static int createTxFlow(void)
             if(!gAutoRetransMode) {
                 spsInfo.autoRetransEnabled = false;
                 resetCallbackPromise();
-                if(Status::SUCCESS != gCv2xRadio->changeSpsFlowInfo(gSpsFlow,
+                if(Status::SUCCESS != radio->changeSpsFlowInfo(gSpsFlow,
                                                    spsInfo,
                                                    changeSpsFlowInfoCallback)
                     || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
@@ -414,7 +385,7 @@ static int createTxFlow(void)
         EventFlowInfo eventInfo;
 
         resetCallbackPromise();
-        if(Status::SUCCESS != gCv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+        if(Status::SUCCESS != radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
                                                TX_SERVICE_ID,
                                                eventInfo,
                                                EVENT_PORT_NUM,
@@ -428,7 +399,7 @@ static int createTxFlow(void)
         if(!gAutoRetransMode) {
             eventInfo.autoRetransEnabled = false;
             resetCallbackPromise();
-            if(Status::SUCCESS != gCv2xRadio->changeEventFlowInfo(gEvtFlow,
+            if(Status::SUCCESS != radio->changeEventFlowInfo(gEvtFlow,
                                                    eventInfo,
                                                    changeEventFlowInfoCallback)
                 || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
@@ -517,9 +488,8 @@ int main(int argc, char *argv[]) {
         cv.notify_all();
     };
 
-    gCv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
-
-    if (not gCv2xRadio) {
+    auto radio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
+    if (not radio) {
         cerr << "C-V2X Radio creation failed." << endl;
         return EXIT_FAILURE;
     }
@@ -538,13 +508,13 @@ int main(int argc, char *argv[]) {
     }
 
     resetCallbackPromise();
-    if(Status::SUCCESS != gCv2xRadio->requestDataSessionSettings(requestDataSessionSettingsCallback)
+    if(Status::SUCCESS != radio->requestDataSessionSettings(requestDataSessionSettingsCallback)
         || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to request for data session settings" << endl;
         return EXIT_FAILURE;
     }
 
-    if (EXIT_SUCCESS == createTxFlow()) {
+    if (EXIT_SUCCESS == createTxFlow(radio)) {
         // Send message in a loop
         for (uint16_t i = 0; i < NUM_TEST_ITERATIONS; ++i) {
             fillBuffer();
@@ -556,7 +526,7 @@ int main(int argc, char *argv[]) {
     // Deregister TX flow
     if (gSpsFlow) {
         resetCallbackPromise();
-        if(Status::SUCCESS != gCv2xRadio->closeTxFlow(gSpsFlow, closeFlowCallback)
+        if(Status::SUCCESS != radio->closeTxFlow(gSpsFlow, closeFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to request to close tx flow" << endl;
             return EXIT_FAILURE;
@@ -564,7 +534,7 @@ int main(int argc, char *argv[]) {
     }
     if (gEvtFlow) {
         resetCallbackPromise();
-        if(Status::SUCCESS != gCv2xRadio->closeTxFlow(gEvtFlow, closeFlowCallback)
+        if(Status::SUCCESS != radio->closeTxFlow(gEvtFlow, closeFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to request to close tx flow" << endl;
             return EXIT_FAILURE;

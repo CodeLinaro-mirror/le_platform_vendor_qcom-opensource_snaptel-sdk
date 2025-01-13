@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -96,22 +96,26 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
     }
 };
 
-void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) {
+void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuState,
+    std::string machineName) {
 #ifdef TELSDK_FEATURE_POWER_ENABLED
-    std::cout << std::endl;
-    SensorUtils::printTcuActivityState(state);
-    if (state == TcuActivityState::SUSPEND) {
+    std::cout << " TCU Activity state changed for machine "
+        << machineName << std::endl;
+    SensorUtils::printTcuActivityState(tcuState);
+
+    if (tcuState == TcuActivityState::SUSPEND) {
         // enable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
             enableFeature(*it);
         }
-        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK);
+        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
+            tcuState);
         if (ackStatus == Status::SUCCESS) {
             std::cout << " Sent SUSPEND acknowledgement" << std::endl;
         } else {
             std::cout << " Failed to send SUSPEND acknowledgement !" << std::endl;
         }
-    } else if (state == TcuActivityState::RESUME) {
+    } else if (tcuState == TcuActivityState::RESUME) {
         // disable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); it++) {
             if(enabledFeatures_.find(*it) != enabledFeatures_.end()) {

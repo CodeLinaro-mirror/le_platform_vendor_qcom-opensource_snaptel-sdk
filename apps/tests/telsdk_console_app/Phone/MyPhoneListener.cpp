@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -361,6 +361,22 @@ std::string MyPhoneHelper::radioTechToString(
         break;
     }
     return rtString;
+}
+
+std::string MyPhoneHelper::operatorInfoIsHomeToString(telux::common::BoolValue isHome) {
+    std::string state = "";
+    switch (isHome) {
+    case telux::common::BoolValue::STATE_FALSE:
+        state = "FALSE";
+        break;
+    case telux::common::BoolValue::STATE_TRUE:
+        state = "TRUE";
+        break;
+    default:
+        state = "UNKNOWN";
+        break;
+    }
+    return state;
 }
 
 void MyVoiceServiceStateCallback::voiceServiceStateResponse(
@@ -897,6 +913,17 @@ std::string MyPhoneListener::eCallModeReasonToString(telux::tel::ECallModeReason
     return reason;
 }
 
+void MyPhoneListener::onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) {
+
+    PRINT_NOTIFICATION << "Operator information changes for PhoneId = " << phoneId
+                       << " , short name = " << info.shortName
+                       << " , long name = " << info.longName
+                       << " , plmn = " << info.plmn
+                       << " , is from home network = "
+                       <<  MyPhoneHelper::operatorInfoIsHomeToString(info.isHome)
+                       << std::endl;
+}
+
 void MySetECallOperatingModeCallback::setECallOperatingModeResponse(
     telux::common::ErrorCode error) {
     std::cout << "\n";
@@ -923,12 +950,16 @@ void MyGetECallOperatingModeCallback::getECallOperatingModeResponse(
     }
 }
 
-void MyOperatorNameCallback::requestOperatorNameCb(std::string operatorLongName,
-   std::string operatorShortName, telux::common::ErrorCode error) {
+void MyOperatorInfoCallback::requestOperatorInfoCb(telux::tel::PlmnInfo info,
+    telux::common::ErrorCode error) {
    std::cout << "\n";
    if (error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "Operator long name: " << operatorLongName
-          << " Short name: " << operatorShortName << "\n";
+      PRINT_CB << "Operator long name: " << info.longName
+          << ", short name: " << info.shortName
+          << ", plmn: " << info.plmn
+          << " , is from home network = "
+          << MyPhoneHelper::operatorInfoIsHomeToString(info.isHome)
+          << "\n";
    } else {
       PRINT_CB << "Operator name request failed with errorCode: "
           << Utils::getErrorCodeAsString(error) << "\n";

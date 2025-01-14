@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -71,6 +71,8 @@ class PhoneFactoryImplStub : public PhoneFactory {
     virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
         SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr)
             override;
+    virtual std::shared_ptr<IApSimProfileManager> getApSimProfileManager(
+        telux::common::InitResponseCb  callback = nullptr) override;
 
  private:
     PhoneFactoryImplStub();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -351,6 +351,7 @@ telux::common::Status VlanManagerStub::bindToBackhaul(
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
         vlanBindConfig.bhInfo.backhaul));
     request.set_operation_type(::dataStub::OperationType(oprType_));
+    request.set_backhaul_vlan_id(vlanBindConfig.bhInfo.vlanId);
     grpc::Status reqStatus = stub_->BindToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
@@ -468,6 +469,7 @@ telux::common::Status VlanManagerStub::queryVlanToBackhaulBindings(
                 vlanConfig.vlanId = config.vlan_id();
                 vlanConfig.bhInfo.slotId = slotId;
                 vlanConfig.bhInfo.profileId = config.profile_id();
+                vlanConfig.bhInfo.vlanId = config.backhaul_vlan_id();
                 configs.push_back(vlanConfig);
             }
             auto f1 = std::async(std::launch::async,

@@ -40,6 +40,13 @@ namespace telux {
 namespace tel {
 
 
+struct UserRefreshParam {
+    bool isRegister = false;
+    bool doVoting = false;
+    std::vector<IccFile> efFiles;
+    RefreshParams refreshParams;
+};
+
 class CardManagerStub : public ICardManager,
                         public IEventListener,
                         public std::enable_shared_from_this<CardManagerStub> {
@@ -75,13 +82,20 @@ public:
 private:
     int cbDelay_;
     int slotCount_ = INVALID_SLOT_COUNT;
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_ = nullptr;
     telux::common::InitResponseCb initCb_;
-    std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_ = nullptr;
     std::unique_ptr<::telStub::CardService::Stub> stub_;
     telux::common::ServiceStatus subSystemStatus_;
     std::mutex cardManagerMutex_;
+    std::condition_variable cardManagerInitCV_;
+    bool ready_ = false;
     std::vector<int> simSlotIds_;
+    pid_t myPid_;
+    std::vector<UserRefreshParam> userRefreshParams_;
+
+    bool waitForInitialization();
+    void setSubsystemReady(bool status);
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     std::map<int, std::shared_ptr<CardStub>> cardMap_;
@@ -90,6 +104,13 @@ private:
     void handleEvent(std::string token, std::string event);
     void invokelisteners (int slotId);
     void handleCardInfoChanged(::telStub::cardInfoChange event);
+    void handleRefreshEvent(::telStub::RefreshEvent event);
+    void setRpcRefreshParams(::telStub::RefreshParams* refreshs,
+        const RefreshParams refreshParams);
+    void convertRefreshParams(const RefreshParams userParams, RefreshParams& refreshParams);
+    SlotId getSlotBySessionType(telux::tel::SessionType st);
+    void findRefreshParams(const RefreshParams& refreshParams, bool& isRegister, bool* doVoting,
+        std::vector<IccFile>* efFiles);
 };
 
 } // end of namespace tel

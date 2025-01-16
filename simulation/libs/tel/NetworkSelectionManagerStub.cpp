@@ -78,6 +78,9 @@ void NetworkSelectionManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
         " callback status ", static_cast<int>(cbStatus));
+    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+        true : false;
+    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
@@ -107,32 +110,29 @@ telux::common::ServiceStatus NetworkSelectionManagerStub::getServiceStatus() {
     return subSystemStatus_;
 }
 
-std::future<bool> NetworkSelectionManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-    [this]() {
-        while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
-        }
-    return(isSubsystemReady());});
-    return((ready_future));
+void NetworkSelectionManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(mtx_);
+    ready_ = status;
+    cv_.notify_all();
 }
 
 bool NetworkSelectionManagerStub::isSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
+    return ready_;
+}
 
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
+bool NetworkSelectionManagerStub::waitForInitialization() {
+    std::unique_lock<std::mutex> cvLock(mtx_);
+    while (!isSubsystemReady()) {
+        cv_.wait(cvLock);
     }
+    return isSubsystemReady();
+}
+
+std::future<bool> NetworkSelectionManagerStub::onSubsystemReady() {
+    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return f;
 }
 
 telux::common::Status NetworkSelectionManagerStub::registerListener(
@@ -174,6 +174,10 @@ telux::common::Status NetworkSelectionManagerStub::deregisterListener(
 telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
     (SelectionModeInfoCb callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestNetworkSelectionModeRequest request;
     ::telStub::RequestNetworkSelectionModeReply response;
     ClientContext context;
@@ -209,6 +213,10 @@ telux::common::Status NetworkSelectionManagerStub::setNetworkSelectionMode
     (NetworkSelectionMode selectMode, std::string mcc, std::string mnc,
     common::ResponseCallback callback ) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::SetNetworkSelectionModeRequest request;
     ::telStub::SetNetworkSelectionModeReply response;
     ClientContext context;
@@ -241,6 +249,10 @@ telux::common::Status NetworkSelectionManagerStub::setNetworkSelectionMode
 telux::common::Status NetworkSelectionManagerStub::requestPreferredNetworks(
     PreferredNetworksCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestPreferredNetworksRequest request;
     ::telStub::RequestPreferredNetworksReply response;
     ClientContext context;
@@ -293,6 +305,10 @@ telux::common::Status NetworkSelectionManagerStub::setPreferredNetworks(
     std::vector<PreferredNetworkInfo> preferredNetworksInfo, bool clearPrevious,
     common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::SetPreferredNetworksRequest request;
     ::telStub::SetPreferredNetworksReply response;
     ClientContext context;
@@ -336,6 +352,10 @@ telux::common::Status NetworkSelectionManagerStub::setPreferredNetworks(
 telux::common::Status NetworkSelectionManagerStub::performNetworkScan(NetworkScanInfo info,
     common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::PerformNetworkScanRequest request;
     ::telStub::PerformNetworkScanReply response;
     ClientContext context;
@@ -375,6 +395,10 @@ telux::common::Status NetworkSelectionManagerStub::performNetworkScan(NetworkSca
 telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
     (SelectionModeResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
     ::telStub::RequestNetworkSelectionModeRequest request;
     ::telStub::RequestNetworkSelectionModeReply response;
     ClientContext context;
@@ -407,6 +431,10 @@ telux::common::Status NetworkSelectionManagerStub::requestNetworkSelectionMode
 telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell(
         const std::vector<LteDubiousCell> &lteDbCellList) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
 
     ::telStub::SetLteDubiousCellRequest request;
     ::telStub::SetLteDubiousCellReply response;
@@ -428,6 +456,10 @@ telux::common::ErrorCode NetworkSelectionManagerStub::setLteDubiousCell(
 telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell(
         const std::vector<NrDubiousCell> &nrDbCellList) {
     LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
 
     ::telStub::SetNrDubiousCellRequest request;
     ::telStub::SetNrDubiousCellReply response;

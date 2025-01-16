@@ -297,6 +297,10 @@
         {
             "retryCountPin1" : 10,
             "retryCountPin2" : 10
+        },
+        "isNtnProfileActive" :
+        {
+            "state" : false
         }
     }
 }

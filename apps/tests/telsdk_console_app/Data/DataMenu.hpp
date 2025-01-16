@@ -70,6 +70,8 @@
 #include "client/ClientMenu.hpp"
 #include "dual_data/DualDataManagementMenu.hpp"
 #include "data_control/DataControlMenu.hpp"
+#include "qos/QoSManagementMenu.hpp"
+#include "data_link/DataLinkMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -107,6 +109,8 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void clientMenu(std::vector<std::string> inputCommand);
     void dualDataManagementMenu(std::vector<std::string> inputCommand);
     void dataControlMenu(std::vector<std::string> inputCommand);
+    void qosManagementMenu(std::vector<std::string> inputCommand);
+    void dataLinkMenu(std::vector<std::string> inputCommand);
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
 
@@ -124,5 +128,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<ClientMenu> clientMenu_;
     std::shared_ptr<DualDataManagementMenu> dualDataManagementMenu_;
     std::shared_ptr<DataControlMenu> dataControlMenu_;
+    std::shared_ptr<QoSManagementMenu> qosManagementMenu_;
+    std::shared_ptr<DataLinkMenu> dataLinkMenu_;
 };
 #endif

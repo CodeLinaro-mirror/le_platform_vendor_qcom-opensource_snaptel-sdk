@@ -85,6 +85,14 @@ public:
 
     grpc::Status setIpConfig(ServerContext* context, const dataStub::setIpConfigRequest* request,
             dataStub::setIpConfigReply* response) override;
+
+    grpc::Status GetIpPassThroughNatConfig(ServerContext* context,
+            const google::protobuf::Empty *request,
+            dataStub::getIpptNatConfigReply* response) override;
+
+    grpc::Status SetIpPassThroughNatConfig(ServerContext* context,
+            const dataStub::setIpptNatConfigRequest* request,
+            dataStub::setIpptNatConfigReply* response) override;
 private:
 
     struct IpConfigStruct {

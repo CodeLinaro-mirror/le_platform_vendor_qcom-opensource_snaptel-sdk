@@ -271,6 +271,10 @@ struct Config {
     bool enableConsistency = true;
     bool enableRelevance = true;
     bool overridePsidCheck = false;
+    bool emergencyVehicleEventTX = false;
+    vector<string> expectedSspValueVect;
+    uint8_t expectedSsp[31];
+    uint32_t expectedSspLength = 0;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
     bool acceptAll = false;
@@ -278,6 +282,7 @@ struct Config {
     int overrideVerifValue = -1;
     bool fakeRVTempIds = false;
     uint32_t totalFakeRVTempIds = 500;
+    int RVTransmitLossSimulation = 0; //percentage of transmit loss of RVs
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;
@@ -444,11 +449,63 @@ public:
     }
 };
 
+// listener for congestion control updates
+class QitsCongCtrlListener :public ICongestionControlListener {
+public:
+    static RadioTransmit* spsTransmit_;
+    uint64_t lastPeriodicity = 100;
+    // need to provide pointer to sps transmit
+    // need to provide pointer to cong control user data
+    void updateSpsTransmitFlow(
+        std::shared_ptr<CongestionControlUserData> congestionControlUserData) {
+        // once the user data is updated, the thread in qits
+        // can now schedule a transmission
+        // cast void pointer
+        // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
+        if (spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
+            && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity) {
+            lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
+            // update the sps flow with the rounded max ITT that congestionControl calculates
+            shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
+            if (spsInfoSharedPtr == nullptr) {
+                std::cerr << "Invalid sps info. Not updating. \n";
+                return;
+            }
+            SpsFlowInfo *spsInfo = spsInfoSharedPtr.get();
+            // congestionControl rounds it already to valid values for sps periodicity
+            spsInfo->periodicityMs =
+                (congestionControlUserData->congestionControlCalculations->maxITT);
+            // set sps priority to same value
+            spsInfo->priority = spsTransmit_->getSpsPriority();
+
+            // set sps size to same value
+            spsInfo->nbytesReserved = spsTransmit_->getSpsResSize();
+            // catch future error here
+            try{
+                Status ret = spsTransmit_->updateSpsFlow(*spsInfo);
+                if (ret == Status::FAILED) {
+                    std::cerr << "sps transmit flow update failed\n";
+                    std::cerr << "Max itt was: "
+                              << congestionControlUserData->congestionControlCalculations->maxITT
+                              << "\n";
+                }
+            } catch (const std::future_error &e) {
+                std::cout << "Caught future error when updating sps flow\n";
+                std::cout << "Error log is: " << e.what() << "\n";
+            }
+        }
+    }
+    void onCongestionControlDataReady (
+        std::shared_ptr<CongestionControlUserData> congestionControlUserData,
+            bool critEvent) override;
+};
+
 class ApplicationBase
 {
 public:
     sem_t rx_sem;
     sem_t log_sem;
+    static sem_t triggerIdChangeSem;
     int appVerbosity = 0;
     int totalTxSuccess = 0;
     int totalRxSuccess = 0;
@@ -487,10 +544,10 @@ public:
     int getV2xIpIfaceAddr(string& addr);
 
     /* Identity Change Related Functions and Variables */
-    void changeIdTimer(unsigned int interval);
-    void changeIdentity();
-    void (ApplicationBase::*thrFn)()=&ApplicationBase::changeIdentity;
+    void changeIdentity(sem_t* idChangeCbSem);
     IDChangeData idChangeData;
+    uint64_t lastIdChangeTime = 0;
+    sem_t idChangeCbSem;
 
     /* Function to permit different levels of verbosity */
     void setAppVerbosity(int value) {
@@ -724,6 +781,8 @@ public:
     static double overrideSpeed;
     static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
     static bool securityInitialized;
+    static unsigned int idChangeDistance;
+    static uint64_t scheduledIdChangeTime;
     static int signFail;
     static int signSuccess;
     static bool exitApp;
@@ -738,6 +797,7 @@ public:
     void diagLogPktGenericInfo();
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
+    static shared_ptr<ILocationInfoEx> lastLocationInfoIdChange;
     bool isTx = false;
     bool isRx = false;
     bool isTxSim = false;

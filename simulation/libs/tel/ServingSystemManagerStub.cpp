@@ -78,6 +78,9 @@ void ServingSystemManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
         " callback status ", static_cast<int>(cbStatus));
+    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
+        true : false;
+    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
@@ -102,37 +105,34 @@ void ServingSystemManagerStub::cleanup() {
     stub_->CleanUpService(&context, request, &response);
 }
 
-telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {
-    LOG(DEBUG, __FUNCTION__);
-    return subSystemStatus_;
-}
-
-std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-    [this]() {
-        while (!isSubsystemReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
-        }
-    return(isSubsystemReady());});
-    return((ready_future));
+void ServingSystemManagerStub::setSubsystemReady(bool status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", status);
+    std::lock_guard<std::mutex> lk(mtx_);
+    ready_ = status;
+    cv_.notify_all();
 }
 
 bool ServingSystemManagerStub::isSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    ::commonStub::GetServiceStatusReply response;
-    const ::commonStub::GetServiceStatusRequest request;
-    ClientContext context;
+    return ready_;
+}
 
-    grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-    static_cast<telux::common::ServiceStatus>(response.service_status());
-    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return true;
-    } else {
-        return false;
+bool ServingSystemManagerStub::waitForInitialization() {
+    std::unique_lock<std::mutex> cvLock(mtx_);
+    while (!isSubsystemReady()) {
+        cv_.wait(cvLock);
     }
+    return isSubsystemReady();
+}
+
+std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
+    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return f;
+}
+
+telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {
+    LOG(DEBUG, __FUNCTION__);
+    return subSystemStatus_;
 }
 
 telux::common::Status ServingSystemManagerStub::registerListener(
@@ -153,6 +153,8 @@ telux::common::Status ServingSystemManagerStub::registerListener(
             mask.set(ServingSystemNotificationType::SYSTEM_INFO);
             mask.set(ServingSystemNotificationType::RF_BAND_INFO);
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+            mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
+            mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
         }
         // TODO: Update client mask for post SSR
         // Register for default notifications
@@ -214,6 +216,9 @@ telux::common::Status ServingSystemManagerStub::registerListener(
                 return status;
             }
         }
+        /* In simulation, TEL_SERVING_SYSTEM_NETWORK_TIME is considered for
+           ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
+           ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence registration is not required. */
     } while(0);
     return status;
 }
@@ -250,6 +255,8 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
             mask.set(ServingSystemNotificationType::SYSTEM_INFO);
             mask.set(ServingSystemNotificationType::RF_BAND_INFO);
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
+            mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
+            mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
         }
         // TODO: Update client mask for SSR
         // De-register optional indications
@@ -306,6 +313,10 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
                 return status;
             }
         }
+        /* In simulation, TEL_SERVING_SYSTEM_NETWORK_TIME is considered for
+           ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
+           ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence de-registration is not
+           required. */
     } while(0);
     return status;
 }
@@ -328,8 +339,8 @@ telux::tel::DcStatus ServingSystemManagerStub::getDcStatus() {
         static_cast<telux::tel::EndcAvailability>(response.endc_availability());
         dcStatus.dcnrRestriction =
             static_cast<telux::tel::DcnrRestriction>(response.dcnr_restriction());
-        LOG(DEBUG, __FUNCTION__, "endcAvailability is ",
-            static_cast<int>(dcStatus.endcAvailability) , "dcnrRestriction is ",
+        LOG(DEBUG, __FUNCTION__, " endcAvailability is ",
+            static_cast<int>(dcStatus.endcAvailability) , " dcnrRestriction is ",
             static_cast<int>(dcStatus.dcnrRestriction));
     }
     return dcStatus;
@@ -502,6 +513,7 @@ telux::common::Status ServingSystemManagerStub::getSystemInfo(ServingSystemInfo 
     }
     sysInfo.domain = static_cast<telux::tel::ServiceDomain>(response.current_domain());
     sysInfo.rat = static_cast<telux::tel::RadioTechnology>(response.current_rat());
+    sysInfo.state = static_cast<telux::tel::ServiceRegistrationState>(response.current_state());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
@@ -676,6 +688,7 @@ telux::common::Status ServingSystemManagerStub::getSmsCapabilityOverNetwork
     smsCapability.domain =
         static_cast<telux::tel::SmsDomain>(response.domain());
     smsCapability.rat = static_cast<telux::tel::RadioTechnology>(response.rat());
+    smsCapability.smsStatus = static_cast<telux::tel::NtnSmsStatus>(response.sms_status());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     return status;
 }
@@ -938,10 +951,12 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
     ServingSystemInfo info;
     info.rat = static_cast<RadioTechnology>(event.current_rat());
     info.domain = static_cast<ServiceDomain>(event.current_domain());
+    info.state = static_cast<ServiceRegistrationState>(event.current_state());
 
     SmsCapability smsCapability;
     smsCapability.rat = static_cast<RadioTechnology>(event.sms_rat());
     smsCapability.domain = static_cast<SmsDomain>(event.sms_domain());
+    smsCapability.smsStatus = static_cast<NtnSmsStatus>(event.sms_status());
 
     LteCsCapability lteCapability = static_cast<LteCsCapability>(event.lte_capability());;
 

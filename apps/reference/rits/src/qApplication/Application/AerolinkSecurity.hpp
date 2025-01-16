@@ -123,6 +123,7 @@ class AerolinkSecurity : public SecurityService {
             SecuredMessageParserC* msgParseContext);
         static int setSecCurrLocation(Kinematics* hvKine);
         static int setLeapSeconds(uint32_t leapSeconds);
+        int sspCheck(void* smp, uint8_t const* ssp);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;

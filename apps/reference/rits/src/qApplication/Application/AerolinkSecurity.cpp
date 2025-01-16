@@ -285,13 +285,18 @@ static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned ch
 static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, const unsigned char *certIdCb){
     // tells the user whether the id change was completed successfully or not.
     completeChangeId_status = returnCode;
+    IDChangeData* tempPtr = (IDChangeData*)userData;
     if(returnCode == WS_SUCCESS){
         // cast userdata to the user data type struct
-        IDChangeData* tempPtr = (IDChangeData*)userData;
         memcpy(tempPtr->certId, certIdCb, sizeof(tempPtr->certId));
         memcpy(tempPtr->tempId, certIdCb, sizeof(tempPtr->tempId)); // start at offset of 2 to get last 6 bytes
         tempPtr->idChanged = true;
         if(secVerbosity > 1){
+            struct timeval currTime;
+            gettimeofday(&currTime, NULL);
+            double endTime =
+                (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+            std::cout << "ID changed completed at: " << endTime <<"\n";
             std::cout << "New cert hash ID is: " ;
             for(int i = 0 ; i < sizeof(tempPtr->certId); i++){
                 printf("%02x:", tempPtr->certId[i]);
@@ -304,7 +309,12 @@ static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, con
             fprintf(stderr,"Failed to Perform ID Change\n");
     }
     retChangeId_status = true;
+    // let any other pending id change continue
     sem_post(&idChangeSem);
+    // let the its stack continue msg generation
+    if(tempPtr->idChangeCbSem != nullptr){
+        sem_post(tempPtr->idChangeCbSem);
+    }
 }
 
 // LOCK-BASED FUNCTIONS will need to be used for safety-critical events to happen properly.
@@ -325,6 +335,7 @@ int AerolinkSecurity::idChange (){
         return -1;
 
     // wait until callback function is called
+    // this prevents multiple id changes from happening simultaneously
     sem_wait(&idChangeSem);
     retChangeId_status = false;
     // on successful return, modify other id-related information in upper layer
@@ -376,15 +387,24 @@ AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCo
         throw std::runtime_error
             ("Invalid lcm name provided\n");
     }
-    if(strlen(lcmName) > 50){
+    auto inputStrLen = strlen(lcmName);
+    if(inputStrLen > 49){
         throw std::runtime_error
             ("Lcm Name Too Long (> 50 chars). AerolinkSecurity Init Failed\n");
     }
-    memcpy(lcmName_, lcmName, sizeof(lcmName));
+
+    memset(lcmName_, 0, sizeof(lcmName_));
+    int i = 0;
+    while(i < inputStrLen){
+        if(lcmName[i] == '\0'){
+            break;
+        }
+        lcmName_[i] = lcmName[i];
+        i++;
+    }
     if(init() < 0) {
         throw std::runtime_error("AerolinkSecurity Init Failed\n");
     }
-    // should  perform sanitary check on the value
 }
 
 AerolinkSecurity *AerolinkSecurity::pInstance = nullptr;
@@ -839,7 +859,51 @@ int AerolinkSecurity::ExtractMsg(
     return 0;
 }
 
+int AerolinkSecurity::sspCheck(void* smp, uint8_t const* ssp){
+    // Get corresponding smp for this thread
+    // Add new smp (if none exists) for this thread
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        try{
+            addNewThrSmp(thrId);
+        }
+        catch (std::exception& e)
+        {
+            if(secVerbosity > 4){
+                print_exception(e);
+            }
+            return -1;
+        }
+        smp = getThrSmp(thrId);
+    }
+    // return nullptr if still nullptr
+    if(smp == nullptr){
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to retreive smp for this thread\n");
+        return -1;
+    }
 
+    AEROLINK_RESULT result;
+    //SSP Check
+    uint32_t len = 0;
+    //Get the SSP from the signer certificate present in the SPDU
+    result = smp_getServiceSpecificPermissions((*(SecuredMessageParserC*)smp), &ssp, &len);
+
+    if (result != WS_SUCCESS)
+    {
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to get SSP (%s)\n", ws_errid(result));
+        return -1;
+    }
+    //Check the length of the SSP
+    if(len < 2)
+    {
+        fprintf(stderr,"No valid SSP Found in the SPDU \n");
+        return -1;
+    }
+
+    return 0;
+}
 // A function to verify a signed packet that can handle multi-threading:
 //   smp_extract
 //   smp_checkRelevance

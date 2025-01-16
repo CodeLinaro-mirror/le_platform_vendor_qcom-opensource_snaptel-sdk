@@ -18,6 +18,10 @@
 #define DEFAULT_NOTIFICATION_DELAY 2000
 #define RPC_FAIL_SUFFIX " RPC Request failed - "
 
+const std::string CV2X_EVENT_RADIO_MGR_FILTER  = "cv2x_radio_manager";
+const std::string CV2X_EVENT_RADIO_FILTER      = "cv2x_radio";
+
+
 #define RPC_TO_CV2X_STATUS(rpc, res)                                             \
     {                                                                            \
         res.rxStatus = static_cast<telux::cv2x::Cv2xStatusType>(rpc.rxstatus()); \
@@ -56,6 +60,18 @@
         }                                                                          \
     }
 
+#define NOTIFY_LISTENER(listenerMgr,type,cb,payload)  \
+    {                                                 \
+        std::vector<std::weak_ptr<type>> listeners;   \
+        listenerMgr.getAvailableListeners(listeners); \
+        for (auto &wp : listeners) {                  \
+            if (auto sp = wp.lock()) {                \
+                sp->cb(payload);                      \
+            }                                         \
+        }                                             \
+    }
+
+
 namespace telux {
 namespace cv2x {
 
@@ -69,6 +85,37 @@ class Cv2xEvtListener : public telux::common::IEventListener {
  private:
     telux::common::ListenerManager<telux::cv2x::ICv2xListener> listenerMgr_;
     void onCv2xStatusChange(telux::cv2x::Cv2xStatus &status);
+    void onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo& rcpSlssUe);
+};
+
+class Cv2xRadioHelper {
+ public:
+     static void resetV2xStatusEx(Cv2xStatusEx &statusEx) {
+        statusEx.status.rxStatus      = Cv2xStatusType::INACTIVE;
+        statusEx.status.txStatus      = Cv2xStatusType::INACTIVE;
+        statusEx.status.rxCause       = Cv2xCauseType::UNKNOWN;
+        statusEx.status.txCause       = Cv2xCauseType::UNKNOWN;
+        statusEx.status.cbrValue      = 255;
+        statusEx.status.cbrValueValid = false;
+        statusEx.poolStatus.clear();
+        statusEx.timeUncertaintyValid = false;
+    }
+    static void resetV2xStatus(Cv2xStatus &status) {
+        status.rxStatus      = Cv2xStatusType::INACTIVE;
+        status.txStatus      = Cv2xStatusType::INACTIVE;
+        status.rxCause       = Cv2xCauseType::UNKNOWN;
+        status.txCause       = Cv2xCauseType::UNKNOWN;
+        status.cbrValue      = 255;
+        status.cbrValueValid = false;
+    }
+    static void rpcSlssInfoToSlssInfo (const ::cv2xStub::SyncRefUeInfo& rcpSlss,
+        cv2x::SyncRefUeInfo& refInfo) {
+        refInfo.slssId     = rcpSlss.slssid();
+        refInfo.inCoverage = rcpSlss.incoverage();
+        refInfo.pattern    = static_cast<telux::cv2x::SlssSyncPattern>(rcpSlss.pattern());
+        refInfo.rsrp       = rcpSlss.rsrp();
+        refInfo.selected   = rcpSlss.selected();
+    }
 };
 
 }  // namespace cv2x

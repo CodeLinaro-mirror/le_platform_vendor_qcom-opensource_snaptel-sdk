@@ -69,6 +69,9 @@ public:
     telux::common::ErrorCode setIpPassThroughConfig(const IpptParams &ipptParms,
             const IpptConfig &config) override;
 
+    telux::common::ErrorCode setIpPassThroughNatConfig(bool enableNat = true);
+    telux::common::ErrorCode getIpPassThroughNatConfig(bool &isNatEnabled);
+
     telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
             IpConfig &ipConfig) override;
 

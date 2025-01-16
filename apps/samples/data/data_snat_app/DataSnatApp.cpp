@@ -43,10 +43,10 @@
  * 5. Create NAT with given parameters.
  *
  * Usage:
- * # ./snat_sample_app <operation-type> <profile-id> <ip-address> \
- *      <local-ip-port> <global-ip-port> <protocol>
+ * # ./snat_sample_app <operation-type> <backhaul-type> <profile-id> <ip-address> \
+ *      <protocol> <local-ip-port> <global-ip-port> 
  *
- * Example - ./snat_sample_app 1 5 192.168.225.22 500 500 6
+ * Example - ./snat_sample_app 1 3 5 192.168.225.22 6 500 500
  */
 
 #include <errno.h>
@@ -93,7 +93,7 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
         return 0;
     }
 
-    int addNATEntry(int profileId, std::string ipAddress, int localIpPort,
+    int addNATEntry(int backhaulType, int profileId, std::string ipAddress, int localIpPort,
             int globalIpPort, int proto) {
 
         telux::common::Status status;
@@ -107,8 +107,13 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
         auto respCb = std::bind(
             &NATCreator::onAddNATStatusAvailable, this, std::placeholders::_1);
 
+        telux::data::BackhaulInfo bhInfo{};
+        bhInfo.backhaul = static_cast<telux::data::BackhaulType>(backhaulType);;
+        bhInfo.slotId = DEFAULT_SLOT_ID;
+        bhInfo.profileId = profileId;
+
         /* Step - 5 */
-        status = dataSnatMgr_->addStaticNatEntry(profileId, natConfig, respCb);
+        status = dataSnatMgr_->addStaticNatEntry(bhInfo, natConfig, respCb);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Can't request add nat, err " <<
                 static_cast<int>(status) << std::endl;
@@ -124,7 +129,7 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
         std::cout << "onAddNATStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to add nat, err" <<
+            std::cout << "Failed to add nat, err " <<
                 static_cast<int>(error) << std::endl;
             return;
         }
@@ -141,27 +146,40 @@ int main(int argc, char *argv[]) {
     int ret;
     std::shared_ptr<NATCreator> app;
 
+    int backhaulType;
     int profileId;
-    int localIpPort;
-    int globalIpPort;
+    int localIpPort  = 0;
+    int globalIpPort = 0;
     int proto;
     std::string ipAddress;
     telux::data::OperationType opType;
 
-    if (argc != 7) {
-        std::cout << "Usage: ./snat_sample_app <operation-type> <profile-id> " <<
-        "<ip-address> <local-ip-port> <global-ip-port> <protocol>" << std::endl;
+
+    if ((argc != 6 && argc != 8) ||
+        (argc == 6 && (std::atoi(argv[5]) == 6 || std::atoi(argv[5]) == 17))) {
+        /* 6-TCP, 17-UDP */
+        std::cout << "Usage: ./snat_sample_app <operation-type> <backhaul-type> " <<
+        "<profile-id>  <ip-address> <protocol> <local-ip-port> <global-ip-port> \n" <<
+        "Note: local-ip-port and global-ip-port are ignored for protocol type " <<
+        "ICMP, IGMP and ESP, so it can be skipped for these protocols"<< std::endl;
         return -EINVAL;
     }
 
     /* Step - 4 */
     opType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
-    profileId = std::atoi(argv[2]);
-    ipAddress = static_cast<std::string>(argv[3]);
-    localIpPort = std::atoi(argv[4]);
-    globalIpPort = std::atoi(argv[5]);
+    /* 0-ETH , 2-WLAN, 3-WWAN */
+    backhaulType = std::atoi(argv[2]);
+
+    profileId = std::atoi(argv[3]);
+    ipAddress = static_cast<std::string>(argv[4]);
+
     /* 1-ICMP, 2-IGMP, 6-TCP, 17-UDP, 50-ESP */
-    proto = std::atoi(argv[6]);
+    proto = std::atoi(argv[5]);
+
+    if (argc == 8) {
+        localIpPort = std::atoi(argv[6]);
+        globalIpPort = std::atoi(argv[7]);
+    }
 
     try {
         app = std::make_shared<NATCreator>();
@@ -175,7 +193,7 @@ int main(int argc, char *argv[]) {
         return ret;
     }
 
-    ret = app->addNATEntry(profileId, ipAddress, localIpPort, globalIpPort, proto);
+    ret = app->addNATEntry(backhaulType, profileId, ipAddress, localIpPort, globalIpPort, proto);
     if (ret < 0) {
         return ret;
     }

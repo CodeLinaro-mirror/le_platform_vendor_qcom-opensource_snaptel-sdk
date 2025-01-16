@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -662,7 +662,7 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
                 vol = volume;
                 p.set_value(true);
             } else {
-                std::cout << "Failed to set stream device" << std::endl;
+                std::cout << "Failed to get stream volume" << std::endl;
                 p.set_value(false);
             }
         });

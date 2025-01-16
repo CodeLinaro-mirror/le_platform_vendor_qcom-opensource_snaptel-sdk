@@ -54,7 +54,7 @@
  */
 
 #include <errno.h>
-
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -90,18 +90,18 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
         }
 
         /* Step - 3 */
-        serviceStatus = p.get_future().get();
-        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Serving system service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
-            return -EIO;
-        }
-
-        /* Step - 4 */
         status = dataServingSystemMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Can't register listener, err " <<
                 static_cast<int>(status) << std::endl;
+            return -EIO;
+        }
+
+        /* Step - 4 */
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Serving system service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -159,6 +159,24 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
     void onServiceStateChanged(telux::data::ServiceStatus serviceStatus) override {
         std::cout << "onServiceStateChanged()" << std::endl;
         printDetails(serviceStatus);
+    }
+
+    void onLteAttachFailure(const telux::data::LteAttachFailureInfo info) override {
+        std::cout << " rejectReason.type " << static_cast<int>(info.rejectReason.type) <<
+            ", rejectReason.code " << static_cast<int>(info.rejectReason.IpCode) << std::endl;
+        std::cout << " PLMN:";
+        for (unsigned int i = 0; i < info.plmnId.size(); ++i) {
+            std::cout << std::setfill('0') << std::setw(2) << std::hex << info.plmnId[i];
+        }
+        std::cout << std::endl;
+
+        if (info.primaryPlmnId.size()) {
+            std::cout << " Primary PLMN:";
+            for (unsigned int i = 0; i < info.primaryPlmnId.size(); ++i) {
+                std::cout << std::setfill('0') << std::setw(2) << std::hex << info.primaryPlmnId[i];
+            }
+            std::cout << std::endl;
+        }
     }
 
  private:

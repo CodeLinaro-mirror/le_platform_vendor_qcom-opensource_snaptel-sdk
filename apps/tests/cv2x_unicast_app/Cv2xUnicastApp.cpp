@@ -808,7 +808,7 @@ static int init() {
     };
 
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!gCv2xRadioMgr) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;

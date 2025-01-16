@@ -885,6 +885,8 @@ using LocationInfoExValidity = uint64_t;
 /** Specify the GNSS signal type and RF band for jammer info and
  *  automatic gain control metric in GnssData.*/
 enum GnssDataSignalTypes {
+  /** Invalid signal type */
+  GNSS_DATA_SIGNAL_TYPE_INVALID = -1,
   /** GPS L1CA RF Band.*/
   GNSS_DATA_SIGNAL_TYPE_GPS_L1CA = 0,
   /** GPS L1C RF Band.*/
@@ -1639,6 +1641,105 @@ struct GnssEphCommon {
     double af2;
 };
 
+/** Validity of GpsQzss Extended Ephemeris fields.*/
+enum GpsQzssExtEphValidityType {
+    /** Valid iscL1ca*/
+    GPS_QZSS_EXT_EPH_ISC_L1CA_VALID = (1<<0),
+     /** Valid iscL2c*/
+    GPS_QZSS_EXT_EPH_ISC_L2C_VALID = (1<<1),
+    /** Valid iscL5I5*/
+    GPS_QZSS_EXT_EPH_ISC_L5I5_VALID = (1<<2),
+    /** Valid iscL5Q5*/
+    GPS_QZSS_EXT_EPH_ISC_L5Q5_VALID = (1<<3),
+    /** Valid alert*/
+    GPS_QZSS_EXT_EPH_ALERT_VALID = (1<<4),
+    /** Valid uraned0*/
+    GPS_QZSS_EXT_EPH_URANED0_VALID = (1<<5),
+    /** Valid uraned1*/
+    GPS_QZSS_EXT_EPH_URANED1_VALID = (1<<6),
+    /** Valid uraned2*/
+    GPS_QZSS_EXT_EPH_URANED2_VALID = (1<<7),
+    /** Valid top*/
+    GPS_QZSS_EXT_EPH_TOP_VALID = (1<<8),
+    /** Valid topClock*/
+    GPS_QZSS_EXT_EPH_TOP_CLOCK_VALID = (1<<9),
+    /** Valid validtyPeriod*/
+    GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID = (1<<10),
+    /** Valid deltaNdot */
+    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1<11),
+    /** Valid delaA*/
+    GPS_QZSS_EXT_EPH_DELTAA_VALID = (1<<12),
+    /** Valid adot */
+    GPS_QZSS_EXT_EPH_ADOT_VALID = (1<<13)
+};
+
+/** Specifies GpsQzssExtEphValidityType.*/
+using GpsQzssExtEphValidity = uint64_t;
+
+/** Extended Ephemeris information for GPS and QZSS */
+struct GpsQzssExtEphemeris {
+    /** Specify satellite vehicle ID number.
+     * For SV id range of each supported constellations, refer to
+     * documentation of @ref telux::loc::GnssMeasurementInfo::gnssSvId.
+     */
+    uint16_t gnssSvId;
+
+    /** Validity mask for the GpsQzss Extended Ephemeris fields.*/
+    GpsQzssExtEphValidity validityMask;
+
+    /** InterSignal Correction between L1ca Data and Pilot channels in milliseconds.
+     *  Always zero for QZSS. Units: milliseconds */
+    float iscL1ca;
+
+    /** InterSignal Correction between L2c Data and Pilot channels in milliseconds.
+     *  Units: milliseconds */
+    float iscL2c;
+
+    /** InterSignal Correction between L5I5 Data and Pilot channels in milliseconds.
+     *  Units: milliseconds */
+    float iscL5I5;
+
+    /** InterSignal Correction between L5Q5 Data and Pilot channels in milliseconds.
+     *  Units: milliseconds */
+    float iscL5Q5;
+
+    /** Alert Bit Info (unitless). */
+    uint8_t alert;
+
+    /** NED accuracy index (5 bits, unitless). */
+    uint8_t uraNed0;
+
+    /** NED accuracy change index(3 bits), UraNed1 = 1/2^N (m/s), N=14 + UraNed1 index (unitless).*/
+    uint8_t uraNed1;
+
+    /** NED accuracy change rate index (3 bits),
+     *  UraNed2 = 1/2^N (m/s^2), N=28 + UraNed2 index (unitless). */
+    uint8_t uraNed2;
+
+    /** Data predict time of week, 0-604500 sec.
+     *  Units: seconds */
+    double top;
+
+    /** Data predict time of week (clock) , scale 300 seconds.
+     *  Units: seconds */
+    uint16_t topClock;
+
+    /** Validity Period in seconds.
+     *  Units: seconds */
+    uint32_t validityPeriod;
+
+    /** Rate of Mean motion difference from computed value [semi-circle/sec^2] (unitless). */
+    double deltaNdot;
+
+    /** Semi-Major Axis Difference At Reference Time [m].
+     *  Units: Meters */
+    double deltaA;
+
+    /** Change Rate In Semi-Major Axis [m/sec].
+     *  Units: Meters/seconds */
+    double adot;
+};
+
 /** Common Ephemeris information for GPS and QZSS*/
 struct GpsQzssEphemeris {
     /**   Common ephemeris data.   */
@@ -1679,6 +1780,12 @@ struct GpsQzssEphemeris {
     /**  Issue of Data, Clock.
      *   Units: Unit-less */
     uint16_t IODC;
+
+    /** Indicates the validity of GpsQzssExtEphemeris data. */
+    bool extendedEphDataValidity;
+
+    /** Extended Ephemeris data for GPS/QZSS */
+    GpsQzssExtEphemeris gpsQzssExtEphData;
 };
 
 /** Ephemeris information for GLONASS*/
@@ -1776,6 +1883,98 @@ struct GlonassEphemeris {
     uint16_t nt;
 };
 
+/** BDS SV type */
+enum BdsSvType {
+    BDS_SV_TYPE_UNKNOWN = 0,
+    BDS_SV_TYPE_GEO     = 1,
+    BDS_SV_TYPE_IGSO    = 2,
+    BDS_SV_TYPE_MEO     = 3
+};
+
+/** Validity of Bds Extended Ephemeris fields.*/
+enum BdsExtEphValidityType {
+    /** Valid iscB2a*/
+    BDS_EXT_EPH_ISC_B2A_VALID = (1<<0),
+    /** Valid iscB1c */
+    BDS_EXT_EPH_ISC_B1C_VALID = (1<<1),
+    /** Valid tgdB2a */
+    BDS_EXT_EPH_TGD_B2A_VALID = (1<<2),
+    /** Valid tgdB1c */
+    BDS_EXT_EPH_TGD_B1C_VALID = (1<<3),
+    /** Valid svType */
+    BDS_EXT_EPH_SV_TYPE_VALID = (1<<4),
+    /** Valid validtyPeriod */
+    BDS_EXT_EPH_VALIDITY_PERIOD = (1<<5),
+    /** Valid integrityFlags */
+    BDS_EXT_EPH_INTEGRITY_FLAGS = (1<<6),
+    /** Valid deltaNdot */
+    BDS_EXT_EPH_DELTA_NDOT_VALID = (1<<7),
+    /** Valid deltaA */
+    BDS_EXT_EPH_DELTAA_VALID = (1<<8),
+    /** Valid adot */
+    BDS_EXT_EPH_ADOT_VALID = (1<<9)
+};
+
+/** Specifies BdsExtEphValidityType.*/
+using BdsExtEphValidity = uint64_t;
+
+/** Extended Ephemeris information for BDS */
+struct BdsExtEphemeris {
+    /** Specify satellite vehicle ID number.
+     *  For SV id range of each supported constellations, refer to
+     *  documentation of @ref telux::loc::GnssMeasurementInfo::gnssSvId.
+     */
+    uint16_t gnssSvId;
+
+    /** Validity mask for the Bds Extended Ephemeris fields.*/
+    BdsExtEphValidity validityMask;
+
+    /** InterSignal Correction between B2a Data and Pilot channels in milliseconds.
+     *  Units: milliseconds */
+    float iscB2a;
+
+    /** InterSignal Correction between B1c Data and Pilot channels in milliseconds.
+     *  Units: milliseconds */
+    float iscB1c;
+
+    /** Time of Group Delay For B2a in milliseconds.
+     *  Units: milliseconds */
+    float tgdB2a;
+
+    /** Time of Group Delay For B1C in milliseconds.
+     *  Units: milliseconds */
+    float tgdB1c;
+
+    /** Bds Sv Type  GEO / MEO / IGSO (Unitless). */
+    BdsSvType svType;
+
+    /** Validity Period in seconds.
+     *  Units: seconds */
+    uint32_t validityPeriod;
+
+    /** Satellite Integrity Flags consists data integrity Flag(DIF),
+     *  Signal Integrity Flag(SIF), Accuracy Integrity Flag (AIF).
+     *  Values:
+     *  b0 - AIF, The signal is Valid(0) or Invalid (1).
+     *  b1 - SIF, The signal is Normal(0) or Abnormal (1).
+     *  b2 - DIF, The error of message parameters in this signal does not
+     *  exceeds the prediction accuracy (0)/ Exceeds the prediction accuracy (1).
+     *  b3 - B1I, ephemeris health (unitless).
+     */
+    uint8_t integrityFlags;
+
+    /** Rate of Mean motion difference from computed value [semi-circle/sec^2] (unitless). */
+    double deltaNdot;
+
+    /** Semi-Major Axis Difference At Reference Time [m].
+     *  Units: meters */
+    double deltaA;
+
+    /** Change Rate In Semi-Major Axis [m/sec].
+     *  Units: Meters/seconds */
+    double adot;
+};
+
 /** Ephemeris information for BDS*/
 struct BdsEphemeris {
 
@@ -1803,6 +2002,12 @@ struct BdsEphemeris {
     /** User range accuracy index (4-bits).
      *  Units: Unit-less */
     uint8_t URAI;
+
+    /** Indicates the validity of BdsExtEphemeris data. */
+    bool extendedEphDataValidity;
+
+    /** Extended Ephemeris data for BDS */
+    BdsExtEphemeris bdsExtEphData;
 };
 
 /** Ephemeris information for GALILEO*/
@@ -1901,6 +2106,13 @@ struct GnssEphemeris {
 
     /** Ephemeris Data for each NAVIC SV */
     std::vector<NavicEphemeris> navicEphemerisData;
+
+    /** Validity of Ephemeris Signal Source Type (Unitless).
+     *  Valid only for GPS/QZSS/BDS constellations */
+    bool validDataSourceSignal;
+
+    /**  Ephemeris Signal Source Type */
+    GnssDataSignalTypes dataSourceSignal;
 };
 
 /** Specify leap second change event info.*/
@@ -2490,6 +2702,8 @@ struct XtraStatus {
      * For all other XtraDataStatus, this field will be set to 0.
      */
     uint32_t xtraValidForHours;
+    /** User consent to avail the Xtra assistance service. */
+    bool userConsent;
 };
 
 /** Enum of all the possible indications invoked by a Location Configurator listener.  */

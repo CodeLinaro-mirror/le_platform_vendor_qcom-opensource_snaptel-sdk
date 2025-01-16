@@ -72,8 +72,13 @@ bool DataMenu::initializeSDK() {
         "data_profile> ");
     bool dpmSubSystemStatus = dataProfileMenu_->init();
 
+    // Instantiate Dual Data Manager
+    dualDataManagementMenu_ = std::make_shared<DualDataManagementMenu>(
+        "Dual Data Manager Menu", "dual_data> ");
+    bool dualDataSubSystemStatus = dualDataManagementMenu_->init();
+
     // Check if the SDK is able to initialize data subsystems
-    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
+    if ((dcmSubSystemStatus) && (dpmSubSystemStatus) && (dualDataSubSystemStatus)) {
         endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
@@ -144,12 +149,21 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "14", "Data_Control_Menu",
             {}, std::bind(&DataMenu::dataControlMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> qosManagementMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "15", "QoS_Management_Menu",
+            {}, std::bind(&DataMenu::qosManagementMenu, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> dataLinkMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "16", "Data_Link_Menu",
+            {}, std::bind(&DataMenu::dataLinkMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand};
+        dataControlMenuCommand, qosManagementMenuCommand, dataLinkMenuCommand};
 
     addCommands(commandsList);
 
@@ -229,6 +243,15 @@ void DataMenu::dataSettingsMenu(std::vector<std::string> userInput) {
     ConsoleApp::displayMenu();
 }
 
+void DataMenu::dataLinkMenu(std::vector<std::string> userInput) {
+    dataLinkMenu_ = std::make_shared<DataLinkMenu>("Data Link Menu", "link> ");
+    if(dataLinkMenu_->init()) {
+        dataLinkMenu_->mainLoop();
+    }
+    dataLinkMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
 void DataMenu::snatMenu(std::vector<std::string> userInput) {
     snatMenu_ = std::make_shared<SnatMenu>("SNAT Menu", "snat> ");
     if(snatMenu_->init()) {
@@ -285,12 +308,14 @@ void DataMenu::clientMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::dualDataManagementMenu(std::vector<std::string> userInput) {
-    dualDataManagementMenu_ =
-        make_shared<DualDataManagementMenu>("Dual Data Management Menu", "dual_data> ");
-    if(dualDataManagementMenu_->init()) {
-        dualDataManagementMenu_->mainLoop();
+    if(dualDataManagementMenu_) {
+        if (dualDataManagementMenu_->displayMenu()) {
+            dualDataManagementMenu_->mainLoop();
+        }
     }
-    dualDataManagementMenu_ = nullptr;
+    else {
+        std::cout << "Error in creating dual data manager menu" << std::endl;
+    }
     ConsoleApp::displayMenu();
 }
 
@@ -301,5 +326,15 @@ void DataMenu::dataControlMenu(std::vector<std::string> userInput) {
         dataControlMenu_->mainLoop();
     }
     dataControlMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::qosManagementMenu(std::vector<std::string> userInput) {
+    qosManagementMenu_ =
+        make_shared<QoSManagementMenu>("QoS Management Menu", "QoS> ");
+    if(qosManagementMenu_->init()) {
+        qosManagementMenu_->mainLoop();
+    }
+    qosManagementMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

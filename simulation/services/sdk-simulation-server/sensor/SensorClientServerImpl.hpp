@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <map>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -23,6 +24,7 @@
 #include <telux/sensor/SensorDefines.hpp>
 
 #include "event/ServerEventManager.hpp"
+#include "libs/common/event-manager/EventParserUtil.hpp"
 #include "libs/sensor/SensorDefinesStub.hpp"
 #include "protos/proto-src/sensor_simulation.grpc.pb.h"
 #include "common/FileBuffer.hpp"
@@ -56,18 +58,20 @@ class SensorClientServerImpl final :
     grpc::Status GetSensorInfo(ServerContext* context, const google::protobuf::Empty* request,
         sensorStub::SensorClientCommandReply* response);
 
-    grpc::Status Activate(ServerContext* context, const google::protobuf::Empty* request,
+    grpc::Status Activate(ServerContext* context, const sensorStub::ActivateRequest* request,
         sensorStub::SensorClientCommandReply* response);
 
-    grpc::Status Deactivate(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::SensorClientCommandReply* response);
-
-    grpc::Status SelfTest(ServerContext* context, const google::protobuf::Empty* request,
+    grpc::Status Deactivate(ServerContext* context, const sensorStub::DeactivateRequest* request,
         sensorStub::SensorClientCommandReply* response);
 
     grpc::Status SensorUpdateRotationMatrix(ServerContext* context,
         const ::google::protobuf::Empty* request,
         sensorStub::SensorClientCommandReply* response);
+
+    grpc::Status SelfTest (ServerContext* context,
+        const sensorStub::SelfTestRequest* request, sensorStub::SelfTestResponse* response);
+
+    void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
  private:
     void apiJsonReader(std::string apiName, sensorStub::SensorClientCommandReply* response);
@@ -77,6 +81,8 @@ class SensorClientServerImpl final :
     void startStreaming();
     void updateStreamRequest();
     void triggerStreamingStoppedEvent();
+    void handleEvent(std::string token , std::string event);
+    void triggerSelfTestFailedEvent(std::string event);
     std::vector<telux::sensor::SensorInfo> sensorInfo_;
     std::shared_ptr<FileBuffer> fileBuffer_ = nullptr;
     std::vector<std::string> requestBuffer_;
@@ -86,5 +92,9 @@ class SensorClientServerImpl final :
     bool replayCsv_ = false;
     uint64_t previousTimestamp_ = 0;
     bool lastBatchStreamed_ = false;
+    int activeAccelCount_ = 0;
+    int activeGyroCount_ = 0;
+    std::unordered_map<telux::sensor::SelfTestType, uint64_t> accelSelfTestCache_;
+    std::unordered_map<telux::sensor::SelfTestType, uint64_t> gyroSelfTestCache_;
 };
 #endif  // SENSOR_FEATURE_MANAGER_SERVER_HPP

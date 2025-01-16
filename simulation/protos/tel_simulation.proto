@@ -39,6 +39,11 @@
      rpc CardPower(CardPowerRequest) returns (CardPowerResponse) {}
      rpc exchangeSimIO(exchangeSimIORequest) returns (exchangeSimIOReply) {}
      rpc requestEid(requestEidRequest) returns (requestEidReply) {}
+     rpc IsNtnProfileActive(IsNtnProfileActiveRequest) returns (IsNtnProfileActiveReply) {}
+     rpc setupRefreshConfig(RefreshConfigReq) returns (TelCommonReply) {}
+     rpc allowCardRefresh(AllowCardRefreshReq) returns (TelCommonReply) {}
+     rpc confirmRefreshHandlingCompleted(ConfirmRefreshHandlingCompleteReq) returns (TelCommonReply) {}
+     rpc requestLastRefreshEvent(RequestLastRefreshEventReq) returns (RequestLastRefreshEventResp) {}
  }
 
  service SubscriptionService {
@@ -217,6 +222,12 @@
   * Messages Definition                                             *
   *******************************************************************/
 
+message TelCommonReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+}
+
 message GetCardStateRequest {
      int32 phone_id = 1;
 }
@@ -285,12 +296,14 @@ message GetCardStateRequest {
      int32 phone_id = 1;
      RadioTechnology current_rat = 2;
      ServiceDomainInfo.Domain current_domain = 3;
-     EndcAvailability.Status endc_availability = 4;
-     DcnrRestriction.Status dcnr_restriction = 5;
-     RadioTechnology sms_rat = 6;
-     SmsDomain sms_domain = 7;
-     LteCsCapability lte_capability = 8;
-     repeated CallBarringInfo barring_infos = 9;
+     ServiceRegistrationState current_state = 4;
+     EndcAvailability.Status endc_availability = 5;
+     DcnrRestriction.Status dcnr_restriction = 6;
+     RadioTechnology sms_rat = 7;
+     SmsDomain sms_domain = 8;
+     NtnSmsStatus sms_status = 9;
+     LteCsCapability lte_capability = 10;
+     repeated CallBarringInfo barring_infos = 11;
  }
 
  message NetworkTimeInfoEvent {
@@ -692,6 +705,102 @@ message RttMessageEvent {
      int32 delay = 5;
  }
 
+ message IsNtnProfileActiveRequest {
+    int32 phone_id = 1;
+ }
+
+ message IsNtnProfileActiveReply {
+    bool is_ntn_profile_active = 1;
+ }
+
+enum SessionType {
+    PRIMARY = 0;
+    SECONDARY = 2;
+    NONPROVISIONING_SLOT_1 = 4;
+    INIT_NONPROVISIONING_SLOT_2 = 5;
+    CARD_ON_SLOT_1 = 6;
+    CARD_ON_SLOT_2 = 7;
+    CHANNEL_ID_SLOT_1 = 8;
+    CHANNEL_ID_SLOT_2 = 9;
+}
+
+message RefreshParams {
+    SessionType sessionType = 1;
+    string aid = 2;
+    string channelId = 3;
+}
+
+message IccFile {
+    uint32 fileId = 1;
+    string filePath = 2;
+}
+
+enum RefreshStage {
+    WAITING_FOR_VOTES = 0;
+    STARTING = 1;
+    ENDED_WITH_SUCCESS = 2;
+    ENDED_WITH_FAILURE = 3;
+    REFRESH_STAGE_UNKNOWN = -1;
+}
+
+enum RefreshMode {
+    RESET = 0;
+    INIT = 1;
+    INIT_FCN = 2;
+    FCN = 3;
+    INIT_FULL_FCN = 4;
+    RESET_APP = 5;
+    RESET_3G = 6;
+    RESH_MODE_UNKNOWN = -1;
+}
+
+message RefreshConfigReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool isRegister = 3;
+    bool doVoting = 4;
+    repeated IccFile efFiles = 5;
+    RefreshParams refreshs = 6;
+}
+
+message AllowCardRefreshReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool allowRefresh = 3;
+    RefreshParams refreshs = 4;
+}
+
+message ConfirmRefreshHandlingCompleteReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    bool isCompleted = 3;
+    RefreshParams refreshs = 4;
+}
+
+message RequestLastRefreshEventReq {
+    uint32 identifier = 1;
+    int32 phone_id = 2;
+    RefreshParams refreshs = 3;
+}
+
+message  RequestLastRefreshEventResp {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    RefreshStage stage =4;
+    RefreshMode mode = 5;
+    repeated IccFile efFiles = 6;
+    RefreshParams refreshs = 7;
+}
+
+message RefreshEvent {
+    int32 phone_id = 1;
+    RefreshStage stage =2;
+    RefreshMode mode = 3;
+    repeated IccFile efFiles = 4;
+    RefreshParams refreshs = 5;
+}
+
 // --- SmsService ---
 
  message SendSmsWithoutSmscRequest {
@@ -937,6 +1046,7 @@ message RttMessageEvent {
  message cardInfoChange {
     int32 phone_id = 1;
     bool card_power = 2;
+    bool is_ntn_profile_active = 3;
  }
 
  message memoryFullEvent {
@@ -1570,6 +1680,7 @@ message UpdateECallMsdResponse {
      PREF_NR5G = 6;
      PREF_NR5G_NSA = 7;
      PREF_NR5G_SA = 8;
+     PREF_NB1_NTN = 9;
  }
 
  enum GsmRFBand {
@@ -1803,6 +1914,15 @@ enum NrRFBand {
      }
  }
 
+ enum ServiceRegistrationState {
+   REG_NO_SERVICE = 0;        /**< No service. */
+   REG_LIMITED_SERVICE = 1;   /**< Limited service. */
+   REG_IN_SERVICE = 2;        /**< In service. */
+   REG_LIMITED_REGIONAL = 3;  /**< Limited regional service. */
+   REG_POWER_SAVE = 4;        /**< Power save */
+   REG_UNKNOWN = -1;          /**< Unknown, when the information is not available */
+ }
+
  message GetSystemInfoRequest {
      int32 phone_id = 1;
  }
@@ -1810,7 +1930,8 @@ enum NrRFBand {
  message GetSystemInfoReply {
      RadioTechnology current_rat = 1;
      ServiceDomainInfo.Domain current_domain = 2;
-     commonStub.Status status = 3;
+     ServiceRegistrationState current_state = 3;
+     commonStub.Status status = 4;
  }
 
  message EndcAvailability {
@@ -2396,6 +2517,7 @@ enum RadioTechnology {
     RADIO_TECH_IWLAN = 18;
     RADIO_TECH_LTE_CA = 19;
     RADIO_TECH_NR5G = 20;
+    RADIO_TECH_NB1_NTN = 21;
 }
 
 enum VoiceServiceTechnology {
@@ -2415,6 +2537,7 @@ enum RATCapability {
     TDS = 6;
     NR5G = 7;
     NR5GSA = 8;
+    NB1_NTN = 9;
     RAT_CAP_INVALID = -1;
 }
 
@@ -2547,6 +2670,7 @@ message CellInfo {
         WCDMA = 4;
         TDSCDMA = 5;
         NR5G = 6;
+        NB1_NTN = 7;
    }
    CellType cell_type = 1;
    bool registered = 2;
@@ -2636,14 +2760,35 @@ message Nr5gSignalStrengthInfo {
     int32 rssnr = 3;
 }
 
+message Nb1NtnCellInfo {
+    Nb1NtnCellIdentity nb1_ntn_cell_identity = 1;
+    Nb1NtnSignalStrengthInfo nb1_ntn_signal_strength_info = 2;
+}
+
+message Nb1NtnCellIdentity {
+    string mcc = 1;
+    string mnc = 2;
+    int32 ci = 3;
+    int32 tac = 4;
+    int32 earfcn = 5;
+}
+
+message Nb1NtnSignalStrengthInfo {
+    int32 signal_strength = 1;
+    int32 rsrp = 2;
+    int32 rsrq = 3;
+    int32 rssnr = 4;
+}
+
 message CellInfoList {
     CellInfo cell_type = 1;
     GsmCellInfo gsm_cell_info = 2;
     WcdmaCellInfo wcdma_cell_info = 3;
     LteCellInfo lte_cell_info = 4;
     Nr5gCellInfo nr5g_cell_info = 5;
-    int32 phone_id = 6;
-    string mcc = 7;
+    Nb1NtnCellInfo nb1_ntn_cell_info = 6;
+    int32 phone_id = 7;
+    string mcc = 8;
 }
 
 message RequestCellInfoListReply {
@@ -2692,6 +2837,7 @@ message SignalStrength {
     WcdmaSignalStrengthInfo wcdma_signal_strength_info = 2;
     LteSignalStrengthInfo lte_signal_strength_info = 3;
     Nr5gSignalStrengthInfo nr5g_signal_strength_info = 4;
+    Nb1NtnSignalStrengthInfo nb1_ntn_signal_strength_info = 5;
 }
 
 message SignalStrengthChangeEvent {
@@ -2876,6 +3022,13 @@ enum SmsDomain {
    UNKNOWN_DOMAIN = -1;  /**< Unknown, when the information is not available */
 };
 
+enum NtnSmsStatus {
+   SMS_NOT_AVAILABLE = 0; /**< SMS service status over CP is not available. */
+   SMS_TEMP_FAILURE = 1;  /**< SMS service status over CP is not available temporarily. */
+   SMS_AVAILABLE = 2;     /**< SMS service status over CP is available. */
+   SMS_UNKNOWN = -1;  /**< Unknown, when the information is not available. */
+}
+
 message GetSmsCapabilityOverNetworkRequest {
     int32 phone_id = 1;
 }
@@ -2883,7 +3036,8 @@ message GetSmsCapabilityOverNetworkRequest {
 message GetSmsCapabilityOverNetworkReply {
     RadioTechnology rat = 1;
     SmsDomain domain = 2;
-    commonStub.Status status = 3;
+    NtnSmsStatus sms_status = 3;
+    commonStub.Status status = 4;
 }
 
 enum  LteCsCapability {

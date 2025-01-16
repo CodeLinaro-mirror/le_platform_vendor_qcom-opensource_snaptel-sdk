@@ -35,6 +35,9 @@
                 "ipptConfig": [
                 ]
             }
-        ]
+        ],
+        "getIpPassThroughNatConfig" : {
+                "natEnable": 1
+        }
     }
 }

@@ -2003,26 +2003,55 @@ void MyLocationListener::printGnssEphemerisCommonData(const telux::loc::GnssEphC
     std::cout   << "\nephSource    : "; printEphSrc(commonData.ephSource);
     std::cout   << "\naction       : "; printEphAct(commonData.action);
     std::cout   << "\nIODE         : " << commonData.IODE
-                << "\naSqrt        : " << commonData.aSqrt
-                << "\ndeltaN       : " << commonData.deltaN
-                << "\nm0           : " << commonData.m0
-                << "\neccentricity : " << commonData.eccentricity
-                << "\nomega0       : " << commonData.omega0
-                << "\ni0           : " << commonData.i0
-                << "\nomega        : " << commonData.omega
-                << "\nomegaDot     : " << commonData.omegaDot
-                << "\niDot         : " << commonData.iDot
-                << "\ncUc          : " << commonData.cUc
-                << "\ncUs          : " << commonData.cUs
-                << "\ncRc          : " << commonData.cRc
-                << "\ncRs          : " << commonData.cRs
-                << "\ncIc          : " << commonData.cIc
-                << "\ncIs          : " << commonData.cIs
+                << "\naSqrt        : " << std::fixed << std::setprecision(15) << commonData.aSqrt
+                << "\ndeltaN       : " << std::fixed << std::setprecision(15) << commonData.deltaN
+                << "\nm0           : " << std::fixed << std::setprecision(15) << commonData.m0
+                << "\neccentricity : " << std::fixed << std::setprecision(15) << commonData.eccentricity
+                << "\nomega0       : " << std::fixed << std::setprecision(15) << commonData.omega0
+                << "\ni0           : " << std::fixed << std::setprecision(15) << commonData.i0
+                << "\nomega        : " << std::fixed << std::setprecision(15) << commonData.omega
+                << "\nomegaDot     : " << std::fixed << std::setprecision(15) << commonData.omegaDot
+                << "\niDot         : " << std::fixed << std::setprecision(15) << commonData.iDot
+                << "\ncUc          : " << std::fixed << std::setprecision(15) << commonData.cUc
+                << "\ncUs          : " << std::fixed << std::setprecision(15) << commonData.cUs
+                << "\ncRc          : " << std::fixed << std::setprecision(15) << commonData.cRc
+                << "\ncRs          : " << std::fixed << std::setprecision(15) << commonData.cRs
+                << "\ncIc          : " << std::fixed << std::setprecision(15) << commonData.cIc
+                << "\ncIs          : " << std::fixed << std::setprecision(15) << commonData.cIs
                 << "\ntoe          : " << commonData.toe
                 << "\ntoc          : " << commonData.toc
-                << "\naf0          : " << commonData.af0
-                << "\naf1          : " << commonData.af1
-                << "\naf2          : " << commonData.af2;
+                << "\naf0          : " << std::fixed << std::setprecision(15) << commonData.af0
+                << "\naf1          : " << std::fixed << std::setprecision(15) << commonData.af1
+                << "\naf2          : " << std::fixed << std::setprecision(15) << commonData.af2;
+}
+
+void MyLocationListener::printGpsQzssExtendedEphemerisData(
+    const telux::loc::GpsQzssExtEphemeris &extEphData) {
+    std::cout   << "GPS QZSS Extended Ephemeris Data";
+    std::cout   << "\n svID                 : " << extEphData.gnssSvId;
+    LocationUtils::displayGpsQzssExtEphValidity(extEphData.validityMask);
+    std::cout   << "\n iscL1ca              : " <<
+                    std::fixed << std::setprecision(15) << extEphData.iscL1ca
+                << "\n iscL2c               : " <<
+                    std::fixed << std::setprecision(15) << extEphData.iscL2c
+                << "\n iscL5I5              : " <<
+                    std::fixed << std::setprecision(15) << extEphData.iscL5I5
+                << "\n iscL5Q5              : " <<
+                    std::fixed << std::setprecision(15) << extEphData.iscL5Q5
+                << "\n alert                : " << extEphData.alert
+                << "\n uraNed0              : " << extEphData.uraNed0
+                << "\n uraNed1              : " << extEphData.uraNed1
+                << "\n uraNed2              : " << extEphData.uraNed2
+                << "\n top                  : " <<
+                    std::fixed << std::setprecision(15) << extEphData.top
+                << "\n topClock             : " << extEphData.topClock
+                << "\n validityPeriod       : " << extEphData.validityPeriod
+                << "\n deltaNdot            : " <<
+                    std::fixed << std::setprecision(15) << extEphData.deltaNdot
+                << "\n deltaA               : " <<
+                    std::fixed << std::setprecision(15) << extEphData.deltaA
+                << "\n adot                 : " <<
+                    std::fixed << std::setprecision(15) << extEphData.adot;
 }
 
 void MyLocationListener::printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData) {
@@ -2031,9 +2060,37 @@ void MyLocationListener::printGpsQzssEphData(const telux::loc::GpsQzssEphemeris 
                 << "\nURAI            : " << static_cast<unsigned>(ephData.URAI)
                 << "\ncodeL2          : " << static_cast<unsigned>(ephData.codeL2)
                 << "\ndataFlagL2P     : " << static_cast<unsigned>(ephData.dataFlagL2P)
-                << "\ntgd             : " << ephData.tgd
+                << "\ntgd             : " << std::fixed << std::setprecision(15) << ephData.tgd
                 << "\nfitInterval     : " << static_cast<unsigned>(ephData.fitInterval)
-                << "\nIODC            : " << ephData.IODC << "\n";
+                << "\nIODC            : " << ephData.IODC
+                << "\nGpsQzss Extended Eph Validity: " << ephData.extendedEphDataValidity << "\n";
+    if(ephData.extendedEphDataValidity) {
+        printGpsQzssExtendedEphemerisData(ephData.gpsQzssExtEphData);
+    }
+}
+
+void MyLocationListener::printBdsExtendedEphemerisData(
+    const telux::loc::BdsExtEphemeris &extEphData) {
+    std::cout   << "BDS Extended Ephemeris Data";
+    std::cout   << "\n svID                 : " << extEphData.gnssSvId;
+    LocationUtils::displayBdsExtEphValidity(extEphData.validityMask);
+    LocationUtils::displayBdsSvType(extEphData.svType);
+    std::cout   << "\n tgdB2a              :" <<
+                    std::fixed << std::setprecision(15) << extEphData.tgdB2a
+                << "\n iscB2a              :" <<
+                    std::fixed << std::setprecision(15) << extEphData.iscB2a
+                << "\n tgdB1c              :" <<
+                    std::fixed << std::setprecision(15) << extEphData.tgdB1c
+                << "\n iscB1c              :" <<
+                    std::fixed << std::setprecision(15) << extEphData.iscB1c
+                << "\n validityPeriod      :" << extEphData.validityPeriod
+                << "\n integrityFlags      :" << static_cast<unsigned>(extEphData.integrityFlags)
+                << "\n deltaNdot            : " <<
+                    std::fixed << std::setprecision(15) << extEphData.deltaNdot
+                << "\n deltaA               : " <<
+                    std::fixed << std::setprecision(15) << extEphData.deltaA
+                << "\n adot                 : " <<
+                    std::fixed << std::setprecision(15) << extEphData.adot;
 }
 
 void MyLocationListener::onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ephemerisInfo) {
@@ -2127,9 +2184,17 @@ void MyLocationListener::onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ep
                         << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].svHealth)
                         << "\nAODC        : "
                         << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].AODC)
-                        << "\ntgd1        : " << ephemerisInfo.bdsEphemerisData[i].tgd1
-                        << "\ntgd2        : " << ephemerisInfo.bdsEphemerisData[i].tgd2
-                        << "\nURAI        : " << ephemerisInfo.bdsEphemerisData[i].URAI << "\n";
+                        << "\ntgd1        : "
+                        << std::fixed << std::setprecision(15) << ephemerisInfo.bdsEphemerisData[i].tgd1
+                        << "\ntgd2        : "
+                        << std::fixed << std::setprecision(15) << ephemerisInfo.bdsEphemerisData[i].tgd2
+                        << "\nURAI        : "
+                        << static_cast<unsigned>(ephemerisInfo.bdsEphemerisData[i].URAI)
+                        << "\nBds Extended Eph Validity: " <<
+                            ephemerisInfo.bdsEphemerisData[i].extendedEphDataValidity << "\n";
+            if(ephemerisInfo.bdsEphemerisData[i].extendedEphDataValidity) {
+                printBdsExtendedEphemerisData(ephemerisInfo.bdsEphemerisData[i].bdsExtEphData);
+            }
         }
     } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
         std::cout << "QZSS satellite" << "\n";
@@ -2157,6 +2222,11 @@ void MyLocationListener::onGnssEphemerisInfo(const telux::loc::GnssEphemeris &ep
         }
     } else {
         std::cout << "UNKNOWN satellite" << "\n";
+    }
+    if(ephemerisInfo.validDataSourceSignal) {
+        LocationUtils::displayGnssDataSignal(ephemerisInfo.dataSourceSignal);
+    } else {
+        std::cout << "Invalid data source signal \n";
     }
     std::cout << "\n";
 }
@@ -2250,6 +2320,7 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
     std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
+    std::cout << "Xtra Feature Consent: " << xtraStatus.userConsent << "\n";
 }
 
 void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask){

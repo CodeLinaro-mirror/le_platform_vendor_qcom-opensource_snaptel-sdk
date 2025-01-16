@@ -235,7 +235,7 @@ struct DubiousCellInfo {
     std::string mnc;                    /**< Mobile network code */
     unsigned int arfcn;                 /**< Absolute radio-frequency channel number */
     unsigned int pci;                   /**< Physical cell identity */
-    RFBand activeBand;                  /**< Active RF band */
+    RFBand activeBand;                  /**< RF band information for a dubious cell */
     DbCellCauseCodeMask causeCodeMask;  /**< Dubious cell cause code bit mask */
 };
 

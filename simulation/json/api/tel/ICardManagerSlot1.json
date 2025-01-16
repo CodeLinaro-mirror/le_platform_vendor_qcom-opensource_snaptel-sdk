@@ -104,6 +104,26 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "setupRefreshConfig" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "allowCardRefresh" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "confirmRefreshHandlingCompleted" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "requestLastRefreshEvent" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

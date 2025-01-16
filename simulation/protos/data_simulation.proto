@@ -188,6 +188,8 @@ service DataFilterManager {
     rpc setIpPassThroughConfig(setIpptConfigRequest) returns (setIpptConfigReply) {}
     rpc getIpConfig(getIpConfigRequest) returns (getIpConfigReply) {}
     rpc setIpConfig(setIpConfigRequest) returns (setIpConfigReply) {}
+    rpc SetIpPassThroughNatConfig(setIpptNatConfigRequest) returns (setIpptNatConfigReply) {}
+    rpc GetIpPassThroughNatConfig(google.protobuf.Empty) returns (getIpptNatConfigReply) {}
     rpc RegisterOnWwanConnectivityConfigChange(google.protobuf.Empty) returns
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
@@ -199,6 +201,9 @@ service DataFilterManager {
     rpc enableSocks(EnableSocksRequest) returns (DefaultReply) {}
   }
 
+  service KeepAliveManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+  }
   service DualDataManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
     rpc GetDualDataCapability(google.protobuf.Empty) returns (GetDualDataCapabilityReply) {}
@@ -211,6 +216,17 @@ service DataFilterManager {
     rpc SetDataStallParams(SetDataStallParamsRequest) returns (SetDataStallParamsReply) {}
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
   }
+
+  service DataLinkManager {
+    rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+    rpc SetEthDataLinkState(SetEthDatalinkStateRequest) returns (SetEthDatalinkStateReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+  }
+
+  service QoSManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+  }
+
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
@@ -231,6 +247,15 @@ message UsageRecommendation {
         NOT_RECOMMENDED = 2;
     }
     Recommendation recommendation = 1;
+}
+
+message LinkStateEnum {
+    enum LinkState {
+        DUMMY = 0;
+        UP = 1;
+        DOWN = 2;
+    }
+    LinkState link_state = 1;
 }
 
 message GetDualDataUsageRecommendationReply {
@@ -490,6 +515,19 @@ message setIpConfigRequest {
     IpType ip_type = 4;
     IpAssign ip_assign = 5;
     IpAddrInfo ip_addr_info = 6;
+}
+
+message setIpptNatConfigRequest {
+    bool enable_nat = 1;
+}
+
+message setIpptNatConfigReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message getIpptNatConfigReply {
+    bool enable_nat = 1;
+    commonStub.ErrorCode error = 2;
 }
 
 message setIpConfigReply {
@@ -1318,3 +1356,14 @@ message APNThrottleInfo{
     string mnc = 7;
 }
 
+message SetEthDatalinkStateRequest {
+    LinkStateEnum eth_datalink_state = 1;
+}
+
+message SetEthDatalinkStateReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message OnEthDataLinkStateChangeReply {
+    LinkStateEnum eth_datalink_state = 1;
+}

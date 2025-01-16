@@ -22,6 +22,7 @@
 
 #include "SimulationServer.hpp"
 #include "cv2x/Cv2xManagerServerImpl.hpp"
+#include "cv2x/Cv2xThrottleManagerServerImpl.hpp"
 #include "cv2x/Cv2xConfigServerImpl.hpp"
 #include "cv2x/Cv2xRadioServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
@@ -39,6 +40,7 @@
 #include "data/DataFilterServerImpl.hpp"
 #include "data/DualDataServerImpl.hpp"
 #include "data/DataControlServerImpl.hpp"
+#include "data/DataLinkServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
@@ -126,6 +128,10 @@ void SimulationServer::startGrpcServer() {
         std::make_shared<Cv2xManagerServerImpl>();
     builder.RegisterService(cv2xRadioMgrService.get());
 
+    std::shared_ptr<Cv2xThrottleManagerServerImpl> cv2xThrottleMgrService =
+        std::make_shared<Cv2xThrottleManagerServerImpl>();
+    builder.RegisterService(cv2xThrottleMgrService.get());
+
     std::shared_ptr<Cv2xConfigServerImpl> cv2xConfigService =
         std::make_shared<Cv2xConfigServerImpl>();
     builder.RegisterService(cv2xConfigService.get());
@@ -189,6 +195,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataControlServerImpl> dataControlService =
         std::make_shared<DataControlServerImpl>();
     builder.RegisterService(dataControlService.get());
+
+    std::shared_ptr<DataLinkServerImpl> dataLinkService =
+        std::make_shared<DataLinkServerImpl>();
+    builder.RegisterService(dataLinkService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

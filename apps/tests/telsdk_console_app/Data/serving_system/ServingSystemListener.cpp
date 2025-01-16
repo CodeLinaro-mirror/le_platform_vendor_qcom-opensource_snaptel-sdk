@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -64,6 +64,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 
 #include "ServingSystemListener.hpp"
 #include "../DataUtils.hpp"
@@ -158,4 +159,28 @@ void ServingSystemListener::onNrIconTypeChanged(telux::data::NrIconType type) {
          std::cout << "Unknown" << std::endl;
       break;
    }
+}
+
+void ServingSystemListener::onLteAttachFailure(const telux::data::LteAttachFailureInfo info) {
+    std::cout << std::endl << std::endl;
+    PRINT_NOTIFICATION << "onLteAttachFailure on SlotId " << slotId_ << std::endl << std::endl;
+    std::cout << "Lte Attach Reject Reason:   Type: "
+        << DataUtils::callEndReasonTypeToString(info.rejectReason.type)
+        << ", Code: " << DataUtils::callEndReasonCode(info.rejectReason) << std::endl;
+    std::cout << " PLMN:";
+    for (unsigned int i = 0; i < info.plmnId.size(); ++i) {
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(
+            info.plmnId[i]);
+    }
+    std::cout << std::endl;
+
+    if (info.primaryPlmnId.size()) {
+        std::cout << " Primary PLMN:";
+        for (unsigned  int i = 0; i < info.primaryPlmnId.size(); ++i) {
+            std::cout << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(
+                info.primaryPlmnId[i]);
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }

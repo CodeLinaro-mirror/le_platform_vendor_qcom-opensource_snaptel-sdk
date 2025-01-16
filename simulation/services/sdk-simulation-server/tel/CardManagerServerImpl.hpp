@@ -1,37 +1,7 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
 
 /**
  * @file       CardManagerServerImpl.hpp
@@ -70,12 +40,32 @@ using telStub::CardService;
 using commonStub::ServiceStatus;
 using commonStub::GetServiceStatusReply;
 
+enum CardRefreshStage {
+    REFRESH_STAGE_UNKNOWN = -1,
+    WAITING_FOR_VOTES = 0,
+    STARTING = 1,
+    ENDED_WITH_SUCCESS = 2,
+    ENDED_WITH_FAILURE = 3,
+};
+
+struct clientSimRefreshPref {
+    uint32_t clientId;
+    int phoneId;
+    telux::tel::RefreshParams sessionAidCid;
+};
+
+struct RefreshEventAndPending {
+    ::telStub::RefreshEvent refreshEvent;
+    uint32_t pendingAllow;
+    uint32_t pendingComplete;
+};
 
 class CardManagerServerImpl final : public telStub::CardService::Service,
                                     public IServerEventListener,
                                     public std::enable_shared_from_this<CardManagerServerImpl> {
  public:
     CardManagerServerImpl();
+    ~CardManagerServerImpl();
     grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
         commonStub::GetServiceStatusReply* response) override ;
     grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
@@ -139,7 +129,21 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
         telStub::QueryFdnLockReply* response) override;
     grpc::Status CardPower(ServerContext* context, const ::telStub::CardPowerRequest* request,
         telStub::CardPowerResponse* response) override;
+    grpc::Status IsNtnProfileActive(ServerContext* context,
+        const ::telStub::IsNtnProfileActiveRequest* request,
+        telStub::IsNtnProfileActiveReply* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
+
+    ::grpc::Status setupRefreshConfig(ServerContext* context,
+        const ::telStub::RefreshConfigReq* request, telStub::TelCommonReply* response);
+    ::grpc::Status allowCardRefresh(ServerContext* context,
+        const ::telStub::AllowCardRefreshReq* request, telStub::TelCommonReply* response);
+    ::grpc::Status confirmRefreshHandlingCompleted(ServerContext* context,
+        const ::telStub::ConfirmRefreshHandlingCompleteReq* request,
+        telStub::TelCommonReply* response);
+    ::grpc::Status requestLastRefreshEvent(ServerContext* context,
+        const ::telStub::RequestLastRefreshEventReq* request,
+        telStub::RequestLastRefreshEventResp* response);
 
     template <typename T>
     commonStub::ErrorCode findmatchingrecordADF (Json::Value rootObj, T response,
@@ -183,6 +187,14 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     std::map <int, std::string> jsonObjSystemStateFileName_;
     std::map <int, Json::Value> jsonObjApiResponseSlot_;
     std::map <int, std::string> jsonObjApiResponseFileName_;
+    std::map <int, RefreshEventAndPending> refreshEvtMap_;
+    std::vector <clientSimRefreshPref> refreshRegisterClients_;
+    std::vector <clientSimRefreshPref> refreshVotingClients_;
+    telux::common::AsyncTaskQueue<void> taskQ_;
+    std::condition_variable cv_;
+    std::mutex mutex_;
+    bool exit_ = false;
+
     grpc::Status readJson();
     bool isCallbackNeeded(Json::Value rootObj, std::string apiname);
     bool findAppId(Json::Value rootObj, const char* appid, int& index);
@@ -197,9 +209,25 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     void getJsonForSystemData (int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,
         Json::Value& rootObj );
+    void getApiConfigureFromJson(const int slotId, const std::string apiname,
+        telux::common::Status& status, telux::common::ErrorCode& ec, int& delay);
     void handleEvent(std::string token , std::string event);
-    void handleCardInfoChanged(std::string eventParams);
+    bool handleCardInfoChanged(std::string eventParams,
+        ::eventService::EventResponse& notification);
     void onEventUpdate(std::string event);
+    bool handleSimRefreshInjector(std::string eventParams,
+        ::eventService::EventResponse& notification);
+    void updateSimRefreshStage(int slotId, CardRefreshStage newStage, uint32_t delayMs,
+        bool checkPendingUserAllow, bool checkPendingUserComplete);
+    int getSlotBySessionType(telux::tel::SessionType st);
+    bool requireConfirmComplete(const CardRefreshStage stage, const telux::tel::RefreshMode mode,
+        const telux::tel::SessionType st);
+    bool clientSimRefreshInfoPresent(std::vector <clientSimRefreshPref>& vector,
+        const clientSimRefreshPref& entry);
+    telux::common::ErrorCode updateClientSimRefresh(std::vector <clientSimRefreshPref>& vector,
+        const clientSimRefreshPref& usrPref, bool enable);
+    template <typename T>
+    void getClientInfoFromRpc(const T* rpcMsg, clientSimRefreshPref& client);
 };
 
 #endif // CARD_MANAGER_SERVER_HPP

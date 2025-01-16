@@ -580,6 +580,41 @@ typedef enum {
     SHIFT_AIRBAGDEPLOYMENT = 12
 }event_bits_shift_et;
 
+/*
+ * this typedef match the J2735 2023 version, or whatever you are working with and
+ * this enum is to specify the value of lightsUse in emergencyDetails field in BSM message */
+typedef enum {
+    J2735_LIGHTS_UNAVAILABLE = 0,
+    J2735_LIGHTS_NOT_IN_USE = 1,
+    J2735_LIGHTS_IN_USE = 2,
+    J2735_YELLOW_LIGHTS= 3,
+    J2735_SCHOOL_BUS_LIGHTS = 4,
+    J2735_ARROW_SIGNS_ACTIVE = 5,
+    J2735_SLOW_MOVING_VEHICLE = 6,
+    J2735_FREQ_STOPS = 7
+}j2735_LightbarStatus_e;
+
+/*
+ * this typedef match the J2735 2023 version, or whatever you are working with and
+ * this enum is to specify the value of sirenUse in emergencyDetails field in BSM message */
+typedef enum {
+    J2735_SIREN_UNAVAILABLE = 0,
+    J2735_SIREN_NOT_IN_USE = 1,
+    J2735_SIREN_IN_USE = 2,
+    J2735_SIREN_RESERVED =3
+}j2735_SirenStatus_e;
+
+/*
+ * this typedef match the J2735 2023 version, or whatever you are working with and
+ * this enum is to specify the value of MultiVehicleResponse in emergencyDetails field in
+ * BSM message  */
+typedef enum {
+    J2735_MULTIVEHICLE_UNAVAILABLE = 0,
+    J2735_SINGLE_VEHICLE = 1,
+    J2735_MULTIVEHICLE_AVAILABLE = 2,
+    J2735_MULTIVEHICLE_RESERVED = 3
+}j2735_MultiVehicleResponse_e;
+
 /* this typedef match the J2735 2016 version, or whatever you are working with */
 typedef union {
     struct {

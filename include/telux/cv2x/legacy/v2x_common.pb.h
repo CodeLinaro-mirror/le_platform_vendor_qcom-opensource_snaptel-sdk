@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
   @file v2x_common.pb.h
@@ -36,12 +41,8 @@
 
 #ifndef PB_V2X_COMMON_PB_H_INCLUDED
 #define PB_V2X_COMMON_PB_H_INCLUDED
-#include <pb.h>
 
-/* @@protoc_insertion_point(includes) */
-#if PB_PROTO_HEADER_VERSION != 30
-#error Regenerate this file with the current version of nanopb generator.
-#endif
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,7 +123,6 @@ typedef struct /** @cond */_v2x_api_ver_t/** @endcond */ {
 
 /** @} *//* end_addtogroup telematics_cv2x_c_common */
 
-
 /** @cond *//* Not to be published in PDF */
 /* Default values for struct fields */
 
@@ -135,9 +135,6 @@ typedef struct /** @cond */_v2x_api_ver_t/** @endcond */ {
 #define v2x_api_ver_t_build_date_str_tag         2
 #define v2x_api_ver_t_build_time_str_tag         3
 #define v2x_api_ver_t_build_details_str_tag      4
-
-/* Struct field encoding specification for nanopb */
-extern const pb_field_t v2x_api_ver_t_fields[5];
 
 /* Maximum encoded size of messages (where known) */
 #define v2x_api_ver_t_size                       399

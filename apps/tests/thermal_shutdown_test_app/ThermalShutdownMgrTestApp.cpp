@@ -29,7 +29,6 @@
 
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
  * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -114,6 +113,14 @@ void ThermalShutdownTestApp::handleArguments() {
 
     if(setCommand_ != AutoShutdownMode::UNKNOWN) {
         myThermCmdMgr_->sendAutoShutdownModeCommand(setCommand_);
+        myThermCmdMgr_->registerForUpdates();
+        auto status = myThermCmdMgr_->cmdRspCb_->commandResponseStatus();
+
+        if (status.get()) {
+            std::cout << " Waiting for async task to complete " << std::endl;
+            myThermCmdMgr_->waitForAsyncTaskToComplete();
+        }
+        myThermCmdMgr_->deregisterForUpdates();
     }
     if(getCommand_) {
         auto f = myThermCmdMgr_->getAutoShutdownModeCommand();
@@ -165,7 +172,7 @@ void signalHandler(int signum)
 }
 
 void ThermalShutdownTestApp::signalHandler( int signum ) {
-    std::unique_lock<std::mutex> lock(mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
     exiting_ = true;
     cv_.notify_all();
@@ -225,6 +232,7 @@ int main(int argc, char ** argv) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
     auto &ThermMgmtTest = ThermalShutdownTestApp::getInstance();
+
     if( 0 != ThermMgmtTest.init()) {
         std::cout << APP_NAME <<
             " Failed to initialize the Thermal-Shutdown management service" << std::endl;

@@ -846,7 +846,14 @@ void DataConnectionMenu::requestThrottledApnsInfo() {
     std::cout << "\nRequest Throttled APN Info" << std::endl;
     telux::common::Status retStat;
     int slotId = DEFAULT_SLOT_ID;
-
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->requestThrottledApnInfo(
         MyDataCallResponseCallback::requestThrottledApnInfoCb);
     Utils::printStatus(retStat);

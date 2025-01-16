@@ -29,7 +29,7 @@ using namespace telux::platform;
 
 int main(int argc, char *argv[]) {
     cout << "Running telux version app" << endl;
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt", "firmware"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {
        std::cout << "Adding supplementary groups failed!" << std::endl;

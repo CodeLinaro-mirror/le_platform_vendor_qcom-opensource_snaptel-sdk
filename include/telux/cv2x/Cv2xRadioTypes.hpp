@@ -617,8 +617,8 @@ struct L2FilterInfo {
     /**< Duration, in millisec (resolution 100 msec). 0 means delete the filter. */
     uint32_t durationMs;
 
-    /**</* Proximity service per packet priority (PPPP), packets with priority above this value
-           will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped. */
+    /**< Proximity service per packet priority (PPPP), packets with priority above this value
+         will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped. */
     uint8_t pppp;
 };
 

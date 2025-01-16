@@ -155,19 +155,20 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
-    int privPort;
-    std::cout << "Enter Private port: ";
-    std::cin >> privPort;
-    Utils::validateInput(privPort);
-
-    int globPort;
-    std::cout << "Enter Global port: ";
-    std::cin >> globPort;
-    Utils::validateInput(globPort);
-
     std::string protoStr;
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
+
+    int privPort = 0 , globPort = 0;
+    if (protoStr != "ICMP" && protoStr != "ESP") {
+        std::cout << "Enter Private port: ";
+        std::cin >> privPort;
+        Utils::validateInput(privPort);
+
+        std::cout << "Enter Global port: ";
+        std::cin >> globPort;
+        Utils::validateInput(globPort);
+    }
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
@@ -202,19 +203,20 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
-    int privPort;
-    std::cout << "Enter Private port: ";
-    std::cin >> privPort;
-    Utils::validateInput(privPort);
-
-    int globPort;
-    std::cout << "Enter Global port: ";
-    std::cin >> globPort;
-    Utils::validateInput(globPort);
-
     std::string protoStr;
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
+
+    int privPort = 0 , globPort = 0;
+    if (protoStr != "ICMP" && protoStr != "ESP") {
+        std::cout << "Enter Private port: ";
+        std::cin >> privPort;
+        Utils::validateInput(privPort);
+
+        std::cout << "Enter Global port: ";
+        std::cin >> globPort;
+        Utils::validateInput(globPort);
+    }
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
@@ -286,19 +288,20 @@ void SnatMenu::addStaticNatEntry_V1(std::vector<std::string> inputCommand) {
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
-    int privPort;
-    std::cout << "Enter Private port: ";
-    std::cin >> privPort;
-    Utils::validateInput(privPort);
-
-    int globPort;
-    std::cout << "Enter Global port: ";
-    std::cin >> globPort;
-    Utils::validateInput(globPort);
-
     std::string protoStr;
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
+
+    int privPort = 0 , globPort = 0;
+    if (protoStr != "ICMP" && protoStr != "ESP") {
+        std::cout << "Enter Private port: ";
+        std::cin >> privPort;
+        Utils::validateInput(privPort);
+
+        std::cout << "Enter Global port: ";
+        std::cin >> globPort;
+        Utils::validateInput(globPort);
+    }
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
@@ -340,19 +343,20 @@ void SnatMenu::removeStaticNatEntry_V1(std::vector<std::string> inputCommand) {
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
-    int privPort;
-    std::cout << "Enter Private port: ";
-    std::cin >> privPort;
-    Utils::validateInput(privPort);
-
-    int globPort;
-    std::cout << "Enter Global port: ";
-    std::cin >> globPort;
-    Utils::validateInput(globPort);
-
     std::string protoStr;
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
+
+    int privPort = 0 , globPort = 0;
+    if (protoStr != "ICMP" && protoStr != "ESP") {
+        std::cout << "Enter Private port: ";
+        std::cin >> privPort;
+        Utils::validateInput(privPort);
+
+        std::cout << "Enter Global port: ";
+        std::cin >> globPort;
+        Utils::validateInput(globPort);
+    }
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;

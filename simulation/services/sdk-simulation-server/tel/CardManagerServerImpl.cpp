@@ -35,6 +35,7 @@
 #include "CardManagerServerImpl.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
 #include <telux/common/DeviceConfig.hpp>
+#include <telux/tel/CardDefines.hpp>
 
 #define JSON_PATH1 "system-state/tel/ICardManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ICardManagerStateSlot2.json"
@@ -42,12 +43,38 @@
 #define JSON_PATH4 "api/tel/ICardManagerSlot2.json"
 
 #define CARD_EVENT "cardInfoChanged"
+#define SIM_REFRESH_EVENT "simRefresh"
 #define SLOT_1 1
 #define SLOT_2 2
+#define REFRESH_USER_ALLOW_TIMEOUT_MS (1000*10)
+#define REFRESH_USER_COMPLETE_TIMEOUT_MS (1000*120)
+
+#define GETVALUE_VIA_STR(str,value) \
+do { \
+    std::string strToken = EventParserUtil::getNextToken(str, DEFAULT_DELIMITER); \
+    if (not strToken.empty()) { \
+        try { \
+            value = std::stoi(strToken); \
+        } catch (exception const &ex) { \
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what()); \
+            return false; \
+        } \
+    } else { \
+        LOG(DEBUG, __FUNCTION__, " strToken is empty."); \
+        return false; \
+   } \
+} while (0);
 
 CardManagerServerImpl::CardManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     readJson();
+}
+
+CardManagerServerImpl::~CardManagerServerImpl() {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lock(mutex_);
+    exit_ = true;
+    cv_.notify_all();
 }
 
 grpc::Status CardManagerServerImpl::readJson() {
@@ -97,6 +124,17 @@ void CardManagerServerImpl::getJsonForApiResponseSlot(int phoneId, std::string& 
     rootObj = jsonObjApiResponseSlot_[phoneId];
 }
 
+void CardManagerServerImpl::getApiConfigureFromJson(const int slotId, const std::string apiname,
+    telux::common::Status& status, telux::common::ErrorCode& ec, int& delay) {
+    Json::Value rootObj;
+    std::string jsonObjApiResponseFileName = "";
+    if(readJson().ok()) {
+        getJsonForApiResponseSlot(slotId, jsonObjApiResponseFileName, rootObj);
+
+        CommonUtils::getValues(rootObj, "ICardManager", apiname, status, ec, delay);
+    }
+}
+
 bool CardManagerServerImpl::isCallbackNeeded(Json::Value rootObj, std::string apiname) {
     int value = rootObj["ICardManager"][apiname]["callbackDelay"].asInt();
     bool isCallback = true;
@@ -141,7 +179,7 @@ grpc::Status CardManagerServerImpl::InitService(ServerContext* context,
         LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
         if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::vector<std::string> filters = {"tel_card"};
+            std::vector<std::string> filters = {telux::tel::TEL_CARD_FILTER};
             auto &serverEventManager = ServerEventManager::getInstance();
             serverEventManager.registerListener(shared_from_this(), filters);
         }
@@ -2008,23 +2046,51 @@ commonStub::ErrorCode CardManagerServerImpl::findmatchingrecordDF (Json::Value r
     }
     return error;
 }
+
+grpc::Status CardManagerServerImpl::IsNtnProfileActive(ServerContext* context,
+    const ::telStub::IsNtnProfileActiveRequest* request,
+    telStub::IsNtnProfileActiveReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = request->phone_id();
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        bool state = rootObj["ICardManager"]["isNtnProfileActive"]["state"].asBool();
+        response->set_is_ntn_profile_active(state);
+    }
+    return readStatus;
+}
+
 void CardManagerServerImpl::onEventUpdate(std::string event) {
-    std::string token;
     LOG(DEBUG, __FUNCTION__,"String is ", event );
-    if ( CARD_EVENT == EventParserUtil::getNextToken(event, DEFAULT_DELIMITER)) {
-        handleCardInfoChanged(event);
+    bool triggerNotification = false;
+    ::eventService::EventResponse notification;
+    std::string evt = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if (CARD_EVENT == evt) {
+        triggerNotification = handleCardInfoChanged(event, notification);
+    } else if (SIM_REFRESH_EVENT == evt) {
+        triggerNotification = handleSimRefreshInjector(event, notification);
     } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+        return;
+    }
+    if (triggerNotification) {
+        notification.set_filter(telux::tel::TEL_CARD_FILTER);
+        //posting the event to EventService event queue
+        EventService::getInstance().updateEventQueue(notification);
     }
 }
 
 void CardManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
-    if (message.filter() == "tel_card") {
+    if (message.filter() == telux::tel::TEL_CARD_FILTER) {
         onEventUpdate(message.event());
     }
 }
 
-void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
+bool CardManagerServerImpl::handleCardInfoChanged(std::string eventParams,
+    ::eventService::EventResponse& notification) {
     std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
     int slotId;
@@ -2039,12 +2105,13 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
             slotId = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            return false;
         }
     }
     if(slotId == SLOT_2) {
         if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
             LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
-            return;
+            return false;
         }
     }
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
@@ -2059,8 +2126,24 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
             input = std::stoi(token);
         } catch(exception const & ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            return false;
         }
     }
+    // Fetch ntn profile active status
+    int isNtnProfileActive;
+    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    if (token == "") {
+        LOG(INFO, __FUNCTION__,
+            "isNtnProfileActive not passed, assuming ntn profile is not active");
+        isNtnProfileActive = false;
+    } else {
+        try {
+            isNtnProfileActive = std::stoi(token);
+        } catch(exception const & ex) {
+            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        }
+    }
+    LOG(DEBUG, __FUNCTION__, " isNtnProfileActive : ", isNtnProfileActive);
     getJsonForSystemData(slotId, jsonfilename, rootObj);
     bool cardpower = static_cast<bool>(input);
     LOG(DEBUG, __FUNCTION__, "The fetched card power state id is: ", cardpower);
@@ -2082,16 +2165,538 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
         }
     } else {
          LOG(DEBUG, __FUNCTION__, "No change in card state ");
+         return false;
     }
+    // write ntn profile active status
+    rootObj["ICardManager"]["isNtnProfileActive"]["state"] = isNtnProfileActive;
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+    jsonObjSystemStateSlot_[slotId] = rootObj;
 
     ::telStub::cardInfoChange cardInfoChangeEvent;
-    ::eventService::EventResponse anyResponse;
-
     cardInfoChangeEvent.set_phone_id(slotId);
     cardInfoChangeEvent.set_card_power(cardpower);
-    anyResponse.set_filter("tel_card");
-    anyResponse.mutable_any()->PackFrom(cardInfoChangeEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
-    eventImpl.updateEventQueue(anyResponse);
+    cardInfoChangeEvent.set_is_ntn_profile_active(isNtnProfileActive);
+
+    notification.mutable_any()->PackFrom(cardInfoChangeEvent);
+    return true;
+}
+
+bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
+    ::eventService::EventResponse& notification) {
+    int stage = WAITING_FOR_VOTES;
+    LOG(DEBUG, __FUNCTION__, " string is: ", eventParams);
+
+    int mode;
+    GETVALUE_VIA_STR(eventParams, mode);
+    int fileId;
+    GETVALUE_VIA_STR(eventParams, fileId);
+    std::string filePath = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    int sessionId;
+    GETVALUE_VIA_STR(eventParams, sessionId);
+    int slotId = getSlotBySessionType(static_cast<telux::tel::SessionType>(sessionId));
+    if (slotId < DEFAULT_SLOT_ID || slotId > MAX_SLOT_ID) {
+        return false;
+    }
+    std::string aid, channelId;
+    if (sessionId == static_cast<int>(telux::tel::SessionType::NONPROVISIONING_SLOT_1) ||
+        sessionId == static_cast<int>(telux::tel::SessionType::NONPROVISIONING_SLOT_2)) {
+        aid = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    } else {
+        LOG(DEBUG, __FUNCTION__, " ignore aid as session type is ", sessionId);
+    }
+    if (sessionId == static_cast<int>(telux::tel::SessionType::CHANNEL_ID_SLOT_1) ||
+        sessionId == static_cast<int>(telux::tel::SessionType::CHANNEL_ID_SLOT_2)) {
+        channelId = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    } else {
+        LOG(DEBUG, __FUNCTION__, " ignore channelId as session type is ", sessionId);
+    }
+
+    RefreshEventAndPending newRefreshEvt;
+    if (refreshEvtMap_.find(slotId) != refreshEvtMap_.end()) {
+        CardRefreshStage cachedStage =
+            static_cast<CardRefreshStage>(refreshEvtMap_[slotId].refreshEvent.stage());
+        if (cachedStage == WAITING_FOR_VOTES || cachedStage == STARTING) {
+            LOG(ERROR, __FUNCTION__, " 1 session in progress, invalid new user inject!");
+            return false;
+        }
+    }
+
+    newRefreshEvt.pendingAllow = refreshVotingClients_.size();
+    newRefreshEvt.pendingComplete = refreshRegisterClients_.size();
+    if (not newRefreshEvt.pendingAllow) {
+        stage = STARTING;
+    } else {
+         updateSimRefreshStage(slotId, ENDED_WITH_FAILURE, REFRESH_USER_ALLOW_TIMEOUT_MS,
+             true, false);
+    }
+    LOG(DEBUG, __FUNCTION__, " slotId ", slotId, ", stage ", stage,  ", mode ", mode,
+        ", fileId ", fileId,  ", filePath ", filePath,
+        ", sessionId ", sessionId, ", aid ", aid, ", channelId ", channelId);
+
+    newRefreshEvt.refreshEvent.set_phone_id(slotId);
+    newRefreshEvt.refreshEvent.set_stage(static_cast<::telStub::RefreshStage>(stage));
+    newRefreshEvt.refreshEvent.set_mode(static_cast<::telStub::RefreshMode>(mode));
+
+    newRefreshEvt.refreshEvent.clear_effiles();
+    ::telStub::IccFile *efFilesMem = newRefreshEvt.refreshEvent.add_effiles();
+    if (efFilesMem) {
+        efFilesMem->set_fileid(fileId);
+        efFilesMem->set_filepath(filePath);
+    }
+
+    auto ssType = static_cast<::telStub::SessionType>(sessionId);
+    ::telStub::RefreshParams* refreshs = newRefreshEvt.refreshEvent.mutable_refreshs();
+    if (refreshs) {
+        refreshs->set_sessiontype(ssType);
+        refreshs->set_aid(aid);
+        refreshs->set_channelid(channelId);
+    }
+
+    notification.mutable_any()->PackFrom(newRefreshEvt.refreshEvent);
+    refreshEvtMap_[slotId] = newRefreshEvt;
+
+    if (stage == STARTING) {
+        /*if no pendingComplete, go to next refresh stage*/
+        if (newRefreshEvt.pendingComplete == 0 ||
+            not requireConfirmComplete(static_cast<CardRefreshStage>(stage),
+            static_cast<telux::tel::RefreshMode>(mode),
+            static_cast<telux::tel::SessionType>(sessionId))) {
+            updateSimRefreshStage(slotId, ENDED_WITH_SUCCESS, DEFAULT_DELAY, false, false);
+        } else {
+            updateSimRefreshStage(slotId, ENDED_WITH_FAILURE, REFRESH_USER_COMPLETE_TIMEOUT_MS,
+                false, true);
+        }
+    }
+    return true;
+}
+
+::grpc::Status CardManagerServerImpl::setupRefreshConfig(ServerContext* context,
+    const ::telStub::RefreshConfigReq* request,
+    telStub::TelCommonReply* response) {
+    if (not request || not response) {
+        LOG(ERROR, __FUNCTION__, " not request || not response.");
+        return ::grpc::Status::CANCELLED;
+    }
+
+    clientSimRefreshPref clientInfo;
+    getClientInfoFromRpc<::telStub::RefreshConfigReq>(request, clientInfo);
+
+    LOG(DEBUG, __FUNCTION__, " phoneId ", clientInfo.phoneId,
+        " isRegister ", static_cast<int>(request->isregister()),
+        ", doVoting ", static_cast<int>(request->dovoting()));
+
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
+    int cbDelay = 0;
+
+    getApiConfigureFromJson(clientInfo.phoneId, "setupRefreshConfig", status, error, cbDelay);
+    do {
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(WARNING, __FUNCTION__, " status non-success in json config");
+            break;
+        }
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (refreshEvtMap_.find(clientInfo.phoneId) != refreshEvtMap_.end()) {
+                if (static_cast<telux::tel::RefreshStage>(
+                    refreshEvtMap_[clientInfo.phoneId].refreshEvent.stage()) ==
+                    telux::tel::RefreshStage::WAITING_FOR_VOTES ||
+                    static_cast<telux::tel::RefreshStage>(
+                    refreshEvtMap_[clientInfo.phoneId].refreshEvent.stage()) ==
+                    telux::tel::RefreshStage::STARTING) {
+                    status = telux::common::Status::FAILED;
+                    error = telux::common::ErrorCode::INVALID_STATE;
+                    LOG(WARNING, __FUNCTION__, " reject setup config if refresh in progress");
+                    break;
+                }
+            }
+        }
+
+        /*update voting clients vector*/
+        error = updateClientSimRefresh(refreshVotingClients_, clientInfo, request->dovoting());
+
+        /*update register clients vector*/
+        error = updateClientSimRefresh(refreshRegisterClients_, clientInfo, request->isregister());
+    } while (0);
+
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    response->set_delay(cbDelay);
+    response->set_status(static_cast<commonStub::Status>(status));
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status CardManagerServerImpl::allowCardRefresh(ServerContext* context,
+    const ::telStub::AllowCardRefreshReq* request,
+    telStub::TelCommonReply* response) {
+    if (not request || not response) {
+        LOG(ERROR, __FUNCTION__, " not request || not response.");
+        return ::grpc::Status::CANCELLED;
+    }
+    LOG(DEBUG, __FUNCTION__);
+
+    clientSimRefreshPref clientInfo;
+    getClientInfoFromRpc<::telStub::AllowCardRefreshReq>(request, clientInfo);
+
+    bool allowRefresh = request->allowrefresh();
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
+    int cbDelay = 0;
+
+    getApiConfigureFromJson(clientInfo.phoneId, "allowCardRefresh", status, error, cbDelay);
+    do {
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(INFO, __FUNCTION__, " user prefer non-SUCCESS in json.");
+            break;
+        }
+        bool foundClient = clientSimRefreshInfoPresent(refreshVotingClients_, clientInfo);
+        if (not foundClient) {
+            LOG(INFO, __FUNCTION__, " no such clientSimRefreshInfo found.");
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::NOT_PROVISIONED;
+            break;
+        }
+        if (refreshEvtMap_.find(clientInfo.phoneId) == refreshEvtMap_.end()) {
+            LOG(ERROR, __FUNCTION__, " no refresh in progress ", clientInfo.phoneId);
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::SUBSCRIPTION_NOT_SUPPORTED;
+            break;
+        }
+        if (static_cast<CardRefreshStage>(refreshEvtMap_[clientInfo.phoneId].refreshEvent.stage())
+            != WAITING_FOR_VOTES) {
+            LOG(ERROR, __FUNCTION__, " refresh event is not in WAITING_FOR_VOTES stage");
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
+            break;
+        }
+        if (not allowRefresh) {
+            updateSimRefreshStage(clientInfo.phoneId, ENDED_WITH_FAILURE, 0, false, false);
+            break;
+        }
+
+        uint32_t pendingAllow;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (refreshEvtMap_[clientInfo.phoneId].pendingAllow > 0) {
+                refreshEvtMap_[clientInfo.phoneId].pendingAllow -= 1;
+            }
+            pendingAllow = refreshEvtMap_[clientInfo.phoneId].pendingAllow;
+            if (0 == pendingAllow) {
+                cv_.notify_all();
+            }
+        }
+        LOG(DEBUG, __FUNCTION__, " pendingAllow ", pendingAllow);
+        if (not pendingAllow) {
+            /*all clients allow refresh*/
+            updateSimRefreshStage(clientInfo.phoneId, STARTING, DEFAULT_DELAY, false, false);
+        }
+    }while (0);
+
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    response->set_status(static_cast<commonStub::Status>(status));
+    response->set_delay(cbDelay);
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status CardManagerServerImpl::confirmRefreshHandlingCompleted(ServerContext* context,
+    const ::telStub::ConfirmRefreshHandlingCompleteReq* request,
+    telStub::TelCommonReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    if (not request || not response) {
+        LOG(ERROR, __FUNCTION__, " not request || not response.");
+        return ::grpc::Status::CANCELLED;
+    }
+
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
+    int cbDelay = 0;
+    clientSimRefreshPref clientInfo;
+
+    getClientInfoFromRpc<::telStub::ConfirmRefreshHandlingCompleteReq>(request, clientInfo);
+    getApiConfigureFromJson(clientInfo.phoneId, "confirmRefreshHandlingCompleted", status, error, cbDelay);
+    do {
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(INFO, __FUNCTION__, " user prefer non-SUCCESS in json.");
+            break;
+        }
+        bool isCompleted = request->iscompleted();
+        bool foundClient = clientSimRefreshInfoPresent(refreshRegisterClients_, clientInfo);
+        if (not foundClient) {
+            LOG(INFO, __FUNCTION__, " no such clientSimRefreshInfo found.");
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::NOT_PROVISIONED;
+            break;
+        }
+        if (refreshEvtMap_.find(clientInfo.phoneId) == refreshEvtMap_.end()) {
+            LOG(ERROR, __FUNCTION__, " no refresh in progress ", clientInfo.phoneId);
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::SUBSCRIPTION_NOT_SUPPORTED;
+            break;
+        }
+
+        auto refresh = refreshEvtMap_[clientInfo.phoneId].refreshEvent;
+        if (not requireConfirmComplete(static_cast<CardRefreshStage>(refresh.stage()),
+            static_cast<telux::tel::RefreshMode>(refresh.mode()),
+            static_cast<telux::tel::SessionType>(refresh.refreshs().sessiontype()))) {
+            LOG(ERROR, __FUNCTION__, " does not require user confirm.");
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::MODE_NOT_SUPPORTED;
+            break;
+        }
+
+        if (isCompleted) {
+            uint32_t pendComplete;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (refreshEvtMap_[clientInfo.phoneId].pendingComplete > 0) {
+                    refreshEvtMap_[clientInfo.phoneId].pendingComplete -= 1;
+                }
+                pendComplete = refreshEvtMap_[clientInfo.phoneId].pendingComplete;
+                if (0 == pendComplete) {
+                    cv_.notify_all();
+                }
+            }
+            LOG(DEBUG, __FUNCTION__, " pendComplete ", pendComplete);
+            if (pendComplete == 0) {
+                updateSimRefreshStage(clientInfo.phoneId, ENDED_WITH_SUCCESS,
+                    DEFAULT_DELAY, false, false);
+            }
+        } else {
+            LOG(DEBUG, __FUNCTION__, " user confirm not complete, waiting.");
+        }
+    } while (0);
+
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    response->set_delay(cbDelay);
+    response->set_status(static_cast<commonStub::Status>(status));
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status CardManagerServerImpl::requestLastRefreshEvent(ServerContext* context,
+    const ::telStub::RequestLastRefreshEventReq* request,
+    telStub::RequestLastRefreshEventResp* response) {
+    LOG(DEBUG, __FUNCTION__);
+    if (not request || not response) {
+        LOG(ERROR, __FUNCTION__, " not request || not response.");
+        return ::grpc::Status::CANCELLED;
+    }
+
+    clientSimRefreshPref clientInfo;
+    getClientInfoFromRpc<::telStub::RequestLastRefreshEventReq>(request, clientInfo);
+
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
+    int cbDelay = 0;
+    getApiConfigureFromJson(clientInfo.phoneId, "confirmRefreshHandlingCompleted", status, error, cbDelay);
+    do {
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " user prefer settings is non-success.");
+            break;
+        }
+        if (refreshEvtMap_.find(clientInfo.phoneId) == refreshEvtMap_.end()) {
+            LOG(ERROR, __FUNCTION__, " no refresh in progress ", clientInfo.phoneId);
+            status = telux::common::Status::FAILED;
+            error = telux::common::ErrorCode::SUBSCRIPTION_NOT_SUPPORTED;
+            break;
+        }
+
+        auto lastRefreshEvt = refreshEvtMap_[clientInfo.phoneId].refreshEvent;
+        response->set_stage(lastRefreshEvt.stage());
+        response->set_mode(lastRefreshEvt.mode());
+
+        for (int i = 0; i< lastRefreshEvt.effiles_size(); ++i) {
+            ::telStub::IccFile* efFile = response->add_effiles();
+            if (efFile) {
+                efFile->set_fileid(lastRefreshEvt.effiles(i).fileid());
+                efFile->set_filepath(lastRefreshEvt.effiles(i).filepath());
+            } else {
+                status = telux::common::Status::FAILED;
+                error = telux::common::ErrorCode::NO_MEMORY;
+                break;
+            }
+        }
+
+        ::telStub::RefreshParams* refreshs = response->mutable_refreshs();
+        refreshs->set_sessiontype(request->refreshs().sessiontype());
+        refreshs->set_aid(request->refreshs().aid());
+        refreshs->set_channelid(request->refreshs().channelid());
+    } while (0);
+
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    response->set_delay(cbDelay);
+    response->set_status(static_cast<commonStub::Status>(status));
+    return ::grpc::Status::OK;
+}
+
+void CardManagerServerImpl::updateSimRefreshStage(int slotId, CardRefreshStage newStage,
+    uint32_t delayMs, bool checkPendingUserAllow, bool checkPendingUserComplete) {
+    LOG(DEBUG, __FUNCTION__, " slotId ", slotId, ", newStage ", static_cast<int>(newStage),
+        ", delayMs ", delayMs, ", checkPendingUserAllow", +checkPendingUserAllow,
+            ", checkPendingUserComplete ", checkPendingUserComplete);
+    auto f = std::async(std::launch::async, [this, slotId, newStage, delayMs,
+        checkPendingUserAllow, checkPendingUserComplete]() {
+        if (delayMs > 0) {
+            std::unique_lock<std::mutex> lck(mutex_);
+            cv_.wait_for(lck, std::chrono::milliseconds(delayMs));
+        }
+        if (exit_) {
+            LOG(INFO, " Abort updateSimRefreshStage due to exiting");
+            return;
+        }
+        if ((checkPendingUserAllow && (refreshEvtMap_[slotId].pendingAllow == 0)) ||
+            (checkPendingUserComplete && (refreshEvtMap_[slotId].pendingComplete == 0))) {
+            LOG(INFO, " Cancel. pendingAllow ", refreshEvtMap_[slotId].pendingAllow,
+                " Cancel. pendingComplete ", refreshEvtMap_[slotId].pendingComplete);
+            return;
+        }
+
+        ::telStub::RefreshEvent refreshEvt;
+        {
+            std::lock_guard<std::mutex> lck(mutex_);
+            if (static_cast<int>(refreshEvtMap_[slotId].refreshEvent.stage()) >=
+                static_cast<int>(ENDED_WITH_SUCCESS)) {
+                LOG(DEBUG, "simrefresh ignore setting newStage ", static_cast<int>(newStage));
+               return;
+            }
+            if (ENDED_WITH_FAILURE == newStage) {
+                refreshEvtMap_[slotId].pendingAllow = 0;
+                refreshEvtMap_[slotId].pendingComplete = 0;
+                cv_.notify_all();
+            }
+            refreshEvtMap_[slotId].refreshEvent.set_stage(
+                static_cast<::telStub::RefreshStage>(newStage));
+            refreshEvt = refreshEvtMap_[slotId].refreshEvent;
+            LOG(DEBUG, "simrefresh slotId ", slotId, ", newStage ", static_cast<int>(newStage));
+        }
+
+        ::eventService::EventResponse evt;
+        evt.mutable_any()->PackFrom(refreshEvt);
+        evt.set_filter(telux::tel::TEL_CARD_FILTER);
+        //posting the event to EventService event queue
+        EventService::getInstance().updateEventQueue(evt);
+
+        if (newStage == STARTING) {
+            if (refreshEvtMap_[slotId].pendingComplete > 0 &&
+                requireConfirmComplete(newStage,
+                static_cast<telux::tel::RefreshMode>(refreshEvtMap_[slotId].refreshEvent.mode()),
+                static_cast<telux::tel::SessionType>(
+                    refreshEvtMap_[slotId].refreshEvent.refreshs().sessiontype()))) {
+                /*require client confirm complete,  fail if timeout.*/
+                updateSimRefreshStage(slotId, ENDED_WITH_FAILURE,
+                    REFRESH_USER_COMPLETE_TIMEOUT_MS, false, true);
+            } else {
+                /*do not require client confirm complete, go ahead change to next stage.*/
+                updateSimRefreshStage(slotId, ENDED_WITH_SUCCESS, DEFAULT_DELAY, false, false);
+            }
+        }
+    }).share();
+    taskQ_.add(f);
+}
+
+int CardManagerServerImpl::getSlotBySessionType(telux::tel::SessionType st) {
+    switch (st) {
+        case telux::tel::SessionType::PRIMARY:
+        case telux::tel::SessionType::NONPROVISIONING_SLOT_1:
+        case telux::tel::SessionType::CARD_ON_SLOT_1:
+        case telux::tel::SessionType::CHANNEL_ID_SLOT_1:
+            return SLOT_1;
+        case telux::tel::SessionType::SECONDARY:
+        case telux::tel::SessionType::NONPROVISIONING_SLOT_2:
+        case telux::tel::SessionType::CARD_ON_SLOT_2:
+        case telux::tel::SessionType::CHANNEL_ID_SLOT_2:
+            return SLOT_2;
+        default:
+            LOG(ERROR, __FUNCTION__, " invalid sessionType ", static_cast<int>(st));
+    }
+    return INVALID_SLOT_ID;
+}
+
+bool CardManagerServerImpl::requireConfirmComplete(const CardRefreshStage stage,
+    const telux::tel::RefreshMode mode, const telux::tel::SessionType st) {
+    if (stage != STARTING) {
+        return false;
+    }
+
+    /*FCN / Init + FCN refresh mode for GW session type, and
+      non RESET refresh mode for noprovisioning session type requires client confirm*/
+    if (((mode == telux::tel::RefreshMode::INIT_FCN || mode == telux::tel::RefreshMode::FCN) &&
+        (st == telux::tel::SessionType::PRIMARY || st == telux::tel::SessionType::SECONDARY))
+        ||
+        (mode != telux::tel::RefreshMode::RESET &&
+            (telux::tel::SessionType::NONPROVISIONING_SLOT_1 == st ||
+            telux::tel::SessionType::NONPROVISIONING_SLOT_2 == st))) {
+        /*In a state require client confirm complete*/
+        LOG(DEBUG, __FUNCTION__, " yes, mode ", static_cast<int>(mode),
+            ", st ", static_cast<int>(st));
+        return true;
+    }
+
+    LOG(DEBUG, __FUNCTION__, " no, mode ", static_cast<int>(mode), ", st ", static_cast<int>(st));
+    return false;
+}
+
+bool CardManagerServerImpl::clientSimRefreshInfoPresent(
+    std::vector <clientSimRefreshPref>& vector, const clientSimRefreshPref&  entry) {
+
+    for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
+        it != vector.end();) {
+        if (it->clientId == entry.clientId && it->phoneId == entry.phoneId &&
+            it->sessionAidCid.sessionType == entry.sessionAidCid.sessionType &&
+            it->sessionAidCid.aid == entry.sessionAidCid.aid &&
+            it->sessionAidCid.channelId == entry.sessionAidCid.channelId) {
+            return true;
+        }
+        ++it;
+    }
+    LOG(DEBUG, __FUNCTION__, " not found. phoneId ", entry.phoneId, ", sessionType",
+        static_cast<int>(entry.sessionAidCid.sessionType), " aid ", entry.sessionAidCid.aid,
+        " channelId ", entry.sessionAidCid.channelId);
+    return false;
+}
+
+telux::common::ErrorCode CardManagerServerImpl::updateClientSimRefresh(
+    std::vector <clientSimRefreshPref>& vector, const clientSimRefreshPref& usrPref, bool enable) {
+    telux::common::ErrorCode res = telux::common::ErrorCode::ALREADY;
+    bool found = false;
+    for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
+        it != vector.end();) {
+        if (it->clientId == usrPref.clientId && it->phoneId == usrPref.phoneId &&
+            it->sessionAidCid.sessionType == usrPref.sessionAidCid.sessionType &&
+            it->sessionAidCid.aid == usrPref.sessionAidCid.aid &&
+            it->sessionAidCid.channelId == usrPref.sessionAidCid.channelId) {
+            found = true;
+            if (not enable) {
+                vector.erase(it);
+                LOG(DEBUG, __FUNCTION__, " erase entry from vector.");
+                res = telux::common::ErrorCode::SUCCESS;
+            } else {
+                LOG(ERROR, __FUNCTION__, " ALREADY enabled.");
+            }
+            break;
+        }
+        ++it;
+    }
+    if (not found) {
+        if (enable) {
+            LOG(DEBUG, __FUNCTION__, " push back entry to vector.");
+            vector.push_back(usrPref);
+            res = telux::common::ErrorCode::SUCCESS;
+        } else {
+            LOG(ERROR, __FUNCTION__, " ALREADY disabled.");
+        }
+    }
+    return res;
+}
+
+template <typename T>
+void CardManagerServerImpl::getClientInfoFromRpc(const T* rpcMsg, clientSimRefreshPref& client) {
+    client.clientId = rpcMsg->identifier();
+    client.phoneId  = rpcMsg->phone_id();
+    client.sessionAidCid.sessionType = static_cast<telux::tel::SessionType>(
+        rpcMsg->refreshs().sessiontype());
+    client.sessionAidCid.aid =  rpcMsg->refreshs().aid();
+    client.sessionAidCid.channelId = rpcMsg->refreshs().channelid();
+
+    LOG(DEBUG, __FUNCTION__, " phoneId ", client.phoneId, ", sessionType ",
+        static_cast<uint32_t>(client.sessionAidCid.sessionType),
+        ", aid ", client.sessionAidCid.aid, ", channelId ", client.sessionAidCid.aid);
 }

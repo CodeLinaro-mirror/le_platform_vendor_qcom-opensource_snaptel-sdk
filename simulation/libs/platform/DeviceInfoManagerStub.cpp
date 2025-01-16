@@ -13,6 +13,7 @@
 #define RPC_FAIL_SUFFIX " RPC Request failed - "
 #define DEFAULT_DELAY 100
 #define SKIP_CALLBACK -1
+#define DEVICEINFO_MANAGER_FILTER "deviceinfo_manager"
 
 namespace telux {
 namespace platform {
@@ -20,108 +21,157 @@ namespace platform {
 using namespace telux::common;
 
 DeviceInfoManagerStub::DeviceInfoManagerStub()
-   : serviceStatus_(ServiceStatus::SERVICE_UNAVAILABLE)
-   , initCb_(nullptr) {
-    LOG(DEBUG, __FUNCTION__);
-
-    stub_ = CommonUtils::getGrpcStub<DeviceInfoManagerService>();
+   : SimulationManagerStub<DeviceInfoManagerService>(std::string("IDeviceInfoManager"))
+   , clientEventMgr_(ClientEventManager::getInstance()) {
+    LOG(INFO, __FUNCTION__);
 }
 
 DeviceInfoManagerStub::~DeviceInfoManagerStub() {
-    LOG(DEBUG, __FUNCTION__);
-
-    cleanup();
+    LOG(INFO, __FUNCTION__);
 }
 
-ServiceStatus DeviceInfoManagerStub::getServiceStatus() {
+
+void DeviceInfoManagerStub::createListener() {
     LOG(DEBUG, __FUNCTION__);
 
-    std::lock_guard<std::mutex> lock(mutex_);
-    return serviceStatus_;
-}
-
-void DeviceInfoManagerStub::setServiceStatus(ServiceStatus cbStatus, int cbDelay) {
-    LOG(DEBUG, __FUNCTION__);
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        serviceStatus_ = cbStatus;
-        if (cbStatus != ServiceStatus::SERVICE_AVAILABLE) {
-            isInitsyncTriggered_ = false;
-        }
-    }
-
-    if (initCb_ && (cbDelay != SKIP_CALLBACK)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
-        initCb_(cbStatus);
-    }
-
-    std::vector<std::weak_ptr<IDeviceInfoListener>> applisteners;
-    listenerMgr_->getAvailableListeners(applisteners);
-    LOG(DEBUG, __FUNCTION__, ": Notifying service status: ", static_cast<int>(cbStatus),
-        " to listeners: ", applisteners.size());
-    for (auto &wp : applisteners) {
-        if (auto sp = wp.lock()) {
-            sp->onServiceStatusChange(cbStatus);
-        }
-    }
-}
-
-Status DeviceInfoManagerStub::init(InitResponseCb callback) {
-    LOG(DEBUG, __FUNCTION__);
-
-    Status status = telux::common::Status::SUCCESS;
-    std::lock_guard<std::mutex> lock(mutex_);
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IDeviceInfoListener>>();
-    if (!listenerMgr_) {
-        LOG(ERROR, __FUNCTION__, " FAILED to create ListenerManager instance");
-        status = Status::FAILED;
-    }
-
-    initCb_ = callback;
-    auto f  = std::async(std::launch::async, [this]() { this->initSync(); }).share();
-    taskQ_.add(f);
-
-    return status;
+    listenerMgr_ = std::make_shared<ListenerManager<IDeviceInfoListener>>();
 }
 
 void DeviceInfoManagerStub::cleanup() {
     LOG(DEBUG, __FUNCTION__);
-
-    initCb_       = nullptr;
 }
 
-void DeviceInfoManagerStub::initSync() {
+void DeviceInfoManagerStub::setInitCbDelay(uint32_t cbDelay) {
+    cbDelay_ = cbDelay;
+    LOG(DEBUG, __FUNCTION__, ":: cbDelay_: ", cbDelay_);
+}
+
+uint32_t DeviceInfoManagerStub::getInitCbDelay() {
+    LOG(DEBUG, __FUNCTION__, ":: cbDelay_: ", cbDelay_);
+
+    return cbDelay_;
+}
+
+Status DeviceInfoManagerStub::init() {
     LOG(DEBUG, __FUNCTION__);
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (isInitsyncTriggered_) {
-            LOG(DEBUG, __FUNCTION__, " Initialization is already triggered");
-            return;
-        } else {
-            isInitsyncTriggered_ = true;
+    Status status = Status::SUCCESS;
+
+    try {
+        createListener();
+    } catch (std::bad_alloc &e) {
+        LOG(ERROR, __FUNCTION__, ": Invalid listener instance");
+        return Status::FAILED;
+    }
+    status = registerDefaultIndications();
+    return status;
+}
+
+void DeviceInfoManagerStub::onEventUpdate(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+
+    // Execute all events in separate thread
+    auto f = std::async(std::launch::deferred, [this, event]() {
+            if (event.Is<commonStub::GetServiceStatusReply>()) {
+                handleSSREvent(event);
+            } else {
+                LOG(ERROR, __FUNCTION__, ":: Invalid event");
+    }}).share();
+
+    taskQ_.add(f);
+}
+
+void DeviceInfoManagerStub::handleSSREvent(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+
+    commonStub::GetServiceStatusReply ssrResp;
+    event.UnpackTo(&ssrResp);
+
+    ServiceStatus srvcStatus = ServiceStatus::SERVICE_FAILED;
+
+    if (ssrResp.service_status() == commonStub::ServiceStatus::SERVICE_AVAILABLE) {
+        srvcStatus = ServiceStatus::SERVICE_AVAILABLE;
+    } else if (ssrResp.service_status() == commonStub::ServiceStatus::SERVICE_UNAVAILABLE) {
+        srvcStatus = ServiceStatus::SERVICE_UNAVAILABLE;
+    } else if (ssrResp.service_status() == commonStub::ServiceStatus::SERVICE_FAILED) {
+        srvcStatus = ServiceStatus::SERVICE_FAILED;
+    } else {
+        // Ignore
+        LOG(ERROR, __FUNCTION__, ":: INVALID SSR event");
+        return;
+    }
+
+    setServiceReady(srvcStatus);
+    onDmsServiceStatusChange(srvcStatus);
+}
+
+void DeviceInfoManagerStub::onDmsServiceStatusChange(
+    telux::common::ServiceStatus srvcStatus) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (srvcStatus == getServiceStatus()) {
+        return;
+    }
+
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, ":: DeviceInfo Manager Service is UNAVAILABLE/FAILED");
+        setServiceStatus(srvcStatus);
+        return;
+    }
+
+    LOG(INFO, __FUNCTION__, ":: DeviceInfo Manager Service is AVAILABLE");
+    auto f = std::async(std::launch::async, [this]() { this->initSync(); }).share();
+    taskQ_.add(f);
+}
+
+void DeviceInfoManagerStub::notifyServiceStatus(ServiceStatus srvcStatus) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::vector<std::weak_ptr<IDeviceInfoListener>> applisteners;
+    listenerMgr_->getAvailableListeners(applisteners);
+    LOG(DEBUG, __FUNCTION__, ":: Notifying DeviceInfo manager service status: ",
+            static_cast<int>(srvcStatus), " to listeners: ", applisteners.size());
+    for (auto &wp : applisteners) {
+        if (auto sp = wp.lock()) {
+            sp->onServiceStatusChange(srvcStatus);
         }
     }
+}
 
-    telux::common::ServiceStatus status = telux::common::ServiceStatus::SERVICE_FAILED;
-    ::platformStub::GetServiceStatusReply response;
-    const ::google::protobuf::Empty request;
-    ClientContext context;
-    int cbDelay = DEFAULT_DELAY;
+ServiceStatus DeviceInfoManagerStub::getServiceStatus() {
+    return SimulationManagerStub::getServiceStatus();
+}
 
-    ::grpc::Status reqstatus = stub_->InitService(&context, request, &response);
+Status DeviceInfoManagerStub::registerDefaultIndications() {
+    LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
-    if(!reqstatus.ok()) {
-        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
-        setServiceStatus(telux::common::ServiceStatus::SERVICE_FAILED, cbDelay);
+    Status status = Status::FAILED;
+    status = clientEventMgr_.registerListener(shared_from_this(), DEVICEINFO_MANAGER_FILTER);
+    if ((status != Status::SUCCESS) &&
+        (status != Status::ALREADY)) {
+        LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
+        return status;
+    }
+    return status;
+}
+
+Status DeviceInfoManagerStub::initSyncComplete(
+        ServiceStatus srvcStatus) {
+    LOG(DEBUG, __FUNCTION__);
+
+    registerDefaultIndications();
+
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE)
+    {
+        return Status::FAILED;
     }
 
-    status = static_cast<telux::common::ServiceStatus>(response.service_status());
-    cbDelay = static_cast<int>(response.delay());
-    setServiceStatus(status, cbDelay);
+    if (!listenerMgr_) {
+        LOG(ERROR, __FUNCTION__, ":: Invalid instance ");
+        return Status::FAILED;
+    }
+
+    return Status::SUCCESS;
 }
 
 Status DeviceInfoManagerStub::registerListener(std::weak_ptr<IDeviceInfoListener> listener) {
@@ -139,8 +189,9 @@ Status DeviceInfoManagerStub::deregisterListener(std::weak_ptr<IDeviceInfoListen
 Status DeviceInfoManagerStub::getPlatformVersion(PlatformVersion &pv) {
     LOG(DEBUG, __FUNCTION__);
 
-    if (serviceStatus_ != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return Status::NOTREADY;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, " DeviceInfoManagerStub is not ready");
+        return telux::common::Status::NOTREADY;
     }
 
     telux::common::Status status = telux::common::Status::FAILED;
@@ -171,8 +222,9 @@ Status DeviceInfoManagerStub::getPlatformVersion(PlatformVersion &pv) {
 Status DeviceInfoManagerStub::getIMEI(std::string &imei) {
     LOG(DEBUG, __FUNCTION__);
 
-    if (serviceStatus_ != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return Status::NOTREADY;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, " DeviceInfoManagerStub is not ready");
+        return telux::common::Status::NOTREADY;
     }
 
     telux::common::Status status = telux::common::Status::FAILED;

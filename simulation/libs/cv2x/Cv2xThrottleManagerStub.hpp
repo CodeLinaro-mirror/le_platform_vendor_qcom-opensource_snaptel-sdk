@@ -9,15 +9,32 @@
 #include <future>
 
 #include "common/AsyncTaskQueue.hpp"
+#include "common/ListenerManager.hpp"
+#include "common/event-manager/EventManager.hpp"
 #include "protos/proto-src/cv2x_simulation.grpc.pb.h"
-
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xThrottleManager.hpp>
+
+#include "common/ListenerManager.hpp"
 
 namespace telux {
 namespace cv2x {
 
-class Cv2xThrottleManagerStub : public ICv2xThrottleManager {
+class Cv2xThrottleEventListener : public IEventListener {
+ public:
+    void onEventUpdate(google::protobuf::Any event) override;
+
+    explicit Cv2xThrottleEventListener(
+        std::shared_ptr<telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>>);
+
+ private:
+    std::shared_ptr<telux::common::ListenerManager<
+                        telux::cv2x::ICv2xThrottleManagerListener>> listenerMgr_;
+
+};
+
+class Cv2xThrottleManagerStub : public ICv2xThrottleManager,
+                                public std::enable_shared_from_this<Cv2xThrottleManagerStub> {
  public:
     Cv2xThrottleManagerStub();
     ~Cv2xThrottleManagerStub();
@@ -31,12 +48,15 @@ class Cv2xThrottleManagerStub : public ICv2xThrottleManager {
     telux::common::Status setVerificationLoad(int load, setVerificationLoadCallback cb) override;
 
  private:
-    std::unique_ptr<::cv2xStub::Cv2xManagerService::Stub> stub_;
+    std::unique_ptr<::cv2xStub::Cv2xThrottleManagerService::Stub> stub_;
     std::atomic<telux::common::ServiceStatus> serviceStatus_{
         telux::common::ServiceStatus::SERVICE_UNAVAILABLE};
 
     void initSync(telux::common::InitResponseCb callback);
     telux::common::AsyncTaskQueue<void> taskQ_;
+    std::shared_ptr<telux::common::ListenerManager<
+                        telux::cv2x::ICv2xThrottleManagerListener>> listenerMgr_;
+    std::shared_ptr<Cv2xThrottleEventListener> throttleEvtListener_;
 };
 
 }  // namespace cv2x

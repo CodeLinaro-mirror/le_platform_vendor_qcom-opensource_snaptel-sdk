@@ -93,6 +93,7 @@ CongestionControlCalculations ApplicationBase::congCtrlCbData;
 v2x_diag_qits_general_data ApplicationBase::generalInfo;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
+RadioTransmit* QitsCongCtrlListener::spsTransmit_;
 FILE* ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
 bool ApplicationBase::securityEnabled;
@@ -106,10 +107,14 @@ double ApplicationBase::overrideSpeed;
 bool ApplicationBase::writeLogFinish;
 bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
+shared_ptr<ILocationInfoEx> ApplicationBase::lastLocationInfoIdChange;
 bool ApplicationBase::securityInitialized;
+unsigned int ApplicationBase::idChangeDistance;
+uint64_t ApplicationBase::scheduledIdChangeTime;
 int ApplicationBase::signFail;
 int ApplicationBase::signSuccess;
-
+bool init_loc = false;
+static int idChangeTriggercounter = 0 ;
 #define EventBitsShift(bits, shift) \
     (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
 
@@ -166,12 +171,27 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
             speed = locationInfo->getSpeed();
         }
         if(ApplicationBase::congestionControlManager){
-                CCErrorCode res =
-                    ApplicationBase::congestionControlManager->updateHostVehicleData(
-                    pos, speed);
+            CCErrorCode res =
+                ApplicationBase::congestionControlManager->updateHostVehicleData(
+                pos, speed);
         }
     }
 
+}
+
+void QitsCongCtrlListener::onCongestionControlDataReady (
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData,
+        bool critEvent) {
+
+    if(congestionControlUserData){
+        QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
+        memcpy(&ApplicationBase::congCtrlCbData,
+                congestionControlUserData->congestionControlCalculations.get(),
+                sizeof(CongestionControlCalculations));
+        if(!critEvent){
+            sem_post(congestionControlUserData->congestionControlSem);
+        }
+    }
 }
 
 unsigned short ApplicationBase::getEventsData(const vehicleeventflags_ut *events) {
@@ -314,8 +334,15 @@ void ApplicationBase::diagLogPktGenericInfo() {
 }
 
 void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
-   ApplicationBase::hvLocationInfo = hvLocationInfoIn;
+    ApplicationBase::hvLocationInfo = hvLocationInfoIn;
+#if AEROLINK
+    if(!init_loc){
+        lastLocationInfoIdChange = hvLocationInfo;
+        init_loc = true;
+    }
+#endif
 }
+
 
 void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
     // can pass mbd, signing, and verif stats here and other settings in future
@@ -366,8 +393,8 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     }
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%d,",
         validPkt  ? 1: 0);
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,",
-        (long unsigned int)congestionControlCalculations->maxITT);
+    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%" PRIu64 ",",
+        congestionControlCalculations->maxITT);
 
     // gps time, event, random time
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
@@ -376,7 +403,6 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
 
     //sps enhancement data
-    //this->congCtrlConfig.spsEnhHysterPerc
     if (congestionControlCalculations->spsEnhanceData) {
         // random time - todo
         tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,%d",
@@ -388,101 +414,84 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     }
 }
 
-
-class QitsCongCtrlListener :public ICongestionControlListener {
-public:
-static RadioTransmit* spsTransmit_;
-uint64_t lastPeriodicity = 100;
-// need to provide pointer to sps transmit
-// need to provide pointer to cong control user data
-void updateSpsTransmitFlow(
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData) {
-    // once the user data is updated, the thread in qits
-    // can now schedule a transmission
-    // cast void pointer
-    // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
-    if (spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
-        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity) {
-        lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
-        // update the sps flow with the rounded max ITT that congestionControl calculates
-        shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
-        if (spsInfoSharedPtr == nullptr) {
-            std::cerr << "Invalid sps info. Not updating. \n";
-            return;
-        }
-        SpsFlowInfo *spsInfo = spsInfoSharedPtr.get();
-        // congestionControl rounds it already to valid values for sps periodicity
-        spsInfo->periodicityMs =
-            (congestionControlUserData->congestionControlCalculations->maxITT);
-
-        // catch future error here
-        try{
-            Status ret = spsTransmit_->updateSpsFlow(*spsInfo);
-            if (ret == Status::FAILED) {
-                std::cerr << "sps transmit flow update failed\n";
-                std::cerr << "Max itt was: "
-                          << congestionControlUserData->congestionControlCalculations->maxITT
-                          << "\n";
-            }
-        } catch (const std::future_error &e) {
-            std::cout << "Caught future error when updating sps flow\n";
-            std::cout << "Error log is: " << e.what() << "\n";
-        }
-    }
-}
-
-void onCongestionControlDataReady (
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool critEvent) override {
-
-    if(congestionControlUserData){
-        QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
-        memcpy(&ApplicationBase::congCtrlCbData,
-                congestionControlUserData->congestionControlCalculations.get(),
-                sizeof(CongestionControlCalculations));
-        if(!critEvent){
-            sem_post(congestionControlUserData->congestionControlSem);
-        }
-    }
-}
-};
-
-
-RadioTransmit* QitsCongCtrlListener::spsTransmit_;
-
-// thread function to periodically change ID and cert
-void ApplicationBase::changeIdTimer(unsigned int interval)
-{
-    printf("Time interval for pseudonym and id change is: %d\n", interval);
-    std::thread([this, interval]() {
-        while (true)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-            (this->*thrFn)();
-        }
-    }).detach();
-}
-
 // first need to call setup function to initialize the lcm id change
 // then periodically call "idChange" and check return value and updates in idChangeData
-void ApplicationBase::changeIdentity(){
-    //  pseudonym cert change
+void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
+    // pseudonym cert change
+    exitApp = false;
+    uint64_t currTime, timeSinceLastIdChange;
+    double hvLatNew, hvLonNew, hvLatOld, hvLonOld;
+    unsigned int distSinceLastIdChange;
+    if(lastIdChangeTime == 0){
+        lastIdChangeTime = timestamp_now();
+    }
     if(!exitApp)
     {
+        // wait for distance requirement
+        // if an event is happening, cert change must not happen
         sem_wait(&idChangeData.idSem);
-        int ret = SecService->idChange();
-        if( ret < 0 ){
-            if(appVerbosity > 1)
-                fprintf(stderr,"Id Change Failure\n");
-        }
-        else{
-            if(appVerbosity > 1)
-                printf("Id Change Success\n");
-            // if not simulation, perform l2 src randomization
-            if (!this->isTxSim) { // radio
-                for(int index = 0 ; index < spsTransmits.size(); index++){
-                    this->spsTransmits[index].updateSrcL2();
+        if(!criticalState){
+            // here we need to check for two things:
+            // interval has passed and distance has been covered since last id change
+            currTime = timestamp_now();
+            if(currTime > lastIdChangeTime) {
+                timeSinceLastIdChange = currTime - lastIdChangeTime;
+            }else{
+                timeSinceLastIdChange = 0;
+            }
+            hvLatNew = (hvLocationInfo->getLatitude());
+            hvLonNew = (hvLocationInfo->getLongitude());
+            hvLatOld = lastLocationInfoIdChange->getLatitude();
+            hvLonOld = lastLocationInfoIdChange->getLongitude();
+            // check if there have been any fixes yet
+            if(init_loc){
+                distSinceLastIdChange =
+                     bsmCompute2dDistance(hvLatOld, hvLonOld, hvLatNew, hvLonNew);
+            }else{
+                distSinceLastIdChange = 0;
+            }
+            // check if both conditions satisfied
+            if(timeSinceLastIdChange >= configuration.idChangeInterval &&
+                distSinceLastIdChange >= ApplicationBase::idChangeDistance){
+                // perform id change and record current position and time
+                int ret = SecService->idChange();
+
+                if( ret < 0 ){
+                    if(appVerbosity > 1) {
+                        fprintf(stderr,"Id Change Failure\n");
+                    }
                 }
+                else{
+                    if(appVerbosity > 7 ){
+                        printf("Id Change Init Call Success\n");
+                        std::cout << "Time is: " << lastIdChangeTime << "\n";
+                        std::cout << "Position is, lat: " << hvLatNew << ", lon: "
+                            << hvLonNew << "\n";
+                        std::cout << "Current time: " << currTime << "\n";
+                        std::cout << "Last id change time: " << lastIdChangeTime << "\n";
+                        std::cout << "Time since last id change: "
+                            << timeSinceLastIdChange << "\n";
+                        std::cout << "Config id change interval: " <<
+                            configuration.idChangeInterval <<"\n";
+                        std::cout << "Distance since last id change " <<
+                            distSinceLastIdChange << "\n";
+                        std::cout << "Config id change distance: " <<
+                            ApplicationBase::idChangeDistance << "\n";
+                    }
+                    // wait for the callback to complete
+                    if(idChangeCbSem != nullptr){
+                        sem_wait(idChangeCbSem);
+                    }
+                    // if not simulation, perform l2 src randomization
+                    if (!this->isTxSim) { // radio
+                        for(int index = 0 ; index < spsTransmits.size(); index++){
+                            this->spsTransmits[index].updateSrcL2();
+                        }
+                    }
+                }
+
+                lastIdChangeTime = timestamp_now();
+                lastLocationInfoIdChange = hvLocationInfo;
             }
         }
         sem_post(&idChangeData.idSem);
@@ -656,6 +665,8 @@ bool ApplicationBase::init() {
         #ifdef AEROLINK
             try{
               // LCM Constructor for Aerolink
+              idChangeData.idChangeCbSem = &idChangeCbSem;
+              sem_init(idChangeData.idChangeCbSem, 0, 1);
               if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
                   SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
                           configuration.securityContextName,
@@ -663,15 +674,6 @@ bool ApplicationBase::init() {
                           configuration.lcmName.c_str(),
                           std::ref(idChangeData)
                           ));
-
-                  // lcm id change timer thread
-                  sem_init(&idChangeData.idSem, 0, 1);
-                  if (appVerbosity > 5){
-                      fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                          this->configuration.idChangeInterval/1000.0);
-                  }
-                  changeIdTimer(this->configuration.idChangeInterval);
-
               }else{
                   // Non-LCM Constructor for Aerolink
                   SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
@@ -743,6 +745,7 @@ bool ApplicationBase::init() {
 
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
+    sem_init(&idChangeData.idSem, 0, 1);
     cb =
         [this](bool emergent,
                const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
@@ -998,7 +1001,7 @@ void ApplicationBase::vehicleEventReport(bool emergent,
         // if notify first, low probability that ID would change when sending the event
         stateCv.notify_all();
         if (criticalState) {
-
+#if AEROLINK
            if (this->configuration.enableSecurity == true) {
                if (SecService->lockIdChange()) {
                    printf("Fail to lock ID change\n");
@@ -1012,7 +1015,7 @@ void ApplicationBase::vehicleEventReport(bool emergent,
                    printf("Fail to lock ID change\n");
                }
            }
-
+#endif
         }
     }
 }
@@ -1536,6 +1539,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         }
     }
 
+    if (configs.find("RVTransmitLossSimulation") != configs.end()) {
+        configuration.RVTransmitLossSimulation =
+            stoi(configs["RVTransmitLossSimulation"]);
+    }
+
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
         if (configs["EnableSecurity"].find("true") != std::string::npos)
@@ -1620,6 +1628,36 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             }
         }
 
+
+        /*For ssp check */
+        if (configs.find("expectedSspValue") != configs.end()) {
+            char* end;
+            uint8_t num = (uint8_t)std::count(configs["expectedSspValue"].begin(),
+                    configs["expectedSspValue"].end(), ':');
+            if(configs["expectedSspValue"].back() != ':'){
+                num++;
+            }
+            this->configuration.expectedSspLength = num;
+            stream.str(configs["expectedSspValue"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string s;
+                getline(stream, s, ':');
+                if (s.empty()) {
+                    break;
+                }
+                this->configuration.expectedSspValueVect.push_back(s);
+                this->configuration.expectedSsp[i] =
+                        (uint8_t)strtol(
+                                this->configuration.expectedSspValueVect.at(i).c_str(), &end,16);
+            }
+            stream.str("");
+            stream.clear();
+        }
+        else{
+            this->configuration.expectedSspLength = 0;
+        }
+
         if(configs.find("setGenLocation") != configs.end()) {
             istringstream is4(configs["setGenLocation"]);
             is4 >> boolalpha >> configuration.setGenLocation;
@@ -1643,6 +1681,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("overridePsidCheck") != configs.end()) {
             istringstream is4(configs["overridePsidCheck"]);
             is4 >> boolalpha >> configuration.overridePsidCheck;
+        }
+
+        if(configs.find("emergencyVehicleEventTX") != configs.end()) {
+            istringstream is4(configs["emergencyVehicleEventTX"]);
+            is4 >> boolalpha >> configuration.emergencyVehicleEventTX;
         }
 
         /* Signing-related statistics */
@@ -1725,6 +1768,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("idChangeInterval") != configs.end()) {
             this->configuration.idChangeInterval =
                 (unsigned int)stoi(configs["idChangeInterval"]);
+        }
+
+        if(configs.find("idChangeDistance") != configs.end()) {
+            ApplicationBase::idChangeDistance =
+                (unsigned int)stoi(configs["idChangeDistance"]);
         }
 
         /** Process both signed and unsigned packets */
@@ -2377,6 +2425,15 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     } else {
         return -1;
     }
+
+#if AEROLINK
+    // check if identiy and cert change needs to be performed
+    if(configuration.enableSecurity && !this->configuration.lcmName.empty()
+            && this->configuration.idChangeInterval) {
+        changeIdentity(idChangeData.idChangeCbSem);
+    }
+#endif
+
     // reserve headroom in abuf if padding is specified
     abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     fillMsg(mc);

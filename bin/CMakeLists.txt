@@ -6,9 +6,10 @@
 # package configuration in the folder
 set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_tel" "telux_cv2x"
                "telux_audio" "telux_power" "telux_therm" "telux_config" "v2x_radio" "telux_sensor"
-               "telux_platform" "telux_platform_diag" "telux_sec" "telux_sec_con" "telux_wlan")
+               "telux_platform" "telux_platform_diag" "telux_sec" "telux_sec_con" "telux_wlan"
+               "telux_satcom")
 
-set(SDK_VERSION "1.68.0")
+set(SDK_VERSION "1.71.4")
 #Update SDK Version for release
 
 # Loop to create stub library from the INPUT_LIST

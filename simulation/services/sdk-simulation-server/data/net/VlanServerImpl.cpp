@@ -69,6 +69,20 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
+    std::string nwType = DataUtilsStub::convertNetworkTypeToString(request->nw_type());
+    bool createBridge = request->create_bridge();
+    auto ifType = request->interface_type();
+
+    if ( (ifType == ::dataStub::InterfaceType::WLAN)  ||
+         (ifType == ::dataStub::InterfaceType::RNDIS) ||
+         (ifType == ::dataStub::InterfaceType::MHI)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if (nwType == "WAN" && createBridge) {
+        data.error = telux::common::ErrorCode::INVALID_ARG;
+    }
+
     if (data.status == telux::common::Status::SUCCESS &&
         data.error == telux::common::ErrorCode::SUCCESS) {
 
@@ -85,9 +99,8 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
             newConfig["vlanId"] = request->vlan_id();
             newConfig["isAccelerated"] = request->is_accelerated();
             newConfig["priority"] = request->priority();
-            newConfig["createBridge"] = request->create_bridge();
-            newConfig["networkType"] =
-                (DataUtilsStub::convertNetworkTypeToString(request->nw_type()));
+            newConfig["createBridge"] = createBridge;
+            newConfig["networkType"] = nwType;
             data.stateRootObj[subsystem]["vlanConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }

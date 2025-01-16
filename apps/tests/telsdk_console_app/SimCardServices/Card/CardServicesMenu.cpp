@@ -247,15 +247,20 @@ bool CardServicesMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "15", "Card_Refresh_Menu", {},
             std::bind(&CardServicesMenu::cardRefreshMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> checkNtnProfileActiveCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "16", "Check_NTN_Profile_Active", {},
+            std::bind(&CardServicesMenu::checkNtnProfileActive, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("16", "Select_card_slot", {},
+      ConsoleAppCommand("17", "Select_card_slot", {},
                         std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
          queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
-         cardPowerCommand, cardFileHandlerMenuCommand, cardRefreshMenuCommand};
+         cardPowerCommand, cardFileHandlerMenuCommand, cardRefreshMenuCommand,
+         checkNtnProfileActiveCommand};
 
    if (cards_.size() > 1) {
        commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -844,6 +849,20 @@ void CardServicesMenu::cardPower(std::vector<std::string> userInput) {
       Utils::printStatus(status);
    } else {
       std::cout << "ERROR - CardManager is null \n";
+   }
+}
+
+void CardServicesMenu::checkNtnProfileActive(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
+   std::cout << "SlotId: " << slot_ << std::endl;
+   if (card) {
+       bool ntnProfileActive = false;
+       ntnProfileActive = card->isNtnProfileActive();
+       if (ntnProfileActive) {
+           std::cout << "NTN profile is active" << std::endl;
+       } else {
+          std::cout << "No active NTN profile" << std::endl;
+       }
    }
 }
 

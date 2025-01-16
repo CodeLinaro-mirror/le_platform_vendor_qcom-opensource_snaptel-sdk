@@ -13,6 +13,8 @@
 #include "ServingSystemManagerStub.hpp"
 #include "DualDataManagerStub.hpp"
 #include "DataControlManagerStub.hpp"
+#include "KeepAliveManagerStub.hpp"
+#include "DataLinkManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/VlanManagerStub.hpp"
@@ -20,6 +22,7 @@
 #include "net/FirewallManagerStub.hpp"
 #include "net/FirewallEntryImpl.hpp"
 #include "net/BridgeManagerStub.hpp"
+#include "net/QoSManagerStub.hpp"
 
 #include "common/Logger.hpp"
 
@@ -470,6 +473,49 @@ std::shared_ptr<telux::data::IDataControlManager> DataFactoryImplStub::getDataCo
     return manager;
 }
 
+std::shared_ptr<telux::data::IKeepAliveManager> DataFactoryImplStub::getKeepAliveManager(
+    SlotId slotId, telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IKeepAliveManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [slotId](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IKeepAliveManager> {
+            std::shared_ptr<telux::data::KeepAliveManagerStub> manager
+                = std::make_shared<telux::data::KeepAliveManagerStub>(slotId);
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("KeepAlive manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &keepAliveCallbacks_);
+    auto manager
+        = getManager<telux::data::IKeepAliveManager>(type,
+            KeepAliveManager_, keepAliveCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
+std::shared_ptr<telux::data::IDataLinkManager> DataFactoryImplStub::getDataLinkManager(
+    telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::IDataLinkManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IDataLinkManager> {
+            std::shared_ptr<telux::data::DataLinkManagerStub> manager
+                = std::make_shared<telux::data::DataLinkManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("DataLink manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ",
+            &dataLinkCallbacks_);
+    auto manager
+        = getManager<telux::data::IDataLinkManager>(type,
+            dataLinkManager_, dataLinkCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
 std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpManager(
     telux::common::InitResponseCb clientCallback) {
     std::function<std::shared_ptr<telux::data::net::IL2tpManager>(
@@ -604,6 +650,28 @@ void DataFactoryImplStub::initCompleteNotifier(std::vector<telux::common::InitRe
     for (auto &callback : Callbacks) {
         callback(status);
     }
+}
+
+std::shared_ptr<telux::data::net::IQoSManager> DataFactoryImplStub::getQoSManager(
+        telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::data::net::IQoSManager>(telux::common::InitResponseCb)>
+        createAndInit
+        = [this](
+              telux::common::InitResponseCb initCb) -> std::shared_ptr<telux::data::net::IQoSManager> {
+        std::shared_ptr<telux::data::net::QoSManagerStub> manager
+            = std::make_shared<telux::data::net::QoSManagerStub>();
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("QoS manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " , callback = ", &qosCallbacks_);
+    auto manager = getManager<telux::data::net::IQoSManager>(
+        type, qosManager_,
+        qosCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 }  // namespace data

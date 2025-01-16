@@ -349,6 +349,71 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "NR5G Signal Level: "
             << signalLevelToString(nr5gCellInfo->getSignalStrengthInfo().getLevel())
              << std::endl;
+         } else if(cellinfo->getType() == telux::tel::CellType::NB1_NTN) {
+            PRINT_CB << "NB1 NTN Cellinfo  " << std::endl;
+            auto nb1NtnCellInfo = std::static_pointer_cast<telux::tel::Nb1NtnCellInfo>(cellinfo);
+            PRINT_CB << "NB1 NTN isRegistered: " << nb1NtnCellInfo->isRegistered() << std::endl;
+            PRINT_CB << "NB1 NTN mcc: " << nb1NtnCellInfo->getCellIdentity().getMobileCountryCode()
+                << std::endl;
+            PRINT_CB << "NB1 NTN mnc: " << nb1NtnCellInfo->getCellIdentity().getMobileNetworkCode()
+                << std::endl;
+            if (nb1NtnCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "NB1 NTN cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "NB1 NTN cid: " << nb1NtnCellInfo->getCellIdentity().getIdentity()
+                    << std::endl;
+            }
+            if (nb1NtnCellInfo->getCellIdentity().getTrackingAreaCode()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NB1 NTN tac: " << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN tac: "
+                   << nb1NtnCellInfo->getCellIdentity().getTrackingAreaCode() << std::endl;
+            }
+            PRINT_CB << "NB1 NTN arfcn: " << nb1NtnCellInfo->getCellIdentity().getEarfcn()
+                << std::endl;
+
+            // NB1 NTN Signal Strength
+            if (nb1NtnCellInfo->getSignalStrengthInfo().getSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NB1 NTN Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN Signal Strength: "
+                   << nb1NtnCellInfo->getSignalStrengthInfo().getSignalStrength()
+                   << std::endl;
+            }
+
+            if (nb1NtnCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NB1 NTN Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+               PRINT_CB << "NB1 NTN Reference Signal Receive Power(in dBm): "<< "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN Signal Strength(in dBm): "
+                    << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+               PRINT_CB << "NB1 NTN Reference Signal Receive Power(in dBm): "
+                    << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if (nb1NtnCellInfo->getSignalStrengthInfo().getRsrq() == INVALID_SIGNAL_STRENGTH_VALUE)
+            {
+               PRINT_CB << "NB1 NTN Reference Signal Receive Quality(in dB): "
+                   << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN Reference Signal Receive Quality(in dB): " <<
+                   nb1NtnCellInfo->getSignalStrengthInfo().getRsrq() << std::endl;
+            }
+
+            if (nb1NtnCellInfo->getSignalStrengthInfo().getRssnr()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NB1 NTN Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN Reference Signal SNR(in dB): "
+                    << nb1NtnCellInfo->getSignalStrengthInfo().getRssnr() * 0.1 << std::endl;
+            }
+
+            PRINT_CB << "NB1 NTN Signal Level: "
+                << signalLevelToString(nb1NtnCellInfo->getSignalStrengthInfo().getLevel())
+                << std::endl;
          }
       }
    } else {

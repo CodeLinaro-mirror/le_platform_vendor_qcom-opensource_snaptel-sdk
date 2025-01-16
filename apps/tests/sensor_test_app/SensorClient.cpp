@@ -139,7 +139,9 @@ SensorClient::~SensorClient() {
         stop_ = true;
         cv_.notify_one();
     }
-    deactivate();
+    if (activated_) {
+        deactivate();
+    }
     sensor_ = nullptr;
     if (workerThread_) {
         workerThread_->join();
@@ -307,6 +309,28 @@ telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
             << " successful, waiting for callback" << std::endl;
     }
     return status;
+}
+
+telux::common::Status SensorClient::selfTestEx(SelfTestType selfTestType) {
+    telux::common::Status status = sensor_->selfTest(selfTestType,
+    [this](ErrorCode result, SelfTestResultParams selfTestResultParams) {
+        PRINT_CB << tag_ << " Received self test response: " << Utils::getErrorCodeAsString(result)
+            << " for Sensor result type: "
+            << SensorUtils::sensorResultTypeToString(selfTestResultParams.sensorResultType_)
+            << " performed at: " << selfTestResultParams.timestamp_ << " ns\n";
+    });
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "self test request failed: ";
+        Utils::printStatus(status);
+    } else {
+        std::cout << tag_ << "Self test request successful, waiting for callback" << std::endl;
+    }
+    return status;
+}
+
+void SensorClient::onSelfTestFailed() {
+    PRINT_CB << tag_ << " Self Test triggered by Sensor service Failed at "
+        << Utils::getNanosecondsSinceBoot() << " ns\n";
 }
 
 void SensorClient::setRecordingFlag(bool enable) {

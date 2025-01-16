@@ -234,3 +234,130 @@ void LocationUtils::displayLocEngineType(telux::loc::LocationAggregationType loc
                                                    break;
     }
 }
+
+void LocationUtils::displayGnssDataSignal(telux::loc::GnssDataSignalTypes dataSourceSignal) {
+    std::cout << "\nGnss Data Signal Type: ";
+    switch(dataSourceSignal) {
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_INVALID : std::cout << "INVALID\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GPS_L1CA : std::cout << "GPS_L1CA\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GPS_L1C : std::cout << "GPS_L1C\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GPS_L2C_L : std::cout << "GPS_L2C\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GPS_L5_Q : std::cout << "GPS_L5_Q\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GLONASS_G1 : std::cout << "GLONASS_G1\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GLONASS_G2 : std::cout << "GLONASS_G2\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GALILEO_E1_C : std::cout << "GALILEO_E1_C\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GALILEO_E5A_Q :
+                                                             std::cout << "GALILEO_E5A_Q\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_GALILEO_E5B_Q :
+                                                             std::cout << "GALILEO_E5B_Q\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1_I : std::cout << "BEIDOU_B1_I\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1C : std::cout << "BEIDOU_B1C\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2_I : std::cout << "BEIDOU_B2_I\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_I : std::cout << "BEIDOU_B2A_I\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_QZSS_L1CA : std::cout << "QZSS_L1CA\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_QZSS_L1S : std::cout << "QZSS_L1S\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_QZSS_L2C_L : std::cout << "QZSS_L2C\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_QZSS_L5_Q : std::cout << "QZSS_L5_Q\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_SBAS_L1_CA : std::cout << "SBAS_L1_CA\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_NAVIC_L5 : std::cout << "NAVIC_L5\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_Q : std::cout << "BEIDOU_B2A_Q\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BI : std::cout << "BEIDOU_B2BI\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BQ : std::cout << "BEIDOU_B2BQ\n"; break;
+        case telux::loc::GNSS_DATA_SIGNAL_TYPE_NAVIC_L1 : std::cout << "NAVIC_L1\n"; break;
+        default: std::cout << "Other\n"; break;
+    }
+}
+
+void LocationUtils::displayBdsSvType(telux::loc::BdsSvType svType) {
+    std::cout << "BDS SV Type: ";
+    switch(svType) {
+        case telux::loc::BDS_SV_TYPE_UNKNOWN: std::cout << "BDS_SV_TYPE_UNKNOWN \n";
+                                              break;
+        case telux::loc::BDS_SV_TYPE_GEO: std::cout << "BDS_SV_TYPE_GEO \n";
+                                              break;
+        case telux::loc::BDS_SV_TYPE_IGSO: std::cout << "BDS_SV_TYPE_IGSO \n";
+                                              break;
+        case telux::loc::BDS_SV_TYPE_MEO: std::cout << "BDS_SV_TYPE_MEO \n";
+                                              break;
+    }
+}
+
+void LocationUtils::displayGpsQzssExtEphValidity(telux::loc::GpsQzssExtEphValidity validityMask) {
+    std::cout << "\nGps Qzss Ext Eph Validity fields\n";
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ISC_L1CA_VALID) {
+        std::cout << "Valid ISC_L1CA\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ISC_L2C_VALID) {
+        std::cout << "Valid ISC_L2C\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ISC_L5I5_VALID) {
+        std::cout << "Valid ISC_L5I5\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ISC_L5Q5_VALID) {
+        std::cout << "Valid ISC_L5Q5\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ALERT_VALID) {
+        std::cout << "Valid ALERT\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_URANED0_VALID) {
+        std::cout << "Valid URANED0\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_URANED1_VALID) {
+        std::cout << "Valid URANED1\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_URANED2_VALID) {
+        std::cout << "Valid URANED2\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_TOP_VALID) {
+        std::cout << "Valid TOP\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_TOP_CLOCK_VALID) {
+        std::cout << "Valid TOP_CLOCK\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID) {
+        std::cout << "Valid VALIDITY_PERIOD\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID) {
+        std::cout << "Valid DELTA_NDOT\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_DELTAA_VALID) {
+        std::cout << "Valid DELTAA\n";
+    }
+    if(validityMask & telux::loc::GPS_QZSS_EXT_EPH_ADOT_VALID) {
+        std::cout << "Valid ADOT\n";
+    }
+}
+
+void LocationUtils::displayBdsExtEphValidity(telux::loc::BdsExtEphValidity validityMask) {
+    std::cout << "\nBds Ext Eph Validity fields\n";
+    if(validityMask & telux::loc::BDS_EXT_EPH_ISC_B2A_VALID) {
+        std::cout << "Valid ISC_B2A\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_ISC_B1C_VALID) {
+        std::cout << "Valid ISC_B1C\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_TGD_B2A_VALID) {
+        std::cout << "Valid TGD_B2A\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_TGD_B1C_VALID) {
+        std::cout << "Valid TGD_B1C\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_SV_TYPE_VALID) {
+        std::cout << "Valid SV_TYPE\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_VALIDITY_PERIOD) {
+        std::cout << "Valid VALIDITY_PERIOD\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_INTEGRITY_FLAGS) {
+        std::cout << "Valid INTEGRITY_FLAGS\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_DELTA_NDOT_VALID) {
+        std::cout << "Valid DELTA_NDOT\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_DELTAA_VALID) {
+        std::cout << "Valid DELTAA\n";
+    }
+    if(validityMask & telux::loc::BDS_EXT_EPH_ADOT_VALID) {
+        std::cout << "Valid ADOT\n";
+    }
+}

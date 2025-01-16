@@ -392,6 +392,24 @@ telux::common::Status CardStub::requestEid(EidResponseCallback callback) {
     return status;
 }
 
+bool CardStub::isNtnProfileActive() {
+    LOG(DEBUG, __FUNCTION__, " getSlotId() = ", getSlotId());
+    bool ntnSupported = false;
+    ::telStub::IsNtnProfileActiveRequest request;
+    ::telStub::IsNtnProfileActiveReply response;
+    ClientContext context;
+    request.set_phone_id(getSlotId());
+
+    grpc::Status status = stub_->IsNtnProfileActive(&context, request, &response);
+
+    if (!status.ok()) {
+        return ntnSupported;
+    }
+    ntnSupported = response.is_ntn_profile_active();
+    LOG(DEBUG, __FUNCTION__, " ntnSupported : ", ntnSupported);
+    return ntnSupported;
+}
+
 void CardStub::invokeCallback(EidResponseCallback callback, std::string eid, int delay,
     telux::common::ErrorCode error ) {
     LOG(DEBUG, __FUNCTION__);

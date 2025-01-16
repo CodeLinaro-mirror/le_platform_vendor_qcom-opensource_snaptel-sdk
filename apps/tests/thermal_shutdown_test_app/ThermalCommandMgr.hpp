@@ -26,11 +26,17 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #ifndef THERMALCOMMANDMGR_HPP
 #define THERMALCOMMANDMGR_HPP
 
 #include<memory>
+#include <condition_variable>
+#include <mutex>
 
 #include "telux/common/CommonDefines.hpp"
 
@@ -56,12 +62,18 @@ public:
    std::future<bool> getAutoShutdownModeCommand();
    void setAutoDisableFlag(bool disable);
    bool getAutoDisableFlag();
+   void waitForAsyncTaskToComplete();
 
+   std::mutex mgrMtx_;
+   std::condition_variable mgrCv_;
+   bool taskCompleted_ = false;
+   std::shared_ptr<ThermalCommandCallback> cmdRspCb_ = nullptr;
+
+   std::shared_ptr<ThermalListener> myThermListener_;
 private:
-  std::atomic<bool> autoDisable_;
-  std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
-  std::shared_ptr<ThermalListener> myThermListener_;
-  std::shared_ptr<ThermalCommandCallback> cmdRspCb_ = nullptr;
+
+   std::atomic<bool> autoDisable_;
+   std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
 
 };
 

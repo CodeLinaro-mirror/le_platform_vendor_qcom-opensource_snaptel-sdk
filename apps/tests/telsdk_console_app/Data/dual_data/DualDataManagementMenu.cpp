@@ -70,7 +70,6 @@ bool DualDataManagementMenu::init() {
             requestCurrentDds, configureDdsSwitchRecommendation, getDdsSwitchRecommendation};
         addCommands(commandsList);
     }
-    ConsoleApp::displayMenu();
     return true;
 }
 
@@ -113,6 +112,20 @@ void DualDataManagementMenu::onInitComplete(telux::common::ServiceStatus status)
     std::lock_guard<std::mutex> lock(mtx_);
     subSystemStatusUpdated_ = true;
     cv_.notify_all();
+}
+
+bool DualDataManagementMenu::displayMenu() {
+    bool retVal = true;
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
+        dualDataManager_->getServiceStatus()) {
+        std::cout << "\nDual Data Manager is ready " << std::endl;
+    }
+    else {
+        std::cout << "\nDual Data Manager is not ready " << std::endl;
+        retVal = false;;
+    }
+    ConsoleApp::displayMenu();
+    return retVal;
 }
 
 void DualDataManagementMenu::getDualDataCapability(std::vector<std::string> &inputCommand) {
@@ -317,13 +330,8 @@ void DualDataManagementMenu::configureDdsSwitchRecommendation(
         std::cout << "DDS recommendation based on (1-Throughput, 2-Latency): ";
         std::cin >> type;
         DataUtils::validateInput(type, {1, 2});
-        if(type) {
-            ddsSwitchRecommendationConfig.recommBasis =
-                telux::data::DDSRecommendationBasis::THROUGHPUT;
-        } else {
-            ddsSwitchRecommendationConfig.recommBasis =
-                telux::data::DDSRecommendationBasis::LATENCY;
-        }
+        ddsSwitchRecommendationConfig.recommBasis =
+            static_cast<telux::data::DDSRecommendationBasis>(type);
     }
 
     telux::common::ErrorCode retStat =

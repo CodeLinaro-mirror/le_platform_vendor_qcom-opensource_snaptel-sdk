@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -296,10 +296,16 @@ telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
     uint64_t requestTimeStamp = Utils::getNanosecondsSinceBoot();
     telux::common::Status status = sensor_->selfTest(selfTestType, [thisRequestID, requestTimeStamp,
                                                                        this](ErrorCode result) {
-        uint64_t responseTimeStamp = Utils::getNanosecondsSinceBoot();
-        PRINT_CB << tag_ << "Received self test response: " << Utils::getErrorCodeAsString(result)
-                 << " for requestID = " << thisRequestID << " after "
-                 << (responseTimeStamp - requestTimeStamp) * 1.0 / 1000000 << "ms" << std::endl;
+        if(result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
+            uint64_t responseTimeStamp = Utils::getNanosecondsSinceBoot();
+            PRINT_CB << tag_ << "Received self test response: "
+                    << Utils::getErrorCodeAsString(result)
+                    << " for requestID = " << thisRequestID << " after "
+                    << (responseTimeStamp - requestTimeStamp) * 1.0 / 1000000 << "ms" << std::endl;
+        } else {
+            PRINT_CB << tag_ << " Received self test response: " <<
+                Utils::getErrorCodeAsString(result);
+        }
     });
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "self test request with ID " << requestID << " failed: ";
@@ -314,10 +320,16 @@ telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
 telux::common::Status SensorClient::selfTestEx(SelfTestType selfTestType) {
     telux::common::Status status = sensor_->selfTest(selfTestType,
     [this](ErrorCode result, SelfTestResultParams selfTestResultParams) {
-        PRINT_CB << tag_ << " Received self test response: " << Utils::getErrorCodeAsString(result)
-            << " for Sensor result type: "
-            << SensorUtils::sensorResultTypeToString(selfTestResultParams.sensorResultType_)
-            << " performed at: " << selfTestResultParams.timestamp_ << " ns\n";
+        if(result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
+            PRINT_CB << tag_ << " Received self test response: " <<
+                Utils::getErrorCodeAsString(result)
+                << " for Sensor result type: "
+                << SensorUtils::sensorResultTypeToString(selfTestResultParams.sensorResultType_)
+                << " performed at: " << selfTestResultParams.timestamp_ << " ns\n";
+        } else {
+            PRINT_CB << tag_ << " Received self test response: " <<
+                Utils::getErrorCodeAsString(result);
+        }
     });
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "self test request failed: ";

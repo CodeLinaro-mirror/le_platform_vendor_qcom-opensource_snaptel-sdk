@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -720,14 +720,18 @@ class ICardListener : public common::IServiceStatusListener {
      *        *          * the @ref telux::tel::ICardManager*                              *
      *        *          * ::confirmRefreshHandlingCompleted*                              *
      **********          *******************************************************************
-     * Init + *          * Provisioning session:Invalidate  * Provisioning session: Reread *
-     * FCN    *          * cached values of files (EFs) in  * files (EFs) in the FCN list  *
-     *        *          * the FCN list.                    * (if not done when the        *
-     *        *          * Nonprovisioning session: Reread  * application state is back to *
-     *        *          * the files (EFs) in the FCN list, * Ready).                      *
-     *        *          * and then invoke the              *                              *
-     *        *          * @ref telux::tel::ICardManager    *                              *
-     *        *          * ::confirmRefreshHandlingCompleted*                              *
+     * Init + * In Init +* Provisioning session:Invalidate  * Provisioning session: Reread *
+     * FCN    * FCN mode,* cached values of files (EFs) in  * files (EFs) in the FCN list  *
+     *        * client   * the FCN list.                    * (if not done when the        *
+     *        * receives * Nonprovisioning session: Reread  * application state is back to *
+     *        * two indi-* the files (EFs) in the FCN list, * Ready).                      *
+     *        * cations  * and then invoke the              *                              *
+     *        * both     * @ref telux::tel::ICardManager    *                              *
+     *        * requests * ::confirmRefreshHandlingCompleted*                              *
+     *        * vote: one*                                  *                              *
+     *        * for Init *                                  *                              *
+     *        * one for  *                                  *                              *
+     *        * FCN.     *                                  *                              *
      **********          *******************************************************************
      * Init + *          * Provisioning session: Invalidate * Provisioning session: Reread *
      * Full   *          * all cached values.               * all files (EFs) (if not done *

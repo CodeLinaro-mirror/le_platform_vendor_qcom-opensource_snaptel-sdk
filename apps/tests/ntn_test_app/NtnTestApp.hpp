@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -39,7 +39,8 @@ class NtnTestApp : public INtnListener,
     void getServiceStatus(std::vector<std::string> inputCommand);
     void isNtnSupported(std::vector<std::string> inputCommand);
     void enableNtn(std::vector<std::string> inputCommand);
-    void sendData(std::vector<std::string> inputCommand);
+    void sendDataString(std::vector<std::string> inputCommand);
+    void sendDataRaw(std::vector<std::string> inputCommand);
     void abortData(std::vector<std::string> inputCommand);
     void getNtnCapabilities(std::vector<std::string> inputCommand);
     void updateSystemSelectionSpecifiers(std::vector<std::string> inputCommand);

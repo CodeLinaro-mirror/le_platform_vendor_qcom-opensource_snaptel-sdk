@@ -776,7 +776,7 @@ telux::common::ErrorCode AudioPlayerImpl::initAudioStream(StreamConfig streamCon
         }
 
         if (applyCachedVolume_) {
-            ec = updateVolume(cachedVolume_, streamLock);
+            ec = updateVolume(cachedVolumeLevel_, streamLock);
             if (ec != telux::common::ErrorCode::SUCCESS) {
                 return ec;
             }
@@ -1539,7 +1539,7 @@ void SetVolumeResponseListener::setVolumeComplete(telux::common::ErrorCode error
  *  Helper to set volume to the given level.
  */
 telux::common::ErrorCode AudioPlayerImpl::updateVolume(
-    StreamVolume volume, std::unique_lock<std::mutex> &streamLock) {
+    float volumeLevel, std::unique_lock<std::mutex> &streamLock) {
 
     bool waitResult = false;
     telux::common::Status status;
@@ -1553,20 +1553,20 @@ telux::common::ErrorCode AudioPlayerImpl::updateVolume(
     /* Based on the number of channels currently playing stream has, set channels for volume */
     switch (curChannelTypeMask_) {
         case telux::audio::ChannelType::LEFT:
-            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.vol         = volumeLevel;
             channelVolume.channelType = telux::audio::ChannelType::LEFT;
             streamVol.volume.emplace_back(channelVolume);
             break;
         case telux::audio::ChannelType::RIGHT:
-            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.vol         = volumeLevel;
             channelVolume.channelType = telux::audio::ChannelType::RIGHT;
             streamVol.volume.emplace_back(channelVolume);
             break;
         default:
-            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.vol         = volumeLevel;
             channelVolume.channelType = telux::audio::ChannelType::LEFT;
             streamVol.volume.emplace_back(channelVolume);
-            channelVolume.vol         = volume.volume[0].vol;
+            channelVolume.vol         = volumeLevel;
             channelVolume.channelType = telux::audio::ChannelType::RIGHT;
             streamVol.volume.emplace_back(channelVolume);
     }
@@ -1602,7 +1602,7 @@ telux::common::ErrorCode AudioPlayerImpl::updateVolume(
 /*
  *  Sets volume to the given level.
  */
-telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
+telux::common::ErrorCode AudioPlayerImpl::setVolume(float volumeLevel) {
     telux::common::ErrorCode ec;
 
     {
@@ -1614,41 +1614,27 @@ telux::common::ErrorCode AudioPlayerImpl::setVolume(StreamVolume volume) {
              * but before player thread gets a chance to create an audio stream.
              * Cache the volume to be applied later when the stream is created.
              */
-            cachedVolume_      = volume;
+            if ((volumeLevel > 1.0) || (volumeLevel < 0.0)) {
+                LOG(ERROR, __FUNCTION__, " out of range volume level");
+                return telux::common::ErrorCode::INVALID_ARGUMENTS;
+            }
+            cachedVolumeLevel_ = volumeLevel;
             applyCachedVolume_ = true;
             return telux::common::ErrorCode::SUCCESS;
         }
 
-        ec = updateVolume(volume, streamLock);
+        ec = updateVolume(volumeLevel, streamLock);
         if (ec == telux::common::ErrorCode::SUCCESS) {
             /*
              * If the volume is set, cache it so that it can be applied to all
              * the new streams if the current stream on which it is currently
              * applied is closed and a new one is created.
              */
-            cachedVolume_      = volume;
+            cachedVolumeLevel_ = volumeLevel;
             applyCachedVolume_ = true;
         }
         return ec;
     }
-}
-
-/*
- *  Sets volume to the given level.
- */
-telux::common::ErrorCode AudioPlayerImpl::setVolume(float volumeLevel) {
-    ChannelVolume channelVolume{};
-    StreamVolume streamVolume{};
-
-    channelVolume.vol         = volumeLevel;
-    channelVolume.channelType = telux::audio::ChannelType::LEFT;
-    streamVolume.volume.emplace_back(channelVolume);
-
-    channelVolume.vol         = volumeLevel;
-    channelVolume.channelType = telux::audio::ChannelType::RIGHT;
-    streamVolume.volume.emplace_back(channelVolume);
-
-    return setVolume(streamVolume);
 }
 
 /*
@@ -1660,8 +1646,7 @@ GetVolumeResponseListener::GetVolumeResponseListener(std::mutex &streamMtx)
 void GetVolumeResponseListener::getVolumeComplete(
     StreamVolume volume, telux::common::ErrorCode errorCode) {
 
-    ChannelVolume channelVolume{};
-    StreamVolume volumeFetched{};
+    float volumeLevelFetched = 0.0;
 
     if (errorCode != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " can't get volume");
@@ -1669,19 +1654,13 @@ void GetVolumeResponseListener::getVolumeComplete(
         /* If the stream was mono the 0th element will contain volume level.
          * If the stream was stereo both 0th and 1st element will have same
          * level. Therefore, just use 0th element. */
-        channelVolume.vol         = volume.volume[0].vol;
-        channelVolume.channelType = ChannelType::LEFT;
-        volumeFetched.volume.push_back(channelVolume);
-        channelVolume.vol         = volume.volume[0].vol;
-        channelVolume.channelType = ChannelType::RIGHT;
-        volumeFetched.volume.push_back(channelVolume);
+        volumeLevelFetched = volume.volume[0].vol;
     }
-    volumeFetched.dir = StreamDirection::RX;
 
     {
         std::lock_guard<std::mutex> streamLock(streamMutex_);
 
-        this->volume        = volumeFetched;
+        this->volumeLevel   = volumeLevelFetched;
         this->errorCode     = errorCode;
         this->responseReady = true;
         this->cv.notify_one();
@@ -1691,11 +1670,10 @@ void GetVolumeResponseListener::getVolumeComplete(
 /*
  * Retrieves the current volume.
  */
-telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
+telux::common::ErrorCode AudioPlayerImpl::getVolume(float &volumeLevel) {
 
     bool waitResult = false;
     telux::common::Status status;
-    ChannelVolume channelVolume{};
     GetVolumeResponseListener listener(streamMtx_);
 
     auto responseCb = std::bind(&GetVolumeResponseListener::getVolumeComplete, &listener,
@@ -1713,19 +1691,12 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
 
             if (applyCachedVolume_) {
                 /* If the volume was set previously by the application return it */
-                volume     = cachedVolume_;
-                volume.dir = StreamDirection::RX;
+                volumeLevel = cachedVolumeLevel_;
                 return telux::common::ErrorCode::SUCCESS;
             }
 
             /* Return system's default volume, if it was never set */
-            channelVolume.vol         = 1.0;
-            channelVolume.channelType = ChannelType::LEFT;
-            volume.volume.push_back(channelVolume);
-            channelVolume.vol         = 1.0;
-            channelVolume.channelType = ChannelType::RIGHT;
-            volume.volume.push_back(channelVolume);
-            volume.dir = StreamDirection::RX;
+            volumeLevel = 1.0;
             return telux::common::ErrorCode::SUCCESS;
         }
 
@@ -1754,25 +1725,9 @@ telux::common::ErrorCode AudioPlayerImpl::getVolume(StreamVolume &volume) {
             return telux::common::ErrorCode::CANCELLED;
         }
 
-        volume = listener.volume;
+        volumeLevel = listener.volumeLevel;
         return listener.errorCode;
     }
-}
-
-/*
- * Retrieves the current volume.
- */
-telux::common::ErrorCode AudioPlayerImpl::getVolume(float &volumeLevel) {
-    telux::common::ErrorCode ec;
-    StreamVolume volume{};
-
-    ec = getVolume(volume);
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        return ec;
-    }
-
-    volumeLevel = volume.volume[0].vol;
-    return telux::common::ErrorCode::SUCCESS;
 }
 
 /*

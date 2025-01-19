@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -806,6 +806,8 @@ message QueryVlanMappingListRequest {
 message VlanMapping {
     int32 profile_id = 1;
     int32 vlan_id = 2;
+    int32 backhaul_vlan_id = 3;
+
 }
 
 message QueryVlanMappingListReply {
@@ -1124,6 +1126,7 @@ message BindToBackhaulConfig {
     int32 profile_id = 3;
     BackhaulPreference backhaul_type = 4;
     OperationType operation_type = 5;
+    int32 backhaul_vlan_id = 6;
 }
 
 message AddFirewallEntryRequest {

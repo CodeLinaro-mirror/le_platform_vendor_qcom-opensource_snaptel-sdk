@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2024, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -130,6 +130,7 @@
          (ModifyOrRespondToModifyCallReply) {}
      rpc SendRtt(SendRttRequest) returns (SendRttReply) {}
      rpc updateCalls(UpdateCurrentCallsRequest) returns (google.protobuf.Empty) {}
+     rpc ConfigureECallRedial(ConfigureECallRedialRequest) returns (ConfigureECallRedialResponse) {}
  }
 
  service ImsServingSystem {
@@ -720,14 +721,12 @@ enum SessionType {
     INIT_NONPROVISIONING_SLOT_2 = 5;
     CARD_ON_SLOT_1 = 6;
     CARD_ON_SLOT_2 = 7;
-    CHANNEL_ID_SLOT_1 = 8;
-    CHANNEL_ID_SLOT_2 = 9;
+    SESSION_TYPE_UNKNOWN = -1;
 }
 
 message RefreshParams {
     SessionType sessionType = 1;
     string aid = 2;
-    string channelId = 3;
 }
 
 message IccFile {
@@ -1202,10 +1201,45 @@ enum CallType {
    UNKNOWN_CALL = -1;      /**< Unknown, when the information is not available */
 }
 
+enum ReasonType {
+    REASON_NONE = 0;            /**< Redial reason is NONE */
+    CALL_ORIG_FAILURE = 1;      /**< Redial will be attempted due to eCall origination failure */
+    CALL_DROP = 2;              /**< Redial will be attempted as the eCall is terminated before the
+                                     receipt of MSD Transmission status */
+    MAX_REDIAL_ATTEMPTED = 3;   /**< Redial will not be attempted as the maximum redial count
+                                     is reached */
+    CALL_CONNECTED = 4;         /**< Redial will not be attempted as the eCall is connected
+                                     successfully. */
+};
+
+enum RedialConfigType {
+    REDIAL_CONFIG_CALL_DROP = 0;  /**< Redial configuration for eCall termination before receipt of
+                                       MSD Transmission status */
+    REDIAL_CONFIG_CALL_ORIG = 1;  /**< Redial configuration for eCall origination failure */
+};
+
  message ECallInfoEvent {
     int32 phone_id = 1;
     HlapTimerEvent action = 2;
     string timer = 3;
+ }
+
+ message ECallRedialInfoEvent {
+    int32 phone_id = 1;
+    bool will_ecall_redial = 2;
+    ReasonType reason = 3;
+ }
+
+ message ConfigureECallRedialRequest {
+    repeated int32 time_gap = 1;
+    RedialConfigType config = 2;
+ }
+
+ message ConfigureECallRedialResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
  }
 
  message Call {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -257,6 +257,7 @@ grpc::Status VlanServerImpl::BindToBackhaul(ServerContext* context,
             newConfig["vlanId"] = request->vlan_id();
             newConfig["slotId"] = request->slot_id();
             newConfig["profileId"] = request->profile_id();
+            newConfig["backhaul_vlanId"] = request->backhaul_vlan_id();
             data.stateRootObj[subsystem]["vlanBindConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
@@ -365,6 +366,7 @@ grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
                 dataStub::VlanMapping *config = response->add_vlan_mapping();
                 config->set_vlan_id(requestedBinding["vlanId"].asInt());
                 config->set_profile_id(requestedBinding["profileId"].asInt());
+                config->set_backhaul_vlan_id(requestedBinding["backhaul_vlanId"].asInt());
             }
         }
     }

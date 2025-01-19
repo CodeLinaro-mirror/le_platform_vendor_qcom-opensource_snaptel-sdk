@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -93,6 +93,7 @@
 #include <telux/tel/ImsServingSystemManager.hpp>
 #include <telux/tel/SuppServicesManager.hpp>
 #include <telux/tel/EcallManager.hpp>
+#include <telux/tel/ApSimProfileManager.hpp>
 
 namespace telux {
 
@@ -355,6 +356,24 @@ class PhoneFactory {
     */
    virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
       SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;
+
+   /**
+    * Gets ApSimProfileManager. ApSimProfileManager is the primary interface to allow the modem
+    * software to interact with an LPA running on the Application process.
+    *
+    * @param [in] callback  Optional callback pointer to get response of ApSimProfile Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided ApSimProfile Manager object
+    *                       will no more be a valid object.
+    *
+    * @returns Pointer of IApSimProfileManager object or nullptr in case of failure.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and
+    *         could break backwards compatibility.
+    */
+   virtual std::shared_ptr<IApSimProfileManager> getApSimProfileManager(
+       telux::common::InitResponseCb  callback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

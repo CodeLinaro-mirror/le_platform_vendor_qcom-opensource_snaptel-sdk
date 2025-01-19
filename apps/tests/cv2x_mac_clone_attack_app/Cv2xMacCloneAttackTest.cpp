@@ -1,7 +1,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -89,11 +89,15 @@ static int initCv2x() {
 
     {
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return (gExit || statusUpdate); });
+        cv.wait(lck, [&] { return (statusUpdate); });
         if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xStatus) {
             cerr << "CV2X radio Manager initialization failed" << endl;
             return EXIT_FAILURE;
         }
+    }
+    if (gExit) {
+         cerr << "gExit==true, aborting" << endl;
+         return EXIT_FAILURE;;
     }
 
     // init cv2x radio
@@ -107,11 +111,15 @@ static int initCv2x() {
 
     {
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return (gExit || statusUpdate); });
+        cv.wait(lck, [&] { return (statusUpdate); });
         if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xStatus) {
             cerr << "CV2X radio initialization failed" << endl;
             return EXIT_FAILURE;
         }
+    }
+    if (gExit) {
+         cerr << "Exiting, abort" << endl;
+         return EXIT_FAILURE;;
     }
 
     // register listener for mac cloning attack indications
@@ -153,8 +161,11 @@ int main(int argc, char *argv[]) {
         cv.wait(lck);
     }
 
-    if (gCv2xRadio and gCv2xListener) {
-        gCv2xRadio->deregisterListener(gCv2xListener);
+    if (gCv2xRadio) {
+        if (gCv2xListener) {
+            gCv2xRadio->deregisterListener(gCv2xListener);
+        }
+        gCv2xRadio = nullptr;
     }
 
     return EXIT_SUCCESS;

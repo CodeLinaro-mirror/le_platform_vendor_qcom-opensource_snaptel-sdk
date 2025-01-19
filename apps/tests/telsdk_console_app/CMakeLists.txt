@@ -63,6 +63,10 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    ImsServingSystem/ImsServingSystemMenu.cpp
    ImsServingSystem/MyImsServSysListener.cpp
 
+   ApSimProfile/ApSimProfileMenu.cpp
+   ApSimProfile/MyApSimProfileHandler.cpp
+   ApSimProfile/ApSimProfileClient.cpp
+
    ModemStatus.cpp
 )
 endif (TELSDK_FEATURE_TEL)

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1162,25 +1162,30 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     uint8_t const *payload = NULL;
     uint32_t       payloadLen = 0;
     SecuredMessageParserC* smp = nullptr;
-    SecurityService* tmpSecService = SecService.get();
-    if(sopt.enableAsync){
-        if(tmpSecService){
-            AerolinkSecurity* tmpAeroSecurity =
-                static_cast<AerolinkSecurity*>(tmpSecService);
-            if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
-                async_index = SHARED_BUFFER_MAX_SIZE-1;
-                begin_flag = true;
+    if(SecService){
+        SecurityService* tmpSecService = SecService.get();
+        if(sopt.enableAsync){
+            if(tmpSecService){
+                AerolinkSecurity* tmpAeroSecurity =
+                    static_cast<AerolinkSecurity*>(tmpSecService);
+                if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
+                    async_index = SHARED_BUFFER_MAX_SIZE-1;
+                    begin_flag = true;
+                }
+                smp = (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext);
             }
-            smp = (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext);
         }
+        // extract the PDU from the secured packet
+        ret = SecService->ExtractMsg(
+            smp,
+            sopt,
+            (uint8_t*)mc->l3_payload,mc->l3_payload_len,
+            payload, payloadLen,
+            dot2HdrLen);
+    }else{
+        // security service no longer valid
+        ret = DECODE_FAIL;
     }
-    // extract the PDU from the secured packet
-    ret = SecService->ExtractMsg(
-        smp,
-        sopt,
-        (uint8_t*)mc->l3_payload,mc->l3_payload_len,
-        payload, payloadLen,
-        dot2HdrLen);
     if (ret == DECODE_FAIL) {
         printf("Error in extracting security header from signed packet.\n");
         asyncVerifFail++;
@@ -1261,7 +1266,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                        (bsm->vehicleAlerts.sirenUse) && (bsm->vehicleAlerts.multi) &&
                        (configuration.expectedSspLength))
                     {
-                        uint8_t const* ssp;
+                        uint8_t const* ssp = nullptr;
                         ret = SecService->sspCheck(smp,ssp);
                         if (ret == DECODE_FAIL) {
                             if (appVerbosity > 4)
@@ -1271,18 +1276,22 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         // First byte of the ssp should be 0x01 as per the specification J2945/J3161
                         // Bits 1-8: Version number. Set to one for this version
                         // of the specification (00000001).
-                        if(ssp[0] != configuration.expectedSsp[0])
-                        {
-                            fprintf(stderr,"Invalid SSP Version Present \n");
-                            return -1;
-                        }
-                        // Second byte of the ssp should be 0x80 as per the specification J2945/J3161
-                        // Bits 9-15: SSP activity bits with bit 9 set to 1
-                        // (bit 16 is reserved for future use)(10000000)
-                        if(ssp[1] != configuration.expectedSsp[1])
-                        {
-                            fprintf(stderr,"Invalid Entity Activity Detected \n");
-                            return -1;
+                        if(ssp != nullptr){
+                            if(sizeof(ssp) > 1){
+                                if(ssp[0] != configuration.expectedSsp[0])
+                                {
+                                    fprintf(stderr,"Invalid SSP Version Present \n");
+                                    return -1;
+                                }
+                                // Second byte of the ssp should be 0x80 as per the specification J2945/J3161
+                                // Bits 9-15: SSP activity bits with bit 9 set to 1
+                                // (bit 16 is reserved for future use)(10000000)
+                                if(ssp[1] != configuration.expectedSsp[1])
+                                {
+                                    fprintf(stderr,"Invalid Entity Activity Detected \n");
+                                    return -1;
+                                }
+                            }
                         }
                     }
                 }
@@ -1329,7 +1338,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
             thrResLoggingValues.insert(std::pair<std::thread::id,
             std::vector<ResultLoggingStats>>(tid, tmp_test));
             for(int i = 0 ; i < configuration.verifResLogSize; i++){
-                    ResultLoggingStats tmpVerifResStat;
+                    ResultLoggingStats tmpVerifResStat = {0};
                     thrResLoggingValues[tid].push_back(tmpVerifResStat);
             }
         }

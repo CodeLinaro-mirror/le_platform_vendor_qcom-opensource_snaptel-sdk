@@ -152,6 +152,7 @@ struct IccFile {
  * application within the card.
  */
 enum class SessionType {
+    UNKNOWN = -1,               /**< Unknown refresh session type */
     PRIMARY = 0,                /**< Accesses the USIM application (for UICC) used to
                                      acquire cellular service network on primary slot. */
     SECONDARY = 2,              /**< Accesses the USIM application (for UICC) used to
@@ -160,30 +161,18 @@ enum class SessionType {
                                      the UICC in slot 1. The nonprovisioning application
                                      can be an ISIM or a USIM currently not used to acquire
                                      the network. The application is specified using the
-                                     AID, as reported via telux::tel::ICardApp::getAppId.
-                                     For UICC, the modem uses shared logical channels. */
+                                     AID, as reported via telux::tel::ICardApp::getAppId. */
     NONPROVISIONING_SLOT_2 = 5, /**< Accesses a nonprovisioning application available on
                                      the UICC in slot 2. The nonprovisioning application
                                      can be an ISIM or a USIM currently not used to acquire
                                      the network. The application is specified using the
-                                     AID, as reported via telux::tel::ICardApp::getAppId.
-                                     For UICC, the modem uses shared logical channels. */
+                                     AID, as reported via telux::tel::ICardApp::getAppId. */
     CARD_ON_SLOT_1 = 6,         /**< Accesses files that are not in any application of the
                                      card in slot 1. (i.e., to access the global phonebook
                                      or the EF-DIR). */
     CARD_ON_SLOT_2 = 7,         /**< Accesses files that are not in any application of the
                                      card in slot 2. (i.e., to access the global phonebook
                                      or the EF-DIR). */
-    CHANNEL_ID_SLOT_1 = 8,      /**< Accesses an application available on the UICC in slot 1,
-                                     after opening an exclusive logical channel
-                                     using telux::tel::ICard::openLogicalChannel.
-                                     The channel ID is received in response of
-                                     openLogicalChannel request. */
-    CHANNEL_ID_SLOT_2 = 9,      /**< Accesses an application available on the UICC in slot 2,
-                                     after opening an exclusive logical channel
-                                     using telux::tel::ICard::openLogicalChannel.
-                                     The channel ID is received in response of
-                                     openLogicalChannel request. */
 };
 
 /**
@@ -194,10 +183,7 @@ struct RefreshParams {
    SessionType sessionType;      /**< Session type */
    std::string aid;              /**< Application identifier, used for
                                      telux::tel::SessionType::NONPROVISIONING_SLOT_1 or
-                                     telux::tel::SessionType::NONPROVISIONING_SLOT_2  */
-   std::string channelId;        /**< Logical channel number, used for
-                                     telux::tel::SessionType::CHANNEL_ID_SLOT_1 or
-                                     telux::tel::SessionType::CHANNEL_ID_SLOT_2  */
+                                     telux::tel::SessionType::NONPROVISIONING_SLOT_2 */
 };
 
 /**

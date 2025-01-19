@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023,2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023,2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -115,8 +115,8 @@ int Cv2xTxStatusReportApp::init() {
 
     // get handle of cv2x radio manager and wait for readiness
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioManager_ = cv2xFactory.getCv2xRadioManager(statusCb);
-    if (!cv2xRadioManager_) {
+    auto radioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    if (!radioMgr) {
         cerr << "Failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
     }
@@ -143,9 +143,8 @@ int Cv2xTxStatusReportApp::init() {
         cv.notify_all();
     };
 
-    radio_ = cv2xRadioManager_->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
-
-    if (not radio_) {
+    auto radio = radioMgr->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
+    if (not radio) {
         cerr << "C-V2X Radio creation failed." << endl;
         return EXIT_FAILURE;
     }
@@ -163,7 +162,7 @@ int Cv2xTxStatusReportApp::init() {
 
     // get initial CV2X status
     promise<Cv2xStatus> prom;
-    auto res = cv2xRadioManager_->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
+    auto res = radioMgr->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
                                                     {
                                                         prom.set_value(status);
                                                     });
@@ -188,17 +187,18 @@ int Cv2xTxStatusReportApp::init() {
     }
 
     // register Tx flow
-    if (EXIT_SUCCESS != registerTxFlow()) {
+    if (EXIT_SUCCESS != registerTxFlow(radio)) {
         // delete created listener if Tx flow registration failed
-        deleteTxReportListener();
+        deleteTxReportListener(radio);
         return EXIT_FAILURE;
     }
 
     // create listener with same port number as the Tx flow src port
-    if (EXIT_SUCCESS != createTxReportListener()) {
+    if (EXIT_SUCCESS != createTxReportListener(radio)) {
         return EXIT_FAILURE;
     }
 
+    radio_ = radio;
     return EXIT_SUCCESS;
 }
 
@@ -206,21 +206,24 @@ int Cv2xTxStatusReportApp::deinit() {
     cout << "Exiting..." << endl;
 
     // deregister Tx flow
-    deregisterTxFlow();
+    deregisterTxFlow(radio_);
 
     // deregister report listener
-    deleteTxReportListener();
+    deleteTxReportListener(radio_);
 
     // free allocated tx buffer
     if (buf_) {
         free(buf_);
         buf_ = nullptr;
     }
+    if (radio_) {
+        radio_ = nullptr;
+    }
 
     exit(0);
 }
 
-int Cv2xTxStatusReportApp::registerTxFlow() {
+int Cv2xTxStatusReportApp::registerTxFlow(std::shared_ptr<ICv2xRadio> &radio) {
     cout << "Registering Tx event Flow" << endl;
 
     promise<ErrorCode> p;
@@ -234,7 +237,7 @@ int Cv2xTxStatusReportApp::registerTxFlow() {
     };
 
     EventFlowInfo flowInfo;
-    auto status = radio_->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+    auto status = radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
                                         DEFAULT_SERVICE_ID,
                                         flowInfo,
                                         DEFAULT_PORT,
@@ -253,9 +256,9 @@ int Cv2xTxStatusReportApp::registerTxFlow() {
     return EXIT_SUCCESS;
 }
 
-int Cv2xTxStatusReportApp::deregisterTxFlow() {
+int Cv2xTxStatusReportApp::deregisterTxFlow(std::shared_ptr<ICv2xRadio> &radio) {
     int ret = EXIT_SUCCESS;
-    if (txFlowValid_) {
+    if (radio && txFlowValid_) {
         cout << "Deregistering Tx flow, close sock:" << txFlow_->getSock() << endl;
 
         promise<ErrorCode> p;
@@ -263,7 +266,7 @@ int Cv2xTxStatusReportApp::deregisterTxFlow() {
             p.set_value(error);
         };
 
-        auto status = radio_->closeTxFlow(txFlow_, closeTxFlowCallback);
+        auto status = radio->closeTxFlow(txFlow_, closeTxFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != p.get_future().get()) {
             cerr << "Failed to deregister Tx flow!" << endl;
@@ -375,10 +378,10 @@ void Cv2xTxStatusReportApp::startTxPkts() {
     }
 }
 
-int Cv2xTxStatusReportApp::createTxReportListener() {
+int Cv2xTxStatusReportApp::createTxReportListener(std::shared_ptr<ICv2xRadio> &radio) {
     promise<ErrorCode> p;
     txReportListener_ = make_shared<Cv2xTxStatusReportListener>();
-    auto status = radio_->registerTxStatusReportListener(
+    auto status = radio->registerTxStatusReportListener(
         DEFAULT_PORT,
         txReportListener_,
         [&p](ErrorCode code)
@@ -394,15 +397,15 @@ int Cv2xTxStatusReportApp::createTxReportListener() {
     return EXIT_SUCCESS;
 }
 
-int Cv2xTxStatusReportApp::deleteTxReportListener() {
-    if (not txReportListener_) {
+int Cv2xTxStatusReportApp::deleteTxReportListener(std::shared_ptr<ICv2xRadio> &radio) {
+    if (not radio || not txReportListener_) {
         cerr << "Tx status report listener not exist" << endl;
         return EXIT_FAILURE;
     }
 
     cout << "Stop listening to Tx Status Report" << endl;
     promise<ErrorCode> p;
-    auto status = radio_->deregisterTxStatusReportListener(
+    auto status = radio->deregisterTxStatusReportListener(
         DEFAULT_PORT,
         [&p](ErrorCode code)
         {

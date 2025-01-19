@@ -29,7 +29,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -157,8 +157,8 @@ int Cv2xTxStatusReportApp::init() {
 
     // get handle of cv2x radio manager and wait for readiness
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioManager_ = cv2xFactory.getCv2xRadioManager(statusCb);
-    if (!cv2xRadioManager_) {
+    auto mgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    if (!mgr) {
         cerr << "Failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
     }
@@ -174,7 +174,7 @@ int Cv2xTxStatusReportApp::init() {
 
     // get initial CV2X status
     promise<Cv2xStatus> prom;
-    auto res = cv2xRadioManager_->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
+    auto res = mgr->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
                                                     {
                                                         prom.set_value(status);
                                                     });
@@ -193,7 +193,7 @@ int Cv2xTxStatusReportApp::init() {
 
     // register listener for CV2X status change
     cv2xStatusListener_ = make_shared<Cv2xStatusListener>(status);
-    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
+    if (Status::SUCCESS != mgr->registerListener(cv2xStatusListener_)) {
         cerr << "Register CV2X status listener failed!" << endl;
         return EXIT_FAILURE;
     }
@@ -210,8 +210,8 @@ int Cv2xTxStatusReportApp::init() {
         cv.notify_all();
     };
 
-    radio_ = cv2xRadioManager_->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
-    if (not radio_) {
+    auto radio = mgr->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
+    if (not radio) {
         cerr << "C-V2X Radio creation failed." << endl;
         return EXIT_FAILURE;
     }
@@ -228,6 +228,8 @@ int Cv2xTxStatusReportApp::init() {
         }
     }
 
+    cv2xRadioManager_ = mgr;
+    radio_ = radio;
     return EXIT_SUCCESS;
 }
 
@@ -277,6 +279,13 @@ int Cv2xTxStatusReportApp::deinit() {
     // stop Tx pkts if started
     if (txThreadValid_) {
         stopTxPkts();
+    }
+
+    if (radio_) {
+        radio_ = nullptr;
+    }
+    if (cv2xRadioManager_) {
+        cv2xRadioManager_ = nullptr;
     }
 
     exit(0);

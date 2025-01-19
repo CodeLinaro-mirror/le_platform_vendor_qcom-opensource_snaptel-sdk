@@ -29,7 +29,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -165,17 +165,32 @@ int main(int argc, char *argv[]) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
+    bool cv2xRadioManagerStatusUpdated = false;
+    telux::common::ServiceStatus cv2xRadioManagerStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xRadioManagerStatusUpdated = true;
+        cv2xRadioManagerStatus = status;
+        cv.notify_all();
+    };
+
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto cv2xRadioMgr = cv2xFactory.getCv2xRadioManager();
+    auto cv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
     if (not cv2xRadioMgr) {
         cout << "Error: get Cv2x RadioManager failed" << endl;
         return EXIT_FAILURE;
     }
 
     // Wait for radio manager to complete initialization
-    if (not cv2xRadioMgr->isReady()) {
-        if (!cv2xRadioMgr->onReady().get()) {
-            cout << "Error: CV2X RadioManager initialize failed" << endl;
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+            cv2xRadioManagerStatus) {
+            cout << "Cv2x Radio Manager initialization failed!" << endl;
             return EXIT_FAILURE;
         }
     }

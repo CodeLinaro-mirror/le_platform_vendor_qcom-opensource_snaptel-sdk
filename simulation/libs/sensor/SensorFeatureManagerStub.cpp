@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -48,6 +48,7 @@ telux::common::ServiceStatus SensorFeatureManagerStub::getServiceStatus(){
 void SensorFeatureManagerStub::cleanup(){
     LOG(DEBUG, __FUNCTION__);
     taskQ_.shutdown();
+    tcuActivityMgr_ = nullptr;
 }
 
 telux::common::Status SensorFeatureManagerStub::init(telux::common::InitResponseCb initCb){
@@ -56,6 +57,82 @@ telux::common::Status SensorFeatureManagerStub::init(telux::common::InitResponse
         = std::async(std::launch::async, [this, initCb]() { this->initSync(initCb); }).share();
     taskQ_.add(f);
     return telux::common::Status::SUCCESS;
+}
+
+bool SensorFeatureManagerStub::getSystemState() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return isSystemSuspended_;
+}
+
+void SensorFeatureManagerStub::onTcuActivityStateUpdate(TcuActivityState state,
+    std::string machineName) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (state == TcuActivityState::SUSPEND) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            isSystemSuspended_ = true;
+            LOG(DEBUG, "isSystemSuspended_: ", isSystemSuspended_);
+        }
+        telux::common::Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
+            state);
+        if (ackStatus == telux::common::Status::SUCCESS) {
+            std::cout << " Sent SUSPEND acknowledgement" << std::endl;
+        } else {
+            std::cout << " Failed to send SUSPEND acknowledgement !" << std::endl;
+        }
+    } else if (state == TcuActivityState::RESUME) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        isSystemSuspended_ = false;
+    }
+}
+
+void SensorFeatureManagerStub::initTcuPowerManager() {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::Status status;
+    telux::common::ServiceStatus serviceStatus;
+    std::promise<telux::common::ServiceStatus> p{};
+    telux::power::ClientInstanceConfig config{};
+
+    std::cout << " Initializing the client as a SLAVE " << std::endl;
+
+    config.clientType = telux::power::ClientType::SLAVE;
+    config.clientName = "slaveClientSensorFeatureMgrStub";
+    config.machineName = telux::power::LOCAL_MACHINE;
+
+    // Get power factory instance
+    auto &powerFactory = PowerFactory::getInstance();
+
+    // Get TCU-activity manager object
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(
+        config, [&p](telux::common::ServiceStatus srvStatus) {
+        p.set_value(srvStatus);
+    });
+
+    if (!tcuActivityMgr_) {
+        std::cout << "Can't get ITcuActivityManager" << std::endl;
+        return;
+    }
+
+    // Wait for TCU-activity manager to be ready
+    std::cout << " Waiting for TCU Activity Manager to be ready " << std::endl;
+    serviceStatus = p.get_future().get();
+    if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Power service unavailable, status " <<
+            static_cast<int>(serviceStatus) << std::endl;
+        return;
+    }
+
+    // Registering a listener for TCU-activity state updates
+    status = tcuActivityMgr_->registerListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Can't register listener, err " <<
+            static_cast<int>(status) << std::endl;
+        return;
+    }
+
+    std::cout << " Registered Listener for TCU-activity state updates" << std::endl;
 }
 
 void SensorFeatureManagerStub::initSync(telux::common::InitResponseCb callback){
@@ -77,6 +154,7 @@ void SensorFeatureManagerStub::initSync(telux::common::InitResponseCb callback){
     if(serviceStatus_ == ServiceStatus::SERVICE_AVAILABLE ){
         auto myself = shared_from_this();
         myself_ = myself;
+        initTcuPowerManager();
     }
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
@@ -106,7 +184,9 @@ void SensorFeatureManagerStub::handleFeatureEvent(::sensorStub::FeatureEvent eve
     auto bufferedEvents = std::make_shared<std::vector<SensorEvent>>();
     parseBufferedEvent(event.events(),bufferedEvents,sensorName);
     invokeEventListener(featureEvent);
-    invokeBufferedEventListener(sensorName, bufferedEvents, true);
+    if(getSystemState()) {
+        invokeBufferedEventListener(sensorName, bufferedEvents, true);
+    }
 }
 
 void SensorFeatureManagerStub::parseBufferedEvent(std::string eventString,

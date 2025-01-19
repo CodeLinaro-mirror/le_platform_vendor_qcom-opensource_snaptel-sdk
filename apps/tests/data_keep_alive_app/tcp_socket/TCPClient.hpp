@@ -43,8 +43,7 @@ class TCPClient {
     {}
     ~TCPClient() { disconnect(); }
 
-    bool connectTo()
-    {
+    bool connectTo() {
         std::cout << " connectTo " << strServerAddr_ << ":" << serverPort_
         << "  via " << strClientAddr_ << ":" << clientPort_ << std::endl;
         receivedStopClient_ = false;
@@ -129,8 +128,7 @@ class TCPClient {
         return true;
     }
 
-    void disconnect()
-    {
+    void disconnect() {
         std::cout << " Stopping TCP client " << std::endl;
         receivedStopClient_ = true;
 
@@ -145,12 +143,16 @@ class TCPClient {
         socket_ = 0;
     }
 
-    void sendMessage(T *msg)
-    {
-        if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T))
-        {
-            worker_->onDisconnect();
-            close(socket_);
+    void sendMessage(T *msg) {
+        if(socket_) {
+            if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T)) {
+                std::cout << " send : " << std::string(strerror(errno)) << std::endl;
+                worker_->onDisconnect();
+                close(socket_);
+                socket_ = 0;
+            }
+        } else {
+            std::cout << " Socket is not connected " << std::endl;
         }
     }
 

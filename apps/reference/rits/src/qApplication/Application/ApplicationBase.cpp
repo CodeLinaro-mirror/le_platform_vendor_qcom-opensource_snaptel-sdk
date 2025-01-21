@@ -62,8 +62,10 @@ CongestionControlCalculations ApplicationBase::congCtrlCbData;
 v2x_diag_qits_general_data ApplicationBase::generalInfo;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
+RadioTransmit* QitsCongCtrlListener::spsTransmit_;
 FILE* ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
+std::mutex ApplicationBase::hvLocUpdateMtx;
 bool ApplicationBase::securityEnabled;
 bool ApplicationBase::congCtrlEnabled;
 bool ApplicationBase::positionOverride;
@@ -75,10 +77,14 @@ double ApplicationBase::overrideSpeed;
 bool ApplicationBase::writeLogFinish;
 bool ApplicationBase::exitApp;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
+shared_ptr<ILocationInfoEx> ApplicationBase::lastLocationInfoIdChange;
 bool ApplicationBase::securityInitialized;
+unsigned int ApplicationBase::idChangeDistance;
+uint64_t ApplicationBase::scheduledIdChangeTime;
 int ApplicationBase::signFail;
 int ApplicationBase::signSuccess;
-
+bool init_loc = false;
+static int idChangeTriggercounter = 0 ;
 #define EventBitsShift(bits, shift) \
     (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
 
@@ -106,13 +112,12 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         kine.latitude = locationInfo->getLatitude() * 10000000;
         kine.longitude = locationInfo->getLongitude() * 10000000;
         kine.elevation = locationInfo->getAltitude() * 10;
-        kine.speed = locationInfo->getSpeed() * 50;
         // make sure that aerolink knows most recent ego position and leap seconds
         if(ApplicationBase::securityInitialized){
             int result = AerolinkSecurity::setSecCurrLocation(&kine);
             telux::common::Status status =
                 locationInfo->getLeapSeconds(kine.leapSeconds);
-            if(status != Status::SUCCESS && kine.leapSeconds != 0){
+            if(status == Status::SUCCESS){
                 result = AerolinkSecurity::setLeapSeconds(kine.leapSeconds);
             }
         }
@@ -128,6 +133,7 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
             pos.elev = ApplicationBase::overrideElev;
             speed = ApplicationBase::overrideSpeed;
         }else{
+            lock_guard<mutex> lk(ApplicationBase::hvLocUpdateMtx);
             pos.posLat = (locationInfo->getLatitude());
             pos.posLong = (locationInfo->getLongitude());
             pos.heading = (locationInfo->getHeading());
@@ -268,7 +274,14 @@ void ApplicationBase::diagLogPktGenericInfo() {
 }
 
 void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
-   ApplicationBase::hvLocationInfo = hvLocationInfoIn;
+    lock_guard<mutex> lk(hvLocUpdateMtx);
+    ApplicationBase::hvLocationInfo = hvLocationInfoIn;
+#if AEROLINK
+    if(!init_loc){
+        lastLocationInfoIdChange = hvLocationInfo;
+        init_loc = true;
+    }
+#endif
 }
 
 void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
@@ -342,52 +355,9 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
     }
 }
 
-
-class QitsCongCtrlListener :public ICongestionControlListener {
-public:
-static RadioTransmit* spsTransmit_;
-uint64_t lastPeriodicity = 100;
-// need to provide pointer to sps transmit
-// need to provide pointer to cong control user data
-void updateSpsTransmitFlow(
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData) {
-    // once the user data is updated, the thread in qits
-    // can now schedule a transmission
-    // cast void pointer
-    // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
-    if (spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
-        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity) {
-        lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
-        // update the sps flow with the rounded max ITT that congestionControl calculates
-        shared_ptr<SpsFlowInfo> spsInfoSharedPtr = spsTransmit_->getSpsFlowInfo();
-        if (spsInfoSharedPtr == nullptr) {
-            std::cerr << "Invalid sps info. Not updating. \n";
-            return;
-        }
-        SpsFlowInfo *spsInfo = spsInfoSharedPtr.get();
-        // congestionControl rounds it already to valid values for sps periodicity
-        spsInfo->periodicityMs =
-            (congestionControlUserData->congestionControlCalculations->maxITT);
-
-        // catch future error here
-        try{
-            Status ret = spsTransmit_->updateSpsFlow(*spsInfo);
-            if (ret == Status::FAILED) {
-                std::cerr << "sps transmit flow update failed\n";
-                std::cerr << "Max itt was: "
-                          << congestionControlUserData->congestionControlCalculations->maxITT
-                          << "\n";
-            }
-        } catch (const std::future_error &e) {
-            std::cout << "Caught future error when updating sps flow\n";
-            std::cout << "Error log is: " << e.what() << "\n";
-        }
-    }
-}
-
-void onCongestionControlDataReady (
+void QitsCongCtrlListener::onCongestionControlDataReady (
     std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool critEvent) override {
+        bool critEvent) {
 
     if(congestionControlUserData){
         QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
@@ -399,44 +369,86 @@ void onCongestionControlDataReady (
         }
     }
 }
-};
-
-
-RadioTransmit* QitsCongCtrlListener::spsTransmit_;
-
-// thread function to periodically change ID and cert
-void ApplicationBase::changeIdTimer(unsigned int interval)
-{
-    printf("Time interval for pseudonym and id change is: %d\n", interval);
-    std::thread([this, interval]() {
-        while (true)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-            (this->*thrFn)();
-        }
-    }).detach();
-}
 
 // first need to call setup function to initialize the lcm id change
 // then periodically call "idChange" and check return value and updates in idChangeData
-void ApplicationBase::changeIdentity(){
-    //  pseudonym cert change
+void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
+    // pseudonym cert change
+    exitApp = false;
+    uint64_t currTime, timeSinceLastIdChange;
+    double hvLatNew, hvLonNew, hvLatOld, hvLonOld;
+    unsigned int distSinceLastIdChange;
+    if(lastIdChangeTime == 0){
+        lastIdChangeTime = timestamp_now();
+    }
     if(!exitApp)
     {
+        // wait for distance requirement
+        // if an event is happening, cert change must not happen
         sem_wait(&idChangeData.idSem);
-        int ret = SecService->idChange();
-        if( ret < 0 ){
-            if(appVerbosity > 1)
-                fprintf(stderr,"Id Change Failure\n");
-        }
-        else{
-            if(appVerbosity > 1)
-                printf("Id Change Success\n");
-            // if not simulation, perform l2 src randomization
-            if (!this->isTxSim) { // radio
-                for(int index = 0 ; index < spsTransmits.size(); index++){
-                    this->spsTransmits[index].updateSrcL2();
+        if(!criticalState){
+            // here we need to check for two things:
+            // interval has passed and distance has been covered since last id change
+            currTime = timestamp_now();
+            if(currTime > lastIdChangeTime) {
+                timeSinceLastIdChange = currTime - lastIdChangeTime;
+            }else{
+                timeSinceLastIdChange = 0;
+            }
+            lock_guard<mutex> lk(hvLocUpdateMtx);
+            hvLatNew = (hvLocationInfo->getLatitude());
+            hvLonNew = (hvLocationInfo->getLongitude());
+            hvLatOld = lastLocationInfoIdChange->getLatitude();
+            hvLonOld = lastLocationInfoIdChange->getLongitude();
+            // check if there have been any fixes yet
+            if(init_loc){
+                distSinceLastIdChange =
+                     bsmCompute2dDistance(hvLatOld, hvLonOld, hvLatNew, hvLonNew);
+            }else{
+                distSinceLastIdChange = 0;
+            }
+            // check if both conditions satisfied
+            if(timeSinceLastIdChange >= configuration.idChangeInterval &&
+                distSinceLastIdChange >= ApplicationBase::idChangeDistance){
+                // perform id change and record current position and time
+                int ret = SecService->idChange();
+
+                if( ret < 0 ){
+                    if(appVerbosity > 1) {
+                        fprintf(stderr,"Id Change Failure\n");
+                    }
                 }
+                else{
+                    if(appVerbosity > 7 ){
+                        printf("Id Change Init Call Success\n");
+                        std::cout << "Time is: " << lastIdChangeTime << "\n";
+                        std::cout << "Position is, lat: " << hvLatNew << ", lon: "
+                            << hvLonNew << "\n";
+                        std::cout << "Current time: " << currTime << "\n";
+                        std::cout << "Last id change time: " << lastIdChangeTime << "\n";
+                        std::cout << "Time since last id change: "
+                            << timeSinceLastIdChange << "\n";
+                        std::cout << "Config id change interval: " <<
+                            configuration.idChangeInterval <<"\n";
+                        std::cout << "Distance since last id change " <<
+                            distSinceLastIdChange << "\n";
+                        std::cout << "Config id change distance: " <<
+                            ApplicationBase::idChangeDistance << "\n";
+                    }
+                    // wait for the callback to complete
+                    if(idChangeCbSem != nullptr){
+                        sem_wait(idChangeCbSem);
+                    }
+                    // if not simulation, perform l2 src randomization
+                    if (!this->isTxSim) { // radio
+                        for(int index = 0 ; index < spsTransmits.size(); index++){
+                            this->spsTransmits[index].updateSrcL2();
+                        }
+                    }
+                }
+
+                lastIdChangeTime = timestamp_now();
+                lastLocationInfoIdChange = hvLocationInfo;
             }
         }
         sem_post(&idChangeData.idSem);
@@ -585,7 +597,6 @@ bool ApplicationBase::init() {
     if(configuration.enableL2Filtering) {
         cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
-
     // set up kinematics listener
     if(configuration.enableLocationFixes){
         if (appVerbosity > 5){
@@ -596,15 +607,11 @@ bool ApplicationBase::init() {
         locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
-        // wait some time for location fixes to come in
-        usleep(100000);
     }
     if (!(isTxSim || isRxSim)) {
         // setup radio flows
         if (0 != setup(MsgType, false)) {
-            std::cerr << "radio flow setup failed\n";
-            closeAllRadio();
-            badRadioSetup = true;
+            printf("radio setup failed\n");
             return false;
         }
         // one-time initialization for security ; if any
@@ -619,15 +626,6 @@ bool ApplicationBase::init() {
                           configuration.lcmName.c_str(),
                           std::ref(idChangeData)
                           ));
-
-                  // lcm id change timer thread
-                  sem_init(&idChangeData.idSem, 0, 1);
-                  if (appVerbosity > 5){
-                      fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
-                          this->configuration.idChangeInterval/1000.0);
-                  }
-                  changeIdTimer(this->configuration.idChangeInterval);
-
               }else{
                   // Non-LCM Constructor for Aerolink
                   SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
@@ -637,24 +635,6 @@ bool ApplicationBase::init() {
               ApplicationBase::securityInitialized = true;
               // set the verbosity of aerolink
               SecService->setSecVerbosity(this->configuration.secVerbosity);
-              // set the leap seconds
-              int ret = -1;
-              if (kinematicsReceive && appLocListener_) {
-                auto locationInfo = appLocListener_->getLocation();
-                if (locationInfo) {
-                    uint8_t leapSeconds = 0;
-                    telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                    if(stat == Status::FAILED || leapSeconds == 0){
-                        leapSeconds = configuration.leapSeconds;
-                    }
-                    if (appVerbosity > 5){
-                        printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
-                    }
-                    ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
-                }
-              }else{
-                ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
-              }
             }catch(const std::runtime_error& error){
                 fprintf(stderr, "Aerolink init failed: Please check config params \n");
                 fprintf(stderr, "Attempting to close all radio flows\n");
@@ -747,44 +727,46 @@ bool ApplicationBase::init() {
 }
 
 ApplicationBase::~ApplicationBase() {
-    if(badRadioSetup){
-        if(appVerbosity){
-            std::cerr << "radio flows were not set up properly\n";
-            exitApp = true;
-        }
-    }else{
-        // call prepare for exit here again in case it wasn't called previously
-        prepareForExit();
+    if(appVerbosity){
+        std::cout << "ApplicationBase destructing" << std::endl;
+    }
 
-        if(SecService){
-            SecService->lockIdChange();
-            SecService->deinit();
-            SecService.reset();
-        }
-        if (enableDiagLog_ && utility_) {
-            utility_->deInitDiagLog();
-        }
+    // call prepare for exit here again in case it wasn't called previously
+    prepareForExit();
 
-        if (ldm) {
-            delete ldm;
-            ldm = nullptr;
+    if(SecService){
+        SecService->lockIdChange();
+        SecService->deinit();
+        SecService.reset();
+    }
+    if (enableDiagLog_ && utility_) {
+        utility_->deInitDiagLog();
+    }
+
+    if (ldm) {
+        delete ldm;
+        ldm = nullptr;
+    }
+    {
+        std::unique_lock<std::mutex> loc(stateMtx);
+        exitApp = true;
+        stateCv.notify_all();
+        if(nullptr != this->currVehState){
+            free(currVehState);
         }
-        {
-            std::unique_lock<std::mutex> loc(stateMtx);
-            exitApp = true;
-            stateCv.notify_all();
-            if(nullptr != this->currVehState){
-                free(currVehState);
+    }
+    {
+        std::unique_lock<std::mutex> lock(csvMutex);
+        if (nullptr != csvfp && !configuration.enableAsync) {
+            if (!writeLogFinish) {
+                auto status = writeMutexCv.wait_for
+                    (lock, std::chrono::seconds(2), []{ return writeLogFinish; });
+                if (!status){
+                    std::cerr << "Warning: Closing CSV file while writes may be in progress" << std::endl;
+                }
             }
-        }
-
-        {
-            std::unique_lock<std::mutex> lock(csvMutex);
-            if (nullptr != csvfp && !configuration.enableAsync) {
-                writeMutexCv.wait(lock, []{ return writeLogFinish; });
-                fclose(csvfp);
-                csvfp = nullptr;
-            }
+            fclose(csvfp);
+            csvfp = nullptr;
         }
     }
 }
@@ -984,33 +966,42 @@ void ApplicationBase::vehicleEventReport(bool emergent,
 }
 void ApplicationBase::prepareForExit() {
     exitApp = true;
-    if(badRadioSetup){
-        if(appVerbosity){
-            exitApp = true;
+    sem_post(&this->rx_sem);
+    sem_post(&this->log_sem);
+    sem_post(&idChangeData.idSem);
+
+    if(configuration.enableCongCtrl &&
+                congestionControlManager && congCtrlInitialized){
+        if(congestionControlManager->
+                    getCongestionControlUserData()->congestionControlSem){
+            sem_post(congestionControlManager->
+                        getCongestionControlUserData()->congestionControlSem);
         }
-    }else{
-        {
-            std::unique_lock<std::mutex> loc(stateMtx);
-            stateCv.notify_all();
-        }
-        {
-            lock_guard<std::mutex> lock(csvMutex);
-            writeLogFinish = true;
-            writeMutexCv.notify_all();
-        }
-        if (kinematicsReceive != nullptr) {
-            kinematicsReceive->close();
-        }
-        // notify all radio interface to prepare for exit
-        for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
-            this->eventTransmits[i].prepareForExit();
-        }
-        for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
-            this->spsTransmits[i].prepareForExit();
-        }
-        for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
-            this->radioReceives[i].prepareForExit();
-        }
+        congestionControlManager->stopCongestionControl();
+        congCtrlInitialized = false;
+    }
+
+    {
+        std::unique_lock<std::mutex> loc(stateMtx);
+        stateCv.notify_all();
+    }
+    {
+        lock_guard<std::mutex> lock(csvMutex);
+        writeLogFinish = true;
+        writeMutexCv.notify_all();
+    }
+    // notify all radio interface to prepare for exit
+    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+        this->eventTransmits[i].prepareForExit();
+    }
+    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
+        this->spsTransmits[i].prepareForExit();
+    }
+    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
+        this->radioReceives[i].prepareForExit();
+    }
+    if (kinematicsReceive != nullptr) {
+        kinematicsReceive->close();
     }
 }
 
@@ -2272,6 +2263,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
     // close all flows before re-setup
     if (true == reSetup) {
+        std::cout << "Closing all radio\n";
         closeAllRadio();
     }
 
@@ -2456,9 +2448,24 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     uint64_t currTime = 0;
     // if congestion control enabled, only send when congestionControl tells us to:
     if(this->configuration.enableCongCtrl && congCtrlInitialized
-        && !(criticalState && txType == TransmitType::EVENT)){
-        sem_wait (congestionControlManager->
-                    getCongestionControlUserData()->congestionControlSem);
+        && !(criticalState && txType == TransmitType::EVENT) && !exitApp){
+        // use a mutex to prevent a potential race condition while waiting for semaphore
+        // and checking if the app's exit flag has been set
+        std::unique_lock<std::mutex> exitLock(stateMtx);
+        if(!exitApp){
+            exitLock.unlock();
+            if(congestionControlManager->
+                        getCongestionControlUserData()->congestionControlSem !=
+                        nullptr){
+                sem_wait (congestionControlManager->
+                            getCongestionControlUserData()->congestionControlSem);
+            }
+            exitLock.lock();
+        }
+        // check if exit app had been set while waiting for the cong ctrl semaphore
+        if(exitApp){
+            return -1;
+        }
     }
 
     if (this->isTxSim) {
@@ -2470,6 +2477,15 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     } else {
         return -1;
     }
+
+#if AEROLINK
+    // check if identiy and cert change needs to be performed
+    if(configuration.enableSecurity && !this->configuration.lcmName.empty()
+            && this->configuration.idChangeInterval && kinematicsReceive &&
+            appLocListener_ && hvLocationInfo) {
+        changeIdentity(idChangeData.idChangeCbSem);
+    }
+#endif
     // reserve headroom in abuf if padding is specified
     abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     fillMsg(mc);
@@ -2484,7 +2500,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     // this will avoid any log writing if the log file was never opened
     // save timestamp before sendto
     currTime = timestamp_now();
-    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT){
+    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT && !exitApp){
         /* Will start it here because to prevent desynchronization
             between the transmit thread and congestion control startup */
         /* Start congestion control threads */
@@ -2600,9 +2616,12 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             }
         }
         if(kinematicsReceive && appLocListener_ && hvLocationInfo){
-            locTimeMs_ = hvLocationInfo->getTimeStamp();
-            locPositionDop_ = hvLocationInfo->getPositionDop();
-            locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
+            {
+                lock_guard<mutex> lk(hvLocUpdateMtx);
+                locTimeMs_ = hvLocationInfo->getTimeStamp();
+                locPositionDop_ = hvLocationInfo->getPositionDop();
+                locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
+            }
         }
     }
     return (validMessage ? encLength : 0);
@@ -2625,15 +2644,7 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
         sopt.sspLength = this->configuration.sspLength;
         sopt.sspMaskLength = this->configuration.sspMaskLength;
     }
-    sopt.enableAsync = this->configuration.enableAsync;
     sopt.secVerbosity = this->configuration.secVerbosity;
-
-    if(kinematicsReceive && appLocListener_ && hvLocationInfo){
-        sopt.hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
-        sopt.hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
-        sopt.hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
-    }
-
     std::thread::id tid = std::this_thread::get_id();
     if(configuration.enableSignStatLog){
         if (thrSignLatencies[tid].size() > signStatIdx[tid]) {

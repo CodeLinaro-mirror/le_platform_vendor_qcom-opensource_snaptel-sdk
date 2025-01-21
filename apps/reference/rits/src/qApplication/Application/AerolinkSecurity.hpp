@@ -101,9 +101,6 @@ class AerolinkSecurity : public SecurityService {
             MisbehaviorStats* misbehaviorStat,
             SecuredMessageParserC* smp);
         void fillBsmDataForMbd(Kinematics* rvBsmData);
-        ~AerolinkSecurity() {
-            deinit();
-        }
 
     private:
        // ctor for aerolink w/o encryption
@@ -131,6 +128,7 @@ class AerolinkSecurity : public SecurityService {
         SecuredMessageParserC smp_;
         int init(void);
         void deinit(void);
+        ~AerolinkSecurity();
         SecurityContextC secContext_;
         AerolinkEncryptionKey  encryptionKey;
         // Multi-Threading Aerolink Variables

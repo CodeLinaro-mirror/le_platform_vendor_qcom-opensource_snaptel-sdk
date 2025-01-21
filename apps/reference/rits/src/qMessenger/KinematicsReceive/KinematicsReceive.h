@@ -98,7 +98,7 @@ private:
    std::shared_ptr<LocListener> locListener_ = nullptr;
    std::vector<std::weak_ptr<ILocationListener>> locListeners_;
    void startDetailsCallback(ErrorCode eventError);
-
+   void responseCallback(ErrorCode errorCode);
 protected:
 
 public:
@@ -108,7 +108,7 @@ public:
    * get method.
     */
    KinematicsReceive();
-
+   ~KinematicsReceive();
 
     /**
     * Constructor that creates a KinematicsReceive Object

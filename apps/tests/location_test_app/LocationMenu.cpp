@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -347,6 +347,11 @@ int LocationMenu::init() {
            "Configure OSNMA", {}, std::bind(&LocationMenu::
                configureOsnma, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> provideXtraNetworkInfo =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("43",
+           "Provide Xtra Network Info", {}, std::bind(&LocationMenu::
+               provideXtraNetworkInfo, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
         = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -360,7 +365,7 @@ int LocationMenu::init() {
         requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
         configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
-        injectMerkleTreeInformation, configureOsnma};
+        injectMerkleTreeInformation, configureOsnma, provideXtraNetworkInfo};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1779,6 +1784,39 @@ void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams
     }
 }
 
+void LocationMenu::populateXtraNetworkInfo(telux::loc::NetworkConnectivityInfo &networkInfo) {
+    int networkConnectionStatus;
+    std::cout << "Enter Network Connection Status[0-2]: ";
+    std::cin >> networkConnectionStatus;
+    Utils::validateInput(networkConnectionStatus);
+    if((networkConnectionStatus < 0) && (networkConnectionStatus > 2)) {
+        networkConnectionStatus = 2;
+    }
+    networkInfo.networkConnectionStatus =
+        static_cast<telux::loc::NetworkConnectionStatus>(networkConnectionStatus);
+
+    int networkConnectionType;
+    std::cout << "Enter Network Connection Type[0-2]: ";
+    std::cin >> networkConnectionType;
+    Utils::validateInput(networkConnectionType);
+    if((networkConnectionType < 0) && (networkConnectionType > 2)) {
+        networkConnectionType = 0;
+    }
+    networkInfo.networkConnectionType =
+        static_cast<telux::loc::NetworkConnectionType>(networkConnectionType);
+
+    char delimiter = '\n';
+    std::string country;
+    std::cout << "Enter country: ";
+    std::getline(std::cin, country, delimiter);
+    networkInfo.country = country;
+
+    std::string mccmnc;
+    std::cout << "Enter mccmnc: ";
+    std::getline(std::cin, mccmnc, delimiter);
+    networkInfo.mccmnc = mccmnc;
+}
+
 void LocationMenu::configureXtraParameters(std::vector<std::string> userInput) {
     if(locationConfigurator_) {
         telux::loc::XtraConfig configParams = {};
@@ -1814,6 +1852,22 @@ void LocationMenu::requestXtraStatus(std::vector<std::string> userInput) {
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status =
             locationConfigurator_->requestXtraStatus(getXtraStatusCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::provideXtraNetworkInfo(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        telux::loc::NetworkConnectivityInfo networkInfo = {};
+        populateXtraNetworkInfo(networkInfo);
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Provide Xtra Network Info");
+        telux::common::Status status = locationConfigurator_->provideXtraNetworkInfo(
+            networkInfo, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
         if (status != telux::common::Status::SUCCESS) {
             std::cout << __FUNCTION__ << " Command Failed" << std::endl;
         }

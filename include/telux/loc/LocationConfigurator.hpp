@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -759,6 +759,24 @@ public:
  */
 
   virtual telux::common::Status requestXtraStatus(GetXtraStatusCallback callback) = 0;
+
+/**
+ * This API is used to provide the device network connectivity information, which XTRA daemon uses
+ * to download the assistance data. This API should be used to notify XTRA whenever there is a
+ * change in network connectivity type or status. For example, if network connectivity is lost
+ * during midrun or if backhaul connectivity type changes.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] networkInfo - Configuration parameters for network connectivity on the device.
+ *
+ * @param [in] callback - Optional callback stating the response errorcode.
+ *
+ */
+
+  virtual telux::common::Status provideXtraNetworkInfo(NetworkConnectivityInfo networkInfo,
+  telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * This API is used to register a configuration listener for getting specific indications/updates.

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -139,10 +139,6 @@ void stopThreads() {
 
         if (application) {
             application->prepareForExit();
-             if(application->configuration.enableCongCtrl &&
-                    application->congestionControlManager){
-                application->congestionControlManager->stopCongestionControl();
-            }
             if (application->qMon) {
                 application->qMon->stop();
             }
@@ -622,46 +618,49 @@ void transmitEventMsg() {
     }
     while (!stopThread) {
         //TODO: need provide a proper way to sync the tx/rx threads
-        if (application->pendingTillEmergency() &&
-            application->eventTransmits[0].getCurrentStatus().txStatus ==
-                Cv2xStatusType::ACTIVE) {
+        if(application){
+            if(!application->eventTransmits.empty()){
+                if (application->pendingTillEmergency() &&
+                    application->eventTransmits[0].getCurrentStatus().txStatus ==
+                        Cv2xStatusType::ACTIVE) {
+                    if(nextSchedTxTime == 0){
+                        lastEventTxTime = timestamp_now();
+                        nextSchedTxTime = lastEventTxTime + 100;
+                    }
+                    int ret = application->send(0, TransmitType::EVENT);
+                    if (ret <= 0) {
+                        cerr << "Failed to send critical event message." << endl;
+                    }else{
+                        critEventMsgCtr++;
+                    }
+                    currTimeTmp = timestamp_now();
+                    waitTime = nextSchedTxTime - currTimeTmp; //ms
+                    if(nextSchedTxTime < currTimeTmp){
+                        waitTime = 0;
+                    }
 
-            if(nextSchedTxTime == 0){
-                lastEventTxTime = timestamp_now();
-                nextSchedTxTime = lastEventTxTime + 100;
-            }
-            int ret = application->send(0, TransmitType::EVENT);
-            if (ret <= 0) {
-                cerr << "Failed to send critical event message." << endl;
-            }else{
-                critEventMsgCtr++;
-            }
-            currTimeTmp = timestamp_now();
-            waitTime = nextSchedTxTime - currTimeTmp; //ms
-            if(nextSchedTxTime < currTimeTmp){
-                waitTime = 0;
-            }
-
-            its.it_value.tv_sec = 0;
-            its.it_value.tv_nsec = (waitTime * 1000000LL);
-            its.it_interval = its.it_value;
-            if(waitTime != 0){
-                if (s = timerfd_settime(tx_timer_fd, 0, &its, NULL) < 0) {
-                    std::cerr << "Error setting time\n";
-                    close(tx_timer_fd);
-                    return;
+                    its.it_value.tv_sec = 0;
+                    its.it_value.tv_nsec = (waitTime * 1000000LL);
+                    its.it_interval = its.it_value;
+                    if(waitTime != 0){
+                        if (s = timerfd_settime(tx_timer_fd, 0, &its, NULL) < 0) {
+                            std::cerr << "Error setting time\n";
+                            close(tx_timer_fd);
+                            return;
+                        }
+                    }
+                    s = read(tx_timer_fd, &exp, sizeof(exp));
+                    if (s == sizeof(uint64_t) && exp > 1) {
+                        timer_misses += (exp-1);
+                        if(application->configuration.driverVerbosity){
+                            cout << "Event TX timer overruns: Total missed: "
+                                << timer_misses << endl;
+                        }
+                    }
+                    // schedule the next tx time based on the first event tx time
+                    nextSchedTxTime = nextSchedTxTime + 100;
                 }
             }
-            s = read(tx_timer_fd, &exp, sizeof(exp));
-            if (s == sizeof(uint64_t) && exp > 1) {
-                timer_misses += (exp-1);
-                if(application->configuration.driverVerbosity){
-                    cout << "Event TX timer overruns: Total missed: "
-                        << timer_misses << endl;
-                }
-            }
-            // schedule the next tx time based on the first event tx time
-            nextSchedTxTime = nextSchedTxTime + 100;
         }
     }
     if (tx_timer_fd != -1) {
@@ -1295,7 +1294,7 @@ int setup(const bool tx, const bool rx,
     if (not application
         or not application->configuration.isValid
         or not application->init()) {
-        cout << "Initialization Failed" << endl;
+        cerr << "Initialization Failed" << endl;
         return -1;
     }
 
@@ -1316,7 +1315,7 @@ int setup(const bool tx, const bool rx,
                 application->radioReceives[i].closeFlow();
             }
             application->radioReceives.erase(application->radioReceives.begin(),
-                application->radioReceives.end());
+                 application->radioReceives.end());
         }
 
         if (application->spsTransmits.empty() || application->eventTransmits.empty()) {
@@ -1629,6 +1628,5 @@ int main(int argc, char** argv) {
     if(!rxSim && !txSim && application){
         application->closeAllRadio();
     }
-
     return 0;
 }

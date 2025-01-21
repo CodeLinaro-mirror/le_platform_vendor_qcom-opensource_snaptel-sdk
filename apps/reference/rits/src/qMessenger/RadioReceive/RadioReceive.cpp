@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -198,6 +198,7 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
     return;
 }
 
+RadioReceive::~RadioReceive(){}
 
 uint32_t RadioReceive::receive(const char* buf, int len) {
     uint8_t sourceMac[CV2X_MAC_ADDR_LEN];

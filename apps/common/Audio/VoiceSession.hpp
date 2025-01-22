@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef VOICESESSION_HPP
 #define VOICESESSION_HPP
 
@@ -53,6 +60,7 @@ public:
     Status stopDtmf();
     Status registerListener(std::weak_ptr<IVoiceListener> listener);
     Status deRegisterListener(std::weak_ptr<IVoiceListener> listener);
+    SlotId getSlotId();
 
 private:
     std::atomic<bool> audioStarted_;

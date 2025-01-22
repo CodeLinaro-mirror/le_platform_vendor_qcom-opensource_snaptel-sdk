@@ -30,37 +30,8 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -168,6 +139,18 @@ void AudioClient::startVoiceSession(SlotId slotId) {
         std::cout << "Invalid Audio Manager" << std::endl;
         return;
     }
+
+    if (hasConcurrentVoiceCall_) {
+        /* If the device doesn't have real DSDA support, then only one voice call
+         * can be active at any time, therefore, delete all streams to make room
+         * for the new audio stream */
+        for (auto &session : voiceSessions_) {
+            stopVoiceSession(session.first);
+        }
+        voiceSessions_.clear();
+        activeSession_ = nullptr;
+    }
+
     setActiveSession(slotId);
     queryInputType();
     config_.slotId = slotId;
@@ -180,6 +163,15 @@ void AudioClient::startVoiceSession(SlotId slotId) {
     }
     if (status == Status::SUCCESS) {
         std::cout << "Audio is enabled for call on slotId : " << slotId << std::endl;
+        if (hasConcurrentVoiceCall_) {
+            currentSlotId_ = slotId;
+            if (slotId == SLOT_ID_1) {
+                audioStartedOnSim1_ = true;
+            }
+            if (slotId == SLOT_ID_2) {
+                audioStartedOnSim2_ = true;
+            }
+        }
     } else {
         std::cout << "Error in enabling audio on slotId : " << slotId << std::endl;
     }
@@ -192,6 +184,17 @@ void AudioClient::startVoiceSession(SlotId slotId) {
 // Function to stop an active voice session
 void AudioClient::stopVoiceSession(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+
+    if (hasConcurrentVoiceCall_) {
+        /* If the stream doesn't exist, return early */
+        if ((slotId == SLOT_ID_1) && !audioStartedOnSim1_) {
+            return;
+        }
+        if ((slotId == SLOT_ID_2) && !audioStartedOnSim2_) {
+            return;
+        }
+    }
+
     setActiveSession(slotId);
     auto status = activeSession_->stopAudio();
     if (status == Status::SUCCESS) {
@@ -199,6 +202,18 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
     }
     if (status == Status::SUCCESS) {
         std::cout << "Audio is disabled for call on slotId : " << slotId << std::endl;
+        if (hasConcurrentVoiceCall_) {
+            if (slotId == SLOT_ID_1){
+                audioStartedOnSim1_ = false;
+            }
+            if (slotId == SLOT_ID_2){
+                audioStartedOnSim2_ = false;
+            }
+            currentSlotId_ = INVALID_SLOT_ID;
+            if (!audioStartedOnSim1_ && !audioStartedOnSim2_) {
+                previousSlotId_ = INVALID_SLOT_ID;
+            }
+        }
     } else {
         std::cout << "Error in disabling audio on slotId : " << slotId << std::endl;
     }
@@ -261,6 +276,9 @@ void AudioClient::loadConfFileData() {
             std::cout << "Invalid ecnr mode using default value" << std::endl;
             config_.ecnrMode = EcnrMode::DISABLE;
         }
+        input = parser.getValue("MULTISIM_VOICE_CONCURRENCY");
+        command = std::stoi(input);
+        hasConcurrentVoiceCall_ = (command == 1) ? true : false;
     } catch (const std::exception &e) {
         std::cout << "ERROR: "<< "Unable to read from file" << std::endl;
         std::cout << "Using default parameters" << std::endl;
@@ -281,30 +299,53 @@ void AudioClient::loadConfFileData() {
 
 void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
-    setActiveSession(slotId);
-    std::string operationName = "";
     if (muteStatus) {
-        operationName = "Mute";
-    } else {
-        operationName = "Unmute";
+        return muteStream(slotId);
     }
+    return unmuteStream(slotId);
+#endif
+}
+
+void AudioClient::muteStream(SlotId slotId) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    setActiveSession(slotId);
     StreamMute mute{};
-    mute.enable = muteStatus;
+    mute.enable = true;
     mute.dir = StreamDirection::RX;
     auto status = activeSession_->setMute(mute);
     if (status == Status::SUCCESS) {
-        mute.dir = StreamDirection::TX;
-        status = activeSession_->setMute(mute);
+        std::cout << " Muted stream on slotId " << slotId << std::endl;
+        if (hasConcurrentVoiceCall_ && (previousSlotId_ == INVALID_SLOT_ID)) {
+            previousSlotId_ = currentSlotId_;
+        }
     } else {
-        std::cout << operationName << " failed on RX path on slotId " << slotId << std::endl;
+        std::cout << " Failed mute stream on slotId " << slotId << std::endl;
     }
+#endif
+}
+
+void AudioClient::unmuteStream(SlotId slotId) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (hasConcurrentVoiceCall_) {
+        SlotId tmpSlotId{};
+        tmpSlotId = previousSlotId_;
+        previousSlotId_ = currentSlotId_;
+        currentSlotId_ = previousSlotId_;
+        if (activeSession_->getSlotId() != slotId) {
+            return startVoiceSession(slotId);
+        }
+    }
+
+    setActiveSession(slotId);
+    StreamMute mute{};
+    mute.enable = false;
+    mute.dir = StreamDirection::RX;
+    auto status = activeSession_->setMute(mute);
     if (status == Status::SUCCESS) {
-        std::cout << operationName << " operation Succeded on slotId " << slotId << std::endl;
+        std::cout << " Unmuted stream on slotId " << slotId << std::endl;
     } else {
-        std::cout << operationName << " failed on TX path on slotId " << slotId << std::endl;
+        std::cout << " Failed unmute stream on slotId " << slotId << std::endl;
     }
-#else
-    return;
 #endif
 }
 

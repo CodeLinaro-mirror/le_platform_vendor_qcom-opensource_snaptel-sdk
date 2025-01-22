@@ -319,6 +319,7 @@ telux::common::Status VlanManagerStub::queryVlanInfo(
                 vlanConfig.isAccelerated = config.is_accelerated();
                 vlanConfig.priority = config.priority();
                 vlanConfig.createBridge = config.create_bridge();
+                vlanConfig.nwType = DataUtilsStub::convertNetworkTypeToEnum(config.nw_type());
                 configs.push_back(vlanConfig);
             }
             auto f1 = std::async(std::launch::async,

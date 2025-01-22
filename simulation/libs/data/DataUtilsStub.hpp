@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -521,6 +521,21 @@ public:
             default :
                 return "NONE";
         }
+    }
+
+    static telux::data::NetworkType convertNetworkTypeToEnum(const ::dataStub::Network
+            &nwType) {
+
+        switch(nwType.nw_type()) {
+            case ::dataStub::Network_NetworkType_LAN:
+                return telux::data::NetworkType::LAN;
+            case ::dataStub::Network_NetworkType_WAN:
+                return telux::data::NetworkType::WAN;
+            case ::dataStub::Network_NetworkType_UNKNOWN:
+            default:
+                return telux::data::NetworkType::UNKNOWN;
+        }
+        return telux::data::NetworkType::UNKNOWN;
     }
 
     static ::dataStub::Network_NetworkType convertNetworkTypeToGrpc(const telux::data::NetworkType

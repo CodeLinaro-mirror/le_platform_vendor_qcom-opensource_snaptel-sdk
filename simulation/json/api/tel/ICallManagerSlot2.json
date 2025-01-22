@@ -8,7 +8,7 @@
         "_comment_eCallType" : "Valid Inputs NGeCall or CSeCall",
         "configureECallRedialFailure" : "SUCCESS",
         "_comment_configureECallRedialFailure" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP",
-        "enableALACKWithClearDown" : "false",
+        "enableALACKWithClearDown" : false,
         "_comment_enableALACKWithClearDown" : "Valid Inputs true, false",
         "makeCall" :
         {

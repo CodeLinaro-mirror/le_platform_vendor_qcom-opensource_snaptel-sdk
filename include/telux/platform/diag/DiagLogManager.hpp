@@ -1,70 +1,20 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *    * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *
- *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * /
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
- * @file      DiagLogManager.hpp
- *
- * @brief     DiagLogManager provides APIs to configure, start and stop collecting diagnostics logs.
- *            The interface offers two methods for log collections; file and callback methods.
- *            in file method, all logs are stored in file. In Callback method, each log entry is
- *            delivered to client provided callback.
- *            Qshrink Database from the modem build must be available to decode qshrink4 format F3
- *            logs provided in callback API.
- *            The interface also offers three log collection modes for each log collection method;
- *            streaming, threshold and circular modes.
- *            Client can choose to enable log collection on either device level (MDM or EAP) or on
- *            peripheral level (such as Modem DSP, CDSP, etc.).
- *            Device level logging includes logs from all supported peripherals on the device.
- *            On platforms where hypervisor is supported, logs collected on MDM device level will
- *            also include logs from guest VMs.
- *            Multi client is not supported and single client trying to do concurrent file and
- *            callback logging is also not supported. Client running on MDM can collect logs
- *            from selected MDM peripherals or MDM device level. Client running on EAP can collect
- *            logs on device level from both MDM and EAP and can collect logs from selected EAP
- *            peripherals.
- *            Once logging is started, subsequent attempt to start logging will return
- *            @ref telux::common::ErrorCode::NO_EFFECT.
- *            Attempt to call @ref telux::platform::diag::IDiagLogManager::setConfig while logging
- *            has already started will return @ref telux::common::ErrorCode::INVALID_STATE error.
+ * @file  DiagLogManager.hpp
+ * @brief IDiagLogManager provides on-device logging (ODL) support for diagnostics.
+ *        Provides APIs to configure, start and stop collecting diagnostics logs.
  */
 
 #ifndef TELUX_PLATFORM_DIAG_DIAGLOGMANAGER_HPP
 #define TELUX_PLATFORM_DIAG_DIAGLOGMANAGER_HPP
 
-#include <future>
 #include <memory>
-#include <stdint.h>
+#include <cstdint>
+#include <string>
 
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -76,345 +26,626 @@ namespace diag {
 /** @addtogroup telematics_diagnostics
  * @{ */
 
-#define MAX_DIAG_FILE_SIZE_MB    100
-#define MAX_NUM_DIAG_FILES       100
-//Forward declarations
-class IDiagListener;
+/**
+ * Minimum size of the log file.
+ */
+#define MIN_DIAG_FILE_SIZE_MB  1
 
 /**
- * Specifies the mode of logging to be used (Streaming, threshold, circular buffer)
+ * Maximum size of the log file.
+ */
+#define MAX_DIAG_FILE_SIZE_MB  100
+
+/**
+ * Minimum number of the log files.
+ */
+#define MIN_NUM_DIAG_FILES  2
+
+/**
+ * Maximum number of the log files.
+ */
+#define MAX_NUM_DIAG_FILES  100
+
+/**
+ * Log flushing stops when this is reached.
+ */
+#define MIN_WATER_MARK  1
+
+/**
+ * Log flushing starts when this is reached.
+ */
+#define MAX_WATER_MARK  100
+
+/**
+ * Default value - flushing stops when this is reached.
+ */
+#define DEFAULT_LOW_WATER_MARK  15
+
+/**
+ * Default value - flushing starts when this is reached.
+ */
+#define DEFAULT_HIGH_WATER_MARK  85
+
+/**
+ * Specifies how an application gets the collected logs.
+ */
+enum class LogMethod {
+    /**
+     * No valid method defined.
+     */
+    NONE = 0,
+
+    /**
+     * File method - logs are saved in file(s).
+     *
+     * By default, these files are saved in the /tmp/diag directory. Client can specify a
+     * different directory by defining platform.diag.diag_output_log_path in the tel.conf
+     * file. If specified, the directory should exist before starting the log collection.
+     *
+     * The logs files typically follow 'diag_log_*_date_time.qmdl' naming convention and
+     * can be read in plain text format using Qualcomm extensible diagnostic monitor (QXDM)
+     * tool.
+     */
+    FILE,
+
+    /**
+     * Callback method - logs are provided via @ref IDiagListener::onAvailableLogs callback
+     * whenever available, in raw format.
+     */
+    CALLBACK
+};
+
+/**
+ * Specifies when an application gets the collected logs.
  */
 enum class DiagLogMode {
-    STREAMING = 0,      /**< Logs are flushed immediately from the buffer when available. Logs are
-                             saved to a file (in file method) or passed to the client in real time
-                             through listener @ref IDiagListener::onAvailableLogs()
-                             (in callback method) */
-    THRESHOLD,          /**< Can be used to conserve power. Logs are flushed out when the buffer is
-                             full. This is only applicable to peripherals with its own buffer such
-                             as Modem DSP. It is not recommended to enable too many
-                             logs in logmask file passed to @ref telux::platform::diag::setConfig
-                             API. Too many logs will cause frequent processor wake ups and
-                             consequently result in the threshold being crossed and logs being
-                             flushed frequently resembling streaming mode. */
-    CIRCULAR_BUFFER,    /**< Can be used to conserve power. Logs are continuously written to a
-                             buffer until client triggers buffer drain command to collect the
-                             logs.
-                             This is only applicable to peripherals with its own buffer such
-                             as Modem DSP. Old logs are overwritten when buffer is
-                             full. Logs in the buffer will be flushed only upon client's request. */
+    /**
+     * Logs are provided immediately whenever available.
+     */
+    STREAMING = 0,
+
+    /**
+     * Logs are provided every time peripheral's local buffer is full.
+     *
+     * Logs are flushed to the client when high-watermark is reached, and flushing
+     * continues until low-watermark is reached where buffering start again.
+     *
+     * Whenever a peripheral wants to pass logs to the client, it raises an interrupt
+     * to the application processor. Therefore, for streaming mode, there are frequent
+     * interrupts which prevents the application processor from entering and remaining
+     * into the power collapsed state for longer duration based on the frequency and
+     * amount of logs.
+     *
+     * Specifying this mode causes logs to be accumulated in the peripheral's local
+     * buffer. An interrupt is raised only when the high-watermark is reached.
+     * Therefore, application processor can remain power collapsed for longer time
+     * saving power.
+     *
+     * Applicable for only peripherals with its own buffer such as Modem DSP.
+     */
+    THRESHOLD,
+
+    /**
+     * Logs are saved in peripheral's local buffer until the client explicitly
+     * requests them through @ref IDiagLogManager::drainPeripheralBuffer.
+     *
+     * Old logs are overwritten when the buffer is full and drain is not issued.
+     *
+     * Similar to the THRESHOLD mode, this can also be used to save power.
+     *
+     * Applicable for only peripherals with its own buffer such as Modem DSP.
+     * Supported only for LogMethod::CALLBACK.
+     */
+    CIRCULAR_BUFFER
 };
 
 /**
- * Enables log collection from selected device(s) which includes logs from Integrated AP and
- * all peripherals on the device.
- * Note: If device logging is enabled, peripheral logging must be disabled.
+ * Specifies the device for which logs are collected. Logs from all the peripherals
+ * on the specified device are collected.
  */
 enum DeviceType {
-    DIAG_DEVICE_NONE = 0,                  /**< Device logging is disabled. Only peripheral logging
-                                                on device application is running on is enabled */
-    DIAG_DEVICE_EXTERNAL_AP = 1 << 0,      /**< Log collection from External Application Processor
-                                                is enabled */
-    DIAG_DEVICE_MDM = 1 << 1,              /**< Log collection from MDM is enabled */
+    /**
+     * No device (only peripheral logs are collected)
+     */
+    DIAG_DEVICE_NONE = 0,
+
+    /**
+     * External application processor (EAP). Client must be running on the EAP.
+     * Unsupported.
+     */
+    DIAG_DEVICE_EXTERNAL_AP = (1 << 0),
+
+    /**
+     * Mobile data modem (MDM). Client can be running on either EAP or MDM.
+     * EAP is not supported.
+     */
+    DIAG_DEVICE_MDM = (1 << 1)
 };
 
-/* This is a bitmask which takes the devices from
- * @ref telux::platform::diag::DeviceType.
+/**
+ * Bitmask taking devices from @ref diag::DeviceType.
+ * Values can be OR'ed together, for ex; (DIAG_DEVICE_EXTERNAL_AP | DIAG_DEVICE_MDM)
+ * to specify more than one device.
  */
 using Devices = uint8_t;
 
 /**
- * Enables log collection from selected peripheral (if it exists) and/or application processor in
- * the device where the client of the API is running.
- * Note: If peripheral logging is enabled, device logging must be disabled.
+ * Specifies the peripheral(s) for which logs are collected. Logs from one
+ * or more peripherals can be collected by setting corresponding bit in the
+ * @ref diag::Peripherals.
  */
 enum PeripheralType {
-    DIAG_PERIPHERAL_NONE = 0,                /**< Disable peripherals log collection           */
-    DIAG_PERIPHERAL_INTEGRATED_AP = 1 << 0,  /**< Enable integrated AP log collection.
-                                                  On platforms where hypervisor is present,
-                                                  this indicates logs from PVM                 */
-    DIAG_PERIPHERAL_MODEM_DSP = 1 << 1,      /**< Enable modem DSP log collection              */
-    DIAG_PERIPHERAL_SVM = 1 << 2,            /**< Enable log collection on all SVMs            */
-    DIAG_PERIPHERAL_LPASS = 1 << 3,          /**< Enable LPASS log collection                  */
-    DIAG_PERIPHERAL_CDSP = 1 << 4,           /**< Enable CDSP log collection                   */
+    /**
+     * No peripheral (only device logs are collected).
+     */
+    DIAG_PERIPHERAL_NONE = 0,
+
+    /**
+     * Application processor (Apps). On platforms with hypervisor, includes
+     * all virtual machines (host and guest).
+     */
+    DIAG_PERIPHERAL_INTEGRATED_AP = (1 << 0),
+
+    /**
+     * Modem digital signal processor (often referred as Q6).
+     */
+    DIAG_PERIPHERAL_MODEM_DSP = (1 << 1),
+
+    /**
+     * Guest virtual machines (also referred as secondary virtual machine SVM).
+     * Unsupported, use DIAG_PERIPHERAL_INTEGRATED_AP instead.
+     */
+    DIAG_PERIPHERAL_SVM = (1 << 2),
+
+    /**
+     * Low power audio subsystem (LPASS).
+     * Unsupported.
+     */
+    DIAG_PERIPHERAL_LPASS = (1 << 3),
+
+    /**
+     * Compute digital signal processor (CDSP).
+     * Unsupported.
+     */
+    DIAG_PERIPHERAL_CDSP = (1 << 4)
 };
 
 /**
- * This is a bitmask which takes the peripherals from
- * @ref telux::platform::diag::PeripheralType using Peripheral.
+ * Bitmask taking peripheral from @ref diag::PeripheralType.
+ * Values can be OR'ed together, for ex; (DIAG_PERIPHERAL_MODEM_DSP | DIAG_PERIPHERAL_CDSP)
+ * to specify more than one peripheral.
  */
 using Peripherals = uint8_t;
 
 /**
- * Diagnostic logging methods.
- * Only one logging method can be selected
- */
-enum class LogMethod{
-    NONE = 0,                 /**< No valid logging method */
-    FILE,                     /**< File logging method. Collected Logs will be saved to file located
-                              under platform.diag.diag_output_log_path key in tel.conf file or under /tmp/diag if
-                              such key does not exist  */
-
-    CALLBACK,                 /**< Callback logging method. Collected logs are provided to clients
-                                   via @ref telux::platform::diag::IDiagListener::onAvailableLogs */
-};
-
-/**
- * Diagnostic log source.
- * When device level logging is selected from @ref telux::platform::diag::Device and logs from all
- * peripherals in such device will be collected.
- * When peripheral logging is selected from @ref telux::platform::diag::Peripheral, logs from
- * selected peripherals will be collected.
+ * Defines source of the logs; device or peripheral. Logs will be collected
+ * from this source.
+ *
+ * Note: device and peripheral logs collection are mutually exclusive.
  */
 enum class SourceType {
-    NONE = 0,                        /**< No valid logging source                                 */
-    DEVICE,                          /**< Device level logging source.                            */
-    PERIPHERAL,                      /**< Peripheral level logging source                         */
+    /**
+     * Unknown source.
+     */
+    NONE = 0,
+
+    /**
+     * Device, refer @ref diag::DeviceType for details.
+     */
+    DEVICE,
+
+    /**
+     * Peripheral, refer @ref diag::PeripheralType for details.
+     */
+    PERIPHERAL
 };
 
 /**
- * Current diagnostic status
- */
-struct DiagStatus{
-    LogMethod logMethod;             /**< Current successfully configured logging method          */
-    bool isLoggingInProgress;        /**< True: If logging has already started. False otherwise   */
-    bool isLogDrainInProgress;       /**< True: If log drain has already started. False otherwise */
-};
-
-/**
- * Configure device(s) or peripheral(s) from which logs to be collected.
- * Logging source can be either device level or peripheral level.
+ * Defines device(s) or peripheral(s) from which logs are collected.
  */
 union SourceInfo {
-    Devices device = DeviceType::DIAG_DEVICE_NONE; /**< @ref telux::platform::diag::Device */
+    /**
+     * Refer @ref diag::Devices for details.
+     */
+    Devices device = DeviceType::DIAG_DEVICE_NONE;
+
+    /**
+     * Refer @ref diag::Peripherals for details.
+     */
     Peripherals peripheral;
-                                                   /**< @ref telux::platform::diag::Peripheral */
 };
 
 /**
- * @brief Represents the config relevant to File method.
- *        Logs are saved to a file under the directory specified by
- *        platform.diag.diag_output_log_path in tel.conf file. if Key does not exist, log will be
- *        stored in default location /tmp/diag
+ * Current status of the log collection.
+ */
+struct DiagStatus {
+    /**
+     * Currently active method.
+     */
+    LogMethod logMethod;
+
+    /**
+     * True, if the collection has started, false otherwise.
+     */
+    bool isLoggingInProgress;
+
+    /**
+     * Always returns false.
+     * @deprecated
+     */
+    bool isLogDrainInProgress;
+};
+
+/**
+ * Defines size of a log file and number of such files when collecting logs
+ * using file method.
  */
 struct FileMethodConfig {
-    uint32_t maxSize;                   /**< Optional. Maximum file size in MB after which it will
-                                             create a new file. The maximum size should not exceed
-                                             MAX_DIAG_FILE_SIZE_MB. */
-    uint32_t maxNumber;                 /**< Optional. Maximum number of log files. Files are
-                                             replaced once this number is reached. The maximum value
-                                             should not exceed MAX_NUM_DIAG_FILES */
-};
+    /**
+     * Optional, maximum file size in megabytes (MB) after which a new file will be
+     * created to save further logs every time this size is crossed.
+     *
+     * Default value is MAX_DIAG_FILE_SIZE_MB.
+     * Valid range is MIN_DIAG_FILE_SIZE_MB <= maxSize <= MAX_DIAG_FILE_SIZE_MB.
+     */
+    uint32_t maxSize;
 
-struct DiagConfig {
-    SourceType srcType;                /**< @ref telux::platform::diag::SourceType                */
-    SourceInfo srcInfo;                /**< @ref telux::platform::diag::SourceInfo. Based on the
-                                            source type selected in DiagConfig.srcType, the
-                                            corresponding field in DiagConfig.srcInfo would be
-                                            valid.                                                */
-    std::string mdmLogMaskFile = "";   /**< Optional - Full path to file that contains the MDM mask
-                                            to filter logs. It is generated using QxDM and can be
-                                            either cfg or cfg2 format. Needed only if logs are
-                                            generated from MDM device or MDM peripherals */
-    std::string eapLogMaskFile = "";   /**< Optional - Full path to file that contains the EAP mask
-                                            to filter logs. It is generated using QxDM and can be
-                                            either cfg or cfg2 format. Needed only if logs are
-                                            generated from EAP device or EAP peripherals */
-    DiagLogMode modeType = DiagLogMode::STREAMING;   /**< @ref telux::platform::diag::DiagLogMode */
-    LogMethod method;                       /**< @ref telux::platform::diag::LogMethod            */
-    union MethodConfig {                    /**< Configuration of selected logging method         */
-        FileMethodConfig fileConfig;        /**< Configuration specific to file logging method    */
-    } methodConfig;
+    /**
+     * Optional, maximum number of the log files. Older files gets overwritten
+     * once this number is reached.
+     *
+     * Default value is MAX_NUM_DIAG_FILES.
+     * Valid range is MIN_NUM_DIAG_FILES <= maxNumber <= MAX_NUM_DIAG_FILES.
+     */
+    uint32_t maxNumber;
 };
 
 /**
- *@brief IDiagLogManager is a primary interface for Diagnostics.
- *       The interface offers APIs to configure log collection method (File or Callback) and
- *       configure log mode for selected method (streaming, threshold, or circular).
- *       The interface also provides APIs to start and stop diagnostics log collection in
- *       configured method and mode.
+ * Defines low and high water marks for threshold and circular buffer modes.
  */
-
-
-class IDiagLogManager {
- public:
+struct BufferedModeConfig {
     /**
-     * Returns the current status of logging subsystem.
+     * High watermark percentage - logs will be flushed from peripheral's
+     * local buffer to the diag framework on the HLOS, when this mark is hit.
      *
-     * @returns Status of logging subsystem @ref telux::platform::diag::DiagStatus
+     * Default value is DEFAULT_HIGH_WATER_MARK.
+     * Valid range is MIN_WATER_MARK <= highWaterMark <= MAX_WATER_MARK.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
+     * For file method, DEFAULT_HIGH_WATER_MARK is used always.
      */
-    virtual DiagStatus getStatus() = 0;
+     uint8_t highWaterMark;
 
     /**
-     * Register a listener for specific events in the Diag log Manager like availability of logs,
-     * checking for unexpected error.
+     * Low watermark percentage - logs flushing will stop when this
+     * mark is hit and buffering will resume.
      *
-     * @param [in] listener         Pointer of IDiagListener object that processes the notification
+     * Default value is DEFAULT_LOW_WATER_MARK.
+     * Valid range is MIN_WATER_MARK <= lowWaterMark <= MAX_WATER_MARK.
      *
-     * @returns Status of registerListener success or suitable status code
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
+     * For file method, DEFAULT_LOW_WATER_MARK is used always.
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<IDiagListener> listener) = 0;
-
-    /**
-     * Removes a previously added listener.
-     *
-     * @param [in] listener         Pointer of IDiagListener object that needs to be removed
-     *
-     * @returns Status of deregisterListener success or suitable status code
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IDiagListener> listener) = 0;
-
-    /**
-     * Sets the logging configurations.
-     *
-     * This API must be called when logging is not in progress. Calling this API while logging has
-     * already started will return @ref telux::common::ErrorCode::INVALID_STATE error.
-     * If error is returned, clients need to invoke the API again with the correct parameters.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DIAG_OPS permission
-     * to invoke this API successfully.
-     *
-     * @param [in] config           @ref telux::platform::diag::DiagConfig
-     *
-     * @returns                     Return code for whether the operation succeeded or failed
-     *                              @ref telux::common::ErrorCode
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode setConfig(const DiagConfig config) = 0;
-
-    /**
-     * Get current configuration settings
-     *
-     * @returns current log configuration @ref telux::platform::diag::DiagConfig.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual DiagConfig getConfig() = 0;
-
-    /**
-     * Starts draining the logs from the circular buffer.
-     * Until @ref telux::platform::diag::stopDrainingLogsLogs is called, logs will continue to be
-     * written to circular buffer, getting flushed and written to log file or provided to client
-     * via @ref telux::platform::diag::IDiagListener::onAvailableLogs based on selected logging
-     * method @ref telux::platform::diag::LogMethod. If this API is called while logging has
-     * not started, @ref telux::common::ErrorCode::INVALID_STATE error is returned.
-     * Attempt to call this API while draining log is already in progress, will not affect the state
-     * of logging and will return @ref telux::common::ErrorCode::NO_EFFECT error.
-     *
-     * This API should be used only in circular buffering mode.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DIAG_OPS permission
-     * to invoke this API successfully.
-     *
-     * @returns                     Return code for whether the operation succeeded or failed
-     *                              @ref telux::common::ErrorCode
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode startDrainingLogs() = 0;
-
-    /**
-     * Stops the draining of logs and continues collecting logs in circular buffer mode.
-     * This API should be used only in circular buffering mode.
-     * If this API is called while logging has not started
-     * @ref telux::common::ErrorCode::INVALID_STATE error is returned.
-     * Attempt to call this API while draining log is not in progress, will not affect the
-     * state of logging and will return @ref telux::common::ErrorCode::NO_EFFECT error.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DIAG_OPS permission
-     * to invoke this API successfully.
-     *
-     * @returns                     Return code for whether the operation succeeded or failed
-     *                              @ref telux::common::ErrorCode
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode stopDrainingLogs() = 0;
-
-    /**
-     * Start the Log collection session
-     * This API starts the log collection. It is expected the configuration to be set successfully
-     * via @ref telux::platform::diag::IDiagLogManager::setConfig before calling this API.
-     * Calling this API after logging has already started will not affect logging state and will
-     * return @ref telux::common::ErrorCode::NO_EFFECT error.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DIAG_OPS permission
-     * to invoke this API successfully.
-     *
-     * @returns                     Return code for whether the operation succeeded or failed
-     *                              @ref telux::common::ErrorCode
-     *                              Error is returned if configuration is not set correctly.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode startLogCollection() = 0;
-
-    /**
-     * Stop the Log collection session
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DIAG_OPS permission
-     * to invoke this API successfully.
-     *
-     * @returns                     Return code for whether the operation succeeded or failed
-     *                              @ref telux::common::ErrorCode
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode stopLogCollection() = 0;
-
-    /**
-     * Destructor for IDiagLogManager
-     */
-    virtual ~IDiagLogManager(){};
-}; // end of IDiagLogManager
+    uint8_t lowWaterMark;
+};
 
 /**
- * Interface for Diag listener object. Client needs to implement this interface to get
- * access to diag log service notifications like onAvailableLogs, onError.
+ * Specifies configuration for the diagnostics log collection process.
+ */
+struct DiagConfig {
+    /**
+     * Refer @ref diag::SourceType for details.
+     */
+    SourceType srcType;
+
+    /**
+     * Refer @ref diag::SourceInfo for details. Based on the source type defined in
+     * DiagConfig::srcType, the corresponding field in DiagConfig::srcInfo will be used.
+     */
+    SourceInfo srcInfo;
+
+    /**
+     * Optional, absolute path to the diag packet mask file to use when collecting logs
+     * from a MDM device/peripheral. It contains required information to filter logs
+     * based on the log type (for ex; event, message, response etc.). It is generated
+     * using Qualcomm extensible diagnostic monitor (QXDM) and have cfg extension.
+     *
+     * Applicable only for MDM device/peripheral.
+     *
+     * The DiagConfig::SourceType defines the subsystem for which logs are collected.
+     * A packet mask further narrows down them to a specific type.
+     */
+    std::string mdmLogMaskFile = "";
+
+    /**
+     * Optional, absolute path to the diag packet mask file when collecting logs from an
+     * EAP device or an EAP peripheral.
+     *
+     * Applicable only for EAP device/peripheral.
+     * EAP based support is currently not supported.
+     */
+    std::string eapLogMaskFile = "";
+
+    /**
+     * Specifies how an application gets the collected logs.
+     * Refer @ref diag::LogMethod for details
+     */
+    LogMethod method;
+
+    /**
+     * Configuration for the selected method.
+     */
+    union MethodConfig {
+        /**
+         * Configuration specific to the file log collection method.
+         */
+        FileMethodConfig fileConfig;
+    } methodConfig;
+
+    /**
+     * Specifies when an application gets the collected logs.
+     * Refer @ref diag::DiagLogMode for details.
+     */
+    DiagLogMode modeType = DiagLogMode::STREAMING;
+
+    /**
+     * Configuration for the selected mode.
+     */
+    union ModeConfig {
+        /**
+         * Configuration specific to the threshold/circular buffer mode.
+         */
+        BufferedModeConfig bufferedModeConfig;
+    } modeConfig;
+};
+
+/**
+ * Receives diagnostics logs when using callback log method.
  *
- * The methods in listener can be invoked from multiple different threads. The implementation
- * should be thread safe.
+ * The methods in listener can be invoked from multiple different threads.
+ * The implementation should be thread safe.
  *
- * The notification delivery mechanism uses the same thread to deliver all the queued notifications
- * to ensure they are delivered in order.
- * Considering this, the thread on which the notifications are delivered should not be blocked for
- * longer operations since this would result in delay in delivery of further notifications that are
- * in the queue waiting to be dispatched.
- *
+ * Client implementing methods in this interface should not perform any long
+ * running or blocking operation from within methods in this class to ensure
+ * there is no delay in internal processing and further log passing to the
+ * application.
  */
 class IDiagListener : public telux::common::ISDKListener {
  public:
     /**
-     * Invoked when logs are available in callback method to when they are available.
+     * Called to pass collected diagnostics logs to the client.
      *
-     * @param [in] ptr                  Pointer to the log data
-     * @param [in] len                  Length of the data
+     * On platforms with access control enabled, caller needs to have
+     * TELUX_DIAG_OPS permission to invoke this API successfully.
      *
+     * @param[in] data Logs collected (as byte array)
+     * @param[in] length Data length (number of bytes)
      */
-    virtual void onAvailableLogs(uint8_t* ptr, int len){};
+    virtual void onAvailableLogs(uint8_t *data, int length){};
 
     /**
      * Destructor for IDiagListener
      */
     virtual ~IDiagListener(){};
-}; // end of IDiagListener
+};
+
+/**
+ * IDiagLogManager provides ability to collect diagnostics logs on-device.
+ *
+ * - Methods; two methods are provided; namely file and callback. In the file method, logs
+ *   are stored in file(S). In callback method, logs are delivered to the client through a
+ *   callback.
+ *
+ * - Modes; three modes are provided; streaming, threshold and circular to let the client
+ *   manage when to get the logs.
+ *
+ * - Source; logs can be collected from the whole device or selected peripherals.
+ *
+ *   A client running on the MDM can collect logs from the whole MDM device or from the
+ *   specific  MDM peripheral(s).
+ *
+ *   Consider a fusion architecture where an EAP is connected to the MDM SoC via some interconnect
+ *   (e.g. USB, PCIe or Ethernet). (a) If the client is running on the MDM, it can collect logs
+ *   from the whole MDM device or from the specific MDM peripheral(s). It cannot collect logs from
+ *   EAP whole device or from the peripherals on EAP. (b) If the client is running on the EAP,
+ *   it can collect logs from the whole MDM device, from the whole EAP device or from the specific
+ *   peripheral(s) on EAP. Currently, EAP is not supported.
+ *
+ * - Granularity, on top of the log source, logs can be further narrowed down to be of specific
+ *   type like message/event/F3 etc. using a mask file.
+ *
+ * - Decoding: When using file method, logs are in a propriety format and can be decoded through
+ *   QXDM to read them in a plain text format. For callback method, they are in raw format.
+ *
+ * - Concurrency: Multi-client is not supported. Only one process can collect logs at any point
+ *                of time. Also file and callback log collection methods are mutually exclusive.
+ */
+class IDiagLogManager {
+ public:
+    /**
+     * Returns current status of the log collection.
+     *
+     * @returns @ref diag::DiagStatus detailing log collection status.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual DiagStatus getStatus() = 0;
+
+    /**
+     * Registers the given listener to receive logs whenever they are available via
+     * @ref IDiagListener.
+     *
+     * @param[in] listener Receives the diagnostics logs.
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+     *          otherwise, an appropriate error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IDiagListener> listener) = 0;
+
+    /**
+     * Deregisters the given listener registered with @ref IDiagLogManager::registerListener().
+     *
+     * @param[in] listener Listener to deregister.
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
+     *          otherwise, an appropriate error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IDiagListener> listener) = 0;
+
+    /**
+     * Sets the configuration for the log collection. Once set, it remains effective until
+     * new configuration is set.
+     *
+     * Must be called before starting the log collection. Calling it again during ongoing
+     * collection will return @ref telux::common::ErrorCode::INVALID_STATE.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @param[in] config @ref diag::DiagConfig defining collection configuration
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the configuration is set,
+     *          @ref telux::common::ErrorCode::INVALID_STATE, if the log collection is
+     *          in progress, @ref telux::common::ErrorCode::MISSING_RESOURCE when running on
+     *          EAP and remote MDM device cannot be detected, otherwise an appropriate error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setConfig(const DiagConfig config) = 0;
+
+    /**
+     * Gets current log collection configuration.
+     *
+     * @returns current configuration @ref telux::platform::diag::DiagConfig.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual DiagConfig getConfig() = 0;
+
+    /**
+     * Drains logs from the peripheral's local buffer to the diag buffer on the host processor.
+     * The draining continues until the low watermark threshold is reached.
+     *
+     * Applicable only for the circular buffering mode.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @param[in] peripherals @ref diag::Peripherals bitmask of peripherals to drain
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the drain is initiated,
+     *          @ref telux::common::ErrorCode::INVALID_STATE if there is no collection in progress
+     *          for given peripheral, @ref telux::common::ErrorCode::NOT_SUPPORTED if draining on
+     *          given peripheral is not supported, an appropriate error code in all other cases.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode drainPeripheralBuffers(Peripherals peripherals) = 0;
+
+    /**
+     * Starts collecting the logs.
+     *
+     * Configuration must be set at-least once using @ref IDiagLogManager::setConfig() before
+     * calling this method.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the log collection is started,
+     *          @ref telux::common::ErrorCode::NO_EFFECT, if the log collection has already
+     *          started, @ref telux::common::ErrorCode:: INVALID_STATE if a valid config is
+     *          not set before calling this method, otherwise an appropriate error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode startLogCollection() = 0;
+
+    /**
+     * Stops collecting the logs.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the log collection is stopped,
+     *          @ref telux::common::ErrorCode::NO_EFFECT, if the log collection has already
+     *          stopped, otherwise an appropriate error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode stopLogCollection() = 0;
+
+    /**
+     * Gets the diag log manager service status.
+     *
+     * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the service is ready,
+     *          @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the service
+     *          is temporarily unavailable (possibly undergoing initialization),
+     *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
+     *          re-initialization
+     */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
+     * Drains logs from the circular buffer.
+     *
+     * Applicable only for the circular buffering mode.
+     *
+     * Until @ref IDiagLogManager::stopDrainingLogs is called, logs will continue to be
+     * written to the circular buffer, getting flushed and provided to the application.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the draining is started,
+     *          @ref telux::common::ErrorCode::INVALID_STATE if there is no collection in progress,
+     *          @ref telux::common::ErrorCode::NO_EFFECT if draining is already in progress,
+     *          an appropriate error code in all other cases.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     *
+     * @deprecated Use @ref IDiagLogManager::drainPeripheralBuffer() instead
+     */
+    virtual telux::common::ErrorCode startDrainingLogs() = 0;
+
+    /**
+     * Stops draining the logs and continues collecting them pushing into internal buffer.
+     *
+     * Applicable only for the circular buffering mode.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
+     * to invoke this API successfully.
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the draining is stopped,
+     *          @ref telux::common::ErrorCode::INVALID_STATE if there is no collection in progress,
+     *          @ref telux::common::ErrorCode::NO_EFFECT if there is no draining in progress,
+     *          an appropriate error code in all other cases.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *       break backwards compatibility.
+     *
+     * @deprecated This is no longer used.
+     */
+    virtual telux::common::ErrorCode stopDrainingLogs() = 0;
+
+    /**
+     * Destructor for IDiagLogManager.
+     */
+    virtual ~IDiagLogManager(){};
+};
 
 /** @} */ /* end_addtogroup telematics_diagnostics */
+
 } // end of namespace diag
 } // end of namespace platform
 } // end of namespace telux

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -113,7 +113,7 @@ class ISensorFeatureEventListener : public telux::common::ISDKListener {
      *
      * The sensor events that occurred when the apps processor was in sleep mode
      * and triggered the sensor feature to occur will be buffered and delivered
-     * using this method instead of @ref telux::sensor::ISensorEventListener::onEvent.
+     * using this method.
      *
      * In case a sensor event occurs when the system is active, this listener is not invoked.
      * In this case, the required sensor data that triggered the feature can be obtained from the

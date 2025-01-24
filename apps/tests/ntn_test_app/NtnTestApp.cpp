@@ -139,15 +139,18 @@ void NtnTestApp::isNtnSupported(std::vector<std::string> inputCommand) {
 
 void NtnTestApp::enableNtn(std::vector<std::string> inputCommand) {
 
-    bool enable, emergency = false;
+    int enable, emergency = 0;
     std::string iccid;
     std::cout << "Enter 0 to disable and 1 to enable NTN: ";
     std::cin >> enable;
+    Utils::validateInput(enable, {0,1});
     if (enable) {
         std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
         std::cin >> emergency;
+        Utils::validateInput(emergency, {0,1});
         std::cout << "Enter iccid: ";
         std::cin >> iccid;
+        Utils::validateInput(iccid);
     }
     std::cout
         << "enableNtn errorno = " <<
@@ -155,13 +158,15 @@ void NtnTestApp::enableNtn(std::vector<std::string> inputCommand) {
 }
 
 void NtnTestApp::sendDataString(std::vector<std::string> inputCommand) {
-    bool isEmergency;
+    int isEmergency;
     std::string str;
 
     std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
     std::cin >> isEmergency;
-    std::cout << "Enter string to be sent (max size 255): ";
+    Utils::validateInput(isEmergency, {0, 1});
+    std::cout << "Enter string to be sent : ";
     std::cin >> str;
+    Utils::validateInput(str);
 
     std::vector<uint8_t> data;
     for (char c : str) {
@@ -175,13 +180,15 @@ void NtnTestApp::sendDataString(std::vector<std::string> inputCommand) {
 }
 
 void NtnTestApp::sendDataRaw(std::vector<std::string> inputCommand) {
-    bool isEmergency;
+    int isEmergency;
     std::string str;
 
     std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
     std::cin >> isEmergency;
+    Utils::validateInput(isEmergency, {0,1});
     std::cout << "Enter raw data to be sent: ";
     std::cin >> str;
+    Utils::validateInput(str);
 
     std::vector<uint8_t> data;
     std::istringstream ss(str);
@@ -237,25 +244,32 @@ void NtnTestApp::updateSystemSelectionSpecifiers(std::vector<std::string> inputC
 
     std::cout << "Enter number of system selection params in SFL: ";
     std::cin >> size;
+    Utils::validateInput(size);
 
     for (size_t i = 0; i < size; ++i) {
         SystemSelectionSpecifier sss;
         std::cout << "Enter mcc: ";
         std::cin >> sss.mcc;
+        Utils::validateInput(sss.mcc);
         std::cout << "Enter mnc: ";
         std::cin >> sss.mnc;
+        Utils::validateInput(sss.mnc);
         std::cout << "Enter number of bands: ";
         std::cin >> bands;
+        Utils::validateInput(bands);
         for (; bands > 0; --bands) {
             std::cout << "Enter band: ";
             std::cin >> band;
+            Utils::validateInput(band);
             sss.ntnBands.push_back(band);
         }
         std::cout << "Enter number of Earfcns: ";
         std::cin >> earfcns;
+        Utils::validateInput(earfcns);
         for (; earfcns > 0; --earfcns) {
             std::cout << "Enter earfcn: ";
             std::cin >> earfcn;
+            Utils::validateInput(earfcn);
             sss.ntnEarfcns.push_back(earfcn);
         }
         sssVec.push_back(sss);
@@ -270,9 +284,10 @@ void NtnTestApp::getNtnState(std::vector<std::string> inputCommand) {
 }
 
 void NtnTestApp::enableCellularScan(std::vector<std::string> inputCommand) {
-    bool flag = false;
+    int flag = 0;
     std::cout << "Enter 1 to enable or 0 to disable cellular scan: \n";
     std::cin >> flag;
+    Utils::validateInput(flag, {0,1});
     auto err = ntnMgr_->enableCellularScan(flag);
     std::cout << "enableCellularScan errno = " << Utils::getErrorCodeAsString(err) << std::endl;
 }

@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -151,6 +151,11 @@ class ECallApp : public ConsoleApp {
      * Function to get eCall category from the user-interface
      */
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
+
+    /**
+     * Function to restart eCall High Level Application Protocol (HLAP) from the user-interface
+     */
+    void restartECallHlapTimer();
 
     /**
      * Function to configure MSD transmission at call connect

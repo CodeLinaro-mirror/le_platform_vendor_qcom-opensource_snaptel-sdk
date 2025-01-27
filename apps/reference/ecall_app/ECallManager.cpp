@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -360,6 +360,21 @@ telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
     auto status = telClient_->setECallConfig(config);
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status ECallManager::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->restartECallHlapTimer(phoneId, id, duration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME
+            << "Failed to send request to restart eCall HLAP timer" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;

@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -369,6 +369,8 @@ std::string TelClientUtils::eCallHlapTimerEventToString(telux::tel::HlapTimerEve
             return std::string("UNKNOWN");
         case telux::tel::HlapTimerEvent::UNCHANGED:
             return std::string("UNCHANGED");
+        case telux::tel::HlapTimerEvent::RESUMED:
+            return std::string("RESUMED");
         default:
             std::stringstream ss;
             ss << "Unknown HlapTimerEvent  = " << (int)event;

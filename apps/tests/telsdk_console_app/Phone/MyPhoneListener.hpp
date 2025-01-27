@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -98,8 +98,8 @@ private:
    std::string radioStateToString(telux::tel::RadioState radioState);
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
    std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
-   telux::tel::VoiceServiceState voiceSrvcState_ = telux::tel::VoiceServiceState::UNKNOWN;
-   int phoneId_ = DEFAULT_PHONE_ID;
+   std::vector<telux::tel::VoiceServiceState> voiceSrvcState_ =
+       {telux::tel::VoiceServiceState::UNKNOWN, telux::tel::VoiceServiceState::UNKNOWN};
 };
 
 class MyCellularCapabilityCallback : public telux::tel::ICellularCapabilityCallback {

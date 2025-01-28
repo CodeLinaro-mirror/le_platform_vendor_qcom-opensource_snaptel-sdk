@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -74,7 +74,6 @@ public:
    static std::string apElementInfoAccessTypeToString(telux::wlan::NetAccessType accessType);
    static telux::wlan::Id convertIntToWlanId(int id);
    static telux::wlan::ApType convertIntToApType(int type);
-   static telux::wlan::BandType convertIntToApBand(int band);
    static telux::wlan::ApInterworking convertIntToInterworking(int interworking);
    static telux::wlan::SecMode convertIntToSecMode(int mode);
    static telux::wlan::SecAuth convertIntToSecAuth(int auth);

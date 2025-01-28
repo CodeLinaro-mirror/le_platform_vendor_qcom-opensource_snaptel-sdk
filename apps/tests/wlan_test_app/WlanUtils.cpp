@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -152,6 +152,9 @@ std::string WlanUtils::apRadioTypeToString(telux::wlan::BandType radio) {
       case telux::wlan::BandType::BAND_2GHZ:
          retString = "2.4 GHZ";
          break;
+      case telux::wlan::BandType::BAND_6GHZ:
+         retString = "6 GHZ";
+         break;
       default:
          break;
    }
@@ -282,21 +285,6 @@ telux::wlan::ApType WlanUtils::convertIntToApType(int type) {
          break;
    }
    return retType;
-}
-
-telux::wlan::BandType WlanUtils::convertIntToApBand(int band) {
-   telux::wlan::BandType retBand = telux::wlan::BandType::BAND_5GHZ;
-   switch(band) {
-      case 1:
-         retBand = telux::wlan::BandType::BAND_5GHZ;
-         break;
-      case 2:
-         retBand = telux::wlan::BandType::BAND_2GHZ;
-         break;
-      default:
-         break;
-   }
-   return retBand;
 }
 
 telux::wlan::ApInterworking WlanUtils::convertIntToInterworking(int interworking) {

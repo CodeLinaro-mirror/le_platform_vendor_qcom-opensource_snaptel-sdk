@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -57,6 +57,7 @@ namespace wlan {
 enum class BandType {
     BAND_5GHZ   = 1,
     BAND_2GHZ   = 2,
+    BAND_6GHZ   = 3,
 };
 
 /**
@@ -103,7 +104,7 @@ enum class StaInterfaceStatus {
  * AP Info - captures ap type (private/guest)
  */
 struct ApInfo {
-	BandType        apRadio;            /**< Radio type (2.4/5.0 GHz) */
+    BandType        apRadio;            /**< Radio type (2.4/5.0/6.0 GHz) */
     ApType          apType;             /**< Ap type (private/guest) */
 };
 

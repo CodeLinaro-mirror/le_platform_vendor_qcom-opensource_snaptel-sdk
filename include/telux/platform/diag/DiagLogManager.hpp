@@ -455,8 +455,9 @@ class IDiagListener : public telux::common::ISDKListener {
  * - Decoding: When using file method, logs are in a propriety format and can be decoded through
  *   QXDM to read them in a plain text format. For callback method, they are in raw format.
  *
- * - Concurrency: Multi-client is not supported. Only one process can collect logs at any point
- *                of time. Also file and callback log collection methods are mutually exclusive.
+ * - Concurrency: Two or more processes can not collect logs from the same peripheral. A process
+ *   can have only one session. A session is started with startLogCollection() and stopped with
+ *   stopLogCollection(). The file and callback methods are mutually exclusive.
  */
 class IDiagLogManager {
  public:

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -45,20 +45,44 @@ void TrafficFilterImpl::setIPv6Address(std::string ipv6Addr, FieldType fieldType
     }
 }
 
-int TrafficFilterImpl::getPort(FieldType fieldType) {
+uint16_t TrafficFilterImpl::getPort(FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
         return sourcePort_;
     } else {
         return destPort_;
     }
 }
-void TrafficFilterImpl::setPort(int port, FieldType fieldType) {
+void TrafficFilterImpl::setPort(uint16_t port, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_VALID;
         sourcePort_ = port;
     } else {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_VALID;
         destPort_ = port;
+    }
+}
+
+void TrafficFilterImpl::getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) {
+    if (fieldType == FieldType::SOURCE) {
+        startPort = sourceStartPort_;
+        range     = sourcePortRange_;
+        return;
+    } else {
+        startPort = destStartPort_;
+        range     = destPortRange_;
+        return;
+    }
+}
+
+void TrafficFilterImpl::setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType) {
+    if (fieldType == FieldType::SOURCE) {
+        validityMask_    = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_RANGE_VALID;
+        sourceStartPort_ = startPort;
+        sourcePortRange_ = range;
+    } else {
+        validityMask_  = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_RANGE_VALID;
+        destStartPort_ = startPort;
+        destPortRange_ = range;
     }
 }
 
@@ -221,11 +245,21 @@ TrafficFilterBuilder &TrafficFilterBuilder::setIPv6Address(
     return *this;
 }
 
-TrafficFilterBuilder &TrafficFilterBuilder::setPort(int port, FieldType fieldType) {
+TrafficFilterBuilder &TrafficFilterBuilder::setPort(uint16_t port, FieldType fieldType) {
     if (trafficFilter_ == nullptr) {
         trafficFilter_ = std::make_shared<TrafficFilterImpl>();
     }
     std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)->setPort(port, fieldType);
+    return *this;
+}
+
+TrafficFilterBuilder &TrafficFilterBuilder::setPortRange(
+    uint16_t startPort, uint16_t range, FieldType fieldType) {
+    if (trafficFilter_ == nullptr) {
+        trafficFilter_ = std::make_shared<TrafficFilterImpl>();
+    }
+    std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)
+        ->setPortRange(startPort, range, fieldType);
     return *this;
 }
 

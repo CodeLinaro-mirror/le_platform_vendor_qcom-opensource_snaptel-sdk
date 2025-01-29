@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,6 +43,8 @@ enum TrafficFilterValidField {
     TF_DESTINATION_PORT_VALID = (1 << 9),
     TF_DESTINATION_VLAN_LIST_VALID = (1 << 10),
     TF_DATA_PATH_VALID = (1 << 11),
+    TF_SOURCE_PORT_RANGE_VALID = (1 << 12),
+    TF_DESTINATION_PORT_RANGE_VALID = (1 << 13),
 };
 
 /**
@@ -120,9 +122,8 @@ class ITrafficFilter {
     /**
      * @brief Retrieves the IPv4 Address
      *
-     * @param [out] ipv4Addr    IPv4 address
-     * @param [in]  fieldType   Indicates whether get is for the source or
-     * destination.
+     * @param [in]  fieldType   Indicates whether the get is for the source or destination.
+     * @return IPv4 address
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
      * change and could break backwards compatibility.
@@ -132,8 +133,7 @@ class ITrafficFilter {
     /**
      * @brief Retrieves the IPv6 address.
      *
-     * @param [in]  fieldType   Indicates whether get is for the source or
-     * destination.
+     * @param [in]  fieldType   Indicates whether the get is for the source or destination.
      * @return IPv6 address.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
@@ -142,22 +142,32 @@ class ITrafficFilter {
     virtual std::string getIPv6Address(FieldType fieldType) = 0;
 
     /**
-     * @brief Retrieves a vector of valid ports.
+     * @brief Retrieves the port.
      *
-     * @param [in] fieldType     Indicates whether get is for the source or
-     * destination.
-     * @return Source port.
+     * @param [in] fieldType     Indicates whether the get is for the source or destination.
+     * @return The port.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
      * change and could break backwards compatibility.
      */
-    virtual int getPort(FieldType fieldType) = 0;
+    virtual uint16_t getPort(FieldType fieldType) = 0;
+
+    /**
+     * @brief Retrieves the port range.
+     *
+     * @param [in] fieldType     Indicates whether the get is for the source or destination.
+     * @param [out] startPort    Start port number
+     * @param [out] range        Port range
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     * break backwards compatibility.
+     */
+    virtual void getPortRange(FieldType fieldType, uint16_t& startPort, uint16_t& range) = 0;
 
     /**
      * @brief Retrieves the list of VLANs.
      *
-     * @param [in] fieldType     Indicates whether get is for the source or
-     * destination.
+     * @param [in] fieldType     Indicates whether the get is for the source or destination.
      * @return A vector of integers representing the source VLANs.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
@@ -260,8 +270,7 @@ class TrafficFilterBuilder {
      * @brief Sets the IPv4 address and subnet.
      *
      * @param [in] ipv4Addr     IPv4 address.
-     * @param [in] fieldType    Indicates whether the set is for the source or
-     * destination.
+     * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
@@ -273,8 +282,7 @@ class TrafficFilterBuilder {
      * @brief Sets the IPv6 address and prefix length.
      *
      * @param [in] ipv6Addr     IPv6 address.
-     * @param [in] fieldType    Indicates whether the set is for the source or
-     * destination.
+     * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
@@ -283,24 +291,35 @@ class TrafficFilterBuilder {
     TrafficFilterBuilder &setIPv6Address(std::string ipv6Addr, FieldType fieldType);
 
     /**
-     * @brief Sets the port.
+     * @brief Sets the port range.
      *
-     * @param [in] port         port number
-     * @param [in] fieldType    Indicates whether the set is for the source or
-     * destination.
+     * @param [in] startPort    Start port number
+     * @param [in] range        Port range
+     * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
      * change and could break backwards compatibility.
      */
-    TrafficFilterBuilder &setPort(int port, FieldType fieldType);
+    TrafficFilterBuilder &setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType);
+
+    /**
+     * @brief Sets the port.
+     *
+     * @param [in] port         port number
+     * @param [in] fieldType    Indicates whether the set is for the source or destination.
+     * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    TrafficFilterBuilder &setPort(uint16_t port, FieldType fieldType);
 
     /**
      * @brief Sets the source VLAN list.
      *
      * @param [in] vlanList     Vector of VLAN IDs.
-     * @param [in] fieldType    Indicates whether the set is for the source or
-     * destination.
+     * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to

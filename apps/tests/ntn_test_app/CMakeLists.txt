@@ -5,6 +5,7 @@ set(TARGET_NTN_TEST_APP ntn_test_app)
 set(SOURCES
     NtnTestApp.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp
 )
@@ -25,7 +26,7 @@ include_directories(BEFORE
 
 add_executable (${TARGET_NTN_TEST_APP} ${SOURCES})
 target_compile_options(${TARGET_NTN_TEST_APP} PRIVATE -std=c++11 -Wall -Werror -g)
-target_link_libraries(${TARGET_NTN_TEST_APP} telux_satcom)
+target_link_libraries(${TARGET_NTN_TEST_APP} pthread telux_satcom)
 
 # install to target
 install ( TARGETS ${TARGET_NTN_TEST_APP}

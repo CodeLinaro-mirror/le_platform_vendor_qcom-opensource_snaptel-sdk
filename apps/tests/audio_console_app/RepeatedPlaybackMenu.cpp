@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -31,8 +31,11 @@ void RepeatedPlaybackMenu::setSystemReady() {
 }
 
 void RepeatedPlaybackMenu::cleanup() {
-    stopPlayAudioFiles(std::vector<std::string>());
-    clearPlaylist(std::vector<std::string>());
+    std::string enableLogs = "0";
+    std::vector<std::string> input = {"0"};
+    input.push_back(enableLogs);
+    stopPlayAudioFiles(input);
+    clearPlaylist(input);
     {
         std::lock_guard<std::mutex> lock(readyMutex_);
         audioPlayerReady_ = false;
@@ -221,6 +224,11 @@ void RepeatedPlaybackMenu::clearPlaylist(std::vector<std::string> userInput) {
         pbConfigs_.clear();
     }
 
+
+    if (!userInput.empty() && userInput[0] == "0") {
+        return;
+    }
+
     std::cout << "playlist cleared"<< std::endl;
 }
 
@@ -269,10 +277,15 @@ void RepeatedPlaybackMenu::stopPlayAudioFiles(std::vector<std::string> userInput
 
     telux::common::ErrorCode ec;
     bool waitResult = false;
+    bool enableLogs = true;
+
+    if (!userInput.empty() && userInput[0] == "0") {
+        enableLogs = false;
+    }
 
     std::unique_lock<std::mutex> stopPlayLock(playMutex_);
 
-    if (playStopped_) {
+    if (playStopped_ && enableLogs) {
         std::cout << "playback already stopped" << std::endl;
         return;
     }
@@ -282,11 +295,14 @@ void RepeatedPlaybackMenu::stopPlayAudioFiles(std::vector<std::string> userInput
 
     ec = audioPlayerMgr_->stopPlayback();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        if (ec == telux::common::ErrorCode::INVALID_STATE) {
+        if (ec == telux::common::ErrorCode::INVALID_STATE && enableLogs) {
             std::cout << "no playback in progress" << std::endl;
             return;
         }
-        std::cout << "failed stop, err " << static_cast<int>(ec) << std::endl;
+
+        if (enableLogs) {
+            std::cout << "failed stop, err " << static_cast<int>(ec) << std::endl;
+        }
         return;
     }
 

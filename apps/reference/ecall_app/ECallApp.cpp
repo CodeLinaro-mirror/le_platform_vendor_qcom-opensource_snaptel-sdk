@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -147,12 +147,33 @@ void ECallApp::init() {
         std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "Restart_ECall_Hlap_Timer", {},
         std::bind(&ECallApp::restartECallHlapTimer, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getECallRedialConfigCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("17", "Get_ECall_Redial_Config", {},
+        std::bind(&ECallApp::getECallRedialConfig, this)));
+
+    std::shared_ptr<ConsoleAppCommand> setPostTestRegistrationCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18",
+            "Set_ECall_Post_Test_Registration_Timer", {},
+        std::bind(&ECallApp::setPostTestRegistrationTimer, this)));
+
+    std::shared_ptr<ConsoleAppCommand> getPostTestRegistrationCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19",
+            "Get_ECall_Post_Test_Registration_Timer", {},
+        std::bind(&ECallApp::getECallPostTestRegistrationTimer, this)));
+
+    std::shared_ptr<ConsoleAppCommand> makeSelfTestECallCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20",
+            "Make_Self_Test_ERAGLONASS_ECall", {},
+        std::bind(&ECallApp::makeSelfTestECall, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
             setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
-            setECallRedialConfigCommand, restartECallHlapTimerCommand};
+            setECallRedialConfigCommand, restartECallHlapTimerCommand, getECallRedialConfigCommand,
+            setPostTestRegistrationCommand, getPostTestRegistrationCommand,
+            makeSelfTestECallCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -226,6 +247,48 @@ void ECallApp::makeECall() {
     } else {
         std::cout << "ECall request is successful" << std::endl;
     }
+}
+
+/**
+ * Trigger a self test ERA-GLONASS eCall to the specified phone number
+ */
+void ECallApp::makeSelfTestECall() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager, cannot trigger eCall" << std::endl;
+        return;
+    }
+    // Configure MSD transmission at call connect
+    char delimiter = '\n';
+    std::string msdData;
+    std::cout << "Enter MSD PDU: ";
+    std::getline(std::cin, msdData, delimiter);
+    std::vector<uint8_t> rawData;
+    if (!msdData.empty()) {
+        rawData = Utils::convertHexToBytes(msdData);
+    } else {
+        rawData = {2, 41, 68, 6, 128, 227, 10, 81, 67, 158, 41, 85, 212, 56, 0, 128, 4, 52, 10, 140,
+            65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
+            8, 20};
+    }
+    // Get phone number from user
+    std::string dialNumber = "";
+    std::cout << "Enter phone number: ";
+    std::getline(std::cin, dialNumber, delimiter);
+    if (dialNumber.empty()) {
+        std::cout << "No input, please provide a valid phone number" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+
+    std::cout << "Self test eCall Triggered" << std::endl;
+    auto ret = eCallMgr_->triggerECall(phoneId, dialNumber, rawData);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Self test eCall request failed" << std::endl;
+    } else {
+        std::cout << "Self test eCall request is successful" << std::endl;
+    }
+
 }
 
 /**
@@ -424,6 +487,58 @@ void ECallApp::setHlapTimer() {
     auto ret = eCallMgr_->setHlapTimer(phoneId, type, timeDuration);
     if(ret != telux::common::Status::SUCCESS) {
        std::cout << "Failed to set HLAP timer" << std::endl;
+    }
+}
+
+/**
+ * Request to set the value of POST TEST REGISTRATION timer.
+ */
+void ECallApp::setPostTestRegistrationTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    char delimiter = '\n';
+    std::string temp = "";
+
+    // Get time duration from user
+    // Default value of POST TEST REGISTRATION TIME is 2 mins
+    uint32_t timeDuration = 2;
+    std::cout << "Enter the time duration in minutes ";
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            timeDuration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+               << timeDuration << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->setPostTestRegistrationTimer(phoneId, timeDuration);
+    if(ret != telux::common::Status::SUCCESS) {
+       std::cout << "Failed to set post test registartion timer" << std::endl;
+    }
+}
+
+/**
+ * Request to get the value of POST TEST REGISTRATION timer.
+ */
+void ECallApp::getECallPostTestRegistrationTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    std::string temp = "";
+    auto ret = eCallMgr_->getECallPostTestRegistrationTimer(phoneId);
+    if(ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get post test registration" << std::endl;
     }
 }
 
@@ -697,6 +812,22 @@ void ECallApp::setECallRedialConfig() {
     auto ret = eCallMgr_->configureECallRedial(config, timeGap);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to set eCall configuration" << std::endl;
+        return;
+    }
+}
+
+/**
+ * Request to get eCall redial configuration parameters for call drop and call origination failure.
+ */
+void ECallApp::getECallRedialConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallRedialConfig();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall redial config" << std::endl;
         return;
     }
 }

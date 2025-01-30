@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -110,8 +110,10 @@ enum class ReasonType {
                                      reciept of MSD Transmission status */
     MAX_REDIAL_ATTEMPTED = 3,   /**< Redial will not be attempted as the maximum redial count
                                      is reached */
-    CALL_CONNECTED = 4,         /**< Redial will not be attempted as the eCall is connected
-                                     successfully. */
+    CALL_CONNECTED = 4,         /**< Redial will not be attempted as the eCall was connected
+                                     successfully. This notification
+                                     @ref ICallListener:onECallRedial is triggered when application
+                                     or PSAP terminates the eCall.*/
 };
 
 /*

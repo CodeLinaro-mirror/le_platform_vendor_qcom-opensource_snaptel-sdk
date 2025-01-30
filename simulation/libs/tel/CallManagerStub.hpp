@@ -104,6 +104,14 @@ public:
         const std::vector<int> &timeGap, common::ResponseCallback callback) override;
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback ) override;
+    telux::common::ErrorCode getECallRedialConfig(std::vector<int> &callOrigTimeGap,
+        std::vector<int> &callDropTimeGap) override;
+    telux::common::Status makeECall(int phoneId, const std::string dialNumber,
+        const std::vector<uint8_t> &msdPdu, MakeCallCallback callback) override;
+    telux::common::Status updateECallPostTestRegistrationTimer(int phoneId, uint32_t timer,
+        common::ResponseCallback callback) override;
+    telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId,
+        uint32_t &timer) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

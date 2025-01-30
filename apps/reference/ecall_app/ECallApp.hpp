@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -91,6 +91,13 @@ class ECallApp : public ConsoleApp {
      *
      */
     void makeCustomNumberECallOverIms();
+
+    /**
+     * Trigger a self test ERA-GLONASS eCall to the specified phone number
+     *
+     */
+    void makeSelfTestECall();
+
     /**
      * Answer an incoming call
      */
@@ -174,6 +181,21 @@ class ECallApp : public ConsoleApp {
      * Set eCall redial configuration parameters for call drop or call origination failure.
      */
     void setECallRedialConfig();
+
+    /**
+     * Get eCall redial configuration parameters for call drop and call origination failure.
+     */
+    void getECallRedialConfig();
+
+    /**
+     * Request to set the value of POST TEST REGISTRATION timer for ERA-GLONASS self test eCall.
+     */
+    void setPostTestRegistrationTimer();
+
+    /**
+     * Request to get the value of POST TEST REGISTRATION timer for ERA-GLONASS self test eCall.
+     */
+    void getECallPostTestRegistrationTimer();
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

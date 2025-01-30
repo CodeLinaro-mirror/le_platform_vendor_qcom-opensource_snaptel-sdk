@@ -1737,3 +1737,23 @@ telux::common::Status CallManagerStub::restartECallHlapTimer(int phoneId, EcallH
     int duration, common::ResponseCallback callback ) {
     return telux::common::Status::NOTSUPPORTED;
 }
+
+telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string dialNumber,
+    const std::vector<uint8_t> &msdPdu, MakeCallCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::Status CallManagerStub::updateECallPostTestRegistrationTimer(int phoneId,
+    uint32_t timer, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode CallManagerStub::getECallPostTestRegistrationTimer(int phoneId,
+    uint32_t &timer) {
+    return telux::common::ErrorCode::GENERIC_FAILURE;
+}
+
+telux::common::ErrorCode CallManagerStub::getECallRedialConfig(std::vector<int> &callOrigTimeGap,
+    std::vector<int> &callDropTimeGap)  {
+    return telux::common::ErrorCode::GENERIC_FAILURE;
+}

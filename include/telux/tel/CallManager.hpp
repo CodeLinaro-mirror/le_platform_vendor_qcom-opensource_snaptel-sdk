@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -255,8 +255,10 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive eCall.
+    * Initiate an European(EU) or ERA-GLONASS automotive eCall.
     * Regular voice calls will be blocked by device while eCall is in progress.
+    * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
+    * GOST R 54620 / GOST R 33464.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -362,8 +364,10 @@ public:
       CustomSipHeader header = {telux::tel::CONTENT_HEADER,""},
       MakeCallCallback callback = nullptr) = 0;
    /**
-    * Initiate an automotive eCall with raw MSD pdu.
+    * Initiate an European(EU) or ERA-GLONASS automotive eCall with raw MSD pdu.
     * Regular voice calls will be blocked by device while eCall is in progress.
+    * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
+    * GOST R 54620 / GOST R 33464.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to successfully invoke this API.
@@ -437,8 +441,11 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive eCall without transmitting Minimum Set of Data (MSD) at call connect.
+    * Initiate an European(EU) or ERA-GLONASS automotive eCall without transmitting
+    * Minimum Set of Data (MSD) at call connect.
     * Regular voice calls will be blocked by device while eCall is in progress.
+    * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
+    * GOST R 54620 / GOST R 33464.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to successfully invoke this API.
@@ -875,12 +882,11 @@ public:
     *
     * @param [in] config         Indicates eCall redial configuration
     *                            @ref telux::tel::RedialConfigType
-    * @param [in] retry          Indicates the number of redial attempts to be performed by the
-    *                            modem. Retry attempts can be between 1 and 10 for eCall
-    *                            origination failure. It can be between 1 and 2 for
-    *                            eCall termination before receipt of MSD Transmission status.
     * @param [in] timeGap        Indicates time gap between successive redial attempts in
     *                            milliseconds.
+    *                            Redial attempts can range from 1 to 10 for eCall origination
+    *                            failures. For eCall termination before the receipt of MSD
+    *                            Transmission status, the range is between 1 and 2 attempts.
     *                            The redial minimum time duration between the successive redial
     *                            attempts is set as per 3GPP TS22.001 annex 6 and the user is
     *                            expected to provide a suitable value of timeGap.
@@ -958,6 +964,109 @@ public:
     */
    virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr ) = 0;
+
+   /**
+    * Retrieve the configured eCall redial parameters for call origination and call drop failures.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [out] callOrigTimeGap Gets redial time gap between successive redial attempts in
+    *                              milliseconds for call origination failures.
+    * @param [out] callDropTimeGap Gets redial time gap between successive redial attempts in
+    *                              milliseconds for call drop failures.
+    *
+    * @returns ErrorCode for getECallRedialConfig i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
+    *             backwards compatibility.
+    */
+   virtual telux::common::ErrorCode getECallRedialConfig(std::vector<int> &callOrigTimeGap,
+        std::vector<int> &callDropTimeGap) = 0;
+
+   /**
+    * Initiate an ERA-GLONASS self test automotive eCall with raw MSD pdu, to the specified
+    * phone number over CS based RAT only (i.e. not IMS).
+    * It will be treated like a regular voice call by the UE and the network.
+    * When an ERA-GLONASS emergency eCall is triggered by user during a self test ECALL, self test
+    * eCall will terminate.
+    *
+    * Self test ECall can be triggered in both the eCall operating mode
+    * @ref telux::tel::ECallMode::ECALL_ONLY and @ref telux::tel::ECallMode::NORMAL.
+    * T9 and T10 HLAP timers will not triggered during a self test ERA-GLONASS eCall.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which on make eCall
+    *                       operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec GOST R 54620/
+    *                       GOST R 33464
+    * @param [in] callback  Callback function to get the response of makeECall
+    *                       request.
+    *                       Possible(not exhaustive) error codes for callback response
+    *                       - @ref telux::common::ErrorCode::SUCCESS
+    *                       - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                       - @ref telux::common::ErrorCode::NO_MEMORY
+    *                       - @ref telux::common::ErrorCode::MODEM_ERR
+    *                       - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                       - @ref telux::common::ErrorCode::INVALID_STATE
+    *                       - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                       - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                       - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                       - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeECall i.e. success or suitable status code.
+    *
+    */
+   virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
+        const std::vector<uint8_t> &msdPdu, MakeCallCallback callback = nullptr) = 0;
+
+   /**
+    * Post test registration timer is started upon termination of ERA-GLONASS self-test to ensure
+    * UE remains registered on the network for the specified duration. Upon expiry of this timer
+    * UE will deregister from the network when UE is in @ref telux::tel::ECallMode::ECALL_ONLY
+    * mode. Application must update post test registration timer before triggering self-test eCall
+    * to overrride exisiting settings.
+    *
+    * The update of post test registration timer is not persistent across reboot.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which on request to update the post
+    *                       test registration timer is made.
+    * @param [in] timer     Input timer value in minutes.
+    *                       Input timer value must be greater than 0 mins. In situations when, AP
+    *                       sets the timer value to 0 minutes, UE will interpret it as 2 minutes.
+    * @param [in] callback  Callback function to get the response of
+    *                       updateECallPostTestRegistrationTimer request.
+    *
+    * @returns Status of updateECallPostTestRegistrationTimer i.e. success or suitable status code.
+    *
+    */
+    virtual telux::common::Status updateECallPostTestRegistrationTimer(int phoneId, uint32_t timer,
+        common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Get the post test registration timer. This timer is applicable only for ERA-GLONASS self test
+    * eCall when device is in @ref telux::tel::ECallMode::ECALL_ONLY eCall operating mode.
+    * Default value of timer is 2 minutes.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which on request to get the post
+    *                       test registration timer is made.
+    *                       operation is performed
+    * @param [in] timer     Input timer value in minutes.
+    *
+    * @returns ErrorCode of getECallPostTestRegistrationTimer i.e. success or suitable error code.
+    *
+    */
+   virtual telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId,
+        uint32_t &timer) = 0;
 
    /**
     * Add a listener to listen for incoming call, call info change and eCall MSD

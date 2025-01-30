@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -137,6 +137,45 @@ telux::common::Status ECallManager::triggerECall(
         return telux::common::Status::FAILED;
     } else {
         std::cout << CLIENT_NAME << "ECall initiated " << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Function to trigger the self test ERA-GLONASS eCall to a specified number.
+ */
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, const std::string dialNumber,
+    std::vector<uint8_t> msdPdu) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    if (telClient_->isECallInProgress()) {
+        std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    msdPdu_.clear();
+    if(!msdPdu.empty()) {
+        msdPdu_ = msdPdu;
+    }
+    setup(phoneId);
+    if (msdPdu_.empty() && !isLocationReceived()) {
+        std::mutex mutex;
+        std::unique_lock<std::mutex> lock(mutex);
+        if (std::cv_status::timeout
+            == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
+            std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
+        }
+    }
+    auto status = telClient_->startECall(
+        phoneId, msdPdu_, dialNumber, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to initiate self test eCall " << std::endl;
+        cleanup();
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Self test eCall initiated " << std::endl;
     }
     return telux::common::Status::SUCCESS;
 }
@@ -350,6 +389,53 @@ telux::common::Status ECallManager::getECallConfig() {
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to get the value of POST TEST REGISTRATION timer.
+ */
+telux::common::ErrorCode ECallManager::getECallPostTestRegistrationTimer(int phoneId) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    auto errorCode = telClient_->getECallPostTestRegistrationTimer(phoneId);
+    if(errorCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get post test registration timer" << std::endl;
+    }
+    return errorCode;
+}
+
+/**
+ * Request to set the value of POST TEST REGISTRATION timer.
+ */
+telux::common::Status ECallManager::setPostTestRegistrationTimer(int phoneId,
+    uint32_t timeDuration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setPostTestRegistrationTimer(phoneId, timeDuration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set post test registration timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to get eCall redial parameters for call origination failure and call drop.
+ */
+telux::common::ErrorCode ECallManager::getECallRedialConfig() {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    auto errorCode = telClient_->getECallRedialConfig();
+    if(errorCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get eCall redial configuration" << std::endl;
+    }
+    return errorCode;
 }
 
 telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
@@ -670,6 +756,16 @@ void ECallManager::parseAppConfig() {
         ecnrMode_ = EcnrMode::ENABLE;
     } else {
         std::cout << CLIENT_NAME << "Enabling ecnr mode by default" << std::endl;
+    }
+    // Get the ERA-GLONASS mode
+    param = appSettings->getValue("ERAGLONASS_ECALL");
+    if (param.compare("DISABLE") == 0) {
+        telClient_->setEraGlonassEnabled(false);
+    } else if (param.compare("ENABLE") == 0) {
+        telClient_->setEraGlonassEnabled(true);
+    } else {
+        std::cout << CLIENT_NAME << "Disabling ERAGLONASS_ECALL mode by default" << std::endl;
+        telClient_->setEraGlonassEnabled(false);
     }
 }
 

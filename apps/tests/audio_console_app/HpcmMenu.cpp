@@ -1,35 +1,7 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -45,6 +17,11 @@ HpcmMenu::HpcmMenu(std::string appName, std::string cursor,
 }
 
 HpcmMenu::~HpcmMenu() {
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        /* exitHpcm_: To identify if HPCM has exited due to the application exit. */
+        exitHpcm_ = true;
+    }
     cleanup();
 }
 
@@ -67,10 +44,11 @@ void HpcmMenu::setSystemReady() {
     hpcmReady_ = true;
 }
 
+/* Cleanup can be triggered either during SSR or when the application exits */
 void HpcmMenu::cleanup() {
     std::lock_guard<std::mutex> lk(mutex_);
+    /* hpcmReady_: To determine if the service is ready, for example, during SSR */
     hpcmReady_ = false;
-    exitHpcm_ = true;
     captureCv_.notify_all();
     bufferReadyCv_.notify_all();
 
@@ -80,12 +58,40 @@ void HpcmMenu::cleanup() {
         }
     }
 
+    /* Clear freeCaptureBuffers_ is necessary when startHpcm is invoked after ssr.
+     * If this is not done, the second startHpcm will have two buffers in freeCaptureBuffers_
+     */
+    while (!freeCaptureBuffers_.empty()) {
+        freeCaptureBuffers_.pop();
+    }
+
+    /* Clear freePlayBuffers_ is necessary when startHpcm is invoked after ssr.
+     * If this is not done, the second startHpcm will have two buffers in freePlayBuffers_
+     */
+    while (!freePlayBuffers_.empty()) {
+        freePlayBuffers_.pop();
+    }
+
     readErrorOccurred_ = false;
     writeErrorOccurred_ = false;
     audioCaptureStream_ = nullptr;
     audioPlayStream_ = nullptr;
     voiceSessions_.clear();
     activeSession_ = nullptr;
+    /* The record thread can exit due to the following scenarios:
+     * (1) SSR occurred
+     * (2) An error occurred
+     * (3) Recording is finished
+     * (4) Stop HPCM request
+     * (5) Application exit
+     *
+     * If HPCM is stopped due to SSR, only `hpcmReady_` should be set. This will indicate that
+     * the record thread is joining because of SSR and should not wait for any pending buffer
+     * response.
+     * To allow the user to start HPCM again after SSR, `exitHpcm_` should be set to true.
+     * Note: Do not change the order of the variables to maintain the correct state.
+     */
+    exitHpcm_ = true;
 }
 
 Status HpcmMenu::createVoiceStream(StreamConfig &config) {
@@ -392,6 +398,20 @@ void HpcmMenu::stopHpcmAudio(std::vector<std::string> userInput) {
     exitPlayThread_ = false;
     exitRecordThread_ = false;
 
+    /* Clear freeCaptureBuffers_ is necessary when startHpcm is invoked after stopHpcm.
+     * If this is not done, the second startHpcm will have two buffers in freeCaptureBuffers_
+     */
+    while (!freeCaptureBuffers_.empty()) {
+        freeCaptureBuffers_.pop();
+    }
+
+    /* Clear freePlayBuffers_ is necessary when startHpcm is invoked after stopHpcm.
+     * If this is not done, the second startHpcm will have two buffers in freePlayBuffers_
+     */
+    while (!freePlayBuffers_.empty()) {
+        freePlayBuffers_.pop();
+    }
+
     if (setActiveSession(slotId_) != Status::SUCCESS) {
         std::cout << "No running voice session for slotId : " << slotId_
             << ", please create one" << std::endl;
@@ -508,20 +528,41 @@ void HpcmMenu::record() {
 
     std::cout << "HPCM recording started" << std::endl;
 
-    while(1) {
+    while(!exitHpcm_ && !exitRecordThread_) {
+        /* Wait for readCompletion(`captureCv_`) until all three of the following conditions are
+         * satisfied:
+         * (1) When there is no buffer in `freeCaptureBuffers_`.
+         * (2) When the class is not started destructing (exitHpcm_ is false) at this point in time.
+         * (3) When the user has not requested to stopHpcm (`exitRecordThread_` is false).
+         * Do not required to wait if any of the following conditions satisfied:
+         * (1) When `freeCaptureBuffers_` is non-empty, go ahead for read operation.
+         * (2) When the class starts destruction (`exitHpcm_` is true) or user is requested to
+         * stopHpcm(`exitRecordThread_` is true), it is not necessary to wait for readCompletion
+         * since we are already waiting for the buffer to return before this thread is destructed.
+         */
         if(freeCaptureBuffers_.empty() && !exitHpcm_ && !exitRecordThread_) {
             captureCv_.wait(lock);
         }
 
-        if (exitHpcm_ || exitRecordThread_ || readErrorOccurred_ || writeErrorOccurred_) {
+        /* It is safe to break from the loop when we know there is a buffer in `freeCaptureBuffers_`
+         * and there is either a read or write error.
+         */
+        if (readErrorOccurred_ || writeErrorOccurred_) {
             /* error occurred during recording, terminate the thread */
             break;
         }
 
+        /* Go ahead for read request:
+         * (1) When there is atleast 1 `freeCaptureBuffers_`.
+         */
         if (!freeCaptureBuffers_.empty()) {
             streamBuffer = freeCaptureBuffers_.front();
             freeCaptureBuffers_.pop();
-            if (!exitHpcm_ && !exitRecordThread_ && streamBuffer && audioCaptureStream_) {
+            /* Once it is poped from `freeCaptureBuffers_`, always invoke read request to the server
+             * under any condition(even if the class is requested to destruct, stopHpcm is requested
+             * by the user), This ensures the buffer is returned to `freeCaptureBuffers_`.
+             */
+            if (streamBuffer && audioCaptureStream_) {
                 status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
                 if(status != telux::common::Status::SUCCESS) {
                     std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
@@ -537,13 +578,27 @@ void HpcmMenu::record() {
     } else {
         std::cout << "recording finished" << std::endl;
     }
-    /*If read operation returns with error then record thread will exit but play thread
+    /* If read operation returns with error then record thread will exit but play thread
     will be waiting for buffer. To avoid that notify play thread to exit. */
     bufferReadyCv_.notify_all();
 
-    while((!exitRecordThread_) && (!exitPlayThread_) &&
-          (freeCaptureBuffers_.size()!= 1) && hpcmReady_) {
-        captureCv_.wait_for(lock, std::chrono::milliseconds(5000));
+    /* Wait for the pending buffer only in the following scenarios:
+     * There might be a pending buffer response from the server, ensure that the pending response
+     * is handled appropriately before joining the thread.
+     * (1) When HPCM is exiting without invoking stopHpcm request, for example, destructor called.
+     * (2) When the service is running and recording has finished, regardless of whether an error
+     * occurred, but the last buffer has not yet arrived; a read/write error might occur if the
+     * voice call is terminated, not yet started, or if reading from PAL failed.
+     * In all these cases, wait for the buffer to arrive from the server.
+     * Do not wait for the pending buffer in the following scenarios:
+     * (1) When SSR occurs, the server is unable to send the pending buffer back to the application.
+     */
+    while((freeCaptureBuffers_.size()!= 1) ){
+        if (exitHpcm_ || exitRecordThread_ || exitPlayThread_) {
+            captureCv_.wait_for(lock, std::chrono::milliseconds(5000));
+        } else {
+            break;
+        }
     }
 
     exitRecordThread_ = false;
@@ -580,12 +635,12 @@ void HpcmMenu::play() {
 
     std::cout << "HPCM playback started" << std::endl;
 
-    while(1) {
+    while(!exitHpcm_ && !exitPlayThread_) {
         //waiting for hpcm read buffer to be ready
         std::unique_lock<std::mutex> lck(bufferReadyMutex_);
         bufferReadyCv_.wait(lck);
 
-        if(exitHpcm_ || exitPlayThread_ || writeErrorOccurred_ || readErrorOccurred_) {
+        if(writeErrorOccurred_ || readErrorOccurred_) {
             break;
         }
 
@@ -609,6 +664,10 @@ void HpcmMenu::play() {
     } else {
         std::cout << "Playback finished" << std::endl;
     }
+
+    /* If write operation returns with error then play thread will exit but record thread
+    will be waiting for buffer. To avoid that notify record thread to exit. */
+    captureCv_.notify_all();
 
     exitPlayThread_ = false;
 }

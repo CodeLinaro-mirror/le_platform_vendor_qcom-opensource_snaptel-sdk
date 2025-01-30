@@ -17,6 +17,7 @@
 #include <telux/satcom/SatcomFactory.hpp>
 
 #include "../../common/utils/Utils.hpp"
+#include "../../common/utils/SignalHandler.hpp"
 
 #define APP_NAME "ntn_test_app"
 
@@ -376,11 +377,6 @@ std::shared_ptr<NtnTestApp> init() {
     return ntnTestApp;
 }
 
-static void signalHandler(int signum) {
-    std::unique_lock<std::mutex> lock(mutex);
-    std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
-}
-
 NtnTestApp::NtnTestApp()
    : ConsoleApp("Ntn Test Menu", "ntn-test> ")
    , ntnMgr_(nullptr) {
@@ -398,10 +394,22 @@ int main(int argc, char **argv) {
               << "  Ntn test app\n"
               << "#################################################\n"
               << std::endl;
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGHUP);
+    SignalHandlerCb cb = [](int sig) {
+        // We can call exit() here if no cleanups needed,
+        // or maybe just set a flag, and let the main thread to decide
+        // when to exit.
+        exit(sig);
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
 
     std::shared_ptr<NtnTestApp> myNtnTestApp = init();
     myNtnTestApp->registerForUpdates();
-    signal(SIGINT, signalHandler);
+
     myNtnTestApp->consoleInit();
     myNtnTestApp->mainLoop();
     myNtnTestApp->deregisterForUpdates();

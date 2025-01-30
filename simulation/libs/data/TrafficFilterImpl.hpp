@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -19,8 +19,11 @@ class TrafficFilterImpl : public ITrafficFilter {
     std::string getIPv6Address(FieldType fieldType) override;
     void setIPv6Address(std::string ipv6Addr, FieldType fieldType);
 
-    int getPort(FieldType fieldType) override;
-    void setPort(int sourcePort, FieldType fieldType);
+    uint16_t getPort(FieldType fieldType) override;
+    void setPort(uint16_t sourcePort, FieldType fieldType);
+
+    void getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) override;
+    void setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType);
 
     std::vector<int> getVlanList(FieldType fieldType) override;
     void setVlanList(std::vector<int> vlanList, FieldType fieldType);
@@ -53,17 +56,21 @@ class TrafficFilterImpl : public ITrafficFilter {
  private:
     std::string sourceIPv4Address_ = "";
     std::string sourceIPv6Address_ = "";
-    int sourcePort_;
+    uint16_t sourcePort_;
     std::string sourceMacAddress_ = "";
     std::string sourceInterfaceName_ = "";
     std::vector<int> sourceVlanList_;
+    uint16_t sourceStartPort_ = 0;
+    uint16_t sourcePortRange_ = 0;
 
     std::string destIPv4Address_ = "";
     std::string destIPv6Address_ = "";
-    int destPort_;
+    uint16_t destPort_;
     std::string destMacAddress_ = "";
     std::string destInterfaceName_ = "";
     std::vector<int> destVlanList_;
+    uint16_t destStartPort_ = 0;
+    uint16_t destPortRange_ = 0;
 
     IpProtocol ipProtocol_ = 0;
     Direction direction_ = Direction::UPLINK;

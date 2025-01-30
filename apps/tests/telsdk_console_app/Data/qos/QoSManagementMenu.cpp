@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -466,7 +466,7 @@ void QoSManagementMenu::getVlanInfo(
     int i = -1;
     while (ss >> i) {
         if (i > 0) {
-            vlans.push_back(i);
+            vlans.push_back(static_cast<int>(i));
             if (ss.peek() == ',' || ss.peek() == ' ')
                 ss.ignore();
         } else {
@@ -500,13 +500,24 @@ void QoSManagementMenu::getIPAddressParamsFromUser(
 void QoSManagementMenu::getPortsFromUser(
     telux::data::TrafficFilterBuilder &tfBuilder, telux::data::FieldType fieldType) {
     int option = 0;
-    std::cout << " [0 - Skip, 1 - Port ]: ";
+    std::cout << " [0 - Skip, 1 - Port, 2 - Port Range ]: ";
     std::cin >> option;
-    Utils::validateInput(option, {0, 1});
+    Utils::validateInput(option, {0, 1, 2});
 
-    if (option) {
+    if (option == 1) {
         std::cout << "Enter port: ";
-        std::cin >> option;
-        tfBuilder.setPort(option, fieldType);
+        uint16_t port;
+        std::cin >> port;
+        Utils::validateInput(port);
+        tfBuilder.setPort(port, fieldType);
+    } else if (option == 2) {
+        uint16_t startPort = 0, portRange = 0;
+        std::cout << "Enter start port: ";
+        std::cin >> startPort;
+        Utils::validateInput(startPort);
+        std::cout << "Enter port range: ";
+        std::cin >> portRange;
+        Utils::validateInput(portRange);
+        tfBuilder.setPortRange(startPort, portRange, fieldType);
     }
 }

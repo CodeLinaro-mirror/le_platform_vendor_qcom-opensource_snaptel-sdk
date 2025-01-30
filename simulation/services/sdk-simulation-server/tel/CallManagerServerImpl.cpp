@@ -1782,7 +1782,7 @@ bool CallManagerServerImpl::getUserConfiguredALACKParameter() {
         getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
         input = rootObj[CALL_MANAGER]["enableALACKWithClearDown"].asBool();
     }
-    LOG(DEBUG, __FUNCTION__, " input" , input);
+    LOG(DEBUG, __FUNCTION__, " input " , input);
     return input;
 }
 
@@ -1938,8 +1938,8 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
 
 void CallManagerServerImpl::triggerECallInfoChangeEvent(std::string timer,
     HlapTimerEvent action ) {
-    LOG(DEBUG, __FUNCTION__);
-    int slotId = 1;
+    int slotId = callInfo_.phoneId;
+    LOG(DEBUG, __FUNCTION__, " slotId: ", slotId);
     ::telStub::ECallInfoEvent eCallInfoEvent;
     ::eventService::EventResponse anyResponse;
     eCallInfoEvent.set_timer(timer);

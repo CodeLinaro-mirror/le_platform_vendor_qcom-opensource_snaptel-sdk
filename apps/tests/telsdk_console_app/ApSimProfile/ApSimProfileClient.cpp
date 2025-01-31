@@ -7,6 +7,7 @@
 #include <future>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "../../common/utils/Utils.hpp"
 #include <telux/tel/PhoneFactory.hpp>
@@ -20,36 +21,34 @@
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
+static const std::string ISD_R_AID = "A0000005591010FFFFFFFF8900000100";
+static const int MAX_ICCID_DIGITS = 20;
+// From string tokenization, to retrieve all tokens or all characters in the token, use index as -1
+static const int INDEX_TO_CAPTURE_FIRST_TOKEN_OR_CHAR = -1;
 // Parameter and response used by the command to get extra responses of an APDU command.
-const std::string ISD_R_AID = "A0000005591010FFFFFFFF8900000100";
 static const int INS_GET_MORE_RESPONSE = 192; // 0xC0
 static const int SW1_MORE_RESPONSE = 97; // 0x61
 static const int SW1_NO_ERROR = 144; // 0x90
 static const int SW2_NO_ERROR = 0;
-/* From APDU response, 3rd byte from last is the result for GET_RESPONSE command
-   last byte = SW2
-   last byte - 1 = SW1
-   last byte - 2 = Result of the APDU command(Enable/Disable/Get profiles result)
-*/
-static const int GET_MORE_RESPONSE_RESULT_BYTE = 2;
-// Error codes are defined in GSMA SGP.22. 0 is the code for success.
-static const int CODE_OK = 0;
 
-struct ApduExchangeResult {
-    int sw1;
-    int sw2;
-    std::string payload;
-    std::vector<int> data;
-};
+// Tag and error codes are defined in GSMA SGP.22
+static const std::string TAG_GET_PROFILES = "bf2d";
+static const std::string TAG_PROFILE_INFO = "e3";
+static const int CODE_OK = 0;
+static const int CODE_INCORRECT_INPUT_OR_ICCID_OR_AID_NOT_FOUND = 1;
+static const int CODE_PROFILE_NOT_IN_ENABLE_OR_DISABLE_STATE = 2;
+static const int CODE_DISALLOWED_BY_POLICY = 3;
+static const int CODE_CAT_BUSY = 5;
+static const int CODE_UNDEFINED_ERROR = 127;
 
 class ResponseData {
  public:
-    ApduExchangeResult getResult() {
+    telux::tel::IccResult getResult() {
         return apduResult;
     }
 
     int getChannel() {
-        return cardchannel;
+        return cardChannel;
     }
 
     std::future<telux::common::ErrorCode> getFuture() {
@@ -57,8 +56,8 @@ class ResponseData {
     }
 
  protected:
-    ApduExchangeResult apduResult;
-    int cardchannel = -1;
+    telux::tel::IccResult apduResult;
+    int cardChannel = -1;
     std::promise<telux::common::ErrorCode> cbPromise_;
 };
 
@@ -95,8 +94,8 @@ class OpenLogicalChannelCallback : public telux::tel::ICardChannelCallback,
         std::cout << std::endl << std::endl;
         if (error == telux::common::ErrorCode::SUCCESS) {
             PRINT_CB << "onChannelResponse successful, channel: " << channel
-                << "\n iccResult " << result.toString() << std::endl;
-            cardchannel        = channel;
+                << "\niccResult " << result.toString() << std::endl;
+            cardChannel        = channel;
             apduResult.sw1     = result.sw1;
             apduResult.sw2     = result.sw2;
             apduResult.payload = result.payload;
@@ -134,10 +133,10 @@ class CloseLogicalChannelCallback : public telux::common::ICommandResponseCallba
 void ApSimProfileClient::CardRefreshResponseCallback::commandResponse(
    telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "Refresh command successful." << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+       PRINT_CB << "Refresh command successful." << std::endl;
    } else {
-      PRINT_CB << "Refresh command failed\n error: " << static_cast<int>(error)
+       PRINT_CB << "Refresh command failed\n error: " << static_cast<int>(error)
              << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
@@ -159,7 +158,7 @@ void ApSimProfileClient::MyApCardListener::onRefreshEvent(
     int slotId, telux::tel::RefreshStage stage, telux::tel::RefreshMode mode,
     std::vector<telux::tel::IccFile> efFiles, telux::tel::RefreshParams config) {
     std::cout << std::endl << std::endl;
-    PRINT_NOTIFICATION << " onRefreshEvent on slot" << slotId
+    PRINT_NOTIFICATION << "onRefreshEvent on slot" << slotId
         << " ,Refresh Stage is " << refreshStageToString(stage)
         << " ,Refresh Mode is " << refreshModeToString(mode)
         << " ,Session Type is " << sessionTypeToString(config.sessionType)
@@ -171,7 +170,7 @@ void ApSimProfileClient::MyApCardListener::onRefreshEvent(
         sp->refreshMode_ = mode;
         sp->refreshSlotId_ = slotId;
     } else {
-        std::cout << "ApSimProfileClient is null" << "\n";
+        std::cout << "ApSimProfileClient is null\n";
     }
 }
 
@@ -190,7 +189,7 @@ void ApSimProfileClient::MyApCardListener::onServiceStatusChange(
             stat = " Unknown service status";
             break;
     }
-    PRINT_NOTIFICATION << " Card onServiceStatusChange" << stat << "\n";
+    PRINT_NOTIFICATION << "Card onServiceStatusChange" << stat << "\n";
 }
 
 std::string ApSimProfileClient::MyApCardListener::refreshStageToString(
@@ -295,7 +294,7 @@ void ApSimProfileClient::MyApSimProfileListener::onRetrieveProfileListRequest(
         sp->indSlotId_ = slotId;
         sp->referenceId_ = referenceId;
     } else {
-        std::cout << "ApSimProfileClient is null" << "\n";
+        std::cout << "ApSimProfileClient is null\n";
     }
 }
 
@@ -312,7 +311,7 @@ void ApSimProfileClient::MyApSimProfileListener::onProfileOperationRequest(
         sp->referenceId_ = referenceId;
         sp->indIccid_ = iccid;
     } else {
-        std::cout << "ApSimProfileClient is null" << "\n";
+        std::cout << "ApSimProfileClient is null\n";
     }
 }
 
@@ -331,7 +330,7 @@ void ApSimProfileClient::MyApSimProfileListener::onServiceStatusChange(
             stat = " Unknown service status";
             break;
     }
-    PRINT_NOTIFICATION << " ApSimProfile onServiceStatusChange" << stat << "\n";
+    PRINT_NOTIFICATION << "ApSimProfile onServiceStatusChange" << stat << "\n";
 }
 
 ApSimProfileClient::ApSimProfileClient() {}
@@ -376,28 +375,26 @@ telux::common::Status ApSimProfileClient::init() {
 
         // If subsystem is not ready, wait for it to be ready
         if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "ApSimProfile subsystem is not ready, Please wait."
-                << std::endl;
+            std::cout << "ApSimProfile subsystem is not ready, Please wait.\n";
         }
 
         subSystemStatus = apSimProfileMgrProm.get_future().get();
 
         // return from the function, if SDK is unable to initialize ApSimProfile subsystem
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "ApSimProfile subsystem is ready \n ";
+            std::cout << "ApSimProfile subsystem is ready\n";
             apSimProfileListener_ = std::make_shared<MyApSimProfileListener>(shared_from_this());
             status = apSimProfileManager_->registerListener(apSimProfileListener_);
             if (status != telux::common::Status::SUCCESS) {
-                std::cout << "ERROR - Failed to register listener" << std::endl;
+                std::cout << "ERROR - Failed to register listener\n";
                 return telux::common::Status::FAILED;
             }
         } else {
-            std::cout << "ERROR - Unable to initialize ApSimProfileManager subsystem"
-                 << std::endl;
+            std::cout << "ERROR - Unable to initialize ApSimProfileManager subsystem\n";
             return telux::common::Status::FAILED;
         }
     } else {
-        std::cout << "ERROR - ApSimProfileManger is null" << std::endl;
+        std::cout << "ERROR - ApSimProfileManger is null\n";
         return telux::common::Status::FAILED;
     }
 
@@ -412,17 +409,17 @@ telux::common::Status ApSimProfileClient::init() {
        // If card subsystem is not ready, wait for it to be ready
        if (cardSubSystemStatus !=
            telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-           std::cout << "Card subsystem is not ready, Please wait" << std::endl;
+           std::cout << "Card subsystem is not ready, Please wait.\n";
        }
        cardSubSystemStatus = cardMgrProm.get_future().get();
 
        if (cardSubSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-           std::cout << "Card subsystem is ready \n";
+           std::cout << "Card subsystem is ready\n";
            // registering listener for card events
            cardListener_ = std::make_shared<MyApCardListener>(shared_from_this());
            status = cardManager_->registerListener(cardListener_);
            if (status != telux::common::Status::SUCCESS) {
-               std::cout << "Unable to registerListener" << " \n ";
+               std::cout << "Unable to register card listener\n";
            }
            std::vector<int> slotIds;
            telux::common::Status status = cardManager_->getSlotIds(slotIds);
@@ -440,11 +437,11 @@ telux::common::Status ApSimProfileClient::init() {
                }
            }
         } else {
-           std::cout << "ERROR - Unable to initialize CardManager subsystem" << std::endl;
+           std::cout << "ERROR - Unable to initialize CardManager subsystem\n";
            return telux::common::Status::FAILED;
         }
      } else {
-        std::cout << "ERROR - CardManager is null" << std::endl;
+        std::cout << "ERROR - CardManager is null\n";
         return telux::common::Status::FAILED;
      }
      return telux::common::Status::SUCCESS;
@@ -459,7 +456,7 @@ std::vector<uint8_t> ApSimProfileClient::hexToBytes(const std::string &hex) {
             bytes.push_back(byte);
         }
     } catch (const std::exception &e) {
-        std::cout << "ERROR" << std::endl;
+        std::cout << "ERROR\n";
     }
     return bytes;
 }
@@ -489,7 +486,7 @@ std::string ApSimProfileClient::getSwappedIccidString(const std::string &data) {
 
     // ICCID can be length of 19 or 20 digits
     if (text.length() < 19 || text.length() > 20) {
-        std::cout << "Not a valid ICCID. Returning empty string" << "\n";
+        std::cout << "Not a valid ICCID. Returning empty string\n";
         return "";
     }
 
@@ -504,42 +501,256 @@ std::string ApSimProfileClient::getSwappedIccidString(const std::string &data) {
     return reverseString;
 }
 
+void ApSimProfileClient::printTransmitApduResult(int result) {
+    std::cout << "\nTransmit APDU result: ";
+    switch (result) {
+        case CODE_OK:
+            std::cout << "SUCCESS\n";
+            break;
+        case CODE_INCORRECT_INPUT_OR_ICCID_OR_AID_NOT_FOUND:
+            std::cout << "INCORRECT_INPUT_OR_ICCID_OR_AID_NOT_FOUND\n";
+            break;
+        case CODE_PROFILE_NOT_IN_ENABLE_OR_DISABLE_STATE:
+            std::cout << "PROFILE_NOT_IN_ENABLE_OR_DISABLE_STATE\n";
+            break;
+        case CODE_DISALLOWED_BY_POLICY:
+            std::cout << "DISALLOWED_BY_POLICY\n";
+            break;
+        case CODE_CAT_BUSY:
+            std::cout << "CAT BUSY\n";
+            break;
+        case CODE_UNDEFINED_ERROR:
+            std::cout << "UNDEFINED_ERROR\n";
+            break;
+        default:
+            std::cout << "FAILED\n";
+            break;
+    }
+}
+
+std::vector<std::string> ApSimProfileClient::tokenize(std::string s, std::string del) {
+    std::vector<std::string> tokens = {};
+    int start = 0, end = INDEX_TO_CAPTURE_FIRST_TOKEN_OR_CHAR*del.size();
+    do {
+        start = end + del.size();
+        end = s.find(del, start);
+        tokens.emplace_back(s.substr(start, end - start));
+    } while (end != INDEX_TO_CAPTURE_FIRST_TOKEN_OR_CHAR);
+    return tokens;
+}
+
+void ApSimProfileClient::parseIccidFromApduResult(std::string payload) {
+    if (payload.empty()) {
+        std::cout << "APDU payload is not valid\n";
+        return;
+    }
+    iccidList_ = {};
+    // Starting 4 digits is for get profiles tag
+    if (payload.substr(0,4) == TAG_GET_PROFILES) {
+        std::vector<std::string> profiles = tokenize(payload, TAG_PROFILE_INFO);
+        for (auto profile : profiles) {
+            if (profile.length() >= MAX_ICCID_DIGITS) {
+                // skip starting 6 digits(subsequent payload length, ICCID TAG and length of ICCID)
+                std::string iccidString = profile.substr(6,MAX_ICCID_DIGITS);
+                iccidList_.emplace_back(getSwappedIccidString(iccidString));
+            }
+        }
+    } else {
+       std::cout << "Not a Get Profiles APDU payload\n";
+    }
+}
+
+int ApSimProfileClient::openLogicalChannel(SlotId slotId) {
+    std::cout << std::endl;
+    int channel = -1;
+    auto openLogicalCb = std::make_shared<OpenLogicalChannelCallback>();
+
+    telux::common::Status status = telux::common::Status::FAILED;
+    auto card = cards_[static_cast<int>(slotId) - 1];
+    if (card) {
+        status = card->openLogicalChannel(ISD_R_AID, openLogicalCb);
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Open logical channel request sent successfully\n";
+            if (openLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
+                std::cout << "Open logical channel is success\n";
+                auto responseData =
+                    std::static_pointer_cast<ResponseData>(openLogicalCb).get();
+                channel = responseData->getChannel();
+           }
+       } else {
+           std::cout << "Open logical channel request failed\n";
+       }
+    }
+    return channel;
+}
+
+void ApSimProfileClient::closeLogicalChannel(SlotId slotId, int channel) {
+    std::cout << std::endl;
+    auto closeLogicalCb = std::make_shared<CloseLogicalChannelCallback>();
+    telux::common::Status status = telux::common::Status::FAILED;
+    auto card = cards_[static_cast<int>(slotId) - 1];
+    if (card) {
+        status = card->closeLogicalChannel(channel, closeLogicalCb);
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Close logical channel request sent successfully\n";
+            if (closeLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
+                std::cout << "Logical channel closed successfully\n";
+            } else {
+               std::cout << "Close logical channel is failed\n";
+            }
+        } else {
+            std::cout << "Close logical channel request is failed\n";
+        }
+    }
+}
+
+int ApSimProfileClient::transmitApdu(SlotId slotId, int channel, std::vector<uint8_t> data,
+    bool isGetProfile) {
+    std::cout << std::endl;
+    int result = -1;
+    if (data.empty()) {
+        std::cout << "Cannot procced with empty payload\n";
+        return result;
+    }
+    // Refer GlobalPlatform Card Specification v.2.3 for more details
+    uint8_t cla = 130; // 0x82
+    uint8_t ins = 226; // 0xE2 - STORE_DATA
+    uint8_t p1 = 145; // 0x91
+    uint8_t p2 = 0;
+    uint8_t p3 = data.size(); // length of the payload
+
+    auto apduLogicalCb = std::make_shared<TransmitApduCallback>();
+    telux::common::Status status = telux::common::Status::FAILED;
+    auto card = cards_[static_cast<int>(slotId) - 1];
+    if (card) {
+        status = card->transmitApduLogicalChannel(channel, cla, ins,
+            p1, p2, p3, data, apduLogicalCb);
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Transmit APDU request sent successfully\n";
+            if (apduLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
+                auto apduData = std::static_pointer_cast<ResponseData>(apduLogicalCb).get();
+
+                // sleep for 2 seconds to check if any SIM REFRESH events
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                if ((apduData->getResult().sw1 == SW1_NO_ERROR) &&
+                    (apduData->getResult().sw2 == SW2_NO_ERROR)) {
+                    result = apduData->getResult().data.back();
+                    std::string payload = apduData->getResult().payload;
+                    if (result == CODE_OK && isGetProfile) {
+                        parseIccidFromApduResult(payload);
+                    }
+                } else if (refreshSlotId_ == static_cast<int>(slotId) &&
+                    refreshMode_ == telux::tel::RefreshMode::RESET) {
+                    result = CODE_OK;
+                } else if (apduData->getResult().sw1 == SW1_MORE_RESPONSE) {
+                    int sw1 = apduData->getResult().sw1;
+                    int remainingBytes = apduData->getResult().sw2;
+                    // send repeative requests until we get sw1 other than GET_RESPONSE(97)
+                    while (sw1 == SW1_MORE_RESPONSE) {
+
+                        std::vector<uint8_t> data = {};
+                        auto apduMoreLogicalCb = std::make_shared<TransmitApduCallback>();
+                        status = card->transmitApduLogicalChannel(channel, 0,
+                             INS_GET_MORE_RESPONSE, 0, 0, remainingBytes, data, apduMoreLogicalCb);
+                        if (status == telux::common::Status::SUCCESS) {
+                            std::cout << "Transmit APDU for more data sent successfully\n";
+                            if (apduMoreLogicalCb->getFuture().get() ==
+                                telux::common::ErrorCode::SUCCESS) {
+                                std::cout << "Transmit APDU for more data is success\n";
+                                auto apduMoreData = std::static_pointer_cast<ResponseData>
+                                    (apduMoreLogicalCb).get();
+                                sw1 = apduMoreData->getResult().sw1;
+                                remainingBytes = apduMoreData->getResult().sw2;
+                                if ((apduMoreData->getResult().sw1 == SW1_NO_ERROR) &&
+                                    (apduMoreData->getResult().sw2 == SW2_NO_ERROR)) {
+                                    result = apduMoreData->getResult().data.back();
+                                    if (result == CODE_OK && isGetProfile) {
+                                        parseIccidFromApduResult(apduMoreData->getResult().payload);
+                                    }
+                                } else {
+                                    std::cout << "Continue for more response\n";
+                                }
+                            } else {
+                                std::cout << "Transmit APDU for more data failed with error\n";
+                            }
+                        } else {
+                            std::cout << "Transmit APDU for more data request is failed\n";
+                        }
+                    } // while end
+                } else {
+                    std::cout << "Transmit APDU result is neither success nor get more response\n";
+                }
+            } else {
+                std::cout << "Transmit APDU is failed with error\n";
+            }
+        } else {
+            std::cout << "Transmit APDU request is failed\n";
+        }
+    }
+    return result;
+}
+
 telux::common::Status ApSimProfileClient::requestProfileList() {
     telux::common::Status status = telux::common::Status::FAILED;
     telux::tel::ApduExchangeStatus apduResult = telux::tel::ApduExchangeStatus::FAILURE;
     SlotId slotId = static_cast<SlotId>(indSlotId_);
     uint32_t referenceId = referenceId_;
 
-    std::vector<std::string> iccidList = {};
+    iccidList_ = {};
     std::string iccidValue = "";
     // parse the config file
     ConfigParser config(FILE_NAME, FILE_PATH);
     try {
        iccidValue = config.getValue("GET_PROFILE_LIST");
-
     } catch (const std::exception &e) {
-        std::cout << "ERROR: "<< " Unable to read from file" << std::endl;
+        std::cout << "Unable to read from file\n";
     }
     if (iccidValue.empty()) {
-        std::cout << "ERROR: " << "ICCID list is not configured, configure in tel.conf" << "\n";
-       return status;
+        std::cout << "ICCID list is not configured in tel.conf\n";
     }
     int position = 0;
-    while ((position = iccidValue.find(',')) != std::string::npos) {
-        iccidList.emplace_back(iccidValue.substr(0, position));
-        iccidValue.erase(0, position + 1);
+    if (!iccidValue.empty()) {
+        while ((position = iccidValue.find(',')) != std::string::npos) {
+             iccidList_.emplace_back(iccidValue.substr(0, position));
+             iccidValue.erase(0, position + 1);
+        }
+        iccidList_.emplace_back(iccidValue);
     }
-    iccidList.emplace_back(iccidValue);
-    for (auto i : iccidList) {
+    for (auto i : iccidList_) {
          i.erase(std::remove(i.begin(), i.end(),' '),i.end());
          std::cout << "ICCID: " << i << "\n";
     }
-    if (!iccidList.empty()) {
+    if (!iccidList_.empty()) {
         apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
+    } else {
+        // Exchange APDU to retrieve the profiles ICCID
+        int channel = openLogicalChannel(slotId);
+        if (channel < 0) {
+            std::cout << "Logical channel is invalid\n";
+            return telux::common::Status::FAILED;
+        }
+
+        // Refer GSMA SGP.22 section 5.7.15 for description and examples
+        std::vector<uint8_t> data = hexToBytes("BF2D055C035A9F70");
+        int result = transmitApdu(slotId, channel, data, true);
+        printTransmitApduResult(result);
+        if (result == CODE_OK) {
+            apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
+        } else {
+            apduResult = telux::tel::ApduExchangeStatus::FAILURE;
+        }
+
+        closeLogicalChannel(slotId, channel);
     }
+
+    if (iccidList_.empty()) {
+        std::cout << "ERROR- ICCID list is empty, can not proceed\n";
+        return telux::common::Status::FAILED;
+    }
+    std::cout << "\nGetProfiles APDU response : " << static_cast<int>(apduResult) << "\n";
     if (apSimProfileManager_) {
         status = apSimProfileManager_->sendRetrieveProfileListResponse(slotId, apduResult,
-            referenceId, iccidList, MyApSimProfileCallback::onResponseCallback);
+            referenceId, iccidList_, MyApSimProfileCallback::onResponseCallback);
     } else {
         std::cout << "ERROR - ApSimProfileManger is null" << std::endl;
     }
@@ -548,145 +759,49 @@ telux::common::Status ApSimProfileClient::requestProfileList() {
 
 telux::common::Status ApSimProfileClient::enableProfile() {
     telux::common::Status status = telux::common::Status::FAILED;
+    // reset to default as this is global
+    refreshSlotId_ = DEFAULT_SLOT_ID;
+    refreshMode_ = telux::tel::RefreshMode::UNKNOWN;
+
     SlotId slotId = static_cast<SlotId>(indSlotId_);
     uint32_t referenceId = referenceId_;
     std::string iccidString = indIccid_;
     if (apSimProfileManager_) {
         // Exchange APDU command to enable the profile
         telux::tel::ApduExchangeStatus apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-        auto card = cards_[static_cast<int>(slotId) - 1];
-        if (card) {
-            int channel = -1;
-            auto openLogicalCb = std::make_shared<OpenLogicalChannelCallback>();
-
-            status = card->openLogicalChannel(ISD_R_AID, openLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << "Open logical channel request sent successfully" << "\n";
-                if (openLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    std::cout << "Open logical channel is success" << "\n";
-                    auto responseData =
-                        std::static_pointer_cast<ResponseData>(openLogicalCb).get();
-                    channel = responseData->getChannel();
-                    if (channel < 0) {
-                        std::cout << "Logical channel is invalid" << "\n";
-                        return telux::common::Status::FAILED;
-                    }
-                }
-            } else {
-                std::cout << "Open logical channel request failed" << "\n";
-                return telux::common::Status::FAILED;
-            }
-
-            // Refer GlobalPlatform Card Specification v.2.3. for more details
-            uint8_t cla = 130; // 0x82
-            uint8_t ins = 226; // 0xE2 - STORE_DATA
-            uint8_t p1 = 145; // 0x91
-            uint8_t p2 = 0;
-            uint8_t p3 = 20; // size of the payload
-            /* TAG(BF31) + length of payload(11) + choice tag(A0) + length of
-               subsequent payload(0C) + Iccid tag(5A) + length of Iccid(0A)+ Iccid
-               value + refresh tag(81) + length of refresh(01) + refresh value(FF) */
-            std::stringstream ss;
-            ss << "BF3111A00C5A0A" << getSwappedIccidString(iccidString) << "8101FF";
-            std::string s = ss.str();
-            std::vector<uint8_t> data = hexToBytes(s);
-
-            auto apduLogicalCb = std::make_shared<TransmitApduCallback>();
-            status = card->transmitApduLogicalChannel(channel, cla, ins, p1, p2, p3, data,
-                apduLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << "Transmit APDU request sent successfully" << "\n";
-                if (apduLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    auto apduData  = std::static_pointer_cast<ResponseData>(apduLogicalCb).get();
-
-                    if ((apduData->getResult().sw1 == SW1_NO_ERROR) &&
-                        (apduData->getResult().sw2 == SW2_NO_ERROR)) {
-                         int result =
-                             apduData->getResult().data[(apduData->getResult().data.size()) -
-                             GET_MORE_RESPONSE_RESULT_BYTE];
-                         std::cout << "Enable profile result from card : " << result <<"\n";
-                         if (result == CODE_OK) {
-                             apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                             std::cout << "Profile enabled successfully" << "\n";
-                         } else {
-                             apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                             std::cout << "Enable profile is failed" << "\n";
-                         }
-                    } else if (apduData->getResult().sw1 == SW1_MORE_RESPONSE) {
-                        std::vector<uint8_t> data = {};
-                        int remainingBytes = apduData->getResult().sw2;
-                        std::cout << "Remaining bytes: " << remainingBytes << "\n";
-                        auto apduMoreLogicalCb = std::make_shared<TransmitApduCallback>();
-                        status = card->transmitApduLogicalChannel(channel, 0,
-                            INS_GET_MORE_RESPONSE, 0, 0, remainingBytes, data, apduMoreLogicalCb);
-                        if (status == telux::common::Status::SUCCESS) {
-                            std::cout << "Transmit APDU for more data sent successfully" << "\n";
-                            if (apduMoreLogicalCb->getFuture().get() ==
-                                telux::common::ErrorCode::SUCCESS) {
-                                std::cout << "Transmit APDU for more data is success" << "\n";
-                                auto apduMoreData = std::static_pointer_cast<ResponseData>
-                                    (apduMoreLogicalCb).get();
-                                if ((apduMoreData->getResult().sw1 == SW1_NO_ERROR) &&
-                                    (apduMoreData->getResult().sw2 == SW2_NO_ERROR)) {
-                                    int result = apduMoreData->getResult().data[(
-                                        apduMoreData->getResult().data.size()) -
-                                        GET_MORE_RESPONSE_RESULT_BYTE];
-                                    std::cout << "Enable profile result from card : " << result
-                                        <<"\n";
-                                    if (result == CODE_OK) {
-                                        apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                                        std::cout << "Profile enabled successfully" << "\n";
-                                    } else {
-                                        apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                        std::cout << "Enable profile is failed" << "\n";
-                                    }
-                                } else {
-                                    apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                    std::cout << "APDU command for GET_RESPONSE is failed" << "\n";
-                                }
-                            } else {
-                                apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                std::cout << "Transmit APDU for more data is failed" << "\n";
-                            }
-                        } else {
-                            apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                            std::cout << "Transmit APDU for more data request is failed" << "\n";
-                        }
-                    } else {
-                         apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                         std::cout << "Transmit APDU for more data request is failed" << "\n";
-                    }
-                } else {
-                    apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                    std::cout << "Transmit APDU for data is failed" << "\n";
-                }
-            } else {
-                std::cout << "Transmit APDU request failed" << "\n";
-            }
-
-            auto closeLogicalCb = std::make_shared<CloseLogicalChannelCallback>();
-            status = card->closeLogicalChannel(channel, closeLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                if (closeLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    std::cout << "Logical channel closed successfully" << "\n";
-                } else if (refreshSlotId_ == static_cast<int>(slotId) &&
-                    refreshMode_ == telux::tel::RefreshMode::RESET) {
-                    std::cout << "Logical channel closed due to SIM refresh" << "\n";
-                } else {
-                    std::cout << "Close logical channel is failed" << "\n";
-                }
-            }
-
-            /* workaround: If the profile is enabled and the response of GET_RESPONSE is error/not
-               received but in between SIM Refresh ind is received which indicates profile is
-               enabled, considering that apdu result will be sent as success. */
-            if (refreshSlotId_ == static_cast<int>(slotId) &&
-                refreshMode_ == telux::tel::RefreshMode::RESET) {
-                apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                std::cout << "Profile enabled successfully" << "\n";
-            }
-            std::cout << "Enable APDU response : " << static_cast<int>(apduResult) << "\n";
+        int channel = openLogicalChannel(slotId);
+        if (channel < 0) {
+            std::cout << "Logical channel is invalid\n";
+            return telux::common::Status::FAILED;
         }
+
+        /* TAG(BF31) + length of payload(11) + choice tag(A0) + length of
+           subsequent payload(0C) + Iccid tag(5A) + length of Iccid(0A)+ Iccid
+           value + refresh tag(81) + length of refresh(01) + refresh value(FF) */
+        std::stringstream ss;
+        ss << "BF3111A00C5A0A" << getSwappedIccidString(iccidString) << "8101FF";
+        std::string s = ss.str();
+        std::vector<uint8_t> data = hexToBytes(s);
+
+        int result = transmitApdu(slotId, channel, data, false);
+        printTransmitApduResult(result);
+        if (result == CODE_OK) {
+            apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
+            std::cout << "Profile enabled successfully\n";
+        } else {
+            apduResult = telux::tel::ApduExchangeStatus::FAILURE;
+            std::cout << "Enable Profile is failed\n";
+        }
+
+        if (refreshSlotId_ == static_cast<int>(slotId) &&
+            refreshMode_ == telux::tel::RefreshMode::RESET) {
+            std::cout << "Logical channel closed due to SIM refresh\n";
+        } else {
+           // close channel manually
+           closeLogicalChannel(slotId, channel);
+        }
+
+        std::cout << "\nEnable APDU response : " << static_cast<int>(apduResult) << "\n";
         status = apSimProfileManager_->sendProfileOperationResponse(slotId, apduResult,
             referenceId, MyApSimProfileCallback::onResponseCallback);
     } else {
@@ -697,144 +812,49 @@ telux::common::Status ApSimProfileClient::enableProfile() {
 
 telux::common::Status ApSimProfileClient::disableProfile() {
     telux::common::Status status = telux::common::Status::FAILED;
+    // reset to default as this is global
+    refreshSlotId_ = DEFAULT_SLOT_ID;
+    refreshMode_ = telux::tel::RefreshMode::UNKNOWN;
+
     SlotId slotId = static_cast<SlotId>(indSlotId_);
     uint32_t referenceId = referenceId_;
     std::string iccidString = indIccid_;
     if (apSimProfileManager_) {
         // Exchange APDU command to disable the profile
         telux::tel::ApduExchangeStatus apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-        auto card = cards_[static_cast<int>(slotId) - 1];
-        if (card) {
-            int channel = -1;
-            auto openLogicalCb = std::make_shared<OpenLogicalChannelCallback>();
-
-            status = card->openLogicalChannel(ISD_R_AID, openLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << "Open logical channel request sent successfully" << "\n";
-                if (openLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    std::cout << "Open logical channel is success" << "\n";
-                    auto responseData = std::static_pointer_cast<ResponseData>(openLogicalCb).get();
-                    channel = responseData->getChannel();
-                    if (channel < 0) {
-                        std::cout << "Logical channel is invalid" << "\n";
-                        return telux::common::Status::FAILED;
-                    }
-                }
-            } else {
-                std::cout << "Open logical channel request failed" << "\n";
-                return telux::common::Status::FAILED;
-            }
-
-            // Refer GlobalPlatform Card Specification v.2.3. for more details
-            uint8_t cla = 130; // 0x82
-            uint8_t ins = 226; // 0xE2 - STORE_DATA
-            uint8_t p1 = 145; // 0x91
-            uint8_t p2 = 0;
-            uint8_t p3 = 20; //size of the payload
-            /* TAG(BF32) + length of payload(11) + choice tag(A0) + length of
-               subsequent payload(0C) + Iccid tag(5A) + length of Iccid(0A)+ Iccid
-               value + refresh tag(81) + length of refresh(01) + refresh value(FF) */
-            std::stringstream ss;
-            ss << "BF3211A00C5A0A" << getSwappedIccidString(iccidString) << "8101FF";
-            std::string s = ss.str();
-            std::vector<uint8_t> data = hexToBytes(s);
-            auto apduLogicalCb = std::make_shared<TransmitApduCallback>();
-            status = card->transmitApduLogicalChannel(channel, cla, ins, p1, p2, p3, data,
-                apduLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << "Transmit APDU request sent successfully" << "\n";
-                if (apduLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    auto apduData  = std::static_pointer_cast<ResponseData>(apduLogicalCb).get();
-
-                    if ((apduData->getResult().sw1 == SW1_NO_ERROR) &&
-                        (apduData->getResult().sw2 == SW2_NO_ERROR)) {
-                         int result = apduData->getResult().data[
-                             (apduData->getResult().data.size())-3];
-                         std::cout << "Disable profile result from card : " << result <<"\n";
-                         if (result == CODE_OK) {
-                             apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                             std::cout << "Profile disabled successfully" << "\n";
-                         } else {
-                             apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                             std::cout << "Disable profile is failed" << "\n";
-                         }
-                    } else if (apduData->getResult().sw1 == SW1_MORE_RESPONSE) {
-                         std::cout << "Transmit APDU for more data sent successfully" << "\n";
-                         std::vector<uint8_t> data = {};
-                         int remainingBytes = apduData->getResult().sw2;
-                         std::cout << "Remaining bytes: " << remainingBytes << "\n";
-                         auto apduMoreLogicalCb = std::make_shared<TransmitApduCallback>();
-                         status = card->transmitApduLogicalChannel(channel, 0,
-                             INS_GET_MORE_RESPONSE, 0, 0, remainingBytes, data,
-                             apduMoreLogicalCb);
-                         if (status == telux::common::Status::SUCCESS) {
-                             std::cout << "Transmit APDU for more data sent successfully" << "\n";
-                             if (apduMoreLogicalCb->getFuture().get() ==
-                                 telux::common::ErrorCode::SUCCESS) {
-                                 std::cout << "Transmit APDU for more data is success" << "\n";
-                                 auto apduMoreData = std::static_pointer_cast<ResponseData>
-                                     (apduMoreLogicalCb).get();
-                                 if ((apduMoreData->getResult().sw1 == SW1_NO_ERROR) &&
-                                     (apduMoreData->getResult().sw2 == SW2_NO_ERROR)) {
-                                     int result = apduMoreData->getResult().data[
-                                         (apduMoreData->getResult().data.size()) -
-                                         GET_MORE_RESPONSE_RESULT_BYTE];
-                                     std::cout << "Disable profile result from card : " << result
-                                         <<"\n";
-                                     if (result == CODE_OK) {
-                                         apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                                         std::cout << "Profile disabled successfully" << "\n";
-                                     } else {
-                                         apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                         std::cout << "Disable profile is failed" << "\n";
-                                     }
-                                 } else {
-                                     apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                     std::cout << "APDU command for GET_RESPONSE is failed" << "\n";
-                                 }
-                              } else {
-                                 apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                                 std::cout << "Transmit APDU for more data is failed" << "\n";
-                              }
-                         } else {
-                              apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                              std::cout << "Transmit APDU for more data is failed" << "\n";
-                         }
-                    } else {
-                         apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                         std::cout << "Transmit APDU for more data request is failed" << "\n";
-                    }
-                } else {
-                   apduResult = telux::tel::ApduExchangeStatus::FAILURE;
-                   std::cout << "Transmit APDU for data is failed" << "\n";
-                }
-            } else {
-                std::cout << "Transmit APDU request failed" << "\n";
-            }
-
-            auto closeLogicalCb = std::make_shared<CloseLogicalChannelCallback>();
-            status = card->closeLogicalChannel(channel, closeLogicalCb);
-            if (status == telux::common::Status::SUCCESS) {
-                if (closeLogicalCb->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
-                    std::cout << "Logical channel closed successfully" << "\n";
-                } else if (refreshSlotId_ == static_cast<int>(slotId) &&
-                   refreshMode_ == telux::tel::RefreshMode::RESET) {
-                   std::cout << "Logical channel closed due to SIM refresh" << "\n";
-               } else {
-                   std::cout << "Close logical channel is failed" << "\n";
-               }
-            }
-            /* workaround: If the profile is enabled and the response of GET_RESPONSE is error/not
-               received but in between SIM Refresh ind is received which indicates profile is
-               enabled, considering that apdu result will be sent as success. */
-            if (refreshSlotId_ == static_cast<int>(slotId) &&
-                refreshMode_ == telux::tel::RefreshMode::RESET) {
-                apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
-                std::cout << "Profile disabled successfully" << "\n";
-            }
-
-            std::cout << "Disable APDU response :" << static_cast<int>(apduResult) << "\n";
+        int channel = openLogicalChannel(slotId);
+        if (channel < 0) {
+            std::cout << "Logical channel is invalid\n";
+            return telux::common::Status::FAILED;
         }
+
+        /* TAG(BF32) + length of payload(11) + choice tag(A0) + length of
+           subsequent payload(0C) + Iccid tag(5A) + length of Iccid(0A)+ Iccid
+           value + refresh tag(81) + length of refresh(01) + refresh value(FF) */
+        std::stringstream ss;
+        ss << "BF3211A00C5A0A" << getSwappedIccidString(iccidString) << "8101FF";
+        std::string s = ss.str();
+        std::vector<uint8_t> data = hexToBytes(s);
+
+        int result = transmitApdu(slotId, channel, data, false);
+        printTransmitApduResult(result);
+        if (result == CODE_OK) {
+            apduResult = telux::tel::ApduExchangeStatus::SUCCESS;
+            std::cout << "Profile disabled successfully\n";
+        } else {
+            apduResult = telux::tel::ApduExchangeStatus::FAILURE;
+            std::cout << "Disable Profile is failed\n";
+        }
+
+        if (refreshSlotId_ == static_cast<int>(slotId) &&
+            refreshMode_ == telux::tel::RefreshMode::RESET) {
+            std::cout << "Logical channel closed due to SIM refresh\n";
+        } else {
+            // close channel manually
+            closeLogicalChannel(slotId, channel);
+        }
+
+        std::cout << "\nDisable APDU response :" << static_cast<int>(apduResult) << "\n";
         status = apSimProfileManager_->sendProfileOperationResponse(slotId, apduResult,
             referenceId, MyApSimProfileCallback::onResponseCallback);
     } else {

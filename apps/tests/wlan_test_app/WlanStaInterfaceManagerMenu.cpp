@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -255,8 +255,10 @@ void WlanStaInterfaceManagerMenu::onStationBandChanged(telux::wlan::BandType rad
 
    if(radio == telux::wlan::BandType::BAND_2GHZ) {
        std::cout << "Station has switched to 2G band" << std::endl;
-   } else {
+   } else if(radio == telux::wlan::BandType::BAND_5GHZ) {
        std::cout << "Station has switched to 5G band" << std::endl;
+   } else {
+       std::cout << "Station has switched to 6G band" << std::endl;
    }
 }
 

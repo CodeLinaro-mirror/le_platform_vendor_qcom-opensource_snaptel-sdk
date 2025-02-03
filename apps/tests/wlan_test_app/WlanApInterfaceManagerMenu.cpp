@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -139,16 +139,20 @@ void WlanApInterfaceManagerMenu::setConfig(std::vector<std::string> userInput) {
     config.venue.group = venue;
 
     int userResp = 0;
-    std::cout << "Ap configured for 2.4 GHz band? (0-YES, 1-NO): ";
+    std::cout << "Enter Ap Band type \
+                    (1-2.4GHz, 2-5 GHz, 3-6GHz): ";
     std::cin >> userResp;
-    WlanUtils::validateInput(userResp, {0, 1});
+    WlanUtils::validateInput(userResp, {1, 2, 3});
     std::cout << std::endl;
     telux::wlan::ApNetConfig apNetConfig = {};
-    if(userResp == 0) {
+    if(userResp == 1) {
         apNetConfig.info.apRadio = telux::wlan::BandType::BAND_2GHZ;
-    } else {
+    } else if (userResp == 2) {
         std::cout << "Ap configured for 5 GHz band" << std::endl;
         apNetConfig.info.apRadio = telux::wlan::BandType::BAND_5GHZ;
+    } else {
+        std::cout << "Ap configured for 6 GHz band" << std::endl;
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_6GHZ;
     }
     populateApConfigNet(apNetConfig);
     config.network.push_back(apNetConfig);
@@ -318,9 +322,11 @@ void WlanApInterfaceManagerMenu::onApBandChanged(telux::wlan::BandType band) {
    PRINT_NOTIFICATION << " ** Wlan onApOperBandChanged **\n";
 
    if(band == telux::wlan::BandType::BAND_2GHZ) {
-       std::cout << "AP has switched to 2G band" << std::endl;
-   } else {
+       std::cout << "AP has switched to 2.4G band" << std::endl;
+   } else if(band == telux::wlan::BandType::BAND_5GHZ) {
        std::cout << "AP has switched to 5G band" << std::endl;
+   } else {
+       std::cout << "AP has switched to 6G band" << std::endl;
    }
 }
 

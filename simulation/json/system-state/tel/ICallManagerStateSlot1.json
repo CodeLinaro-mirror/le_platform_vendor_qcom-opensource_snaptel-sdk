@@ -35,6 +35,10 @@
         {
             "callOrigFailure" : "5000 60000 60000 60000 180000 180000 180000 180000 180000 180000",
             "callDrop" : "5000 60000"
+        },
+        "eCallPostTestRegistrationTimer" :
+        {
+            "timer" : 2
         }
     }
 }

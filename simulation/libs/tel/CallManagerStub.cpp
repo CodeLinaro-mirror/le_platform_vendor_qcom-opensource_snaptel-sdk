@@ -67,6 +67,11 @@ void CallManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
         " callback status ", static_cast<int>(cbStatus));
+    telux::common::Status status = getInProgressCallsFromServer();
+    if(status == telux::common::Status::FAILED) {
+        cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+        LOG(ERROR, __FUNCTION__, " status ", static_cast<int>(cbStatus));
+    }
     setServiceStatus(cbStatus);
 }
 
@@ -405,8 +410,8 @@ void CallManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::MsdPullRequestEvent callevent;
         event.UnpackTo(&callevent);
         handleMsdUpdateRequest(callevent);
-    } else if(event.Is<::telStub::CallStateChangeEvent>()) {
-        ::telStub::CallStateChangeEvent callevent;
+    } else if(event.Is<::telStub::GetInProgressCallsData>()) {
+        ::telStub::GetInProgressCallsData callevent;
         event.UnpackTo(&callevent);
         handleCallInfoChanged(callevent);
     } else if(event.Is<::telStub::ModifyCallRequestEvent>()) {
@@ -497,7 +502,7 @@ void CallManagerStub::handleMsdUpdateRequest(::telStub::MsdPullRequestEvent even
     }
 }
 
-void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent event) {
+void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData event) {
     int phoneId = event.phone_id();
     LOG(DEBUG, __FUNCTION__," phoneId ", phoneId);
     std::vector<std::shared_ptr<CallStub>> calls ;
@@ -505,25 +510,17 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
         CallInfo callInfo;
         callInfo.callState = static_cast<telux::tel::CallState>(
             event.calls(i).call_state());
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ",
-            static_cast<int>(callInfo.callState));
-        callInfo.index  =  static_cast<int>(event.calls(i).call_index());
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(callInfo.index));
         callInfo.callDirection  =  static_cast<telux::tel::CallDirection>(
             event.calls(i).call_direction());
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
-            static_cast<int>(callInfo.callDirection));
+        callInfo.index  =  static_cast<int>(event.calls(i).call_index());
+        callInfo.callDirection  =  static_cast<telux::tel::CallDirection>(
+            event.calls(i).call_direction());
         callInfo.remotePartyNumber = static_cast<std::string>(
-            event.calls(i).remote_party_number());
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
-            static_cast<std::string>(callInfo.remotePartyNumber));
+            event.calls(i).remote_party_number());;
         callInfo.callEndCause = static_cast<telux::tel::CallEndCause>(
             event.calls(i).call_end_cause());
         callInfo.sipErrorCode = event.calls(i).sip_error_code();
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"callEndCause is ",
-            static_cast<int>(callInfo.callEndCause), " sipErrorCode is ", callInfo.sipErrorCode);
         callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMultiPartyCall is ", callInfo.isMultiPartyCall);
         callInfo.isMpty = event.calls(i).is_mpty();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMpty is ", callInfo.isMpty);
         callInfo.mode = static_cast<telux::tel::RttMode>(event.calls(i).mode());
@@ -533,13 +530,19 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
             static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
         callInfo.callType =
             static_cast<telux::tel::CallType>(event.calls(i).call_type());
-        LOG(DEBUG, __FUNCTION__,
+            LOG(DEBUG, __FUNCTION__," CallState: ", static_cast<int>(callInfo.callState),
+            " CallIndex: ", static_cast<int>(callInfo.index),
+            " Calldirection: ", static_cast<int>(callInfo.callDirection),
+            " RemotePartyNumber: ", static_cast<std::string>(callInfo.remotePartyNumber),
+            " callEndCause: ", static_cast<int>(callInfo.callEndCause),
+            " sipErrorCode: ", callInfo.sipErrorCode,
+            " isMultiPartyCall: ", callInfo.isMultiPartyCall,
+            " isMpty: ", callInfo.isMpty,
             " Rtt mode: ", static_cast<int>(callInfo.mode),
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
-            " Peer Rtt capability:", static_cast<int>(callInfo.peerRttCapability),
-            " Call Type:", static_cast<int>(callInfo.callType));
-
-
+            " Peer Rtt capability: ", static_cast<int>(callInfo.peerRttCapability),
+            " Call Type: ", static_cast<int>(callInfo.callType)
+        );
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         {
             calls.emplace_back(Info);
@@ -552,24 +555,42 @@ void CallManagerStub::handleCallInfoChanged(::telStub::CallStateChangeEvent even
     addLatestCalls(calls);
 }
 
+telux::common::Status CallManagerStub::getInProgressCallsFromServer() {
+    telux::common::Status status = telux::common::Status::FAILED;
+    for (int i = 1; i <= noOfSlots_; i++) {
+        ::telStub::GetInProgressCallsRequest request;
+        ::telStub::GetInProgressCallsData response;
+        ClientContext context;
+        request.set_phone_id(i);
+        LOG(DEBUG, __FUNCTION__, " Requested calls information for slot " , i);
+        grpc::Status reqstatus = stub_->getInProgressCalls(&context, request, &response);
+        if (reqstatus.ok()) {
+            status = telux::common::Status::SUCCESS;
+            handleCallInfoChanged(response);
+        }
+        else {
+            LOG(ERROR, __FUNCTION__, " Requested calls information for slot failed ");
+            return telux::common::Status::FAILED;
+        }
+    }
+    return status;
+}
+
 void CallManagerStub::updateCurrentCalls() {
     for (int i = 1; i <= noOfSlots_; i++) {
         ::telStub::UpdateCurrentCallsRequest request;
         ::google::protobuf::Empty response;
         ClientContext context;
-
         request.set_phone_id(i);
         LOG(DEBUG, __FUNCTION__, " Requested calls information for slot " , i);
         grpc::Status reqstatus = stub_->updateCalls(&context, request, &response);
         if (reqstatus.ok()) {
             LOG(DEBUG, __FUNCTION__, " Requested calls information for slot is successful ");
-        }
-        else {
+        } else {
             LOG(ERROR, __FUNCTION__, " Requested calls information for slot failed ");
         }
     }
 }
-
 
 void CallManagerStub::refreshCachedCalls(int phoneId,
     std::vector<std::shared_ptr<CallStub>> &latestCalls) {
@@ -1735,25 +1756,148 @@ telux::common::Status CallManagerStub::configureECallRedial(RedialConfigType con
 
 telux::common::Status CallManagerStub::restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
     int duration, common::ResponseCallback callback ) {
-    return telux::common::Status::NOTSUPPORTED;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::RestartECallHlapTimerRequest request;
+    ::telStub::RestartECallHlapTimerResponse response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    request.set_phone_id(phoneId);
+    request.set_timer_id(static_cast<telStub::EcallHlapTimerId>(timerId));
+    request.set_timer_duration(duration);
+    grpc::Status reqstatus = stub_->restartECallHlapTimer(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
 }
 
 telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string dialNumber,
     const std::vector<uint8_t> &msdPdu, MakeCallCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    LOG(DEBUG, "CallManager - ", __FUNCTION__);
+    if (phoneId <= 0 || phoneId > noOfSlots_) {
+        LOG(DEBUG, __FUNCTION__, " Invalid PhoneId");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
+        LOG(ERROR, __FUNCTION__, " Call Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::telStub::MakeECallRequest request =
+        createRequest<::telStub::MakeECallRequest>(phoneId, dialNumber, true,
+        makeSelfTestERAGLONASSECallWithRawMsd);
+    ::telStub::MakeECallReply response;
+    ClientContext context;
+
+    grpc::Status reqstatus = stub_->MakeECall(&context, request, &response);
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        std::string remotePartyNumber =
+            static_cast<std::string>(response.call().remote_party_number());
+        int callIndex = static_cast<int>(response.call().call_index());
+
+        if (status == telux::common::Status::SUCCESS ) {
+            // Update call details from server and invoke callback
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            callback, error);
+        } else {
+            // Update call details from server
+            findMatchingCall(callIndex, remotePartyNumber, phoneId, cbDelay, nullptr,
+            nullptr, error);
+        }
+    }
+    return status;
 }
 
 telux::common::Status CallManagerStub::updateECallPostTestRegistrationTimer(int phoneId,
     uint32_t timer, common::ResponseCallback callback) {
-    return telux::common::Status::NOTSUPPORTED;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::UpdateECallPostTestRegistrationTimerRequest request;
+    ::telStub::UpdateECallPostTestRegistrationTimerResponse response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    request.set_phone_id(phoneId);
+    request.set_timer(timer);
+    grpc::Status reqstatus = stub_->updateECallPostTestRegistration(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status = static_cast<telux::common::Status>(response.status());
+        int cbDelay = static_cast<int>(response.delay());
+        if(callback) {
+            auto f = std::async(std::launch::async,
+            [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
 }
 
 telux::common::ErrorCode CallManagerStub::getECallPostTestRegistrationTimer(int phoneId,
     uint32_t &timer) {
-    return telux::common::ErrorCode::GENERIC_FAILURE;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::GetECallPostTestRegistrationTimerRequest request;
+    ::telStub::GetECallPostTestRegistrationTimerResponse response;
+    ClientContext context;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    request.set_phone_id(phoneId);
+    grpc::Status reqstatus = stub_->getECallPostTestRegistrationTimer(&context, request, &response);
+    if (reqstatus.ok()) {
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        timer = static_cast<int>(response.timer_duration());
+    }
+    return errorCode;
 }
 
 telux::common::ErrorCode CallManagerStub::getECallRedialConfig(std::vector<int> &callOrigTimeGap,
     std::vector<int> &callDropTimeGap)  {
-    return telux::common::ErrorCode::GENERIC_FAILURE;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    const ::google::protobuf::Empty request;
+    ::telStub::GetECallRedialResponse response;
+    ClientContext context;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    grpc::Status reqstatus = stub_->getECallRedialConfig(&context, request, &response);
+    if (reqstatus.ok()) {
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        for (auto &r : (response.call_orig_time_gap())) {
+            int tmp =  static_cast<int>(r);
+            LOG(DEBUG, __FUNCTION__," call orig time gap " , tmp );
+            callOrigTimeGap.emplace_back(tmp);
+        }
+        for (auto &r : (response.call_drop_time_gap())) {
+            int tmp =  static_cast<int>(r);
+            LOG(DEBUG, __FUNCTION__," call drop time gap " , tmp );
+            callDropTimeGap.emplace_back(tmp);
+        }
+    }
+    return errorCode;
 }

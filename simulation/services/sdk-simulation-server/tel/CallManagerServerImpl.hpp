@@ -83,6 +83,7 @@ struct CallInfo {
    RttMode localRttCapability = RttMode::DISABLED;
    RttMode peerRttCapability  = RttMode::DISABLED;
    CallType callType  = CallType::UNKNOWN;
+   bool isEraGlonassSelfTestECall = false;
 };
 
 
@@ -155,12 +156,28 @@ public:
     grpc::Status ConfigureECallRedial(ServerContext* context,
         const telStub::ConfigureECallRedialRequest* request,
         telStub::ConfigureECallRedialResponse* response);
-    void startTimer(std::string timer);
-    void msdTransmissionStatus(std::string msdtransmision );
+    grpc::Status getECallRedialConfig(ServerContext* context,
+        const google::protobuf::Empty* request,
+        telStub::GetECallRedialResponse* response);
+    grpc::Status updateECallPostTestRegistration(ServerContext* context,
+        const telStub::UpdateECallPostTestRegistrationTimerRequest* request,
+        telStub::UpdateECallPostTestRegistrationTimerResponse* response);
+    grpc::Status getECallPostTestRegistrationTimer(ServerContext* context,
+        const telStub::GetECallPostTestRegistrationTimerRequest* request,
+        telStub::GetECallPostTestRegistrationTimerResponse* response);
+    grpc::Status restartECallHlapTimer(ServerContext* context,
+        const telStub::RestartECallHlapTimerRequest* request,
+        telStub::RestartECallHlapTimerResponse* response);
+    grpc::Status getInProgressCalls(ServerContext* context,
+        const telStub::GetInProgressCallsRequest* request,
+        telStub::GetInProgressCallsData* response);
+    void startTimer(std::string timer, int phoneId);
+    void msdTransmissionStatus(std::string msdtransmision, int phoneId );
     void changeCallState(int phoneId, std::string callstate, int index);
-    void expiryTimer(std::string timer);
-    void sendEvent(std::string timer, std::string status );
+    void expiryTimer(std::string timer, int phoneId);
+    void sendEvent(std::string timer, std::string status, int phoneId);
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
+    void onServerEvent(google::protobuf::Any event) override;
     void onECallRedial(int phoneId, bool willECallRedial, telux::tel::ReasonType reason);
 
 private:
@@ -175,6 +192,9 @@ private:
     std::mutex callManagerMutex_;
     std::shared_ptr<EcallStateMachine> ecallStateMachine_;
     bool iseCallNumTypeOverridden_ = false;
+    std::condition_variable hlapTimerResetCv_;
+    std::string stopTimerId_;
+    std::mutex timerExpiryMtx_;
     grpc::Status readJson();
     void getJsonForSystemData (int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,
@@ -184,11 +204,13 @@ private:
     void handleIncomingCallRequest(std::string eventParams);
     void handleModifyCallRequest(std::string eventParams);
     void handleRttMessageRequest(std::string eventParams);
+    void handleOperatingModeChanged(::telStub::OperatingModeEvent event);
     telux::common::Status handleStateMachine(int phoneId, int callIndex);
-    void startTimers(std::string timer);
+    void startTimers(std::string timer, int phoneId);
     void triggerTimerExpiry(std::string timer, int phoneId);
-    void triggerECallInfoChangeEvent(std::string timer, telux::tel::HlapTimerEvent action);
-    void triggerCallInfoChangeEvent(int phoneId, std::shared_ptr<CallInfo> call);
+    void triggerECallInfoChangeEvent(int phoneId, std::string timer,
+        telux::tel::HlapTimerEvent action);
+    void triggerCallInfoChangeEvent(int phoneId, int callIndex);
     void triggerCallInfoChange(int phoneId);
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(int phoneId, std::string action,
@@ -198,7 +220,7 @@ private:
     void triggerModifyCallRequestEvent(int phoneId, int callIndex);
     void triggerRttMessageEvent(int phoneId, std::string message);
     bool findAndRemoveMatchingCall(int callIndex);
-    void updateEcallHlapTimer(std::string timer, HlapTimerStatus status);
+    void updateEcallHlapTimer(int phoneId, std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();
     bool getUserConfiguredeCallRat();
     std::string getUserConfiguredECallRedialConfig();
@@ -215,15 +237,14 @@ private:
     bool match(std::shared_ptr<CallInfo> call, CallInfo callToCompare);
     bool match(std::shared_ptr<CallInfo> call, int slotId, int callIndex);
     void logCallDetails(std::shared_ptr<CallInfo> call);
-    std::shared_ptr<CallInfo> findCallAndUpdateCallState(int index,
-        CallState callState, int phoneId);
-    std::shared_ptr<CallInfo> findCallAndUpdateRttMode(int index, RttMode mode, int phoneId);
+    bool findCallAndUpdateCallState(int index, CallState callState, int phoneId);
+    bool findCallAndUpdateRttMode(int index, RttMode mode, int phoneId);
     bool findMatchingCall(CallInfo callToCompare);
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
     bool find(std::shared_ptr<CallInfo> call, int index, int phoneId);
     void onEventUpdate(std::string event);
-    void handleCallMachine();
-    void changeCallStateofActiveCalls(CallInfo info);
+    void handleCallMachine(int phoneId, int callIndex);
+    void changeCallStateofActiveCalls(int phoneId, int callIndex);
     void changeRttModeOfCall(RttMode mode, int index, int phoneId);
     void resumeBackgroundCalls(int phoneId);
     void hangupWaitingOrBackgroundCalls(int phoneId);
@@ -234,8 +255,11 @@ private:
     // Find the lowest unfilled index in the call list.
     int setCallIndexForNewCall();
     bool getUserConfiguredALACKParameter();
+    void restartTimer(int phoneId, std::string timer, int timerDuration);
+    telux::tel::ECallMode getEcallOperatingMode(int phoneId);
+    void fillCallInformation(int phoneId, ::telStub::GetInProgressCallsData* data);
     template <typename T>
-    bool addNewCallDetails(const T* request) {
+    int addNewCallDetails(const T* request) {
         CallInfo callInfo;
         callInfo.phoneId = request->phone_id();
         callInfo.index = setCallIndexForNewCall();
@@ -306,6 +330,10 @@ private:
             callInfo.localRttCapability = RttMode::FULL;
             callInfo.peerRttCapability = RttMode::FULL;
         }
+        if(makeCallApiType == CallApi::makeSelfTestERAGLONASSECallWithRawMsd) {
+            callInfo.isEraGlonassSelfTestECall = true;
+            callInfo.callType = CallType::VOICE_CALL;
+        }
         callInfo.isMsdTransmitted = request->is_msd_transmitted();
         callInfo_ = callInfo;
         auto call = std::make_shared<CallInfo>(callInfo);
@@ -315,15 +343,21 @@ private:
             // Regulatory eCall and custom number eCall over CS and PS allowed only one at a time.
             // It is a limitation in simulation state handling.
             if(!findMatchingCall(callInfo)) {
-                calls_.emplace_back(call);
-                return true;
+                {
+                    std::lock_guard<std::mutex> lock(callManagerMutex_);
+                    calls_.emplace_back(call);
+                }
+                return call->index;
             }
         } else {
             // Voice calls of same remote party number are allowed
-            calls_.emplace_back(call);
-            return true;
+            {
+                std::lock_guard<std::mutex> lock(callManagerMutex_);
+                calls_.emplace_back(call);
+            }
+            return call->index;
         }
-        return false;
+        return CALL_INDEX_INVALID;
     }
 };
 

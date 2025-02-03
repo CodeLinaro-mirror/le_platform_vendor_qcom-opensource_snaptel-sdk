@@ -314,6 +314,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     int callIndex_;
     bool isCustomNumbereCall_;
     std::string eCallRedialConfig_;
+    bool isEraGlonassSelfTestECall_;
  public:
     /**
      * Constructor for EcallStateMachine
@@ -322,7 +323,7 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
         std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall,
         bool isALACKConfigEnabled, int phoneId, int callIndex, bool isCustomNumberEcall,
-        std::string eCallRedialConfig, bool updateInProgress);
+        std::string eCallRedialConfig, bool isEraGlonassSelfTestECall, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -355,7 +356,8 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
         HANGUP_REQUEST_FROM_PSAP,
         MSD_PULL_REQUEST_FROM_PSAP,
         ON_TIMER_EXPIRY,
-        ON_NETWORK_DEREGISTRATION_REQUEST
+        ON_NETWORK_DEREGISTRATION_REQUEST,
+        ON_OPERATING_MODE_AIRPLANE
     };
 
     uint32_t eventId_ = telux::tel::EcallStateMachine::EventID::NONE;
@@ -402,6 +404,8 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     std::vector<int> getConfiguredRedialParameters(std::string config);
 
     telux::tel::ECallMode getEcallOperatingMode(int phoneId);
+
+    bool isEraGlonassSelfTestECall();
 
     bool updateInProgress_;
 

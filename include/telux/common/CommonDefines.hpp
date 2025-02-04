@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -78,7 +78,17 @@
 #include "SDKListener.hpp"
 
 /**
- * Specifies the slot id where the Uicc card is inserted
+ * In case of @ref telux::tel::IMultiSimManager::switchActiveSlot, slotId represents physical
+ * UICC/SIM slot.
+ *
+ * For all the other APIs slotId represents the logical UICC/SIM slot.
+ *
+ * For multi-SIM configurations, logical and physical slot IDs are identical.
+ *
+ * On single-SIM TCU platforms, a logical slot can be mapped to any available physical slot.
+ * Use the @ref telux::tel::IMultiSimManager::switchActivePhysicalSlot API to set up the logical
+ * to physical slot mapping.
+ *
  */
 typedef enum {
    INVALID_SLOT_ID = -1,

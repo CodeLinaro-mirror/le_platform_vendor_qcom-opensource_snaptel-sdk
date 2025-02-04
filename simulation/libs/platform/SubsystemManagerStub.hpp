@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -61,26 +61,30 @@ class SubsystemManagerStub : public ISubsystemManager,
 
  private:
     uint32_t cbDelay_ = 0;
-    std::shared_ptr<telux::common::ListenerManager<ISubsystemListener>> listenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<ISubsystemListener>> q6ListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<ISubsystemListener>> a7ListenerMgr_;
     std::mutex mutex_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     ClientEventManager &clientEventMgr_;
-    std::bitset<2> supportedProcTypes_;
-    std::bitset<3> supportedSubsystems_;
+    // Define a type for the combination of Subsystem and ProcType
+    using Combination = std::pair<Subsystem, ProcType>;
+    // Set to store supported combinations
+    std::set<Combination> supportedCombinations_;
 
-    void sendNewStatusToClients(telux::common::ServiceStatus newStatus,
+    void sendNewStatusToClients(telux::common::OperationalStatus newOpStatus,
         Subsystem subsystem, ProcType procType);
     telux::common::ErrorCode registerForMpss(
+        std::weak_ptr<ISubsystemListener> listener, telux::common::ProcType location);
+    telux::common::ErrorCode registerForApss(
         std::weak_ptr<ISubsystemListener> listener, telux::common::ProcType location);
     void onDmsServiceStatusChange(telux::common::ServiceStatus newStatus);
     void createListener();
     void onEventUpdate(google::protobuf::Any event);
     void handleSSREvent(google::protobuf::Any event);
     void handleSubsystemEvent(google::protobuf::Any event);
-    bool isProcTypeSupported(size_t position);
-    void setProcType(size_t position);
-    bool isSubsystemSupported(size_t position);
-    void setSubsystemType(size_t position);
+    void registerCombination(Subsystem subsystem, ProcType procType);
+    bool isSupported(Subsystem subsystem, ProcType procType);
+    void resetCombination();
 };
 
 }  // End of namespace platform

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -97,13 +97,13 @@ void DeviceInfoManagerServerImpl::onSubsystemEventUpdate(std::string event) {
     std::string token;
 
     /** INPUT-event:
-     * subsystem_status SUBSYSTEM PROC_TYPE STATUS
+     * operational_status SUBSYSTEM PROC_TYPE STATUS
      * OUTPUT-token:
-     * subsystem_status
+     * operational_status
      **/
     token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     /** INPUT-token:
-     * subsystem_status
+     * operational_status
      * INPUT-event:
      * SUBSYSTEM PROC_TYPE STATUS
      **/
@@ -112,7 +112,7 @@ void DeviceInfoManagerServerImpl::onSubsystemEventUpdate(std::string event) {
 
 /** INPUT-token:
   * ssr
-  * subsystem_status
+  * operational_status
   * INPUT-event:
   * SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
   * SUBSYSTEM PROC_TYPE STATUS
@@ -125,9 +125,9 @@ void DeviceInfoManagerServerImpl::handleEvent(std::string token,std::string even
         //INPUT-token: ssr
         //INPUT-event: SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
         handleSSREvent(event);
-    } else if (token == "subsystem_status") {
+    } else if (token == "operational_status") {
         //INPUT-event: SUBSYSTEM PROC_TYPE STATUS
-        handleSubsystemStatusEvent(event);
+        handleOperationalStatusEvent(event);
     } else {
         LOG(DEBUG, __FUNCTION__, ":: Invalid event ! Ignoring token: ",
                 token, ", event: ", event);
@@ -145,14 +145,14 @@ bool DeviceInfoManagerServerImpl::isValidSubsystem(int subsystem) {
             (subsystem == static_cast<int>(Subsystem::MPSS));
 }
 
-void DeviceInfoManagerServerImpl::handleSubsystemStatusEvent(std::string eventParams) {
-    LOG(DEBUG, __FUNCTION__, ":: subsystem_status event: ", eventParams);
+void DeviceInfoManagerServerImpl::handleOperationalStatusEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__, ":: operational_status event: ", eventParams);
 
     std::istringstream iss(eventParams);
     int subsystem, procType;
-    std::string subsystemStatus;
+    std::string operationalStatus;
 
-    if (!(iss >> subsystem >> procType >> subsystemStatus)) {
+    if (!(iss >> subsystem >> procType >> operationalStatus)) {
         LOG(DEBUG, __FUNCTION__, "Invalid input: ",eventParams);
         return;
     }
@@ -162,33 +162,28 @@ void DeviceInfoManagerServerImpl::handleSubsystemStatusEvent(std::string eventPa
         return;
     }
 
-    telux::common::ServiceStatus srvcStatus =
-        telux::common::ServiceStatus::SERVICE_FAILED;
-    if (subsystemStatus == "SERVICE_AVAILABLE") {
-        srvcStatus = telux::common::ServiceStatus::SERVICE_AVAILABLE;
-    } else if (subsystemStatus == "SERVICE_UNAVAILABLE") {
-        srvcStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    } else if (subsystemStatus == "SERVICE_FAILED") {
-        srvcStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    commonStub::OperationalStatus opStatus =
+        commonStub::OperationalStatus::NONOPERATIONAL;
+    if (operationalStatus == "OPERATIONAL") {
+        opStatus = commonStub::OperationalStatus::OPERATIONAL;
+    } else if (operationalStatus == "NONOPERATIONAL") {
+        opStatus = commonStub::OperationalStatus::NONOPERATIONAL;
     } else {
-        // Ignore
-        LOG(DEBUG, __FUNCTION__, ":: INVALID subsystem status: ", subsystemStatus);
+        LOG(DEBUG, __FUNCTION__, ":: INVALID operational status: ", operationalStatus);
         return;
     }
 
-    onSubsystemEvent(subsystem, procType, srvcStatus);
+    onSubsystemEvent(subsystem, procType, opStatus);
 }
 
-void DeviceInfoManagerServerImpl::onSubsystemEvent(int subsystem, int procType, ServiceStatus srvStatus) {
+void DeviceInfoManagerServerImpl::onSubsystemEvent(int subsystem, int procType,
+    commonStub::OperationalStatus opStatus) {
     LOG(DEBUG,__FUNCTION__);
 
     ::platformStub::SubsystemStatusreply subsystemResp;
     ::eventService::EventResponse anyResponse;
-    ::commonStub::GetServiceStatusReply commonStubStatus;
 
-    setResponse(srvStatus, &commonStubStatus);
-
-    subsystemResp.set_status(commonStubStatus.service_status());
+    subsystemResp.set_status(opStatus);
     subsystemResp.set_subsystem(subsystem);
     subsystemResp.set_proc_type(procType);
 

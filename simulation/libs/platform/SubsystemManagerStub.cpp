@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -28,7 +28,8 @@ SubsystemManagerStub::~SubsystemManagerStub() {
 void SubsystemManagerStub::createListener() {
     LOG(DEBUG, __FUNCTION__);
 
-    listenerMgr_ = std::make_shared<ListenerManager<ISubsystemListener>>();
+    q6ListenerMgr_ = std::make_shared<ListenerManager<ISubsystemListener>>();
+    a7ListenerMgr_ = std::make_shared<ListenerManager<ISubsystemListener>>();
 }
 
 void SubsystemManagerStub::cleanup() {
@@ -61,32 +62,19 @@ void SubsystemManagerStub::onEventUpdate(google::protobuf::Any event) {
     taskQ_.add(f);
 }
 
-bool SubsystemManagerStub::isProcTypeSupported(size_t position) {
-    LOG(DEBUG, __FUNCTION__);
-
+void SubsystemManagerStub::registerCombination(Subsystem subsystem, ProcType procType) {
     std::lock_guard<std::mutex> lock(mutex_);
-    return supportedProcTypes_.test(position);
+    supportedCombinations_.insert({subsystem, procType});
 }
 
-void SubsystemManagerStub::setProcType(size_t position) {
-    LOG(DEBUG, __FUNCTION__);
-
+bool SubsystemManagerStub::isSupported(Subsystem subsystem, ProcType procType) {
     std::lock_guard<std::mutex> lock(mutex_);
-    supportedProcTypes_.set(position);
+    return supportedCombinations_.find({subsystem, procType}) != supportedCombinations_.end();
 }
 
-bool SubsystemManagerStub::isSubsystemSupported(size_t position) {
-    LOG(DEBUG, __FUNCTION__);
-
+void SubsystemManagerStub::resetCombination() {
     std::lock_guard<std::mutex> lock(mutex_);
-    return supportedSubsystems_.test(position);
-}
-
-void SubsystemManagerStub::setSubsystemType(size_t position) {
-    LOG(DEBUG, __FUNCTION__);
-
-    std::lock_guard<std::mutex> lock(mutex_);
-    supportedSubsystems_.set(position);
+    supportedCombinations_.clear();
 }
 
 void SubsystemManagerStub::handleSubsystemEvent(google::protobuf::Any event) {
@@ -94,16 +82,13 @@ void SubsystemManagerStub::handleSubsystemEvent(google::protobuf::Any event) {
 
     ::platformStub::SubsystemStatusreply subsystemResp;
     event.UnpackTo(&subsystemResp);
-    ServiceStatus srvcStatus = ServiceStatus::SERVICE_FAILED;
+    OperationalStatus opStatus = OperationalStatus::UNAVAILABLE;
 
-    if (subsystemResp.status() == commonStub::ServiceStatus::SERVICE_AVAILABLE) {
-        srvcStatus = ServiceStatus::SERVICE_AVAILABLE;
-    } else if (subsystemResp.status() == commonStub::ServiceStatus::SERVICE_UNAVAILABLE) {
-        srvcStatus = ServiceStatus::SERVICE_UNAVAILABLE;
-    } else if (subsystemResp.status() == commonStub::ServiceStatus::SERVICE_FAILED) {
-        srvcStatus = ServiceStatus::SERVICE_FAILED;
+    if (subsystemResp.status() == commonStub::OperationalStatus::OPERATIONAL) {
+        opStatus = OperationalStatus::OPERATIONAL;
+    } else if (subsystemResp.status() == commonStub::OperationalStatus::NONOPERATIONAL) {
+        opStatus = OperationalStatus::UNAVAILABLE;
     } else {
-        // Ignore
         LOG(ERROR, __FUNCTION__, ":: INVALID event");
         return;
     }
@@ -111,48 +96,43 @@ void SubsystemManagerStub::handleSubsystemEvent(google::protobuf::Any event) {
     telux::common::Subsystem subsystem = static_cast<Subsystem>(subsystemResp.subsystem());
     telux::common::ProcType procType = static_cast<ProcType>(subsystemResp.proc_type());
 
-    if (!isProcTypeSupported(static_cast<int>(procType))) {
-        LOG(DEBUG, __FUNCTION__, " procType is not supported");
+    if (!isSupported(subsystem, procType)) {
+        LOG(DEBUG, __FUNCTION__, " ", static_cast<int>(subsystem), " and ",
+        static_cast<int>(procType), " combination is not supported/registered. ");
         return;
     }
 
-    if (!isSubsystemSupported(static_cast<int>(subsystem))) {
-        LOG(DEBUG, __FUNCTION__, " subsystem is not supported");
-        return;
-    }
-
-    sendNewStatusToClients(srvcStatus, subsystem, procType);
+    sendNewStatusToClients(opStatus, subsystem, procType);
 }
 
 /*
  * Find all the registered clients and pass them the latest state.
  */
-void SubsystemManagerStub::sendNewStatusToClients(telux::common::ServiceStatus newStatus,
+void SubsystemManagerStub::sendNewStatusToClients(telux::common::OperationalStatus newOpStatus,
     Subsystem subsystem, ProcType procType) {
     LOG(DEBUG, __FUNCTION__);
 
     telux::common::SubsystemInfo subsystemInfo{};
-    telux::common::OperationalStatus newOperationalStatus;
 
     subsystemInfo.subsystems = subsystem;
     subsystemInfo.location = procType;
 
     std::vector<std::weak_ptr<ISubsystemListener>> applisteners;
-    listenerMgr_->getAvailableListeners(applisteners);
+
+    if (subsystem == telux::common::Subsystem::MPSS) {
+        q6ListenerMgr_->getAvailableListeners(applisteners);
+    } else {
+        a7ListenerMgr_->getAvailableListeners(applisteners);
+    }
 
     if (applisteners.empty()) {
         LOG(DEBUG, __FUNCTION__, " no registered listener");
         return;
     }
 
-    newOperationalStatus = telux::common::OperationalStatus::UNAVAILABLE;
-    if (newStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        newOperationalStatus = telux::common::OperationalStatus::OPERATIONAL;
-    }
-
     for (auto &wp : applisteners) {
         if (auto app = wp.lock()) {
-            app->onStateChange(subsystemInfo, newOperationalStatus);
+            app->onStateChange(subsystemInfo, newOpStatus);
         }
     }
 }
@@ -247,8 +227,8 @@ Status SubsystemManagerStub::initSyncComplete(
         return Status::FAILED;
     }
 
-    if (!listenerMgr_) {
-        LOG(ERROR, __FUNCTION__, ":: Invalid instance ");
+    if (!q6ListenerMgr_ || !a7ListenerMgr_) {
+        LOG(ERROR, __FUNCTION__, ":: Invalid listener manager instance ");
         return Status::FAILED;
     }
 
@@ -297,14 +277,20 @@ telux::common::ErrorCode SubsystemManagerStub::registerListener(
     for (telux::common::SubsystemInfo &subsystem : subsystems) {
         if ((subsystem.subsystems & telux::common::Subsystem::MPSS)
             == telux::common::Subsystem::MPSS) {
-            setSubsystemType(static_cast<int>(telux::common::Subsystem::MPSS));
             ec = registerForMpss(listener, subsystem.location);
             if (ec != telux::common::ErrorCode::SUCCESS) {
-                {
-                    std::lock_guard<std::mutex> lock(mutex_);
-                    supportedSubsystems_.reset();
-                }
                 return ec;
+            } else {
+                registerCombination(Subsystem::MPSS, subsystem.location);
+            }
+        }
+        if ((subsystem.subsystems & telux::common::Subsystem::APSS)
+            == telux::common::Subsystem::APSS) {
+            ec = registerForApss(listener, subsystem.location);
+            if (ec != telux::common::ErrorCode::SUCCESS) {
+                return ec;
+            } else {
+                registerCombination(Subsystem::APSS, subsystem.location);
             }
         }
     }
@@ -327,14 +313,40 @@ telux::common::ErrorCode SubsystemManagerStub::registerForMpss(
         return telux::common::ErrorCode::INVALID_ARG;
     }
 
-    status = listenerMgr_->registerListener(listener);
+    status = q6ListenerMgr_->registerListener(listener);
 
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " can't register, err ", static_cast<int>(status));
         return telux::common::CommonUtils::toErrorCode(status);
     }
 
-    setProcType(static_cast<int>(location));
+    return telux::common::ErrorCode::SUCCESS;
+}
+
+/*
+ * Add client's listener for monitoring APSS state change.
+ */
+telux::common::ErrorCode SubsystemManagerStub::registerForApss(
+    std::weak_ptr<ISubsystemListener> listener, telux::common::ProcType location) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::Status status;
+
+    if (location == telux::common::ProcType::LOCAL_PROC) {
+        /* Running on MDM and trying to monitor MDM itself  */
+        LOG(ERROR, __FUNCTION__, " can't monitor mdm from mdm");
+        return telux::common::ErrorCode::INVALID_ARG;
+    }
+
+    /* Running on MDM and trying to monitor EAP/APQ should be denied.
+     * However, application may be running on NAD1 and trying to monitor
+     * NAD2, therefore, allow the registration. */
+    status = a7ListenerMgr_->registerListener(listener);
+
+    if (status != telux::common::Status::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " can't register, err ", static_cast<int>(status));
+        return telux::common::CommonUtils::toErrorCode(status);
+    }
 
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -346,19 +358,21 @@ telux::common::ErrorCode SubsystemManagerStub::deRegisterListener(
     std::weak_ptr<ISubsystemListener> listener) {
 
     telux::common::Status status;
+    resetCombination();
 
-    status = listenerMgr_->deRegisterListener(listener);
-    if (status != telux::common::Status::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't deregister, err ", static_cast<int>(status));
+    status = q6ListenerMgr_->deRegisterListener(listener);
+    if ((status != telux::common::Status::SUCCESS)
+        && (status != telux::common::Status::NOSUCH)) {
+        LOG(ERROR, __FUNCTION__, " can't deregister q6, err ", static_cast<int>(status));
         return telux::common::CommonUtils::toErrorCode(status);
     }
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        supportedProcTypes_.reset();
-        supportedSubsystems_.reset();
+    status = a7ListenerMgr_->deRegisterListener(listener);
+    if ((status != telux::common::Status::SUCCESS)
+        && (status != telux::common::Status::NOSUCH)) {
+        LOG(ERROR, __FUNCTION__, " can't deregister a7, err ", static_cast<int>(status));
+        return telux::common::CommonUtils::toErrorCode(status);
     }
-
 
     return telux::common::ErrorCode::SUCCESS;
 }

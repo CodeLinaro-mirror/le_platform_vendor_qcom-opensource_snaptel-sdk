@@ -45,10 +45,11 @@
 namespace telux {
 
 namespace config {
-/** @addtogroup telematics_config_manager
- * @{ */
 
 using ConfigId = std::string;
+
+/** @addtogroup telematics_config_manager
+ * @{ */
 
 enum class ConfigType {
     HARDWARE, /**< For hardware or platform related configuration files */

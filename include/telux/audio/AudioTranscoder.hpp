@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -80,9 +80,6 @@
 namespace telux {
 namespace audio {
 
-/** @addtogroup telematics_audio_transcoder
- * @{ */
-
 class IAudioBuffer;
 
 /**
@@ -116,6 +113,9 @@ using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer
  */
 using TranscoderWriteResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio_transcoder
+ * @{ */
 
 /**
  *  Provides the methods for transcoding the compressed audio data.

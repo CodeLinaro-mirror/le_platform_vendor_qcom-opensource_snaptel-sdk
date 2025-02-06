@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -81,9 +81,6 @@
 
 namespace telux {
 namespace tel {
-
-/** @addtogroup telematics_sms
- * @{ */
 
 class ISmsListener;
 class ISmscAddressCallback;
@@ -166,8 +163,6 @@ struct MessageAttributes {
    int numberOfCharsLeftInLastSegment; /**< characters left in last segment */
 };
 
-using PduBuffer = std::vector<uint8_t>;
-
 /**
  * @brief Structure containing information about the part of multi-part SMS such as concatenated
  * message reference number, number of segments and segment number. During concatenation this
@@ -183,6 +178,11 @@ struct MessagePartInfo {
    uint8_t segmentNumber;                  /**< Segment Number */
 
 };
+
+using PduBuffer = std::vector<uint8_t>;
+
+/** @addtogroup telematics_sms
+ * @{ */
 
 /**
  * @brief Data structure represents an incoming SMS. This is applicable for single part message
@@ -292,6 +292,8 @@ private:
                                                               stored on SIM */
 };
 
+/** @} */ /* end_addtogroup telematics_sms */
+
 /**
  * This function is called in response to sending a single part or multi-part SMS. This response
  * callback is invoked  when a single part message is sent or when all the parts of a multi-part
@@ -375,6 +377,9 @@ using RequestPreferredStorageCb = std::function<void(StorageType type,
  */
 using RequestStorageDetailsCb = std::function<void(uint32_t maxCount, uint32_t availableCount,
    telux::common::ErrorCode errorCode)>;
+
+/** @addtogroup telematics_sms
+ * @{ */
 
 /**
  * @brief SmsManager class is the primary interface to manage SMS operations such as

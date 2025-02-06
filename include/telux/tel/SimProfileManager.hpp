@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -86,9 +86,6 @@
 namespace telux {
 namespace tel {
 
-/** @addtogroup telematics_rsp
- * @{ */
-
 /**
  * This function is called with the response to requestProfileList API.
  *
@@ -127,6 +124,9 @@ using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCo
  */
 using ServerAddressResponseCb = std::function<void(std::string smdpAddress,
     std::string smdsAddress, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_rsp
+ * @{ */
 
 /**
  *@brief ISimProfileManager is a primary interface for remote eUICCs (eSIMs or embedded SIMs)
@@ -279,7 +279,7 @@ class ISimProfileManager {
      * TELUX_TEL_SIM_PROFILE_USER_CONSENT permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
-     * @param [in] userConsent       Consent for proﬁle download and install.
+     * @param [in] userConsent       Consent for profile download and install.
                                      True means user consent given to download and install.
      * @param [in] reason            Reason for not providing user consent to download and install.
      *                               @ref telux::tel::UserConsentReasonType

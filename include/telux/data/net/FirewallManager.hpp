@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -87,9 +87,6 @@
 namespace telux {
 namespace data {
 namespace net {
-
-/** @addtogroup telematics_data_net
- * @{ */
 
 // Forward declarations
 class IFirewallEntry;
@@ -195,6 +192,9 @@ using FirewallEntriesCb = std::function<void(
  */
 using DmzEntriesCb
     = std::function<void(std::vector<std::string> dmzEntries, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data_net
+ * @{ */
 
 /**
  *@brief    FirewallManager is a primary interface that filters and controls the network

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -50,9 +50,6 @@
 
 namespace telux {
 namespace tel {
-
-/** @addtogroup telematics_card
- * @{ */
 
 /**
  * Defines supported elementary file(EF) types.
@@ -128,6 +125,10 @@ using EfGetFileAttributesCallback = std::function<void(telux::common::ErrorCode 
  *       of records in EF.
  *
  */
+
+/** @addtogroup telematics_card
+ * @{ */
+
 class ICardFileHandler {
  public:
 

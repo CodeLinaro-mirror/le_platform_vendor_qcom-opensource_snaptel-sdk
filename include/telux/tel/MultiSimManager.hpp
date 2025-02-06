@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -86,9 +86,6 @@ namespace telux {
 namespace tel {
 
 
-/** @addtogroup telematics_multi_sim
- * @{ */
-
 // Forward declaration
 class IMultiSimListener;
 
@@ -118,6 +115,9 @@ using HighCapabilityCallback
 using SlotStatusCallback
     = std::function<void(std::map<SlotId, SlotStatus> slotStatus,
         telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_multi_sim
+ * @{ */
 
 /**
  *@brief       MultiSimManager allows to perform operation pertaining to devices which have

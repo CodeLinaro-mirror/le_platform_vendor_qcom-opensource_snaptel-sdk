@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -88,8 +88,7 @@
 namespace telux {
 namespace tel {
 
-/** @addtogroup telematics_phone
- * @{ */
+
 
 class ISignalStrengthCallback;
 class IVoiceServiceStateCallback;
@@ -151,6 +150,9 @@ using ECallGetOperatingModeCallback
 using OperatorNameCallback
    = std::function<void(std::string operatorLongName, std::string operatorShortName,
        telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_phone
+ * @{ */
 
 /**
  * @brief This class allows getting system information and registering for system events.

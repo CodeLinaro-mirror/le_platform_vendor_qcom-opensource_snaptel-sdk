@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -88,9 +88,6 @@
 namespace telux {
 namespace therm {
 
-/** @addtogroup telematics_therm_shutdown_management
- * @{ */
-
 /**
  * This function is called with the response to getAutoShutdownMode API.
  *
@@ -100,6 +97,9 @@ namespace therm {
  * @param [in] mode  AutoShutdownMode
  */
 using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>;
+
+/** @addtogroup telematics_therm_shutdown_management
+ * @{ */
 
 /**
  * @brief   IThermalShutdownManager class provides interface to enable/disable automatic thermal

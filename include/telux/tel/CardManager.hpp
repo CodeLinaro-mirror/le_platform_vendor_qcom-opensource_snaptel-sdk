@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,9 +86,6 @@
 namespace telux {
 namespace tel {
 
-/** @addtogroup telematics_card
- * @{ */
-
 // Forward declarations
 class ICardChannelCallback;
 class ICardCommandCallback;
@@ -108,6 +105,9 @@ class ICardFileHandler;
  */
 using EidResponseCallback
     = std::function<void(const std::string &eid, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_card
+ * @{ */
 
 /**
  * ICardManager provide APIs for slot count, retrieve slot ids, get card state and get card.

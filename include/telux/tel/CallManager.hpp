@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -90,9 +90,6 @@
 namespace telux {
 
 namespace tel {
-
-/** @addtogroup telematics_call
- * @{ */
 
 class IMakeCallCallback;
 
@@ -154,6 +151,9 @@ using EcbmStatusCallback
  */
 using ECallHlapTimerCallback
    = std::function<void(telux::common::ErrorCode error, uint32_t timeDuration)>;
+
+/** @addtogroup telematics_call
+ * @{ */
 
 /**
  * @brief Call Manager is the primary interface for call related operations

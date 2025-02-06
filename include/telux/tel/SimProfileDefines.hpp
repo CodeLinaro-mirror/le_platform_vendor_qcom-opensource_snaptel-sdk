@@ -43,6 +43,18 @@
 namespace telux {
 namespace tel {
 
+/**
+ * 16 bit mask that denotes which of the profile policy rules(PPR) defined in
+ * Policy Rule Type enum are used.
+ */
+using PolicyRuleMask = std::bitset<16>;
+
+/**
+ * 64 bit mask that denotes which of the reset options defined in
+ * @ ref ResetOption enum are used.
+ */
+using ResetOptionMask = std::bitset<64>;
+
 /** @addtogroup telematics_rsp
  * @{ */
 
@@ -116,12 +128,6 @@ enum PolicyRuleType {
 };
 
 /**
- * 16 bit mask that denotes which of the profile policy rules(PPR) defined in
- * Policy Rule Type enum are used.
- */
-using PolicyRuleMask = std::bitset<16>;
-
-/**
  * Defines memory reset options. Each value represents
  * corresponding bit for ResetOptionMask bitset.
  */
@@ -130,12 +136,6 @@ enum ResetOption {
     OPERATIONAL_PROFILE = (1 << 1),     /**< Delete all operational profiles */
     DEFAULT_SMDP_ADDRESS = (1 << 2),    /**< Reset the default SM-DP+ address */
 };
-
-/**
- * 64 bit mask that denotes which of the reset options defined in
- * @ ref ResetOption enum are used.
- */
-using ResetOptionMask = std::bitset<64>;
 
 /** @} */ /* end_addtogroup telematics_rsp */
 }

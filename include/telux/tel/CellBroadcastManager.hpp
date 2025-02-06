@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -89,9 +89,6 @@
 namespace telux {
 namespace tel {
 
-/** @addtogroup telematics_cellbroadcast
- * @{ */
-
 class ICellBroadcastListener;
 
 /**
@@ -128,6 +125,9 @@ struct Point {
    double latitude;
    double longitude;
 };
+
+/** @addtogroup telematics_cellbroadcast
+ * @{ */
 
 /**
  * This class represents a simple polygon with different points.

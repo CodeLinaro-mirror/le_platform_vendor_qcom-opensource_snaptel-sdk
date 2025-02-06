@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -88,9 +88,6 @@ namespace telux {
 namespace data {
 namespace net {
 
-/** @addtogroup telematics_data_net
- * @{ */
-
 // Forward declarations
 class IVlanListener;
 
@@ -144,6 +141,9 @@ using VlanMappingResponseCb = std::function<void(
  */
 using VlanBindingsResponseCb = std::function<void(
     const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data_net
+ * @{ */
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).

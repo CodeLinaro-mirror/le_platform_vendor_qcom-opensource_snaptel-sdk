@@ -46,9 +46,6 @@
 extern "C" {
 #endif
 
-/** @addtogroup telematics_cv2x_c_kinematics
-@{ */
-
 /** Kinematics data handle to the interface. */
 typedef int v2x_kinematics_handle_t;
 
@@ -155,6 +152,9 @@ typedef void (*v2x_kinematics_deregister_callback_t)(v2x_status_enum_type status
     @newpage
  */
 typedef void (*v2x_kinematics_final_callback_t)(v2x_status_enum_type status, void *context);
+
+/** @addtogroup telematics_cv2x_c_kinematics
+@{ */
 
 /**
     Gets the compiled API version interface (as an integer number).

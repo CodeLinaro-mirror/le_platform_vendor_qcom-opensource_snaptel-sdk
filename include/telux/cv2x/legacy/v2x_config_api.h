@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -77,9 +77,6 @@
 extern "C" {
 #endif
 
-/** @addtogroup telematics_cv2x_c_config
-@{ */
-
 /**
     V2X configuration source types listed in ascending order of priority.
     The system always uses the V2X configuration with the highest priority
@@ -120,6 +117,8 @@ typedef struct {
 */
 typedef void (*cv2x_config_event_listener)(v2x_config_event_info_t info);
 
+/** @addtogroup telematics_cv2x_c_config
+@{ */
 
 /**
     Register listener for any updates to CV2X configuration.

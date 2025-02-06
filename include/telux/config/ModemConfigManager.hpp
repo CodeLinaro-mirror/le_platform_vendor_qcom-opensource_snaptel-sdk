@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -85,8 +85,6 @@
 namespace telux {
 
 namespace config {
-/** @addtogroup telematics_config_manager
- * @{ */
 
 /**
  * This function is called as a response to @ref requestConfigList().
@@ -120,6 +118,9 @@ using GetAutoSelectionModeCallback = std::function<void (AutoSelectionMode mode,
  */
 using GetActiveConfigCallback = std::function<void (ConfigInfo configInfo,
                                     telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_config_manager
+ * @{ */
 
 /**
  * @brief   IModemConfigManager provides interface to list config files present in modem's storage.

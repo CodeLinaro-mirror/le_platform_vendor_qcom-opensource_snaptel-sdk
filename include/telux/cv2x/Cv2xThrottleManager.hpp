@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -83,8 +83,6 @@
 
 namespace telux {
 namespace cv2x {
-/** @addtogroup telematics_cv2x_cpp
- *  * @{ */
 
 /**
  * This function is called as a response to @ref ICv2xThrottleManager::setVerificationLoad
@@ -95,6 +93,9 @@ namespace cv2x {
  *
  */
 using setVerificationLoadCallback = std::function<void (telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_cv2x_cpp
+ *  * @{ */
 
 /**
  * @brief Listener class for getting filter rate update notification.

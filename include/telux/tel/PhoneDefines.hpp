@@ -47,6 +47,23 @@ namespace telux {
 
 namespace tel {
 
+using RATCapabilitiesMask = std::bitset<16>;
+
+using VoiceServiceTechnologiesMask = std::bitset<16>;
+
+/**
+ * Structure contains slotID and RAT capabilities corresponding to slot.
+ */
+struct SimRatCapability {
+   int slotId;
+   RATCapabilitiesMask capabilities;
+};
+
+/**
+ * For Device max subcription capability
+ */
+using DeviceRatCapability = SimRatCapability;
+
 /** @addtogroup telematics_call
  * @{ */
 
@@ -216,8 +233,6 @@ enum class RATCapability {
    NR5GSA, /**< NR5G SA mode */
 };
 
-using RATCapabilitiesMask = std::bitset<16>;
-
 /**
  * Defines all voice support available on device
  */
@@ -226,21 +241,6 @@ enum class VoiceServiceTechnology {
    VOICE_TECH_1x_CSFB,
    VOICE_TECH_VOLTE,
 };
-
-using VoiceServiceTechnologiesMask = std::bitset<16>;
-
-/**
- * Structure contains slotID and RAT capabilities corresponding to slot.
- */
-struct SimRatCapability {
-   int slotId;
-   RATCapabilitiesMask capabilities;
-};
-
-/**
- * For Device max subcription capability
- */
-using DeviceRatCapability = SimRatCapability;
 
 /**
  * Structure contains information about device capability.

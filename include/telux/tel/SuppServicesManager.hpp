@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -51,9 +51,6 @@
 
 namespace telux {
 namespace tel {
-
-/** @addtogroup telematics_supp_services
- * @{ */
 
 /**
  * Defines supplementary services status.
@@ -533,6 +530,9 @@ using GetCallWaitingPrefCb
 using GetForwardingPrefCb
     = std::function<void(std::vector<ForwardInfo> forwardInfoList, SuppSvcProvisionStatus
         provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_supp_services
+ * @{ */
 
 /**
  * @brief ISuppServicesManager is the interface to provide supplementary services like call

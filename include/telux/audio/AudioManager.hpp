@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -164,9 +164,6 @@ class IStreamBuffer : virtual public IAudioBuffer {
 
 /** @} */ /* end_addtogroup telematics_audio_stream */
 
-/** @addtogroup telematics_audio_manager
- * @{ */
-
 /**
  * Invoked to pass the list of the supported audio devices. Used in conjunction
  * with IAudioManager::getDevices().
@@ -246,6 +243,9 @@ using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error
  */
 using GetCalInitStatusResponseCb = std::function<void(CalibrationInitStatus calInitStatus,
         telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio_manager
+ * @{ */
 
 /**
  *  Provides the APIs to discover the supported audio devices, create streams, and subscribe
@@ -422,9 +422,6 @@ class IAudioDevice {
 
 /** @} */ /* end_addtogroup telematics_audio_manager */
 
-/** @addtogroup telematics_audio_stream
- * @{ */
-
 /**
  * Invoked to pass the list of the audio devices associated with the stream. Used in
  * conjunction with @ref IAudioStream::getDevice().
@@ -460,6 +457,9 @@ using GetStreamVolumeResponseCb = std::function<void(StreamVolume volume,
  */
 using GetStreamMuteResponseCb = std::function<void(StreamMute mute,
         telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio_stream
+ * @{ */
 
 /**
  *  Base class for all audio stream types. Contains the common properties and methods.
@@ -679,6 +679,8 @@ class IAudioVoiceStream : virtual public IAudioStream {
    virtual ~IAudioVoiceStream() {};
 };
 
+/** @} */ /* end_addtogroup telematics_audio_stream */
+
 /**
  * Used in conjunction with @ref IAudioPlayStream::write(). Invoked to pass the audio data
  * length (in bytes) played from the given buffer.
@@ -694,6 +696,9 @@ class IAudioVoiceStream : virtual public IAudioStream {
 using WriteResponseCb =
         std::function<void(std::shared_ptr<IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio_stream
+ * @{ */
 
 /**
  *  Represents the stream created with the @ref StreamType::PLAY type. Provides the methods to
@@ -772,6 +777,8 @@ class IAudioPlayStream : virtual public IAudioStream {
     virtual ~IAudioPlayStream() {};
 };
 
+/** @} */ /* end_addtogroup telematics_audio_stream */
+
 /**
  * Used in conjunction with @ref IAudioCaptureStream::read(). Invoked to pass the captured
  * audio samples. The IAudioBuffer::getDataSize() gives the length of the data (in bytes).
@@ -787,6 +794,9 @@ class IAudioPlayStream : virtual public IAudioStream {
 using ReadResponseCb =
         std::function<void(std::shared_ptr<IStreamBuffer> buffer,
         telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio_stream
+ * @{ */
 
 /**
  *  Represents the stream created with the @ref StreamType::CAPTURE type. Provides

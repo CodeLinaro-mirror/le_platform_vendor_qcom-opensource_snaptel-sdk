@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,9 +86,6 @@ namespace telux {
 namespace data {
 namespace net {
 
-/** @addtogroup telematics_data_net
- * @{ */
-
 // Forward declarations
 class IBridgeListener;
 
@@ -121,6 +118,9 @@ struct BridgeInfo {
  */
 using BridgeInfoResponseCb
     = std::function<void(const std::vector<BridgeInfo> &infos, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data_net
+ * @{ */
 
 /**
  * @brief      IBridgeManager provides APIs to enable/disable and set/get/delete software bridges

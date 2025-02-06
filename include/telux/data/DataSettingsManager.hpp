@@ -85,9 +85,6 @@
 namespace telux {
 namespace data {
 
-/** @addtogroup telematics_data
- * @{ */
-
 // Forward declarations
 class IDataSettingsListener;
 
@@ -168,6 +165,9 @@ using RequestMacSecSateResponseCb = std::function<void(bool enabled,
  */
 using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId,
     bool isAllowed, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.

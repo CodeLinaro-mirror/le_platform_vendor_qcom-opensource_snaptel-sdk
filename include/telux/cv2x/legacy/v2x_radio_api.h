@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -87,11 +87,11 @@
 extern "C" {
 #endif
 
-/** @addtogroup telematics_cv2x_c_radio
-@{ */
-
 /** Radio data handle to the interface. */
 typedef int v2x_radio_handle_t;
+
+/** @addtogroup telematics_cv2x_c_radio
+@{ */
 
 /** Invalid handle returned by v2x_radio_init() and v2x_radio_init_v2() upon an error. */
 #define V2X_RADIO_HANDLE_BAD (-1)

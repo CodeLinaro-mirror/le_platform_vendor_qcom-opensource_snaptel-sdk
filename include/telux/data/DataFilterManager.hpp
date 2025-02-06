@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -90,9 +90,6 @@
 namespace telux {
 namespace data {
 
-/** @addtogroup telematics_data
- * @{ */
-
 /**
  * This function is called in the response to requestDataRestrictMode().
  *
@@ -102,6 +99,9 @@ namespace data {
  */
 using DataRestrictModeCb =
     std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  * @brief   IDataFilterManager class provides interface to enable/disable the data restrict filters

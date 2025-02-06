@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,9 +81,6 @@
 
 namespace telux {
 namespace data {
-
-/** @addtogroup telematics_data
- * @{ */
 
 //Forward Declaration
 class IServingSystemListener;
@@ -194,6 +191,9 @@ using RequestRoamingStatusResponseCb
 */
 using RequestNrIconTypeResponseCb
     = std::function<void(NrIconType type, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  * @brief Serving System Manager class provides APIs related to the serving system for data

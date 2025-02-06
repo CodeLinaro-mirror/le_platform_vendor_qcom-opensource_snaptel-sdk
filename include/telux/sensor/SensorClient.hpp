@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -51,9 +51,6 @@
 namespace telux {
 namespace sensor {
 
-/** @addtogroup telematics_sensor_control
- * @{ */
-
 /**
  * @brief   This file hosts the sensor interfaces to configure, activate or get data from the
  *          individual sensors available - Gyroscope, Accelerometer, etc.
@@ -67,6 +64,9 @@ namespace sensor {
  *
  */
 using SelfTestResultCallback = std::function<void(telux::common::ErrorCode result)>;
+
+/** @addtogroup telematics_sensor_control
+ * @{ */
 
 /**
  * @brief ISensorEventListener interface is used to receive notifications related to

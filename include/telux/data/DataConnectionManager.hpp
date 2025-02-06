@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -89,9 +89,6 @@
 
 namespace telux {
 namespace data {
-
-/** @addtogroup telematics_data
- * @{ */
 
 // Forward declarations
 class IDataConnectionListener;
@@ -287,6 +284,9 @@ using requestDataCallBitRateResponseCb
  */
 using requestRoamingModeResponseCb =
     std::function<void(bool isRoamingEnabled, int profileId, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity

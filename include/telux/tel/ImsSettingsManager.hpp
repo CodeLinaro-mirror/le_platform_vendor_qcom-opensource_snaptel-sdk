@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -65,7 +65,7 @@
 
 /**
  * @file       ImsSettingsManager.hpp
- * @brief      ImsSettingsManager allows to set or get IMS service conﬁguration parameters.
+ * @brief      ImsSettingsManager allows to set or get IMS service configuration parameters.
  *             For example to enable or disable the IMS service, VOIMS service.
  *
  */
@@ -83,9 +83,6 @@ namespace tel {
 
 // Forward declaration
 class IImsSettingsListener;
-
-/** @addtogroup telematics_ims_settings
- * @{ */
 
 /**
  * Defines the IMS service configuration parameters
@@ -129,6 +126,9 @@ struct ImsServiceConfig {
  */
 using ImsServiceConfigCb
    = std::function<void(SlotId slotId, ImsServiceConfig config, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_ims_settings
+ * @{ */
 
 /**
  * @brief      ImsSettingsManager allows IMS settings. For example enabling or disabling

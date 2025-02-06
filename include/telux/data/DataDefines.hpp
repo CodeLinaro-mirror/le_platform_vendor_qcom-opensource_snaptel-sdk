@@ -80,6 +80,35 @@
 namespace telux {
 namespace data {
 
+/**
+ * 16 bit mask to set apn types paramater.
+ * ApnMaskType enum are used to set apn types.
+ */
+using ApnTypes = std::bitset<16>;
+
+/**
+ * Internet (IP) protocol numbers found in IPv4 or IPv6 headers
+ * the protocol numbers are defined by Internet Assigned Numbers Authority (IANA)
+ */
+using IpProtocol = uint8_t;
+
+/**
+ * QOS Flow identifier
+ */
+using QosFlowId = uint32_t;
+
+/**
+ * 16 bit mask that denotes which of the flow paramaters defined in
+ * QosIPFlowMaskType enum are used for TFT @QosIPFlowInfo.
+ */
+using QosIPFlowMask = std::bitset<16>;
+
+/**
+ * 16 bit mask that denotes which of the flow paramaters defined in
+ * QosFlowMaskType enum are used for TFT @TrafficFlowTemplate.
+ */
+using QosFlowMask = std::bitset<16>;
+
 /** @addtogroup telematics_data
  * @{ */
 
@@ -178,12 +207,6 @@ enum ApnMaskType {
     APN_MASK_TYPE_UT          = (1 << 10),  /**< APN type for UT  */
     APN_MASK_TYPE_MCX         = (1 << 11),  /**< APN type for mission critical service  */
 };
-
-/**
- * 16 bit mask to set apn types paramater.
- * ApnMaskType enum are used to set apn types.
- */
-using ApnTypes = std::bitset<16>;
 
 /**
  * Profile Parameters used for profile creation, query and modify
@@ -737,12 +760,6 @@ enum class Direction {
 };
 
 /**
- * Internet (IP) protocol numbers found in IPv4 or IPv6 headers
- * the protocol numbers are defined by Internet Assigned Numbers Authority (IANA)
- */
-using IpProtocol = uint8_t;
-
-/**
  * Default IP Protocol number in IPv4 or IPv6 headers.
  */
 #define IP_PROT_UNKNOWN 0xFF
@@ -836,11 +853,6 @@ enum class QosFlowStateChangeEvent {
 };
 
 /**
- * QOS Flow identifier
- */
-using QosFlowId = uint32_t;
-
-/**
  * QOS flow IP traffic class type
  */
 enum class IpTrafficClassType {
@@ -869,12 +881,6 @@ enum QosIPFlowMaskType {
 };
 
 /**
- * 16 bit mask that denotes which of the flow paramaters defined in
- * QosIPFlowMaskType enum are used for TFT @QosIPFlowInfo.
- */
-using QosIPFlowMask = std::bitset<16>;
-
-/**
  * QOS Flow IP info
  */
 struct QosIPFlowInfo {
@@ -894,12 +900,6 @@ enum QosFlowMaskType {
     MASK_FLOW_TX_FILTERS = 3,     /** TX filters set */
     MASK_FLOW_RX_FILTERS = 4,     /** RX filters set */
 };
-
-/**
- * 16 bit mask that denotes which of the flow paramaters defined in
- * QosFlowMaskType enum are used for TFT @TrafficFlowTemplate.
- */
-using QosFlowMask = std::bitset<16>;
 
 /** @} */ /* end_addtogroup telematics_data */
 }

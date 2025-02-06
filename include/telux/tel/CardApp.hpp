@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,9 +81,6 @@ namespace telux {
 
 namespace tel {
 
-/** @addtogroup telematics_card
- * @{ */
-
 /**
  * This function is called with the response to pin operations like change pin password,
  * unlock card and set card lock.
@@ -116,6 +113,9 @@ using QueryFdnLockResponseCb
  */
 
 using QueryPin1LockResponseCb = std::function<void(bool state, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_card
+ * @{ */
 
 /**
  * @brief Represents a single card application.

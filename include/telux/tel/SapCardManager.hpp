@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -85,9 +85,6 @@
 namespace telux {
 
 namespace tel {
-
-/** @addtogroup telematics_card
- * @{ */
 
 // Forward declarations
 class IAtrResponseCallback;
@@ -147,6 +144,9 @@ struct CardReaderStatus {
 
 using SapStateResponseCallback
    = std::function<void(SapState sapState, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_card
+ * @{ */
 
 /**
  * @brief ISapCardManager provide APIs for SAP related operations.

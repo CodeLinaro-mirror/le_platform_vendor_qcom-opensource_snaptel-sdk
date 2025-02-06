@@ -118,16 +118,23 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->
                 set_gsm_bit_error_rate(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                     ["gsmSignalStrengthInfo"]["gsmBitErrorRate"].asInt());
+            response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                set_gsm_rssi(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                    ["gsmSignalStrengthInfo"]["gsmRssi"].asInt());
         } else {
             response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
                 set_gsm_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
             response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
                 set_gsm_bit_error_rate(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
+                set_gsm_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
         }
         LOG(DEBUG, __FUNCTION__, " gsmSignalStrength: ", response->mutable_signal_strength()->\
             mutable_gsm_signal_strength_info()->gsm_signal_strength(),
             " gsmBitErrorRate: ", response->mutable_signal_strength()->\
-            mutable_gsm_signal_strength_info()->gsm_bit_error_rate());
+            mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
+            " gsmRssi: ", response->mutable_signal_strength()->\
+            mutable_gsm_signal_strength_info()->gsm_rssi());
 
         // lte signal strength
         if (servingRat == telStub::RadioTechnology::RADIO_TECH_LTE &&
@@ -150,6 +157,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
                 set_timing_advance(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["lteSignalStrengthInfo"]["timingAdvance"].asInt());
+            response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
+                set_lte_rssi(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["lteSignalStrengthInfo"]["lteRssi"].asInt());
         } else {
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->
                 set_lte_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -163,6 +173,8 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
                 INVALID_SIGNAL_STRENGTH_VALUE);
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
                 set_timing_advance(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
+                set_lte_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
         }
         LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
@@ -176,7 +188,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
                 lte_cqi(), " timingAdvance: ",
             response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-                timing_advance());
+                timing_advance(), " lteRssi: ",
+            response->mutable_signal_strength()->mutable_lte_signal_strength_info()->\
+                lte_rssi());
 
         // wcdma signal strength
         if (servingRat == telStub::RadioTechnology::RADIO_TECH_UMTS &&
@@ -193,6 +207,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
                 set_rscp(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                     ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
+            response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+                set_rssi(data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                    ["wcdmaSignalStrengthInfo"]["rssi"].asInt());
         } else {
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
                 set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -202,6 +219,8 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
                 set_ecio(INVALID_SIGNAL_STRENGTH_VALUE);
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
                 set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+                set_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
         }
         LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
@@ -211,7 +230,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
             ecio(), " rscp: ",
             response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-            rscp());
+            rscp(), " rssi: ",
+            response->mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
+            rssi());
 
         // nr5g signal strength
         if (servingRat == telStub::RadioTechnology::RADIO_TECH_NR5G &&
@@ -254,6 +275,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
             response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
                 data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["nb1NtnSignalStrengthInfo"]["rssnr"].asInt());
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssi(
+                data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["nb1NtnSignalStrengthInfo"]["rssi"].asInt());
         } else {
             response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
                 set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -263,6 +287,8 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
                 ->set_rsrq(INVALID_SIGNAL_STRENGTH_VALUE);
             response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()
                 ->set_rssnr(INVALID_SIGNAL_STRENGTH_VALUE);
+            response->mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()
+                ->set_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
        }
        LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
@@ -270,7 +296,9 @@ JsonData TelUtil::readSignalStrengthRespFromJsonFile(int phoneId,
            ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rsrp"].asInt(), " nb1NtnRsrq: ",
            data.stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
            ["rsrq"].asInt(), " nb1NtnRssnr: ",  data.stateRootObj[TEL_PHONE_MANAGER]\
-           ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssnr"].asInt());
+           ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssnr"].asInt(),
+           " nb1NtnRssi: ",  data.stateRootObj[TEL_PHONE_MANAGER]\
+           ["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssi"].asInt());
         response->set_phone_id(phoneId);
     } else {
         LOG(ERROR, __FUNCTION__, " Unable to fetch signal strength");
@@ -730,16 +758,23 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
             set_gsm_bit_error_rate(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["gsmSignalStrengthInfo"]["gsmBitErrorRate"].asInt());
+        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+            set_gsm_rssi(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["gsmSignalStrengthInfo"]["gsmRssi"].asInt());
     } else {
         event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
             set_gsm_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
         event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
             set_gsm_bit_error_rate(INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->\
+            set_gsm_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " gsmSignalStrength:", event.mutable_signal_strength()->\
         mutable_gsm_signal_strength_info()->gsm_signal_strength(),
         " gsmBitErrorRate", event.mutable_signal_strength()->\
-        mutable_gsm_signal_strength_info()->gsm_bit_error_rate());
+        mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
+        " gsmRssi", event.mutable_signal_strength()->\
+        mutable_gsm_signal_strength_info()->gsm_rssi());
 
     // lte signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_LTE) {
@@ -761,6 +796,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_timing_advance(
             stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
             ["timingAdvance"].asInt());
+        event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_lte_rssi(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
+            ["lteRssi"].asInt());
     } else {
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
             set_lte_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -773,6 +811,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_lte_cqi(
             INVALID_SIGNAL_STRENGTH_VALUE);
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_timing_advance(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_lte_signal_strength_info()->set_lte_rssi(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
@@ -787,7 +827,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
             lte_cqi(), " timingAdvance: ",
         event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
-            timing_advance());
+            timing_advance(), " lteRssi: ",
+        event.mutable_signal_strength()->mutable_lte_signal_strength_info()->\
+            lte_rssi());
 
     // wcdma signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_UMTS) {
@@ -803,6 +845,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
             set_rscp(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
+        event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+            set_rssi(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["wcdmaSignalStrengthInfo"]["rssi"].asInt());
     } else {
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
             set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -812,6 +857,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
             set_ecio(INVALID_SIGNAL_STRENGTH_VALUE);
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
             set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
+            set_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
@@ -821,7 +868,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
         ecio(), " rscp: ",
         event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
-        rscp());
+        rscp(), " rssi: ",
+        event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->\
+        rssi());
 
     // nr5g signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_NR5G) {
@@ -863,6 +912,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
             stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
             ["rssnr"].asInt());
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssi(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rssi"].asInt());
     } else {
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
             set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -871,6 +923,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rsrq(
             INVALID_SIGNAL_STRENGTH_VALUE);
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssnr(
+            INVALID_SIGNAL_STRENGTH_VALUE);
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->set_rssi(
             INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
@@ -881,7 +935,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(int phoneI
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
             rssnr(), " rsrq: ",
         event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
-            rsrq());
+            rsrq()," rssi: ",
+        event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->\
+            rssi());
     event.set_phone_id(phoneId);
     return error;
 }
@@ -1248,16 +1304,23 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_gsm_signal_strength_info()->
             set_gsm_bit_error_rate(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["gsmSignalStrengthInfo"]["gsmBitErrorRate"].asInt());
+        signalStrength.mutable_gsm_signal_strength_info()->
+            set_gsm_rssi(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["gsmSignalStrengthInfo"]["gsmRssi"].asInt());
     } else {
         signalStrength.mutable_gsm_signal_strength_info()->set_gsm_signal_strength(
             INVALID_SIGNAL_STRENGTH_VALUE);
         signalStrength.mutable_gsm_signal_strength_info()->set_gsm_bit_error_rate(
             INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_gsm_signal_strength_info()->set_gsm_rssi(
+            INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " gsmSignalStrength: ",
         signalStrength.mutable_gsm_signal_strength_info()->gsm_signal_strength(),
         " gsmBitErrorRate: ",
-        signalStrength.mutable_gsm_signal_strength_info()->gsm_bit_error_rate());
+        signalStrength.mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
+        " gsmRssi: ",
+        signalStrength.mutable_gsm_signal_strength_info()->gsm_rssi());
 
     // lte signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_LTE) {
@@ -1279,6 +1342,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_lte_signal_strength_info()->set_timing_advance(
             stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
             ["timingAdvance"].asInt());
+        signalStrength.mutable_lte_signal_strength_info()->set_lte_rssi(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
+            ["lteRssi"].asInt());
     } else {
         signalStrength.mutable_lte_signal_strength_info()->
             set_lte_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -1292,6 +1358,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
             INVALID_SIGNAL_STRENGTH_VALUE);
         signalStrength.mutable_lte_signal_strength_info()->set_timing_advance(
             INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_lte_signal_strength_info()->set_lte_rssi(
+            INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " lteSignalStrength: ",
         signalStrength.mutable_lte_signal_strength_info()->lte_signal_strength(), " lteRsrp: ",
@@ -1299,7 +1367,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_lte_signal_strength_info()->lte_rsrq(), " lteRssnr: ",
         signalStrength.mutable_lte_signal_strength_info()->lte_rssnr(), " lteCqi: ",
         signalStrength.mutable_lte_signal_strength_info()->lte_cqi(), " timingAdvance: ",
-        signalStrength.mutable_lte_signal_strength_info()->timing_advance());
+        signalStrength.mutable_lte_signal_strength_info()->timing_advance()," lteRssi: ",
+        signalStrength.mutable_lte_signal_strength_info()->lte_rssi());
 
     // wcdma signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_UMTS) {
@@ -1315,6 +1384,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_wcdma_signal_strength_info()->
             set_rscp(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
                 ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
+        signalStrength.mutable_wcdma_signal_strength_info()->
+            set_rssi(stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
+                ["wcdmaSignalStrengthInfo"]["rssi"].asInt());
     } else {
         signalStrength.mutable_wcdma_signal_strength_info()->
             set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -1324,6 +1396,8 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
             set_ecio(INVALID_SIGNAL_STRENGTH_VALUE);
         signalStrength.mutable_wcdma_signal_strength_info()->
             set_rscp(INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_wcdma_signal_strength_info()->
+            set_rssi(INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " wcdmaSignalStrength: ",
         signalStrength.mutable_wcdma_signal_strength_info()->signal_strength(),
@@ -1332,7 +1406,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         " ecio: ",
         signalStrength.mutable_wcdma_signal_strength_info()->ecio(),
         " rscp: ",
-        signalStrength.mutable_wcdma_signal_strength_info()->rscp());
+        signalStrength.mutable_wcdma_signal_strength_info()->rscp(),
+        " rssi: ",
+        signalStrength.mutable_wcdma_signal_strength_info()->rssi());
 
     // nr5g signal strength
     if (servingRat == telStub::RadioTechnology::RADIO_TECH_NR5G) {
@@ -1369,6 +1445,9 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
         signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssnr(
             stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
             ["rssnr"].asInt());
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssi(
+            stateRootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+            ["rssi"].asInt());
     } else {
         signalStrength.mutable_nb1_ntn_signal_strength_info()->
             set_signal_strength(INVALID_SIGNAL_STRENGTH_VALUE);
@@ -1378,12 +1457,15 @@ telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(int phoneId,
             INVALID_SIGNAL_STRENGTH_VALUE);
         signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssnr(
             INVALID_SIGNAL_STRENGTH_VALUE);
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->set_rssi(
+            INVALID_SIGNAL_STRENGTH_VALUE);
     }
     LOG(DEBUG, __FUNCTION__, " nb1NtnSignalStrength: ",
         signalStrength.mutable_nb1_ntn_signal_strength_info()->signal_strength(), " nb1NtnRsrp: ",
         signalStrength.mutable_nb1_ntn_signal_strength_info()->rsrp(), " nb1NtnRsrq: ",
         signalStrength.mutable_nb1_ntn_signal_strength_info()->rsrq(), " nb1NtnRssnr: ",
-        signalStrength.mutable_nb1_ntn_signal_strength_info()->rssnr());
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->rssnr()," nb1NtnRssi: ",
+        signalStrength.mutable_nb1_ntn_signal_strength_info()->rssi());
     return error;
 }
 
@@ -1493,6 +1575,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
         event.signal_strength().gsm_signal_strength_info().gsm_signal_strength();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]["gsmBitErrorRate"] =
         event.signal_strength().gsm_signal_strength_info().gsm_bit_error_rate();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]["gsmRssi"] =
+        event.signal_strength().gsm_signal_strength_info().gsm_rssi();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]["signalStrength"] =
         event.signal_strength().wcdma_signal_strength_info().signal_strength();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]["bitErrorRate"] =
@@ -1501,18 +1585,22 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
         event.signal_strength().wcdma_signal_strength_info().ecio();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]["rscp"] =
         event.signal_strength().wcdma_signal_strength_info().rscp();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]["rssi"] =
+        event.signal_strength().wcdma_signal_strength_info().rssi();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteSignalStrength"] =
         event.signal_strength().lte_signal_strength_info().lte_signal_strength();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteRsrp"] =
         event.signal_strength().lte_signal_strength_info().lte_rsrp();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteRsrq"] =
-        event.signal_strength().lte_signal_strength_info().lte_rsrp();
+        event.signal_strength().lte_signal_strength_info().lte_rsrq();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteRssnr"] =
         event.signal_strength().lte_signal_strength_info().lte_rssnr();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteCqi"] =
         event.signal_strength().lte_signal_strength_info().lte_cqi();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["timingAdvance"] =
         event.signal_strength().lte_signal_strength_info().timing_advance();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]["lteRssi"] =
+        event.signal_strength().lte_signal_strength_info().lte_rssi();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrp"] =
         event.signal_strength().nr5g_signal_strength_info().rsrp();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nr5gSignalStrengthInfo"]["rsrq"] =
@@ -1527,6 +1615,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(int phoneId,
         event.signal_strength().nb1_ntn_signal_strength_info().rsrq();
     rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssnr"] =
         event.signal_strength().nb1_ntn_signal_strength_info().rssnr();
+    rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]["rssi"] =
+        event.signal_strength().nb1_ntn_signal_strength_info().rssi();
     return JsonParser::writeToJsonFile(rootObj, jsonfilename);
 }
 
@@ -2697,6 +2787,9 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(int phoneI
         mutable_gsm_signal_strength_info()->set_gsm_bit_error_rate(
             strength.gsm_signal_strength_info().gsm_bit_error_rate());
     signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_gsm_signal_strength_info()->set_gsm_rssi(
+            strength.gsm_signal_strength_info().gsm_rssi());
+    signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_wcdma_signal_strength_info()->set_signal_strength(
             strength.wcdma_signal_strength_info().signal_strength());
     signalStrengthChangeEvent.mutable_signal_strength()->
@@ -2708,6 +2801,9 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(int phoneI
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_wcdma_signal_strength_info()->set_rscp(
             strength.wcdma_signal_strength_info().rscp());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_wcdma_signal_strength_info()->set_rssi(
+            strength.wcdma_signal_strength_info().rssi());
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_lte_signal_strength_info()->set_lte_signal_strength(
             strength.lte_signal_strength_info().lte_signal_strength());
@@ -2723,9 +2819,12 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(int phoneI
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_lte_signal_strength_info()->set_lte_cqi(
             strength.lte_signal_strength_info().lte_cqi());
-     signalStrengthChangeEvent.mutable_signal_strength()->
+    signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_lte_signal_strength_info()->set_timing_advance(
             strength.lte_signal_strength_info().timing_advance());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_lte_signal_strength_info()->set_lte_rssi(
+            strength.lte_signal_strength_info().lte_rssi());
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_nr5g_signal_strength_info()->set_rsrp(
             strength.nr5g_signal_strength_info().rsrp());
@@ -2747,6 +2846,9 @@ telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(int phoneI
     signalStrengthChangeEvent.mutable_signal_strength()->
         mutable_nb1_ntn_signal_strength_info()->set_rssnr(
             strength.nb1_ntn_signal_strength_info().rssnr());
+    signalStrengthChangeEvent.mutable_signal_strength()->
+        mutable_nb1_ntn_signal_strength_info()->set_rssi(
+            strength.nb1_ntn_signal_strength_info().rssi());
     return signalStrengthChangeEvent;
 }
 

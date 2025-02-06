@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -136,6 +136,14 @@ void MyCellInfoCallback::cellInfoListResponse(
                    << gsmCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(gsmCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): "
+                   << gsmCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE" << std::endl;
@@ -186,6 +194,14 @@ void MyCellInfoCallback::cellInfoListResponse(
             } else {
                PRINT_CB << "LTE Signal Strength(in dBm): "
                     << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "LTE Received Signal Strength Indicator(in dBm): "
+                   << lteCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
             if(lteCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
@@ -257,6 +273,14 @@ void MyCellInfoCallback::cellInfoListResponse(
                     << wcdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(wcdmaCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "WCDMA Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "WCDMA Received Signal Strength Indicator(in dBm): "
+                   << wcdmaCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
@@ -311,6 +335,13 @@ void MyCellInfoCallback::cellInfoListResponse(
             }
             PRINT_CB << "NR5G arfcn: " << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
             // NR5G Signal Strength
+            if(nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NR5G Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NR5G Signal Strength: "
+                    << nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength() << std::endl;
+            }
 
             if(nr5gCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "NR5G Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
@@ -392,6 +423,14 @@ void MyCellInfoCallback::cellInfoListResponse(
                     << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
                PRINT_CB << "NB1 NTN Reference Signal Receive Power(in dBm): "
                     << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(nb1NtnCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NB1 NTN Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                   << nb1NtnCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
             if (nb1NtnCellInfo->getSignalStrengthInfo().getRsrq() == INVALID_SIGNAL_STRENGTH_VALUE)

@@ -665,7 +665,9 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
              event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
                 gsm_signal_strength(),
              event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
-                gsm_bit_error_rate(), INVALID_SIGNAL_STRENGTH_VALUE);
+                gsm_bit_error_rate(), INVALID_SIGNAL_STRENGTH_VALUE,
+             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
+                gsm_rssi());
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
         = std::make_shared<LteSignalStrengthInfo>(
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
@@ -675,7 +677,8 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_cqi(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
-                timing_advance());
+                timing_advance(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssi());
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
             event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
@@ -684,7 +687,9 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
                 event.mutable_signal_strength()->
                     mutable_wcdma_signal_strength_info()->ecio(),
                 event.mutable_signal_strength()->
-                    mutable_wcdma_signal_strength_info()->rscp());
+                    mutable_wcdma_signal_strength_info()->rscp(),
+                 event.mutable_signal_strength()->
+                    mutable_wcdma_signal_strength_info()->rssi());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
@@ -696,7 +701,8 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
                 signal_strength(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrp(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
-            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr());
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr(),
+            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssi());
     signalStrengthNotify
         = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
             nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
@@ -743,8 +749,10 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                     mutable_gsm_signal_strength_info()->gsm_signal_strength();
                 int gsmBitErrorRate = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
                     mutable_gsm_signal_strength_info()->gsm_bit_error_rate();
+                int gsmRssi= event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
+                    mutable_gsm_signal_strength_info()->gsm_rssi();
                 GsmSignalStrengthInfo gsmCellSS(gsmSignalStrength, gsmBitErrorRate,
-                                               INVALID_SIGNAL_STRENGTH_VALUE);
+                                               INVALID_SIGNAL_STRENGTH_VALUE, gsmRssi);
                 GsmCellIdentity gsmCI(gsmMcc, gsmMnc, gsmLac, gsmCid, gsmArfcn, gsmBsic);
                 auto gsmCellInfo = std::make_shared<GsmCellInfo>(registered, gsmCI, gsmCellSS);
                 cellInfoList.emplace_back(gsmCellInfo);
@@ -775,8 +783,11 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                 int wcdmaRscp = event.mutable_cell_info_list(i)->
                     mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                     rscp();
+                int wcdmaRssi = event.mutable_cell_info_list(i)->
+                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                    rssi();
                 WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate,
-                    wcdmaEcio, wcdmaRscp);
+                    wcdmaEcio, wcdmaRscp, wcdmaRssi);
                 WcdmaCellIdentity wcdmaCI(wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc,
                     wcdmaArfcn);
                 auto wcdmaCellInfo = std::make_shared<telux::tel::WcdmaCellInfo>
@@ -809,8 +820,10 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                     mutable_lte_signal_strength_info()->lte_cqi();
                 int lteTimingAdvance = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
                     mutable_lte_signal_strength_info()->timing_advance();
+                int lteRssi = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
+                    mutable_lte_signal_strength_info()->lte_rssi();
                 LteSignalStrengthInfo lteCellSS(lteSignalStrength, lteRsrp, lteRsrq, lteRssnr,
-                     lteCqi, lteTimingAdvance);
+                     lteCqi, lteTimingAdvance, lteRssi);
                 LteCellIdentity lteCI(lteMcc, lteMnc, lteCi, ltePci, lteTac, lteEarfcn);
                 auto lteCellInfo = std::make_shared<LteCellInfo>(registered, lteCI, lteCellSS);
                 cellInfoList.emplace_back(lteCellInfo);
@@ -862,8 +875,10 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
                     mutable_nb1_ntn_signal_strength_info()->rsrq();
                 int nb1NtnRssnr = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
                     mutable_nb1_ntn_signal_strength_info()->rssnr();
+                int nb1NtnRssi = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
+                    mutable_nb1_ntn_signal_strength_info()->rssi();
                 Nb1NtnSignalStrengthInfo nb1NtnCellSS(nb1NtnSignalStrength, nb1NtnRsrp, nb1NtnRsrq,
-                     nb1NtnRssnr);
+                     nb1NtnRssnr, nb1NtnRssi);
                 Nb1NtnCellIdentity nb1NtnCI(nb1NtnMcc, nb1NtnMnc, nb1NtnCi, nb1NtnTac,
                      nb1NtnEarfcn);
                 auto nb1NtnCellInfo = std::make_shared<Nb1NtnCellInfo>(registered, nb1NtnCI,

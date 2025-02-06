@@ -2029,6 +2029,9 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 {
     //fill data with values that may not make sense, these data should come from vehicle
     //CAN network
+    //reset these variables
+    bsm->events.data = 0;
+    bsm->vehsafeopts = 0;
     if(criticalState){
         bsm->has_partII = (v2x_bool_t)1;
         bsm->qty_partII_extensions = (int)1;
@@ -2036,6 +2039,7 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
         bsm->has_special_extension = (v2x_bool_t)0;
         bsm->has_supplemental_extension = (v2x_bool_t)0;
         bsm->TransmissionState = J2735_TRANNY_REVERSE_GEARS;
+        bsm->vehsafeopts |= PART_II_SAFETY_EXT_OPTION_EVENTS;
     }else{
         bsm->has_partII = (v2x_bool_t)0;
         bsm->has_safety_extension = (v2x_bool_t)0;
@@ -2043,6 +2047,7 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
         bsm->has_special_extension = (v2x_bool_t)0;
         bsm->has_supplemental_extension = (v2x_bool_t)0;
         bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
+        bsm->vehsafeopts = 0;
 
         if((configuration.emergencyVehicleEventTX))
         {
@@ -2072,10 +2077,6 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
             bsm->specvehopts |= SPECIAL_VEH_EXT_OPTION_EMERGENCY_DETAILS;
         }
     }
-
-    bsm->vehsafeopts = 0;
-    bsm->events.data = 0;
-
     if(this->currVehState != NULL){
         // for each flag, set the corresponding one in the bsm
         bsm->events.bits.eventAirBagDeployment =

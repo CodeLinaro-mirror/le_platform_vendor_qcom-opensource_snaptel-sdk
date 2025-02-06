@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -271,7 +271,8 @@ struct CallBarringInfo {
 };
 
 /**
- * Define SMS support over network for registered RAT.
+ * Define SMS support over network for registered RAT. For NB-IoT(NB1) NTN RAT, use
+ * @ref telux::tel::NtnSmsStatus
  */
 enum class SmsDomain {
    UNKNOWN = -1,  /**< Unknown, when the information is not available */
@@ -296,9 +297,9 @@ enum class NtnSmsStatus {
 struct SmsCapability {
    RadioTechnology rat;  /**< Current serving RAT */
    SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network,
-                              not applicable for NB1_NTN RAT. */
-   NtnSmsStatus smsStatus;  /**< SMS service status for NB1_NTN RAT, not applicable for other
-                                     RATs. */
+                              not applicable for NB1 NTN RAT. */
+   NtnSmsStatus smsStatus;  /**< SMS service status for NB1 NTN RAT, not applicable for other
+                                 RATs. */
 };
 
 /**
@@ -791,6 +792,9 @@ public:
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to successfully invoke this API.
     *
+    * @note The active bandwidth information @ref telux::tel::RFBandInfo::bandWidth is not
+    * supported for NB1 NTN RAT.
+    *
     * @param [in] callback    Callback function to get the response of get
     *                         RF band information request.
     *
@@ -863,7 +867,7 @@ public:
    virtual telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) = 0;
 
    /**
-    * Request RF band preferences for all RATs.
+    * Request RF band preferences for all RATs except NB1 NTN.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to successfully invoke this API.
@@ -884,6 +888,9 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
     * permission to invoke this API successfully.
     *
+    * @note This API is not supported for NB1 NTN RAT. To update bands preferences corresponding
+    * for the NB1 NTN, use @ref telux::satcom::INtnManager::updateSystemSelectionSpecifiers
+    *
     * @param [in] prefList      Use RFBandListBuilder to build @ref telux::tel::IRFBandList
     *                           instance.
     * @param [in] callback      Optional callback function to get the response of
@@ -902,6 +909,8 @@ public:
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to successfully invoke this API.
+    *
+    * @note This API is not supported for NB1 NTN RAT.
     *
     * @param [in] callback    Callback function to retrieve the response of get
     *                         RF band capability request.
@@ -1079,6 +1088,9 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to receive this notification.
     *
+    * @note The active bandwidth information @ref telux::tel::RFBandInfo::bandWidth is not
+    * supported for NB1 NTN RAT.
+    *
     * @param [in] bandInfo       @ref RFBandInfo
     *
     */
@@ -1160,6 +1172,8 @@ public:
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to receive this notification
+    *
+    * @note This API is not supported for NB1 NTN RAT.
     *
     * @param [in] prefList    @ref telux::tel::IRFBandList instance
     *

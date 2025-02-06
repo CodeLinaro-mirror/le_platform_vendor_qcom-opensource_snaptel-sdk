@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -448,11 +448,14 @@ public:
     * - NR5G    RSRQ             : -20 to -3   (in dB)
     *
     * This configuration is a global setting. The signal strength setting does not persist through
-    * device reboot and needs to be configured again. Default signal strength configuration is set
-    * after a device reboot.
+    * device reboot and needs to be configured again. On reboot, the default signal strength
+    * configuration is set to delta @ref telux::tel::SignalStrengthConfigExType with default values
+    * for all signal measurement types.
     *
     * On platforms with access control enabled, the caller needs to have the TELUX_TEL_PHONE_MGMT
     * permission to successfully invoke this API.
+    *
+    * @note This API is not supported for @ref telux::tel::RadioTechnology::RADIO_TECH_NB1_NTN
     *
     * @param [in] signalStrengthConfigEx   Signal strength configuration.
     * @param [in] hysteresisMs             (Optional) Signal strength hysteresis timer in

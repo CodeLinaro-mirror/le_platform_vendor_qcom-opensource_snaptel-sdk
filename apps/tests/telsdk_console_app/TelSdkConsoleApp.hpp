@@ -40,9 +40,9 @@
 #include <string>
 #include <vector>
 
-#include "ModemStatus.hpp"
+//#include "ModemStatus.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
-#include "Audio/AudioClient.hpp"
+//#include "Audio/AudioClient.hpp"
 
 class TelSdkConsoleApp : public ConsoleApp {
 public:

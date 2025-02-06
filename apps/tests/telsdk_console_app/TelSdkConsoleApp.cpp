@@ -52,17 +52,17 @@ extern "C" {
 #include <telux/common/Version.hpp>
 #include <telux/common/DeviceConfig.hpp>
 
-#include "Call/CallMenu.hpp"
-#include "ECall/ECallMenu.hpp"
-#include "Phone/PhoneMenu.hpp"
-#include "Sms/SmsMenu.hpp"
+//#include "Call/CallMenu.hpp"
+//#include "ECall/ECallMenu.hpp"
+//#include "Phone/PhoneMenu.hpp"
+//#include "Sms/SmsMenu.hpp"
 #include "Data/DataMenu.hpp"
-#include "SimCardServices/SimCardServicesMenu.hpp"
-#include "MultiSim/MultiSimMenu.hpp"
-#include "Cellbroadcast/CellbroadcastMenu.hpp"
-#include "Rsp/RspMenu.hpp"
-#include "ImsSettings/ImsSettingsMenu.hpp"
-#include "ImsServingSystem/ImsServingSystemMenu.hpp"
+//#include "SimCardServices/SimCardServicesMenu.hpp"
+//#include "MultiSim/MultiSimMenu.hpp"
+//#include "Cellbroadcast/CellbroadcastMenu.hpp"
+//#include "Rsp/RspMenu.hpp"
+//#include "ImsSettings/ImsSettingsMenu.hpp"
+//#include "ImsServingSystem/ImsServingSystemMenu.hpp"
 #include "TelSdkConsoleApp.hpp"
 
 #include "../../common/utils/Utils.hpp"
@@ -79,6 +79,7 @@ TelSdkConsoleApp::~TelSdkConsoleApp() {
  * Used for creating a menus of high level features
  */
 void TelSdkConsoleApp::init() {
+/*
     std::shared_ptr<ConsoleAppCommand> phoneMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Phone_Status", {},
             std::bind(&TelSdkConsoleApp::phoneMenu, this, std::placeholders::_1)));
@@ -94,9 +95,11 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> simCardMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Card_Services", {},
             std::bind(&TelSdkConsoleApp::simCardMenu, this, std::placeholders::_1)));
+*/
     std::shared_ptr<ConsoleAppCommand> dataMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "6", "Data", {}, std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
+/*
     std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
         std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
@@ -117,14 +120,16 @@ void TelSdkConsoleApp::init() {
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
              dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand,
              imsaMenuCommand};
-
+*/
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {dataMenuCommand};
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
-    static std::shared_ptr<AudioClient> audioClient_ = AudioClient::getInstance();
+    // static std::shared_ptr<AudioClient> audioClient_ = AudioClient::getInstance();
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
 }
-
+/*
 void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
@@ -189,7 +194,7 @@ void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
     std::cout << "Telephony is unsupported" << std::endl;
 #endif
 }
-
+*/
 void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_DATA_ENABLED
     DataMenu dataMenu("Data Menu", "data> ");
@@ -201,6 +206,7 @@ void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
 #endif
 }
 
+/*
 void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
@@ -260,11 +266,11 @@ void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) 
     std::cout << "Telephony is unsupported" << std::endl;
 #endif
 }
-
+*/
 void TelSdkConsoleApp::displayMenu() {
     ConsoleApp::displayMenu();
 }
-
+/*
 #ifdef TELSDK_FEATURE_TEL_ENABLED
 void TelSdkConsoleApp::onModemAvailable() {
 // Do not perform requestOperatingMode in CV2X machine
@@ -276,7 +282,7 @@ void TelSdkConsoleApp::onModemAvailable() {
     }
 }
 #endif
-
+*/
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
 

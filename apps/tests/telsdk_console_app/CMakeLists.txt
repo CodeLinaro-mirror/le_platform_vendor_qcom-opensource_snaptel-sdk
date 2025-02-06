@@ -1,67 +1,80 @@
 cmake_minimum_required(VERSION 2.8.9)
 
+include(GNUInstallDirs)
+include(FindPkgConfig)
+include(CMakePrintHelpers)
+cmake_print_variables(telematics-apps_SOURCE_DIR)
+
+#Print telematics-apps_SOURCE_DIR
+message(STATUS "telematics-apps_SOURCE_DIR=${telematics-apps_SOURCE_DIR}")
+
+# Assign a variable to a specific directory
+set(APPS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+
 set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${telematics-apps_SOURCE_DIR}/common
-    ${telematics-apps_SOURCE_DIR}/common/utils)
+    #${telematics-apps_SOURCE_DIR}/common
+    #${telematics-apps_SOURCE_DIR}/common/utils
+    ${APPS_SOURCE_DIR}/common
+    ${APPS_SOURCE_DIR}/common/utils
+)
 
 if (TELSDK_FEATURE_TEL)
-
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-   Phone/PhoneMenu.cpp
-   Phone/MyPhoneListener.cpp
-   Phone/MySubscriptionListener.cpp
-   Phone/MySignalStrengthHandler.cpp
-   Phone/MyCellInfoHandler.cpp
-   Phone/SuppServicesMenu.cpp
-   Phone/SuppServicesHandler.cpp
-   Call/CallMenu.cpp
-   Call/MyCallListener.cpp
-   Call/conference/ConferenceMenu.cpp
-   Call/realTimeText/RttMenu.cpp
+   #Phone/PhoneMenu.cpp
+   #Phone/MyPhoneListener.cpp
+   #Phone/MySubscriptionListener.cpp
+   #Phone/MySignalStrengthHandler.cpp
+   #Phone/MyCellInfoHandler.cpp
+   #Phone/SuppServicesMenu.cpp
+   #Phone/SuppServicesHandler.cpp
+   #Call/CallMenu.cpp
+   #Call/MyCallListener.cpp
+   #Call/conference/ConferenceMenu.cpp
+   #Call/realTimeText/RttMenu.cpp
 
-   SimCardServices/SimCardServicesMenu.cpp
-   SimCardServices/Card/CardServicesMenu.cpp
-   SimCardServices/Card/MyCardListener.cpp
-   SimCardServices/Card/CardFileMenu.cpp
-   SimCardServices/SapCard/SapCardServicesMenu.cpp
-   SimCardServices/SapCard/MySapCardListener.cpp
+   #SimCardServices/SimCardServicesMenu.cpp
+   #SimCardServices/Card/CardServicesMenu.cpp
+   #SimCardServices/Card/MyCardListener.cpp
+   #SimCardServices/Card/CardFileMenu.cpp
+   #SimCardServices/SapCard/SapCardServicesMenu.cpp
+   #SimCardServices/SapCard/MySapCardListener.cpp
 
-   Sms/SmsMenu.cpp
-   Sms/MySmsListener.cpp
+   #Sms/SmsMenu.cpp
+   #Sms/MySmsListener.cpp
 
-   ECall/ECallMenu.cpp
-   ECall/MsdSettings.cpp
-   ECall/MyECallListener.cpp
+   #ECall/ECallMenu.cpp
+   #ECall/MsdSettings.cpp
+   #ECall/MyECallListener.cpp
 
-   Phone/MyServingSystemHandler.cpp
-   Phone/ServingSystemMenu.cpp
+   #Phone/MyServingSystemHandler.cpp
+   #Phone/ServingSystemMenu.cpp
 
-   Phone/MyNetworkSelectionHandler.cpp
-   Phone/NetworkMenu.cpp
+   #Phone/MyNetworkSelectionHandler.cpp
+   #Phone/NetworkMenu.cpp
 
-   MultiSim/MyMultiSimHandler.cpp
-   MultiSim/MyMultiSimListener.cpp
-   MultiSim/MultiSimMenu.cpp
+   #MultiSim/MyMultiSimHandler.cpp
+   #MultiSim/MyMultiSimListener.cpp
+   #MultiSim/MultiSimMenu.cpp
 
-   Rsp/RspListener.cpp
-   Rsp/MyRspHandler.cpp
-   Rsp/RspMenu.cpp
+   #Rsp/RspListener.cpp
+   #Rsp/MyRspHandler.cpp
+   #Rsp/RspMenu.cpp
 
-   Cellbroadcast/CellbroadcastMenu.cpp
-   Cellbroadcast/CellbroadcastListener.cpp
-   Cellbroadcast/CellbroadcastHandler.cpp
+   #Cellbroadcast/CellbroadcastMenu.cpp
+   #Cellbroadcast/CellbroadcastListener.cpp
+   #Cellbroadcast/CellbroadcastHandler.cpp
 
-   ImsSettings/MyImsSettingsHandler.cpp
-   ImsSettings/ImsSettingsListener.cpp
-   ImsSettings/ImsSettingsMenu.cpp
+   #ImsSettings/MyImsSettingsHandler.cpp
+   #ImsSettings/ImsSettingsListener.cpp
+   #ImsSettings/ImsSettingsMenu.cpp
 
-   ImsServingSystem/ImsServingSystemMenu.cpp
-   ImsServingSystem/MyImsServSysListener.cpp
+   #ImsServingSystem/ImsServingSystemMenu.cpp
+   #ImsServingSystem/MyImsServSysListener.cpp
 
-   ModemStatus.cpp
+   #ModemStatus.cpp
 )
 endif (TELSDK_FEATURE_TEL)
 
@@ -95,26 +108,33 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
 )
 endif (TELSDK_FEATURE_DATA)
 
-if (TELSDK_FEATURE_AUDIO)
-    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
-    )
-endif (TELSDK_FEATURE_AUDIO)
+# To disable audio from telsdk_console_app please disable flag AUDIO_ENABLED
+#if (TELSDK_FEATURE_AUDIO)
+#    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+#    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
+#    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
+#    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
+#    )
+#endif (TELSDK_FEATURE_AUDIO)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-   Audio/AudioClient.cpp
+   #Audio/AudioClient.cpp
    TelSdkConsoleApp.cpp
-   ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-   ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
-   ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
-   ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
-   ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+   #${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+   #${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
+   #${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
+   #${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
+   #${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+   ${APPS_SOURCE_DIR}/common/utils/Utils.cpp
+   ${APPS_SOURCE_DIR}/common/utils/SignalHandler.cpp
+   ${APPS_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
+   ${APPS_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
+   ${APPS_SOURCE_DIR}/common/ConfigParser.cpp
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-class-memaccess")
 
 add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
 
@@ -125,7 +145,7 @@ if (TELSDK_FEATURE_TEL)
 set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_tel)
 endif (TELSDK_FEATURE_TEL)
 if (TELSDK_FEATURE_DATA)
-set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_data)
+set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_data telux_common)
 endif (TELSDK_FEATURE_DATA)
 if (TELSDK_FEATURE_AUDIO)
 set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_audio)

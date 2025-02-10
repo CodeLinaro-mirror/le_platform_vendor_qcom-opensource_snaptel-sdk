@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2019-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2019-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -135,9 +135,6 @@ using QueryVlanResponseCb
 using VlanMappingResponseCb = std::function<void(
     const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_net
- * @{ */
-
 /**
  * This function is called as a response to @ref queryVlanToBackhaulBindings()
  *
@@ -150,6 +147,9 @@ using VlanMappingResponseCb = std::function<void(
  */
 using VlanBindingsResponseCb = std::function<void(
     const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_net
+ * @{ */
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).

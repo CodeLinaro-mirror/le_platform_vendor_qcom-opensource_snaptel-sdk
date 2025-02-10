@@ -45,6 +45,11 @@ namespace telux {
 
 namespace audio {
 
+/**
+ * Represent Stream's consolidated lists of Channel presence
+ */
+using ChannelTypeMask = int;
+
 /** Duration to play DTMF tone for infinite time */
 const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 
@@ -112,11 +117,6 @@ enum ChannelType {
    LEFT = (1 << 0), /**< Represents left channel   */
    RIGHT = (1 << 1), /**< Represents right channel */
 };
-
-/**
- * Represent Stream's consolidated lists of Channel presence
- */
-using ChannelTypeMask = int;
 
 /**
  * Specifies Stream data format

@@ -47,8 +47,6 @@
 
 namespace telux {
 namespace cv2x {
-/** @addtogroup telematics_cv2x_cpp
- *  * @{ */
 
 /**
  * This function is called as a response to @ref setVerificationLoad
@@ -59,6 +57,9 @@ namespace cv2x {
  *
  */
 using setVerificationLoadCallback = std::function<void (telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_cv2x_cpp
+ *  * @{ */
 
 /**
  * @brief Listener class for getting filter rate update notification.

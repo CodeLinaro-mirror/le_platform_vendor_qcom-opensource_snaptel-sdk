@@ -50,9 +50,6 @@ namespace telux {
 
 namespace loc {
 
-/** @addtogroup telematics_location
-* @{ */
-
 /**
  * @brief ILocationManager provides interface to register and remove listeners.
  * It also allows to set and get configuration/ criteria for position reports.
@@ -91,6 +88,9 @@ public:
  */
   using GetTerrestrialInfoCallback = std::function<void(
       const std::shared_ptr<ILocationInfoBase> terrestrialInfo)>;
+
+/** @addtogroup telematics_location
+* @{ */
 
 /**
  * Checks the status of location subsystems and returns the result.

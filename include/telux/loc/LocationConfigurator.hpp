@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -83,9 +83,6 @@
 namespace telux {
 
 namespace loc {
-
-/** @addtogroup telematics_location
-* @{ */
 
 /**
  * @brief ILocationConfigurator allows general engine configurations (example: TUNC, PACE etc),
@@ -150,6 +147,9 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
  */
  using GetXtraStatusCallback = std::function<void(const telux::loc::XtraStatus xtraStatus,
     telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_location
+* @{ */
 
 /**
  * Checks the status of location configuration subsystems and returns the result.

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -83,6 +83,117 @@
 namespace telux {
 
 namespace loc {
+
+/**
+ * Defines Satellite Based Augmentation System(SBAS) corrections.
+ * SBAS contributes to improve the performance of GNSS system.
+ */
+enum SbasCorrectionType {
+  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
+                             SBAS ionospheric correction is used */
+  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
+                             SBAS fast correction is used */
+  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
+                             SBAS long correction is used */
+  SBAS_INTEGRITY, /**< Bit mask to specify whether
+                      SBAS integrity information is used */
+  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
+                              SBAS DGNSS correction is used */
+  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
+                            SBAS RTK correction is used */
+  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
+                            SBAS PPP correction is used */
+  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
+                            SBAS RTK fixed correction is used */
+  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                            only SBAS corrected SV is used */
+  SBAS_COUNT  /**< Bitset */
+};
+
+/**
+ * 8 bit mask that denotes which of the SBAS corrections in SbasCorrection used
+ * to improve the performance of GNSS output.
+ */
+using SbasCorrection = std::bitset<SBAS_COUNT>;
+
+/*Bit mask containing bits from GnssPositionTechType */
+using GnssPositionTech = uint32_t;
+
+/*Bit mask containing bits from KinematicDataValidityType */
+using KinematicDataValidity = uint32_t;
+
+/** This bitset represents the list of the Location Config Indications selected by the Client. */
+using LocConfigIndications = std::bitset<32>;
+
+/** Specifies the applicable reports using the bits represented in GnssReportType */
+using GnssReportTypeMask = uint32_t;
+
+/** Specifies DRConfigValidityType */
+using DRConfigValidity = uint16_t;
+
+/** Specifies NmeaSentenceType mask */
+using NmeaSentenceConfig = uint32_t;
+
+/** Specifies RobustLocationConfigType mask */
+using RobustLocationConfig = uint16_t;
+
+/** Specifies TerrestrialTechnologyType mask */
+using TerrestrialTechnology = uint32_t;
+
+/** Specifies AidingDataType mask */
+using AidingData = uint32_t;
+
+/** Specifies GnssEnergyConsumedInfoValidityType */
+using GnssEnergyConsumedInfoValidity = uint16_t;
+
+/** Specifies LocationSystemInfoValidityType mask */
+using LocationSystemInfoValidity = uint32_t;
+
+/** Specifies LeapSecondInfoValidityType mask */
+using LeapSecondInfoValidity = uint32_t;
+
+/** Specifies GnssMeasurementsClockValidityType.*/
+using GnssMeasurementsClockValidity = uint32_t;
+
+/** Specifies GnssMeasurementsAdrStateValidityType.*/
+using GnssMeasurementsAdrStateValidity = uint32_t;
+
+/** Specifies GnssMeasurementsStateValidityType.*/
+using GnssMeasurementsStateValidity = uint32_t;
+
+/** Specifies GnssMeasurementsDataValidityType.*/
+using GnssMeasurementsDataValidity = uint32_t;
+
+/** Specifies PositioningEngineType mask */
+using PositioningEngine = uint32_t;
+
+/** Specifies LocReqEngineType mask*/
+using LocReqEngine = uint16_t;
+
+/** Specifies DrCalibrationStatusType mask */
+using DrCalibrationStatus = uint32_t;
+
+/** Specifies GnssDataValidityType mask */
+using GnssDataValidity = uint32_t;
+
+/*Bit mask containing bits from LocationInfoExValidityType */
+using LocationInfoExValidity = uint64_t;
+
+/*Bit mask containing bits from LocationValidityType */
+using LocationInfoValidity = uint32_t;
+
+/*Bit mask containing bits from LocationTechnologyType */
+using LocationTechnology = uint32_t;
+
+/*Bit mask containing bits from GnssSignalType */
+using GnssSignal = uint32_t;
+
+/*Bit mask containing bits from GnssTimeValidityType */
+using GnssTimeValidity = uint32_t;
+
+/*Bit mask containing bits from GlonassTimeValidity */
+using TimeValidity = uint32_t;
+
 /** @addtogroup telematics_location
 * @{ */
 
@@ -150,38 +261,6 @@ enum class LocationReliability {
   MEDIUM = 3, /**<  Location reliability is medium, limited cross-check passed */
   HIGH = 4 /**<  Location reliability is high, strong cross-check passed */
 };
-
-/**
- * Defines Satellite Based Augmentation System(SBAS) corrections.
- * SBAS contributes to improve the performance of GNSS system.
- */
-enum SbasCorrectionType {
-  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
-                             SBAS ionospheric correction is used */
-  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
-                             SBAS fast correction is used */
-  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
-                             SBAS long correction is used */
-  SBAS_INTEGRITY, /**< Bit mask to specify whether
-                      SBAS integrity information is used */
-  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
-                              SBAS DGNSS correction is used */
-  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
-                            SBAS RTK correction is used */
-  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
-                            SBAS PPP correction is used */
-  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
-                            SBAS RTK fixed correction is used */
-  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
-                            only SBAS corrected SV is used */
-  SBAS_COUNT  /**< Bitset */
-};
-
-/**
- * 8 bit mask that denotes which of the SBAS corrections in SbasCorrection used
- * to improve the performance of GNSS output.
- */
-using SbasCorrection = std::bitset<SBAS_COUNT>;
 
 /**
  * Indicates whether altitude is assumed or calculated.
@@ -278,9 +357,6 @@ enum GnssPositionTechType {
   GNSS_PROPAGATED = (1 << 11),
 };
 
-/*Bit mask containing bits from GnssPositionTechType */
-using GnssPositionTech = uint32_t;
-
 /**
  * Specifies related kinematics mask
  */
@@ -306,9 +382,6 @@ enum KinematicDataValidityType {
   /** Navigation data has Body pitch */
   HAS_PITCH_UNC = (1 << 9)
 };
-
-/*Bit mask containing bits from KinematicDataValidityType */
-using KinematicDataValidity = uint32_t;
 
 /**
  * Specifies kinematics related information.
@@ -393,9 +466,6 @@ enum GnssTimeValidityType {
   GNSS_SYSTEM_NUM_CLOCK_RESETS_VALID = (1 << 5)
 };
 
-/*Bit mask containing bits from GnssTimeValidityType */
-using GnssTimeValidity = uint32_t;
-
 struct TimeInfo {
   /** Validity mask for below fields */
   GnssTimeValidity validityMask;
@@ -448,9 +518,6 @@ enum GlonassTimeValidity {
   GNSS_GLO_NUM_CLOCK_RESETS_VALID = (1 << 5),
   GNSS_GLO_FOUR_YEAR_VALID = (1 << 6)
 };
-
-/*Bit mask containing bits from GlonassTimeValidity */
-using TimeValidity = uint32_t;
 
 struct GlonassTimeInfo {
   /** GLONASS day number in four years. Refer to GLONASS ICD.
@@ -554,9 +621,6 @@ enum GnssSignalType {
   BEIDOU_B2AQ = (1<<21)
 };
 
-/*Bit mask containing bits from GnssSignalType */
-using GnssSignal = uint32_t;
-
 struct GnssMeasurementInfo {
   /** GnssSignalType mask */
   GnssSignal gnssSignalType;
@@ -625,9 +689,6 @@ enum LocationTechnologyType {
   LOC_PROPAGATED = (1 << 11),
 };
 
-/*Bit mask containing bits from LocationTechnologyType */
-using LocationTechnology = uint32_t;
-
 enum LocationValidityType {
   /** Location has valid latitude and longitude.*/
     HAS_LAT_LONG_BIT          = (1<<0),
@@ -652,9 +713,6 @@ enum LocationValidityType {
     /** Location has valid elapsed real time uncertainty.*/
     HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
 };
-
-/*Bit mask containing bits from LocationValidityType */
-using LocationInfoValidity = uint32_t;
 
 /** Gnss Location Information mask flags */
 enum LocationInfoExValidityType {
@@ -738,9 +796,6 @@ enum LocationInfoExValidityType {
   HAS_DGNSS_STATION_ID = (1ULL<<39)
 };
 
-/*Bit mask containing bits from LocationInfoExValidityType */
-using LocationInfoExValidity = uint64_t;
-
 enum GnssDataSignalTypes {
   GNSS_DATA_SIGNAL_TYPE_GPS_L1CA = 0,       /**<  GPS L1CA Signal  */
   GNSS_DATA_SIGNAL_TYPE_GPS_L1C = 1,        /**<  GPS L1C Signal  */
@@ -771,9 +826,6 @@ enum GnssDataValidityType {
   /** AGC is available */
   HAS_AGC = (1ULL << 1)
 };
-
-/** Specifies GnssDataValidityType mask */
-using GnssDataValidity = uint32_t;
 
 struct GnssData {
   /** bitwise OR of GnssDataValidityType */
@@ -806,9 +858,6 @@ enum DrCalibrationStatusType {
   DR_GYRO_CALIBRATION_NEEDED  = (1<<4)
 };
 
-/** Specifies DrCalibrationStatusType mask */
-using DrCalibrationStatus = uint32_t;
-
 /** Specifies the type of engine requested for fixes*/
 enum LocReqEngineType{
     /** Indicate that the fused/default position is needed to be reported back
@@ -832,9 +881,6 @@ enum LocReqEngineType{
 
 };
 
-/** Specifies LocReqEngineType mask*/
-using LocReqEngine = uint16_t;
-
 /** Specifies the type of engine for the reported fixes*/
 enum LocationAggregationType {
   /** This is the propagated/aggregated report from the fixes of all engines
@@ -857,9 +903,6 @@ enum PositioningEngineType{
     /** For VP position engine.*/
     VP_POSITIONING_ENGINE       = (1 << 3),
 };
-
-/** Specifies PositioningEngineType mask */
-using PositioningEngine = uint32_t;
 
 /**
  * Specify parameters related to enable/disable SVs */
@@ -975,9 +1018,6 @@ enum GnssMeasurementsDataValidityType{
     FULL_ISB_UNCERTAINTY             = (1<<21)
 };
 
-/** Specifies GnssMeasurementsDataValidityType.*/
-using GnssMeasurementsDataValidity = uint32_t;
-
 /** Specify GNSS measurement state in
  *  GnssMeasurementsData::stateMask.*/
 enum GnssMeasurementsStateValidityType {
@@ -1013,9 +1053,6 @@ enum GnssMeasurementsStateValidityType {
     SBAS_SYNC_BIT               = (1<<13)
 };
 
-/** Specifies GnssMeasurementsStateValidityType.*/
-using GnssMeasurementsStateValidity = uint32_t;
-
 /** Specify accumulated delta range state in
  *  GnssMeasurementsData::adrStateMask.*/
 enum GnssMeasurementsAdrStateValidityType {
@@ -1028,9 +1065,6 @@ enum GnssMeasurementsAdrStateValidityType {
     /** State is "cycle slip".*/
     CYCLE_SLIP_BIT  = (1<<2)
 };
-
-/** Specifies GnssMeasurementsAdrStateValidityType.*/
-using GnssMeasurementsAdrStateValidity = uint32_t;
 
 /** Specify the GNSS multipath indicator state in
  *  GnssMeasurementsData::multipathIndicator.*/
@@ -1066,9 +1100,6 @@ enum GnssMeasurementsClockValidityType {
     /** Validity of hwClockDiscontinuityCount.*/
     HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8)
 };
-
-/** Specifies GnssMeasurementsClockValidityType.*/
-using GnssMeasurementsClockValidity = uint32_t;
 
 /** Specify the signal measurement information such as satellite vehicle pseudo range,
  *  satellite vehicle time, carrier phase measurement etc. from GNSS positioning engine.
@@ -1222,9 +1253,6 @@ enum LeapSecondInfoValidityType{
     LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT = (1ULL << 1)
 };
 
-/** Specifies LeapSecondInfoValidityType mask */
-using LeapSecondInfoValidity = uint32_t;
-
 struct LeapSecondInfo {
     LeapSecondInfoValidity valid;
 
@@ -1242,9 +1270,6 @@ enum LocationSystemInfoValidityType{
     LOCATION_SYS_INFO_LEAP_SECOND = (1ULL << 0),
 };
 
-/** Specifies LocationSystemInfoValidityType mask */
-using LocationSystemInfoValidity = uint32_t;
-
 struct LocationSystemInfo {
     LocationSystemInfoValidity valid;
     LeapSecondInfo   info;
@@ -1256,9 +1281,6 @@ enum GnssEnergyConsumedInfoValidityType {
     /** validity of GnssEnergyConsumedInfo*/
     ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT = (1<<0)
 };
-
-/** Specifies GnssEnergyConsumedInfoValidityType */
-using GnssEnergyConsumedInfoValidity = uint16_t;
 
 /** Specify the info regarding energy consumed by GNSS
  *  engine.*/
@@ -1282,9 +1304,6 @@ enum AidingDataType {
     AIDING_DATA_DR_SENSOR_CALIBRATION = (1 << 1),
 };
 
-/** Specifies AidingDataType mask */
-using AidingData = uint32_t;
-
 /**
  * Specifies the set of terrestrial technologies.
  */
@@ -1292,9 +1311,6 @@ enum TerrestrialTechnologyType {
     /** Cell-based technology */
     GTP_WWAN = (1 << 0),
 };
-
-/** Specifies TerrestrialTechnologyType mask */
-using TerrestrialTechnology = uint32_t;
 
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */
@@ -1306,9 +1322,6 @@ enum RobustLocationConfigType {
     /** Validity of version. */
     VALID_VERSION          = (1<<2)
 };
-
-/** Specifies RobustLocationConfigType mask */
-using RobustLocationConfig = uint16_t;
 
 /** Specify the versioning info of robust location module for
  *  the GNSS standard position engine (SPE). */
@@ -1366,9 +1379,6 @@ enum NmeaSentenceType {
     ALL = 0xffffffff,
 };
 
-/** Specifies NmeaSentenceType mask */
-using NmeaSentenceConfig = uint32_t;
-
 /** Specify the Geodetic datum for NMEA sentence types that are generated. */
 enum class GeodeticDatumType {
     /** No type*/
@@ -1401,9 +1411,6 @@ enum DRConfigValidityType {
     /** Validity of gyro scale factor uncertainty. */
     GYRO_SCALE_FACTOR_UNC_VALID          = (1<<4),
 };
-
-/** Specifies DRConfigValidityType */
-using DRConfigValidity = uint16_t;
 
 /**
  * Specify vehicle body-to-Sensor mount parameters for use
@@ -1451,9 +1458,6 @@ enum GnssReportType {
     /** 1Hz measurement reports */
     MEASUREMENT       = (1 << 4),
 };
-
-/** Specifies the applicable reports using the bits represented in GnssReportType */
-using GnssReportTypeMask = uint32_t;
 
 /** Specify the dead reckoning engine configuration parameters.
  */
@@ -1666,9 +1670,6 @@ struct XtraStatus {
 enum LocConfigIndicationsType {
     LOC_CONF_IND_XTRA_STATUS = 0
 };
-
-/** This bitset represents the list of the Location Config Indications selected by the Client. */
-using LocConfigIndications = std::bitset<32>;
 
 /**
  * @brief ILocationInfoBase provides interface to get basic position related

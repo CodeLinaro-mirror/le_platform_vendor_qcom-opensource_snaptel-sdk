@@ -108,13 +108,14 @@ enum PolicyRuleType {
                                                       disabling */
 };
 
+/** @} */ /* end_addtogroup telematics_rsp */
+
 /**
  * 16 bit mask that denotes which of the profile policy rules(PPR) defined in
  * Policy Rule Type enum are used.
  */
 using PolicyRuleMask = std::bitset<16>;
 
-/** @} */ /* end_addtogroup telematics_rsp */
 }
 }
 

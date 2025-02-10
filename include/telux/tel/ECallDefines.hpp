@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -49,6 +49,35 @@
 namespace telux {
 
 namespace tel {
+
+/**
+ * Defines the supported ECall configuration parameters
+ */
+enum EcallConfigType {
+    ECALL_CONFIG_MUTE_RX_AUDIO,        /**< Mute the local audio device during MSD transmission */
+    ECALL_CONFIG_NUM_TYPE,             /**< Decides which number needs to be dialed when an eCall
+                                            is initiated */
+    ECALL_CONFIG_OVERRIDDEN_NUM,       /**< User configured/overridden number that will be dialed
+                                            for eCall */
+    ECALL_CONFIG_USE_CANNED_MSD,       /**< Use the pre-defined MSD in modem for eCall */
+    ECALL_CONFIG_GNSS_UPDATE_INTERVAL, /**< Time interval in milliseconds, at which modem updates
+                                            the GNSS information in its internally generated MSD */
+    ECALL_CONFIG_T2_TIMER,             /**< T2 timer value */
+    ECALL_CONFIG_T7_TIMER,             /**< T7 timer value */
+    ECALL_CONFIG_T9_TIMER,             /**< T9 timer value */
+    ECALL_CONFIG_MSD_VERSION,          /**< MSD version to be used by modem when it internally
+                                            generates MSD i.e when MSD is not sent by application
+                                            and also canned MSD is not used */
+    ECALL_CONFIG_COUNT,
+};
+
+/**
+ * Bit mask that denotes which of the ECall configuration parameters defined in EcallConfigType
+ * enum are valid(and to be considered) in the provided EcallConfig structure.
+ * For example, if the configuration related to Canned MSD is provided, then
+ * EcallConfigValidity valid = (1 << ECALL_CONFIG_USE_CANNED_MSD).
+ */
+using EcallConfigValidity = std::bitset<ECALL_CONFIG_COUNT>;
 
 /** @addtogroup telematics_phone
  * @{ */
@@ -420,35 +449,6 @@ enum class ECallNumType {
    DEFAULT,         /* Default configured number is dialed */
    OVERRIDDEN,      /* User configured/overridden number is dialed */
 };
-
-/**
- * Defines the supported ECall configuration parameters
- */
-enum EcallConfigType {
-    ECALL_CONFIG_MUTE_RX_AUDIO,        /**< Mute the local audio device during MSD transmission */
-    ECALL_CONFIG_NUM_TYPE,             /**< Decides which number needs to be dialed when an eCall
-                                            is initiated */
-    ECALL_CONFIG_OVERRIDDEN_NUM,       /**< User configured/overridden number that will be dialed
-                                            for eCall */
-    ECALL_CONFIG_USE_CANNED_MSD,       /**< Use the pre-defined MSD in modem for eCall */
-    ECALL_CONFIG_GNSS_UPDATE_INTERVAL, /**< Time interval in milliseconds, at which modem updates
-                                            the GNSS information in its internally generated MSD */
-    ECALL_CONFIG_T2_TIMER,             /**< T2 timer value */
-    ECALL_CONFIG_T7_TIMER,             /**< T7 timer value */
-    ECALL_CONFIG_T9_TIMER,             /**< T9 timer value */
-    ECALL_CONFIG_MSD_VERSION,          /**< MSD version to be used by modem when it internally
-                                            generates MSD i.e when MSD is not sent by application
-                                            and also canned MSD is not used */
-    ECALL_CONFIG_COUNT,
-};
-
-/**
- * Bit mask that denotes which of the ECall configuration parameters defined in EcallConfigType
- * enum are valid(and to be considered) in the provided EcallConfig structure.
- * For example, if the configuration related to Canned MSD is provided, then
- * EcallConfigValidity valid = (1 << ECALL_CONFIG_USE_CANNED_MSD).
- */
-using EcallConfigValidity = std::bitset<ECALL_CONFIG_COUNT>;
 
 /**
  * Represents various configuration parameters related to automotive emergency call

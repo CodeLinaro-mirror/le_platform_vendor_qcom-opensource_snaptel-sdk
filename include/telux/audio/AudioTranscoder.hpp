@@ -50,8 +50,6 @@
 namespace telux {
 
 namespace audio {
-/** @addtogroup telematics_audio
- * @{ */
 
 class IAudioBuffer;
 
@@ -101,6 +99,9 @@ using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer
  */
 using TranscoderWriteResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio
+ * @{ */
 
 /**
  * @brief   ITranscoder is used to convert one audio format to another audio format

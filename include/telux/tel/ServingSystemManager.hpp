@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -194,14 +194,6 @@ using RatPreferenceCallback
 using ServiceDomainPreferenceCallback
    = std::function<void(ServiceDomainPreference preference, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_serving_system
- * @{ */
-
-/**
- * @brief Serving System Manager class provides the API to request and set
- *        service domain preference and RAT preference.
- */
-
 /**
  * This function is called with the response to requestNetworkTime API.
  *
@@ -217,6 +209,14 @@ using ServiceDomainPreferenceCallback
  */
 using NetworkTimeResponseCallback
    = std::function<void(NetworkTimeInfo info, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_serving_system
+ * @{ */
+
+/**
+ * @brief Serving System Manager class provides the API to request and set
+ *        service domain preference and RAT preference.
+ */
 
 class IServingSystemManager {
 public:

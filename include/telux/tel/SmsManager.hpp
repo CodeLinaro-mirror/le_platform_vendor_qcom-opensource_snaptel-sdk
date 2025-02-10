@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -82,6 +82,31 @@
 namespace telux {
 namespace tel {
 
+using PduBuffer = std::vector<uint8_t>;
+
+/**
+ * This function is called in response to sending a single part or multi-part SMS. This response
+ * callback is invoked  when a single part message is sent or when all the parts of a multi-part
+ * message is sent. This function is called in response to telux::tel::ISmsManager::sendSms and
+ * telux::tel::ISmsManager::sendRawSms APIs.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] msgRefs        This parameter represent the unique message reference number(s)
+ *                            corresponding to single/multi-part message that we successfully sent.
+ *                            When part of a message is delivered, the notification API i.e
+ *                            @ref telux::tel::ISmsListener::onDeliveryReport will be invoked
+ *                            with the message reference number corresponding to that part.
+ * @param [in] errorCode      If sending any part of a multi-part message fails or a single part
+ *                            message fails this API will return an @ref telux:common::errorcode
+ *                            corresponding to the failure.
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+ */
+using SmsResponseCb = std::function<void(std::vector<int> msgRefs,
+   telux::common::ErrorCode errorCode)>;
+
 /** @addtogroup telematics_sms
  * @{ */
 
@@ -108,8 +133,6 @@ struct MessageAttributes {
    int segmentSize;                    /**< Max size of each segment */
    int numberOfCharsLeftInLastSegment; /**< characters left in last segment */
 };
-
-using PduBuffer = std::vector<uint8_t>;
 
 /**
  * @brief Structure containing information about the part of multi-part SMS such as concatenated
@@ -213,29 +236,6 @@ private:
                                                               multi-part message */
    PduBuffer rawPdu_;                                    /**< Raw PDU content */
 };
-
-/**
- * This function is called in response to sending a single part or multi-part SMS. This response
- * callback is invoked  when a single part message is sent or when all the parts of a multi-part
- * message is sent. This function is called in response to telux::tel::ISmsManager::sendSms and
- * telux::tel::ISmsManager::sendRawSms APIs.
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] msgRefs        This parameter represent the unique message reference number(s)
- *                            corresponding to single/multi-part message that we successfully sent.
- *                            When part of a message is delivered, the notification API i.e
- *                            @ref telux::tel::ISmsListener::onDeliveryReport will be invoked
- *                            with the message reference number corresponding to that part.
- * @param [in] errorCode      If sending any part of a multi-part message fails or a single part
- *                            message fails this API will return an @ref telux:common::errorcode
- *                            corresponding to the failure.
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
- */
-using SmsResponseCb = std::function<void(std::vector<int> msgRefs,
-   telux::common::ErrorCode errorCode)>;
 
 /**
  * @brief SmsManager class is the primary interface to manage SMS operations such as

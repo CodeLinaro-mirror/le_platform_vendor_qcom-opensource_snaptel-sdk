@@ -49,8 +49,6 @@
 namespace telux {
 
 namespace config {
-/** @addtogroup telematics_config
- * @{ */
 
 /**
  * This function is called as a response to @ref requestConfigList().
@@ -84,6 +82,9 @@ using GetAutoSelectionModeCallback = std::function<void (AutoSelectionMode mode,
  */
 using GetActiveConfigCallback = std::function<void (ConfigInfo configInfo,
                                     telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_config
+ * @{ */
 
 /**
  * @brief   IModemConfigManager provides interface to list config files present in modem's storage.

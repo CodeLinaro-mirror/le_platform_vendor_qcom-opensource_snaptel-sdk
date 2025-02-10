@@ -128,6 +128,7 @@ public:
 
     virtual ~IStreamBuffer() {};
 };
+/** @} */ /* end_addtogroup telematics_audio */
 
 /**
  * This function is called with the response to getDevices API.
@@ -202,6 +203,9 @@ using CreateTranscoderResponseCb = std::function<void(
  *                    @ref ErrorCode
  */
 using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio
+ * @{ */
 
 /**
  * @brief   Audio Manager is a primary interface for audio operations. It provide
@@ -335,6 +339,7 @@ public:
    virtual ~IAudioDevice() {};
 
  };
+/** @} */ /* end_addtogroup telematics_audio */
 
 /**
  * This function is called with the response to stream getDevice API.
@@ -377,6 +382,9 @@ using GetStreamVolumeResponseCb
  */
 using GetStreamMuteResponseCb
    = std::function<void(StreamMute mute, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio
+ * @{ */
 
 /**
  * @brief   IAudioStream represents single audio stream with base properties
@@ -534,6 +542,7 @@ public:
 
    virtual ~IAudioVoiceStream() {};
 };
+/** @} */ /* end_addtogroup telematics_audio */
 
 /**
  * This function is called with the response to IAudioPlayStream::write().
@@ -554,6 +563,9 @@ public:
 using WriteResponseCb
     = std::function<void(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesWritten,
                                                             telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio
+ * @{ */
 
 /**
  * @brief   IAudioPlayStream represents single audio playback stream
@@ -627,6 +639,7 @@ public:
     virtual ~IAudioPlayStream() {};
 };
 
+/** @} */ /* end_addtogroup telematics_audio */
 
 /**
  * This function is called with the response to IAudioCaptureStream::read().
@@ -646,6 +659,9 @@ public:
 using ReadResponseCb
     = std::function<void(std::shared_ptr<IStreamBuffer> buffer,
                                         telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_audio
+ * @{ */
 
 /**
  * @brief   IAudioCaptureStream represents single audio capture stream

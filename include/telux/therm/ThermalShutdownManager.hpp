@@ -52,9 +52,6 @@
 namespace telux {
 namespace therm {
 
-/** @addtogroup telematics_therm
- * @{ */
-
 /**
  * This function is called with the response to getAutoShutdownMode API.
  *
@@ -64,6 +61,9 @@ namespace therm {
  * @param [in] mode  AutoShutdownMode
  */
 using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>;
+
+/** @addtogroup telematics_therm
+ * @{ */
 
 /**
  * @brief   IThermalShutdownManager class provides interface to enable/disable automatic thermal

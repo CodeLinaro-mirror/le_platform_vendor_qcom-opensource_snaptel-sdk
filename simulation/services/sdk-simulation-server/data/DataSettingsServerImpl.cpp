@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -967,7 +967,7 @@ grpc::Status DataSettingsServerImpl::setIpConfig(ServerContext* context,
                 auto configFound = isIpConfigExist(request, ipConfigStruct.ipType,
                         ipConfigStruct.ipAssign);
                 if (configFound) {
-                    data.error = telux::common::ErrorCode::INTERNAL;
+                    data.error = telux::common::ErrorCode::NO_EFFECT;
                 } else {
                     data.error = modifyIpConfig(ipConfigStruct);
                 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -87,6 +87,8 @@ public:
     telux::common::Status setRFBandPreferences(std::shared_ptr<IRFBandList> prefList,
         common::ResponseCallback callback = nullptr) override;
     telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback) override;
+    telux::common::ErrorCode setHplmnSearchTime(uint32_t time) override;
+    telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,

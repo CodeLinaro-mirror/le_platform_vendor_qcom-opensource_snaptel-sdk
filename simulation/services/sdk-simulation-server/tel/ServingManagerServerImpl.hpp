@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -77,6 +77,12 @@ public:
     grpc::Status RequestRFBandCapability(ServerContext* context,
         const ::telStub::RequestRFBandCapabilityRequest* request,
         telStub::RequestRFBandCapabilityReply* response) override;
+    grpc::Status SetHplmnSearchTime(ServerContext* context,
+        const ::telStub::SetHplmnSearchTimeRequest* request,
+        telStub::SetHplmnSearchTimeReply* response) override;
+    grpc::Status GetHplmnSearchTime(ServerContext* context,
+        const ::telStub::GetHplmnSearchTimeRequest* request,
+        telStub::GetHplmnSearchTimeReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;

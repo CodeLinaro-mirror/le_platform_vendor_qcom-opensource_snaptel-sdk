@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -332,9 +332,9 @@ void MyServiceDomainPrefResponseCallback::serviceDomainPrefResponse(
 void MyServingSystemResponsecallback::servingSystemResponse(telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "setRatPreference is successful" << std::endl;
+      PRINT_CB << "Request is successful" << std::endl;
    } else {
-      PRINT_CB << "setRatPreference Request failed, errorCode: " << static_cast<int>(error)
+      PRINT_CB << " Request failed, errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }

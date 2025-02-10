@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -882,6 +882,50 @@ telux::common::Status ServingSystemManagerStub::requestRFBandCapability
     taskQ_->add(f);
     }
     return status;
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::setHplmnSearchTime(uint32_t time) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::SetHplmnSearchTimeRequest request;
+    ::telStub::SetHplmnSearchTimeReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.set_time(time);
+
+    grpc::Status reqstatus = stub_->SetHplmnSearchTime(&context, request, &response);
+
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    return error;
+}
+
+telux::common::ErrorCode
+    ServingSystemManagerStub::getHplmnSearchTime(uint32_t &time) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::GetHplmnSearchTimeRequest request;
+    ::telStub::GetHplmnSearchTimeReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    grpc::Status reqstatus = stub_->GetHplmnSearchTime(&context, request, &response);
+
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    time = response.time();
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    return error;
 }
 
 void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {

@@ -107,6 +107,8 @@
             "_comment_lteBands" : "Refer telux::tel::LteRFBand for more details",
             "nrBands" : "1 2 3 5 7 8 96 99 102 259",
             "_comment_nrBands" : "Refer telux::tel::NrRFBand for more details"
-        }
+        },
+        "HplmnSearchTime": 60,
+        "_comment_HplmnSearchTime" : "Indicates HPLMN search timer value in minutes. "
     }
 }

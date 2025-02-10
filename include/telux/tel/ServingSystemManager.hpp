@@ -924,6 +924,50 @@ public:
        = 0;
 
    /**
+    * Set the HPLMN search timer value, which determines the background scan rate for home networks.
+    * After an SSR or reboot, the user-set value will revert to the default value and the client
+    * will need to reset the timer value.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+    * permission to invoke this API successfully.
+    *
+    * @param [in] time           Indicates HPLMN search timer value in minutes.
+    *                            Valid value range [0, 71582] and 0xFFFFFFFF. A timer value of
+    *                            0xFFFFFFFF means use the SIM-defined timer. Any timer value less
+    *                            than the minimum periodic search timer value configured in
+    *                            EFNASCONFIG(Non Access Stratum Configuration) will be set to the
+    *                            minimum value. If the timer value is set to 0 and timer value in
+    *                            EFNASCONFIG is invalid, the search timer will not start. If HPLMN
+    *                            timer is running and the remaining timer duration is greater than
+    *                            then duration set then modem will stop and restart the timer with
+    *                            the duration received in set request.
+    *
+    * @returns @ref telux::common::ErrorCode of setHplmnSearchTime i.e. success or suitable error
+    *          code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode setHplmnSearchTime(uint32_t time) = 0;
+
+   /**
+    * Get the HPLMN search timer value.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] time        Indicates HPLMN search timer value in minutes.
+    *
+    * @returns @ref telux::common::ErrorCode of getHplmnSearchTime i.e. success or suitable error
+    *          code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that

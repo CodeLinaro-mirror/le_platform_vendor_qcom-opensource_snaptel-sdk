@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -805,6 +805,62 @@ grpc::Status ServingManagerServerImpl::RequestRFBandCapability(ServerContext* co
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::SetHplmnSearchTime(ServerContext* context,
+    const ::telStub::SetHplmnSearchTimeRequest* request,
+    telStub::SetHplmnSearchTimeReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "setHplmnSearchTime";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj[MANAGER]["HplmnSearchTime"] = request->time();
+        LOG(DEBUG, __FUNCTION__, "HPLMN Search Time: ", request->time());
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+    //Create response
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::GetHplmnSearchTime(ServerContext* context,
+    const ::telStub::GetHplmnSearchTimeRequest* request,
+    telStub::GetHplmnSearchTimeReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "getHplmnSearchTime";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    if(data.error == telux::common::ErrorCode::SUCCESS) {
+        int time = data.stateRootObj[MANAGER]["HplmnSearchTime"].asInt();
+        LOG(DEBUG, __FUNCTION__, " HPLMN Search Time: ", time);
+        response->set_time(time);
+    }
+    //Create response
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
 
     return grpc::Status::OK;
 }

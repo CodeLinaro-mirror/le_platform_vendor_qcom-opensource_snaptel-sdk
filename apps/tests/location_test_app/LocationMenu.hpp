@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -103,6 +103,7 @@ public:
    void requestMinSVElevation(std::vector<std::string> userInput);
    void configureXtraParameters(std::vector<std::string> userInput);
    void requestXtraStatus(std::vector<std::string> userInput);
+   void provideXtraNetworkInfo(std::vector<std::string> userInput);
    void registerConfigListener(std::vector<std::string> userInput);
    void deRegisterConfigListener(std::vector<std::string> userInput);
    void injectMerkleTreeInformation(std::vector<std::string> userInput);
@@ -130,6 +131,7 @@ private:
    telux::common::Status initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
         &locationConfigurator);
    void populateXtraConfigParams(telux::loc::XtraConfig &configParams);
+   void populateXtraNetworkInfo(telux::loc::NetworkConnectivityInfo &networkInfo);
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<MyLocationListener> posListener_;
    std::shared_ptr<MyLocationConfigListener> locConfigListener_;

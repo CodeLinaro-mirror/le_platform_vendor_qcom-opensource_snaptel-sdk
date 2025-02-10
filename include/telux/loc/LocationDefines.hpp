@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -2009,6 +2009,57 @@ enum LocConfigIndicationsType {
 
 /** This bitset represents the list of the Location Config Indications selected by the Client. */
 using LocConfigIndications = std::bitset<32>;
+
+/** Enum representing the network connection status. */
+enum class NetworkConnectionStatus {
+    /** The network connection status is unknown. */
+    UNKNOWN = 0,
+    /** The device is connected to a network. */
+    CONNECTED = 1,
+    /** The device is not connected to any network. */
+    DISCONNECTED = 2,
+
+};
+
+/** Enum specifying the network connection type. */
+enum class NetworkConnectionType {
+    /** The network type is not known. */
+    UNKNOWN = 0,
+    /** The device is connected to a network type Wireless Wide Area Network (WWAN). */
+    WWAN = 1,
+    /** The device is connected to a network type Wireless Local Area Network (WLAN). */
+    WLAN = 2,
+};
+
+/** Specifies the set of network details required by XTRA. */
+struct NetworkConnectivityInfo {
+    /**
+     * Use @ref telux::loc::NetworkConnectionStatus to get info regarding network connection
+     * status.
+     */
+    NetworkConnectionStatus networkConnectionStatus;
+
+    /**
+     * Use @ref telux::loc::NetworkConnectionType to get info regarding network connection type.
+     */
+    NetworkConnectionType networkConnectionType;
+
+    /**
+     * This should be set only when networkConnectionType is WWAN. For other network types,
+     * this member should remain unset. This should be a 2-byte country string, such as "cn",
+     * "us", "in".
+     */
+    std::string country;
+
+    /**
+     * This should be set only when networkConnectionType is WWAN. For other network types,
+     * this member should remain unset. When networkConnectionType is WWAN, set the
+     * Mobile Country Code (MCC) and the Mobile Network Code (MNC) to this member.
+     * separate MCC and MNC with '|' resulting in a format CCC|NN or CCC|NNN depending on 3-digit
+     * or 2 digit MNC. For example: "405|854" where 405 is the MCC and 854 is the MNC.
+     */
+    std::string mccmnc;
+};
 
 /**
  * @brief ILocationInfoBase provides interface to get basic position related

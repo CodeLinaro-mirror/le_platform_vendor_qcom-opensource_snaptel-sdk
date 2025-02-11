@@ -5,4 +5,4 @@ Remote SIM
 
 This section contains APIs related to Remote SIM operations.
 
-.. doxygengroup:: Telematics_remote_sim
+.. doxygengroup:: telematics_remote_sim

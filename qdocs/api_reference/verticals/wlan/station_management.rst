@@ -5,6 +5,4 @@ Station management
 
 This section contains APIs related to station configuration management, such as static/dynamic IP, bridge/router mode, etc.
 
-.. doxygengroup:: Telematics_wlan_station
-    
-    
+.. doxygengroup:: telematics_wlan_station

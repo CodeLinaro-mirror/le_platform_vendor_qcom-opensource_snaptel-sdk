@@ -5,4 +5,4 @@ Security
 
 This section contains APIs related to security management.
 
-.. doxygengroup:: Telematics_sec_mgmt
+.. doxygengroup:: telematics_sec_mgmt

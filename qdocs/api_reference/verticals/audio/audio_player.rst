@@ -5,6 +5,4 @@ Audio player
 
 This section contains audio player APIs.
 
-.. doxygengroup:: Telematics_audio_player
-    
-    
+.. doxygengroup:: telematics_audio_player

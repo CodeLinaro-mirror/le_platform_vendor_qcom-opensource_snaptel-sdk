@@ -5,4 +5,4 @@ Remote SIM provisioning
 
 This section contains APIs related to Remote SIM provisioning.
 
-.. doxygengroup:: Telematics_rsp
+.. doxygengroup:: telematics_rsp

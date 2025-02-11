@@ -1,5 +1,5 @@
 ..
-   *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
    *  SPDX-License-Identifier: BSD-3-Clause-Clear
 
 ..
@@ -537,7 +537,7 @@ Logging is also provided per device or peripheral level. With device level loggi
 that device is collected. With peripheral logging, logs from client selected perihpherals only are captured.
 Diagnostic services APIs in the Telematics SDK provide the following functionality.
 
-- Configure diagnostic servics which include:  
+- Configure diagnostic servics which include:
 
    - Set logging level (Device/Peripheral).
    - Set logging method (File/Callback).
@@ -564,13 +564,13 @@ If application is running on either application processors when it crashes, appl
 be restarted to initial state. For other scenarios, details are explained below for each subsystem.
 
 Data Services
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Data services behavior when Subsystem Restart event occur is shown in table below:
 
 .. figure:: /../images/data_ssr.png
    :scale: 65
-   
+
    **Data SSR and Recovery**
 
 

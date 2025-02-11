@@ -5,4 +5,4 @@ SMS
 
 This section contains APIs related to Sending and Receiving SMS.
 
-.. doxygengroup:: Telematics_sms
+.. doxygengroup:: telematics_sms

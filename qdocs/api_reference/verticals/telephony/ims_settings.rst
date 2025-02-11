@@ -5,4 +5,4 @@ IMS settings
 
 This section contains APIs related to IMS Configuration.
 
-.. doxygengroup:: Telematics_ims_settings
+.. doxygengroup:: telematics_ims_settings

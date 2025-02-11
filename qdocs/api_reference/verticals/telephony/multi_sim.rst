@@ -5,4 +5,4 @@ Multi-SIM
 
 This section contains APIs related to Multi SIM DSDA Configuration.
 
-.. doxygengroup:: Telematics_multi_sim
+.. doxygengroup:: telematics_multi_sim

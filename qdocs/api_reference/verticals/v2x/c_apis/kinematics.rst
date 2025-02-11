@@ -5,4 +5,4 @@ C Kinematics APIs
 
 This section contains C Kinematics APIs related to Cellular-V2X operation. For any new CV2x development, it is recommended to use the C++ telux::loc::ILocationManager APIs.
 
-.. doxygengroup:: Telematics_cv2x_c_kinematics
+.. doxygengroup:: telematics_cv2x_c_kinematics

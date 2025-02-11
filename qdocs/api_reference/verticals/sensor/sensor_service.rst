@@ -5,6 +5,4 @@ Sensor service
 
 This section contains APIs, data structures and components to access the sensor sub-system.
 
-.. doxygengroup:: Telematics_sensor_service
-    
-    
+.. doxygengroup:: telematics_sensor_service

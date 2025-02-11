@@ -5,6 +5,4 @@ Call
 
 This section contains APIs related to Call.
 
-.. doxygengroup:: Telematics_call
-    
-    
+.. doxygengroup:: telematics_call

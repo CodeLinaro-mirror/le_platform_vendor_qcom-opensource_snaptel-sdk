@@ -2097,7 +2097,7 @@ The following managers are currently available in the simulation:
 5. SubsystemManager
 
 Platform APIs response handling
-""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""
 
 The framework allows responses of each API to be configured using a JSON file.
 

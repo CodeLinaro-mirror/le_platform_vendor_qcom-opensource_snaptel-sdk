@@ -5,6 +5,4 @@ Transcoder
 
 This section contains APIs related to Audio Transcoder operation.
 
-.. doxygengroup:: Telematics_audio_transcoder
-    
-    
+.. doxygengroup:: telematics_audio_transcoder

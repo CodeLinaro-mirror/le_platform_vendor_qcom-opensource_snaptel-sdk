@@ -5,6 +5,4 @@ Access point management
 
 This section contains APIs related to access point configuration management, such as private/guest, internet/local access, etc.
 
-.. doxygengroup:: Telematics_wlan_ap
-    
-    
+.. doxygengroup:: telematics_wlan_ap

@@ -5,6 +5,4 @@ WLAN device management
 
 This section contains APIs related to device configuration management, such as the number of access points and stations enabled, WLAN enable/disable, etc
 
-.. doxygengroup:: Telematics_wlan
-    
-    
+.. doxygengroup:: telematics_wlan

@@ -5,6 +5,4 @@ Modem configuration
 
 This section contains APIs related to Modem Config operations.
 
-.. doxygengroup:: Telematics_config_manager
-    
-    
+.. doxygengroup:: telematics_config_manager

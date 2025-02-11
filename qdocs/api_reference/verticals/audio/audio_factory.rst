@@ -1,6 +1,4 @@
 AudioFactory
 ============
 
-.. doxygengroup:: Telematics_audio
-    
-    
+.. doxygengroup:: telematics_audio

@@ -5,4 +5,4 @@ Subscription management
 
 This section contains APIs related to Subscription Management.
 
-.. doxygengroup:: Telematics_subscription
+.. doxygengroup:: telematics_subscription

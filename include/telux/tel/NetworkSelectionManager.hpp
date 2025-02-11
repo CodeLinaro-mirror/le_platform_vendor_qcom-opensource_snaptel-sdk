@@ -28,7 +28,7 @@
  */
 
 /* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
@@ -381,6 +381,8 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
     * permission to invoke this API successfully.
     *
+    * @note This API is not supported for the NTN network.
+    *
     * @param [in] selectMode    Selection mode for a network i.e. automatic or manual.
     *                           If selection mode is automatic then MCC and MNC are ignored.
     *                           If it is manual, client has to explicitly pass MCC and MNC
@@ -423,6 +425,8 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
     * permission to invoke this API successfully.
     *
+    * @note This API is not supported for the NTN network.
+    *
     * @param [in] preferredNetworksInfo   List of 3GPP preferred networks.
     * @param [in] clearPrevious           If flag is false then new 3GPP preferred
     *                                     network list is appended to existing
@@ -464,6 +468,9 @@ public:
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
     * permission to invoke this API successfully.
+    *
+    * @note This API is not supported for the NTN network. To perform network scan on the NTN
+    * network, use @ref telux::satcom::INtnManager::enableCellularScan
     *
     * @param [in] info        Provides network scan type and if the network scan type is user
     *                         prefered RAT, includes RAT(s) information. @ref NetworkScanInfo
@@ -640,6 +647,8 @@ public:
     * This API will be invoked multiple times in case of partial network scan results.
     * In case of network scan failure and network scan completed this API will not be invoked
     * further.
+    *
+    * @note This API is not supported for the NTN network.
     *
     * @param [in] scanStatus      Status of the network scan results @ref NetworkScanStatus
     * @param [in] operatorInfos   Operators info with details of network operator name, MCC,

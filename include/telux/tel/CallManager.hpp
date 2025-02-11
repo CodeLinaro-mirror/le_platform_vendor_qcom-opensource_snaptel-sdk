@@ -1060,7 +1060,7 @@ public:
     * @param [in] phoneId   Represents phone corresponding to which on request to get the post
     *                       test registration timer is made.
     *                       operation is performed
-    * @param [in] timer     Input timer value in minutes.
+    * @param [out] timer    Timer value in minutes.
     *
     * @returns ErrorCode of getECallPostTestRegistrationTimer i.e. success or suitable error code.
     *

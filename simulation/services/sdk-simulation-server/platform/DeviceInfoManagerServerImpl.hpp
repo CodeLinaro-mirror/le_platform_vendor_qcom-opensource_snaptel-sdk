@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -58,8 +58,8 @@ class DeviceInfoManagerServerImpl final :
     void handleSSREvent(std::string eventParams);
     void onDeviceInfoEventUpdate(std::string event);
     void onSubsystemEventUpdate(std::string event);
-    void onSubsystemEvent(int subsystem, int procType, telux::common::ServiceStatus srvStatus);
-    void handleSubsystemStatusEvent(std::string eventParams);
+    void onSubsystemEvent(int subsystem, int procType, commonStub::OperationalStatus opStatus);
+    void handleOperationalStatusEvent(std::string eventParams);
     bool isValidProcType(int procType);
     bool isValidSubsystem(int subsystem);
 

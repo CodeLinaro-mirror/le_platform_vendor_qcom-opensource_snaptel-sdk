@@ -29,7 +29,7 @@
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -842,11 +842,9 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when a change occur in hardware acceleration service.
      * If reported state is @ref ServiceState::INACTIVE:
-     *   All existing data calls will take software acceleration path.
+     *   All existing data calls will take software path.
      * If reported state is @ref ServiceState::ACTIVE:
-     *   All new data calls that are started after this API invocation will be H/w accelerated.
-     *   Data calls that existed before this API was invoked will continue without h/w acceleration.
-     *   Client could stop and re-start pre-existing data calls in order to use H/w acceleration.
+     *   All existing and new data calls will be hardware accelerated.
      *
      * @param [in] state   New state of hardware Acceleration service (Active/Inactive)
      *

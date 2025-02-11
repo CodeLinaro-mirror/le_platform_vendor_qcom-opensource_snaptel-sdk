@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -72,6 +72,7 @@ extern "C" {
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 #include "../../../../common/utils/Utils.hpp"
 
 #include "L2tpMenu.hpp"
@@ -524,6 +525,11 @@ void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
         std::cin >> profileId;
         Utils::validateInput(profileId);
         bindConfig.bhInfo.profileId = profileId;
+        int slotId = DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+            slotId = Utils::getValidSlotId();
+        }
+        bindConfig.bhInfo.slotId = static_cast<SlotId>(slotId);
     } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
         int vlanId;
         std::cout << "Enter Vlan Id to bind session to: ";
@@ -569,6 +575,11 @@ void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) 
         std::cin >> profileId;
         Utils::validateInput(profileId);
         bindConfig.bhInfo.profileId = profileId;
+        int slotId = DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+            slotId = Utils::getValidSlotId();
+        }
+        bindConfig.bhInfo.slotId = static_cast<SlotId>(slotId);
     } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
         int vlanId;
         std::cout << "Enter Vlan Id to bind session to: ";
@@ -608,7 +619,7 @@ void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputComma
                                 "UNKNOWN"));
                     if (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
                         std::cout << "Backhaul: " << bh << ", profId: " << (int)c.bhInfo.profileId
-                            << ", Local id: " << c.locId << "\n";
+                            << ", slotId: " << c.bhInfo.slotId << ", Local id: " << c.locId << "\n";
                     } else if (c.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
                         std::cout << "Backhaul: " << bh << ", vlanId associated with session: "
                             << (int)c.bhInfo.vlanId << ", Local id: " << c.locId << "\n";

@@ -5,5 +5,4 @@ TCU activity manager
 
 This section contains APIs related to TCU activity state management.
 
-.. doxygengroup:: Telematics_power_manager 
-    
+.. doxygengroup:: telematics_power_manager

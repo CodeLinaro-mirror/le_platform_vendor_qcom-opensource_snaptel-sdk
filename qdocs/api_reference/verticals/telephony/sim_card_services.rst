@@ -5,4 +5,4 @@ SIM card services
 
 This section contains APIs related to Card Services.
 
-.. doxygengroup:: Telematics_card
+.. doxygengroup:: telematics_card

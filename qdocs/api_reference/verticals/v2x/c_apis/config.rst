@@ -5,4 +5,4 @@ C Config APIs
 
 This section contains C Config APIs related to Cellular-V2X operation. These APIs are provided as an abstraction of the CV2X configuration relevant interfaces.
 
-.. doxygengroup:: Telematics_cv2x_c_config 
+.. doxygengroup:: telematics_cv2x_c_config

@@ -5,6 +5,4 @@ Audio stream
 
 This section contains APIs related to Audio Stream operation.
 
-.. doxygengroup:: Telematics_audio_stream
-    
-    
+.. doxygengroup:: telematics_audio_stream

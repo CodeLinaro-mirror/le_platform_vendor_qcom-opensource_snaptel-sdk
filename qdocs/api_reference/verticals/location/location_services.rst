@@ -5,6 +5,4 @@ Location services
 
 This section contains APIs related to Location Services.
 
-.. doxygengroup:: Telematics_location
-    
-    
+.. doxygengroup:: telematics_location

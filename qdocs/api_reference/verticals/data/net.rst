@@ -5,6 +5,4 @@ Network selection
 
 This section contains APIs related to data network configuration.
 
-.. doxygengroup:: Telematics_network_selection
-    
-    
+.. doxygengroup:: telematics_network_selection

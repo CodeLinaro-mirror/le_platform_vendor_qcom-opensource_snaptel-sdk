@@ -5,4 +5,4 @@ Diagnostics
 
 This section contains APIs related to diagnostics services.
 
-.. doxygengroup:: Telematics_diagnostics
+.. doxygengroup:: telematics_diagnostics

@@ -5,4 +5,4 @@ Phone
 
 This section contains APIs related to Phone, Signal Strength and interfaces to register global listeners to event notifications.
 
-.. doxygengroup:: Telematics_phone
+.. doxygengroup:: telematics_phone

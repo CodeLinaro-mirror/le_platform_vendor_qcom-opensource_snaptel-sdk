@@ -5,4 +5,4 @@ C Common APIs
 
 This section contains C Common APIs related to Cellular-V2X operation.
 
-.. doxygengroup:: Telematics_cv2x_c_common 
+.. doxygengroup:: telematics_cv2x_c_common

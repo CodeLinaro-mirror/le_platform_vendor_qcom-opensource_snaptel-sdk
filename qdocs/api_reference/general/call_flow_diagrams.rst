@@ -1,5 +1,5 @@
 ..
-   *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
    *  SPDX-License-Identifier: BSD-3-Clause-Clear
 
 ==================
@@ -1601,10 +1601,10 @@ Call flow to set Ethernet data link state
 1. Application requests a data factory for the data link manager object.
 2. Data factory returns a shared pointer to the data link manager object to the application.
 3. When the subsystem is ready, application registers as listener to receive notifications for Ethernet data link state changes.
-3. Application brings up the Ethernet data link state.
-4. The change in Ethernet data link state (UP) is notified to the application.
-5. Application brings down the ethernet data link state.
-6. The change in Ethernet data link state (DOWN) is notified to the application.
+4. Application brings up the Ethernet data link state.
+5. The change in Ethernet data link state (UP) is notified to the application.
+6. Application brings down the ethernet data link state.
+7. The change in Ethernet data link state (DOWN) is notified to the application.
 
 C-V2X
 -----

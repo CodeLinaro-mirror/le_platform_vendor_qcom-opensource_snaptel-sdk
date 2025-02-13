@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -18,6 +18,7 @@
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
+#include <type_traits>
 #include <grpcpp/health_check_service_interface.h>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/CardDefines.hpp>
@@ -48,10 +49,11 @@ enum CardRefreshStage {
     ENDED_WITH_FAILURE = 3,
 };
 
-struct clientSimRefreshPref {
+struct ClientSimRefreshPref {
     uint32_t clientId;
     int phoneId;
     telux::tel::RefreshParams sessionAid;
+    std::vector<telux::tel::IccFile> files;
 };
 
 struct RefreshEventAndPending {
@@ -188,8 +190,8 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     std::map <int, Json::Value> jsonObjApiResponseSlot_;
     std::map <int, std::string> jsonObjApiResponseFileName_;
     std::map <int, RefreshEventAndPending> refreshEvtMap_;
-    std::vector <clientSimRefreshPref> refreshRegisterClients_;
-    std::vector <clientSimRefreshPref> refreshVotingClients_;
+    std::vector <ClientSimRefreshPref> refreshRegisterClients_;
+    std::vector <ClientSimRefreshPref> refreshVotingClients_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     std::condition_variable cv_;
     std::mutex mutex_;
@@ -222,12 +224,13 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     int getSlotBySessionType(telux::tel::SessionType st);
     bool requireConfirmComplete(const CardRefreshStage stage, const telux::tel::RefreshMode mode,
         const telux::tel::SessionType st);
-    bool clientSimRefreshInfoPresent(std::vector <clientSimRefreshPref>& vector,
-        const clientSimRefreshPref& entry);
-    telux::common::ErrorCode updateClientSimRefresh(std::vector <clientSimRefreshPref>& vector,
-        const clientSimRefreshPref& usrPref, bool enable);
+    bool clientSimRefreshInfoPresent(std::vector <ClientSimRefreshPref>& vector,
+        const ClientSimRefreshPref& entry);
+    telux::common::ErrorCode updateClientSimRefresh(std::vector <ClientSimRefreshPref>& vector,
+        const ClientSimRefreshPref& usrPref, bool enable);
+    int findMatchedClients(::telStub::RefreshEvent event, const std::vector<ClientSimRefreshPref>& entry);
     template <typename T>
-    void getClientInfoFromRpc(const T* rpcMsg, clientSimRefreshPref& client);
+    void getClientInfoFromRpc(const T* rpcMsg, ClientSimRefreshPref& client);
 };
 
 #endif // CARD_MANAGER_SERVER_HPP

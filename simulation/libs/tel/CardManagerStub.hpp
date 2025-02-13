@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -109,8 +109,9 @@ private:
         const RefreshParams refreshParams);
     void convertRefreshParams(const RefreshParams userParams, RefreshParams& refreshParams);
     SlotId getSlotBySessionType(telux::tel::SessionType st);
-    void findRefreshParams(const RefreshParams& refreshParams, bool& isRegister, bool* doVoting,
-        std::vector<IccFile>* efFiles);
+    void findRefreshParams(const RefreshParams& refreshParams,
+        const std::vector<IccFile>& efFiles, bool& isRegister, bool* doVoting,
+        bool isEvent = false);
 };
 
 } // end of namespace tel

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -2215,14 +2215,6 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         }
     }
 
-    newRefreshEvt.pendingAllow = refreshVotingClients_.size();
-    newRefreshEvt.pendingComplete = refreshRegisterClients_.size();
-    if (not newRefreshEvt.pendingAllow) {
-        stage = STARTING;
-    } else {
-         updateSimRefreshStage(slotId, ENDED_WITH_FAILURE, REFRESH_USER_ALLOW_TIMEOUT_MS,
-             true, false);
-    }
     LOG(DEBUG, __FUNCTION__, " slotId ", slotId, ", stage ", stage,  ", mode ", mode,
         ", fileId ", fileId,  ", filePath ", filePath,", sessionId ", sessionId,
         ", aid ", aid);
@@ -2232,10 +2224,12 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     newRefreshEvt.refreshEvent.set_mode(static_cast<::telStub::RefreshMode>(mode));
 
     newRefreshEvt.refreshEvent.clear_effiles();
-    ::telStub::IccFile *efFilesMem = newRefreshEvt.refreshEvent.add_effiles();
-    if (efFilesMem) {
-        efFilesMem->set_fileid(fileId);
-        efFilesMem->set_filepath(filePath);
+    if (fileId > 0) {
+        ::telStub::IccFile *efFilesMem = newRefreshEvt.refreshEvent.add_effiles();
+        if (efFilesMem) {
+            efFilesMem->set_fileid(fileId);
+            efFilesMem->set_filepath(filePath);
+        }
     }
 
     auto ssType = static_cast<::telStub::SessionType>(sessionId);
@@ -2243,6 +2237,17 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     if (refreshs) {
         refreshs->set_sessiontype(ssType);
         refreshs->set_aid(aid);
+    }
+
+    newRefreshEvt.pendingAllow =
+        findMatchedClients(newRefreshEvt.refreshEvent, refreshVotingClients_);
+    newRefreshEvt.pendingComplete =
+        findMatchedClients(newRefreshEvt.refreshEvent, refreshRegisterClients_);
+    if (not newRefreshEvt.pendingAllow) {
+        stage = STARTING;
+    } else {
+         updateSimRefreshStage(slotId, ENDED_WITH_FAILURE, REFRESH_USER_ALLOW_TIMEOUT_MS,
+             true, false);
     }
 
     notification.mutable_any()->PackFrom(newRefreshEvt.refreshEvent);
@@ -2271,8 +2276,16 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         return ::grpc::Status::CANCELLED;
     }
 
-    clientSimRefreshPref clientInfo;
+    ClientSimRefreshPref clientInfo;
     getClientInfoFromRpc<::telStub::RefreshConfigReq>(request, clientInfo);
+    for (int i = 0; i < request->effiles_size(); ++i) {
+        clientInfo.files.push_back({static_cast<uint16_t>(request->effiles(i).fileid()),
+            static_cast<std::string>(request->effiles(i).filepath())});
+    }
+    for (auto file : clientInfo.files) {
+        LOG(DEBUG, __FUNCTION__, " File ID : ", file.fileId,
+            ", File path : ", file.filePath);
+    }
 
     LOG(DEBUG, __FUNCTION__, " phoneId ", clientInfo.phoneId,
         " isRegister ", static_cast<int>(request->isregister()),
@@ -2280,6 +2293,8 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
 
     telux::common::Status status = telux::common::Status::FAILED;
     telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
+    telux::common::ErrorCode voteError = telux::common::ErrorCode::CANCELLED;
+    telux::common::ErrorCode regError = telux::common::ErrorCode::CANCELLED;
     int cbDelay = 0;
 
     getApiConfigureFromJson(clientInfo.phoneId, "setupRefreshConfig", status, error, cbDelay);
@@ -2306,11 +2321,20 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         }
 
         /*update voting clients vector*/
-        error = updateClientSimRefresh(refreshVotingClients_, clientInfo, request->dovoting());
+        voteError = updateClientSimRefresh(refreshVotingClients_, clientInfo, request->dovoting());
 
         /*update register clients vector*/
-        error = updateClientSimRefresh(refreshRegisterClients_, clientInfo, request->isregister());
+        regError = updateClientSimRefresh(refreshRegisterClients_, clientInfo,
+            request->isregister());
+
+        if (voteError == telux::common::ErrorCode::ALREADY &&
+            regError == telux::common::ErrorCode::ALREADY) {
+            error = telux::common::ErrorCode::ALREADY;
+        }
     } while (0);
+
+    LOG(DEBUG, __FUNCTION__, " Error for voting clients is ", static_cast<int>(voteError),
+        " Error for register clients is ", static_cast<int>(regError));
 
     response->set_error(static_cast<commonStub::ErrorCode>(error));
     response->set_delay(cbDelay);
@@ -2327,7 +2351,7 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     }
     LOG(DEBUG, __FUNCTION__);
 
-    clientSimRefreshPref clientInfo;
+    ClientSimRefreshPref clientInfo;
     getClientInfoFromRpc<::telStub::AllowCardRefreshReq>(request, clientInfo);
 
     bool allowRefresh = request->allowrefresh();
@@ -2402,7 +2426,7 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
     telux::common::Status status = telux::common::Status::FAILED;
     telux::common::ErrorCode error = telux::common::ErrorCode::CANCELLED;
     int cbDelay = 0;
-    clientSimRefreshPref clientInfo;
+    ClientSimRefreshPref clientInfo;
 
     getClientInfoFromRpc<::telStub::ConfirmRefreshHandlingCompleteReq>(request, clientInfo);
     getApiConfigureFromJson(clientInfo.phoneId, "confirmRefreshHandlingCompleted", status, error, cbDelay);
@@ -2473,7 +2497,7 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         return ::grpc::Status::CANCELLED;
     }
 
-    clientSimRefreshPref clientInfo;
+    ClientSimRefreshPref clientInfo;
     getClientInfoFromRpc<::telStub::RequestLastRefreshEventReq>(request, clientInfo);
 
     telux::common::Status status = telux::common::Status::FAILED;
@@ -2625,10 +2649,9 @@ bool CardManagerServerImpl::requireConfirmComplete(const CardRefreshStage stage,
 }
 
 bool CardManagerServerImpl::clientSimRefreshInfoPresent(
-    std::vector <clientSimRefreshPref>& vector, const clientSimRefreshPref&  entry) {
+    std::vector <ClientSimRefreshPref>& vector, const ClientSimRefreshPref& entry) {
 
-    for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
-        it != vector.end();) {
+    for (auto it = vector.begin(); it != vector.end();) {
         if (it->clientId == entry.clientId && it->phoneId == entry.phoneId &&
             it->sessionAid.sessionType == entry.sessionAid.sessionType &&
             it->sessionAid.aid == entry.sessionAid.aid) {
@@ -2641,27 +2664,94 @@ bool CardManagerServerImpl::clientSimRefreshInfoPresent(
     return false;
 }
 
+int CardManagerServerImpl::findMatchedClients(
+    ::telStub::RefreshEvent event, const std::vector<ClientSimRefreshPref>& entry) {
+
+    ClientSimRefreshPref client;
+    client.phoneId  = event.phone_id();
+    client.sessionAid.sessionType = static_cast<telux::tel::SessionType>(
+        event.refreshs().sessiontype());
+    client.sessionAid.aid = event.refreshs().aid();
+    for (int i = 0; i < event.effiles_size(); ++i) {
+        client.files.push_back({static_cast<uint16_t>(event.effiles(i).fileid()),
+            static_cast<std::string>(event.effiles(i).filepath())});
+    }
+    for (auto file : client.files) {
+        LOG(DEBUG, __FUNCTION__, " File ID : ", file.fileId,
+            ", File path : ", file.filePath);
+    }
+
+    int found = 0;
+    for (auto it = entry.begin(); it != entry.end(); ++ it) {
+        if (it->phoneId == client.phoneId &&
+            it->sessionAid.sessionType == client.sessionAid.sessionType &&
+            it->sessionAid.aid == client.sessionAid.aid) {
+            if (it->files.size() == 0 && client.files.size() == 0) {
+                found ++;
+                LOG(DEBUG, __FUNCTION__,
+                    " Found a client with the empty file ");
+            } else if (it->files.size() > 0 && client.files.size() > 0) {
+                unsigned int efMatch = 0;
+                for(auto itUserFiles = std::begin(client.files);
+                    itUserFiles != std::end(client.files); ++ itUserFiles) {
+                    for(auto itCacheFiles = std::begin(it->files);
+                        itCacheFiles != std::end(it->files); ++ itCacheFiles) {
+                        if (itCacheFiles->fileId == itUserFiles->fileId &&
+                            itCacheFiles->filePath == itUserFiles->filePath) {
+                            efMatch ++;
+                            break;
+                        }
+                    }
+                }
+                if (client.files.size() == efMatch) {
+                    LOG(DEBUG, __FUNCTION__,
+                    " Found a client containing ", client.files.size() ," files ");
+                    found ++;
+                }
+            }
+        }
+    }
+
+    return found;
+}
+
 telux::common::ErrorCode CardManagerServerImpl::updateClientSimRefresh(
-    std::vector <clientSimRefreshPref>& vector, const clientSimRefreshPref& usrPref, bool enable) {
-    telux::common::ErrorCode res = telux::common::ErrorCode::ALREADY;
+    std::vector <ClientSimRefreshPref>& vector, const ClientSimRefreshPref& usrPref, bool enable) {
     bool found = false;
-    for (std::vector<clientSimRefreshPref>::iterator it = vector.begin();
-        it != vector.end();) {
+    for (auto it = vector.begin(); it != vector.end();) {
         if (it->clientId == usrPref.clientId && it->phoneId == usrPref.phoneId &&
             it->sessionAid.sessionType == usrPref.sessionAid.sessionType &&
             it->sessionAid.aid == usrPref.sessionAid.aid) {
-            found = true;
-            if (not enable) {
-                vector.erase(it);
-                LOG(DEBUG, __FUNCTION__, " erase entry from vector.");
-                res = telux::common::ErrorCode::SUCCESS;
-            } else {
-                LOG(ERROR, __FUNCTION__, " ALREADY enabled.");
+            if (it->files.size() == 0 && usrPref.files.size() == 0) {
+                found = true;
+            } else if (it->files.size() > 0 && usrPref.files.size() > 0) {
+                const std::vector<telux::tel::IccFile> constFiles(it->files);
+                for(auto itUserFiles = std::begin(usrPref.files);
+                    itUserFiles != std::end(usrPref.files); ++ itUserFiles) {
+                    for(auto itCacheFiles = std::begin(constFiles);
+                        itCacheFiles != std::end(constFiles); ++ itCacheFiles) {
+                        if (itCacheFiles->fileId == itUserFiles->fileId &&
+                            itCacheFiles->filePath == itUserFiles->filePath) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
             }
-            break;
+            if (found) {
+                if (not enable) {
+                    vector.erase(it);
+                    LOG(DEBUG, __FUNCTION__, " erase entry from vector.");
+                    return telux::common::ErrorCode::SUCCESS;
+                } else {
+                    LOG(ERROR, __FUNCTION__, " ALREADY enabled.");
+                    return telux::common::ErrorCode::ALREADY;
+                }
+            }
         }
         ++it;
     }
+    auto res = telux::common::ErrorCode::ALREADY;
     if (not found) {
         if (enable) {
             LOG(DEBUG, __FUNCTION__, " push back entry to vector.");
@@ -2675,13 +2765,12 @@ telux::common::ErrorCode CardManagerServerImpl::updateClientSimRefresh(
 }
 
 template <typename T>
-void CardManagerServerImpl::getClientInfoFromRpc(const T* rpcMsg, clientSimRefreshPref& client) {
+void CardManagerServerImpl::getClientInfoFromRpc(const T* rpcMsg, ClientSimRefreshPref& client) {
     client.clientId = rpcMsg->identifier();
     client.phoneId  = rpcMsg->phone_id();
     client.sessionAid.sessionType = static_cast<telux::tel::SessionType>(
         rpcMsg->refreshs().sessiontype());
-    client.sessionAid.aid =  rpcMsg->refreshs().aid();
-
+    client.sessionAid.aid = rpcMsg->refreshs().aid();
     LOG(DEBUG, __FUNCTION__, " phoneId ", client.phoneId, ", sessionType ",
         static_cast<uint32_t>(client.sessionAid.sessionType),
         ", aid ", client.sessionAid.aid);

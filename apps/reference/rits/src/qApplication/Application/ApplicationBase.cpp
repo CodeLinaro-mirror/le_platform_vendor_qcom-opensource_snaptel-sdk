@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -96,6 +96,7 @@ shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::conges
 RadioTransmit* QitsCongCtrlListener::spsTransmit_;
 FILE* ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
+std::mutex ApplicationBase::hvLocUpdateMtx;
 bool ApplicationBase::securityEnabled;
 bool ApplicationBase::congCtrlEnabled;
 bool ApplicationBase::positionOverride;
@@ -142,13 +143,13 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         kine.latitude = locationInfo->getLatitude() * 10000000;
         kine.longitude = locationInfo->getLongitude() * 10000000;
         kine.elevation = locationInfo->getAltitude() * 10;
-        kine.speed = locationInfo->getSpeed() * 50;
+        kine.speed = locationInfo->getSpeed() * (250/18);
         // make sure that aerolink knows most recent ego position and leap seconds
         if(ApplicationBase::securityInitialized){
             int result = AerolinkSecurity::setSecCurrLocation(&kine);
             telux::common::Status status =
                 locationInfo->getLeapSeconds(kine.leapSeconds);
-            if(status != Status::SUCCESS && kine.leapSeconds != 0){
+            if(status == Status::SUCCESS && kine.leapSeconds != 0){
                 result = AerolinkSecurity::setLeapSeconds(kine.leapSeconds);
             }
         }
@@ -334,6 +335,8 @@ void ApplicationBase::diagLogPktGenericInfo() {
 }
 
 void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
+    // need a lock here
+    lock_guard<mutex> lk(hvLocUpdateMtx);
     ApplicationBase::hvLocationInfo = hvLocationInfoIn;
 #if AEROLINK
     if(!init_loc){
@@ -439,8 +442,11 @@ void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
             }else{
                 timeSinceLastIdChange = 0;
             }
-            hvLatNew = (hvLocationInfo->getLatitude());
-            hvLonNew = (hvLocationInfo->getLongitude());
+            {
+                lock_guard<mutex> lk(hvLocUpdateMtx);
+                hvLatNew = (hvLocationInfo->getLatitude());
+                hvLonNew = (hvLocationInfo->getLongitude());
+            }
             hvLatOld = lastLocationInfoIdChange->getLatitude();
             hvLonOld = lastLocationInfoIdChange->getLongitude();
             // check if there have been any fixes yet
@@ -640,7 +646,6 @@ bool ApplicationBase::init() {
     if(configuration.enableL2Filtering) {
         cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
-
     // set up kinematics listener
     if(configuration.enableLocationFixes){
         if (appVerbosity > 5){
@@ -651,12 +656,10 @@ bool ApplicationBase::init() {
         locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
-        // wait some time for location fixes to come in
-        usleep(100000);
     }
     if (!(isTxSim || isRxSim)) {
         // setup radio flows
-        if (0 != setup(MsgType)) {
+        if (0 != setup(MsgType, false)) {
             printf("radio setup failed\n");
             return false;
         }
@@ -683,24 +686,6 @@ bool ApplicationBase::init() {
               ApplicationBase::securityInitialized = true;
               // set the verbosity of aerolink
               SecService->setSecVerbosity(this->configuration.secVerbosity);
-              // set the leap seconds
-              int ret = -1;
-              if (kinematicsReceive && appLocListener_) {
-                auto locationInfo = appLocListener_->getLocation();
-                if (locationInfo) {
-                    uint8_t leapSeconds = 0;
-                    telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
-                    if(stat == Status::FAILED || leapSeconds == 0){
-                        leapSeconds = configuration.leapSeconds;
-                    }
-                    if (appVerbosity > 5){
-                        printf("Leap seconds set to: %" PRIu8 "\n", leapSeconds);
-                    }
-                    ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
-                }
-              }else{
-                ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
-              }
             }catch(const std::runtime_error& error){
                 fprintf(stderr, "Aerolink init failed: Please check config params \n");
                 fprintf(stderr, "Attempting to close all radio flows\n");
@@ -794,11 +779,20 @@ bool ApplicationBase::init() {
 }
 
 ApplicationBase::~ApplicationBase() {
-    if (enableDiagLog_ && utility_) {
-        utility_->deInitDiagLog();
-    }
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
+    }
+
+    // call prepare for exit here again in case it wasn't called previously
+    prepareForExit();
+
+    if(SecService){
+        SecService->lockIdChange();
+        SecService->deinit();
+        SecService.reset();
+    }
+    if (enableDiagLog_ && utility_) {
+        utility_->deInitDiagLog();
     }
 
     if (ldm) {
@@ -813,8 +807,6 @@ ApplicationBase::~ApplicationBase() {
             free(currVehState);
         }
     }
-    sem_destroy(&rx_sem);
-    sem_destroy(&log_sem);
 
     {
        std::unique_lock<std::mutex> lock(csvMutex);
@@ -1020,16 +1012,30 @@ void ApplicationBase::vehicleEventReport(bool emergent,
     }
 }
 void ApplicationBase::prepareForExit() {
-    std::unique_lock<std::mutex> loc(stateMtx);
-    exitApp = true;
-    stateCv.notify_all();
+    exitApp = true; 
+    sem_post(&this->rx_sem);
+    sem_post(&this->log_sem);
+    sem_post(&idChangeData.idSem);
+
+    if(configuration.enableCongCtrl &&
+                congestionControlManager && congCtrlInitialized){
+        if(congestionControlManager->
+                    getCongestionControlUserData()->congestionControlSem){
+            sem_post(congestionControlManager->
+                        getCongestionControlUserData()->congestionControlSem);
+        }
+        congestionControlManager->stopCongestionControl();
+        congCtrlInitialized = false;
+    }
+
+    {
+        std::unique_lock<std::mutex> loc(stateMtx);
+        stateCv.notify_all();
+    }
     {
         lock_guard<std::mutex> lock(csvMutex);
         writeLogFinish = true;
         writeMutexCv.notify_all();
-    }
-    if (kinematicsReceive != nullptr) {
-        kinematicsReceive->close();
     }
     // notify all radio interface to prepare for exit
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
@@ -1040,6 +1046,9 @@ void ApplicationBase::prepareForExit() {
     }
     for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
         this->radioReceives[i].prepareForExit();
+    }
+    if (kinematicsReceive != nullptr) {
+        kinematicsReceive->close();
     }
 }
 
@@ -2227,6 +2236,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
     // close all flows before re-setup
     if (true == reSetup) {
+        std::cout << "Closing all radio\n";
         closeAllRadio();
     }
 
@@ -2411,9 +2421,12 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     uint64_t currTime = 0;
     // if congestion control enabled, only send when congestionControl tells us to:
     if(this->configuration.enableCongCtrl && congCtrlInitialized
-        && !(criticalState && txType == TransmitType::EVENT)){
+        && !(criticalState && txType == TransmitType::EVENT) && !exitApp){
         sem_wait (congestionControlManager->
                     getCongestionControlUserData()->congestionControlSem);
+    }
+    if(exitApp){
+        return -1;
     }
 
     if (this->isTxSim) {
@@ -2429,11 +2442,11 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
 #if AEROLINK
     // check if identiy and cert change needs to be performed
     if(configuration.enableSecurity && !this->configuration.lcmName.empty()
-            && this->configuration.idChangeInterval) {
+            && this->configuration.idChangeInterval && kinematicsReceive &&
+            appLocListener_ && hvLocationInfo) {
         changeIdentity(idChangeData.idChangeCbSem);
     }
 #endif
-
     // reserve headroom in abuf if padding is specified
     abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     fillMsg(mc);
@@ -2448,7 +2461,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     // this will avoid any log writing if the log file was never opened
     // save timestamp before sendto
     currTime = timestamp_now();
-    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT){
+    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT && !exitApp){
         /* Will start it here because to prevent desynchronization
             between the transmit thread and congestion control startup */
         /* Start congestion control threads */
@@ -2575,9 +2588,12 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             }
         }
         if(kinematicsReceive && appLocListener_ && hvLocationInfo){
-            locTimeMs_ = hvLocationInfo->getTimeStamp();
-            locPositionDop_ = hvLocationInfo->getPositionDop();
-            locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
+            {
+                lock_guard<mutex> lk(hvLocUpdateMtx);
+                locTimeMs_ = hvLocationInfo->getTimeStamp();
+                locPositionDop_ = hvLocationInfo->getPositionDop();
+                locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
+            }
         }
     }
     return (validMessage ? encLength : 0);
@@ -2600,15 +2616,7 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
         sopt.sspLength = this->configuration.sspLength;
         sopt.sspMaskLength = this->configuration.sspMaskLength;
     }
-    sopt.enableAsync = this->configuration.enableAsync;
     sopt.secVerbosity = this->configuration.secVerbosity;
-
-    if(kinematicsReceive && appLocListener_ && hvLocationInfo){
-        sopt.hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
-        sopt.hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
-        sopt.hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
-    }
-
     std::thread::id tid = std::this_thread::get_id();
     if(configuration.enableSignStatLog){
         if (thrSignLatencies[tid].size() > signStatIdx[tid]) {

@@ -30,7 +30,7 @@
 /*
  *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -143,7 +143,7 @@ public:
     * Constructor for Simulation of Radio Receives.
     */
     RadioReceive(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port);
-
+    ~RadioReceive();
     /**
     * Blocking mehtod that receives from created flow's socket.
     * @param buf - a char pointer to store the data received.

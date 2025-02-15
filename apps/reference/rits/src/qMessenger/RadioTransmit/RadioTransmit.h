@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -163,7 +163,7 @@ public:
                   const TrafficIpType trafficType,
                   const uint16_t port,
                   const uint32_t serviceId);
-
+    ~RadioTransmit();
     /**
     * Method that transmits data in a buffer based in the constructed flow.
     * @param buf a char pointer of the data buffer to be sent.

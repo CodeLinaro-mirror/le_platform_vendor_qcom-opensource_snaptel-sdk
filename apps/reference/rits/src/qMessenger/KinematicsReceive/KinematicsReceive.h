@@ -28,7 +28,7 @@
  */
 
  /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -100,7 +100,7 @@ private:
    std::shared_ptr<LocListener> locListener_ = nullptr;
    std::vector<std::weak_ptr<ILocationListener>> locListeners_;
    void startDetailsCallback(ErrorCode eventError);
-
+   void responseCallback(ErrorCode errorCode);
 protected:
 
 public:
@@ -110,7 +110,7 @@ public:
    * get method.
     */
    KinematicsReceive();
-
+   ~KinematicsReceive();
 
     /**
     * Constructor that creates a KinematicsReceive Object

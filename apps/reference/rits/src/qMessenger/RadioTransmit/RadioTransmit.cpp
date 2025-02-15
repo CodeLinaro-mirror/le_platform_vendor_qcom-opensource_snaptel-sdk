@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -182,7 +182,7 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
         cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
     }
 }
-
+RadioTransmit::~RadioTransmit(){}
 void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress) {
     string ifName;
     this->destSock.sin6_family = AF_INET6;

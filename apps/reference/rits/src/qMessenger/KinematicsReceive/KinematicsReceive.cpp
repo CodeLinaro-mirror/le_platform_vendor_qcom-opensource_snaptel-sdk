@@ -29,7 +29,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -56,7 +56,12 @@ shared_ptr<ILocationInfoEx> LocListener::getLocation() {
         !locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
             return (locationInfo_!= nullptr || exit_ == true);
         })) {
-        cout<<"request for location too fast. " << +exit_ << std::endl;
+            if(locationInfo_ == nullptr){
+                std::cerr << "location info is nullptr even after 1s\n";
+            }
+        std::cerr << "request for location was too fast. " << +exit_ << std::endl;
+    }else{
+        std::cerr << "get location failed\n";
     }
     return locationInfo_;
 };
@@ -77,10 +82,10 @@ void LocListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &lo
     locationInfo_ = locationInfo;
     if(locCbFunction_){
         locCbFunction_(locationInfo_);
-    }
-    if (not locInfoAvailable) {
-        locInfoAvailable = true;
-        locInfoCv_.notify_all();
+        if (not locInfoAvailable) {
+            locInfoAvailable = true;
+            locInfoCv_.notify_all();
+        }
     }
 }
 
@@ -97,7 +102,9 @@ LocListener::~LocListener(){
 
 
 KinematicsReceive::KinematicsReceive(){}
-
+KinematicsReceive::~KinematicsReceive(){
+    close();
+}
 shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
     if(!KinematicsReceive::instance){
         KinematicsReceive(this->interval);
@@ -133,7 +140,6 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
         // Registering a listener to get location fixes
         locationManager_->registerListenerEx(locListener_);
         // Starting the reports for fixes
-        printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
                             startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
@@ -142,7 +148,7 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
         if (locationManager_) {
             locationManager_ == nullptr;
         }
-        cout << "Error on Location Create.\n";
+        std::cerr << "Error on Location Create.\n";
     }
     this->interval = interval;
 }
@@ -176,7 +182,6 @@ KinematicsReceive::KinematicsReceive(
             }
         }
         // Starting the reports for fixes
-        printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
                             startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
@@ -185,21 +190,32 @@ KinematicsReceive::KinematicsReceive(
         if (locationManager_) {
             locationManager_ == nullptr;
         }
-        cout << "Error on Location Create.\n";
+        std::cerr << "Error on Location Create.\n";
     }
     this->interval = interval;
 }
 
+void KinematicsReceive::responseCallback(ErrorCode errorCode){
+    if(errorCode != ErrorCode::SUCCESS){
+        std::cerr << "Error occurred for report stop. " << (int)errorCode << "\n";
+    }
+}
+
 void KinematicsReceive::close(){
     if (locationManager_) {
+        auto respCallback = [&](ErrorCode error){
+                            responseCallback(error); };
+        locationManager_->stopReports(respCallback);
         if (locListener_) {
-            locListener_->close();
             locationManager_->deRegisterListenerEx(locListener_);
+            locListener_->close();
+        }
+        for (auto listener : locListeners_) {
+            locationManager_->deRegisterListenerEx(listener);
         }
     }
 
-    for (auto listener : locListeners_) {
-        locationManager_->deRegisterListenerEx(listener);
+    if(locationManager_){
+        locationManager_.reset();
     }
-    cout << "Location Listeners closed.\n";
 }

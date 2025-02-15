@@ -637,8 +637,11 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                             }
                             else
                             {
-                                hvLatitude = hvLocationInfo->getLatitude();
-                                hvLongitude = hvLocationInfo->getLongitude();
+                                {
+                                    lock_guard<mutex> lk(hvLocUpdateMtx);
+                                    hvLatitude = hvLocationInfo->getLatitude();
+                                    hvLongitude = hvLocationInfo->getLongitude();
+                                }
                             }
                         }
                         distFromRV = bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
@@ -699,8 +702,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                     unsigned int rvTmpId = rvBsm->id;
                     congestionControlManager->addCongestionControlData(
                         rvTmpId,rvBsm->Latitude/10000000.0,
-                        rvBsm->Longitude / 10000000.0, rvBsm->Heading_degrees,
-                        rvBsm->Speed, rvBsm->timestamp_ms,
+                        rvBsm->Longitude / 10000000.0, rvBsm->Heading_degrees * 0.0125,
+                        rvBsm->Speed / (250/18), rvBsm->timestamp_ms,
                         rvBsm->MsgCount);
                 }
                 if (appVerbosity > 2)
@@ -796,9 +799,12 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
 void SaeApplication::prepareForSecurityChecks(bsm_value_t* bsm, SecurityOpt_t* sopt){
     // set the hv kinematics for consistency, relevancy, mbd checks
     if(hvLocationInfo){
-        sopt->hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
-        sopt->hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
-        sopt->hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
+        {
+            lock_guard<mutex> lk(hvLocUpdateMtx);
+            sopt->hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
+            sopt->hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
+            sopt->hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
+        }
     }
     // set the rv kinematics for consistency, relevancy, mbd checks
     sopt->rvKine.latitude = bsm->Latitude;
@@ -1000,8 +1006,8 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
                                 asyncCbData[PostProcessingCbData[i]].asyncBs.id,
                                 (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
                                 (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees,
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.Speed,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees * 0.0125,
+                                asyncCbData[PostProcessingCbData[i]].asyncBs.Speed * (250/18),
                                 asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
                                 asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
                         }
@@ -1244,8 +1250,11 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
                         }
                         else
                         {
-                            hvLatitude = hvLocationInfo->getLatitude();
-                            hvLongitude = hvLocationInfo->getLongitude();
+                            {
+                                lock_guard<mutex> lk(hvLocUpdateMtx);
+                                hvLatitude = hvLocationInfo->getLatitude();
+                                hvLongitude = hvLocationInfo->getLongitude();
+                            }
                         }
                     }
                     distFromRV = bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
@@ -2113,6 +2122,7 @@ void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
         !appLocListener_ || !hvLocationInfo){
         return;
     }
+    lock_guard<mutex> lk(ApplicationBase::hvLocUpdateMtx);
     //ref_app code with the new telSDK Location
     bsm->Latitude = (hvLocationInfo->getLatitude() * 10000000);
     bsm->Longitude = (hvLocationInfo->getLongitude() * 10000000);

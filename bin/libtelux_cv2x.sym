@@ -501,7 +501,7 @@
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvE11executeTaskEv=so_stub_for_libtelux_cv2x
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvE14purgeCompletedEv=so_stub_for_libtelux_cv2x
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvE3addERSt13shared_futureIvE=so_stub_for_libtelux_cv2x
--Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvE8shutdownEv=so_stub_for_libtelux_cv2x
+-Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvE8shutdownEb=so_stub_for_libtelux_cv2x
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvEC1Ev=so_stub_for_libtelux_cv2x
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvEC2Ev=so_stub_for_libtelux_cv2x
 -Wl,--defsym=_ZN5telux6common14AsyncTaskQueueIvED1Ev=so_stub_for_libtelux_cv2x

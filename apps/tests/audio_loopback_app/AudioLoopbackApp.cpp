@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -101,9 +101,9 @@ static void signalHandler( int signum ) {
 }
 
 Status AudioLoopbackApp::init() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
-    std::promise<ServiceStatus> prom;
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
+    std::promise<ServiceStatus> prom{};
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
     audioManager_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
@@ -124,7 +124,7 @@ Status AudioLoopbackApp::init() {
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;

@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <chrono>
 #include <iostream>
@@ -103,8 +109,8 @@ int main(int, char **) {
    std::shared_ptr<telux::loc::ILocationManager> locationMgr = locationFactory.getLocationManager();
 
    // [5] Check if location subsystem is ready
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
    bool locSubSystemsStatus = locationMgr->isSubsystemReady();
 
    // [5.1] If location subsystem is not ready, wait for it to be ready
@@ -116,7 +122,7 @@ int main(int, char **) {
 
    // [5.2] Exit the application, if SDK is unable to initialize location subsystems
    if(locSubSystemsStatus) {
-      endTime = std::chrono::system_clock::now();
+      endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << std::endl << "Send SMS in the following format";
       std::cout << std::endl

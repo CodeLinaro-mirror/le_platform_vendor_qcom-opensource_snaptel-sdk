@@ -29,7 +29,7 @@
  /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -406,7 +406,7 @@ namespace gn {
             if (df_txcb != nullptr) {
                 df_txcb((char *)e->Buffer, (uint16_t)BufLen);
             }
-            auto now = std::chrono::system_clock::now();
+            auto now = std::chrono::steady_clock::now();
             status = e->Ecv.wait_until(lk, now + TimerValue);
         } while ((count < Config_.itsGnLocationServiceMaxRetrans) ||
                 (status != std::cv_status::timeout));
@@ -450,7 +450,7 @@ namespace gn {
 
             }
             //wait_until will unlock the CBFmutex_
-            auto now = std::chrono::system_clock::now();
+            auto now = std::chrono::steady_clock::now();
             if (!CBFqueue_.empty())
                 status = CBFcv_.wait_until(lk, now + TimerValueBusy);
             else

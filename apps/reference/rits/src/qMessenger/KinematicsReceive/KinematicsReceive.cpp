@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
  /**
   * @file: KinematicsReceive.cpp
@@ -55,13 +61,13 @@ void KinematicsReceive::startDetailsCallback(ErrorCode error){
 KinematicsReceive::KinematicsReceive(){}
 
 shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::steady_clock::now();
     bool newListener = true;
     if(!KinematicsReceive::instance){
         KinematicsReceive(this->interval);
     }
     while(!KinematicsReceive::instance->locationInfo){
-        auto end = std::chrono::system_clock::now();
+        auto end = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsed_seconds = end-start;
         if( newListener && elapsed_seconds.count() > 1){
             cout<<"No location after 1 second. Handling listener.\n";
@@ -70,7 +76,7 @@ shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
         }
     }
     lock_guard<mutex> lk(sync);
-    auto end = std::chrono::system_clock::now();
+    auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     return KinematicsReceive::instance->locationInfo;
 }

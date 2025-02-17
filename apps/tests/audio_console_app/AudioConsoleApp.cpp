@@ -26,7 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file       AudioConsoleApp.cpp
  *
@@ -72,8 +77,8 @@ AudioConsoleApp::~AudioConsoleApp() {
 }
 
 void AudioConsoleApp::init() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
@@ -99,7 +104,7 @@ void AudioConsoleApp::init() {
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;

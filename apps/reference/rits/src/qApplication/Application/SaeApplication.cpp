@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1300,10 +1300,16 @@ void SaeApplication::wraThreadFunc(int routerLifetime)
             // we didn't receive 2nd WRA yet, no idea about the WRA interval.
             // Use routerlifetime as wait time.
             std::chrono::milliseconds wt(routerLifetime*1000);
-            status = wraCv.wait_for(lk, wt);
+            status =
+                wraCv.wait_for(
+                    lk,
+                    std::chrono::steady_clock::duration(wt));
         } else {
             //if no WRA within 3*interval, deem it as out of range of RSU
-            status = wraCv.wait_for(lk, 3*wraInterval);
+            status =
+                wraCv.wait_for(
+                    lk,
+                    std::chrono::steady_clock::duration(3*wraInterval));
         }
         lk.unlock();
         if (status == std::cv_status::timeout) {

@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * Sample program to demonstrate Card Services APIs like get slot ids, getApplications,
@@ -143,7 +149,11 @@ void MyTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode erro
 bool waitForCardEvent(CardEvent cardEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS) {
    std::unique_lock<std::mutex> lock(eventMutex);
    cardEventExpected = cardEvent;
-   auto cvStatus = eventCV.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS));
+   auto cvStatus =
+       eventCV.wait_for(
+           lock,
+           std::chrono::steady_clock::duration(
+               std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS)));
    if(cvStatus == std::cv_status::timeout) {
       std::cout << "Event: " << (int)cardEvent << "not found with in " << DEFAULT_TIMEOUT_IN_SECONDS
                 << "second(s)";
@@ -172,20 +182,23 @@ int main(int, char **) {
 
    // [2] Wait for the telephony subsystem initialization.
    bool subSystemsStatus = cardManager->isSubsystemReady();
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
 
    if(!subSystemsStatus) {
       std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
       std::future<bool> f = cardManager->onSubsystemReady();
-      auto status = f.wait_for(std::chrono::seconds(5));
+      auto status =
+          f.wait_for(
+              std::chrono::steady_clock::duration(
+                  std::chrono::seconds(5)));
       if(status == std::future_status::ready) {
          subSystemsStatus = true;
       }
    }
 
    if(subSystemsStatus) {
-      endTime = std::chrono::system_clock::now();
+      endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;

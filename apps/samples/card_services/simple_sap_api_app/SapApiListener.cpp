@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * Sample program to demonstrate SAP Card Services APIs like get slot ids, getApplications,
@@ -143,7 +149,11 @@ void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode e
 bool waitForSapEvent(SapEvent sapEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS) {
    std::unique_lock<std::mutex> lock(eventMutex);
    eventExpected = sapEvent;
-   auto cvStatus = eventCV.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS));
+   auto cvStatus =
+       eventCV.wait_for(
+           lock,
+           std::chrono::steady_clock::duration(
+               std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS)));
    if(cvStatus == std::cv_status::timeout) {
       std::cout << "Event: " << (int)sapEvent << "not found with in " << DEFAULT_TIMEOUT_IN_SECONDS
                 << "second(s)";
@@ -171,8 +181,8 @@ int main(int, char **) {
 
    // [2] Wait for the telephony subsystem initialization.
    bool subSystemsStatus = phoneManager->isSubsystemReady();
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
 
    if(!subSystemsStatus) {
       std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
@@ -181,7 +191,7 @@ int main(int, char **) {
    }
 
    if(subSystemsStatus) {
-      endTime = std::chrono::system_clock::now();
+      endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;

@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <chrono>
 #include <future>
@@ -80,15 +86,15 @@ telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
         }
         // The dgnssManager object is associated with a default source which support
         // injection of RCTM3 format data.
-        std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-        startTime = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+        startTime = std::chrono::steady_clock::now();
         ServiceStatus dgnssMgrStatus = dgnssManager->getServiceStatus();
         if(dgnssMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Dgnss subsystem is not ready, Please wait" << std::endl;
         }
         dgnssMgrStatus = prom.get_future().get();
         if(dgnssMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-            endTime = std::chrono::system_clock::now();
+            endTime = std::chrono::steady_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
             std::cout << "Elapsed Time for Dgnss subsystems to ready : "
                 << elapsedTime.count() << "s\n"  << std::endl;

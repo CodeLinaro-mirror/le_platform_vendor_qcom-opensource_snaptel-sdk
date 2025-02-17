@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -113,15 +113,15 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
                 prom.set_value(ServiceStatus::SERVICE_FAILED);
             }
         });
-      std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-      startTime = std::chrono::system_clock::now();
+      std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+      startTime = std::chrono::steady_clock::now();
       ServiceStatus locMgrStatus = locationManager->getServiceStatus();
       if(locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
          std::cout << "Location subsystem is not ready, Please wait" << std::endl;
       }
       locMgrStatus = prom.get_future().get();
       if(locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-          endTime = std::chrono::system_clock::now();
+          endTime = std::chrono::steady_clock::now();
           std::chrono::duration<double> elapsedTime = endTime - startTime;
           std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
               << "s\n" << std::endl;
@@ -160,8 +160,8 @@ telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILo
                 prom.set_value(ServiceStatus::SERVICE_FAILED);
             }
         });
-        std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-        startTime = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+        startTime = std::chrono::steady_clock::now();
 
         ServiceStatus locCfgStatus = locationConfigurator->getServiceStatus();
         if(locCfgStatus != ServiceStatus::SERVICE_AVAILABLE) {
@@ -169,7 +169,7 @@ telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILo
         }
         locCfgStatus = prom.get_future().get();
         if(locCfgStatus == ServiceStatus::SERVICE_AVAILABLE) {
-            endTime = std::chrono::system_clock::now();
+            endTime = std::chrono::steady_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
             std::cout << "Elapsed Time for configuration subsystems to ready : "
                 << elapsedTime.count() << "s\n" << std::endl;

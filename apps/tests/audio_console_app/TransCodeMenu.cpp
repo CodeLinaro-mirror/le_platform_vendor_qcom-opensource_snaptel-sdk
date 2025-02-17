@@ -375,7 +375,9 @@ void TransCodeMenu::read() {
                         (sampleRate*numChannels*16);
     waitTime = waitTime+ GAURD_FOR_WAITING;
     while (readBuffers_.size() != TOTAL_READ_BUFFERS && ready_) {
-        cvRead_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        cvRead_.wait_for(lock,
+                         std::chrono::steady_clock::duration(
+                             std::chrono::milliseconds(waitTime)));
     }
 
     std::lock_guard<std::mutex> lock1(readFileM_);

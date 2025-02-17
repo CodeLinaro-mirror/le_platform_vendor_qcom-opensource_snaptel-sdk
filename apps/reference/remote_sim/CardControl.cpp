@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file    CardControl.cpp
@@ -175,7 +181,9 @@ Status CardControl::init()
     if (!(cardMgr_->isSubsystemReady())) {
         LOGD("Card subsystem not ready yet, waiting...\n");
         auto f = cardMgr_->onSubsystemReady();
-        if (f.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
+        if (f.wait_for(
+                std::chrono::steady_clock::duration(
+                    std::chrono::seconds(timeoutSec))) != std::future_status::ready) {
             LOGE("Subsystem did not come up within %d seconds, exiting!\n", timeoutSec);
             return Status::FAILED;
         }
@@ -422,7 +430,9 @@ Status CardControl::openSapConn()
     openConnPromise_ = std::promise<bool>();
     auto openConnFuture = openConnPromise_.get_future();
 
-    if (openConnFuture.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
+    if (openConnFuture.wait_for(
+            std::chrono::steady_clock::duration(
+                std::chrono::seconds(timeoutSec))) != std::future_status::ready) {
         LOGE("SIM connection did not open within %d seconds!\n", timeoutSec);
         return Status::FAILED;
     }
@@ -454,7 +464,9 @@ Status CardControl::requestPowerOn()
     powerOnPromise_ = std::promise<bool>();
     auto powerOnFuture = powerOnPromise_.get_future();
 
-    if (powerOnFuture.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
+    if (powerOnFuture.wait_for(
+            std::chrono::steady_clock::duration(
+                std::chrono::seconds(timeoutSec))) != std::future_status::ready) {
         LOGE("SIM didn't power on within %d seconds!\n", timeoutSec);
         return Status::FAILED;
     }

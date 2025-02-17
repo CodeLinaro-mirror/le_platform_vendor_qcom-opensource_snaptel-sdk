@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       AudioClient.cpp
@@ -68,8 +74,8 @@ bool AudioClient::isReady() {
 Status AudioClient::init() {
 #ifdef AUDIO_SUPPORTED
     // Get the AudioFactory and AudioManager instances.
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
     audioMgr_ = audioFactory.getAudioManager();
@@ -91,7 +97,7 @@ Status AudioClient::init() {
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
     if (ready_) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;

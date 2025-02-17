@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file LocationTable.cpp
  * @brief implementation of location table class
@@ -239,7 +245,7 @@ namespace gn {
                 }
             }
             //wait_until will unlock the TableMutex_
-            auto now = std::chrono::system_clock::now();
+            auto now = std::chrono::steady_clock::now();
             auto status = Cv_.wait_until(lk, now + TimerValue);
             if (status == std::cv_status::timeout)
                 continue;

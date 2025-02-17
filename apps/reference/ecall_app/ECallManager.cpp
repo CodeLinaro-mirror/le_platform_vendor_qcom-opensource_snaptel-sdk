@@ -31,7 +31,7 @@
  *
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -142,7 +142,10 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
+                == locUpdateCV_.wait_for(
+                    lock,
+                    std::chrono::steady_clock::duration(
+                        std::chrono::milliseconds(locUpdateIntervalMs_)))) {
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
@@ -176,7 +179,10 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
+                == locUpdateCV_.wait_for(
+                    lock,
+                    std::chrono::steady_clock::duration(
+                        std::chrono::milliseconds(locUpdateIntervalMs_)))) {
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }

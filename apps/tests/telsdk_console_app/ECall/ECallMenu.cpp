@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <iostream>
 
@@ -176,8 +182,8 @@ void ECallMenu::removeCallListener(std::shared_ptr<telux::tel::ICallListener> li
 }
 
 bool ECallMenu::initalizeSDK() {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
    //  Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
@@ -195,7 +201,7 @@ bool ECallMenu::initalizeSDK() {
 
        //  Exit the application, if SDK is unable to initialize telephony subsystems
        if(subSystemStatus) {
-          endTime = std::chrono::system_clock::now();
+          endTime = std::chrono::steady_clock::now();
           std::chrono::duration<double> elapsedTime = endTime - startTime;
           registerCallListener(callListener_);
           phoneManager->getPhoneIds(phoneIds_);

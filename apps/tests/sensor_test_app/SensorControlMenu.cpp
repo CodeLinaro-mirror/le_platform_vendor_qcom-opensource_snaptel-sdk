@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -94,8 +94,8 @@ SensorControlMenu::~SensorControlMenu() {
 }
 
 telux::common::ServiceStatus SensorControlMenu::initSensorManager() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
     std::promise<ServiceStatus> prom;
     //  Get the SensorFactory and SensorManager instances.
     auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
@@ -114,7 +114,7 @@ telux::common::ServiceStatus SensorControlMenu::initSensorManager() {
     }
     //  Exit the application, if SDK is unable to initialize sensor subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Sensor Subsystems to ready : " << elapsedTime.count() << "s"
                   << std::endl;

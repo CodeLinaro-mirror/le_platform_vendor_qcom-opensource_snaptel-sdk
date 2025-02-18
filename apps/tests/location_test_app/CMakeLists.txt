@@ -6,7 +6,6 @@ set(TARGET_LOCATION_TEST_APP location_test_app)
 set(APPS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 set(LOCATION_TEST_APP_SOURCES
-    DgnssMenu.cpp
     LocationMenu.cpp
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
@@ -40,6 +39,3 @@ target_link_libraries(${TARGET_LOCATION_TEST_APP} telux_loc telux_common)
 install ( TARGETS ${TARGET_LOCATION_TEST_APP}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
-install ( FILES config_files/OSNMA_MerkleTree.xml
-          DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
-          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ )

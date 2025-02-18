@@ -81,7 +81,6 @@
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationManager.hpp>
 #include <telux/loc/LocationConfigurator.hpp>
-#include <telux/loc/DgnssManager.hpp>
 
 namespace telux {
 
@@ -120,19 +119,6 @@ public:
     */
    virtual std::shared_ptr<ILocationConfigurator> getLocationConfigurator(
        telux::common::InitResponseCb callback = nullptr) = 0;
-
-   /**
-    * Get instance of Dgnss manager.
-    *
-    * @param[in] dataFormat @ref DgnssDataFormat RTCM injection data format
-    * @param[in] callback   Optional callback pointer to get the response of the manager
-    *                       initialisation.
-    *
-    * @returns Pointer of IDgnssManager object.
-    */
-   virtual std::shared_ptr<IDgnssManager> getDgnssManager(
-       DgnssDataFormat dataFormat = DgnssDataFormat::DATA_FORMAT_RTCM_3,
-           telux::common::InitResponseCb callback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
 protected:

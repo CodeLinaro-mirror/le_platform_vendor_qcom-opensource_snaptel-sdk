@@ -243,6 +243,8 @@ grpc::Status SmsManagerServerImpl::RequestSmsMessageList(ServerContext* context,
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         telStub::SmsTagType::TagType tag = request->tag_type();
         telux::tel::SmsTagType type = static_cast<telux::tel::SmsTagType>(tag);
+        telux::tel::StorageType storageType =
+            static_cast<telux::tel::StorageType>(request->storage_type());
         std::vector<telux::tel::SmsMetaInfo> infos;
         telux::common::Status status;
         telux::common::ErrorCode error;
@@ -250,28 +252,30 @@ grpc::Status SmsManagerServerImpl::RequestSmsMessageList(ServerContext* context,
         CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay);
 
         if(status == telux::common::Status::SUCCESS) {
-            int size = getSMSStorage(phoneId);
+            std::string storageName;
+            if (storageType == telux::tel::StorageType::SIM) {
+                storageName = "SmsDatabaseSimStorage";
+            } else if (storageType == telux::tel::StorageType::NV) {
+                storageName = "SmsDatabaseNvStorage";
+            }
+            int size = getSMSStorage(phoneId, storageName);
             for (int i = 0; i < size; i++) {
                 telux::tel::SmsTagType typeInput = type;
                 telux::tel::SmsMetaInfo Info;
                 if (type == telux::tel::SmsTagType::UNKNOWN) {
                     Info.msgIndex =
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
-                        ["smsMetaInfo_msgIndex"].asInt();
+                        rootObj[TEL_SMS_MANAGER][storageName][i]["smsMetaInfo_msgIndex"].asInt();
                     std::string tagType =
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
-                        ["smsMetaInfo_tagType"].asString();
+                        rootObj[TEL_SMS_MANAGER][storageName][i]["smsMetaInfo_tagType"].asString();
                     Info.tagType = Helper::getTagType(tagType);
                     infos.push_back(Info);
                 } else if ((type == telux::tel::SmsTagType::MT_READ) ||
                             (type == telux::tel::SmsTagType::MT_NOT_READ)) {
                     std::string tag =
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
-                        ["smsMetaInfo_tagType"].asString();
+                        rootObj[TEL_SMS_MANAGER][storageName][i]["smsMetaInfo_tagType"].asString();
                     telux::tel::SmsTagType tagType = Helper::getTagType(tag);
                     if(typeInput == tagType ) {
-                        Info.msgIndex =
-                        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
+                        Info.msgIndex = rootObj[TEL_SMS_MANAGER][storageName][i]\
                             ["smsMetaInfo_msgIndex"].asInt();
                         Info.tagType =  tagType;
                         infos.push_back(Info);
@@ -305,12 +309,12 @@ grpc::Status SmsManagerServerImpl::RequestSmsMessageList(ServerContext* context,
     return readStatus;
     }
 
-int SmsManagerServerImpl::getSMSStorage(int phoneId) {
+int SmsManagerServerImpl::getSMSStorage(int phoneId, std::string storageName) {
     LOG(DEBUG, __FUNCTION__);
     std::string jsonfilename = "";
     Json::Value rootObj;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    int size = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
+    int size = rootObj[TEL_SMS_MANAGER][storageName].size();
     LOG(DEBUG, __FUNCTION__, "size of SmsDatabaseStorage is", size);
     return size;
 }
@@ -324,14 +328,16 @@ grpc::Status SmsManagerServerImpl::ReadMessage(ServerContext *context,
     Json::Value rootObj;
     int phoneId = request->phone_id();
     uint32_t messageIndex = request->msg_index();
-    LOG(ERROR, __FUNCTION__, " MsgIndex ", messageIndex );
+    telStub::StorageType::Type type = request->storage_type();
+    telux::tel::StorageType storageType = static_cast<telux::tel::StorageType>(type);
+    LOG(DEBUG, __FUNCTION__, " MsgIndex ", messageIndex, " storageType ",
+        static_cast<int>(storageType));
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
         std::string jsonObjApiResponseFileName = "";
         Json::Value jsonObjApiResponse;
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
-        uint32_t size = getSMSStorage(phoneId);
         uint32_t index_for_db;
         SmsMsg msg;
         telux::common::Status status;
@@ -339,16 +345,22 @@ grpc::Status SmsManagerServerImpl::ReadMessage(ServerContext *context,
         int delay;
         bool found = false;
         CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay);
-
+        std::string storageName;
+        if (storageType == telux::tel::StorageType::SIM) {
+            storageName = "SmsDatabaseSimStorage";
+        } else if (storageType == telux::tel::StorageType::NV) {
+            storageName = "SmsDatabaseNvStorage";
+        }
+        uint32_t size = getSMSStorage(phoneId, storageName);
         if(status == telux::common::Status::SUCCESS) {
             for (index_for_db = 0; index_for_db < size; index_for_db++) {
                 uint32_t Id = -1;
-                Id = std::stoi(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index_for_db]\
+                Id = std::stoi(rootObj[TEL_SMS_MANAGER][storageName][index_for_db]\
                     ["smsMetaInfo_msgIndex"].asString());
                 LOG(DEBUG, __FUNCTION__, " MsgIndex ", Id);
-                if(Id == messageIndex ) {
+                if(Id == messageIndex) {
                     LOG(DEBUG, __FUNCTION__, " Fetching data at MsgIndex ", index_for_db);
-                    parseMessageAtIndex(phoneId, index_for_db, msg);
+                    parseMessageAtIndex(phoneId, index_for_db, msg, storageName);
                     found = true;
                     break;
                 }
@@ -400,39 +412,39 @@ grpc::Status SmsManagerServerImpl::ReadMessage(ServerContext *context,
     return readStatus;
 }
 
-void SmsManagerServerImpl::parseMessageAtIndex(int phoneId, int index, SmsMsg& msg ) {
+void SmsManagerServerImpl::parseMessageAtIndex(int phoneId, int index, SmsMsg& msg,
+    std::string storageName) {
     LOG(DEBUG, __FUNCTION__,"Index", index );
     std::string jsonfilename = "";
     Json::Value rootObj;
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
         getJsonForSystemData(phoneId, jsonfilename, rootObj);
-        msg.text = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]["text"].asString();
+        msg.text = rootObj[TEL_SMS_MANAGER][storageName][index]["text"].asString();
         LOG(DEBUG, __FUNCTION__,"text_", msg.text );
-        msg.sender = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]["sender"].asString();
-        msg.receiver = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]\
-            ["receiver"].asString();
-        std::string encoding = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]\
+        msg.sender = rootObj[TEL_SMS_MANAGER][storageName][index]["sender"].asString();
+        msg.receiver = rootObj[TEL_SMS_MANAGER][storageName][index]["receiver"].asString();
+        std::string encoding = rootObj[TEL_SMS_MANAGER][storageName][index]\
             ["encoding"].asString();
         msg.encoding = Helper::getencodingMethod(encoding);
-        msg.pdu = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]["pdu"].asString();
-        msg.msgIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]\
+        msg.pdu = rootObj[TEL_SMS_MANAGER][storageName][index]["pdu"].asString();
+        msg.msgIndex = rootObj[TEL_SMS_MANAGER][storageName][index]\
             ["smsMetaInfo_msgIndex"].asInt();
-        msg.messageInfoRefNumber = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["messagePartInfo_refNumber"].asInt();
-        msg.messageInfoSegments = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["messagePartInfo_numberOfSegments"].asInt();
-        msg.messageInfoSegmentNumber = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["messagePartInfo_segmentNumber"].asInt();
+        msg.messageInfoRefNumber = rootObj[TEL_SMS_MANAGER][storageName][index]\
+            ["messagePartInfo_refNumber"].asInt();
+        msg.messageInfoSegments = rootObj[TEL_SMS_MANAGER][storageName][index]\
+            ["messagePartInfo_numberOfSegments"].asInt();
+        msg.messageInfoSegmentNumber = rootObj[TEL_SMS_MANAGER][storageName][index]\
+            ["messagePartInfo_segmentNumber"].asInt();
         LOG(DEBUG, __FUNCTION__,"messagePartInfo_refNumber", msg.messageInfoRefNumber );
         LOG(DEBUG, __FUNCTION__,"messagePartInfo_numberOfSegments", msg.messageInfoSegments );
         LOG(DEBUG, __FUNCTION__,"messagePartInfo_segmentNumber", msg.messageInfoSegmentNumber );
-        std::string tagType = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["smsMetaInfo_tagType"].asString();
+        std::string tagType = rootObj[TEL_SMS_MANAGER][storageName][index]\
+            ["smsMetaInfo_tagType"].asString();
         msg.tagType = Helper::getTagType(tagType );
-        msg.isMetaInfoValid = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-            [index]["isMetaInfoValid"].asBool();
-        msg.pduBuffer = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index]["rawPdu"].asString();
+        msg.isMetaInfoValid = rootObj[TEL_SMS_MANAGER][storageName][index]\
+            ["isMetaInfoValid"].asBool();
+        msg.pduBuffer = rootObj[TEL_SMS_MANAGER][storageName][index]["rawPdu"].asString();
     }
 }
 
@@ -458,18 +470,26 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         telStub::DelType::DeleteType deleteType = request->del_type();
         telux::tel::DeleteType deltype = static_cast<telux::tel::DeleteType>(deleteType);
+        telStub::StorageType::Type type = request->storage_type();
+        telux::tel::StorageType storageType = static_cast<telux::tel::StorageType>(type);
         CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay);
 
         if(status == telux::common::Status::SUCCESS) {
-            uint32_t size = getSMSStorage(phoneId);
             uint32_t index_for_db;
             int adjust_index = 0;
             bool delAtIndex = true;
             std::vector<int> indexstodelete;
+            std::string storageName;
+            if (storageType == telux::tel::StorageType::SIM) {
+                storageName = "SmsDatabaseSimStorage";
+            } else if (storageType == telux::tel::StorageType::NV) {
+                storageName = "SmsDatabaseNvStorage";
+            }
+            uint32_t size = getSMSStorage(phoneId, storageName);
             for (index_for_db = 0; index_for_db < size; index_for_db++) {
                 if(deltype == telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG) {
                     std::string tag =
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index_for_db]\
+                        rootObj[TEL_SMS_MANAGER][storageName][index_for_db]\
                         ["smsMetaInfo_tagType"].asString().c_str();
                     if (Helper::getTagType(tag) == tagType) {
                         int tmp = index_for_db - adjust_index;
@@ -477,16 +497,15 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
                         adjust_index++;
                     }
                 } else if (deltype == telux::tel::DeleteType::DELETE_MSG_AT_INDEX) {
-                    uint32_t Id =
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index_for_db]\
+                    uint32_t Id = rootObj[TEL_SMS_MANAGER][storageName][index_for_db]\
                         ["smsMetaInfo_msgIndex"].asInt();
-                    if(Id == messageIndex) {
+                    if(Id == messageIndex ) {
                         indexstodelete.push_back(index_for_db);
                         break;
                     }
                 } else if (deltype == telux::tel::DeleteType::DELETE_ALL) {
                     Json::Value newRoot;
-                    rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"] = newRoot["SmsDatabaseStorage"];
+                    rootObj[TEL_SMS_MANAGER][storageName] = newRoot[storageName];
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                     delAtIndex = false;
@@ -495,7 +514,7 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
                 }
             }
             if(delAtIndex) {
-                error = deletedSmsatIndex(phoneId, indexstodelete);
+                error = deletedSmsatIndex(phoneId, indexstodelete, storageName);
             }
         }
         //Create respone
@@ -510,7 +529,7 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
 }
 
 telux::common::ErrorCode SmsManagerServerImpl::deletedSmsatIndex(int phoneId,
-    std::vector<int> index) {
+    std::vector<int> index, std::string storageName) {
     std::string jsonfilename = "";
     Json::Value rootObj;
     ErrorCode error;
@@ -524,20 +543,20 @@ telux::common::ErrorCode SmsManagerServerImpl::deletedSmsatIndex(int phoneId,
             if (error != ErrorCode::SUCCESS) {
                 LOG(ERROR, __FUNCTION__, " Reading JSON File failed!");
             }
-            int numprofiles = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
+            int numprofiles = rootObj[TEL_SMS_MANAGER][storageName].size();
             LOG(DEBUG, __FUNCTION__, numprofiles);
 
             int newCount = 0;
             for (int i=0; i < numprofiles; i++) {
                 if(i != *itr) {
-                    newRoot["SmsDatabaseStorage"][newCount] =
-                        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i];
+                    newRoot[storageName][newCount] =
+                        rootObj[TEL_SMS_MANAGER][storageName][i];
                     newCount++;
                 } else {
                     LOG(DEBUG, __FUNCTION__, " The index deleting currently is  ", *itr);
                 }
             }
-            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"] = newRoot["SmsDatabaseStorage"];
+            rootObj[TEL_SMS_MANAGER][storageName] = newRoot[storageName];
             error = JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
         }
@@ -644,10 +663,17 @@ grpc::Status SmsManagerServerImpl::SetTag(ServerContext *context,
         uint32_t messageIndex = request->msg_index();
         telStub::SmsTagType::TagType tag = request->tag_type();
         telux::tel::SmsTagType tagType = static_cast<telux::tel::SmsTagType>(tag);
+        telStub::StorageType::Type type = request->storage_type();
+        telux::tel::StorageType storageType = static_cast<telux::tel::StorageType>(type);
         CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay);
-
+        std::string storageName;
+        if (storageType == telux::tel::StorageType::SIM) {
+            storageName = "SmsDatabaseSimStorage";
+        } else if (storageType == telux::tel::StorageType::NV) {
+            storageName = "SmsDatabaseNvStorage";
+        }
         if(status == telux::common::Status::SUCCESS) {
-            uint32_t size = getSMSStorage(phoneId);
+            uint32_t size = getSMSStorage(phoneId, storageName);
             uint32_t index_for_db;
             if (messageIndex > size) {
                 LOG(ERROR, __FUNCTION__, " MsgIndex ", messageIndex ," not found");
@@ -657,12 +683,12 @@ grpc::Status SmsManagerServerImpl::SetTag(ServerContext *context,
             if (foundMsgIndex) {
                 for (index_for_db = 0; index_for_db < size; index_for_db++) {
                     uint32_t Id = -1;
-                    Id = std::stoi(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"]\
-                        [index_for_db]["smsMetaInfo_msgIndex"].asString());
+                    Id = std::stoi(rootObj[TEL_SMS_MANAGER][storageName][index_for_db]\
+                        ["smsMetaInfo_msgIndex"].asString());
                     LOG(DEBUG, __FUNCTION__, " messageIndex ", Id);
-                    if(Id == messageIndex ) {
-                        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index_for_db]\
-                            ["smsMetaInfo_tagType"] = Helper::tagTypeToString(tagType);
+                    if(Id == messageIndex) {
+                        rootObj[TEL_SMS_MANAGER][storageName][index_for_db]["smsMetaInfo_tagType"]
+                            = Helper::tagTypeToString(tagType);
                         JsonParser::writeToJsonFile(rootObj, jsonfilename);
                         jsonObjSystemStateSlot_[phoneId] = rootObj;
                     }
@@ -694,16 +720,27 @@ grpc::Status SmsManagerServerImpl::RequestStorageDetails(ServerContext *context,
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
     grpc::Status readStatus = readJson();
+    telStub::StorageType::Type type = request->storage_type();
+    telux::tel::StorageType storageType = static_cast<telux::tel::StorageType>(type);
     if(readStatus.ok()) {
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         bool isCallback = isCallbackNeeded(jsonObjApiResponse, apiname);
         CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay);
 
         if(status == telux::common::Status::SUCCESS) {
-            size = getSMSStorage(phoneId);
-            maxCount =
-            jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
-                ["requestStorageDetailsCbMaxCount"].asInt();
+            std::string storageName;
+            std::string maxCountName;
+            if (storageType == telux::tel::StorageType::SIM) {
+                storageName = "SmsDatabaseSimStorage";
+                maxCountName = "requestSimStorageDetailsCbMaxCount";
+            } else if (storageType == telux::tel::StorageType::NV) {
+                storageName = "SmsDatabaseNvStorage";
+                maxCountName = "requestNvStorageDetailsCbMaxCount";
+            }
+            size = getSMSStorage(phoneId, storageName);
+            maxCount = jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
+                    [maxCountName].asInt();
+
             availableCount = maxCount - size;
         }
 
@@ -1005,7 +1042,7 @@ void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
 
 }
 
-int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
+int SmsManagerServerImpl::getNewSmsIndex(int phoneId, std::string storageName) {
     std::string jsonfilename = "";
     Json::Value rootObj;
     int currentIndex;
@@ -1015,12 +1052,12 @@ int SmsManagerServerImpl::getNewSmsIndex(int phoneId) {
     /* If sms message of index 0 is not present return index 0
      * as it's the first missing element of database.
      */
-    if(rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][0]["smsMetaInfo_msgIndex"].asInt() == 0) {
-        int size = getSMSStorage(phoneId);
+    if(rootObj[TEL_SMS_MANAGER][storageName][0]["smsMetaInfo_msgIndex"].asInt() == 0) {
+        int size = getSMSStorage(phoneId, storageName);
         for (int i = 0; i < size - 1; i++) {
-            currentIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i]\
+            currentIndex = rootObj[TEL_SMS_MANAGER][storageName][i]\
                 ["smsMetaInfo_msgIndex"].asInt();
-            nextIndex = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i+1]\
+            nextIndex = rootObj[TEL_SMS_MANAGER][storageName][i+1]\
                 ["smsMetaInfo_msgIndex"].asInt();
             if(nextIndex != currentIndex + 1) {
                 flag = true;
@@ -1120,11 +1157,6 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__, "The fetched segmentNumber is: ", segmentNumber);
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
 
-    /* Update msgIndex */
-
-    msgIndex = getNewSmsIndex(phoneId);
-    LOG(DEBUG, __FUNCTION__, "The fetched msgIndex is: ", msgIndex);
-
     /* Update tagType */
 
     tagType = "MT_NOT_READ";
@@ -1215,16 +1247,27 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
     std::string storage = rootObj[TEL_SMS_MANAGER]["setPreferredStorage"]\
         ["storageType"].asString();
     telux::tel::StorageType type = Helper::getstorageType(storage);
-    if(type == telux::tel::StorageType::SIM) {
-        int size = getSMSStorage(phoneId);
-        uint32_t maxCount =
-        jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
-            ["requestStorageDetailsCbMaxCount"].asInt();
-        uint32_t availableCount = maxCount - size;
+    std::string storageName;
+    std::string maxCountName;
+    if (type == telux::tel::StorageType::SIM) {
+        storageName = "SmsDatabaseSimStorage";
+        maxCountName = "requestSimStorageDetailsCbMaxCount";
+    } else if (type == telux::tel::StorageType::NV) {
+        storageName = "SmsDatabaseNvStorage";
+        maxCountName = "requestNvStorageDetailsCbMaxCount";
+    }
+    /* Update msgIndex */
+    msgIndex = getNewSmsIndex(phoneId, storageName);
+    LOG(DEBUG, __FUNCTION__, "The fetched msgIndex is: ", msgIndex);
+    if(type == telux::tel::StorageType::SIM || type == telux::tel::StorageType::NV) {
+        int currentSMSCount = getSMSStorage(phoneId, storageName);
+        LOG(DEBUG, __FUNCTION__,"Current SMS Count is : ", currentSMSCount);
+
+        uint32_t maxCount = jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
+            [maxCountName].asInt();
+        uint32_t availableCount = maxCount - currentSMSCount;
         if(availableCount > 0) {
             Json::Value newSms;
-            int currentSMSCount = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
-            LOG(DEBUG, __FUNCTION__,"Current SMS  Count is : ", currentSMSCount);
             newSms["text"] = text;
             newSms["sender"] = sender;
             newSms["receiver"] = receiver;
@@ -1237,10 +1280,10 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
             newSms["isMetaInfoValid"] = isMetaInfoValid;
             newSms["smsMetaInfo_msgIndex"] =  msgIndex;
             newSms["smsMetaInfo_tagType"] = tagType;
-            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][currentSMSCount] = newSms;
+            rootObj[TEL_SMS_MANAGER][storageName][currentSMSCount] = newSms;
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
-            sortDatabase(phoneId, newSms, msgIndex);
+            sortDatabase(phoneId, newSms, msgIndex, storageName);
         } else {
             LOG(DEBUG, __FUNCTION__, "Memory Full ");
         }
@@ -1254,22 +1297,23 @@ void SmsManagerServerImpl::handleIncomingSms(std::string eventParams) {
         taskQ_->add(f);
 }
 
-void SmsManagerServerImpl::sortDatabase(int phoneId, Json::Value newSms, int index) {
+void SmsManagerServerImpl::sortDatabase(int phoneId, Json::Value newSms, int index,
+    std::string storageName) {
     std::string jsonfilename = "";
     Json::Value rootObj;
     LOG(DEBUG, __FUNCTION__,"Index is : ", index);
 
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    int currentSMSCount = rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"].size();
-    LOG(DEBUG, __FUNCTION__,"Current SMS  Count is : ", currentSMSCount);
+    int currentSMSCount = rootObj[TEL_SMS_MANAGER][storageName].size();
+    LOG(DEBUG, __FUNCTION__,"Current SMS Count is : ", currentSMSCount);
     if(index > currentSMSCount - 1) {
         return;
     } else {
         for (int i = currentSMSCount - 1; i > index ; --i ) {
-           rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i] =
-            rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][i - 1];
+           rootObj[TEL_SMS_MANAGER][storageName][i] =
+            rootObj[TEL_SMS_MANAGER][storageName][i - 1];
         }
-        rootObj[TEL_SMS_MANAGER]["SmsDatabaseStorage"][index] = newSms;
+        rootObj[TEL_SMS_MANAGER][storageName][index] = newSms;
     }
     JsonParser::writeToJsonFile(rootObj, jsonfilename);
     jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1312,18 +1356,38 @@ grpc::Status SmsManagerServerImpl::IsMemoryFull(ServerContext *context,
     std::string jsonfilename = "";
     Json::Value rootObj;
     int phoneId = request->phone_id();
-    getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
-
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    telux::tel::StorageType type = telux::tel::StorageType::UNKNOWN;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        std::string storage = rootObj[TEL_SMS_MANAGER]["setPreferredStorage"]\
+            ["storageType"].asString();
+        type = Helper::getstorageType(storage);
+    }
     bool isMemoryFull = false;
-    int size = getSMSStorage(phoneId);
-    uint32_t maxCount =
-    rootObj[TEL_SMS_MANAGER]["requestStorageDetails"]
-        ["requestStorageDetailsCbMaxCount"].asInt();
+    std::string storageName;
+    std::string maxCountName;
+    if (type == telux::tel::StorageType::SIM) {
+        storageName = "SmsDatabaseSimStorage";
+        maxCountName = "requestSimStorageDetailsCbMaxCount";
+    } else if (type == telux::tel::StorageType::NV) {
+        storageName = "SmsDatabaseNvStorage";
+        maxCountName = "requestNvStorageDetailsCbMaxCount";
+    }
+    int size = getSMSStorage(phoneId, storageName);
+    uint32_t maxCount = jsonObjApiResponse[TEL_SMS_MANAGER]["requestStorageDetails"]\
+        [maxCountName].asInt();
+
     uint32_t availableCount = maxCount - size;
     if(availableCount == 0) {
         isMemoryFull = true;
     }
     //Create response
     response->set_ismemoryfull(isMemoryFull);
+    response->set_storage_type(static_cast<telStub::StorageType::Type>(type));
+
     return grpc::Status::OK;
 }

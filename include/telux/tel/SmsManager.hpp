@@ -128,6 +128,7 @@ enum class StorageType {
    UNKNOWN = -1,     /**< Unknown storage type */
    NONE,             /**< This indicates SMS not stored on any of storage and is directly notified to client. This is the default storage type */
    SIM,              /**< This indicates SMS is stored on SIM */
+   NV,               /**< This indicates SMS is stored on NV */
 };
 
 /**
@@ -135,8 +136,9 @@ enum class StorageType {
  */
 struct DeleteInfo {
     DeleteType delType; /**< Specifies the type of delete operation to be performed */
-    SmsTagType tagType; /**< 1. If SMS tag type is set to @ref telux::tel::SmsTagType::UNKNOWN and delType is set to @ref telux::tel::DeleteType::DELETE_ALL then all messages on the storage would be deleted.\n 2. To delete all messages of a particular tag, set tagType to the particular tag like @ref telux::tel::SmsTagType::MT_READ and delType to @ref telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG */
+    SmsTagType tagType; /**< 1. If SMS tag type is set to @ref telux::tel::SmsTagType::UNKNOWN and delType is set to @ref telux::tel::DeleteType::DELETE_ALL then all messages on the storage of @ref telux::tel::StorageType::SIM or @ref telux::tel::StorageType::NV would be deleted.\n 2. To delete all messages of a particular tag, set tagType to the particular tag like @ref telux::tel::SmsTagType::MT_READ and delType to @ref telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG */
     uint32_t msgIndex;  /**< To delete message at specific index, specify msgIndex and delType as @ref telux::tel::DeleteType::DELETE_MSG_AT_INDEX */
+    StorageType storageType;    /**< Specifies the storage type of delete operation to be performed */
 };
 
 /**
@@ -311,7 +313,7 @@ private:
    std::shared_ptr<MessagePartInfo> msgPartInfo_;        /**< Information related to part of
                                                               multi-part message */
    bool isMetaInfoValid_;                                /**< If true meta information is valid otherwise not */
-   SmsMetaInfo metaInfo_;                                /**< Meta information related to SMS stored on SIM */
+   SmsMetaInfo metaInfo_;                                /**< Meta information related to SMS stored on SIM or NV */
 };
 
 /**
@@ -368,7 +370,7 @@ using SmsResponseCbEx = std::function<void(std::vector<int> msgRefs,
 
 /**
  * This function can be invoked in response to getting a list of message information for the
- * messages saved in SIM storage. To get message detail at a specific index on storage,
+ * messages saved in SIM or NV storage. To get message detail at a specific index on storage,
  * @ref telux::tel::ISmsManager::readMessage API should be invoked. The callback can be
  * invoked from multiple different threads. The implementation should be thread-safe.
  *
@@ -382,8 +384,8 @@ using RequestSmsInfoListCb = std::function<void(std::vector<SmsMetaInfo> infos,
    telux::common::ErrorCode errorCode)>;
 
 /**
- * This function can be invoked in response to reading SMS message on SIM storage. The callback can
- * be from multiple different threads. The implementation should be thread-safe.
+ * This function can be invoked in response to reading SMS message on SIM or NV storage.
+ * The callback can be from multiple different threads. The implementation should be thread-safe.
  *
  * @param [in] message        @ref telux::tel::SmsMessage
  * @param [in] errorCode      Return code which indicates whether the operation
@@ -409,8 +411,8 @@ using RequestPreferredStorageCb = std::function<void(StorageType type,
  * This function can be invoked in response to request for storage details. The callback can be
  * from multiple different threads. The implementation should be thread-safe.
  *
- * @param [in] maxCount              Maximum number of messages allowed for SIM storage.
- * @param [in] availableCount        Available count in terms of SIM messages.
+ * @param [in] maxCount              Maximum number of messages allowed for SIM or NV storage.
+ * @param [in] availableCount        Available count in terms of SIM or NV messages.
  * @param [in] errorCode             Return code which indicates whether the operation
  *                                   succeeded or not.  @ref telux::common::ErrorCode.
  *
@@ -519,7 +521,9 @@ public:
       = 0;
 
    /**
-    * Requests a list of message information for the messages saved in SIM storage.
+    * Requests a list of message information for the messages saved in SIM or NV storage.
+    * If the storageType parameter is not explicitly provided, the system defaults to querying
+    * messages from the SIM storage.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_STORAGE
     * permission to invoke this API successfully.
@@ -529,30 +533,37 @@ public:
     *                            @ref telux::tel::SmsTagType::UNKNOWN will retrieve all the messages
     *                            from storage.
     * @param [in] callback       Callback  to get the response of request SMS messages info.
+    * @param [in] storageType    @ref telux::tel::StorageType.
     *
     * @returns Status of requestSmsMessageList i.e. success or suitable error code.
     *
     */
    virtual telux::common::Status requestSmsMessageList(SmsTagType type,
-      RequestSmsInfoListCb callback) = 0;
+      RequestSmsInfoListCb callback, StorageType storageType = StorageType::SIM) = 0;
 
    /**
-    * Retrieve a particular message from SIM storage matching the index.
+    * Retrieve a particular message from SIM or NV storage matching the index.
+    * If the storageType parameter is not explicitly provided, the system defaults to reading
+    * messages from the SIM storage.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_STORAGE
     * permission to invoke this API successfully.
     *
     * @param [in] messageIndex   SMS index on storage.
-    * @param [in] callback       Callback to get the response of read SMS message from storage .
+    * @param [in] callback       Callback to get the response of read SMS message from storage.
+    * @param [in] storageType    @ref telux::tel::StorageType.
     *
     * @returns Status of readMessage i.e. success or suitable error code.
     *
     */
-   virtual telux::common::Status readMessage(uint32_t messageIndex, ReadSmsMessageCb callback) = 0;
+   virtual telux::common::Status readMessage(uint32_t messageIndex, ReadSmsMessageCb callback,
+       StorageType storageType = StorageType::SIM) = 0;
 
    /**
-    * Delete specific SMS based on message index or delete messages on SIM storage based on
-    * @ref telux::tel::SmsTagType or delete all messages from SIM storage.
+    * Delete specific SMS based on message index or delete messages on SIM or NV storage based on
+    * @ref telux::tel::SmsTagType or delete all messages from SIM or NV storage.
+    * If the storageType parameter is not explicitly provided, the system defaults to deleting
+    * messages from the SIM storage.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_STORAGE
     * permission to invoke this API successfully.
@@ -585,6 +596,8 @@ public:
     * on the storage set in this API, if any. Messages in the current storage will not be moved
     * to the new storage. If client does not require messages to be stored by the platform,
     * then the storage could be set to @ref telux::tel::StorageType::NONE.
+    * After an SSR or reboot, the preferred storage will persist.
+    *
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_CONFIG
     * permission to invoke this API successfully.
@@ -599,7 +612,9 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Update the tag of the incoming message stored in SIM storage as read/unread
+    * Update the tag of the incoming message stored in SIM or NV storage as read/unread
+    * If the storageType parameter is not explicitly provided, the system defaults to update the
+    * tag for message from the SIM storage.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_OPS
     * permission to invoke this API successfully.
@@ -609,26 +624,32 @@ public:
     * @param [in] tagType        @ref telux::tel::SmsTagType. The applicable tag types are
     *                            MT_READ and MT_NOT_READ.
     * @param [in] callback       Optional callback to get the response of updating the tag.
+    * @param [in] storageType    @ref telux::tel::StorageType.
     *
     * @returns Status of setTag i.e. success or suitable error code.
     *
     */
    virtual telux::common::Status setTag(uint32_t msgIndex, SmsTagType tagType,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+      telux::common::ResponseCallback callback = nullptr,
+      StorageType storageType = StorageType::SIM) = 0;
 
    /**
-    * Request details about SIM storage like total size and available size in terms of number of
-    * messages.
+    * Request details about SIM or NV storage like total size and available size in terms of
+    * number of messages.
+    * If the storageType parameter is not explicitly provided, the system defaults to querying
+    * storage details from the SIM storage.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_CONFIG
     * permission to invoke this API successfully.
     *
+    * @param [in] storageType   @ref telux::tel::StorageType
     * @param [in] callback      Callback to get the response of storage detail request.
     *
     * @returns Status of requestStorageDetails i.e. success or suitable error code.
     *
     */
-   virtual telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback) = 0;
+   virtual telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback,
+       StorageType storageType = StorageType::SIM) = 0;
 
    /**
     * Calculate message attributes for the given message.
@@ -764,8 +785,9 @@ class ISmsListener : public telux::common::IServiceStatusListener {
 public:
    /**
     * This function will be invoked when a single part message is received or when a part of a
-    * multi-part message is received. If the SMS preferred storage is to store the SMS in storage
-    * i.e SIM then the SMS will be first stored in storage and then this API will be invoked.
+    * multi-part message is received. If the SMS preferred storage is to store the SMS or NV in
+    * storage i.e SIM then the SMS will be first stored in storage and then this API will be
+    * invoked.
     *
     * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_LISTEN
     * permission to invoke this API successfully.
@@ -783,7 +805,7 @@ public:
     * message are received. In case of a single part message, it will be invoked as soon as it is
     * received. In case of multi-part, the implementation waits for all parts of the message to
     * arrive and then invokes this API. If the SMS preferred storage is to store the SMS in storage
-    * i.e SIM then the messages will be first stored in storage and then this API will be
+    * i.e SIM or NV then the messages will be first stored in storage and then this API will be
     * invoked.
     *
     * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_LISTEN
@@ -829,7 +851,7 @@ public:
     * @param [in] phoneId             Unique identifier per SIM slot. Phone on which the message is
     *                                 received.
     * @param [in] type                @ref telux::tel::StorageType. Applicable storage type
-    *                                 StorageType::SIM
+    *                                 StorageType::SIM and StorageType::NV
     *
     */
    virtual void onMemoryFull(int phoneId, StorageType type) {

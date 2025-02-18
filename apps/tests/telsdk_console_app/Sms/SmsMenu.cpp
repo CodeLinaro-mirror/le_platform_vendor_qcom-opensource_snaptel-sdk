@@ -416,15 +416,20 @@ void SmsMenu::sendRequestMessageList(std::vector<std::string> userInput) {
    std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
    std::getline(std::cin, tagType, delimiter);
    int smsTagType = -1;
+   std::string storageType;
+   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
+   int type = -1;
    try {
       smsTagType = stoi(tagType);
+      type = stoi(storageType);
    } catch (const std::exception &e) {
       std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
          << tagType << std::endl;
       return;
    }
    auto ret = smsManager->requestSmsMessageList(static_cast<telux::tel::SmsTagType>(smsTagType),
-      SmsStorageCallback::reqMessageListResponse);
+      SmsStorageCallback::reqMessageListResponse, static_cast<telux::tel::StorageType>(type));
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Request message list succeeded" << std::endl;
    } else {
@@ -440,14 +445,20 @@ void SmsMenu::sendReadMessage(std::vector<std::string> userInput) {
    std::cout << "Enter message index: ";
    std::getline(std::cin, messageIndex, delimiter);
    uint32_t msgIndex = DEFAULT_INDEX;
+   std::string storageType;
+   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
+   int type = -1;
    try {
       msgIndex = stoi(messageIndex);
+      type = stoi(storageType);
    } catch (const std::exception &e) {
       std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
          << messageIndex << std::endl;
       return;
    }
-   auto ret = smsManager->readMessage(msgIndex, SmsStorageCallback::readMsgResponse);
+   auto ret = smsManager->readMessage(msgIndex, SmsStorageCallback::readMsgResponse,
+       static_cast<telux::tel::StorageType>(type));
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Read message request succeeded" << std::endl;
    } else {
@@ -460,15 +471,19 @@ void SmsMenu::deleteMessage(std::vector<std::string> userInput) {
    std::cout << " Delete Message \n" << std::endl;
    char delimiter = '\n';
    std::string delType;
+   std::string storageType;
    std::cout << "Enter Delete type : \nDELETE_ALL = 0 \nDELETE_ALL_MESSAGE_TAG = 1";
    std::cout << "\nDELETE_AT_INDEX = 2 \nChoose type: ";
    std::getline(std::cin, delType, delimiter);
-
+   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
    int deleteType = -1;
    int smsTagType = -1;
+   int type = -1;
    uint32_t msgIndex = DEFAULT_INDEX;
    try {
       deleteType = stoi(delType);
+      type = stoi(storageType);
       if (deleteType == DELETE_ALL_MESSAGE_TAG) {
          std::string tagType;
          std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
@@ -490,6 +505,7 @@ void SmsMenu::deleteMessage(std::vector<std::string> userInput) {
    info.delType = static_cast<telux::tel::DeleteType>(deleteType);
    info.tagType = static_cast<telux::tel::SmsTagType>(smsTagType);
    info.msgIndex = msgIndex;
+   info.storageType = static_cast<telux::tel::StorageType>(type);
 
    auto ret = smsManager->deleteMessage(info, SmsStorageCallback::deleteResponse);
    if(ret == telux::common::Status::SUCCESS) {
@@ -515,7 +531,7 @@ void SmsMenu::setPreferredStorage(std::vector<std::string> userInput) {
    std::cout << " Set Preferred Storage \n" << std::endl;
    char delimiter = '\n';
    std::string storageType;
-   std::cout << "Enter Storage type : \nNONE = 0 \nSIM = 1 \nChoose type: ";
+   std::cout << "Enter Storage type : \nNONE = 0 \nSIM = 1 \nNV = 2 \nChoose type: ";
    std::getline(std::cin, storageType, delimiter);
    int type = -1;
    try {
@@ -547,16 +563,21 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
    std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
    std::getline(std::cin, tagType, delimiter);
    int smsTagType = -1;
+   std::string storageType;
+   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
+   int type = -1;
    try {
       smsTagType = stoi(tagType);
       msgIndex = stoi(messageIndex);
+      type = stoi(storageType);
    } catch (const std::exception &e) {
       std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
          << messageIndex << std::endl;
       return;
    }
    auto ret = smsManager->setTag(msgIndex, static_cast<telux::tel::SmsTagType>(smsTagType),
-      SmsStorageCallback::setTagResponse);
+      SmsStorageCallback::setTagResponse, static_cast<telux::tel::StorageType>(type));
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Set tag request succeeded" << std::endl;
    } else {
@@ -565,8 +586,22 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::requestStorageDetails(std::vector<std::string> userInput) {
+   std::cout << " Request Storage Details \n" << std::endl;
    auto smsManager = smsManagers_[slot_ - 1];
-   auto ret = smsManager->requestStorageDetails(SmsStorageCallback::reqStorageDetailsResponse);
+   char delimiter = '\n';
+   std::string storageType;
+   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
+   int type = -1;
+   try {
+      type = stoi(storageType);
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+         << storageType << std::endl;
+      return;
+   }
+   auto ret = smsManager->requestStorageDetails(SmsStorageCallback::reqStorageDetailsResponse,
+       static_cast<telux::tel::StorageType>(type));
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Request for SIM storage details succeeded" << std::endl;
    } else {

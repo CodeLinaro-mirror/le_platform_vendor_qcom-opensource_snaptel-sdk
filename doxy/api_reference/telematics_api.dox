@@ -235,6 +235,9 @@ Jun 2017   SVM      Created to support V2X API
       This section contains APIs related to station configuration management, such as static/dynamic IP, bridge/router mode, etc.
     @}
 
+    @defgroup telematics_satcom NTN Management
+    This section contains APIs related to NTN management.
+
     @defgroup telematics_diagnostics Diagnostics Services
     This section contains APIs related to diagnostics services.
   @}

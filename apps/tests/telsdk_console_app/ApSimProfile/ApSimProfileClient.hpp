@@ -35,12 +35,20 @@ class ApSimProfileClient : public std::enable_shared_from_this<ApSimProfileClien
      std::vector<uint8_t> hexToBytes(const std::string &hex);
      std::string getSwappedIccidString(const std::string &data);
      telux::common::Status registerRefresh(SlotId slotId);
+     void printTransmitApduResult(int result);
+     void parseIccidFromApduResult(std::string payload);
+     std::vector<std::string> tokenize(std::string s, std::string del);
+
+     int openLogicalChannel(SlotId slotId);
+     void closeLogicalChannel(SlotId slotId, int channel);
+     int transmitApdu(SlotId slotId, int channel, std::vector<uint8_t> data, bool isGetProfile);
 
      telux::tel::RefreshMode refreshMode_ = telux::tel::RefreshMode::UNKNOWN;
      int refreshSlotId_ = DEFAULT_SLOT_ID;
-     uint32_t referenceId_ = -1;
+     uint32_t referenceId_ = 0;
      int indSlotId_ = DEFAULT_SLOT_ID;
      std::string indIccid_ = "";
+     std::vector<std::string> iccidList_ = {};
 
      class MyApCardListener : public telux::tel::ICardListener {
       public:

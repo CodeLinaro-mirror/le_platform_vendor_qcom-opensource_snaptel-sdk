@@ -18,3 +18,4 @@ Modules
    thermal
    v2x
    wlan
+   satcom

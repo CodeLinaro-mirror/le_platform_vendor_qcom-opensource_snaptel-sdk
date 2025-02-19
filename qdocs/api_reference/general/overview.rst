@@ -76,6 +76,9 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 :ref:`Diagnostics Services<general/overview:Diagnostic Services>`
    The Diagnostics services subsystem consists of APIs to configure, start and stop diagnostic logging.
 
+:ref:`Satcom services<general/overview:Satcom Services>`
+   The Satcom services subsystem includes APIs to configure, start, stop, and transmit non-IP data over the Non-Terrestrial Network.
+
 Telematics SDK classes can be broadly divided into the following types:
 - Factory -- Factory classes are central classes such as PhoneFactory which can be used to create Manager classes corresponding to their sub-systems such as PhoneManager.
 - Manager -- Manager classes such as PhoneManager to manage multiple Phone instances, CardManager to manage multiple SIM Card instances etc.
@@ -529,6 +532,16 @@ WLAN management APIs in the Telematics SDK provide services related to the follo
 - Request list of devices connected to any access point.
 - Restart hostapd and wpa_supplicant daemons
 
+Satcom Services
+~~~~~~~~~~~~~~~
+Satcom services APIs in the Telematics SDK offer functionalities for configuring the NTN and transmitting non-IP data over it. These include:
+
+- Enabling/disabling NTN.
+- Updating the system selection specifiers (SFL list) used by the modem to scan for the NTN network.
+- Requesting NTN network capabilities.
+- Sending/receiving data over NTN.
+- Enabling background PLMN scans.
+
 Diagnostic Services
 ~~~~~~~~~~~~~~~~~~~
 Two methods are supported to collect logs; file and callback method. In file method, logs are captured
@@ -600,6 +613,7 @@ Listed below are the SELinux Interfaces which are generic for any API in particu
    "cv2x", "telux_allow_v2x()", "domain context", "telux_allow_v2x(app_t)"
    "sensor", "telux_allow_sensor()", "domain context", "telux_allow_sensor(app_t)"
    "platform", "telux_allow_platform()", "domain context", "telux_allow_platform(app_t)"
+   "satcom", "telux_allow_satcom()", "domain context", "telux_allow_satcom(app_t)"
 
 The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform SDK data operations.
 
@@ -724,6 +738,10 @@ To determine which permission type to be used for a API, please refer to the doc
 |              | TELUX_TEL_ECALL_CONFIG             | telux_allow_tel_ecall_config             |
 |              +------------------------------------+------------------------------------------+ 
 |              | TELUX_TEL_SUPP_SERVICES            | telux_allow_tel_supp_services            |
++--------------+------------------------------------+------------------------------------------+
+| Satcom       | TELUX_NTN_CONFIG                   | telux_access_ntn_config_t                |
+|              +------------------------------------+------------------------------------------+
+|              | TELUX_NTN_DATA                     | telux_access_ntn_data_t                  |
 +--------------+------------------------------------+------------------------------------------+
 
 

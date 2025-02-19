@@ -44,6 +44,7 @@ as command-line argument to application.
    api_samples/cellular_connection_security/cellular_connection_security
    api_samples/wifi_connection_security/wifi_connection_security
    api_samples/wlan/wlan
+   api_samples/satcom/satcom
    api_samples/diag/diag
 
 ..
@@ -62,4 +63,5 @@ as command-line argument to application.
    * :ref:`cellular-connection-security`
    * :ref:`wifi-connection-security`
    * :ref:`wlan`
+   * :ref:`satcom`
    * :ref:`diagnostics`

@@ -3223,6 +3223,36 @@ Call flow to Modify WLAN Access Point Configuration
 9. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
 10. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
 
+SATCOM
+------
+
+Call flow to enable NTN and send non-IP data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/ntn_enable_and_send.png
+
+1. Application requests INtnManager object from Satcom factory.
+2. Satcom factory returns shared pointer to INtnManager to the application.
+3. Application can use INtnManager::getServiceStatus to determine if the system is ready.
+4. The application receives the status, i.e., either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether the subsystem is ready or not.
+5. If the subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+6. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. Application registers listener for notifications related to NTN state/data etc.
+8. Application receives the status (SUCCESS or suitable failure) based on registration of listener to NtnManager.
+9. Application optionally sends SFL configuration to be used by the modem.(mcc, mnc, bands and earfcns)
+10. Application receives the result (SUCCESS or suitable failure) of SFL configuration request.
+11. Application enables NTN.
+12. Application receives the NTN state change notification when NTN is enabled and ready to be used to send non-IP data.
+13. Application also receives the signal strength change notification indicating the new signal strength.
+14. Application requests the capabilities such as maximum data size for the connected NTN network.
+15. Application receives the capabilities result.
+16. Application sends non-IP data.
+17. Application receives transaction ID of the send request. This can be used to map the data acknowledgement that could come later.
+18. Application receives the L2 acknowledgement for the sent data packet.
+19. Application disables the NTN.
+20. Application receives the result of the request to disable the NTN.
+21. Application receives the state change notification.
+
 Diagnostics
 -----------
 

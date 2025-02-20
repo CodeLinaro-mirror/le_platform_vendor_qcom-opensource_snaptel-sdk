@@ -1,5 +1,5 @@
 /* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -837,11 +837,11 @@ void DataSettingsMenu::getIpConfig(std::vector<std::string> inputCommand) {
     std::cin >> vlanId;
     ipConfigParams.vlanId = vlanId;
 
-    std::cout << "Enter Interface Type (1-ETH, 2-ECM): ";
+    std::cout << "Enter Interface Type (1-ETH): ";
     std::cin >> interfaceType;
-    DataUtils::validateInput(interfaceType, {1, 2});
+    DataUtils::validateInput(interfaceType, {1});
     ipConfigParams.ifType = (interfaceType == 1 ? telux::data::InterfaceType::ETH
-            : telux::data::InterfaceType::ECM);
+            : telux::data::InterfaceType::UNKNOWN);
 
     std::cout << "Enter IP Family Type (1-IPV4, 2-IPV6): ";
     std::cin >> ipFamilyType;
@@ -858,7 +858,7 @@ void DataSettingsMenu::getIpConfig(std::vector<std::string> inputCommand) {
     }
 
     PRINT_RESPONSE_DATA << "interface type:\t\t" <<
-        (ipConfigParams.ifType == telux::data::InterfaceType::ETH ? "ETH" : "ECM") << std::endl;
+        (ipConfigParams.ifType == telux::data::InterfaceType::ETH ? "ETH" : "UNKNOWN") << std::endl;
     PRINT_RESPONSE_DATA << "vlan id:\t\t" << ipConfigParams.vlanId << std::endl;
     ipConfigParams.ipFamilyType == telux::data::IpFamilyType::IPV4 ? ipTypeStr = "IPV4"
         : (ipConfigParams.ipFamilyType == telux::data::IpFamilyType::IPV6 ? ipTypeStr = "IPV6"

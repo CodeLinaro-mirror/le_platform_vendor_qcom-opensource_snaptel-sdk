@@ -601,6 +601,24 @@ struct DeviceInfo {
     std::string   ulaV6Addr;          /**< ULA IPv6 Addresses                                */
 };
 
+/**  Data structure for DHCP configuration.
+ */
+struct DhcpConfig {
+    std::string dhcpStartIP;      /**<   DHCP start IP address. */
+
+    std::string dhcpEndIP;        /**<   DHCP end IP address. */
+
+    uint32_t leaseTime;        /**<   DHCP lease time, in seconds.*/
+};
+
+/** DHCP config state.
+ */
+enum class DhcpConfigState {
+    DISABLE,
+    ENABLE,
+    RESTART,
+};
+
 /** @} */ /* end_addtogroup telematics_data */
 }
 }

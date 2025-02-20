@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.30.2)
 
 project (telematics-apps)
 
@@ -137,4 +137,4 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 add_subdirectory( common/console_app_framework )
 #add_subdirectory( reference )
 add_subdirectory( tests )
-#add_subdirectory( samples)
+add_subdirectory( samples)

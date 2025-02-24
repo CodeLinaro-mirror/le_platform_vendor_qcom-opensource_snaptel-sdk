@@ -66,7 +66,7 @@
 #include <telux/data/DualDataManager.hpp>
 #include <telux/data/DataControlManager.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
-
+#include <telux/data/net/IpsecManager.hpp>
 
 namespace telux {
 namespace data {
@@ -349,6 +349,20 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IEthernetManager> getEthernetManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get IPsec Manager
+     *
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              IPsec manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IpsecManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IIpsecManager> getIpsecManager(
         telux::data::OperationType oprType,
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 

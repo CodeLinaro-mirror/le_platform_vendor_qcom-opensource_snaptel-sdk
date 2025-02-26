@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -343,6 +343,15 @@ grpc::Status PowerManagerServiceImpl::SendModemActivityState(ServerContext* cont
     const powerStub::SetActivityState* request, powerStub::PowerManagerCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("setModemActivityState", response);
+    return grpc::Status::OK;
+}
+
+grpc::Status PowerManagerServiceImpl::GetLocalTcuState(ServerContext* context,
+    const google::protobuf::Empty* request, powerStub::GetLocalTcuStateReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    ::powerStub::TcuState state;
+    convertToGrpcState(localMachState_, state);
+    response->set_local_mach_state(state);
     return grpc::Status::OK;
 }
 

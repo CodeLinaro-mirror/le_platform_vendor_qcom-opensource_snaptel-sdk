@@ -18,6 +18,7 @@ set(DATA_STUB_SOURCES
     IpFilterImpl.cpp
     DualDataManagerStub.cpp
     DataControlManagerStub.cpp
+    #EthernetManagerStub.cpp
     net/SocksManagerStub.cpp
     net/NatManagerStub.cpp
     net/L2tpManagerStub.cpp

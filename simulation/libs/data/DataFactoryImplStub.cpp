@@ -1,6 +1,6 @@
  /*
-  *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
-  *  SPDX-License-Identifier: BSD-3-Clause-Clear
+  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  * SPDX-License-Identifier: BSD-3-Clause-Clear
   */
 
 #include "DataFactoryImplStub.hpp"
@@ -20,6 +20,7 @@
 #include "net/FirewallManagerStub.hpp"
 #include "net/FirewallEntryImpl.hpp"
 #include "net/BridgeManagerStub.hpp"
+#include "EthernetManagerStub.hpp"
 
 #include "common/Logger.hpp"
 
@@ -469,6 +470,33 @@ std::shared_ptr<telux::data::IDataControlManager> DataFactoryImplStub::getDataCo
             dataControlManager_, dataControlCallbacks_, clientCallback, createAndInit);
     return manager;
 }
+
+std::shared_ptr<telux::data::IEthernetManager> DataFactoryImplStub::getEthernetManager(
+    telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback) {
+    if (oprType == telux::data::OperationType::DATA_REMOTE) {
+        return nullptr;
+    }
+
+    std::function<std::shared_ptr<telux::data::IEthernetManager>(
+        telux::common::InitResponseCb)>
+        createAndInit = [oprType](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IEthernetManager> {
+        std::shared_ptr<telux::data::EthernetManagerStub> manager
+            = std::make_shared<telux::data::EthernetManagerStub>();
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Ethernet manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
+       " for operationType = ", static_cast<int>(oprType), " , callback = ", &ethernetCallbacks_);
+    auto manager
+        = getManager<telux::data::IEthernetManager>(type,
+            ethernetManager_, ethernetCallbacks_, clientCallback, createAndInit);
+    return manager;
+}
+
 
 std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpManager(
     telux::common::InitResponseCb clientCallback) {

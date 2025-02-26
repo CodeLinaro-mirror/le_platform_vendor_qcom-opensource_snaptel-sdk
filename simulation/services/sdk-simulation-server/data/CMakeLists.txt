@@ -8,6 +8,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/DataFilterServerImpl.cpp
     data/DualDataServerImpl.cpp
     data/DataControlServerImpl.cpp
+    #data/EthernetManagerServerImpl.cpp
     data/net/SocksServerImpl.cpp
     data/net/NatServerImpl.cpp
     data/net/L2tpServerImpl.cpp

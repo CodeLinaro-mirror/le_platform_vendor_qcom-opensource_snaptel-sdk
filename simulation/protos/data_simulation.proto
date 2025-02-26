@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -12,6 +12,21 @@ import "common_simulation.proto";
 /*******************************************************************
 * Services Definition                                             *
 *******************************************************************/
+
+/*
+* This service is used to execute EthernetManager related APIs.
+*/
+
+service EthernetManager {
+    rpc InitService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc SetEthernetNicConfig(SetEthernetNicConfigRequest) returns (DefaultReply) {}
+    rpc GetEthernetNicConfig(google.protobuf.Empty) returns (GetEthernetNicConfigReply) {}
+    rpc ActivateLAN(google.protobuf.Empty) returns (DefaultReply) {}
+    rpc RegisterListener(google.protobuf.Empty) returns (stream RegisterListenerReply) {}
+    rpc DeregisterListener(DeregisterListenerRequest) returns (google.protobuf.Empty) {}
+    rpc GetOperationType(google.protobuf.Empty) returns (GetOperationTypeReply) {}
+}
 
 /*
 * This service is used to execute DataConnectionManager related APIs.
@@ -221,6 +236,84 @@ service TetherManager {
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
+
+/*******************************************************************
+ * EthernetManager Messages Definition                                             *
+ *******************************************************************/
+
+message EthNicConfig {
+    string eth_iface_name = 1;
+    EthNetworkTypeEnum eth_nic_type = 2;
+}
+
+message MacsecNicConfig {
+    ConfigStateEnum state = 1;
+    string macsec_iface_name = 2;
+    MacsecModeEnum macsec_mode = 3;
+    string eth_nic_iface_name = 4;
+    uint32 mtu_size = 5;
+}
+
+message EthConfig {
+    EthModeEnum mode = 1;
+    repeated EthNicConfig v_eth_nic_config = 2;
+    repeated MacsecNicConfig v_macsec_nic_config = 3;
+}
+
+message SetEthernetNicConfigRequest {
+    EthConfig eth_config = 1;
+}
+
+message GetEthernetNicConfigReply {
+    EthConfig eth_config = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message RegisterListenerReply {
+    int32 client_id = 1;
+    ServiceStatus status = 2;
+}
+
+message DeregisterListenerRequest {
+    int32 client_id = 1;
+}
+
+message GetOperationTypeReply {
+    OperationType operation_type = 1;
+}
+
+enum EthModeEnum {
+    ETHERNET_LAN_ROUTER = 0;
+    ETHERNET_MODE_ENUM_MIN_VAL = -1;
+    ETHERNET_WAN_ROUTER = 1;
+    ETHERNET_WAN_LAN_ROUTER = 2;
+    ETHERNET_MODE_ENUM_MAX_VAL = 10;
+}
+
+enum EthNetworkTypeEnum {
+    
+    ETHERNET_LAN_TYPE = 0;
+    ETHERNET_NETEORK_TYPE_ENUM_MIN_VAL = -1;
+    ETHERNET_WAN_TYPE = 1;
+    ETHERNET_NETEORK_TYPE_ENUM_MAX_VAL = 10;
+}
+
+enum ConfigStateEnum {
+    
+    CONFIG_DISABLE = 0;
+    CONFIG_STATE_ENUM_MIN_VAL = -1;
+    CONFIG_ENABLE = 1;
+    CONFIG_RESTART = 2;
+    CONFIG_STATE_ENUM_MAX_VAL = 10;
+}
+
+enum MacsecModeEnum {
+    MACSEC_MODE_UNKNOWN_VAL = 0;
+    MACSEC_MDOE_ENUM_MIN_VAL = -1;
+    MACSEC_MODE_SUPPLICANT = 1;   
+    MACSEC_MODE_AUTHENTICATOR = 2;
+    MACSEC_MDOE_ENUM_MAX_VAL = 10;
+}
 
 message GetDualDataCapabilityReply {
     bool capability = 1;

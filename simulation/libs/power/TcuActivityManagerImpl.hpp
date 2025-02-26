@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -21,7 +21,6 @@ using namespace telux::common;
 
 struct TcuActivityUserData {
     int cmdCallbackId;
-    TcuActivityState prevState;
 };
 
 class TcuActivityManagerImpl : public ITcuActivityManager,
@@ -76,18 +75,19 @@ class TcuActivityManagerImpl : public ITcuActivityManager,
 
     void onMachineUpdate(MachineEvent state) override;
 
+    telux::common::ErrorCode getActivityState(std::string machineName,
+        TcuActivityState &state) override;
+
     ~TcuActivityManagerImpl();
 
  private:
     void setServiceStatusAndNotify(telux::common::ServiceStatus status);
-    void setCachedTcuState(TcuActivityState state);
     TcuActivityManagerImpl(TcuActivityManagerImpl const &)            = delete;
     TcuActivityManagerImpl &operator=(TcuActivityManagerImpl const &) = delete;
 
     std::shared_ptr<telux::common::ListenerManager<ITcuActivityListener>> listenerMgr_;
     std::shared_ptr<telux::common::ListenerManager<IServiceStatusListener>> svcStatusListenerMgr_;
     telux::common::CommandCallbackManager cmdCallbackMgr_;
-    TcuActivityState currentTcuState_;
     std::mutex mutex_;
     bool isInitsyncTriggered_ = false;
     telux::common::AsyncTaskQueue<void> taskQ_;

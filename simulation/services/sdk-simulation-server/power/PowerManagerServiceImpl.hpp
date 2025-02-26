@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -58,6 +58,8 @@ class PowerManagerServiceImpl final : public powerStub::PowerManagerService::Ser
         const powerStub::SetActivityState* request, powerStub::PowerManagerCommandReply* response);
     grpc::Status DeregisterFromServer(ServerContext* context,
         const powerStub::PowerClientConnect* request, google::protobuf::Empty* response);
+    grpc::Status GetLocalTcuState(ServerContext* context, const google::protobuf::Empty* request,
+        powerStub::GetLocalTcuStateReply* response);
 
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 

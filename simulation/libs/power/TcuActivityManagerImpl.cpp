@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -17,8 +17,7 @@ namespace power {
 using namespace telux::common;
 
 TcuActivityManagerImpl::TcuActivityManagerImpl(ClientInstanceConfig config)
-   : currentTcuState_(TcuActivityState::UNKNOWN)
-   , grpcClient_(nullptr)
+   : grpcClient_(nullptr)
    , config_(config) {
     if (config_.clientType == ClientType::MASTER) {
         config_.machineName = LOCAL_MACHINE;
@@ -175,7 +174,6 @@ void TcuActivityManagerImpl::initSync() {
         if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " FAILED to register for TCU-activity state events");
         }
-        setCachedTcuState(initialState);
         setServiceStatusAndNotify(telux::common::ServiceStatus::SERVICE_AVAILABLE);
         initCV_.notify_all();
         return;
@@ -240,9 +238,6 @@ telux::common::Status TcuActivityManagerImpl::setActivityState(
     LOG(INFO, __FUNCTION__, " machine name: ", machineName, " state: ", static_cast<int>(state));
     telux::common::Status status = telux::common::Status::FAILED;
     status = grpcClient_->sendActivityStateCommand(state, machineName, callback);
-    if(status == telux::common::Status::SUCCESS && machineName == ALL_MACHINES) {
-        setCachedTcuState(state);
-    }
     return status;
 }
 
@@ -253,8 +248,9 @@ telux::common::Status TcuActivityManagerImpl::setActivityState(
 }
 
 TcuActivityState TcuActivityManagerImpl::getActivityState() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return currentTcuState_;
+    TcuActivityState state;
+    getActivityState("PVM", state);
+    return state;
 }
 
 telux::common::Status TcuActivityManagerImpl::sendActivityStateAck(
@@ -268,12 +264,6 @@ telux::common::Status TcuActivityManagerImpl::sendActivityStateAck(
 telux::common::Status TcuActivityManagerImpl::sendActivityStateAck(TcuActivityStateAck ack) {
     LOG(WARNING, __FUNCTION__, " deprecated API used!");
     return telux::common::Status::NOTSUPPORTED;
-}
-
-void TcuActivityManagerImpl::setCachedTcuState(TcuActivityState state) {
-    LOG(INFO, __FUNCTION__, "state: ", static_cast<int>(state));
-    std::lock_guard<std::mutex> lock(mutex_);
-    currentTcuState_ = state;
 }
 
 telux::common::Status TcuActivityManagerImpl::setModemActivityState(TcuActivityState state) {
@@ -296,6 +286,25 @@ telux::common::Status TcuActivityManagerImpl::getAllMachineNames(
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::ErrorCode TcuActivityManagerImpl::getActivityState(std::string machineName,
+    TcuActivityState &state) {
+    LOG(DEBUG, __FUNCTION__);
+    if((config_.clientType == ClientType::SLAVE) && (machineName != "PVM")) {
+        return telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if(machineName != "PVM") {
+        LOG(DEBUG, __FUNCTION__, " machinename not found ");
+        return telux::common::ErrorCode::INVALID_ARGUMENTS;
+    }
+    telux::common::Status status            = telux::common::Status::FAILED;
+    status = grpcClient_->getActivityState(state);
+    if(status == telux::common::Status::SUCCESS) {
+        return telux::common::ErrorCode::SUCCESS;
+    }
+    LOG(DEBUG, __FUNCTION__, " Failed - ", static_cast<int>(status));
+    return telux::common::ErrorCode::GENERIC_FAILURE;
+}
+
 void TcuActivityManagerImpl::onMachineUpdate(telux::power::MachineEvent state) {
     LOG(DEBUG, __FUNCTION__);
     std::string tcuMachineName = LOCAL_MACHINE;
@@ -315,7 +324,6 @@ void TcuActivityManagerImpl::onMachineUpdate(telux::power::MachineEvent state) {
 
 void TcuActivityManagerImpl::onTcuStateUpdate(TcuActivityState state, std::string tcuMachineName) {
     LOG(DEBUG, __FUNCTION__);
-    setCachedTcuState(state);
     std::vector<std::weak_ptr<ITcuActivityListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
@@ -335,7 +343,7 @@ void TcuActivityManagerImpl::onTcuStateUpdate(TcuActivityState state, std::strin
     } else {
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
-                sp->onTcuActivityStateUpdate(currentTcuState_, tcuMachineName);
+                sp->onTcuActivityStateUpdate(state, tcuMachineName);
             }
         }
     }

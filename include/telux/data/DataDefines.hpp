@@ -350,6 +350,7 @@ enum class InterfaceType {
     AP_SECONDARY = 10,    /**< Secondary WLAN access point                       */
     AP_TERTIARY = 11,     /**< Tertiary WLAN access point                        */
     AP_QUATERNARY = 12,   /**< Quaternary WLAN access point                      */
+    BT = 13,        /**< bluetooth bt-pan interface                              */
 };
 
 /**
@@ -580,6 +581,24 @@ struct ClientDataUsage {
     std::string macAddress;          /**<   MAC address of the client.
                                               This field is applicable for Mac-based stats */
     DataUsage usage;                 /**<   Data usage statistics */
+};
+
+/**
+ * Client Device Info
+ */
+struct DeviceInfo {
+    std::string   macAddr;            /**< Client MAC Address                                */
+    InterfaceType ifType;             /**< Device type primary AP/guest AP/USB/eth client.   */
+    std::string   hostName;           /**< Host name of dynamically IP allocated WLAN/USB/eth
+                                             clients */
+    uint32_t      leaseExpiryTime;    /**< Lease expiry time in minutes for dynamically
+                                             IP allocated WLAN/USB clients. */
+    std::string   v4Addr;             /**< IPv4 Address of Wi-Fi device                      */
+    std::string   llV6Addr;           /**< Link local IPv6 Addresses                         */
+    std::vector<std::string> v6Addr;  /**< List of IPv6 Addresses of Wi-Fi device            */
+    DataUsage     statsInfo;          /**< Packet stats info rx/tx bytes by client           */
+    int16_t       vlanId = 0;         /**< VLAN id                                           */
+    std::string   ulaV6Addr;          /**< ULA IPv6 Addresses                                */
 };
 
 /** @} */ /* end_addtogroup telematics_data */

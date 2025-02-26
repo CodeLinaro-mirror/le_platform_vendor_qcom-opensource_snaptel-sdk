@@ -77,6 +77,26 @@ public:
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IClientListener> listener) = 0;
 
+    /**
+     * Get complete client information for connected devices, including client mac address,
+     * interface type, hostname etc @ref telux::data::DeviceInfo.
+     *
+     * This API provides the complete suite of connected devices information. A device is any
+     * entity with a unique MAC address that is connected to the MDM either over a wired or
+     * wireless interconnect. If to get DataUsage via this API, packet stats monitoring should be
+     * enabled @ref IStatsManager::setDataUsageStats.
+     *
+     * @param [out] clientsInfo     List of connected device information per device @ref
+     *                              telux::data::DeviceInfo.
+     *
+     * @returns     Return code for whether the operation succeeded or failed.
+     *              If usage monitoring is not enabled, INVALID_STATE is returned.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getConnectedDevicesInfo(
+        std::vector<DeviceInfo> &clientsInfo) = 0;
 
     /**
      * Get data usage for connected devices

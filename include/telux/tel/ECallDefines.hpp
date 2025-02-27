@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -90,6 +90,47 @@ enum class ECallMsdTransmissionStatus {
                                                   or Third Party Service (TPS) eCall */
    OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall
                                                   or Third Party Service (TPS) eCall */
+   LL_NACK_DUE_TO_T7_EXPIRY = 13,   /**< Link-Layer Acknowledgement(LL-NACK) is received during
+                                         in-band MSD transmission due to expiry of T7 HLAP eCall
+                                         timer */
+   MSD_AL_ACK_CLEARDOWN = 14,   /**< Modem can cleardown the eCall after receipt of
+                                     Application-Layer Acknowledgement(AL-LCK) during in-band MSD
+                                     transmission */
+};
+
+/*
+ * Represents reasons for performing redial of eCall or not.
+ */
+
+enum class ReasonType {
+    NONE = 0,                   /**< Redial reason is NONE */
+    CALL_ORIG_FAILURE = 1,      /**< Redial will be attempted due to eCall origination failure */
+    CALL_DROP = 2,              /**< Redial will be attempted as the eCall is terminated before the
+                                     reciept of MSD Transmission status */
+    MAX_REDIAL_ATTEMPTED = 3,   /**< Redial will not be attempted as the maximum redial count
+                                     is reached */
+    CALL_CONNECTED = 4,         /**< Redial will not be attempted as the eCall is connected
+                                     successfully. */
+};
+
+/*
+ * Represents information about the redial eCall.
+ */
+
+struct ECallRedialInfo {
+   bool willECallRedial; /**< Indicates whether redial of eCall will be attempted by modem or
+                              not */
+   ReasonType reason; /**< Indicates the reason for redial of eCall to be performed or not */
+};
+
+/*
+ * Represents the redial configuration type for eCall
+ */
+
+enum class RedialConfigType {
+    CALL_DROP = 0,  /**< Redial configuration for eCall termination before reciept of MSD
+                         Transmission status */
+    CALL_ORIG = 1,  /**< Redial configuration for eCall origination failure */
 };
 
 /**
@@ -371,18 +412,22 @@ enum class HlapTimerStatus {
  * Represents an event causing a change in the the status of eCall High Level Application Protocol
  * (HLAP) timer that is maintained by the UE state machine.
  *
- * Timer STARTED notification is provided when the timer moves from INACTIVE to ACTIVE state.
- * Timer STOPPED notification is provided when the timer moves from ACTIVE to INACTIVE state, after
- * its underlying condition is satisfied.
- * Timer EXPIRED notification is provided when the timer moves from ACTIVE to INACTIVE state, after
- * its underlying condition not satisfied until its timeout.
+ * The timer STARTED notification is provided when the timer moves from INACTIVE to ACTIVE state.
+ * The timer STOPPED notification is provided when the timer moves from ACTIVE to INACTIVE state,
+ * after its underlying condition is satisfied.
+ * The timer EXPIRED notification is provided when the timer moves from ACTIVE to INACTIVE state,
+ * after its underlying condition not satisfied until its timeout.
+ * The timer RESUMED notification is provided when the application restarts the timer after events
+ * like modem reset or a change of modem operating mode from low power mode to online using @ref
+ * telux::tel::ICallManager::restartECallHlapTimer().
  */
 enum class HlapTimerEvent {
    UNKNOWN = -1,             /**< Unknown */
    UNCHANGED,                /**< No change in timer status */
-   STARTED,                  /**< eCall Timer is Started */
-   STOPPED,                  /**< eCall Timer is Stopped */
+   STARTED,                  /**< eCall Timer is started */
+   STOPPED,                  /**< eCall Timer is stopped */
    EXPIRED,                  /**< eCall Timer is expired */
+   RESUMED,                  /**< eCall Timer is resumed. Applicable only for T9 and T10 timers */
 };
 
 /**
@@ -472,6 +517,19 @@ enum EcallConfigType {
                                             generates MSD i.e when MSD is not sent by application
                                             and also canned MSD is not used */
     ECALL_CONFIG_COUNT,
+};
+
+/**
+ * Represents timers that need to be restarted by the application after a modem reset or when the
+ * operating mode of the device changes from low power mode to online.
+ */
+enum class EcallHlapTimerId {
+    UNKNOWN = 0,                  /**< Unknown timer ID. */
+    T9 = 5,                       /**< Timer ID for T9 timer for a regulatory eCall or test eCall.
+                                       Applicable for both the eCall operating modes
+                                       ( Normal and eCall only ). */
+    T10 = 6,                      /**< Timer ID for T10 timer for a regulatory eCall or test eCall.
+                                       Applicable for eCall only operating mode. */
 };
 
 /**

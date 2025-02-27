@@ -26,40 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -69,6 +41,7 @@
  *          It manages the telephony subsystem using Telematics-SDK APIs.
  */
 
+#include <iomanip>
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -266,6 +239,15 @@ void TelClient::OnMsdUpdateRequest(int phoneId) {
     }
 }
 
+// Notify clients whether redial will be perfomed or not with the reason
+void TelClient::onECallRedial(int phoneId, ECallRedialInfo info) {
+    std::cout << CLIENT_NAME << " eCall redial will"
+              << (info.willECallRedial ? " be performed " : " not be perfomed")
+              << (info.willECallRedial ? " and redial reason is " : " and not redial reason is")
+              << TelClientUtils::eCallRedialReasonToString(info.reason)
+              << std::endl;
+}
+
 // Callback to notify eCall HLAP timers status
 void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) {
     std::string infoStr = "\n";
@@ -440,6 +422,29 @@ void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, uint32_t ti
     } else {
         std::cout << CLIENT_NAME << "Successfully get ECall HLAP timer is " <<
             timeDuration << std::endl;
+    }
+}
+
+// Callback which provides response for restart of HLAP timer
+void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
+    }
+}
+
+// Callback which provides response to configure ECall redial parameters
+void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME <<
+            "Configuration of ECall Redial parameters failed with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully configured eCall redial parameters" << std::endl;
     }
 }
 
@@ -812,6 +817,22 @@ telux::common::Status TelClient::setECallConfig(EcallConfig config) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to restart eCall HLAP timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->restartECallHlapTimer(phoneId, id, duration,
+        std::bind(&TelClient::restartHlapTimerResponse, this, std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
     ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
     if (!callMgr_) {
@@ -829,6 +850,43 @@ telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
         std::string encodedString(optionalAdditionalDataContent.begin(),
             optionalAdditionalDataContent.end());
         TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
+    std::vector<uint8_t> &msdPdu) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get encoded eCall"
+            << " MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    auto errCode = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
+    std::vector<uint8_t> msdPayload = msdPdu;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded eCall MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    } else {
+        std::stringstream ss;
+        for (auto i : msdPdu) {
+            ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+        }
+        TelClientUtils::printECallMsdPayload(ss.str());
+    }
+    return telux::common::ErrorCode::SUCCESS;
+}
+
+telux::common::Status TelClient::configureECallRedial(int config, std::vector<int> &timeGap) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager,  Failed to configure eCall redial"
+            << " configuration " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->configureECallRedial(static_cast<RedialConfigType>(config), timeGap,
+        std::bind(&TelClient::configureECallRedialResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to configure eCall redial configuration" << std::endl;
+        return status;
     }
     return telux::common::Status::SUCCESS;
 }

@@ -26,40 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -88,6 +60,10 @@
 #define ECALL_DO_NOT_TRANSMIT_MSD 2
 #define ECALL_T10_TIMER_MIN 60
 #define ECALL_T10_TIMER_MAX 720
+#define T9 5
+#define T10 6
+#define CALL_DROP 0
+#define CALL_ORIG 1
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -159,11 +135,24 @@ void ECallApp::init() {
         std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent,
         this)));
 
+    std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Get_ECall_Msd_Payload", {},
+        std::bind(&ECallApp::getECallMsdPayload, this)));
+
+    std::shared_ptr<ConsoleAppCommand> restartECallHlapTimerCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Restart_ECall_Hlap_Timer", {},
+        std::bind(&ECallApp::restartECallHlapTimer, this)));
+
+    std::shared_ptr<ConsoleAppCommand> setECallRedialConfigCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "Set_ECall_Redial_Config", {},
+        std::bind(&ECallApp::setECallRedialConfig, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
-            setEcallConfigCommand, getEncodedOADContentCommand};
+            setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
+            restartECallHlapTimerCommand, setECallRedialConfigCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -624,6 +613,55 @@ void ECallApp::setECallConfig() {
     }
 }
 
+void ECallApp::restartECallHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    EcallHlapTimerId id = EcallHlapTimerId::UNKNOWN;
+    int duration = 0;
+    char delimiter = '\n';
+    std::string temp = "";
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    std::cout << "Select the timer id to restart eCall HLAP timer \n    \
+        \r\t5 - Timer-id for T9 timer\n  \
+        \r\t6 - Timer-id for T10 timer\n " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            int input = std::stoi(temp);
+            id = static_cast<EcallHlapTimerId>(input);
+            if(input < T9 || input > T10) {
+                std::cout << "ERROR: Invalid timer id is entered" << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << " Enter duration of timer (in seconds) " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            duration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
+        return;
+    }
+}
+
 void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if(!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
@@ -633,6 +671,58 @@ void ECallApp::getEncodedOptionalAdditionalDataContent() {
     auto ret = eCallMgr_->getEncodedOptionalAdditionalDataContent();
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get encoded optional additional data content" << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getECallMsdPayload() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallMsdPayload();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall MSD payload" << std::endl;
+        return;
+    }
+}
+
+void ECallApp::setECallRedialConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    std::string redialConfig;
+    char delimiter = '\n';
+    int config = 0;
+    std::cout << "Enter ECall redial config : 0 - call drop , 1 - call origination failure ";
+    std::getline(std::cin, redialConfig, delimiter);
+    try {
+        config = std::stoi(redialConfig);
+        std::cout << "ECall redial config is " << config << std::endl;
+        if(config < CALL_DROP || config > CALL_ORIG) {
+            std::cout << "ERROR: Invalid config is entered" << std::endl;
+            return;
+        }
+    } catch (const std::exception &e) {
+        std::cout << "ERROR: invalid input, please enter a valid value. INPUT: "
+            << config << std::endl;
+        return;
+    }
+    std::string timeGapData;
+    std::cout << "Enter time gap between two successive redial attempts in milliseconds with space"
+        << "between the elements for example, input 5000 60000 : ";
+    std::getline(std::cin, timeGapData, delimiter);
+    std::vector<int> timeGap;
+    if (!timeGapData.empty()) {
+        timeGap = Utils::convertStringToVector(timeGapData);
+    } else {
+        std::cout << "ERROR: empty input ";
+    }
+    auto ret = eCallMgr_->configureECallRedial(config, timeGap);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to set eCall configuration" << std::endl;
         return;
     }
 }

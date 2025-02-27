@@ -26,40 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef ECALLMANAGER_HPP
@@ -230,6 +202,18 @@ class ECallManager : public LocationListener,
     telux::common::Status setECallConfig(EcallConfig config);
 
     /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns Status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
      * Gets encoded optional additional data content for eCall MSD.
      *
      * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable
@@ -237,6 +221,24 @@ class ECallManager : public LocationListener,
      *
      */
     telux::common::Status getEncodedOptionalAdditionalDataContent();
+
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload();
+
+    /**
+     * Configure eCall redial parameters for call origination failure or call drop
+     *
+     * @returns status code for configureECallRedial i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status configureECallRedial(int config, std::vector<int> &timeGap);
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;

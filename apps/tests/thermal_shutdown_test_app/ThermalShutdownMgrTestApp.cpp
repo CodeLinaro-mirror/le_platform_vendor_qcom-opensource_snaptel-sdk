@@ -29,7 +29,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -111,11 +111,19 @@ Status ThermalShutdownTestApp::parseArguments(int argc, char **argv) {
 
 void ThermalShutdownTestApp::handleArguments() {
 
+    if (!myThermCmdMgr_) {
+        std::cout << " Invalid command manager " << std::endl;
+        return;
+    }
     if(setCommand_ != AutoShutdownMode::UNKNOWN) {
         myThermCmdMgr_->sendAutoShutdownModeCommand(setCommand_);
         myThermCmdMgr_->registerForUpdates();
-        auto status = myThermCmdMgr_->cmdRspCb_->commandResponseStatus();
 
+        if (!myThermCmdMgr_->cmdRspCb_) {
+            std::cout << " Invalid callback " << std::endl;
+            return;
+        }
+        auto status = myThermCmdMgr_->cmdRspCb_->commandResponseStatus();
         if (status.get()) {
             std::cout << " Waiting for async task to complete " << std::endl;
             myThermCmdMgr_->waitForAsyncTaskToComplete();

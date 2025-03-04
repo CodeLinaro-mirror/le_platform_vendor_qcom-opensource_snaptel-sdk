@@ -229,6 +229,10 @@ public:
     virtual telux::common::Status deregisterListener(
             std::weak_ptr<IModemConfigListener> listener) = 0;
 
+    /**
+     * Destructor for IModemConfigManager
+     */
+    virtual ~IModemConfigManager(){};
 };
 
 /** @} */ /* end_addtogroup telematics_config */

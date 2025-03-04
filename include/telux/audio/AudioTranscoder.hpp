@@ -203,6 +203,11 @@ public:
      */
     virtual telux::common::Status
             deRegisterListener(std::weak_ptr<ITranscodeListener> listener) = 0;
+
+    /**
+     * Destructor for ITranscoder
+     */
+    virtual ~ITranscoder(){};
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

@@ -278,6 +278,11 @@ class ICard {
      */
     virtual telux::common::Status requestEid(EidResponseCallback callback)
         = 0;
+
+    /**
+     * Destructor for ICard
+     */
+    virtual ~ICard(){};
 };
 
 /**

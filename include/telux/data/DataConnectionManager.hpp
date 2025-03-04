@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -239,6 +239,16 @@ using TrafficFlowTemplateCb =
  */
 class IDataConnectionManager {
  public:
+    /**
+     * Returns current initialization status of data connection manager.
+     *
+     * @returns SERVICE_AVAILABLE    If data connection manager is ready for service.
+     *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
+     *          SERVICE_FAILED       If data connection manager encountered an irrecoverable failure.
+     *
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
     /**
      * Checks if the data subsystem is ready.
      *

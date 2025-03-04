@@ -148,6 +148,11 @@ public:
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IDataSettingsListener> listener) = 0;
+
+    /**
+     * Destructor for IDataSettingsManager
+     */
+    virtual ~IDataSettingsManager(){};
 };
 
 /**

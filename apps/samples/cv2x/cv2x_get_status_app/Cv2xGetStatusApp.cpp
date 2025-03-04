@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022,2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -132,7 +132,9 @@ static map<Cv2xCauseType, string> gCv2xCauseToString = {
 };
 
 static void printCv2xStatus(Cv2xStatusEx eStatus) {
-    cout << Utils::getCurrentTimeString() << " C-V2X Status:" << endl;
+    cout << "Current UTC Timestamp: " << Utils::getCurrentTimestamp();
+    cout << ", Local Time: " << Utils::getCurrentTimeString() <<  endl;
+    cout << "C-V2X Status:" << endl;
     cout << "  Overall RX status=" << gCv2xStatusToString[eStatus.status.rxStatus];
     cout << ", cause=" << gCv2xCauseToString[eStatus.status.rxCause] << endl;
     cout << "  Overall TX status=" << gCv2xStatusToString[eStatus.status.txStatus];

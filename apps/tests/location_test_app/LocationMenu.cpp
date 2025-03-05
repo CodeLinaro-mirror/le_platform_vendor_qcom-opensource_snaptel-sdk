@@ -772,7 +772,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
         LeverArmConfigInfo configInfo;
         char delimiter = '\n';
         while(true) {
-            telux::loc::LeverArmType leverArmType;
+            telux::loc::LeverArmType leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
             telux::loc::LeverArmParams leverArmParams;
             std::string type;
             std::cout << "Enter the LeverArmType : " << std::endl;

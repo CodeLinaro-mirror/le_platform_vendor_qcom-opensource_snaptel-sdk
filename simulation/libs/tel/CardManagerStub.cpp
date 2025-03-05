@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -454,7 +454,7 @@ telux::common::Status CardManagerStub::allowCardRefresh(SlotId slotId,
     /*Need to check whether the refreshParams match with the setupConfig*/
     bool isRegistered = false;
     bool doVoting = false;;
-    findRefreshParams(refreshParams, isRegistered, &doVoting, nullptr);
+    findRefreshParams(refreshParams, {}, isRegistered, &doVoting);
     if (not doVoting) {
         /*User did not setup refresh config to voting*/
         LOG(ERROR, __FUNCTION__, " did not request voting in setupconfig");
@@ -501,7 +501,7 @@ telux::common::Status CardManagerStub::confirmRefreshHandlingCompleted(SlotId sl
 
     /*Need to check whether the refreshParams match with the setupConfig*/
     bool isRegistered = false;
-    findRefreshParams(refreshParams, isRegistered, nullptr, nullptr);
+    findRefreshParams(refreshParams, {}, isRegistered, nullptr);
     if (not isRegistered) {
         LOG(ERROR, __FUNCTION__, " did not register cardRefresh evts");
         return telux::common::Status::NOTALLOWED;
@@ -547,7 +547,7 @@ telux::common::Status CardManagerStub::requestLastRefreshEvent(SlotId slotId,
 
     /*Need to check whether the refreshParams match with the setupConfig*/
     bool isRegistered = false;
-    findRefreshParams(refreshParams, isRegistered, nullptr, nullptr);
+    findRefreshParams(refreshParams, {}, isRegistered, nullptr);
     if (not isRegistered) {
         LOG(ERROR, __FUNCTION__, " did not register cardRefresh evts");
         return telux::common::Status::NOTALLOWED;
@@ -614,43 +614,13 @@ void CardManagerStub::handleRefreshEvent(::telStub::RefreshEvent event) {
     /*2. Need to check whether the refreshParams match with the setupConfig*/
     bool isRegistered = false;
     bool doVoting = false;
-    std::vector<IccFile> efFiles;
-    findRefreshParams(refreshParams, isRegistered, &doVoting, &efFiles);
-    if (not isRegistered) {
-        LOG(ERROR, __FUNCTION__, " did not register cardRefresh evts");
-        return;
+    std::vector<IccFile> efFiles = {};
+    for (int i = 0; i < event.effiles_size(); ++i) {
+        efFiles.push_back({static_cast<uint16_t>(event.effiles(i).fileid()),
+            event.effiles(i).filepath()});
     }
 
-    /*3. check whether client registered EFs include the EF in this event*/
-    int userOptionEfssize = efFiles.size();
-    int efMatch = 0;
-    int notificationEfssize = event.effiles_size();
-    std::vector<IccFile> evtEfFiles;
-    LOG(ERROR, __FUNCTION__, " userOptionEfssize ", userOptionEfssize,
-        ", notificationEfssize ", notificationEfssize);
-    for (int i = 0; i < notificationEfssize; ++i) {
-        IccFile ef;
-        ::telStub::IccFile* efFile = event.mutable_effiles(i);
-        if (efFile) {
-            ef.fileId   = efFile->fileid();
-            ef.filePath = efFile->filepath();
-            evtEfFiles.push_back(ef);
-            LOG(DEBUG, __FUNCTION__, " ef[", i, "].fileId ", static_cast<int>(ef.fileId),
-                ", ef[", i, "].filePath ", ef.filePath);
-            for (int j = 0; j < userOptionEfssize; j++) {
-                if (ef.fileId == efFiles[j].fileId &&
-                    ef.filePath == efFiles[j].filePath) {
-                    efMatch++;
-                    break;
-                }
-            }
-        }
-    }
-    if (notificationEfssize != efMatch) {
-        LOG(WARNING, __FUNCTION__, " IccFiles matche ", efMatch,
-        " of total notification Efssize ", notificationEfssize, " abort!");
-        return;
-    }
+    findRefreshParams(refreshParams, efFiles, isRegistered, &doVoting, true);
 
     /*Finally notify listeners if all path*/
     std::vector<std::weak_ptr<ICardListener>> applisteners;
@@ -659,7 +629,7 @@ void CardManagerStub::handleRefreshEvent(::telStub::RefreshEvent event) {
         for(auto &wp : applisteners) {
             if(auto sp = wp.lock()) {
                 sp->onRefreshEvent(slotId, static_cast<RefreshStage>(event.stage()),
-                    static_cast<RefreshMode>(event.mode()), evtEfFiles, refreshParams);
+                    static_cast<RefreshMode>(event.mode()), efFiles, refreshParams);
             }
         }
     }
@@ -684,23 +654,45 @@ SlotId CardManagerStub::getSlotBySessionType(telux::tel::SessionType st) {
     return INVALID_SLOT_ID;
 }
 
-void CardManagerStub::findRefreshParams(const RefreshParams& refreshParams, bool& isRegister,
-    bool* doVoting, std::vector<IccFile>* efFiles) {
+void CardManagerStub::findRefreshParams(const RefreshParams& refreshParams,
+    const std::vector<IccFile>& efFiles, bool& isRegister, bool* doVoting,
+    bool isEvent) {
     RefreshParams sessionAid;
     convertRefreshParams(refreshParams, sessionAid);
-
+    bool found = false;
     for (auto it = userRefreshParams_.begin(); it != userRefreshParams_.end(); ++it) {
         if ((it->refreshParams.sessionType == sessionAid.sessionType) &&
             (it->refreshParams.aid == sessionAid.aid)) {
-            LOG(DEBUG, __FUNCTION__, " found matched entry");
-            isRegister = it->isRegister;
-            if (doVoting) {
-                *doVoting = it->doVoting;
+            if (!isEvent || (it->efFiles.size() == 0 && efFiles.size() == 0)) {
+                found = true;
+            } else if (isEvent && it->efFiles.size() > 0 && efFiles.size() > 0) {
+                unsigned int efMatch = 0;
+                for(auto itUserFiles = std::begin(efFiles);
+                    itUserFiles != std::end(efFiles); ++ itUserFiles) {
+                    for(auto itCacheFiles = std::begin(it->efFiles);
+                        itCacheFiles != std::end(it->efFiles);
+                        ++ itCacheFiles) {
+                        if (itCacheFiles->fileId == itUserFiles->fileId &&
+                            itCacheFiles->filePath == itUserFiles->filePath) {
+                            efMatch ++;
+                            break;
+                        }
+                    }
+                }
+                if (efFiles.size() != efMatch) {
+                    LOG(WARNING, __FUNCTION__, " IccFiles match ", efMatch,
+                    " of total notification Efssize ", efFiles.size(), " abort!");
+                    found = true;
+                }
             }
-            if (efFiles) {
-                *efFiles = it->efFiles;
+            if (found) {
+                LOG(DEBUG, __FUNCTION__, " found matched entry");
+                isRegister = it->isRegister;
+                if (doVoting) {
+                    *doVoting = it->doVoting;
+                }
+                break;
             }
-            break;
         }
     }
     LOG(DEBUG, __FUNCTION__, " isRegister ", +isRegister);

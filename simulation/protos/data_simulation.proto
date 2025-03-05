@@ -210,6 +210,14 @@ service DataFilterManager {
     rpc SetDataStallParams(SetDataStallParamsRequest) returns (SetDataStallParamsReply) {}
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
   }
+
+service TetherManager {
+    rpc InitService(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc StartBTTether(BTTetherMode) returns (DefaultReply) {}
+    rpc StopBTTether(google.protobuf.Empty) returns (DefaultReply) {}
+    rpc RequestBTTetherStatus(google.protobuf.Empty) returns (BTTetherStatusReply) {}
+}
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
@@ -1296,4 +1304,26 @@ message SetDataStallParamsRequest {
 
 message SetDataStallParamsReply {
     commonStub.ErrorCode error = 1;
+}
+
+message BTTetherMode {
+    enum Mode {
+        LAN = 0;
+        WAN = 1;
+    }
+    Mode mode = 1;
+}
+
+message BTTetherStatusReply {
+    BTTetherMode bt_tether_mode = 1;
+    BTTetherStatus bt_tether_status = 2;
+    DefaultReply reply = 3;
+}
+
+message BTTetherStatus {
+    enum Status {
+        UP = 0;
+        DOWN = 1;
+    }
+    Status status = 1;
 }

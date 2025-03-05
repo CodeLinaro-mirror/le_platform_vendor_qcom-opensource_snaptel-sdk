@@ -4,6 +4,7 @@ set(TARGET_AUDIO_LOOPBACK_APP audio_loopback_app)
 
 set(AUDIO_LOOPBACK_APP_SOURCES
     AudioLoopbackApp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

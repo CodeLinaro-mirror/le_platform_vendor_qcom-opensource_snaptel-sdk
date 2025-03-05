@@ -39,6 +39,7 @@ extern "C"
 
 #include <algorithm>
 #include <iostream>
+#include <cstring>
 
 #include <telux/data/DataFactory.hpp>
 

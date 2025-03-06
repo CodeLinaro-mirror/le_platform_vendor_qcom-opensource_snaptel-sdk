@@ -29,7 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -529,7 +529,7 @@ struct SignalStrengthConfig {
    SignalStrengthConfigType configType;     /**< Signal strength configuration type. */
    RadioSignalStrengthType ratSigType;      /**< Radio signal strength type. */
 
-   /** Signal strength data. */
+   /**< Signal strength data. */
    union {
       uint16_t delta;                       /**< Signal strength delta. */
       SignalStrengthThreshold threshold;    /**< Signal strength threshold. */
@@ -553,7 +553,7 @@ struct PlmnInfo {
  */
 struct SignalStrengthConfigData {
    SignalStrengthMeasurementType sigMeasType;       /**< Signal strength measurement type. */
-   /** Signal strength data. */
+   /**< Signal strength data. */
    union {
       uint16_t delta;                               /**< Signal strength delta. */
       struct {
@@ -577,7 +577,7 @@ struct SignalStrengthConfigEx {
                                                              applicable only when threshold is
                                                              configured. */
    RadioTechnology radioTech;                           /**< Radio technology. */
-   std::vector<SignalStrengthConfigData> sigConfigData; /** Signal strength data. */
+   std::vector<SignalStrengthConfigData> sigConfigData; /**< Signal strength data. */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

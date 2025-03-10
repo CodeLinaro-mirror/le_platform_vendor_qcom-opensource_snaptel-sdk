@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -314,6 +314,32 @@ telux::common::Status PowerGrpcClient::setModemActivityState(TcuActivityState st
         LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
     }
     return status;
+}
+
+telux::common::Status PowerGrpcClient::getActivityState(TcuActivityState &state) {
+    LOG(DEBUG, __FUNCTION__);
+    const ::google::protobuf::Empty request {};
+    ::powerStub::GetLocalTcuStateReply response {};
+    ClientContext context{};
+
+    grpc::Status reqStatus;
+    reqStatus = stub_->GetLocalTcuState(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+        return telux::common::Status::FAILED;
+    }
+
+    ::powerStub::TcuState grpcState = response.local_mach_state();
+    if(grpcState == ::powerStub::TcuState::STATE_RESUME) {
+        state = telux::power::TcuActivityState::RESUME;
+    } else if(grpcState == ::powerStub::TcuState::STATE_SUSPEND) {
+        state = telux::power::TcuActivityState::SUSPEND;
+    } else if(grpcState == ::powerStub::TcuState::STATE_SHUTDOWN) {
+        state = telux::power::TcuActivityState::SHUTDOWN;
+    } else if(grpcState == ::powerStub::TcuState::STATE_UNKNOWN) {
+        state = telux::power::TcuActivityState::UNKNOWN;
+    }
+    return telux::common::Status::SUCCESS;
 }
 
 void PowerGrpcClient::onEventUpdate(google::protobuf::Any event) {

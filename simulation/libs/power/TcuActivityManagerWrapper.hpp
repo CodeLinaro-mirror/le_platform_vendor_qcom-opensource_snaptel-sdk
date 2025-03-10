@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,6 +44,8 @@ class TcuActivityManagerWrapper : public ITcuActivityManager {
     telux::common::Status sendActivityStateAck(
         StateChangeResponse ack, TcuActivityState state) override;
     telux::common::Status setModemActivityState(TcuActivityState state) override;
+    telux::common::ErrorCode getActivityState(std::string machineName,
+        TcuActivityState &state) override;
 
  private:
     TcuActivityManagerWrapper(TcuActivityManagerWrapper const &)            = delete;

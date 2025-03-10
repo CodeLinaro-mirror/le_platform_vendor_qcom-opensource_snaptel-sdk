@@ -130,8 +130,13 @@ void WlanDeviceManagerMenu::enableWlan(std::vector<std::string> userInput) {
     WlanUtils::validateInput(wlanEnable, {0, 1});
 
     telux::common::ErrorCode retCode =  wlanDeviceManager_->enable(static_cast<bool>(wlanEnable));
-    std::cout << "\nWlan Enable Response"
-              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+
+    if(wlanEnable) {
+        std::cout << "\nWlan Enable Response";
+    } else {
+        std::cout << "\nWlan Disable Response";
+    }
+    std::cout << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
               << ". ErrorCode: " << static_cast<int>(retCode)
               << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }

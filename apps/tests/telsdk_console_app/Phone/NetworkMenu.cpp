@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -120,31 +120,31 @@ bool NetworkMenu::init() {
             return false;
          }
       }
+      std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "1", "select_sim_slot", {},
+      std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
 
       std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "get_selection_mode", {},
+         "2", "get_selection_mode", {},
       std::bind(&NetworkMenu::getNetworkSelectionMode, this, std::placeholders::_1)));
       std::shared_ptr<ConsoleAppCommand> setNetworkSelectionModeCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "set_selection_mode", {},
+         "3", "set_selection_mode", {},
       std::bind(&NetworkMenu::setNetworkSelectionMode, this, std::placeholders::_1)));
       std::shared_ptr<ConsoleAppCommand> getPreferredNetworksCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "get_preferred_networks", {},
+         "4", "get_preferred_networks", {},
       std::bind(&NetworkMenu::getPreferredNetworks, this, std::placeholders::_1)));
       std::shared_ptr<ConsoleAppCommand> setPreferredNetworksCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "set_preferred_networks", {},
+         "5", "set_preferred_networks", {},
       std::bind(&NetworkMenu::setPreferredNetworks, this, std::placeholders::_1)));
       std::shared_ptr<ConsoleAppCommand> performNetworkScanCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "perform_network_scan", {},
+         "6", "perform_network_scan", {},
       std::bind(&NetworkMenu::performNetworkScan, this, std::placeholders::_1)));
-      std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "select_sim_slot", {},
-      std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
 
       std::shared_ptr<ConsoleAppCommand> setLteDubiousCellCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
@@ -167,12 +167,8 @@ bool NetworkMenu::init() {
       std::bind(&NetworkMenu::removeAllNrDubiousCell, this, std::placeholders::_1)));
 
       std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
-         = {getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
+         = {selectSimSlotCommand, getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
       getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
-
-      if (networkManagers_.size() > 1) {
-         commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
-      }
 
       commandsListNetworkSubMenu.emplace_back(setLteDubiousCellCommand);
       commandsListNetworkSubMenu.emplace_back(setNrDubiousCellCommand);
@@ -401,6 +397,12 @@ void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
 }
 
 void NetworkMenu::selectSimSlot(std::vector<std::string> userInput) {
+
+   if (networkManagers_.size() == 1) {
+      std::cout << "To select a SIM slot, please enable DSDS" << std::endl;
+      return;
+   }
+
    std::string slotSelection;
    char delimiter = '\n';
 

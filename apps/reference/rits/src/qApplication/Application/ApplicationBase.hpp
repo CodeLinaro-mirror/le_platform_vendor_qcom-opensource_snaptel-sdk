@@ -30,7 +30,7 @@
 /*
  *Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -328,6 +328,11 @@ public:
      * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmission
      */
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
+
+    /**
+    * Destructor for ApplicationBase
+    */
+    virtual ~ApplicationBase(){};
 
     /**
     * Closes all tx and rx flows from Snaptel SDK.

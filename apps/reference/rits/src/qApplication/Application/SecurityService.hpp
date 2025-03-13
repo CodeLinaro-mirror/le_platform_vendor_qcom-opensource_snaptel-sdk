@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -121,8 +121,6 @@ public:
         SecurityCtxName_(ctxName),
         countryCode_(countryCode) {
         }
-    ~SecurityService(){
-    }
 
     virtual int ExtractMsg(const SecurityOpt opt,
                             const uint8_t * msg,
@@ -157,6 +155,11 @@ public:
     * @return int - Reports -1 on failure, else success.
     */
     virtual int idChange() = 0;
+
+    /**
+    * Destructor for SecurityService
+    */
+    virtual ~SecurityService(){};
 protected:
     /**
     * Virtual method to setup and initialize security instance.

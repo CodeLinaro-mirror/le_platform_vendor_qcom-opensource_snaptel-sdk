@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1990,6 +1990,10 @@ public:
  */
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
+/**
+ * Destructor for ILocationInfoBase
+ */
+  virtual ~ILocationInfoBase(){};
 };
 
 /**
@@ -2360,6 +2364,10 @@ public:
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
+/**
+ * Destructor for ILocationInfoEx
+ */
+  virtual ~ILocationInfoEx(){};
 };
 
 /**
@@ -2495,6 +2503,11 @@ public:
  * when not supported.
  */
   virtual double getBasebandCnr() = 0;
+
+/**
+ * Destructor for ISVInfo
+ */
+  virtual ~ISVInfo(){};
 };
 
 /**
@@ -2520,6 +2533,11 @@ public:
  *
  */
   virtual std::vector<std::shared_ptr<ISVInfo> > getSVInfoList() = 0;
+
+/**
+ * Destructor for IGnssSVInfo
+ */
+  virtual ~IGnssSVInfo(){};
 };
 
 /**
@@ -2538,6 +2556,11 @@ public:
  */
 
   virtual GnssData getGnssData() = 0;
+
+  /**
+   * Destructor for IGnssSignalInfo
+   */
+   virtual ~IGnssSignalInfo(){};
 };
 
 /** @} */ /* end_addtogroup telematics_location */

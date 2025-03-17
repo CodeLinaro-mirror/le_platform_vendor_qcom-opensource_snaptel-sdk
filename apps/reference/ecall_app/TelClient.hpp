@@ -108,14 +108,16 @@ class TelClient : public ICallListener,
      * @param [in] category     ECallCategory
      * @param [in] variant      ECallVariant
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
+     * @param [in] dialDuration Dial duration for automotive emergency ERA-GLONASS eCall
+     * @param [in] autoAnswerDuration Auto answer duration for incoming PSAP callback.
      * @param [in] callListener pointer to CallStatusListener to notify call status changes
      *
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
     telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
-        ECallCategory category, ECallVariant variant, bool transmitMsd,
-        std::shared_ptr<CallStatusListener> callListener);
+        ECallCategory category, ECallVariant variant, bool transmitMsd, int dialDuration,
+        int autoAnswerDuration, std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function starts a self test ERA-GLONASS eCall to specified number.
@@ -407,13 +409,14 @@ class TelClient : public ICallListener,
     void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
     void setEraGlonassEnabled(bool isEnabled);
+    bool isEraGlonassEnabled();
+    void getCacheData(int &dialDuration, int &autoAnswerDuration );
 
     TelClient();
     ~TelClient();
 
  private:
     void setECallProgressState(bool state);
-    bool isEraGlonassEnabled();
     class AnswerCommandCallback : public telux::common::ICommandResponseCallback {
      public:
         void commandResponse(telux::common::ErrorCode error) override;
@@ -507,6 +510,8 @@ class TelClient : public ICallListener,
     bool stopDialTimer_;
     /* It represents duration during which incoming PSAP callback will be answered automatically.*/
     int autoAnswerDuration_;
+    /* It represents duration during which eCall should get connected successfully with PSAP.*/
+    int dialDuration_;
     /* It represents whether T9 HLAP timer is active */
     bool isT9TimerActive_;
     /** It represents whether ongoing eCall will redial due to call origination or

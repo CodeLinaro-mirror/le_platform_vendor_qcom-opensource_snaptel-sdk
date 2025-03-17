@@ -122,8 +122,12 @@ void TelClient::EcallScanFailHandler::setHighCapabilityResponse(telux::common::E
                   it->second.category, it->second.dialNumber, it->second.transmitMsd,
                      callListener );
             } else {
-               status = sp->startECall(it->first, it->second.msdPdu, it->second.msdData,
-                  it->second.category, it->second.variant, it->second.transmitMsd, callListener);
+                int dialDuration = 5;
+                int autoAnswerDuration = 0;
+                sp->getCacheData(dialDuration, autoAnswerDuration );
+                status = sp->startECall(it->first, it->second.msdPdu, it->second.msdData,
+                  it->second.category, it->second.variant, it->second.transmitMsd, dialDuration,
+                  autoAnswerDuration, callListener);
             }
             if (status == telux::common::Status::SUCCESS) {
                std::cout << CLIENT_NAME <<"Initiated an Ecall on slot: " << it->first <<"\n";

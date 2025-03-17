@@ -78,6 +78,7 @@ TelClient::TelClient()
    , isDialDurationTimeOut_(false)
    , stopDialTimer_(false)
    , autoAnswerDuration_(0)
+   , dialDuration_(5)
    , isT9TimerActive_(false)
    , willECallRedial_(false)
    , disconnectECallInNextAttempt_(false)
@@ -151,6 +152,13 @@ bool TelClient::isECallInProgress() {
 // Indicates whether an ERAGLONASS mode is enabled
 bool TelClient::isEraGlonassEnabled() {
     return isEraglonassEnabled_;
+}
+
+// Fills the dial duration and auto answer user data required for new eCall triggered during
+// network scan failure.
+void TelClient::getCacheData(int &dialDuration, int &autoAnswerDuration ) {
+    dialDuration = dialDuration_;
+    autoAnswerDuration = autoAnswerDuration_;
 }
 
 // Set the ERAGLONASS mode
@@ -628,7 +636,7 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
     ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
-    std::shared_ptr<CallStatusListener> callListener) {
+    int dialDuration, int autoAnswerDuration, std::shared_ptr<CallStatusListener> callListener) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
                   << std::endl;
@@ -636,35 +644,6 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     }
     setECallProgressState(true);
     isPrivateEcallTriggered = false;
-    // Get dial duration and redial attempts from user
-    char delimiter = '\n';
-    std::string temp = "";
-    int dialDuration = 5;
-    if (isEraGlonassEnabled()) {
-        std::cout << "Enter dial duration (in minutes): ";
-        std::getline(std::cin, temp, delimiter);
-        if(!temp.empty()) {
-            try {
-                dialDuration = std::stoi(temp);
-            } catch(const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
-            }
-        } else {
-            std::cout << "No input" << std::endl;
-        }
-
-        std::cout << "Enter auto answer timer duration (in minutes): ";
-        std::getline(std::cin, temp, delimiter);
-        if(!temp.empty()) {
-            try {
-                autoAnswerDuration_ = std::stoi(temp);
-            } catch(const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
-            }
-        } else {
-            std::cout << "No input" << std::endl;
-        }
-    }
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -702,6 +681,8 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
             disconnectECallInNextAttempt_ = false;
             isT9TimerActive_ = false;
             isAutoAnswerDurationTimeOut_ = false;
+            dialDuration_ = dialDuration;
+            autoAnswerDuration_ = autoAnswerDuration;
         }
     } else {
         std::cout << CLIENT_NAME << "Request to make an ECall failed!" << std::endl;

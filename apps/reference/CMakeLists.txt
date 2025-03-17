@@ -9,7 +9,7 @@ endif(BUILD_ALL_REFERENCE)
 
 if(NOT TELSDK_FEATURE_FOR_SECONDARY_VM)
 if(WITH_LOCATION AND TELSDK_FEATURE_LOC)
-#    add_subdirectory( chrony-sock)
+    add_subdirectory( chrony-sock)
 endif(WITH_LOCATION AND TELSDK_FEATURE_LOC)
 endif (NOT TELSDK_FEATURE_FOR_SECONDARY_VM)
 

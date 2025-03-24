@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
+include(GNUInstallDirs)
 set(TARGET_LOCATION_TEST_APP location_test_app)
+
+set(APPS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 set(LOCATION_TEST_APP_SOURCES
     DgnssMenu.cpp
@@ -8,10 +11,10 @@ set(LOCATION_TEST_APP_SOURCES
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
     LocationUtils.cpp
-    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
-    ../../common/console_app_framework/ConsoleAppCommand.cpp
-    ../../common/console_app_framework/ConsoleApp.cpp
-    ../../common/ConfigParser.cpp
+    ${APPS_SOURCE_DIR}/common/utils/Utils.cpp
+    ${APPS_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
+    ${APPS_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
+    ${APPS_SOURCE_DIR}/common/ConfigParser.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -23,8 +26,8 @@ SYSR_INCLUDE_DIR(telux)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/utils
+    ${APPS_SOURCE_DIR}/common
+    ${APPS_SOURCE_DIR}/common/utils
 )
 
 # set global variables

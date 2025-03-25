@@ -109,16 +109,16 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
 endif (TELSDK_FEATURE_DATA)
 
 # To disable audio from telsdk_console_app please disable flag AUDIO_ENABLED
-#if (TELSDK_FEATURE_AUDIO)
-#    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-#    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
-#    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
-#    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
-#    )
-#endif (TELSDK_FEATURE_AUDIO)
+if (TELSDK_FEATURE_AUDIO)
+    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+        Audio/AudioClient.cpp
+        ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
+        ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
+        ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
+    )
+endif (TELSDK_FEATURE_AUDIO)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-   #Audio/AudioClient.cpp
    TelSdkConsoleApp.cpp
    #${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    #${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp

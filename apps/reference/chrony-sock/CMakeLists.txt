@@ -34,7 +34,7 @@ install(TARGETS ${APP_NAME}
 
 if(WITH_SYSTEMD)
     install(FILES chrony-sock.service
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../usr/lib/systemd/system)
 else()
     install(FILES start_chrony_sock_le
             DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init.d

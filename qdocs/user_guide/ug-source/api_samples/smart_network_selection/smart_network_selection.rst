@@ -42,20 +42,20 @@ smart network selection.
    }
 
 
-4. Set dubious cell for the LTE netowrk
+4. Set dubious cell list for the LTE netowrk
 
 .. code-block::
 
-   LteDubiousCellInfo params;
-   DubiousCellInfo dbCellInfo;
-   dbCellInfo.mcc = mcc;
-   dbCellInfo.mnc = mnc;
-   dbCellInfo.arfcn = arfcn;
-   dbCellInfo.pci = pci;
-   dbCellInfo.activeBand = activeBand;
-   dbCellInfo.causeCodeMask = causeCodeMask;
-   params.ciList.emplace_back(dbCellInfo);
-   params.cgi = cgi;
+   std::vector<telux::tel::LteDubiousCell> params;
+   telux::tel::LteDubiousCell lteDbCellInfo;
+   lteDbCellInfo.ci.mcc = mcc;
+   lteDbCellInfo.ci.mnc = mnc;
+   lteDbCellInfo.ci.arfcn = arfcn;
+   lteDbCellInfo.ci.pci = pci;
+   lteDbCellInfo.ci.activeBand = activeBand;
+   lteDbCellInfo.ci.causeCodeMask = causeCodeMask;
+   lteDbCellInfo.cgi = cgi;
+   params.push_back(lteDbCellInfo);
 
    if(networkMgr) {
       ErrorCode err = networkMgr->setLteDubiousCell(params);
@@ -63,21 +63,21 @@ smart network selection.
       }
    }
 
-5. Set dubious cell for the NR netowrk
+5. Set dubious cell list for the NR netowrk
 
 .. code-block::
 
-   NrDubiousCellInfo params;
-   DubiousCellInfo dbCellInfo;
-   dbCellInfo.mcc = mcc;
-   dbCellInfo.mnc = mnc;
-   dbCellInfo.arfcn = arfcn;
-   dbCellInfo.pci = pci;
-   dbCellInfo.activeBand = activeBand;
-   dbCellInfo.causeCodeMask = causeCodeMask;
-   params.ciList.emplace_back(dbCellInfo);
-   params.cgi = cgi;
-   params.spacing = spacing;
+   std::vector<telux::tel::NrDubiousCell> params;
+   telux::tel::NrDubiousCell nrDbCellInfo;
+   nrDbCellInfo.ci.mcc = mcc;
+   nrDbCellInfo.ci.dbCellInfo.mnc = mnc;
+   nrDbCellInfo.ci.dbCellInfo.arfcn = arfcn;
+   nrDbCellInfo.ci.dbCellInfo.pci = pci;
+   nrDbCellInfo.ci.dbCellInfo.activeBand = activeBand;
+   nrDbCellInfo.ci.dbCellInfo.causeCodeMask = causeCodeMask;
+   nrDbCellInfo.cgi = cgi;
+   nrDbCellInfo.spacing = spacing;
+   params.push_back(nrDbCellInfo);
 
    if(networkMgr) {
       ErrorCode err = networkMgr->setNrDubiousCell(params);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -41,6 +41,9 @@ class PowerFactoryImpl : public PowerFactory, public telux::common::FactoryHelpe
 
     std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
         ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) override;
+
+    std::shared_ptr<IWakeupManager> getWakeupManager(
+        telux::common::InitResponseCb callback = nullptr) override;
 
  private:
     PowerFactoryImpl();

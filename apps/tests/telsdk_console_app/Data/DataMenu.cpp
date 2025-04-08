@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -145,11 +145,16 @@ void DataMenu::init() {
             "14", "Data_Control_Menu",
             {}, std::bind(&DataMenu::dataControlMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> networkSettingMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "15", "Network_Setting_Menu",
+            {}, std::bind(&DataMenu::networkSettingMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand};
+        dataControlMenuCommand, networkSettingMenuCommand};
 
     addCommands(commandsList);
 
@@ -303,3 +308,14 @@ void DataMenu::dataControlMenu(std::vector<std::string> userInput) {
     dataControlMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
+
+void DataMenu::networkSettingMenu(std::vector<std::string> userInput) {
+    networkSettingMenu_ =
+        make_shared<NetworkSettingMenu>("Network Setting Menu", "network_setting> ");
+    if(networkSettingMenu_->init()) {
+        networkSettingMenu_->mainLoop();
+    }
+    networkSettingMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+

@@ -70,6 +70,8 @@
  *             provisioning.This interface provides APIs to add, delete, set profile,
  *             request profile list, update nickname, providing user consent, get Eid on the eUICC.
  *
+ * @note This class is not intended for production software and is intended for testing and trial
+ * purposes only.
  */
 
 #ifndef SIMPROFILEMANAGER_HPP

@@ -63,6 +63,8 @@
 #include <telux/data/ClientManager.hpp>
 #include <telux/data/DualDataManager.hpp>
 #include <telux/data/DataControlManager.hpp>
+#include <telux/data/net/NetworkSettingManager.hpp>
+
 
 namespace telux {
 namespace data {
@@ -296,6 +298,20 @@ class DataFactory {
      */
     virtual std::shared_ptr<telux::data::IDataControlManager> getDataControlManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get NetworkSetting Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              NetworkSetting manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of INetworkSettingManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::INetworkSettingManager> getNetworkSettingManager(
+        telux::data::OperationType oprType, telux::common::InitResponseCb
+        clientCallback = nullptr) = 0;
+
 #ifndef TELUX_DOXY_SKIP
  protected:
     DataFactory();

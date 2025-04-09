@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,30 +33,36 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef LOOPBACKMENU_HPP
-#define LOOPBACKMENU_HPP
+#ifndef AUDIOSESSION_HPP
+#define AUDIOSESSION_HPP
 
-#include "ConsoleApp.hpp"
-#include "AudioClient.hpp"
+#include <map>
 
-class LoopbackMenu : public ConsoleApp {
- public:
-    LoopbackMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-    ~LoopbackMenu();
-    void init();
-    void cleanup();
-    void setSystemReady();
+#include <telux/audio/AudioManager.hpp>
+#include <telux/common/CommonDefines.hpp>
 
- private:
-    void createStream(std::vector<std::string> userInput);
-    void deleteStream(std::vector<std::string> userInput);
-    void startLoopback(std::vector<std::string> userInput);
-    void stopLoopback(std::vector<std::string> userInput);
+using namespace telux::common;
+using namespace telux::audio;
 
-    std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;
-    std::shared_ptr<AudioClient> audioClient_;
-    std::atomic<bool> loopbackStarted_;
-    std::atomic<bool> ready_;
+/* AudioSession class provides methods to create/delete the various streams and the
+ * common functionalities like volume mute and device switch.
+ */
+class AudioSession {
+public:
+    AudioSession();
+    ~AudioSession();
+
+    Status createStream(StreamConfig config);
+    Status deleteStream();
+
+    Status setStreamDevice(std::vector<DeviceType> devices);
+    Status getStreamDevice(std::vector<DeviceType> &devices);
+    Status setVolume(StreamVolume streamVol);
+    Status getVolume(StreamVolume &volume);
+    Status setMute(StreamMute mute);
+    Status getMute(StreamMute &muteStatus);
+protected:
+    std::shared_ptr<IAudioStream> stream_;
 };
 
-#endif  // LOOPBACKMENU_HPP
+#endif  // AUDIOSESSION_HPP

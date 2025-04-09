@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,30 +33,45 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef LOOPBACKMENU_HPP
-#define LOOPBACKMENU_HPP
+#ifndef AUDIOHELPER_HPP
+#define AUDIOHELPER_HPP
 
-#include "ConsoleApp.hpp"
-#include "AudioClient.hpp"
+#include <telux/audio/AudioManager.hpp>
+#include <telux/common/CommonDefines.hpp>
 
-class LoopbackMenu : public ConsoleApp {
- public:
-    LoopbackMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-    ~LoopbackMenu();
-    void init();
-    void cleanup();
-    void setSystemReady();
+using namespace telux::audio;
+using namespace telux::common;
 
- private:
-    void createStream(std::vector<std::string> userInput);
-    void deleteStream(std::vector<std::string> userInput);
-    void startLoopback(std::vector<std::string> userInput);
-    void stopLoopback(std::vector<std::string> userInput);
-
-    std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;
-    std::shared_ptr<AudioClient> audioClient_;
-    std::atomic<bool> loopbackStarted_;
-    std::atomic<bool> ready_;
+enum Freq {
+    Freq_697 = 697,
+    Freq_770 = 770,
+    Freq_852 = 852,
+    Freq_941 = 941,
+    Freq_1209 = 1209,
+    Freq_1336 = 1336,
+    Freq_1477 = 1477,
+    Freq_1633 = 1633,
 };
 
-#endif  // LOOPBACKMENU_HPP
+/** AudioHelper class provides methods to get user inputs */
+class AudioHelper {
+public:
+    static void getUserSlotIdInput(int &slotId);
+    static void getAudioFormatInput(AudioFormat &audioFormat);
+    static void getUserSampleRateInput(uint32_t &sampleRate);
+    static void getUserChannelInput(ChannelTypeMask &channels);
+    static void getUserDeviceInput(std::vector<DeviceType> &devices);
+    static void getUserCreateStreamInput(StreamConfig &config);
+    static void getUserDirectionInput(StreamDirection &direction);
+    static void getUserVolumeInput(StreamVolume &streamVolume);
+    static void getVolumeValueInput(float &vol);
+    static void getUserVoicePathInput(std::vector<Direction> &direction);
+    static void getUserMuteStatusInput(StreamMute &mute);
+    static Status getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_t &gain);
+
+private:
+    static Status lowFrequencyHelper(uint32_t lowFreq, DtmfLowFreq &lowFrequency);
+    static Status highFrequencyHelper(uint32_t highFreq, DtmfHighFreq &highFrequency);
+};
+
+#endif  // AUDIOHELPER_HPP

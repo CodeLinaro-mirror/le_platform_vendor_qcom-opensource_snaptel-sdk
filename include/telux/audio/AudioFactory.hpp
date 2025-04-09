@@ -27,13 +27,15 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
- * @file       AudioFactory.hpp
- *
- * @brief      AudioFactory is the central factory to create all audio instances
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to
- *             change and could break backwards compatibility.
+ * @file  AudioFactory.hpp
+ * @brief Factory to created IAudioManager instance.
  */
 
 #ifndef AUDIOFACTORY_HPP
@@ -42,48 +44,45 @@
 #include <telux/audio/AudioManager.hpp>
 
 namespace telux {
-
 namespace audio {
+
 /** @addtogroup telematics_audio
  * @{ */
 
 /**
- * @brief   AudioFactory allows creation of audio manager.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
+ *  Allows the creation of an IAudioManager instance.
  */
 class AudioFactory {
-public:
+ public:
    /**
-    * Get Audio Factory instance.
+    * Gets the AudioFactory instance.
     */
    static AudioFactory &getInstance();
 
    /**
-    * Get instance of audio manager.
+    * Gets the IAudioManager instance.
     *
-    * @returns IAudioManager pointer.
+    * @param [in] callback Optional, callback to know the status of the
+    *                      AudioManager initialization
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
+    * @returns IAudioManager instance
     */
-   std::shared_ptr<IAudioManager> getAudioManager();
+   virtual std::shared_ptr<IAudioManager> getAudioManager() = 0;
 
-   ~AudioFactory();
-
-private:
-   std::mutex audioFactoryMutex_;
-   std::shared_ptr<IAudioManager> audioManager_;
-
+#ifndef TELUX_DOXY_SKIP
+protected:
    AudioFactory();
+   virtual ~AudioFactory();
+#endif
+
+ private:
    AudioFactory(const AudioFactory &) = delete;
    AudioFactory &operator=(const AudioFactory &) = delete;
 };
 
 /** @} */ /* end_addtogroup telematics_audio */
-}  // End of namespace audio
 
+}  // End of namespace audio
 }  // End of namespace telux
 
 #endif  // AUDIOFACTORY_HPP

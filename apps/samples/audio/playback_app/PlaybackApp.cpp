@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -67,7 +73,7 @@ static void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCod
 
 // Callback to provide response to the write request
 static void writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
-                telux::common::ErrorCode error)
+                ErrorCode error)
 {
    if (ErrorCode::SUCCESS == error) {
         std::cout << "write() succeeded" << std::endl;
@@ -164,7 +170,7 @@ int main(int, char **) {
     }
     memset(streamBuffer->getRawBuffer(),0,size);
     status = audioPlayStream->write(streamBuffer,writeCallback);
-    if(status != telux::common::Status::SUCCESS) {
+    if(status != Status::SUCCESS) {
         std::cout << "Request to write to stream failed." << std::endl;
     } else {
         std::cout << "Request to write to stream sent." << std::endl;

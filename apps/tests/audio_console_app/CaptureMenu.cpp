@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 #include <queue>
@@ -42,11 +48,13 @@ CaptureMenu::CaptureMenu(std::string appName, std::string cursor,
    : ConsoleApp(appName, cursor),
    audioClient_(audioClient) {
        captureStatus_ = false;
+       ready_ = false;
 }
 
 CaptureMenu::~CaptureMenu() {
     audioClient_ = nullptr;
     captureStatus_ = false;
+    readFail_ = false;
 
     for(std::thread &th : runningThreads_) {
         if(th.joinable()){
@@ -100,6 +108,7 @@ void CaptureMenu::init() {
          startCaptureCommand,
          stopCaptureCommand};
    if(audioClient_){
+        ready_ = true;
         audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
            audioClient_->getStream(StreamType::CAPTURE));
         ConsoleApp::addCommands(captureMenuCommandsList);
@@ -108,9 +117,31 @@ void CaptureMenu::init() {
    }
 }
 
+void CaptureMenu::cleanup() {
+    ready_ = false;
+    captureStatus_ = false;
+    readFail_ = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
+    for (std::thread &th : runningThreads_) {
+        if (th.joinable()){
+            th.join();
+        }
+    }
+    bufferRecordedTillNow_ = 0;
+    audioCaptureStream_ = nullptr;
+}
+
+void CaptureMenu::setSystemReady() {
+    ready_ = true;
+}
+
+
 void CaptureMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if(audioClient_){
+    if (ready_) {
         if(!audioCaptureStream_) {
             status = audioClient_->createStream(telux::audio::StreamType::CAPTURE);
             if(status == telux::common::Status::SUCCESS) {
@@ -120,15 +151,16 @@ void CaptureMenu::createStream(std::vector<std::string> userInput) {
         } else {
              std::cout << "Stream exist please delete first" << std::endl;
         }
-   } else {
-       std::cout << "AudioClient not initialized " << std::endl;
-   }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    }
 }
 
 void CaptureMenu::deleteStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioCaptureStream_) {
         captureStatus_ = false;
+        readFail_ = false;
         for(std::thread &th : runningThreads_) {
             if(th.joinable()){
                 th.join();
@@ -211,6 +243,7 @@ void CaptureMenu::startCapture(std::vector<std::string> userInput) {
 
 void CaptureMenu::stopCapture(std::vector<std::string> userInput) {
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 
@@ -252,35 +285,57 @@ void CaptureMenu::record() {
         std::cout << "Unable to Create File " <<std::endl;
         return;
     }
+
     captureStatus_ = true;
     std::cout << "Audio Capture Started" << std::endl;
+    auto readCb =  std::bind(&CaptureMenu::readCallback, this,
+                  std::placeholders::_1, std::placeholders::_2);
     while (captureStatus_)
     {
         if(!freeBuffers_.empty()) {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
-            auto readCb =  std::bind(&CaptureMenu::readCallback, this,
-                  std::placeholders::_1, std::placeholders::_2);
             telux::common::Status status = audioCaptureStream_->read(streamBuffer,
                     bytesToRead, readCb);
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "read() failed with error" << static_cast<unsigned int>(status)
                 <<std::endl;
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                readFail_ = true;
+                break;
             }
         } else {
             cv_.wait(lock);
+            if(readFail_) {
+                break;
+            }
         }
     }
-    int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
+
+    if(readFail_) {
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
+            cv_.wait(lock);
+        }
+        std::cout << "File Recording Failed" <<std::endl;
+    }  else {
+    /* WaitTime is time required to receive buffer for the last read request.
+       We calculate the total time by converting max buffer size in bytes to bits, then we divide
+       this by frame size which is numChannel(mono/setero)*16(2 byte per analog sample) and
+       samplerate to get time.*/
+        int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
-    waitTime = waitTime+100;
-    while(freeBuffers_.size() != TOTAL_BUFFERS) {
-        cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        waitTime = waitTime+100;
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
+            cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        }
+        std::cout << "File Recorded SuccessFully" <<std::endl;
     }
+
     fflush(file_);
     fclose(file_);
-    std::cout << "File Recorded SuccessFully" <<std::endl;
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
@@ -290,6 +345,7 @@ void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buff
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read() returned with error " << static_cast<unsigned int>(error)
             << std::endl;
+        readFail_ = true;
     } else {
         uint32_t size = buffer->getDataSize();
         bytesWrittenToFile = fwrite(buffer->getRawBuffer(),1,size,file_);
@@ -300,6 +356,10 @@ void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buff
     }
     buffer->reset();
     freeBuffers_.push(buffer);
-    cv_.notify_all();
-    return;
+    {
+        /*This thread will be able to acquire this lock once the waiting thread is in wait state by
+          releasing the lock, ready to receive the wake up notification.*/
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
 }

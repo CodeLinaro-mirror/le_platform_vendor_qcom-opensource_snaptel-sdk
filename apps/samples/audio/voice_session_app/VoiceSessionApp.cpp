@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -157,7 +163,7 @@ int main(int, char **) {
     if (subSystemsStatus) {
         std::cout << "onSubsystemReady: Audio Subsystem is ready." << std::endl;
     } else {
-        std::cout << "Audio Subsystem is NOT ready." << std::endl;
+        std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return EXIT_FAILURE;
     }
 

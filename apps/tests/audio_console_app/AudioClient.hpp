@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOCLIENT_HPP
 #define AUDIOCLIENT_HPP
 
@@ -46,37 +52,36 @@ using namespace telux::common;
 
 class AudioClient {
 public:
-    AudioClient();
+    AudioClient(std::shared_ptr<IAudioManager> audioManager);
     ~AudioClient();
-
-    void init();
+    // To cleanup when the service becomes unavailable
+    void cleanup();
 
     // AudioClient creates stream for any type of stream and any SubMenu can request for stream
-    std::shared_ptr<IAudioStream> getStream(StreamType streamtype);
+    std::shared_ptr<IAudioStream> getStream(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
 
-    // since file of path is taken during stream creation it is stored for future use
+    // since path of file is taken during stream creation it is stored for future use
     void getPlayConfig(std::string &filePath, AudioFormat &playFormat);
 
     // Since sample Rate and Channel Type is asked while opening stream we keep them because it
     // is required during the time of writting to file.
     void getCaptureConfig(uint32_t &sampleRate, uint32_t &channelType);
 
-    Status createStream(StreamType streamType);
-    Status deleteStream(StreamType streamType);
+    Status createStream(StreamType streamType, int slotId = DEFAULT_SLOT_ID);
+    Status deleteStream(StreamType streamType, int slotId = DEFAULT_SLOT_ID);
 
-    void getStreamDevice(StreamType streamtype);
-    void setStreamDevice(StreamType streamtype);
-    void getVolume(StreamType streamtype);
-    void setVolume(StreamType streamtype);
-    void getMute(StreamType streamtype);
-    void setMute(StreamType streamtype);
+    void getStreamDevice(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
+    void setStreamDevice(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
+    void getVolume(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
+    void setVolume(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
+    void getMute(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
+    void setMute(StreamType streamtype, int slotId = DEFAULT_SLOT_ID);
 
 private:
     // Since all functions need streamType so a common stream resolver
-    void resolveStreamType(StreamType streamType);
-
+    void resolveStreamType(StreamType streamType, int slotId = DEFAULT_SLOT_ID);
     // Input functions for different cases
-    void takeUserModemIdInput(int &modemId);
+    void takeUserSlotIdInput(int &slotId);
     void takeAudioFormatInput(AudioFormat &audioFormat);
     void takeUserSampleRateInput(uint32_t &userSampleRate);
     void takeUserChannelInput(telux::audio::ChannelTypeMask &channelType);
@@ -99,10 +104,14 @@ private:
     std::shared_ptr<IAudioManager> audioManager_;
     std::shared_ptr<IAudioStream> stream_;
     std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
+    std::shared_ptr<IAudioVoiceStream> audioVoiceStream2_;
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<IAudioCaptureStream> audioCaptureStream_;
     std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;
     std::shared_ptr<IAudioToneGeneratorStream> audioToneStream_;
+
+    // Mutex to sync cleanup of stream during SSR
+    std::mutex cleanupMtx_;
 };
 
 #endif //AUDIOCLIENT_HPP

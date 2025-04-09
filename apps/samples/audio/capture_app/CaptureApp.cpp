@@ -26,6 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -166,7 +173,7 @@ int main(int, char **) {
     }
 
     status = audioCaptureStream->read(streamBuffer, size, readCallback);
-    if(status != telux::common::Status::SUCCESS) {
+    if(status != Status::SUCCESS) {
         std::cout << "Request to read from stream Failed." << std::endl;
     } else {
         std::cout << "Request to read from stream sent." << std::endl;

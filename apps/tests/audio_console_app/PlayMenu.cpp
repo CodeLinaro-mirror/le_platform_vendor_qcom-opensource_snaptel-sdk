@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 
@@ -39,18 +45,13 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
    : ConsoleApp(appName, cursor),
    audioClient_(audioClient) {
     pipeLineEmpty_ = true;
-
+    ready_ = false;
+    playInProgress_ = false;
+    writeFail_ = false;
 }
 
 PlayMenu::~PlayMenu() {
-    audioClient_ = nullptr;
-    playStatus_ = false;
-
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
+   cleanup();
 }
 
 void PlayMenu::init() {
@@ -86,7 +87,7 @@ void PlayMenu::init() {
          {}, std::bind(&PlayMenu::stopPlay, this, std::placeholders::_1)));
 
 
-     std::vector<std::shared_ptr<ConsoleAppCommand>> playMenuCommandsList
+    std::vector<std::shared_ptr<ConsoleAppCommand>> playMenuCommandsList
       = {createStreamCommand,
          deleteStreamCommand,
          getDeviceCommand,
@@ -97,18 +98,44 @@ void PlayMenu::init() {
          setMuteCommand,
          startPlayCommand,
          stopPlayCommand};
-   if(audioClient_){
-        audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
-           audioClient_->getStream(StreamType::PLAY));
-        ConsoleApp::addCommands(playMenuCommandsList);
-   } else {
-       std::cout << "AudioClient not initialized " << std::endl;
-   }
+    if (audioClient_) {
+            ready_ = true;
+            audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
+            audioClient_->getStream(StreamType::PLAY));
+            ConsoleApp::addCommands(playMenuCommandsList);
+    } else {
+        std::cout << "AudioClient not initialized " << std::endl;
+    }
+}
+
+void PlayMenu::cleanup() {
+    ready_ = false;
+    playInProgress_ = false;
+    playStatus_ = false;
+    playStopcv_.notify_all();
+    cv_.notify_all();
+    for (std::thread &th : runningThreads_) {
+        if(th.joinable()){
+            th.join();
+        }
+    }
+    pipeLineEmpty_ = true;
+    audioPlayStream_ = nullptr;
+    writeFail_ = false;
+}
+
+void PlayMenu::setSystemReady() {
+    ready_ = true;
+}
+
+
+void PlayMenu::closeFile() {
+    fclose(file_);
 }
 
 void PlayMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if(audioClient_) {
+    if(ready_) {
         if(!audioPlayStream_) {
             status = audioClient_->createStream(StreamType::PLAY);
             if(status == telux::common::Status::SUCCESS) {
@@ -120,7 +147,7 @@ void PlayMenu::createStream(std::vector<std::string> userInput) {
             std::cout << "Stream exist please delete first" << std::endl;
         }
     } else {
-       std::cout << "AudioClient not initialized " << std::endl;
+       std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
@@ -128,6 +155,7 @@ void PlayMenu::deleteStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioPlayStream_) {
         playStatus_ = false;
+        writeFail_ = false;
         for(std::thread &th : runningThreads_) {
             if(th.joinable()){
                 th.join();
@@ -194,15 +222,14 @@ void PlayMenu::setMute(std::vector<std::string> userInput) {
 
 void PlayMenu::startPlay(std::vector<std::string> userInput) {
     if(audioPlayStream_) {
-        audioClient_->getPlayConfig(filePath_, playFormat_);
-        if (playFormat_ == AudioFormat::PCM_16BIT_SIGNED) {
+        // Check if a file is already being played.
+        if(!playInProgress_) {
+            audioClient_->getPlayConfig(filePath_, playFormat_);
             std::thread playThread(&PlayMenu::play, this);
             runningThreads_.emplace_back(std::move(playThread));
-        } else if ( (playFormat_ == AudioFormat::AMRWB_PLUS) ||
-                    (playFormat_ == AudioFormat::AMRNB) ||
-                    (playFormat_ == AudioFormat::AMRWB)) {
-            std::thread playThread(&PlayMenu::play, this);
-            runningThreads_.emplace_back(std::move(playThread));
+            playInProgress_ = true;
+        } else {
+            std::cout << "File Play in progress please wait" << std::endl;
         }
     } else {
         std::cout << "No running Play session please create one" << std::endl;
@@ -211,40 +238,54 @@ void PlayMenu::startPlay(std::vector<std::string> userInput) {
 
 void PlayMenu::stopPlay(std::vector<std::string> userInput) {
     playStatus_ = false;
-
-    if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
-        (playFormat_ == AudioFormat::AMRWB) ||
-        (playFormat_ == AudioFormat::AMRNB)){
-        std::promise<bool> p;
-        auto status = audioPlayStream_->stopAudio(
-            StopType::FORCE_STOP, [&p](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    writeFail_ = false;
+    if (audioPlayStream_) {
+        if (isAMR()){
+            std::promise<bool> p;
+            auto status = audioPlayStream_->stopAudio(
+                StopType::FORCE_STOP, [&p](telux::common::ErrorCode error) {
+                if (error == telux::common::ErrorCode::SUCCESS) {
+                    p.set_value(true);
+                } else {
+                    p.set_value(false);
+                    std::cout << "Failed to force stop" << std::endl;
+                }
+                });
+            if(status == telux::common::Status::SUCCESS){
+                std::cout << "Request to force stop Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Force Stop successful" << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to force stop" << std::endl;
+                std::cout << "Request to force stop failed" << std::endl;
             }
-            });
-        if(status == telux::common::Status::SUCCESS){
-            std::cout << "Request to force stop Sent" << std::endl;
-        } else {
-            std::cout << "Request to force stop failed" << std::endl;
         }
-        if (p.get_future().get()) {
-                std::cout << "Force Stop successful !!" << std::endl;
-        }
+    } else {
+        std::cout << "No running Play session please create one" << std::endl;
     }
 }
 
 void PlayMenu::writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
                 telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS || buffer->getDataSize() != bytes) {
-        pipeLineEmpty_ = false;
+
+    if (error != telux::common::ErrorCode::SUCCESS){
+        if (isAMR()) {
+            pipeLineEmpty_ = false;
+        }
+        writeFail_ = true;
+    }
+
+    if(buffer->getDataSize() != bytes){
+        if (isAMR()) {
+            pipeLineEmpty_ = false;
+            std::cout << " pipeline not ready " << std::endl;
+        }
         std::cout <<
             "Bytes Requested " << buffer->getDataSize() << " Bytes Written " << bytes << std::endl;
         // We are seeking back so that left over buffer can be resent again.
         long offset = -1 * (static_cast<long>((buffer->getDataSize() - bytes)));
         fseek(file_, offset, SEEK_CUR);
+
     }
 
     buffer->reset();
@@ -254,6 +295,13 @@ void PlayMenu::writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer
 }
 
 void PlayMenu::play() {
+
+    bool firstPlay = true;
+    uint32_t size = 0;
+    std::string userInput ="";
+    uint32_t numBytes =0;
+    std::promise<bool> p;
+    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
     while(!freeBuffers_.empty()) {
         freeBuffers_.pop();
     }
@@ -265,10 +313,6 @@ void PlayMenu::play() {
         return;
     }
     std::unique_lock<std::mutex> lock(mutex_);
-    uint32_t size = 0;
-    std::string userInput ="";
-    uint32_t numBytes =0;
-    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
     for(int i = 0; i < TOTAL_BUFFERS; i++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if(streamBuffer != nullptr) {
@@ -286,66 +330,116 @@ void PlayMenu::play() {
         }
     }
     playStatus_ = true;
+    pipeLineEmpty_ = true;
+    writeFail_ = false;
+    auto writeCb = std::bind(&PlayMenu::writeCallback, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
     std::cout << "Audio play started" << std::endl;
-    while (!feof(file_) && playStatus_)
+    while (playStatus_)
     {
+        if (!firstPlay) {
+            if(feof(file_) && freeBuffers_.empty()) {
+                cv_.wait(lock);
+            }
+            if(feof(file_) && pipeLineEmpty_ && (freeBuffers_.size() == TOTAL_BUFFERS)) {
+                break;
+            }
+        }
+        firstPlay = false;
         if(!freeBuffers_.empty() && (pipeLineEmpty_)) {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
             numBytes = fread(streamBuffer->getRawBuffer(),1,size,file_);
+            if (numBytes == 0 && feof(file_)) {
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                playStatus_ = true;
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                continue;
+            }
             if(numBytes != size && !feof(file_)) {
                 std::cout << "Unable to read specified bytes, bytes read: " << numBytes<< std::endl;
                 streamBuffer->reset();
                 freeBuffers_.push(streamBuffer);
                 playStatus_ = false;
+                writeFail_ = true;
                 break;
             }
             streamBuffer->setDataSize(numBytes);
-            auto writeCb = std::bind(&PlayMenu::writeCallback, this, std::placeholders::_1,
-                        std::placeholders::_2, std::placeholders::_3);
-            telux::common::Status status = audioPlayStream_->write(streamBuffer,writeCb);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "write() failed with error" << static_cast<unsigned int>(status)
-                <<std::endl;
-            }
-        } else {
-            cv_.wait(lock);
-        }
-    }
-    if (playFormat_ == AudioFormat::PCM_16BIT_SIGNED) {
-        while(freeBuffers_.size() != TOTAL_BUFFERS) {
-            cv_.wait(lock);
-        }
-    } else if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
-               (playFormat_ == AudioFormat::AMRWB) ||
-               (playFormat_ == AudioFormat::AMRNB)){
-        std::promise<bool> p;
-        auto status = audioPlayStream_->stopAudio(
-            StopType::STOP_AFTER_PLAY, [&p](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+            if (ready_) {
+                telux::common::Status status = audioPlayStream_->write(streamBuffer,writeCb);
+                if(status != telux::common::Status::SUCCESS) {
+                    std::cout << "write() failed with error" << static_cast<unsigned int>(status)
+                    <<std::endl;
+                    streamBuffer->reset();
+                    freeBuffers_.push(streamBuffer);
+                    playStatus_ = false;
+                    writeFail_ = true;
+                    break;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to stop after playing buffers" << std::endl;
+                std::cout << "Audio Service UNAVAILABLE" << std::endl;
             }
-            });
-        if(status == telux::common::Status::SUCCESS){
-            std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
         } else {
-            std::cout << "Request to stop playback after pending buffers failed" << std::endl;
-        }
-        if (p.get_future().get()) {
-                std::cout << "Pending buffers played successful !!" << std::endl;
+            cv_.wait(lock);
+            if(writeFail_) {
+                break;
+            }
         }
     }
-    if(playStatus_) {
-        std::cout << "File played SuccessFully" <<std::endl;
+    if (ready_) {
+        if(isAMR()) {
+            std::unique_lock<std::mutex> lck(playStopMutex_);
+            auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
+                [&p](telux::common::ErrorCode error) {
+                    if (error == telux::common::ErrorCode::SUCCESS) {
+                        p.set_value(true);
+                    } else {
+                        p.set_value(false);
+                        std::cout << "Failed to stop after playing buffers" << std::endl;
+                    }
+            });
+            if(status == telux::common::Status::SUCCESS) {
+                std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
+                }
+            } else {
+                std::cout << "Request to stop playback after pending buffers failed" << std::endl;
+            }
+        } else {
+            while(freeBuffers_.size() != TOTAL_BUFFERS) {
+                cv_.wait(lock);
+            }
+        }
+    }
+    if(writeFail_) {
+        std::cout << "Play Failed" << std::endl;
     } else {
-        std::cout << "Play Stopped" << std::endl;
+        if(playStatus_) {
+            std::cout << "File played SuccessFully" <<std::endl;
+        } else {
+            std::cout << "Play Stopped" << std::endl;
+        }
     }
     playStatus_ = false;
-    fflush(file_);
-    fclose(file_);
+    playInProgress_ = false;
+    closeFile();
+}
+
+bool PlayMenu::isAMR() {
+
+    switch (playFormat_) {
+        case AudioFormat::AMRWB_PLUS:
+        case AudioFormat::AMRWB:
+        case AudioFormat::AMRNB:
+            return true;
+        default:
+            return false;
+    }
+
+    return false;
 }
 
 void PlayMenu::onReadyForWrite() {
@@ -357,7 +451,11 @@ void PlayMenu::onReadyForWrite() {
 }
 
 void PlayMenu::onPlayStopped() {
-    std::cout << "Playback Stopped after playing pending buffers" << std::endl;
+    {
+        std::lock_guard<std::mutex> lk(playStopMutex_);
+        playStopcv_.notify_all();
+        std::cout << "Playback Stopped after playing pending buffers" << std::endl;
+    }
 }
 
 void PlayMenu::registerListener() {

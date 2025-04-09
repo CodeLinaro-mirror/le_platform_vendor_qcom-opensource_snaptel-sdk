@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef TRANSCODEMENU_HPP
 #define TRANSCODEMENU_HPP
 
@@ -43,11 +49,13 @@ public:
     TransCodeMenu(std::string appName, std::string cursor);
     ~TransCodeMenu();
     void init();
+    void cleanup();
+    void setSystemReady();
     void onReadyForWrite() override;
+    void tearDown(std::vector<std::string> userInput);
 
 private:
     void startTranscoding(std::vector<std::string> userInput);
-    void abortTranscoding(std::vector<std::string> userInput);
     void createTranscoder();
     void read();
     void write();
@@ -66,15 +74,23 @@ private:
     std::shared_ptr<IAudioManager> audioManager_;
     FILE * readFile_;
     FILE * writeFile_;
-    std::mutex mutex_;
+    std::mutex readFileM_;
+    std::mutex writeFileM_;
+    std::mutex writeM_;
+    std::mutex readM_;
+    std::mutex CreateTranscoderMutex_;
     std::condition_variable cv_;
+    std::condition_variable cvRead_;
+    std::condition_variable cvWrite_;
     std::string readFilePath_, writeFilePath_;
     std::vector<std::thread> runningThreads_;
-    bool writeStatus_;
-    bool readStatus_;
+    std::atomic<bool> writeStatus_;
+    std::atomic<bool> readStatus_;
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> writeBuffers_;
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> readBuffers_;
-    bool pipeLineEmpty_;
+    std::atomic<bool> pipeLineEmpty_;
+    std::atomic<bool> ready_;
+    std::atomic<bool> stopTranscoder_;
 };
 
 #endif // TRANSCODEMENU_HPP

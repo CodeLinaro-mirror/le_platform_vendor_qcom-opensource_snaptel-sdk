@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef TONEMENU_HPP
 #define TONEMENU_HPP
 
@@ -34,28 +40,23 @@
 #include "AudioClient.hpp"
 
 class ToneMenu : public ConsoleApp {
-public:
+ public:
     ToneMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
     ~ToneMenu();
-
     void init();
+    void cleanup();
+    void setSystemReady();
 
-private:
+ private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
-    void getDevice(std::vector<std::string> userInput);
-    void setDevice(std::vector<std::string> userInput);
-    void getVolume(std::vector<std::string> userInput);
-    void setVolume(std::vector<std::string> userInput);
-    void getMute(std::vector<std::string> userInput);
-    void setMute(std::vector<std::string> userInput);
     void playTone(std::vector<std::string> userInput);
     void stopTone(std::vector<std::string> userInput);
 
     std::shared_ptr<IAudioToneGeneratorStream> audioToneStream_;
     std::shared_ptr<AudioClient> audioClient_;
-    bool toneStarted_;
+    std::atomic<bool> toneStarted_;
+    std::atomic<bool> ready_;
 };
 
-#endif // TONEMENU_HPP
+#endif  // TONEMENU_HPP

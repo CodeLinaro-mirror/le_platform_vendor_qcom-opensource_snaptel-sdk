@@ -27,26 +27,34 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef VOICEMENU_HPP
 #define VOICEMENU_HPP
 
+#include <map>
+
 #include "ConsoleApp.hpp"
-#include "AudioClient.hpp"
+#include "../../common/Audio/VoiceSession.hpp"
+#include "../../common/Audio/AudioHelper.hpp"
 #include <telux/audio/AudioListener.hpp>
 
 class VoiceMenu : public ConsoleApp,
                   public telux::audio::IVoiceListener,
-                  public std::enable_shared_from_this<VoiceMenu>{
-public:
-    VoiceMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
+                  public std::enable_shared_from_this<VoiceMenu> {
+ public:
+    VoiceMenu(std::string appName, std::string cursor);
     ~VoiceMenu();
-
     void init();
-
+    void setSystemReady();
+    void cleanup();
     virtual void onDtmfToneDetection(DtmfTone dtmfTone) override;
 
-private:
+ private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
     void getDevice(std::vector<std::string> userInput);
@@ -61,16 +69,16 @@ private:
     void stopDtmf(std::vector<std::string> userInput);
     void registerListener(std::vector<std::string> userInput);
     void deRegisterListener(std::vector<std::string> userInput);
+    void changeSlotId();
+    void deleteActiveSession(int slotId);
+    Status createActiveSession(int slotId);
+    Status setActiveSession(int slotId);
 
-    telux::common::Status lowFrequencyHelper(uint32_t lowFreq,
-                             telux::audio::DtmfLowFreq &lowFrequency);
-
-    telux::common::Status highFrequencyHelper(uint32_t highFreq,
-                             telux::audio::DtmfHighFreq &highFrequency);
-
-    std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
-    std::shared_ptr<AudioClient> audioClient_;
-    bool audioStarted_;
+    std::shared_ptr<VoiceSession> activeSession_;
+    std::mutex mutex_;
+    std::map<int, std::shared_ptr<VoiceSession>> voiceSessions_;
+    std::atomic<bool> ready_;
+    int slotId_;
 };
 
-#endif // VOICEMENU_HPP
+#endif  // VOICEMENU_HPP

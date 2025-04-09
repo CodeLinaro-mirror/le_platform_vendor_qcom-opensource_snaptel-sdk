@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,30 +33,35 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef LOOPBACKMENU_HPP
-#define LOOPBACKMENU_HPP
+#ifndef VOICESESSION_HPP
+#define VOICESESSION_HPP
 
-#include "ConsoleApp.hpp"
-#include "AudioClient.hpp"
+#include <telux/audio/AudioManager.hpp>
+#include <telux/audio/AudioListener.hpp>
 
-class LoopbackMenu : public ConsoleApp {
- public:
-    LoopbackMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-    ~LoopbackMenu();
-    void init();
-    void cleanup();
-    void setSystemReady();
+using namespace telux::audio;
+using namespace telux::common;
 
- private:
-    void createStream(std::vector<std::string> userInput);
-    void deleteStream(std::vector<std::string> userInput);
-    void startLoopback(std::vector<std::string> userInput);
-    void stopLoopback(std::vector<std::string> userInput);
+#include "AudioSession.hpp"
 
-    std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;
-    std::shared_ptr<AudioClient> audioClient_;
-    std::atomic<bool> loopbackStarted_;
-    std::atomic<bool> ready_;
+/* VoiceSession class provides methods to create/delete voice stream, start/stop audio over voice
+ * call. It also provide methods to generate and detect the DTMF tone.
+ */
+class VoiceSession : public AudioSession {
+public:
+    VoiceSession();
+    ~VoiceSession();
+
+    Status startAudio();
+    Status stopAudio();
+    Status startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain);
+    Status stopDtmf();
+    Status registerListener(std::weak_ptr<IVoiceListener> listener);
+    Status deRegisterListener(std::weak_ptr<IVoiceListener> listener);
+
+private:
+    std::atomic<bool> audioStarted_;
+    int slotId_;
 };
 
-#endif  // LOOPBACKMENU_HPP
+#endif // VOICESESSION_HPP

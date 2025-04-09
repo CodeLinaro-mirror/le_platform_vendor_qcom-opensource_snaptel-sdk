@@ -27,102 +27,110 @@
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
- * @file    AudioListener.hpp
- *
- * @brief   AudioListener provides callback methods for listening to notifications like DTMF tone
- *          detection. Client need to implement these methods.
- *          The methods in listener can be invoked from multiple threads.So the client needs to
- *          make sure that the implementation is thread-safe.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
+ * @file  AudioListener.hpp
+ * @brief Defines the listener classes and methods to receive asynchronous events.
  */
 
 #ifndef AUDIOLISTENER_HPP
 #define AUDIOLISTENER_HPP
 
 #include <telux/audio/AudioDefines.hpp>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace audio {
 
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 /**
- * @brief Listener class for getting notifications related to DTMF tone detection. The client needs
- *        to implement these methods as briefly as possible and avoid blocking calls in it.
- *        The methods in this class can be invoked from multiple different threads. Client
- *        needs to make sure that the implementation is thread-safe.
- *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
+ *  Listener for a DTMF tone detected event on a @ref StreamType::VOICE_CALL stream.
  */
 class IVoiceListener {
-public:
+ public:
     /**
-     * This function is called when a DTMF tone is detected in the voice stream
+     * Called when a DTMF tone is detected on a @ref StreamType::VOICE_CALL stream.
+     * Used in conjuction with @ref IAudioVoiceStream::registerListener().
      *
-     * @param [in] dtmfTone     DTMF tone properties
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
+     * @param [in] dtmfTone Contains details of the tone detected
      */
-    virtual void onDtmfToneDetection(DtmfTone dtmfTone) {
-    }
+    virtual void onDtmfToneDetection(DtmfTone dtmfTone) {}
 
     /**
-     * Destructor of IVoiceListener
+     * Destructor of the IVoiceListener.
      */
-    virtual ~IVoiceListener() {
-    }
+    virtual ~IVoiceListener() {}
 };
 
+/**
+ *  Listener for events on a playback stream.
+ */
 class IPlayListener {
-public:
+ public:
     /**
-     * This function is called when pipeline is ready to accept new buffer. It is applicable only
-     * for compressed audio format type where a client can write and queue buffers for playback.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * Called when the audio pipeline is ready to accept the next buffer to play
+     * during compressed playback.
      */
     virtual void onReadyForWrite() {}
 
     /**
-     * This function is called when stopAudio() is called with StopType::STOP_AFTER_PLAY. It
-     * indicates that all the buffers that were present in the pipeline have been played.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * Called when the compressed playback has stopped.
      */
     virtual void onPlayStopped() {}
 
     /**
-     * Destructor of IPlayListener
+     * Destructor of IPlayListener.
      */
     virtual ~IPlayListener() {}
 };
 
+/** @} */ /* end_addtogroup telematics_audio_stream */
+
+/** @addtogroup telematics_audio_transcoder
+ * @{ */
+
+/**
+ *  Listener for events during transcoding.
+ */
 class ITranscodeListener {
-public:
+ public:
     /**
-     * This function is called when pipeline is ready to accept new buffer. It is applicable only
-     * for compressed audio format type where a client can write and queue buffers for transcoding.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * Called when the audio pipeline is ready to accept the next buffer containing
+     * data to transcode.
      */
     virtual void onReadyForWrite() {}
 
     /**
-     * Destructor of ITranscodeListener
+     * Destructor of ITranscodeListener.
      */
     virtual ~ITranscodeListener() {}
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_transcoder */
+
+/** @addtogroup telematics_audio_manager
+ * @{ */
+
+/**
+ * Listener for the audio service availability. Refer to @ref telux::common::IServiceStatusListener
+ * for details.
+ */
+class IAudioListener : public telux::common::IServiceStatusListener {
+ public:
+    /**
+     * Destructor of IAudioListener.
+     */
+    virtual ~IAudioListener() {}
+};
+
+/** @} */ /* end_addtogroup telematics_audio_manager */
 
 }  // end of namespace audio
 }  // end of namespace telux

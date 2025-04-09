@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -219,21 +219,33 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
 /**
  * Hang-up an ongoing Call
  */
-telux::common::Status ECallManager::hangupCall() {
+telux::common::Status ECallManager::hangupCall(int phoneId, int callIndex) {
     if(!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(!telClient_->isECallInProgress()) {
-        std::cout << CLIENT_NAME << "No ECall is in progress" << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    auto status = telClient_->hangup(phoneId_);
+    auto status = telClient_->hangup(phoneId, callIndex);
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to hangup the call" << std::endl;
         return telux::common::Status::FAILED;
     } else {
         std::cout << CLIENT_NAME << "Call hang-up successful" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Dump the list of calls in progress
+ */
+telux::common::Status ECallManager::getCalls() {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->getCurrentCalls();
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get current calls" << std::endl;
+        return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
 }

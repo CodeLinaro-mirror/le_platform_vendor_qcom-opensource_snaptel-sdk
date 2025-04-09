@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -161,12 +161,20 @@ public:
     /**
      * This function is used to hangup an ongoing call
      *
-     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     * @param [in] phoneId    Represents phone corresponding to which the operation is performed
+     * @param [in] callIndex  Represents the call on which the operation is performed
      *
      * @returns Status of hangup i.e success or suitable status code.
      *
      */
-    telux::common::Status hangup(int phoneId);
+    telux::common::Status hangup(int phoneId, int callIndex);
+
+    /**
+     * This function dumps the list of calls in progress
+     *
+     * @returns Status of getCurrentCalls i.e success or suitable status code.
+     */
+    telux::common::Status getCurrentCalls();
 
     /**
      * This function requests status of various eCall HLAP timers

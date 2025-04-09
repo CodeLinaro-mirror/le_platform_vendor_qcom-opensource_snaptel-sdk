@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -120,6 +120,11 @@ private:
      * Hangup the ongoing call
      */
     void hangupCall();
+
+    /**
+     * Dump the list of calls in progress
+     */
+    void getCalls();
 
     /**
      * Request eCall High Level Application Protocol(HLAP) timers status

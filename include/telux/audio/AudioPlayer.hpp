@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,7 +59,13 @@ struct RepeatInfo {
  */
 struct PlaybackConfig {
 
-    /** Absolute path of the file */
+    /** Absolute path of the audio file. Supports playback of audio files with the following
+     *  standard header lengths:
+     *  1. AudioFormat::PCM_16BIT_SIGNED: 44 bytes (RIFF)
+     *  2. AudioFormat::AMRWB_PLUS: 2 bytes (ETSI TS 126 290 V8.0.0 (2009-01) section 8.3)
+     *  3. AudioFormat::AMRWB: 9 bytes (RFC4867)
+     *  4. AudioFormat::AMRNB: 6 bytes (RFC4867)
+     */
     std::string absoluteFilePath;
 
     /** Defines how a file should be played */

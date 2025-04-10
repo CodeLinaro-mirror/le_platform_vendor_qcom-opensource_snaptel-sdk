@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       LocationClient.cpp
  *
@@ -114,12 +120,14 @@ telux::common::Status LocationClient::startLocUpdates(uint32_t interval,
     }
     // Registering a listener for location fix updates
     telux::common::Status status = locMgr_->registerListenerEx(shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
-        std::cout << CLIENT_NAME << "*** ERROR - Failed to register for location updates"
-                    << std::endl;
+    if(status == telux::common::Status::ALREADY) {
+        std::cout << CLIENT_NAME << "Already registered for location updates" << std::endl;
+        return telux::common::Status::SUCCESS;
+    } else if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to register listener for location updates" << std::endl;
         return telux::common::Status::FAILED;
     } else {
-        std::cout << CLIENT_NAME << "Registered Listener for location updates" << std::endl;
+        std::cout << CLIENT_NAME << "Registered listener for location updates" << std::endl;
     }
     status = locMgr_->startBasicReports(0, interval, std::bind(&LocationClient::commandCallback,
                                         this, std::placeholders::_1));

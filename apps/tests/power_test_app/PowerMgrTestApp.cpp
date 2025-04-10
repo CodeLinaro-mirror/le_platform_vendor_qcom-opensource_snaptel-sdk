@@ -45,6 +45,9 @@
 #include <csignal>
 #include <mutex>
 #include <condition_variable>
+#include <cstdlib>
+#include <cstdio>
+#include <future>
 
 extern "C" {
 #include "unistd.h"
@@ -54,6 +57,7 @@ extern "C" {
 #include "../../common/utils/Utils.hpp"
 
 static bool listenerEnabled = false;
+static bool listenForWakeup = false;
 static std::mutex mutex;
 static std::condition_variable cv;
 
@@ -477,11 +481,19 @@ void PowerMgmtTestApp::consoleinit() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "8", "Get_Machine_State", {},
          std::bind(&PowerMgmtTestApp::getTcuActivityStateEx, this, "")));
+   std::shared_ptr<ConsoleAppCommand> regWakeupReasonCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "9", "Start_Listening_Wakeup_Details", {},
+         std::bind(&PowerMgmtTestApp::regForWakeupReason, this)));
+   std::shared_ptr<ConsoleAppCommand> deregWakeupReasonCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "10", "Stop_Listening_Wakeup_Details", {},
+         std::bind(&PowerMgmtTestApp::deregForWakeupReason, this)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPowerMenu
       = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand,
          setModemActivityStateCommand, getMachineNameCommand, getAllMachineNamesCommand,
-         getTcuActivityStateExCommand};
+         getTcuActivityStateExCommand, regWakeupReasonCommand, deregWakeupReasonCommand};
    ConsoleApp::addCommands(commandsListPowerMenu);
    ConsoleApp::displayMenu();
 }
@@ -503,6 +515,121 @@ std::shared_ptr<PowerMgmtTestApp> init(ClientType clientType, std::string client
         return nullptr;
     }
     return powerMgmtTest;
+}
+
+/*
+ * Prints IWakeupManager service's state (SSR).
+ */
+void WakeupReasonListener::onServiceStatusChange(telux::common::ServiceStatus newStatus) {
+    std::cout << "IWakeupManager new state : " << static_cast<int>(newStatus) << std::endl;
+}
+
+/*
+ * Print details of the QMI message that caused the system wakeup.
+ */
+void WakeupReasonListener::onWakeup(telux::power::WakeupInfo wakeupInfo) {
+
+    std::printf("onWakeup()\n");
+
+    if (wakeupInfo.wakeupType != telux::power::WakeupType::QMI) {
+        std::printf("not QMI type wakeup");
+        return;
+    }
+
+    std::printf("serviceId : %u\n", wakeupInfo.qmiWakeupInfo.serviceId);
+    std::printf("sourceNodeId : %u\n", wakeupInfo.qmiWakeupInfo.sourceNodeId);
+    std::printf("destinationNodeId : %u\n", wakeupInfo.qmiWakeupInfo.destinationNodeId);
+
+    if (wakeupInfo.qmiWakeupInfo.isMsgIdValid) {
+        std::printf("msgId : %u\n", wakeupInfo.qmiWakeupInfo.msgId);
+    }
+    if (wakeupInfo.qmiWakeupInfo.isPIDValid) {
+        std::printf("pid : %u\n", wakeupInfo.qmiWakeupInfo.pid);
+    }
+    if (wakeupInfo.qmiWakeupInfo.isProcessNameValid) {
+        std::printf("processName : %s\n", wakeupInfo.qmiWakeupInfo.processName.c_str());
+    }
+}
+
+/*
+ * Create an IWakeupManager instance and register with it to get QMI message details.
+ * Deny registration, if the user already registered listener.
+ */
+void PowerMgmtTestApp::regForWakeupReason() {
+
+    telux::common::ErrorCode ec;
+    telux::common::ServiceStatus serviceStatus;
+    std::promise<telux::common::ServiceStatus> p{};
+
+    if (wakeupReasonListener_) {
+        std::cout << "Already listening" << std::endl;
+        return;
+    }
+
+    if (!wakeupMgr_) {
+        auto &powerFactory = telux::power::PowerFactory::getInstance();
+        wakeupMgr_ = powerFactory.getWakeupManager(
+            [&p](telux::common::ServiceStatus srvStatus) {
+            p.set_value(srvStatus);
+        });
+    }
+    if (!wakeupMgr_) {
+        std::cout << "Can't get IWakeupManager" << std::endl;
+        return;
+    }
+
+    serviceStatus = p.get_future().get();
+    if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Power service unavailable, status " <<
+            static_cast<int>(serviceStatus) << std::endl;
+        wakeupMgr_ = nullptr;
+        return;
+    }
+
+    try {
+        wakeupReasonListener_ = std::make_shared<WakeupReasonListener>();
+    } catch (const std::exception& e) {
+        std::cout << "Can't allocate WakeupReasonListener" << std::endl;
+        return;
+    }
+
+    ec = wakeupMgr_->registerListener(wakeupReasonListener_);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Can't register listener, err " << static_cast<int>(ec) << std::endl;
+        wakeupReasonListener_ = nullptr;
+        /* No need to release wakeupMgr_, since there is no advantage of going through
+         * whole process of allocation and initialization of IWakeupManager again when
+         * we already have a valid instance. */
+        return;
+    }
+
+    std::cout << "Started listening" << std::endl;
+    return;
+}
+
+/*
+ * Deregister with IWakeupManager to stop listening.
+ */
+void PowerMgmtTestApp::deregForWakeupReason() {
+
+    telux::common::ErrorCode ec;
+
+    if (!wakeupReasonListener_) {
+        std::cout << "Listening not started" << std::endl;
+        return;
+    }
+
+    ec = wakeupMgr_->deRegisterListener(wakeupReasonListener_);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Can't deregister listener, err " << static_cast<int>(ec) << std::endl;
+        return;
+    }
+
+    /* Reset */
+    wakeupReasonListener_ = nullptr;
+
+    std::cout << "Stopped listening" << std::endl;
+    return;
 }
 
 /**
@@ -593,6 +720,8 @@ int main(int argc, char ** argv) {
             myPowerMgmtTest->mainLoop();
             myPowerMgmtTest->deregisterForUpdates();
             return 0;
+        } else if (std::string(argv[i]) == "-w") {
+            listenForWakeup = true;
         } else {
             printHelp();
             return -1;
@@ -605,6 +734,9 @@ int main(int argc, char ** argv) {
     }
     if(listenerEnabled) {
         myPowerMgmtTest->registerForUpdates();
+    }
+    if (listenForWakeup) {
+        myPowerMgmtTest->regForWakeupReason();
     }
     signal(SIGINT, signalHandler);
     std::unique_lock<std::mutex> lock(mutex);
@@ -635,6 +767,9 @@ int main(int argc, char ** argv) {
     cv.wait(lock);
     if(listenerEnabled || inputCommand) {
         myPowerMgmtTest->deregisterForUpdates();
+    }
+    if (listenForWakeup) {
+        myPowerMgmtTest->deregForWakeupReason();
     }
 
     std::cout << "Exiting application..." << std::endl;

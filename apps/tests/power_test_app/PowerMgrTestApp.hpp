@@ -26,7 +26,6 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *  Copyright (c) 2021, 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
@@ -42,6 +41,8 @@
 #include <telux/power/PowerFactory.hpp>
 #include <telux/power/TcuActivityManager.hpp>
 #include <telux/power/TcuActivityListener.hpp>
+#include <telux/power/WakeupManager.hpp>
+
 #include "ConsoleApp.hpp"
 
 #define APP_NAME "telux_power_test_app"
@@ -49,6 +50,12 @@
 
 using namespace telux::power;
 using namespace telux::common;
+
+class WakeupReasonListener : public telux::power::IWakeupListener {
+ public:
+   void onWakeup(telux::power::WakeupInfo wakeupInfo) override;
+   void onServiceStatusChange(telux::common::ServiceStatus newStatus) override;
+};
 
 class PowerMgmtTestApp : public ITcuActivityListener,
                          public IServiceStatusListener,
@@ -79,13 +86,14 @@ public:
     void getTcuActivityStateEx(std::string machineName);
 
     void consoleinit();
+    void regForWakeupReason();
+    void deregForWakeupReason();
 private:
-
-    PowerMgmtTestApp(PowerMgmtTestApp const &) = delete;
-    PowerMgmtTestApp &operator=(PowerMgmtTestApp const &) = delete;
-
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::power::ITcuActivityManager> tcuActivityMgr_;
+
+    std::shared_ptr<WakeupReasonListener> wakeupReasonListener_;
+    std::shared_ptr<telux::power::IWakeupManager> wakeupMgr_;
 };
 
 #endif  // POWERTESTAPP_HPP

@@ -327,7 +327,7 @@
                        {
                            "id": 1,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -353,7 +353,7 @@
                        {
                            "id": 2,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -379,7 +379,7 @@
                        {
                            "id": 2,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -388,7 +388,9 @@
                            "id": 0,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 1,
+                                   "clr": 0
                                }
                            ]
                        }
@@ -415,7 +417,7 @@
                        {
                            "id": 2,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -424,7 +426,9 @@
                            "id": 1,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 1,
+                                   "clr": 0
                                }
                            ]
                        }
@@ -451,7 +455,7 @@
                        {
                            "id": 2,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -483,7 +487,7 @@
                        {
                            "id": 1,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -503,7 +507,7 @@
                        {
                            "id": 1,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -523,7 +527,7 @@
                        {
                            "id": 1,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -543,7 +547,7 @@
                        {
                            "id": 1,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ]
@@ -569,13 +573,13 @@
                        {
                            "id": 2,
                            "temp": 120000,
-                           "hyst": 3000,
+                           "hyst": 2000,
                            "type": "passive"
                        },
                        {
                            "id": 3,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -653,13 +657,13 @@
                        {
                            "id": 2,
                            "temp": 120000,
-                           "hyst": 3000,
+                           "hyst": 2000,
                            "type": "passive"
                        },
                        {
                            "id": 3,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -678,7 +682,9 @@
                            "id": 10,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
                                }
                            ]
                        },
@@ -686,10 +692,14 @@
                            "id": 8,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
                                },
                                {
-                                   "id": 2
+                                   "id": 2,
+                                   "level": 255,
+                                   "clr": 11
                                }
                            ]
                        },
@@ -697,10 +707,14 @@
                            "id": 6,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
                                },
                                {
-                                   "id": 2
+                                   "id": 2,
+                                   "level": 255,
+                                   "clr": 11
                                }
                            ]
                        }
@@ -727,13 +741,13 @@
                        {
                            "id": 2,
                            "temp": 120000,
-                           "hyst": 3000,
+                           "hyst": 2000,
                            "type": "passive"
                        },
                        {
                            "id": 3,
                            "temp": 125000,
-                           "hyst": 5000,
+                           "hyst": 3000,
                            "type": "passive"
                        }
                    ],
@@ -752,18 +766,24 @@
                            "id": 10,
                            "tripPoints": [
                                {
-                                   "id": 1
-                               }
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
+                              }
                            ]
                        },
                        {
                            "id": 8,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
                                },
                                {
-                                   "id": 2
+                                   "id": 2,
+                                   "level": 255,
+                                   "clr": 11
                                }
                            ]
                        },
@@ -771,10 +791,14 @@
                            "id": 6,
                            "tripPoints": [
                                {
-                                   "id": 1
+                                   "id": 1,
+                                   "level": 11,
+                                   "clr": 0
                                },
                                {
-                                   "id": 2
+                                   "id": 2,
+                                   "level": 255,
+                                   "clr": 11
                                }
                            ]
                        }
@@ -1176,3 +1200,4 @@
            }
        ]
 }
+

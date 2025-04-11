@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -70,6 +70,8 @@
  *             provisioning.This interface provides APIs to add, delete, set profile,
  *             request profile list, update nickname, providing user consent, get Eid on the eUICC.
  *
+ * @note This class is not intended for production software and is intended for testing and trial
+ * purposes only.
  */
 
 #ifndef TELUX_TEL_SIMPROFILEMANAGER_HPP

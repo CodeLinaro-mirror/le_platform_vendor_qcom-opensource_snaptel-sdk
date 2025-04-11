@@ -326,6 +326,8 @@ std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {
    {telux::common::ErrorCode::REG_RESULT_ERR_OUT_OF_PROFILES, "REG_RESULT_ERR_OUT_OF_PROFILES"},
    {telux::common::ErrorCode::REG_RESULT_NO_EMERGENCY_PDN_SUPPORT,
     "REG_RESULT_NO_EMERGENCY_PDN_SUPPORT"},
+   {telux::common::ErrorCode::REG_RESULT_PROFILE_ALREADY_PRESENT,
+      "REG_RESULT_PROFILE_ALREADY_PRESENT"},
    {telux::common::ErrorCode::DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY,
     "DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY"},
    {telux::common::ErrorCode::DS_PROFILE_3GPP_ACCESS_ERR, "DS_PROFILE_3GPP_ACCESS_ERR"},

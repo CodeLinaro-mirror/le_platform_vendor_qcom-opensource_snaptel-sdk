@@ -26,11 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -228,12 +226,29 @@ class ITcuActivityManager {
         std::string machineName, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Gets the current power state of device.
+     * For the master client, gives the @ref TcuActivityState of the machine
+     * specified by machineName.
      *
-     * @returns @ref TcuActivityState::RESUME if the device is resumed, else the
-     *          machine state applicable at the time instant this method is called
-     */
-    virtual TcuActivityState getActivityState() = 0;
+     * For the slave client, gives the @ref TcuActivityState of the local machine.
+     *
+     * @param[in] machineName Machine's name for which the @ref TcuActivityState
+     *                        is requested. Machine names can be obtained
+     *                        through @ref getAllMachines().
+     *
+     * @param[out] state      Current @ref TcuActivityState for the given machineName
+     *                        specified by @ref TcuActivityState.
+     *
+     * @returns          @ref telux::common::ErrorCode::SUCCESS if the state is retrieved,
+     *                   @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED if a slave client
+     *                   tries to get state of a machine other than the one they're running on,
+     *                   an appropriate error code otherwise.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *              to change and could break backwards compatibility.
+    */
+    virtual telux::common::ErrorCode getActivityState(std::string machineName,
+        TcuActivityState &state) = 0;
+
 
     /**
      * When a slave client receives notification in ITcuActivityListener::onTcuActivityStateUpdate,
@@ -345,6 +360,17 @@ class ITcuActivityManager {
      *              StateChangeResponse ack) instead.
      */
     virtual telux::common::Status sendActivityStateAck(TcuActivityStateAck ack) = 0;
+
+    /**
+     * Gets the current @ref TcuActivityState of the machine where the client is running on.
+     *
+     * @returns @ref TcuActivityState- the current TcuActivityState of the machine
+     *                                 where the client is running on.
+     *
+     * @deprecated Use @ref getActivityState(std::string machineName,
+     *             TcuActivityState &state) instead.
+     */
+    virtual TcuActivityState getActivityState() = 0;
 
     /**
      * Destructor of ITcuActivityManager.

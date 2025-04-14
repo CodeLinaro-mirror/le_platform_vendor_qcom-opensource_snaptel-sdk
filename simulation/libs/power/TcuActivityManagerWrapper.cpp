@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -101,6 +101,11 @@ telux::common::Status TcuActivityManagerWrapper::getMachineName(std::string &mac
 telux::common::Status TcuActivityManagerWrapper::getAllMachineNames(
     std::vector<std::string> &machineNames) {
     return tcuActivityMgrImpl_->getAllMachineNames(machineNames);
+}
+
+telux::common::ErrorCode TcuActivityManagerWrapper::getActivityState(std::string machineName,
+    TcuActivityState &state) {
+    return tcuActivityMgrImpl_->getActivityState(machineName, state);
 }
 
 }  // end of namespace power

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -63,6 +63,7 @@ class PowerGrpcClient : public IEventListener,
     telux::common::Status sendActivityStateCommand(TcuActivityState state, std::string machineName,
         telux::common::ResponseCallback &callback);
     telux::common::Status sendActivityStateAck(StateChangeResponse ack, TcuActivityState state);
+    telux::common::Status getActivityState(TcuActivityState &state);
     telux::common::Status setModemActivityState(TcuActivityState state);
     void onEventUpdate(google::protobuf::Any event) override;
     ~PowerGrpcClient();

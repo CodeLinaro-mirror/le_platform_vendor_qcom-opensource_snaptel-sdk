@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 syntax = "proto3";
@@ -21,6 +21,7 @@ service PowerManagerService{
    rpc SendModemActivityState (SetActivityState) returns (PowerManagerCommandReply) {}
    rpc SendActivityStateAck (SlaveAck) returns (google.protobuf.Empty) {}
    rpc DeregisterFromServer (PowerClientConnect) returns (google.protobuf.Empty) {}
+   rpc GetLocalTcuState (google.protobuf.Empty) returns (GetLocalTcuStateReply) {}
 }
 
 
@@ -100,4 +101,8 @@ enum MachineState {
 
 message MachineUpdateEvent {
     MachineState mach_state = 1;
+}
+
+message GetLocalTcuStateReply {
+    TcuState local_mach_state = 1;
 }

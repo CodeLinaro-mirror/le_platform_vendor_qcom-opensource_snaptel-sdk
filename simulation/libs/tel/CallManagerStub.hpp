@@ -128,7 +128,7 @@ private:
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     void handleECallEvent(::telStub::ECallInfoEvent event);
-    void handleCallInfoChanged(::telStub::CallStateChangeEvent event);
+    void handleCallInfoChanged(::telStub::GetInProgressCallsData event);
     void handleMsdUpdateRequest(::telStub::MsdPullRequestEvent event);
     void handleModifyCallRequest(::telStub::ModifyCallRequestEvent event);
     void handleRttMessage(::telStub::RttMessageEvent event);
@@ -154,6 +154,7 @@ private:
     void addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
     void refreshCachedCalls(int phoneId, std::vector<std::shared_ptr<CallStub>> &latestCalls);
     void notifyAndRemoveDroppedCalls();
+    telux::common::Status getInProgressCallsFromServer();
     void onEventUpdate(std::string event);
     telux::common::Status dialCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi);

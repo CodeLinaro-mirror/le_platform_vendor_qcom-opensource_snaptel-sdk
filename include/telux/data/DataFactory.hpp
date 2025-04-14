@@ -69,6 +69,7 @@
 #include <telux/data/net/IpsecManager.hpp>
 #include <telux/data/net/QoSManager.hpp>
 #include <telux/data/CellularDeviceManager.hpp>
+#include <telux/data/net/BackhaulManager.hpp>
 
 namespace telux {
 namespace data {
@@ -367,6 +368,18 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::net::IIpsecManager> getIpsecManager(
         telux::data::OperationType oprType,
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get Backhaul Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Backhaul manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IBackhaulManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IBackhaulManager>
+        getBackhaulManager(telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
     /**
      * Gets the QoS manager instance.

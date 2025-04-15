@@ -1,12 +1,14 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef NTNTESTAPP_HPP
 #define NTNTESTAPP_HPP
 
 #include <memory>
+#include <atomic>
+#include <map>
 
 #include "ConsoleApp.hpp"
 #include <telux/satcom/NtnManager.hpp>
@@ -29,6 +31,7 @@ class NtnTestApp : public INtnListener,
     std::string toString(NtnCapabilities cap);
     std::string toString(SignalStrength ss);
     std::string toString(ServiceStatus status);
+    std::string toString(LocationFixRequestReason reqReason);
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size);
     void onNtnStateChange(NtnState state);
     void onCapabilitiesChange(NtnCapabilities capabilities);
@@ -36,6 +39,8 @@ class NtnTestApp : public INtnListener,
     void onServiceStatusChange(ServiceStatus status);
     void onDataAck(ErrorCode err, TransactionId id);
     void onCellularCoverageAvailable(bool isCellularCoverageAvailable);
+    void onLocationFixRequest(LocationFixRequestReason reqReason);
+    void onNtnBandUpdate(uint32_t bandValue);
     void getServiceStatus(std::vector<std::string> inputCommand);
     void isNtnSupported(std::vector<std::string> inputCommand);
     void enableNtn(std::vector<std::string> inputCommand);
@@ -46,9 +51,23 @@ class NtnTestApp : public INtnListener,
     void updateSystemSelectionSpecifiers(std::vector<std::string> inputCommand);
     void getNtnState(std::vector<std::string> inputCommand);
     void enableCellularScan(std::vector<std::string> inputCommand);
+    void setLocationFix(std::vector<std::string> inputCommand);
+    void locationFixResponse(std::vector<std::string> inputCommand);
+    void autoSetLocationFixFromFile(std::vector<std::string> inputCommand);
+    void stopAutoSetLocationFixFromFile(std::vector<std::string> inputCommand);
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::satcom::INtnManager> ntnMgr_ = nullptr;
 
+private:
+    std::atomic<bool> autoSetLocationFix_ {false};
+    std::atomic<int> lastIndex_ {0};
+    std::atomic<int> currentIndex_ {0};
+    std::vector<std::map<std::string, std::string>> rows_;
+
+    void autoSetLocationFix();
+    void updateLocationFixFromRow(telux::satcom::LocationFix& fixParams);
+    void readData(const std::string& filename,
+        std::vector<std::map<std::string, std::string>>& rows);
 };
 
 #endif  // NTNTESTAPP_HPP

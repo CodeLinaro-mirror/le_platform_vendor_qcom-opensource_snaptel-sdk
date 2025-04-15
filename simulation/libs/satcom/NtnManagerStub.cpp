@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "NtnManagerStub.hpp"
@@ -155,6 +155,17 @@ telux::common::ErrorCode NtnManagerStub::enableCellularScan(bool enable) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
+telux::common::ErrorCode NtnManagerStub::setLocationFix(const LocationFix &params) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode NtnManagerStub::locationFixResponse(LocationStatus status,
+    uint64_t waitTime) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
 void NtnManagerStub::onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
     LOG(DEBUG, __FUNCTION__);
 }
@@ -176,6 +187,14 @@ void NtnManagerStub::onNtnStateChange(telux::satcom::NtnState state) {
 }
 
 void NtnManagerStub::onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
+    LOG(DEBUG, __FUNCTION__);
+}
+
+void NtnManagerStub::onLocationFixRequest(LocationFixRequestReason reqReason) {
+    LOG(DEBUG, __FUNCTION__);
+}
+
+void NtnManagerStub::onNtnBandUpdate(uint32_t bandValue) {
     LOG(DEBUG, __FUNCTION__);
 }
 

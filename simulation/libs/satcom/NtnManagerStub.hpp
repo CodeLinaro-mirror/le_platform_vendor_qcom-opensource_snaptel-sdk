@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef NTNMANAGERIMPL_HPP
@@ -44,6 +44,9 @@ class NtnManagerStub : public INtnManager, public INtnListener {
     NtnState getNtnState() override;
     telux::common::ErrorCode getSignalStrength(SignalStrength &signalStrength) override;
     telux::common::ErrorCode enableCellularScan(bool enable) override;
+    telux::common::ErrorCode setLocationFix(const LocationFix &params) override;
+    telux::common::ErrorCode locationFixResponse(LocationStatus status,
+        uint64_t waitTime) override;
 
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) override;
     void onDataAck(telux::common::ErrorCode err, telux::satcom::TransactionId id) override;
@@ -52,6 +55,8 @@ class NtnManagerStub : public INtnManager, public INtnListener {
     void onNtnStateChange(telux::satcom::NtnState state) override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onCellularCoverageAvailable(bool isCellularCoverageAvailable) override;
+    void onLocationFixRequest(LocationFixRequestReason reqReason) override;
+    void onNtnBandUpdate(uint32_t bandValue) override;
 
  private:
     std::mutex mtx_;

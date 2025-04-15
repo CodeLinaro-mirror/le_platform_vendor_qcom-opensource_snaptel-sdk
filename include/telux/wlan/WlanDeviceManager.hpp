@@ -178,10 +178,10 @@ class IWlanDeviceManager {
 
     /**
      * Request Wlan configuration: Returns the configuration that was set using
-     * @ref telus::wlan::IWlanDeviceManager::setMode.
-     * This might differ from what configuration is has actually been enabled in the system, for
+     * @ref telux::wlan::IWlanDeviceManager::setMode.
+     * This might differ from the configuration that is actually enabled in the system, for
      * instance, when the hardware cannot fully support the configuration that was set.
-     * To get the status of current configuration an Wlan enablement,
+     * To get the status of the current configuration on Wlan enablement,
      * @ref telux::wlan::IWlanDeviceManager::getStatus should be used.
      *
      * @param [in] numAp                Num of configured APs

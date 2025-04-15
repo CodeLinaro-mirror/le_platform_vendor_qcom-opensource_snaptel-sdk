@@ -25,6 +25,9 @@ class TrafficFilterImpl : public ITrafficFilter {
     void getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) override;
     void setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType);
 
+    PortConfig& getPortConfig(FieldType fieldType) override;
+    void setPortConfig(PortConfig portConfig, FieldType fieldType);
+
     std::vector<int> getVlanList(FieldType fieldType) override;
     void setVlanList(std::vector<int> vlanList, FieldType fieldType);
 
@@ -62,6 +65,7 @@ class TrafficFilterImpl : public ITrafficFilter {
     std::vector<int> sourceVlanList_;
     uint16_t sourceStartPort_ = 0;
     uint16_t sourcePortRange_ = 0;
+    PortConfig sourcePortConfig_{};
 
     std::string destIPv4Address_ = "";
     std::string destIPv6Address_ = "";
@@ -71,6 +75,7 @@ class TrafficFilterImpl : public ITrafficFilter {
     std::vector<int> destVlanList_;
     uint16_t destStartPort_ = 0;
     uint16_t destPortRange_ = 0;
+    PortConfig destPortConfig_{};
 
     IpProtocol ipProtocol_ = 0;
     Direction direction_ = Direction::UPLINK;

@@ -45,6 +45,8 @@ enum TrafficFilterValidField {
     TF_DATA_PATH_VALID = (1 << 11),
     TF_SOURCE_PORT_RANGE_VALID = (1 << 12),
     TF_DESTINATION_PORT_RANGE_VALID = (1 << 13),
+    TF_SOURCE_PORT_CONFIG_VALID = (1 << 14),
+    TF_DESTINATION_PORT_CONFIG_VALID = (1 << 15),
 };
 
 /**
@@ -59,6 +61,66 @@ using TrafficFilterValidFields = uint32_t;
 enum class FieldType {
     SOURCE,
     DESTINATION,
+};
+/**
+ * Port Configuration
+ *
+ * @ref PortConfig::port -  Port number. If range is non-zero, this is the starting port number;
+ * otherwise, it is a single port number.
+ *
+ * @ref PortConfig::range - Optional field. Port range.
+ *
+ * @ref PortConfig::maxActiveConnections - Optional field, applicable for QoS filter. This
+ * indicates the maximum number of active connections possible at the same time in the given source
+ * port range, considering all traffic sources - in apps processor or tethered client. This is
+ * applicable when multiple traffic sources:
+ *  1. send data in the UL direction over the cellular connection
+ *  2. use the same data call (use the same public IP)
+ *  3. have the same source port range
+ *
+ *  If the maximum active connections are less than the range provided, then by default, the
+ *  range will be considered the maximum active connections.
+ *  Some examples below consider multiple clients' traffic sources satisfying the above conditions.
+ *
+ *  Case-1:
+ *       - Client-1: Location: Apps processor, start port 1, range = 10
+ *       - Client-2: Location: Tethered client, start port 1, range = 10
+ *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 20}
+ *       - Explanation: If both clients use all the ports 1-10 at the same time.
+ *
+ *  Case-2:
+ *       - Client-1: Location: Tethered client-1, port range = 1-10
+ *       - Client-2: Location: Tethered client-2, port range = 1-10
+ *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 15}
+ *       - Explanation: If both clients together use 15 ports at the same time.
+ *
+ *  Case-3:
+ *       - Client-1: Location: Apps processor, port range = 1-10
+ *       - Client-2: Location: Tethered client-1, port range = 1-10
+ *       - Client-3: Location: Tethered client-2, port range = 1-10
+ *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 30}
+ *       - Explanation: If all three clients use all the ports 1-10 at the same time.
+ *
+ *  Case-3:
+ *       - Client-1: Location: Apps processor, port range = 1-10
+ *       - Client-2: Location: Tethered client-1, port range = 1-10
+ *       - Client-3: Location: Tethered client-2, port range = 1-10
+ *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 30}
+ *       - Explanation: If all three clients use all the ports 1-10 at the same time.
+ *
+ *  Case-4:
+ *       - Client-1: Location: Apps processor, port range = 1-10
+ *       - Client-2: Location: Tethered client-1, port range = 1-10
+ *       - Client-3: Location: Tethered client-2, port range = 1-10
+ *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 7}
+ *       - Explanation: If all clients together use 7 ports at the same time, the maximum number of
+ *                    active connections is less than the range provided above, which is considered
+ *                    the maximum active connections.
+ */
+struct PortConfig {
+    uint16_t port;
+    uint16_t range = 0;  /**< Optional field. */
+    uint16_t maxActiveConnections = 0;  /**< Optional field. */
 };
 
 /**
@@ -140,6 +202,17 @@ class ITrafficFilter {
      * change and could break backwards compatibility.
      */
     virtual std::string getIPv6Address(FieldType fieldType) = 0;
+
+    /**
+     * @brief Retrieves the port configuration.
+     *
+     * @param [in] fieldType     Indicates whether the get is for the source or destination.
+     * @return The port configuration.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    virtual PortConfig& getPortConfig(FieldType fieldType) = 0;
 
     /**
      * @brief Retrieves the port.
@@ -289,6 +362,18 @@ class TrafficFilterBuilder {
      * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setIPv6Address(std::string ipv6Addr, FieldType fieldType);
+
+    /**
+     * @brief Sets the port configuration.
+     *
+     * @param [in] portConfig       Port configuration
+     * @param [in] fieldType        Indicates whether the set is for the source or destination.
+     * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    TrafficFilterBuilder &setPortConfig(PortConfig portConfig, FieldType fieldType);
 
     /**
      * @brief Sets the port range.

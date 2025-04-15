@@ -86,6 +86,24 @@ void TrafficFilterImpl::setPortRange(uint16_t startPort, uint16_t range, FieldTy
     }
 }
 
+PortConfig& TrafficFilterImpl::getPortConfig(FieldType fieldType) {
+   if (fieldType == FieldType::SOURCE) {
+        return sourcePortConfig_;
+    } else {
+        return destPortConfig_;
+    }
+}
+
+void TrafficFilterImpl::setPortConfig(PortConfig portConfig, FieldType fieldType) {
+    if (fieldType == FieldType::SOURCE) {
+        validityMask_    = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_CONFIG_VALID;
+        sourcePortConfig_ = portConfig;
+    } else {
+        validityMask_  = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_CONFIG_VALID;
+        destPortConfig_ = portConfig;
+    }
+}
+
 std::vector<int> TrafficFilterImpl::getVlanList(FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
         return sourceVlanList_;
@@ -260,6 +278,16 @@ TrafficFilterBuilder &TrafficFilterBuilder::setPortRange(
     }
     std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)
         ->setPortRange(startPort, range, fieldType);
+    return *this;
+}
+
+TrafficFilterBuilder &TrafficFilterBuilder::setPortConfig(
+    PortConfig portConfig, FieldType fieldType) {
+    if (trafficFilter_ == nullptr) {
+        trafficFilter_ = std::make_shared<TrafficFilterImpl>();
+    }
+    std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)
+        ->setPortConfig(portConfig, fieldType);
     return *this;
 }
 

@@ -511,13 +511,25 @@ void QoSManagementMenu::getPortsFromUser(
         Utils::validateInput(port);
         tfBuilder.setPort(port, fieldType);
     } else if (option == 2) {
-        uint16_t startPort = 0, portRange = 0;
+        uint16_t startPort = 0, portRange = 0, maxActiveConnections = 0;
         std::cout << "Enter start port: ";
         std::cin >> startPort;
         Utils::validateInput(startPort);
         std::cout << "Enter port range: ";
         std::cin >> portRange;
         Utils::validateInput(portRange);
-        tfBuilder.setPortRange(startPort, portRange, fieldType);
+        if(fieldType == telux::data::FieldType::SOURCE) {
+            std::cout << "Note: If maximum number of active connections is less than the range"
+            " provided above,\n then the range is considered as max active connections.\n"
+            "Enter maximum number of active connections possible at the same time\nor 0 to skip: ";
+            std::cin >> maxActiveConnections;
+            telux::data::PortConfig portConfig {};
+            portConfig.port = startPort;
+            portConfig.range = portRange;
+            portConfig.maxActiveConnections = maxActiveConnections;
+            tfBuilder.setPortConfig(portConfig, fieldType);
+        } else {
+            tfBuilder.setPortRange(startPort, portRange, fieldType);
+        }
     }
 }

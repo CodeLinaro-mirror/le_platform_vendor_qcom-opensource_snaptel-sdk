@@ -98,7 +98,7 @@ struct InterfaceStatus {
  * Wlan Regulatory Setting
  */
 struct RegulatoryParams {
-    std::string         country;     /**< Country code according to ISO 3166 standard             */
+    std::string         country;     /**< Country code according to ISO 3166 alpha-2 standard     */
     float               opChannel;   /**< Operating channel according to IEEE 802.11 Standards    */
     std::vector<float>  opClass;     /**< Operating class according to IEEE 802.11 Standards      */
     uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts
@@ -218,7 +218,7 @@ class IWlanDeviceManager {
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_DEVICE_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] country                 Active country code according to ISO 3166 standard
+     * @param [in] country              Active country code according to ISO 3166 alpha-2 standard
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *

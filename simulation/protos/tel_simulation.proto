@@ -16,7 +16,7 @@
      rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc IsSubsystemReady(google.protobuf.Empty) returns (commonStub.IsSubsystemReadyReply) {}
-     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+     rpc CleanUpService(CleanupRequest) returns (google.protobuf.Empty) {}
      rpc GetCardState(GetCardStateRequest) returns (GetCardStateReply) {}
      rpc GetSupportedApps(GetSupportedAppsRequest) returns (GetSupportedAppsReply) {}
      rpc ReadEFLinearFixed(ReadEFLinearFixedRequest) returns (ReadEFLinearFixedReply) {}
@@ -797,6 +797,10 @@ message  RequestLastRefreshEventResp {
     RefreshMode mode = 5;
     repeated IccFile efFiles = 6;
     RefreshParams refreshs = 7;
+}
+
+message CleanupRequest {
+    uint32 identifier = 1;
 }
 
 message RefreshEvent {

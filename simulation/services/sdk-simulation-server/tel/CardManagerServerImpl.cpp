@@ -223,6 +223,29 @@ grpc::Status CardManagerServerImpl::IsSubsystemReady(ServerContext* context,
     return readStatus;
 }
 
+grpc::Status CardManagerServerImpl::CleanUpService(ServerContext* context,
+    const ::telStub::CleanupRequest* request, ::google::protobuf::Empty* response) {
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t clientId = request->identifier();
+    for (auto it = refreshVotingClients_.begin();
+        it != refreshVotingClients_.end();) {
+        if (it->clientId == clientId) {
+            it = refreshVotingClients_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    for (auto it = refreshRegisterClients_.begin();
+        it != refreshRegisterClients_.end();) {
+        if (it->clientId == clientId) {
+            it = refreshRegisterClients_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    return grpc::Status::OK;
+}
+
 grpc::Status CardManagerServerImpl::GetCardState(ServerContext* context,
     const ::telStub::GetCardStateRequest* request,
     telStub::GetCardStateReply* response) {
@@ -2327,10 +2350,6 @@ bool CardManagerServerImpl::handleSimRefreshInjector(std::string eventParams,
         regError = updateClientSimRefresh(refreshRegisterClients_, clientInfo,
             request->isregister());
 
-        if (voteError == telux::common::ErrorCode::ALREADY &&
-            regError == telux::common::ErrorCode::ALREADY) {
-            error = telux::common::ErrorCode::ALREADY;
-        }
     } while (0);
 
     LOG(DEBUG, __FUNCTION__, " Error for voting clients is ", static_cast<int>(voteError),

@@ -74,6 +74,8 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
         commonStub::GetServiceStatusReply* response) override;
     grpc::Status IsSubsystemReady(ServerContext* context, const google::protobuf::Empty* request,
         commonStub::IsSubsystemReadyReply* response) override;
+    grpc::Status CleanUpService(ServerContext* context, const ::telStub::CleanupRequest* request,
+         ::google::protobuf::Empty* response) override;
     grpc::Status GetCardState(ServerContext *context, const telStub::GetCardStateRequest *request,
         telStub::GetCardStateReply *reply) override;
     grpc::Status ReadEFLinearFixed(ServerContext* context,

@@ -537,6 +537,7 @@ Satcom Services
 Satcom services APIs in the Telematics SDK offer functionalities for configuring the NTN and transmitting non-IP data over it. These include:
 
 - Enabling/disabling NTN.
+- Set location fix in case external GNSS is used.
 - Updating the system selection specifiers (SFL list) used by the modem to scan for the NTN network.
 - Requesting NTN network capabilities.
 - Sending/receiving data over NTN.

@@ -3312,6 +3312,37 @@ Call flow to enable NTN and send non-IP data
 20. Application receives the result of the request to disable the NTN.
 21. Application receives the state change notification.
 
+Call flow to enable NTN and send non-IP data in case of external GNSS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/ntn_enable_send_data_external_gnss.png
+
+1. Application requests INtnManager object from Satcom factory.
+2. Satcom factory returns shared pointer to INtnManager to the application.
+3. Application can use INtnManager::getServiceStatus to determine if the system is ready.
+4. The application receives the status, i.e., either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether the subsystem is ready or not.
+5. If the subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+6. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. Application registers listener for notifications related to NTN state/data etc.
+8. Application receives the status (SUCCESS or suitable failure) based on registration of listener to NtnManager.
+9. Application sets the location fix.
+10. Application enables NTN.
+11. Application receives the status (SUCCESS or suitable failure).
+12. Application receives the NTN state change notification when NTN is enabled and ready to be used to send non-IP data.
+13. Application receives the signal strength change notification indicating the new signal strength.
+14. Application also receives the NTN band update.
+15. If the application receives a location fix request.
+16. Application provides the location fix response.
+17. Application sets the location fix.
+18. Application requests the capabilities such as maximum data size for the connected NTN network.
+19. Application receives the capabilities result.
+20. Application sends non-IP data.
+21. Application receives transaction ID of the send request. This can be used to map the data acknowledgement that could come later.
+22. Application receives the L2 acknowledgement for the sent data packet.
+23. Application disables the NTN.
+24. Application receives the result of the request to disable the NTN.
+25. Application receives the state change notification.
+
 Diagnostics
 -----------
 

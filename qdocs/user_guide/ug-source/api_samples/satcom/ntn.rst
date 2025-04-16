@@ -35,6 +35,15 @@ The following steps illustrate how to configure and use NTN.
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
         // Process downlink data coming from NTN network
     }
+
+    void onLocationFixRequest(LocationFixRequestReason reqReason) {
+        // Handle location fix request
+    }
+
+    void onNtnBandUpdate(uint32_t bandValue) {
+        // Handle NTN band update
+    }
+
     };
 
 
@@ -75,13 +84,13 @@ The following steps illustrate how to configure and use NTN.
    status = ntnMgr->registerListener(listener);
 
 
-6. Update system selection specifier list (optional).
+6. Set location fix (optional).
 
 .. code-block::
 
-   std::vector<SystemSelectionSpecifier> params;
-   // Fill params as per vendor specification.
-   err = ntnMgr->updateSystemSelectionSpecifiers(params);
+   LocationFix params;
+   // Update the location information from the external GNSS receiver
+   err = ntnMgr->setLocationFix(params);
 
 
 7. Enable NTN.

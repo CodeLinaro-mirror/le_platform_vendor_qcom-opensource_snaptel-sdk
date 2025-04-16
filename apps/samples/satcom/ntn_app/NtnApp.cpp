@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11,10 +11,11 @@
  * 1. Get a SatcomFactory instance.
  * 2. Get a INtnManager instance from the SatcomFactory.
  * 3. Wait for the service to become available.
- * 4. update System Selection Specifiers
- * 5. Enable NTN
- * 6. Perform operations such as sending non IP data over NTN network.
- * 7. Finally, when the use case is over, disable NTN.
+ * 4. Set location fix
+ * 5. update System Selection Specifiers
+ * 6. Enable NTN
+ * 7. Perform operations such as sending non IP data over NTN network.
+ * 8. Finally, when the use case is over, disable NTN.
  *
  * Usage:
  * # ./ntn_sample_app
@@ -36,10 +37,17 @@
 #include <vector>
 #include <cstring>
 #include <cstdint>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/satcom/SatcomFactory.hpp>
 #include <telux/satcom/NtnManager.hpp>
+
+#define DEFAULT_CSV_FILE_PATH "/data/vendor/telsdk/"
+#define DEFAULT_CSV_FILE_NAME "locationFix.csv"
 
 using namespace telux::satcom;
 
@@ -119,6 +127,16 @@ class NtnApp : public INtnListener,
                 std::cout << "Signal Strength : GREAT\n";
                 break;
         }
+    }
+
+    std::string printLocationRequest(LocationFixRequestReason reqReason) {
+        switch (reqReason) {
+            case LocationFixRequestReason::NORMAL:
+                return "NORMAL";
+            case LocationFixRequestReason::VALIDITY_TIMER_EXPIRED:
+                return "VALIDITY_TIMER_EXPIRED";
+        };
+        return "UNKOWN";
     }
 
     void printNtnCapabilities(NtnCapabilities cap)
@@ -251,6 +269,88 @@ class NtnApp : public INtnListener,
         return 0;
     }
 
+    void updateLocationFixParams(const std::string& filename,
+        telux::satcom::LocationFix& fixParams) {
+        std::cout << "Updating location fix params.\n";
+        std::ifstream file(filename);
+        std::string line;
+        std::unordered_map<std::string, std::string> params;
+
+        if (file.is_open()) {
+            // Read headers
+            std::vector<std::string> headers;
+            std::getline(file, line);
+            std::stringstream ss(line);
+            std::string header;
+            while (std::getline(ss, header, ',')) {
+                headers.emplace_back(header);
+            }
+
+            // Read params
+            std::getline(file, line);
+            std::stringstream ssValues(line);
+            std::string value;
+            size_t index = 0;
+            while (std::getline(ssValues, value, ',')) {
+                params[headers[index]] = value;
+                ++index;
+            }
+            file.close();
+        } else {
+            std::cout << "unable to open file " << filename << " .\n";
+            return;
+        }
+
+        try {
+            fixParams.lat = std::stof(params["lat"]);
+            fixParams.lon = std::stof(params["lon"]);
+            fixParams.alt = std::stof(params["alt"]);
+
+            fixParams.velInfo.isEnuValueValid = params["isEnuValueValid"] == "true";
+            fixParams.velInfo.enuVel[0] = std::stof(params["enuEastingVel"]);
+            fixParams.velInfo.enuVel[1] = std::stof(params["enuNorthingVel"]);
+            fixParams.velInfo.enuVel[2] = std::stof(params["enuUpwardVel"]);
+
+            fixParams.velInfo.isEnuUncerValid = params["isEnuUncerValid"] == "true";
+            fixParams.velInfo.enuUncer[0] = std::stof(params["enuEastingUncer"]);
+            fixParams.velInfo.enuUncer[1] = std::stof(params["enuNorthingUncer"]);
+            fixParams.velInfo.enuUncer[2] = std::stof(params["enuUpwardUncer"]);
+
+            fixParams.isHeadingValid = params["isHeadingValid"] == "true";
+            fixParams.heading = std::stoul(params["heading"]);
+            fixParams.isHeadingUncerValid = params["isHeadingUncerValid"] == "true";
+            fixParams.headingUncer = std::stoul(params["headingUncer"]);
+            fixParams.uncerCircular = std::stoul(params["uncerCircular"]);
+            fixParams.isConfidenceValid = params["isConfidenceValid"] == "true";
+            fixParams.confidence = std::stoul(params["confidence"]);
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid argument: " << e.what() << '\n';
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Out of range: " << e.what() << '\n';
+        }
+    }
+
+    int setLocationFix() {
+        std::string filename = std::string(DEFAULT_CSV_FILE_PATH) +
+            std::string(DEFAULT_CSV_FILE_NAME);
+        telux::satcom::LocationFix fixParams;
+        telux::common::ErrorCode err;
+
+        updateLocationFixParams(filename, fixParams);
+
+        err = ntnMgr_->setLocationFix(fixParams);
+
+        if (err != telux::common::ErrorCode::SUCCESS) {
+            std::cout << "setLocationFix Failed with error = " <<
+                static_cast<int>(err) << std::endl;
+            return -EIO;
+        } else {
+            std::cout << "setLocationFix SUCCESS" << std::endl;
+        }
+
+        return 0;
+    }
+
     void onNtnStateChange(NtnState newState)
     {
         printNtnState(newState);
@@ -277,6 +377,24 @@ class NtnApp : public INtnListener,
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
         std::cout << "Downlink data available:\n";
         // Process downlink data
+    }
+
+    void onLocationFixRequest(LocationFixRequestReason reqReason) {
+        std::cout << "**** onLocationFixRequest Reason = "
+            << printLocationRequest(reqReason) << std::endl;
+
+        std::cout << "Updating location fix response" << std::endl;
+        ntnMgr_->locationFixResponse(telux::satcom::LocationStatus::SUCCESS, 0);
+
+        std::cout << "Setting location fix" << std::endl;
+        auto ret = setLocationFix();
+        if (ret < 0) {
+            std::cout << "Error in setting location fix" << std::endl;
+        }
+    }
+
+    void onNtnBandUpdate(uint32_t bandValue) {
+        std::cout << "**** onNtnBandUpdate BandValue = " << bandValue << std::endl;
     }
 
  private:
@@ -308,24 +426,40 @@ int main(int argc, char *argv[]) {
     if (ret < 0) {
         return ret;
     }
+    std::cout << "Initialization complete, setting location fix." << std::endl;
 
     /* Step - 4 */
+    ret = app->setLocationFix();
+    if (ret < 0) {
+        return ret;
+    }
+
+    std::cout << "Updating SystemSelectionSpecifiers" << std::endl;
+    /* Step - 5 */
     ret = app->updateSystemSelectionSpecifiers();
     if (ret < 0) {
         return ret;
     }
 
-    /* Step - 5 */
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    /* Step - 6 */
+    std::cout << "Enabling NTN" << std::endl;
     ret = app->enableNtn(iccid);
     if (ret < 0) {
         return ret;
     }
 
-    /* Step - 6 */
-    /* Send/Receive data as per application logic  */
-    ret = app->sendData();
+    std::this_thread::sleep_for(std::chrono::seconds(15));
 
     /* Step - 7 */
+    /* Send/Receive data as per application logic  */
+    std::cout << "Sending data" << std::endl;
+    ret = app->sendData();
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    /* Step - 8 */
+    std::cout << "Disabling NTN" << std::endl;
     ret = app->disableNtn();
     if (ret < 0) {
         return ret;

@@ -1,7 +1,6 @@
 /*
- *
- *    Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *    SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -14,6 +13,7 @@
  *          - send/receive non-IP data over NTN network
  *          - enable/disable cellular terrestrial network scan while NTN is active
  *          - configure system selection specifiers
+ *          - set location fix
  *          - monitor NTN state
  *          - monitor NTN service availability
  *          - monitor NTN network capabilities
@@ -34,6 +34,8 @@
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
+
+#define MAX_DIMENSIONS 3
 
 namespace telux {
 namespace satcom {
@@ -90,6 +92,65 @@ enum SignalStrength {
     MODERATE = 2,
     GOOD     = 3,
     GREAT    = 4,
+};
+
+/**
+ * Provides the reason for location fix request.
+ */
+enum LocationFixRequestReason {
+    UNKOWN                 = 0,
+    NORMAL                 = 1, /** A routine request for a location fix. If a valid
+                                    location fix is available in the cache, it can be
+                                    provided to fulfill this request. */
+    VALIDITY_TIMER_EXPIRED = 2, /** The validity timer has expired, prompting a location
+                                    fix request. */
+};
+
+/**
+ * Specifies the status of a location fix request.
+ */
+enum class LocationStatus {
+    INVALID               = -1,
+    SUCCESS               = 0,  /** The location fix fetch was successful. */
+    INVALID_ARG           = 1,  /** The location fix fetch failed due to invalid
+                                    location request. */
+    INTERNAL_ERR          = 2,  /** The location fix fetch cannot be started due
+                                    to an internal error */
+    NOT_SUPPORTED         = 3,  /** The location fix cannot be provided due to
+                                    missing external GNSS support or other reasons. */
+    RETRY                 = 4,  /** The location fix request should be retried after
+                                    a given hysteresis time. */
+    FAILED                = 5,  /** The location fix fetch was started but failed. */
+};
+
+/**
+ * Velocity parameters
+ */
+struct VelocityInfo {
+  bool isEnuValueValid;             /**<  Indicates if the ENU velocity values
+                                          are valid */
+  float enuVel[MAX_DIMENSIONS];     /**<  Velocity in the Easting, Northing,
+                                          and Upward directions */
+  bool isEnuUncerValid;             /**<  Indicates if the uncertainty in the
+                                          ENU values is valid */
+  float enuUncer[MAX_DIMENSIONS];   /**<  Uncertainty in ENU values */
+};
+
+/**
+ * Location fix parameters
+ */
+struct LocationFix {
+  float lat;   /**< Latitude coordinate in degrees */
+  float lon;   /**< Longitude coordinate in degrees */
+  float alt;   /**< Altitude above sea level */
+  uint32_t uncerCircular;      /**< Radius of the horizontal uncertainty circle in meters */
+  VelocityInfo velInfo;        /**< Velocity parameters */
+  bool isHeadingValid;         /**< Indicates if the heading value is valid */
+  uint32_t heading;            /**< Heading or direction in degrees */
+  bool isHeadingUncerValid;    /**< Indicates if the heading uncertainty value is valid */
+  uint32_t headingUncer;       /**< Uncertainty in the heading value in degrees */
+  bool isConfidenceValid;     /**< Indicates if the confidence value is valid */
+  uint32_t confidence;        /**< Horizontal uncertainty confidence value */
 };
 
 /**
@@ -279,6 +340,50 @@ class INtnManager {
     virtual telux::common::ErrorCode enableCellularScan(bool enable) = 0;
 
     /**
+     * Updates the location information from the external GNSS receiver. This needs
+     * to be called before enabling NTN.
+     *
+     * @note Ensure that external GNSS receiver is turned off after updating the
+     * location information and before enabling NTN in order to have reliable GNSS and NTN
+     * operations. This is only applicable if there is interference expected between the GNSS
+     * and NTN bands.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param[in] params location fix parameters.
+     *
+     * @returns Error code which indicates whether operation succeeded or not.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setLocationFix(const LocationFix &params) = 0;
+
+    /**
+     * Provides the response when the modem makes a request via
+     * @ref telux::satcom::INtnListener::onLocationFixRequest, for a location fix from the
+     * External GNSS receiver.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_NTN_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param[in] status    The response status to the fetch request.
+     * @param[in] waitTime  The time in milli seconds after which the modem should re-request the
+     *                      location fix using @ref telux::satcom::INtnListener::onLocationFixRequest.
+     *                      This is applicable for @ref LocationStatus::RETRY if the location fix
+     *                      cannot be fetched from the external GNSS receiver and the location fix
+     *                      request needs to be re-triggered.
+     *
+     * @returns Error code which indicates whether operation succeeded or not.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode locationFixResponse(LocationStatus status,
+        uint64_t waitTime) = 0;
+
+    /**
      * Register with NtnManager as listener for receiving service status, NTN state changes
      * and data availability notifications.
      *
@@ -409,6 +514,36 @@ class INtnListener : public telux::common::ISDKListener {
      *             could break backwards compatibility.
      */
     virtual void onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
+    }
+
+    /**
+     * Invoked when the modem requires a new location fix in order to acquire NTN service. The
+     * modem might periodically make these requests since each location fix provided by the client
+     * expires after a certain validity period. When this API is invoked, the client shall ensure
+     * that GNSS is turned on and location information is fetched.
+     * Use @ref telux::satcom::INtnManager::locationFixResponse to update the response for the
+     * location fix request. Once the location information is completely fetched the location
+     * fix shall be updated by calling @ref telux::satcom::INtnManager::setLocationFix.
+     *
+     * @param [in] reqReason   Provides the reason for expiration.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onLocationFixRequest(LocationFixRequestReason reqReason) {
+    }
+
+    /**
+     * This function is invoked when the frequency at which NTN is operating is updated.
+     * The client can use this band information to switch external GNSS on/off
+     * during NTN operation, if there is interference when both bands coexist.
+     *
+     * @param [in] bandValue   The current NTN band value.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onNtnBandUpdate(uint32_t bandValue) {
     }
 
     /**

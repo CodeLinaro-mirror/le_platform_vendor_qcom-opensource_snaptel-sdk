@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -294,10 +293,10 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                             // When modem is redialing, eCall_ must not be cleared to ensure
                             // hangup is sent on valid eCall.
                             std::cout << CLIENT_NAME << "  clear eCall cache " << std::endl;
-                            eCall_ = nullptr;
                             clearECall_ = false;
                         }
                     }
+                    eCall_ = nullptr;
                 }
             }
         } else {

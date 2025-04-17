@@ -1,6 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,8 +46,31 @@ void HpcmMenu::setSystemReady() {
 /* Cleanup can be triggered either during SSR or when the application exits */
 void HpcmMenu::cleanup() {
     std::lock_guard<std::mutex> lk(mutex_);
-    /* hpcmReady_: To determine if the service is ready, for example, during SSR */
-    hpcmReady_ = false;
+    /*
+     * hpcmReady_: A flag to determine if the service is ready, particularly relevant SSR.
+     *
+     * The cleanup() function can be invoked in two scenarios:
+     *
+     * 1) From the destructor: This occurs when HPCM exits due to the application terminating. In
+     *    this case, the destructor is called, and exitHpcm_ is set to true. Since the application
+     *    has to wait for all request callbacks to complete before exiting, there is no need to set
+     *    hpcmReady_ to false.
+     *
+     * 2) During SSR: As cleanup is performed by the library during SSR, the application must
+     *    initiate its own cleanup process without waiting for any callback responses.
+     *    Therefore, hpcmReady_ should be set to false to indicate that the service is no longer
+     *    available.
+     */
+    if (!exitHpcm_) {
+        hpcmReady_ = false;
+    }
+
+    // Set the flag to true to signal the play thread to exit its loop and terminate gracefully.
+    exitPlayThread_ = true;
+
+    // Set the flag to true to signal the record thread to exit its loop and terminate gracefully.
+    exitRecordThread_ = true;
+
     captureCv_.notify_all();
     bufferReadyCv_.notify_all();
 
@@ -312,7 +334,7 @@ void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
     StreamConfig config;
     telux::common::Status status = telux::common::Status::FAILED;
     if (!hpcmReady_) {
-        std::cout << "HPCM is not initialized" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
         return;
     }
 
@@ -373,7 +395,7 @@ void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
 void HpcmMenu::stopHpcmAudio(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if (!hpcmReady_) {
-        std::cout << "HPCM is not initialized" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
         return;
     }
 
@@ -593,7 +615,7 @@ void HpcmMenu::record() {
      * Do not wait for the pending buffer in the following scenarios:
      * (1) When SSR occurs, the server is unable to send the pending buffer back to the application.
      */
-    while((freeCaptureBuffers_.size()!= 1) ){
+    while((freeCaptureBuffers_.size()!= 1 && hpcmReady_) ){
         if (exitHpcm_ || exitRecordThread_ || exitPlayThread_) {
             captureCv_.wait_for(lock, std::chrono::milliseconds(5000));
         } else {

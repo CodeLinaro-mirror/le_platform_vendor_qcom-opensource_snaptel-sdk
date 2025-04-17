@@ -294,10 +294,10 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                             // When modem is redialing, eCall_ must not be cleared to ensure
                             // hangup is sent on valid eCall.
                             std::cout << CLIENT_NAME << "  clear eCall cache " << std::endl;
-                            eCall_ = nullptr;
                             clearECall_ = false;
                         }
                     }
+                    eCall_ = nullptr;
                 }
             }
         } else {

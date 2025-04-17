@@ -95,6 +95,12 @@ class DataSettingsMenu : public ConsoleApp ,
     void setAutoConnect(std::vector<std::string> inputCommand);
     void requestAutoConnect(std::vector<std::string> inputCommand);
 
+    void setLANConfig(std::vector<std::string> inputCommand);
+    void requestLANConfig(std::vector<std::string> inputCommand);
+    void requestNetworkConfiguration(std::vector<std::string> inputCommand);
+    void setDhcpv6DNSConfig(std::vector<std::string> inputCommand);
+    void requestDhcpv6DNSConfig(std::vector<std::string> inputCommand);
+
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 

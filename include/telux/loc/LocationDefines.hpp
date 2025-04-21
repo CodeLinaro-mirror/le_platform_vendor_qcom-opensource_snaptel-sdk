@@ -65,49 +65,9 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
                                                   uncertainty. The default here means that the
                                                   engine is allowed to use infinite power.
                                                   Units: 100 micro watt second. */
-const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffffffff indicates an
-                                                                  invalid reading for energy
-                                                                  consumed info. */
+
 const float UNKNOWN_SV_TIME_SUB_NS = -1; /**< Unknown Sub nanoseconds portion of the received GNSS
                                               time. */
-/**
- * Defines RTCM injection data format
- */
-enum class DgnssDataFormat{
-  /** Source data format is unknown */
-  DATA_FORMAT_UNKNOWN                = 0,
-  /** Source data format is RTCM_3 */
-  DATA_FORMAT_RTCM_3                 = 1,
-  /** Source data format is 3GPP RTK Rel-15 */
-  DATA_FORMAT_3GPP_RTK_R15           = 2
-};
-
-/**
- * Defines status reported by cdfw for RTCM injection.
- */
-enum class DgnssStatus{
-  /** Dgnss subsystem doesn't support the data source */
-  DATA_SOURCE_NOT_SUPPORTED          = 1,
-  /** Dgnss subsystem doesn't support the data format */
-  DATA_FORMAT_NOT_SUPPORTED          = 2,
-  /** After the source injects the data, dgnss subsystem discovers there is
-   *  another higher priority source injecting the data at the
-   *  same time, and the current injected data is dropped */
-  OTHER_SOURCE_IN_USE                = 3,
-  /** There is a parsing error such as unrecognized format, CRC
-   *  check failure, value range check failure, etc.; the injected
-   *  data is dropped */
-  MESSAGE_PARSE_ERROR                = 4,
-  /** Data source is usable */
-  DATA_SOURCE_USABLE                 = 5,
-  /** Data source is not usable, for example,
-   * the reference station is too far away to improve the potion accuracy */
-  DATA_SOURCE_NOT_USABLE             = 6,
-  /** The CDFW service askes the source client to stop
-   *  injecting the correction data */
-  CDFW_STOP_SOURCE_INJECT            = 7
-};
-
 /**
  * Defines the horizontal accuracy level of the fix.
  */
@@ -183,7 +143,7 @@ enum class GnssConstellationType {
   GALILEO = 2, /**< GALILEO satellite */
   SBAS = 3, /**< SBAS satellite */
   COMPASS = 4, /**< COMPASS satellite.
-               @deprecated constellation type is not supported.*/
+               @deprecated constellation type is not supported.*/  //@todo_remove
   GLONASS = 5, /**< GLONASS satellite */
   BDS = 6, /**< BDS satellite */
   QZSS = 7, /**< QZSS satellite */
@@ -363,23 +323,6 @@ struct GnssKinematicsData {
   /** Uncertainty of yaw, in unit of radian.
    *  Uncertainty is defined with 68% confidence level. */
   float yawUnc;
-};
-
-/**
- * The location info is calculated according to the vehicle's GNSS antenna where as Vehicle
- * Reference Point(VRP) refers to a point on the vehicle where the display of the car sits.
- * The VRP based info is calculated by adding that extra difference between GNSS antenna and
- * the VRP on the top where the location info is recieved. The VRP parameters can be configured
- * through @ref ILocationConfigurator::configureLeverArm.
- * LLAInfo specifies latitude, longitude and altitude info of location for VRP-based.
- */
-struct LLAInfo {
-  /** Latitude, in unit of degrees, range [-90.0, 90.0]. */
-  double latitude;
-  /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
-  double longitude;
-  /** Altitude above the WGS 84 reference ellipsoid, in unit of meters. */
-  float altitude;
 };
 
 /**
@@ -977,91 +920,6 @@ struct GnssData {
   AgcStatus     agcStatusL5;
 };
 
-/** Specify the sensor calibration status in @ref ILocationInfoEx.*/
-enum DrCalibrationStatusType {
-  /** Indicate that roll calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_ROLL_CALIBRATION_NEEDED  = (1<<0),
-  /** Indicate that pitch calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_PITCH_CALIBRATION_NEEDED = (1<<1),
-  /** Indicate that yaw calibration is needed. Need to accelerate
-   *  in a straight line.*/
-  DR_YAW_CALIBRATION_NEEDED   = (1<<2),
-  /** Indicate that odo calibration is needed. Need to accelerate
-   *  in a straight line.*/
-  DR_ODO_CALIBRATION_NEEDED   = (1<<3),
-  /** Indicate that gyro calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_GYRO_CALIBRATION_NEEDED  = (1<<4),
-  /** Lot more turns on level ground needed */
-  DR_TURN_CALIBRATION_LOW     = (1<<5),
-  /** Some more turns on level ground needed */
-  DR_TURN_CALIBRATION_MEDIUM  = (1<<6),
-  /** Sufficient turns on level ground observed */
-  DR_TURN_CALIBRATION_HIGH    = (1<<7),
-  /** Lot more accelerations in straight line needed */
-  DR_LINEAR_ACCEL_CALIBRATION_LOW      = (1<<8),
-  /** Some more accelerations in straight line needed */
-  DR_LINEAR_ACCEL_CALIBRATION_MEDIUM   = (1<<9),
-  /** Sufficient acceleration events in straight line observed */
-  DR_LINEAR_ACCEL_CALIBRATION_HIGH     = (1<<10),
-  /** Lot more motion in straight line needed */
-  DR_LINEAR_MOTION_CALIBRATION_LOW     = (1<<11),
-  /** Some more motion in straight line needed */
-  DR_LINEAR_MOTION_CALIBRATION_MEDIUM  = (1<<12),
-  /** Sufficient motion events in straight line observed */
-  DR_LINEAR_MOTION_CALIBRATION_HIGH    = (1<<13),
-  /** Lot more stationary events on level ground needed */
-  DR_STATIC_CALIBRATION_LOW            = (1<<14),
-  /** Some more stationary events on level ground needed */
-  DR_STATIC_CALIBRATION_MEDIUM         = (1<<15),
-  /** Sufficient stationary events on level ground observed */
-  DR_STATIC_CALIBRATION_HIGH           = (1<<16)
-};
-
-/** Specifies DrCalibrationStatusType mask */
-using DrCalibrationStatus = uint32_t;
-
-/** Specify various status that contributes to the DR position
- *  engine. */
-enum DrSolutionStatusType {
-    /** Vehicle sensor speed input was detected by the DR position engine. */
-    VEHICLE_SENSOR_SPEED_INPUT_DETECTED = (1<<0),
-    /** Vehicle sensor speed input was used by the DR position engine. */
-    VEHICLE_SENSOR_SPEED_INPUT_USED     = (1<<1),
-    /** DRE solution disengaged due to insufficient calibration */
-    WARNING_UNCALIBRATED                = (1<<2),
-    /** DRE solution disengaged due to bad GNSS quality */
-    WARNING_GNSS_QUALITY_INSUFFICIENT   = (1<<3),
-    /** DRE solution disengaged as ferry condition detected */
-    WARNING_FERRY_DETECTED              = (1<<4),
-    /** DRE solution disengaged as 6DOF sensor inputs not available */
-    ERROR_6DOF_SENSOR_UNAVAILABLE       = (1<<5),
-    /** DRE solution disengaged as vehicle speed inputs not available */
-    ERROR_VEHICLE_SPEED_UNAVAILABLE     = (1<<6),
-    /** DRE solution disengaged as Ephemeris info not available */
-    ERROR_GNSS_EPH_UNAVAILABLE          = (1<<7),
-    /** DRE solution disengaged as GNSS measurement info not available */
-    ERROR_GNSS_MEAS_UNAVAILABLE         = (1<<8),
-    /** DRE solution disengaged due non-availability of stored position from previous session */
-    WARNING_INIT_POSITION_INVALID       = (1<<9),
-    /** DRE solution dis-engaged due to vehicle motion detected at session start */
-    WARNING_INIT_POSITION_UNRELIABLE    = (1<<10),
-    /** DRE solution dis-engaged due to unreliable position */
-    WARNING_POSITON_UNRELIABLE          = (1<<11),
-    /** DRE solution dis-engaged due to a generic error */
-    ERROR_GENERIC                       = (1<<12),
-    /** DRE solution dis-engaged due to Sensor Temperature being out of range */
-    WARNING_SENSOR_TEMP_OUT_OF_RANGE    = (1<<13),
-    /** DRE solution dis-engaged due to insufficient user dynamics */
-    WARNING_USER_DYNAMICS_INSUFFICIENT  = (1<<14),
-    /** DRE solution dis-engaged due to inconsistent factory data */
-    WARNING_FACTORY_DATA_INCONSISTENT   = (1<<15)
-};
-
-/** Specifies DrSolutionStatus mask */
-using DrSolutionStatus = uint32_t;
 
 /** Specifies the set of engines whose position reports are requested via
  *  startDetailedEngineReports.*/
@@ -1137,41 +995,6 @@ struct SvBlackListInfo {
 };
 
 typedef std::vector<SvBlackListInfo> SvBlackList;
-
-/**
- *  Lever ARM type */
-enum LeverArmType {
-    /** Lever arm parameters regarding the VRP (Vehicle Reference
-     *  Point) w.r.t the origin (at the GNSS Antenna) */
-    LEVER_ARM_TYPE_GNSS_TO_VRP = 1,
-    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
-     *  IMU (inertial measurement unit) for DR (dead reckoning
-     *  engine) */
-    LEVER_ARM_TYPE_DR_IMU_TO_GNSS = 2,
-    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
-     *  IMU (inertial measurement unit) for VEPP (vision enhanced
-     *  precise positioning engine)
-     *  @deprecated enum type is not supported.*/
-    LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS = 3,
-    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
-     *  IMU (inertial measurement unit) for VPE (vision positioning
-     *  engine) */
-    LEVER_ARM_TYPE_VPE_IMU_TO_GNSS = 3,
-};
-
-/**
- * Specify parameters related to lever arm */
-struct LeverArmParams {
-    /** Offset along the vehicle forward axis, in unit of meters */
-    float forwardOffset;
-    /** Offset along the vehicle starboard axis, in unit of
-     *  meters */
-    float sidewaysOffset;
-    /** Offset along the vehicle up axis, in unit of meters  */
-    float upOffset;
-};
-
-typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
 /** Specify valid fields in GnssMeasurementsData.*/
 enum GnssMeasurementsDataValidityType{
@@ -1972,50 +1795,15 @@ struct LocationSystemInfo {
 };
 
 /**
- *  Specify the valid fields in GnssEnergyConsumedInfo. */
-enum GnssEnergyConsumedInfoValidityType {
-    /** validity of GnssEnergyConsumedInfo*/
-    ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT = (1<<0)
-};
-
-/** Specifies GnssEnergyConsumedInfoValidityType */
-using GnssEnergyConsumedInfoValidity = uint16_t;
-
-/** Specify the info regarding energy consumed by GNSS
- *  engine.*/
-struct GnssEnergyConsumedInfo {
-    /** Bitwise OR of GnssEnergyConsumedInfoValidityType to
-     *  specify the valid fields in GnssEnergyConsumedInfo.*/
-    GnssEnergyConsumedInfoValidity valid;
-
-    /** Energy consumed by the modem GNSS engine since device first
-     *  ever bootup, in unit of 0.1 milli watt seconds.
-     *  For an invalid reading, INVALID_ENERGY_CONSUMED is returned.*/
-    uint64_t energySinceFirstBoot;
-};
-
-/**
  *  Specifies the set of aiding data. This is referenced in the
  *  deleteAidingData for deleting any aiding data. */
 enum AidingDataType {
     /** Mask to delete ephemeris aiding data */
     AIDING_DATA_EPHEMERIS  = (1 << 0),
-    /** Mask to delete calibration data from dead reckoning position engine */
-    AIDING_DATA_DR_SENSOR_CALIBRATION = (1 << 1),
 };
 
 /** Specifies AidingDataType mask */
 using AidingData = uint32_t;
-
-/**
- *  Specifies the set of terrestrial technologies. */
-enum TerrestrialTechnologyType {
-    /** Cell-based technology */
-    GTP_WWAN = (1 << 0),
-};
-
-/** Specifies TerrestrialTechnologyType mask */
-using TerrestrialTechnology = uint32_t;
 
 /**
  *  Specifies the HLOS generated NMEA sentence types. */
@@ -2073,95 +1861,6 @@ struct NmeaConfig {
      * @ref ILocationManager::startDetailedEngineReports to understand the usage further.
     */
     LocReqEngine engineType = LocReqEngineType::LOC_REQ_ENGINE_FUSED_BIT;
-};
-
-/** Specify the valid mask for robust location configuration
- *  used by the GNSS standard position engine (SPE). */
-enum RobustLocationConfigType {
-    /** Validity of enabled */
-    VALID_ENABLED          = (1<<0),
-    /** Validity of enabledForE911. */
-    VALID_ENABLED_FOR_E911 = (1<<1),
-    /** Validity of version. */
-    VALID_VERSION          = (1<<2)
-};
-
-/** Specifies RobustLocationConfigType mask */
-using RobustLocationConfig = uint16_t;
-
-/** Specify the versioning info of robust location module for
- *  the GNSS standard position engine (SPE). */
-struct RobustLocationVersion {
-    /** Major version number. */
-    uint8_t major;
-    /** Minor version number. */
-    uint16_t minor;
-};
-
-/** Specify the robust location configuration used by the GNSS
- *  standard position engine (SPE) */
-struct RobustLocationConfiguration {
-    /** Validity mask */
-    RobustLocationConfig validMask;
-    /** Specify whether robust location feature is enabled or
-     *  not. */
-    bool enabled;
-    /** Specify whether robust location feature is enabled or not
-     *  when device is on E911 call. */
-    bool enabledForE911;
-    /** Specify the version info of robust location module used
-     *  by the GNSS standard position engine (SPE). */
-    RobustLocationVersion version;
-};
-
-/** Specify the valid mask for the configuration parameters of
- *  dead reckoning position engine */
-enum DRConfigValidityType {
-    /** Validity of body to sensor mount parameters. */
-    BODY_TO_SENSOR_MOUNT_PARAMS_VALID    = (1<<0),
-    /** Validity of vehicle speed scale factor. */
-    VEHICLE_SPEED_SCALE_FACTOR_VALID     = (1<<1),
-    /** Validity of vehicle speed scale factor uncertainty. */
-    VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID = (1<<2),
-    /** Validity of gyro scale factor. */
-    GYRO_SCALE_FACTOR_VALID              = (1<<3),
-    /** Validity of gyro scale factor uncertainty. */
-    GYRO_SCALE_FACTOR_UNC_VALID          = (1<<4),
-};
-
-/** Specifies DRConfigValidityType */
-using DRConfigValidity = uint16_t;
-
-/**
- * Specify vehicle body-to-Sensor mount parameters for use
- * by dead reckoning positioning engine. */
-struct BodyToSensorMountParams {
-    /** The misalignment of the sensor board along the
-     *  horizontal plane of the vehicle chassis measured looking
-     *  from the vehicle to forward direction.
-     *  In unit of degrees.
-     *  Range: [-180.0, 180.0].*/
-    float rollOffset;
-    /** The misalignment along the horizontal plane of the vehicle
-     *  chassis measured looking from the vehicle to the right
-     *  side. Positive pitch indicates vehicle is inclined such
-     *  that forward wheels are at higher elevation than rear
-     *  wheels.
-     *  In unit of degrees.
-     *  Range: [-180.0, 180.0].*/
-    float yawOffset;
-    /** The angle between the vehicle forward direction and the
-     *  sensor axis as seen from the top of the vehicle, and
-     *  measured in counterclockwise direction.
-     *  In unit of degrees.
-     *  Range: [-180.0, 180.0].*/
-    float pitchOffset;
-    /** Single uncertainty number that may be the largest of the
-     *  uncertainties for roll offset, pitch offset and yaw
-     *  offset.
-     *  In unit of degrees.
-     *  Range: [-180.0, 180.0].*/
-    float offsetUnc;
 };
 
 /**
@@ -2227,36 +1926,6 @@ using GnssReportTypeMask = uint32_t;
      will be enabled by default if no specific report masks are specified.
      ENGINE_NMEA and NMEA are mutually exclusive. */
 const uint32_t DEFAULT_GNSS_REPORT = (0xffffffff ^ ENGINE_NMEA);
-
-/** Specify the dead reckoning engine configuration parameters.
- */
-struct DREngineConfiguration {
-    /** Specify the valid fields. */
-    DRConfigValidity validMask;
-    /** Body to sensor mount parameters used by dead reckoning
-     *  positioning engine. */
-    BodyToSensorMountParams mountParam;
-    /** Vehicle Speed Scale Factor configuration input for the dead reckoning positioning engine.
-     *  The multiplicative scale factor is applied to the received Vehicle Speed value
-     *  (in meter/second) to obtain the true Vehicle Speed. Range is [0.9 to 1.1].
-     *  Note: The scale factor is specific to a given vehicle make & model. */
-    float speedFactor;
-    /** Vehicle Speed Scale Factor Uncertainty (68% confidence) configuration input for the dead
-     *  reckoning positioning engine. Range is [0.0 to 0.1].
-     *  Note: The scale factor uncertainty is specific to a given vehicle make & model. */
-    float speedFactorUnc;
-    /** Gyroscope Scale Factor configuration input for the dead reckoning positioning engine. The
-     *  multiplicative scale factor is applied to received gyroscope value to obtain the true
-     *  value. Range is [0.9 to 1.1].
-     *  Note: The scale factor is specific to the Gyroscope sensor and typically derived from
-     *  either sensor data-sheet or from actual calibration. */
-    float gyroFactor;
-    /** Gyroscope Scale Factor uncertainty (68% confidence) configuration input for the dead
-     *  reckoning positioning engine. Range is [0.0 to 0.1].
-     *  Note: The scale factor uncertainty is specific to the Gyroscope sensor and typically
-     *  derived from either sensor data-sheet or from actual calibration. */
-    float gyroFactorUnc;
-};
 
 /**
  * Define the set of constellations for secondary band.
@@ -2906,12 +2575,6 @@ public:
   virtual GnssPositionTech getPositionTechnology() = 0;
 
 /**
- * Retrieves position related information.
- *
- */
-  virtual GnssKinematicsData getBodyFrameData() = 0;
-
-/**
  * Retrieves gnss measurement usage info.
  *
  */
@@ -2963,30 +2626,6 @@ public:
       std::vector<float> &velocityUncertaintyEastNorthUp) = 0;
 
 /**
- * Sensor calibration confidence percent, range [0, 100].
- *
- * @returns the percentage of calibration taking all the parameters into account.
- *
- */
-  virtual uint8_t getCalibrationConfidencePercent() = 0;
-
-/**
- * Sensor calibration status.
- *
- * @returns mask indicating the calibration status with respect to different parameters.
- *
- */
-  virtual DrCalibrationStatus getCalibrationStatus() = 0;
-
-/**
- * DR solution status.
- *
- * @returns mask indicating the solution status with respect to the DR position engine.
- *
- */
-  virtual DrSolutionStatus getSolutionStatus() = 0;
-
-/**
  * Location engine type. When the type is set to LOC_ENGINE_SRC_FUSED, the fix is
  * the propagated/aggregated reports from all engines running on the system (e.g.:
  * DR/SPE/PPE) based QTI algorithm. To check which location engine contributes
@@ -3008,29 +2647,6 @@ public:
   virtual PositioningEngine getLocOutputEngMask() = 0;
 
 /**
- * When robust location is enabled, this field will indicate how well the various input
- * data considered for navigation solution conforms to expectations.
- *
- * @returns values in the range [0.0, 1.0], with 0.0 for least conforming and 1.0 for
- * most conforming.
- *
- */
-  virtual float getConformityIndex() = 0;
-
-/**
- * Vehicle Reference Point(VRP) based latitude, longitude and altitude information.
- *
- */
-  virtual LLAInfo getVRPBasedLLA() = 0;
-
-/**
- * VRP-based east, north and up velocity information.
- * @returns - vector of directional velocities in this order {east velocity, north velocity,
- *            up velocity}
- */
-  virtual std::vector<float> getVRPBasedENUVelocity() = 0;
-
-/**
  * Determination of altitude is assumed or calculated. ASSUMED means there may not be
  * enough satellites to determine the precise altitude.
  * @returns altitude type ASSUMED/CALCULATED or if not avalilable then UNKNOWN.
@@ -3045,33 +2661,6 @@ public:
  */
   virtual ReportStatus getReportStatus() = 0;
 
-/**
- * Integrity risk used for protection level parameters. Unit of 2.5e-10.
- * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
- * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
- * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
- * @ref ILocationInfoEx::getProtectionLevelVertical will not be available.
- *
- */
-  virtual uint32_t getIntegrityRiskUsed() = 0;
-
-/**
- * Along-track protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelAlongTrack() = 0;
-
-/**
- * Cross-track protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelCrossTrack() = 0;
-
-/**
- * Vertical component protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelVertical() = 0;
 
 /**
  * Retrieves navigation solution mask used to indicate SBAS corrections.
@@ -3084,25 +2673,6 @@ public:
  *
  */
   virtual SbasCorrection getSbasCorrection() = 0;
-
-/** List of DGNSS station IDs providing corrections.
- *  Range:
- *  - SBAS --  120 to 158 and 183 to 191
- *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
- *  - Other values reserved.
- */
-  virtual std::vector<uint16_t> getDgnssStationIds() = 0;
-
- /** Distance between the basestation and the receiver.
-  *  Units: meter.
- */
-  virtual double getBaselineLength() = 0;
-
- /** Difference in time between the fix timestamp using the correction
-  * and the time of the correction data.
-  * Units: milliseconds.
- */
-  virtual uint64_t getAgeOfCorrections() = 0;
 
 };
 

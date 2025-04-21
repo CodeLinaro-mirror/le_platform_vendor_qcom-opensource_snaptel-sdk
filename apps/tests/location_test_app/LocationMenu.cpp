@@ -46,11 +46,9 @@
 #include "../../common/utils/Utils.hpp"
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
-#include "DgnssMenu.hpp"
 #include "LocationUtils.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
-#define MERKLE_XML_PATH "/etc/OSNMA_MerkleTree.xml"
 #define RECORDING_MODE_SLEEP 60
 
 using namespace telux::common;
@@ -163,204 +161,141 @@ telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILo
 }
 
 int LocationMenu::init() {
-   std::shared_ptr<ConsoleAppCommand> startDetailedReportsCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Start_Detailed_Reports", {},
-         std::bind(&LocationMenu::startDetailedReports, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> startDetailedEngineReportsCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Start_Detailed_Engine_Reports", {},
-         std::bind(&LocationMenu::startDetailedEngineReports, this, std::placeholders::_1)));
+    int commandSeqNum = 1; 
+    std::shared_ptr<ConsoleAppCommand> startDetailedReportsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+          std::to_string(commandSeqNum++), "Start_Detailed_Reports", {},
+          std::bind(&LocationMenu::startDetailedReports, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> startBasicReportsCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Start_Basic_Reports", {},
-         std::bind(&LocationMenu::startBasicReports, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> startDetailedEngineReportsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+          std::to_string(commandSeqNum++), "Start_Detailed_Engine_Reports", {},
+          std::bind(&LocationMenu::startDetailedEngineReports, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> stopReportsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("4", "Stop_Reports", {},
+    std::shared_ptr<ConsoleAppCommand> startBasicReportsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+          std::to_string(commandSeqNum++), "Start_Basic_Reports", {},
+          std::bind(&LocationMenu::startBasicReports, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> stopReportsCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand(std::to_string(commandSeqNum++), "Stop_Reports", {},
                         std::bind(&LocationMenu::stopReports, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> enableReportLogsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("5", "Filter_notifications", {},
+    std::shared_ptr<ConsoleAppCommand> enableReportLogsCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand(std::to_string(commandSeqNum++), "Filter_notifications", {},
                         std::bind(&LocationMenu::enableReportLogs, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> enableDisableTunc = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("6", "C-TUNC", {},
-                        std::bind(&LocationMenu::enableDisableTunc, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> enableDisablePace = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Configure PACE", {},
+    std::shared_ptr<ConsoleAppCommand> enableDisablePace = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure PACE", {},
                         std::bind(&LocationMenu::enableDisablePace, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> deleteAllAidingData = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("8", "Delete_data", {},
+    std::shared_ptr<ConsoleAppCommand> deleteAllAidingData = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand(std::to_string(commandSeqNum++), "Delete_data", {},
                         std::bind(&LocationMenu::deleteAllAidingData, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> configureLeverArm = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("9", "Lever_arm", {},
-                        std::bind(&LocationMenu::configureLeverArm, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Configure blacklist constellation or SVs", {}, std::bind(
+    std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure blacklist constellation or SVs", {}, std::bind(
                         &LocationMenu::configureConstellation, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> configureRobustLocation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("11", "Configure robust location", {}, std::bind(
-                        &LocationMenu::configureRobustLocation, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> registerLocationSystemInfo = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("12", "Register Location System Info", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Register Location System Info", {},
                         std::bind(&LocationMenu::registerLocationSystemInfo, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> deRegisterLocationSystemInfo = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Deregister Location System Info", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Deregister Location System Info", {},
                         std::bind(&LocationMenu::deRegisterLocationSystemInfo, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> requestEnergyConsumedInfo = std::make_shared<
-       ConsoleAppCommand>(ConsoleAppCommand("14", "Request for energy consumed Info", {},
-           std::bind(&LocationMenu::requestEnergyConsumedInfo, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> dgnssInjectCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("15", "Dgnss_Correction_Injection", {},
-                        std::bind(&LocationMenu::dgnssInject, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> configureMinGpsWeek = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("16", "Configure minimum gps week", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure minimum gps week", {},
                         std::bind(&LocationMenu::configureMinGpsWeek, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestMinGpsWeek = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("17", "Request minimum gps week", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Request minimum gps week", {},
                         std::bind(&LocationMenu::requestMinGpsWeek, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> deleteAidingDataWarm = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("18", "Delete aiding data", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Delete aiding data", {}, std::bind(
                         &LocationMenu::deleteAidingDataWarm, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureMinSVElevation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("19", "Configure minimum sv elevation", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure minimum sv elevation", {},
                         std::bind(&LocationMenu::configureMinSVElevation, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestMinSVElevation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("20", "Request minimum sv elevation", {},
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Request minimum sv elevation", {},
                         std::bind(&LocationMenu::requestMinSVElevation, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> requestRobustLocation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("21", "Request robust Location", {},
-                        std::bind(&LocationMenu::requestRobustLocation, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> configureConstellationEmpty = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("22", "Configure constellation, enable all", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure constellation, enable all", {}, std::bind(
                         &LocationMenu::configureConstellationEmpty, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureConstellationDeviceDefault = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("23", "Configure constellation, device default", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure constellation, device default", {}, std::bind(
                         &LocationMenu::configureConstellationDeviceDefault, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> configureDR = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("24", "Configure dead reckoning engine", {}, std::bind(
-                        &LocationMenu::configureDR, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> configureSecondaryBand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("25", "Configure secondary band constellation", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Configure secondary band constellation", {}, std::bind(
                         &LocationMenu::configureSecondaryBand, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> enableDefaultSecondaryBand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("26", "Enable default secondary band constellation", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Enable default secondary band constellation", {}, std::bind(
                         &LocationMenu::enableDefaultSecondaryBand, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestSecondaryBand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("27", "Request secondary band constellation", {}, std::bind(
+      ConsoleAppCommand(std::to_string(commandSeqNum++), "Request secondary band constellation", {}, std::bind(
                         &LocationMenu::requestSecondaryBand, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> getYearOfHw = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("28", "Request year of hardware information", {}, std::bind(
-                        &LocationMenu::getYearOfHw, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> configureEngineState = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("29", "Configure engine state", {}, std::bind(
-                        &LocationMenu::configureEngineState, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> provideConsentForTerrestrialPositioning =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("30",
-           "Request user consent for terrestrial positioning", {}, std::bind(&LocationMenu::
-               provideConsentForTerrestrialPositioning, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> requestTerrestrialPositioning =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31",
-           "Request terrestrial positioning info", {}, std::bind(&LocationMenu::
-               requestTerrestrialPositioning, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> cancelTerrestrialPositioning =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("32",
-           "Cancel terrestrial positioning info", {}, std::bind(&LocationMenu::
-               cancelTerrestrialPositioning, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> configureNmeaSentence =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("33",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Configure Nmea sentences", {}, std::bind(&LocationMenu::
                configureNmeaSentence, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureAllNmeaSentence =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("34",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Configure All Nmea sentences", {}, std::bind(&LocationMenu::
                configureAllNmeaSentence, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> configureEngineIntegrityRisk =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("35",
-           "Configure Engine Integrity Risk", {}, std::bind(&LocationMenu::
-               configureEngineIntegrityRisk, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> getCapabilities =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("36",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Request capabilities information", {}, std::bind(&LocationMenu::
                getCapabilities, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> configureXtraParams =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("37",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Configure Xtra Parameters", {}, std::bind(&LocationMenu::
                configureXtraParameters, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> requestXtraStatus =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("38",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Request Xtra Status", {}, std::bind(&LocationMenu::
                requestXtraStatus, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> registerConfigListener =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("39",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "Register Configuration Listener", {}, std::bind(&LocationMenu::
                registerConfigListener, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> deRegisterConfigListener =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("40",
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(commandSeqNum++),
            "De-Register Configuration Listener", {}, std::bind(&LocationMenu::
                deRegisterConfigListener, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> injectMerkleTreeInformation =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("41",
-           "Inject Merkle Tree Information", {}, std::bind(&LocationMenu::
-               injectMerkleTreeInformation, this, std::placeholders::_1)));
-
-    std::shared_ptr<ConsoleAppCommand> configureOsnma =
-       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("42",
-           "Configure OSNMA", {}, std::bind(&LocationMenu::
-               configureOsnma, this, std::placeholders::_1)));
-
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
         = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
-        stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
-        deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
-        registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
-        dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
-        configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
-        configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
-        configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
-        configureEngineState, provideConsentForTerrestrialPositioning,
-        requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
-        configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
-        configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
-        injectMerkleTreeInformation, configureOsnma};
+        stopReportsCommand, enableReportLogsCommand, enableDisablePace,
+        deleteAllAidingData, configureConstellation,
+        registerLocationSystemInfo, deRegisterLocationSystemInfo,
+        configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
+        configureMinSVElevation, requestMinSVElevation,
+        configureConstellationEmpty, configureConstellationDeviceDefault,
+        configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand,
+        configureNmeaSentence,
+        configureAllNmeaSentence, getCapabilities, configureXtraParams, requestXtraStatus,
+        registerConfigListener, deRegisterConfigListener,
+        };
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -596,62 +531,6 @@ void LocationMenu::stopReports(std::vector<std::string> userInput) {
                                            myLocCmdResponseCb_, std::placeholders::_1));
 }
 
-void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
-   if(locationConfigurator_) {
-       char delimiter = '\n';
-       std::string option;
-       std::cout << "Enter Y to enable or N to disable C-TUNC: ";
-       std::getline(std::cin, option, delimiter);
-       std::string threshold;
-       std::cout << "Enter value for threshold in ms, default is 0.0: ";
-       std::getline(std::cin, threshold, delimiter);
-       std::string energyBudget;
-       std::cout << "Enter value for power in .1 milli watt second, default is 0: ";
-       std::getline(std::cin, energyBudget, delimiter);
-
-       bool enable = false;
-       if(option == "Y" || option == "y") {
-            enable = true;
-       } else if(option == "N") {
-            enable = false;
-       } else {
-            std::cout << " BAD input " << std::endl;
-       }
-       float optThreshold = 0.0;
-       if(!threshold.empty()) {
-           try {
-                optThreshold = std::stof(threshold);
-           } catch(const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values " << optThreshold
-                          << std::endl;
-           }
-        } else {
-             optThreshold = 0.0;
-        }
-        int optPower = 0;
-        if(!energyBudget.empty()) {
-            try {
-                optPower = std::stoi(energyBudget);
-            } catch(const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values " << optPower
-                          << std::endl;
-            }
-        } else {
-             optPower = 0;
-        }
-        std::cout << " Enable: " << enable << " Threshold: " << optThreshold << " Power: " <<
-                optPower << std::endl;
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Constraint-TUNC");
-        telux::common::Status status = locationConfigurator_->configureCTunc(enable,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                        std::placeholders::_1), optThreshold, optPower);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
-   }
-}
-
 void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
   if(locationConfigurator_) {
        char delimiter = '\n';
@@ -679,36 +558,6 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
    }
 }
 
-void LocationMenu::provideConsentForTerrestrialPositioning(
-    std::vector<std::string> userInput) {
-  if (locationConfigurator_) {
-       char delimiter = '\n';
-       std::string option;
-       std::cout << "Enter Y to set user consent to true or N to set user consent to false :";
-       std::getline(std::cin, option, delimiter);
-
-       bool userConsent = false;
-       if (option == "Y" || option == "y") {
-            userConsent = true;
-       } else if (option == "N" || option == "n") {
-            userConsent = false;
-       } else {
-            std::cout << " BAD input " << std::endl;
-       }
-        std::cout << " userConsent: " << userConsent << std::endl;
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-            "RequestUserConsent-TerrestrialPositioning");
-        telux::common::Status status = locationConfigurator_->
-            provideConsentForTerrestrialPositioning(userConsent,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-          std::cout << "FAILED" << std::endl;
-        }
-   }
-}
-
 void LocationMenu::deleteAllAidingData(std::vector<std::string> userInput) {
    if(locationConfigurator_) {
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Delete Aiding Data");
@@ -729,9 +578,7 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
       std::vector<int> options;
       std::cout << "Enter the types of data to be deleted : \n"
                    "0 - EPHEMERIS \n"
-                   "1 - DR_SENSOR_CALIBRATION \n"
-                   "Enter your delete data preference\n"
-                   "(Example: enter 0,1 to choose both EPHEMERIS and DR_SENSOR_CALIBRATION):\n";
+                   "Enter your delete data preference\n";
       std::getline(std::cin,deleteDataPreference,delimiter);
       std::stringstream ss(deleteDataPreference);
       int i = -1;
@@ -762,323 +609,6 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
           std::cout << "Not implemented" << std::endl;
       }
    }
-}
-
-//TODO : split configureLeverArm into smaller sub functions
-void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
-   if(locationConfigurator_) {
-        typedef std::unordered_map<telux::loc::LeverArmType, telux::loc::LeverArmParams>
-            LeverArmConfigInfo;
-        LeverArmConfigInfo configInfo;
-        char delimiter = '\n';
-        while(true) {
-            telux::loc::LeverArmType leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
-            telux::loc::LeverArmParams leverArmParams;
-            std::string type;
-            std::cout << "Enter the LeverArmType : " << std::endl;
-            std::cout << " Enter 1 for GNSS_TO_VRP or 2 for DR_IMU_TO_GNSS" << std::endl;
-            std::cout << "  or 3 for VPE_IMU_TO_GNSS " << std::endl;
-            std::getline(std::cin, type, delimiter);
-            int leverArmTypeOption = 1;
-            if(!type.empty()) {
-                try {
-                    leverArmTypeOption = std::stoi(type);
-                } catch(const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " <<
-                        leverArmTypeOption << std::endl;
-                }
-            } else {
-                 leverArmTypeOption = 1;
-            }
-            if(leverArmTypeOption < 1 or leverArmTypeOption > 3) {
-                std::cout << "invalid LeverArmType, enter again." << std::endl;
-                continue;
-            }
-            if(leverArmTypeOption == 1) {
-                leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
-            } else if (leverArmTypeOption == 2) {
-                leverArmType = LEVER_ARM_TYPE_DR_IMU_TO_GNSS;
-            } else if (leverArmTypeOption == 3){
-                leverArmType = LEVER_ARM_TYPE_VPE_IMU_TO_GNSS;
-            }
-            std::cout << "leverArmTypeOption : " << leverArmTypeOption << std::endl;
-            std::cout << "leverArmType : " << leverArmType << std::endl;
-            std::string forwardOffset;
-            float optForwardOffset = 0.0;
-            std::cout << " Enter the LeverArm Parameters : " << std::endl;
-            std::cout << " Enter forward offset : " << std::endl;
-            if (std::getline(std::cin, forwardOffset)) {
-                std::stringstream inputStream(forwardOffset);
-                if(!(inputStream >> optForwardOffset)) {
-                    std::cout << "Invalid Input" << std::endl;
-                    return;
-                }
-             } else {
-                 std::cout << "Invalid Input" << std::endl;
-             }
-
-            leverArmParams.forwardOffset = optForwardOffset;
-            std::cout << " leverArmParams.forwardOffset" << leverArmParams.forwardOffset
-                << std::endl;
-
-            std::string sidewaysOffset;
-            float optSidewaysOffset = 0.0;
-            std::cout << " Enter sideways offset : " << std::endl;
-            if (std::getline(std::cin, sidewaysOffset)) {
-                std::stringstream inputStream(sidewaysOffset);
-                if(!(inputStream >> optSidewaysOffset)) {
-                    std::cout << "Invalid Input" << std::endl;
-                    return;
-                }
-             } else {
-                 std::cout << "Invalid Input" << std::endl;
-             }
-            leverArmParams.sidewaysOffset = optSidewaysOffset;
-            std::cout << " leverArmParams.sidewaysOffset" << leverArmParams.sidewaysOffset <<
-                std::endl;
-
-            std::string upOffset;
-            float optUpOffset = 0.0;
-            std::cout << " Enter up offset : " << std::endl;
-            if (std::getline(std::cin, upOffset)) {
-                std::stringstream inputStream(upOffset);
-                if(!(inputStream >> optUpOffset)) {
-                    std::cout << "Invalid Input" << std::endl;
-                    return;
-                }
-             } else {
-                 std::cout << "Invalid Input" << std::endl;
-             }
-            leverArmParams.upOffset = optUpOffset;
-            std::cout << " leverArmParams.upOffset" << leverArmParams.upOffset;
-
-            configInfo.insert({leverArmType, leverArmParams});
-            std::string option;
-            std::cout << "Do you want to insert more : " << std::endl;
-            std::cout << "enter Y/N : " << std::endl;
-            std::getline(std::cin, option, delimiter);
-            if(option == "Y" || option == "y") {
-                continue;
-            } else {
-                break;
-            }
-
-        }
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Configure lever arm");
-        telux::common::Status status = locationConfigurator_->configureLeverArm(configInfo,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                        std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
-   }
-}
-
-void LocationMenu::bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig) {
-    char delimiter = '\n';
-    std::string option;
-    std::cout << "Is body to sensor mount parameters valid ?" << std::endl;
-    std::cout << "Enter Y/N" << std::endl;
-    std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
-        drConfig.validMask |= telux::loc::DRConfigValidityType::
-            BODY_TO_SENSOR_MOUNT_PARAMS_VALID;
-        std::cout << "Enter Body to sensor parameters" << std::endl;
-        std::string rollOffset, yawOffset, pitchOffset, offsetUnc;
-        std::cout << "Enter rollOffset :" << std::endl;
-        std::getline(std::cin, rollOffset, delimiter);
-        drConfig.mountParam.rollOffset = std::stof(rollOffset);
-        std::cout << "Enter yawOffset :" << std::endl;
-        std::getline(std::cin, yawOffset, delimiter);
-        drConfig.mountParam.yawOffset = std::stof(yawOffset);
-        std::cout << "Enter pitchOffset :" << std::endl;
-        std::getline(std::cin, pitchOffset, delimiter);
-        drConfig.mountParam.pitchOffset = std::stof(pitchOffset);
-        std::cout << "Enter offsetUnc :" << std::endl;
-        std::getline(std::cin, offsetUnc, delimiter);
-        drConfig.mountParam.offsetUnc = std::stof(offsetUnc);
-    } else {
-        std::cout << "Body to sensor mount parameters is invalid " << std::endl;
-    }
-}
-
-void LocationMenu::speedScaleUtility(telux::loc::DREngineConfiguration& drConfig) {
-    char delimiter = '\n';
-    std::string option;
-    std::cout << "Is vehicle speed scale factor valid ?" << std::endl;
-    std::cout << "Enter Y/N" << std::endl;
-    std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
-        drConfig.validMask |= telux::loc::DRConfigValidityType::
-            VEHICLE_SPEED_SCALE_FACTOR_VALID;
-        std::string speedFactor;
-        std::cout << "Enter speedFactor :" << std::endl;
-        std::getline(std::cin, speedFactor, delimiter);
-        drConfig.speedFactor = std::stof(speedFactor);
-    } else {
-        std::cout << "Vehicle speed scale factor is invalid " << std::endl;
-    }
-    std::cout << "Is vehicle speed scale factor uncertainty valid ?" << std::endl;
-    std::cout << "Enter Y/N" << std::endl;
-    std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
-        drConfig.validMask |= telux::loc::DRConfigValidityType::
-            VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID;
-        std::string speedFactorUnc;
-        std::cout << "Enter speedFactorUnc :" << std::endl;
-        std::getline(std::cin, speedFactorUnc, delimiter);
-        drConfig.speedFactorUnc = std::stof(speedFactorUnc);
-    } else {
-        std::cout << "Vehicle speed scale factor uncertainty is invalid " << std::endl;
-    }
-}
-
-void LocationMenu::gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig) {
-    char delimiter = '\n';
-    std::string option;
-    std::cout << "Is gyro scale factor valid ?" << std::endl;
-    std::cout << "Enter Y/N" << std::endl;
-    std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
-        drConfig.validMask |= telux::loc::DRConfigValidityType::
-            GYRO_SCALE_FACTOR_VALID;
-        std::string gyroFactor;
-        std::cout << "Enter gyroFactor :" << std::endl;
-        std::getline(std::cin, gyroFactor, delimiter);
-        drConfig.gyroFactor = std::stof(gyroFactor);
-    } else {
-        std::cout << "Gyro scale factor is invalid " << std::endl;
-    }
-    std::cout << "Is gyro scale factor uncertainty valid ?" << std::endl;
-    std::cout << "Enter Y/N" << std::endl;
-    std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
-        drConfig.validMask |= telux::loc::DRConfigValidityType::
-            GYRO_SCALE_FACTOR_UNC_VALID;
-        std::string gyroFactorUnc;
-        std::cout << "Enter gyroFactorUnc :" << std::endl;
-        std::getline(std::cin, gyroFactorUnc, delimiter);
-        drConfig.gyroFactorUnc = std::stof(gyroFactorUnc);
-    } else {
-        std::cout << "Gyro scale factor uncertainty is invalid " << std::endl;
-    }
-}
-
-void LocationMenu::configureDR(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        telux::loc::DREngineConfiguration drConfig;
-        drConfig.validMask = static_cast<telux::loc::DRConfigValidity>(0);
-        bodyToSensorUtility(drConfig);
-        speedScaleUtility(drConfig);
-        gyroScaleUtility(drConfig);
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-            "Configure DREngineParameters");
-        telux::common::Status status = locationConfigurator_->configureDR(
-            drConfig, std::bind(&MyLocationCommandCallback::commandResponse,
-                myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-          std::cout << "Failed" << std::endl;
-        }
-    }
-}
-
-void LocationMenu::configureEngineState(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        char delimiter = '\n';
-        telux::loc::EngineType engineType;
-        std::string type;
-        std::cout << "Enter the type of engine : " << std::endl;
-        std::cout << "Enter 1 for SPE" << std::endl;
-        std::cout << "Enter 2 for PPE" << std::endl;
-        std::cout << "Enter 3 for DRE" << std::endl;
-        std::cout << "Enter 4 for VPE" << std::endl;
-        std::getline(std::cin, type, delimiter);
-        int engineTypeOption = std::stoi(type);
-        if (engineTypeOption == 1) {
-            engineType = telux::loc::EngineType::SPE;
-        } else if (engineTypeOption == 2) {
-            engineType = telux::loc::EngineType::PPE;
-        } else if (engineTypeOption == 3){
-            engineType = telux::loc::EngineType::DRE;
-        } else {
-            engineType = telux::loc::EngineType::VPE;
-        }
-
-        telux::loc::LocationEngineRunState engineState;
-        std::string state;
-        std::cout << "Enter the state of engine : " << std::endl;
-        std::cout << "Enter 1 to bring engine to suspend state" << std::endl;
-        std::cout << "Enter 2 to bring engine to running state" << std::endl;
-        std::cout << "Enter 3 to bring engine to suspend_retain state" << std::endl;
-        std::getline(std::cin, state, delimiter);
-        int engineStateOption = std::stoi(state);
-        if (engineStateOption == 1) {
-            engineState = telux::loc::LocationEngineRunState::SUSPENDED;
-        } else if(engineStateOption == 2 ) {
-            engineState = telux::loc::LocationEngineRunState::RUNNING;
-        } else{
-            engineState = telux::loc::LocationEngineRunState::SUSPEND_RETAIN;
-        }
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
-            ("Configure engine state");
-        telux::common::Status status = locationConfigurator_->configureEngineState(engineType,
-            engineState, std::bind(&MyLocationCommandCallback::commandResponse,
-                myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-            std::cout << "FAILED" << std::endl;
-        }
-    }
-}
-
-void LocationMenu::configureEngineIntegrityRisk(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        char delimiter = '\n';
-        telux::loc::EngineType engineType;
-        std::string type;
-        std::cout << "Enter the type of engine : " << std::endl;
-        std::cout << "Enter 1 for SPE" << std::endl;
-        std::cout << "Enter 2 for PPE" << std::endl;
-        std::cout << "Enter 3 for DRE" << std::endl;
-        std::cout << "Enter 4 for VPE" << std::endl;
-        std::getline(std::cin, type, delimiter);
-        int engineTypeOption = std::stoi(type);
-        if (engineTypeOption == 1) {
-            engineType = telux::loc::EngineType::SPE;
-        } else if (engineTypeOption == 2) {
-            engineType = telux::loc::EngineType::PPE;
-        } else if (engineTypeOption == 3){
-            engineType = telux::loc::EngineType::DRE;
-        } else {
-            engineType = telux::loc::EngineType::VPE;
-        }
-
-        std::string integrityRisk;
-        std::cout << "Enter value for integrityRisk :";
-        std::getline(std::cin, integrityRisk, delimiter);
-
-        uint32_t intRiskLevel = 0;
-        if(!integrityRisk.empty()) {
-            try {
-                intRiskLevel = std::stoi(integrityRisk);
-            } catch(const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values " << intRiskLevel
-                          << std::endl;
-            }
-        } else {
-             intRiskLevel = 1;
-        }
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
-            ("Configure Engine Integrity Risk");
-        telux::common::Status status = locationConfigurator_->configureEngineIntegrityRisk(
-            engineType, intRiskLevel, std::bind(&MyLocationCommandCallback::commandResponse,
-                myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-            std::cout << "FAILED" << std::endl;
-        }
-    }
 }
 
 void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
@@ -1422,158 +952,9 @@ void LocationMenu::requestSecondaryBand(std::vector<std::string> userInput) {
    }
 }
 
-void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
-  if(locationConfigurator_) {
-       char delimiter = '\n';
-       std::string option;
-       std::cout << "Enter Y to enable or N to disable Robust Location: ";
-       std::getline(std::cin, option, delimiter);
-
-       bool enable = false;
-       if(option == "Y" || option == "y") {
-            enable = true;
-       } else if(option == "N" || option == "n") {
-            enable = false;
-       } else {
-            std::cout << " BAD input " << std::endl;
-       }
-        std::cout << " Enable: " << enable << std::endl;
-
-       std::string optionE911;
-       std::cout << "Enter Y to enable or N to disable Robust Location E911 session: ";
-       std::getline(std::cin, optionE911, delimiter);
-
-       bool enableE911 = false;
-       if(optionE911 == "Y" || optionE911 == "y") {
-            enableE911 = true;
-       } else if(optionE911 == "N" || optionE911 == "n") {
-            enableE911 = false;
-       } else {
-            std::cout << " BAD input " << std::endl;
-       }
-        std::cout << " EnableE911: " << enableE911 << std::endl;
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
-            ("Configure-Robust Location");
-        telux::common::Status status = locationConfigurator_->configureRobustLocation(enable,
-            enableE911, std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                        std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
-   }
-}
-
-void LocationMenu::requestRobustLocation(std::vector<std::string> userInput) {
-  if(locationConfigurator_) {
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
-            ("Request-Robust Location");
-        auto robustLocationCb = std::bind(&MyLocationCommandCallback::onRobustLocationInfo,
-            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
-        telux::common::Status status = locationConfigurator_->requestRobustLocation(robustLocationCb);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
-   }
-}
-
-void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput) {
-  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-      "Request GNSS Energy Consumed Info");
-  auto gnssEnergyConsumedCb = std::bind(
-      &MyLocationCommandCallback::onGnssEnergyConsumedInfo, myLocCmdResponseCb_,
-          std::placeholders::_1, std::placeholders::_2);
-   locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
-}
-
-void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
-  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-      "Request year of hardware info");
-  auto getYearOfHwCb = std::bind(
-      &MyLocationCommandCallback::onGetYearOfHwInfo, myLocCmdResponseCb_,
-          std::placeholders::_1, std::placeholders::_2);
-  locationManager_->getYearOfHw(getYearOfHwCb);
-}
-
 void LocationMenu::getCapabilities(std::vector<std::string> userInput) {
   telux::loc::LocCapability capabilities = locationManager_->getCapabilities();
   LocationUtils::displayCapabilities(capabilities);
-}
-
-void LocationMenu::requestTerrestrialPositioning(std::vector<std::string> userInput) {
-  if (locationManager_) {
-      std::string timeoutInput;
-      char delimiter = '\n';
-      std::cout << "Enter the timeout in msec (default 1000msec): ";
-      std::getline(std::cin, timeoutInput, delimiter);
-      int optTimeout = -1;
-      if (!timeoutInput.empty()) {
-         try {
-            optTimeout = std::stoi(timeoutInput);
-         } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << optTimeout
-                      << std::endl;
-         }
-      } else {
-         optTimeout = 1000;
-      }
-
-      std::string terrestrialTech;
-      TerrestrialTechnology techType = DEFAULT_UNKNOWN;
-      std::vector<int> options;
-      std::cout << "Enter the terrestrial technology : \n"
-                   "0 - GTP_WWAN \n"
-                   "Enter your preference\n"
-                   "(Example: enter 0 to choose GTP_WWAN)\n";
-      std::getline(std::cin, terrestrialTech,delimiter);
-      std::stringstream ss(terrestrialTech);
-      int i = -1;
-      while (ss >> i) {
-        options.push_back(i);
-        if (ss.peek() == ',' || ss.peek() == ' ')
-          ss.ignore();
-      }
-      for (auto &opt : options) {
-        if (opt == 0) {
-          try {
-            techType |= 1UL << opt;
-          } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << opt
-                         << std::endl;
-          }
-        } else {
-            std::cout << "Terrestrial technology should not be out of range" << std::endl;
-        }
-      }
-
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-          "Request Terrestrial Technology");
-      auto terrestrialPositionCb = std::bind(
-          &MyLocationCommandCallback::onTerrestrialPositionInfo,
-              std::make_shared<MyLocationCommandCallback>("Terrestrial Info"),
-                  std::placeholders::_1);
-      telux::common::Status status = locationManager_->getTerrestrialPosition(
-          (uint32_t)optTimeout, techType, terrestrialPositionCb, std::bind(
-              &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                  std::placeholders::_1));
-      if (status == telux::common::Status::SUCCESS) {
-          std::cout << "Status SUCCESS" << std::endl;
-      }
-   }
-}
-
-void LocationMenu::cancelTerrestrialPositioning(std::vector<std::string> userInput) {
-  if (locationManager_) {
-
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-          "Cancel Terrestrial Technology");
-      telux::common::Status status = locationManager_->cancelTerrestrialPositionRequest(
-          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-              std::placeholders::_1));
-      if (status == telux::common::Status::SUCCESS) {
-          std::cout << "Status SUCCESS" << std::endl;
-      }
-   }
 }
 
 void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {
@@ -1866,58 +1247,6 @@ void LocationMenu::deRegisterConfigListener(std::vector<std::string> userInput) 
     }
 }
 
-void LocationMenu::injectMerkleTreeInformation(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        std::ifstream configFileStream;
-        configFileStream.open(MERKLE_XML_PATH);
-        if(configFileStream.is_open()) {
-            std::string line;
-            std::string merkleTreeStr = "";
-            while(std::getline(configFileStream, line)) {
-                merkleTreeStr += line;
-            }
-            std::cout << "XML buffer size " << merkleTreeStr.size() << "\n";
-            std::cout << "XML Content-\n" << merkleTreeStr << "\n";
-
-            myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
-                ("Inject Merkle Tree Information");
-            telux::common::Status status = locationConfigurator_->injectMerkleTreeInformation(
-                merkleTreeStr, std::bind(&MyLocationCommandCallback::commandResponse,
-                    myLocCmdResponseCb_, std::placeholders::_1));
-            if (status == telux::common::Status::FAILED) {
-                std::cout << "FAILED" << std::endl;
-            }
-            configFileStream.close();
-        } else {
-            std::cout << "Failed to open the file\n";
-        }
-    }
-}
-
-void LocationMenu::configureOsnma(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        char delimiter = '\n';
-        std::string option;
-        std::cout << "Enable Osnma feature (y/n): ";
-        std::getline(std::cin, option, delimiter);
-        bool enable = false;
-        if(option == "Y" || option == "y") {
-            enable = true;
-        } else {
-            enable = false;
-        }
-
-        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-            "Configure OSNMA");
-        telux::common::Status status = locationConfigurator_->configureOsnma(
-            enable, std::bind(&MyLocationCommandCallback::commandResponse,
-                myLocCmdResponseCb_, std::placeholders::_1));
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
-    }
-}
-
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';
    std::string usrInput;
@@ -2043,14 +1372,6 @@ void LocationMenu::enableDataInfoLogs() {
    } else {
       std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
-}
-void LocationMenu::dgnssInject(std::vector<std::string> userInput) {
-   auto dgnssMenu = std::make_shared<DgnssMenu>("Dgnss Menu", "location> ");
-   if (dgnssMenu->init(locationManager_) == -1) {
-       std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
-       return;
-   }
-   dgnssMenu->mainLoop();
 }
 
 void LocationMenu::enableNmeaInfoLogs() {

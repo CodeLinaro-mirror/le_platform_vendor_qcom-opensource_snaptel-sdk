@@ -114,8 +114,6 @@ private:
    void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
    void printFixAvailability(telux::loc::SVInfoAvailability availability);
    void printSvUsedInPosition(telux::loc::SvUsedInPosition svUsedInPosition);
-   void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-   void printSolutionStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printMeasurementsClockValidity(telux::loc::GnssMeasurementsClockValidity flags);
@@ -124,15 +122,12 @@ private:
    void printMeasurementAdrState(telux::loc::GnssMeasurementsAdrStateValidity mask);
    void printMeasurementsMultipathIndicator(telux::loc::
        GnssMeasurementsMultipathIndicator indicator);
-   void printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo);
-   void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
    void printGnssEphemerisCommonData(const telux::loc::GnssEphCommon &commonData);
    void printEphSrc(telux::loc::GnssEphSource ephSrc);
    void printEphAct(telux::loc::GnssEphAction ephAct);
    void printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData);
-   void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
 
    void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
 };

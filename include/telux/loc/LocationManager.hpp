@@ -103,40 +103,6 @@ class ILocationManager {
 public:
 
 /**
- * This function is called with the response to getEnergyConsumedInfoUpdate API.
- *
- * @param[in] energyConsumed - Information regarding energy consumed by Gnss engine.
- *
- * @param[in] error - Return code which indicates whether the operation succeeded
- *                    or not.
- *
- *
- */
- using GetEnergyConsumedCallback = std::function<void(telux::loc::GnssEnergyConsumedInfo
-     energyConsumed, telux::common::ErrorCode error)>;
-
-/**
- * This function is called with the response to getYearOfHw API.
- *
- * @param[in] yearOfHw - Year of hardware information.
- *
- * @param[in] error - Return code which indicates whether the operation succeeded
- *                    or not.
- *
- */
-  using GetYearOfHwCallback = std::function<void(uint16_t yearOfHw,
-      telux::common::ErrorCode error)>;
-
-/**
- * This function is called with the response to getTerrestrialPosition API.
- *
- * @param[in] terrestrialInfo - basic position related information.
- *
- */
-  using GetTerrestrialInfoCallback = std::function<void(
-      const std::shared_ptr<ILocationInfoBase> terrestrialInfo)>;
-
-/**
  * Checks the status of location subsystems and returns the result.
  *
  * @returns True if location subsystem is ready for service otherwise false.
@@ -415,19 +381,6 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
- * This API receives information on energy consumed by modem GNSS engine. If this API
- * is called on this object while this is already a pending request, then it will overwrite
- * the callback to be invoked and the callback from the previous invocation will not be
- * called.
- *
- * @param [in] cb - callback to get the information of Gnss energy consumed.
- *
- * @returns Status of requestEnergyConsumedInfo i.e success or suitable status code.
- *
- */
-  virtual telux::common::Status requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) = 0;
-
-/**
  * This API will stop reports started using startDetailedReports or startBasicReports
  * or registerListener or setMinIntervalForReports.
  *
@@ -441,69 +394,6 @@ public:
  */
   virtual telux::common::Status
       stopReports(telux::common::ResponseCallback callback = nullptr) = 0;
-
-/**
- * This API retrieves the year of hardware information.
- *
- * @param[in] cb - callback to get information of year of hardware.
- *
- * @returns Status of getYearOfHw i.e success or suitable status code.
- *
- */
-  virtual telux::common::Status getYearOfHw(GetYearOfHwCallback cb) = 0;
-
-/**
- * This API retrieves single-shot terrestrial position using the set of specified terrestrial
- * technologies.
- * This API can be invoked even while there is an on-going tracking session that was started using
- * startBasicReports/startDetailedReports/startDetailedEngineReports.
- * If this API is invoked while there is already a pending request for terrestrial position, the
- * request will fail and @ref telux::common::ResponseCallback will get invoked with @ref
- * telux::common::ErrorCode::OP_IN_PROGRESS.
- * To cancel a pending request, use @ref ILocationManager::cancelTerrestrialPositionRequest.
- * Before using this API, user consent needs to be set true via
- * @ref ILocationConfigurator::provideConsentForTerrestrialPositioning.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
- * invoke this API successfully.
- *
- * @param[in] timeoutMsec - the time in milliseconds within which the client is expecting a
- *                          response. If the system is unable to provide a report within this
- *                          time, the @ref telux::common::ResponseCallback will be invoked with
- *                          @ref telux::common::ErrorCode::OPERATION_TIMEOUT.
- *
- * @param[in] techMask - the set of terrestrial technologies that are allowed to be used for
- *                       producing the position.
- *
- * @param[in] cb - callback to receive terrestrial position. This callback will only
- *                 be invoked when ResponseCallback is invoked with SUCCESS.
- *
- * @param [in] callback - Optional callback to get the response of getTerrestrialPosition.
- *
- * @returns Status of getTerrestrialPosition i.e success or suitable status code.
- *
- */
-  virtual telux::common::Status getTerrestrialPosition(uint32_t timeoutMsec,
-      TerrestrialTechnology techMask, GetTerrestrialInfoCallback cb, telux::common::
-          ResponseCallback callback = nullptr) = 0;
-
-/**
- * This API cancels the pending request invoked by @ref ILocationManager::getTerrestrialPosition.
- * If this API is invoked while there is no pending request for terrestrial position from
- * @ref ILocationManager::getTerrestrialPosition, then @ref telux::common::ResponseCallback will be invoked
- * with @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
- * invoke this API successfully.
- *
- * @param [in] callback - Optional callback to get the response of
- *                        cancelTerrestrialPositionRequest.
- *
- * @returns Status of cancelTerrestrialPositionRequest i.e success or suitable status code.
- *
- */
-  virtual telux::common::Status cancelTerrestrialPositionRequest(telux::common::
-      ResponseCallback callback = nullptr) = 0;
 
 /**
  * This API retrieves capability information.
@@ -520,60 +410,6 @@ public:
  */
   virtual ~ILocationManager() {}
   ;
-
-/**
- * Starts the Location report by configuring the time and distance between
- * the consecutive reports. Any of the 3 APIs that is startDetailedReports or
- * startDetailedEngineReports or startBasicReports can be called one after the other
- * irrespective of order, without calling stopReports in between any of them and the
- * API which is called last will be honored for providing the callbacks. In case of multiple
- * clients invoking this API with different intervals, if the platforms is configured, then the
- * clients will receive the reports at their requested intervals. If not configured then all the
- * clients will be serviced at the smallest interval among all clients' intervals.
- * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
- * caller send which is not one of these will result in the implementation picking one of these
- * periodicities.
- * This Api enables the onBasicLocationUpdate Api on the listener. Please note that
- * these reports are generated by FUSED Engine type.
- *
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
- * invoke this API successfully.
- *
- * E.g. If intervalInMs is 1000 milliseconds and distanceInMeters is 100m,
- * reports will be provided according to the condition that happens first. So we need to
- * provide both the parameters for evaluating the report.
- *
- * The underlying system may have a minimum distance threshold(e.g. 1 meter).
- * Effective distance will not be smaller than this lower bound.
- *
- * The effective distance may have a granularity level higher than 1 m, e.g.
- * 5 m. So distanceInMeters being 59 may be honored at 60 m, depending on the system.
- *
- * Where there is another application in the system having a session with
- * shorter distance, this client may benefit and receive reports at that distance.
- *
- * @param [in] distanceInMeters - DistanceInMeters between two consecutive reports in meters.
- *                                This parameter is not used.
- *
- * @param [in] intervalInMs - Minimum time interval between two consecutive reports in
- *                            milliseconds. The interval controls the rate at which the
- *                            PVT reports are delivered to clients via
- *                            @ref ILocationListener::onBasicLocationUpdate.
- *
- * @param [in] callback - Optional callback to get the response of set
- *                        minimum distance for reports.
- *
- * @returns Status of startBasicReports i.e. success or suitable status code.
- *
- * @deprecated This API which takes distance as an argument is not supported anymore.
- * Use @ref ILocationManager::startBasicReports(uint32_t intervalInMs,
- *  telux::common::ResponseCallback callback = nullptr) = 0;
- *
- */
-  virtual telux::common::Status
-      startBasicReports(uint32_t distanceInMeters, uint32_t intervalInMs,
-                        telux::common::ResponseCallback callback = nullptr) = 0;
 
 };
 /** @} */ /* end_addtogroup telematics_location */

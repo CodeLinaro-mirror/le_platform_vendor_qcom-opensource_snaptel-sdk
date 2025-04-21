@@ -73,28 +73,16 @@ public:
    void stopReports(std::vector<std::string> userInput);
    void registerLocationSystemInfo(std::vector<std::string> userInput);
    void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
-   void enableDisableTunc(std::vector<std::string> userInput);
    void enableDisablePace(std::vector<std::string> userInput);
-   void provideConsentForTerrestrialPositioning(std::vector<std::string> userInput);
    void deleteAllAidingData(std::vector<std::string> userInput);
    void deleteAidingDataWarm(std::vector<std::string> userInput);
-   void configureLeverArm(std::vector<std::string> userInput);
-   void configureDR(std::vector<std::string> userInput);
-   void configureEngineState(std::vector<std::string> userInput);
-   void configureEngineIntegrityRisk(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureConstellationEmpty(std::vector<std::string> userInput);
    void configureConstellationDeviceDefault(std::vector<std::string> userInput);
    void configureSecondaryBand(std::vector<std::string> userInput);
    void enableDefaultSecondaryBand(std::vector<std::string> userInput);
    void requestSecondaryBand(std::vector<std::string> userInput);
-   void configureRobustLocation(std::vector<std::string> userInput);
-   void requestRobustLocation(std::vector<std::string> userInput);
-   void requestEnergyConsumedInfo(std::vector<std::string> userInput);
-   void getYearOfHw(std::vector<std::string> userInput);
    void getCapabilities(std::vector<std::string> userInput);
-   void requestTerrestrialPositioning(std::vector<std::string> userInput);
-   void cancelTerrestrialPositioning(std::vector<std::string> userInput);
    void configureNmeaSentence(std::vector<std::string> userInput);
    void configureAllNmeaSentence(std::vector<std::string> userInput);
    void configureMinGpsWeek(std::vector<std::string> userInput);
@@ -105,8 +93,6 @@ public:
    void requestXtraStatus(std::vector<std::string> userInput);
    void registerConfigListener(std::vector<std::string> userInput);
    void deRegisterConfigListener(std::vector<std::string> userInput);
-   void injectMerkleTreeInformation(std::vector<std::string> userInput);
-   void configureOsnma(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
@@ -120,10 +106,6 @@ public:
    void enableDisasterCrisisInfoLogs();
    void enableEphemerisInfoLogs();
    void enableEngineNmeaInfoLogs();
-   void dgnssInject(std::vector<std::string> userInput);
-   void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
-   void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
-   void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
    telux::common::Status launchAsRecordingUtility(LocReqEngine engineType);
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

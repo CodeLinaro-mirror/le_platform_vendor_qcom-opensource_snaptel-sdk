@@ -135,17 +135,6 @@ public:
  using GetMinSVElevationCallback = std::function<void(uint8_t minSVElevation,
      telux::common::ErrorCode error)>;
 
-/** This function is called with the response to requestRobustLocation API.
- *
- * @param[in] rLConfig - robust location settings information.
- *
- *  @param[in] error - Return code which indicates whether the operation succeeded
- *                    or not.
- *
- */
- using GetRobustLocationCallback = std::function<void(const telux::loc::
-     RobustLocationConfiguration rLConfig, telux::common::ErrorCode error)>;
-
 /** This function is called with the response to requestXtraStatus API.
  *
  * @param[in] xtraStatus - Information pertaining to Xtra assistance data.
@@ -191,40 +180,6 @@ public:
   virtual std::future<bool> onSubsystemReady() = 0;
 
 /**
- * This API enables or disables the constrained time uncertainty(C-TUNC) feature. When the
- * vehicle is turned off this API helps to put constraint on the time uncertainty. For multiple
- * invocations of this API, client should wait for the command to finish, e.g.: via
- * ResponseCallback received before issuing a second configureCTunc command. Behavior is not
- * defined if client issues a second request of configureCTunc without waiting for the finish of
- * the previous configureCTunc request.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] enable - true for enable C-TUNC feature and false for disable C-TUNC
- *                      feature.
- *
- * @param [in] callback - Optional callback to get the response of enablement/disablement of
- *                        C-TUNC.
- *
- * @param [in] timeUncertainty - specifies the time uncertainty threshold that gps engine
- *                              needs to maintain, in unit of milli-seconds. This parameter is
- *                              ignored when the request is to disable this feature.
- *
- * @param [in] energyBudget - specifies the power budget that the GPS engine is allowed to
- *                            spend to maintain the time uncertainty, in the unit of
- *                            100 micro watt second. If the power exceeds the energyBudget then
- *                            this API is disabled. This is a cumulative energy budget. This
- *                            parameter is ignored when the request is to disable this feature.
- *
- * @returns Status of configureCTunc i.e. success or suitable status code.
- *
- */
-  virtual telux::common::Status configureCTunc(bool enable, telux::common::ResponseCallback callback
-        = nullptr, float timeUncertainty = DEFAULT_TUNC_THRESHOLD, uint32_t energyBudget =
-                DEFAULT_TUNC_ENERGY_THRESHOLD) = 0;
-
-/**
  * This API enables or disables position assisted clock estimator feature. For multiple
  * invocations of this API, client should wait for the command to finish, e.g.: via
  * ResponseCallback received before issuing a second configurePACE command. Behavior is
@@ -260,35 +215,6 @@ public:
 
   virtual telux::common::Status deleteAllAidingData(telux::common::ResponseCallback callback
         = nullptr) = 0;
-
-/**
- * This API sets the lever arm parameters for the vehicle. LeverArm is sytem level parameters and
- * it is not expected to change. So, it is needed to issue configureLeverArm once for every
- * application processor boot-up. For multiple invocations of this API client should wait for the
- * command to finish, e.g.: via ResponseCallback received before issuing a second
- * configureLeverArm command. Behavior is not defined if client issues a second request of
- * configureLeverArm without waiting for the finish of the previous configureLeverArm request.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] info - lever arm configuration info regarding below three
- *                   types of lever arm info:
- *                   a: GNSS Antenna with respect to the origin at the IMU (inertial measurement
- *                   unit) for DR engine
- *                   b: GNSS Antenna with respect to the origin at the IMU (inertial measurement
- *                   unit) for VEPP engine
- *                   c: VRP (Vehicle Reference Point) with respect to the origin (at the GNSS
- *                   Antenna). Vehicle manufacturers prefer the position output to be tied to a
- *                   specific point in the vehicle rather than where the antenna is placed
- *                   (midpoint of the rear axle is typical).
- *
- * @param [in] callback - Optional callback to get the response of configure lever arm.
- *
- */
-
-  virtual telux::common::Status configureLeverArm(const LeverArmConfigInfo& info,
-        telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * This API blacklists some constellations or subset of SVs from the constellation from being used
@@ -374,46 +300,6 @@ public:
   virtual telux::common::Status requestSecondaryBandConfig(GetSecondaryBandCallback cb) = 0;
 
 /**
- * This API enables/disables robust location 2.0 feature and enables/disables robust location while
- * device is on E911. When this API is enabled it reports confidence of the GNSS spoofing by the
- * getConformityIndex() API defined in the ILocationInfoEx class, which is a measure of robustness
- * of the underlying navigation solution. It indicates how well the various input data considered
- * for navigation solution conform to expectations. In the presence of detected spoofed inputs,
- * the navigation solution may take corrective actions to mitigate the spoofed inputs and improve
- * robustness of the solution.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] enable - true to enable robust location and false to disable robust location.
- *
- * @param [in] enableForE911 - true to enable robust location when the device is on E911 session
- *                             and false to disable on E911 session. This parameter is only valid
- *                             if robust location is enabled.
- *
- * @param [in] callback - Optional callback to get the response of configure robust location.
- *
- *
- */
-
-  virtual telux::common::Status configureRobustLocation(bool enable,
-      bool enableForE911 = false,
-          telux::common::ResponseCallback callback = nullptr) = 0;
-
-/**
- * This API retrieves the robust location 2.0 settings and version info used by the GNSS standard
- * position engine (SPE).
- *
- * @param [in] cb - callback to retrieve robust location information.
- *
- * @returns Status of requestRobustLocation i.e. success or suitable status code.
- *
- *
- */
-
-  virtual telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) = 0;
-
-/**
  * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE)
  * and shall not be called while GNSS SPE is in the middle of a session.
  * Client needs to assure that there is no active GNSS SPE session prior to issuing this command.
@@ -434,7 +320,6 @@ public:
  *
  *
  */
-
   virtual telux::common::Status configureMinGpsWeek(uint16_t minGpsWeek,
       telux::common::ResponseCallback callback = nullptr) = 0;
 
@@ -454,7 +339,6 @@ public:
  *
  *
  */
-
   virtual telux::common::Status requestMinGpsWeek(GetMinGpsWeekCallback cb) = 0;
 
 /**
@@ -541,82 +425,6 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
- * This API configures various parameters for dead reckoning position engine. Clients should
- * wait for the command to finish e.g.: via ResponseCallback to be received before issuing a
- * second configureDR command. Behavior is not defined if client issues a second
- * request of configureDR without waiting for the completion of the previous
- * configureDR request.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] config - specify dead reckoning engine configuration.
- *
- * @param [in] callback - Optional callback to get the response of configureDR.
- *
- * @returns Status of configureDR i.e. success or suitable status code.
- *
- *
- */
-
-  virtual telux::common::Status configureDR(const
-      DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) = 0;
-
-/**
- * This API is used to instruct the specified engine to be in the suspended/running state.
- * When the engine is placed in suspended state, the engine will stop. If there is an on-going
- * session, engine will no longer produce fixes. In the suspended state, calling API to delete
- * aiding data from the paused engine may not have effect. Request to delete Aiding data shall
- * be issued after engine resume.
- *
- * Currently, only DR engine will support this request. The request to suspend/running DR engine
- * can be made with or without an on-going session. With DR engine, on resume, GNSS position &
- * heading re-acquisition may be needed for DR to engage.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] engineType - the engine that is instructed to change its run state.
- *
- * @param [in] engineState - the new engine run state that the engine is instructed to be in.
- *
- * @param [in] callback - Optional callback to get the response of configureEngineState.
- *
- * @returns Status of configureEngineState i.e. success or suitable status code.
- *
- */
-
-  virtual telux::common::Status configureEngineState(const EngineType engineType,
-      const LocationEngineRunState engineState,
-          telux::common::ResponseCallback callback = nullptr ) = 0;
-
-/**
- * Clients can request Terrestrial Positioning using @ref ILocationManager::getTerrestrialPosition.
- * Terrestrial Positioning requires sending device data to the cloud to get the position.
- * This functionality requires user consent. This API needs to be invoked to provide the user
- * consent.
- *
- * The consent will remain effective across power cycles, until this API is called with a
- * different value.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONSENT permission to
- * invoke this API successfully.
- *
- * @param [in] userConsent - true indicates user consents to sending device data to cloud,
- *                           false indicates user does not consent.
- *
- * @param [in] callback - Optional callback to get the response of
- *                        provideConsentForTerrestrialPositioning.
- *
- * @returns Status of provideConsentForTerrestrialPositioning i.e. success or suitable
- *          status code.
- *
- */
-
-  virtual telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
-      telux::common::ResponseCallback callback = nullptr) = 0;
-
-/**
  * This API is used to configure the NMEA sentence types that clients will receive via
  * @ref ILocationManager::startDetailedReports or
  * @ref ILocationManager::startDetailedEngineReports.
@@ -687,38 +495,6 @@ public:
     telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
- * This API is used to instruct the specified engine to use the provided integrity risk level for
- * protection level calculation in position report.
- * This API can be called when a position session is in progress.
- * Prior to calling this API for a particular engine, the engine shall not calculate the
- * protection levels and shall not include the protection levels in its position report.
- * The implementation might not support protection levels across all engines. For engines that
- * don't support it, @ref telux::common::ResponseCallback will get invoked with
- * @ref telux::common::ErrorCode::NOT_SUPPORTED.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] engineType - the engine that is instructed to use the specified integrity risk
- *                          level for protection level calculation.
- *
- * @param [in] integrityRisk - the integrity risk level used for calculating protection level.
- *                             The integrity risk is defined as a probability per epoch, in unit
- *                             of 2.5e-10. The valid range for actual integrity is
- *                             [2.5e-10, 1-2.5e-10]), this corresponds to range of [1,4e9-1] of
- *                             this parameter.
- *
- * @param [in] callback - Optional callback to get the response of configureEngineIntegrityRisk.
- *
- * @returns Status of configureEngineIntegrityRisk i.e. success or suitable status code.
- *
- *
- */
-
-  virtual telux::common::Status configureEngineIntegrityRisk(const EngineType engineType,
-      uint32_t integrityRisk, telux::common::ResponseCallback callback = nullptr ) = 0;
-
-/**
  * This API is used to enable/disable the XTRA (Predicted GNSS Satellite Orbit Data) feature
  * on device. If XTRA feature is to be enabled, this API is also used to configure the various
  * XTRA settings in device.
@@ -783,46 +559,6 @@ public:
 
   virtual telux::common::Status deRegisterListener(LocConfigIndications indicationList,
     std::weak_ptr<ILocationConfigListener> listener) = 0;
-
-/**
- * To support the Galileo OSNMA feature, this API is used to inject the Merkle Tree information
- * via a XML configuration file. The XML configuration contains the Merkle root, Merkle nodes
- * and information for upto 2 public keys.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] merkleTreeInfo - The XML content to be injected.
- *                              For injecting the Merkle information, clients need to
- *                              pass the XML content in the form of a std::string.
- *
- * @param [in] callback - Optional callback to receive the result of the injection.
- *
- * @returns Status of the injection i.e. success or suitable status code.
- *
- *
- */
-
-  virtual telux::common::Status injectMerkleTreeInformation(std::string merkleTreeInfo,
-    telux::common::ResponseCallback callback = nullptr) = 0;
-
-/**
- * This API is used to enable/disable the OSNMA Feature in the Modem.
- *
- * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
- * invoke this API successfully.
- *
- * @param [in] enable - Enable/Disable the OSNMA Feature in the modem.
- *
- * @param [in] callback - Optional callback to receive the result of the enablement/disablement.
- *
- * @returns Status of the enablement/disablement i.e. success or suitable status code.
- *
- *
- */
-
-  virtual telux::common::Status configureOsnma(bool enable,
-    telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

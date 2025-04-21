@@ -75,6 +75,7 @@
 MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
    commandName_ = cmdName;
 }
+
 void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
@@ -83,25 +84,6 @@ void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) 
       PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
-}
-
-void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo
-    gnssEnergyConsumed, telux::common::ErrorCode error) {
-   std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
-
-   PRINT_CB << "\n**************** Gnss Energy Consumed Information ***************"
-       << std::endl;
-   std::cout << "<<< onGnssEnergyConsumedInfoCb\n" << std::endl;
-   std::cout << " GnssEnergyConsumedInfoValidity : " << std::endl;
-   if(gnssEnergyConsumed.valid & telux::loc::ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT) {
-     std::cout << " Energy consumed is valid" << std::endl;
-   }
-   else {
-     std::cout << " Energy consumed is invalid" << std::endl;
-   }
-   std::cout << " Energy consumed : " << gnssEnergyConsumed.energySinceFirstBoot
-       << std::endl;
-   std::cout << "*******************************" << std::endl;
 }
 
 void MyLocationCommandCallback::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
@@ -183,47 +165,6 @@ void MyLocationCommandCallback::printLocationTech(telux::loc::LocationTechnology
    }
 }
 
-void MyLocationCommandCallback::onTerrestrialPositionInfo(
-       const std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo) {
-   PRINT_CB << "\n*********************** Terrestrial Position Report *********************"
-                      << std::endl;
-   printLocationValidity(locationInfo->getLocationInfoValidity());
-   printLocationTech(locationInfo->getTechMask());
-
-   if(locationInfo->getTimeStamp() != telux::loc::UNKNOWN_TIMESTAMP) {
-     time_t realtime;
-     realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
-     std::cout << "Time stamp: " << locationInfo->getTimeStamp() << " mSec" << std::endl;
-     std::cout << "GMT Time stamp: " << ctime(&realtime);
-   } else {
-     std::cout << "Time stamp Not Valid" << std::endl;
-   }
-   std::cout << "Latitude: " << std::setprecision(15) << locationInfo->getLatitude() << std::endl
-             << "Longitude: " << std::setprecision(15) << locationInfo->getLongitude() << std::endl
-             << "Altitude: " << std::setprecision(15) << locationInfo->getAltitude() << std::endl
-             << "Speed: " << locationInfo->getSpeed() << std::endl
-             << "Heading: " << locationInfo->getHeading() << std::endl
-             << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
-             << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
-             << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
-             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
-             << "Time Uncertainty: " << locationInfo->getTimeUncMs() << std::endl
-             << "gPTP time: " << locationInfo->getElapsedGptpTime() << std::endl
-             << "gPTP time uncertainty: " << locationInfo->getElapsedGptpTimeUnc() << std::endl;
-
-   std::cout << "*************************************************************" << std::endl;
-}
-
-void MyLocationCommandCallback::onGetYearOfHwInfo(uint16_t yearOfHw,
-    telux::common::ErrorCode error) {
-   std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
-
-   PRINT_CB << "\n**************** Year Of Hardware Information ***************"
-       << std::endl;
-   std::cout << "Year of Hardware is : " << yearOfHw << std::endl;
-   std::cout << "*******************************" << std::endl;
-}
-
 void MyLocationCommandCallback::onMinGpsWeekInfo(uint16_t minGpsWeek,
     telux::common::ErrorCode error) {
   std::cout << __FUNCTION__ <<  " : " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -239,27 +180,6 @@ void MyLocationCommandCallback::onMinSVElevationInfo(uint8_t minSVElevation,
 
   PRINT_CB << " ************ Request Minimum SV Elevation Angle ***************" << std::endl;
   std::cout << " Minimum SV Elevation is : " << (uint32_t)minSVElevation << std::endl;
-}
-
-void MyLocationCommandCallback::onRobustLocationInfo(const telux::loc::RobustLocationConfiguration
-     rLConfig, telux::common::ErrorCode error) {
-  std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
-
-  PRINT_CB << " ************ Request Robust Location ***************" << std::endl;
-  if (rLConfig.validMask & telux::loc::VALID_ENABLED) {
-    std::cout << " Enabled is valid" << std::endl;
-  }
-  if (rLConfig.validMask & telux::loc::VALID_ENABLED_FOR_E911) {
-    std::cout << " Enabled for E911 is valid" << std::endl;
-  }
-  if (rLConfig.validMask & telux::loc::VALID_VERSION) {
-    std::cout << " Version is valid" << std::endl;
-  }
-  std::cout << " Enabled is : " << rLConfig.enabled << std::endl;
-  std::cout << " Enabled for E911 is : " << rLConfig.enabledForE911 << std::endl;
-  std::cout << " Major version is : " << unsigned(rLConfig.version.major) << std::endl;
-  std::cout << " Minor version is : " << rLConfig.version.minor << std::endl;
-  std::cout << " ****************************************************" << std::endl;
 }
 
 void MyLocationCommandCallback::onSecondaryBandInfo(telux::loc::ConstellationSet set,

@@ -552,88 +552,6 @@ void MyLocationListener::printGnssSystemTime(
    }
 }
 
-void MyLocationListener::printLocationPositionDynamics(
-   std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
-   telux::loc::GnssKinematicsData posDynamics_ = locationInfo->getBodyFrameData();
-   std::cout << "Location Position Dynamics: " << std::endl;
-   telux::loc::KinematicDataValidity kinematicDataValidity = posDynamics_.bodyFrameDataMask;
-   if((kinematicDataValidity & telux::loc::HAS_LONG_ACCEL)) {
-      std::cout << "Navigation data has Forward Acceleration" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_LAT_ACCEL)) {
-      std::cout << "Navigation data has Sideward Acceleration" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_VERT_ACCEL)) {
-      std::cout << "Navigation data has Vertical Acceleration" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_YAW_RATE)) {
-      std::cout << "Navigation data has Heading Rate" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_PITCH)) {
-      std::cout << "Navigation data has Body pitch" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_LONG_ACCEL_UNC)) {
-      std::cout << "Navigation data has Forward Acceleration Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_LAT_ACCEL_UNC)) {
-      std::cout << "Navigation data has Sideward Acceleration Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_VERT_ACCEL_UNC)) {
-      std::cout << "Navigation data has Vertical Acceleration Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_YAW_RATE_UNC)) {
-      std::cout << "Navigation data has Heading Rate Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_PITCH_UNC)) {
-      std::cout << "Navigation data has Body pitch Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_PITCH_RATE_BIT)) {
-      std::cout << "Navigation data has pitch rate" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_PITCH_RATE_UNC_BIT)) {
-      std::cout << "Navigation data has pitch rate uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_ROLL_BIT)) {
-      std::cout << "Navigation data has roll" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_ROLL_UNC_BIT)) {
-      std::cout << "Navigation data has roll Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_ROLL_RATE_BIT)) {
-      std::cout << "Navigation data has roll rate" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_ROLL_RATE_UNC_BIT)) {
-      std::cout << "Navigation data has roll rate Uncertainty" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_YAW_BIT)) {
-      std::cout << "Navigation data has yaw" << std::endl;
-   }
-   if((kinematicDataValidity & telux::loc::HAS_YAW_UNC_BIT)) {
-      std::cout << "Navigation data has yaw Uncertainty" << std::endl;
-   }
-   std::cout << "Forward Acceleration in body frame (m/s2): " << posDynamics_.longAccel;
-   std::cout << " Sideward Acceleration in body frame (m/s2): " << posDynamics_.latAccel;
-   std::cout << " Vertical Acceleration in body frame (m/s2): " << posDynamics_.vertAccel
-             << std::endl;
-   std::cout << "Heading Rate (Radians/second): " << posDynamics_.yawRate;
-   std::cout << " Body pitch (Radians): " << posDynamics_.pitch;
-   std::cout << " Uncertainty of Forward Acceleration in body frame: " << posDynamics_.longAccelUnc
-             << std::endl;
-   std::cout << "Uncertainty of Side-ward Acceleration in body frame: " << posDynamics_.latAccelUnc;
-   std::cout << " Uncertainty of Vertical Acceleration in body frame: " <<
-             posDynamics_.vertAccelUnc;
-   std::cout << " Uncertainty of Heading Rate: " << posDynamics_.yawRateUnc;
-   std::cout << " Uncertainty of Body pitch: " << posDynamics_.pitchUnc;
-   std::cout << " Body pitch rate: " << posDynamics_.pitchRate;
-   std::cout << " Uncertainty of pitch rate: " << posDynamics_.pitchRateUnc;
-   std::cout << " Roll of body frame, clockwise is positive: " << posDynamics_.roll;
-   std::cout << " Uncertainty of roll, 68% confidence level: " << posDynamics_.rollUnc;
-   std::cout << " Roll rate of body frame, clockwise is positive: " << posDynamics_.rollRate;
-   std::cout << " Uncertainty of roll rate, 68% confidence level: " << posDynamics_.rollRateUnc;
-   std::cout << " Yaw of body frame, clockwise is positive: " << posDynamics_.yaw;
-   std::cout << " Uncertainty of yaw, 68% confidence level: " << posDynamics_.yawUnc << std::endl;
-}
-
 void MyLocationListener::printLocationPositionTech(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
    telux::loc::GnssPositionTech gnssPositionTech = locationInfo->getPositionTechnology();
@@ -787,120 +705,6 @@ void MyLocationListener::printFixAvailability(telux::loc::SVInfoAvailability ava
          break;
       default:
          std::cout << "Fix availability: UNKNOWN" << std::endl;
-   }
-}
-
-void MyLocationListener::printCalibrationStatus(
-    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
-   telux::loc::DrCalibrationStatus calibrationStatus = locationInfo->getCalibrationStatus();
-   std::cout << "Calibration status : " << std::endl;
-   if((calibrationStatus & telux::loc::DR_ROLL_CALIBRATION_NEEDED)) {
-      std::cout << "Roll calibration is needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_PITCH_CALIBRATION_NEEDED)) {
-      std::cout << "Pitch calibration is needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_YAW_CALIBRATION_NEEDED)) {
-      std::cout << "Yaw calibration is needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_ODO_CALIBRATION_NEEDED)) {
-      std::cout << "Odo calibration is needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_GYRO_CALIBRATION_NEEDED)) {
-      std::cout << "Gyro calibration is needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_LOW)) {
-      std::cout << "Lot more turns on level ground needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_MEDIUM)) {
-      std::cout << "Some more turns on level ground needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_HIGH)) {
-      std::cout << "Sufficient turns on level ground observed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_LOW)) {
-      std::cout << "Lot more accelerations in straight line needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_MEDIUM)) {
-      std::cout << "Some more accelerations in straight line needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_HIGH)) {
-      std::cout << "Sufficient acceleration events in straight line observed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_LOW)) {
-      std::cout << "Lot more motion in straight line needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_MEDIUM)) {
-      std::cout << "Some more motion in straight line needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_HIGH)) {
-      std::cout << "Sufficient motion events in straight line observed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_LOW)) {
-      std::cout << "Lot more stationary events on level ground needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_MEDIUM)) {
-      std::cout << "Some more stationary events on level ground needed" << std::endl;
-   }
-   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_HIGH)) {
-      std::cout << "Sufficient stationary events on level ground observed" << std::endl;
-   }
-}
-
-void MyLocationListener::printSolutionStatus(
-   std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
-   telux::loc::DrSolutionStatus solutionStatus = locationInfo->getSolutionStatus();
-   std::cout << "Solution status : " << std::endl;
-   if((solutionStatus & telux::loc::VEHICLE_SENSOR_SPEED_INPUT_DETECTED)) {
-      std::cout << "Vehicle sensor speed input was detected by the DR position engine."<< std::endl;
-   }
-   if((solutionStatus & telux::loc::VEHICLE_SENSOR_SPEED_INPUT_USED)) {
-      std::cout << "Vehicle sensor speed input was used by the DR position engine. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_UNCALIBRATED)) {
-      std::cout << "DRE solution disengaged due to insufficient calibration. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_GNSS_QUALITY_INSUFFICIENT)) {
-      std::cout << "DRE solution disengaged due to bad GNSS quality. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_FERRY_DETECTED)) {
-      std::cout << "DRE solution disengaged as ferry condition detected. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::ERROR_6DOF_SENSOR_UNAVAILABLE)) {
-      std::cout << "DRE solution disengaged as 6DOF sensor inputs not available. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::ERROR_VEHICLE_SPEED_UNAVAILABLE)) {
-      std::cout << "DRE solution disengaged as vehicle speed inputs not available. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::ERROR_GNSS_EPH_UNAVAILABLE)) {
-      std::cout << "DRE solution disengaged as Ephemeris info not available. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::ERROR_GNSS_MEAS_UNAVAILABLE)) {
-      std::cout << "DRE solution disengaged as GNSS measurement info not available. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_INIT_POSITION_INVALID)) {
-      std::cout << "DRE solution disengaged due non-availability of stored position from"
-         "previous session. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_INIT_POSITION_UNRELIABLE)) {
-      std::cout << "DRE solution dis-engaged due to vehicle motion detected at session"
-         " start. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_POSITON_UNRELIABLE)) {
-      std::cout << "DRE solution dis-engaged due to unreliable position. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::ERROR_GENERIC)) {
-      std::cout << "DRE solution dis-engaged due to a generic error. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_SENSOR_TEMP_OUT_OF_RANGE)) {
-      std::cout << "DRE solution dis-engaged due to Sensor Temperature "
-         "being out of range. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_USER_DYNAMICS_INSUFFICIENT)) {
-      std::cout << "DRE solution dis-engaged due to insufficient user dynamics. "<< std::endl;
-   }
-   if((solutionStatus & telux::loc::WARNING_FACTORY_DATA_INCONSISTENT)) {
-      std::cout << "DRE solution dis-engaged due to inconsistent factory data. "<< std::endl;
    }
 }
 
@@ -1128,20 +932,6 @@ void MyLocationListener::printMeasurementsMultipathIndicator(
   }
 }
 
-void MyLocationListener::printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo) {
-  std::cout << "LLAVRPBased Information :" << std::endl;
-  std::cout << " Latitude : " << llaInfo.latitude << std::endl;
-  std::cout << " Longitude : " << llaInfo.longitude << std::endl;
-  std::cout << " Altitude : " << llaInfo.altitude << std::endl;
-}
-
-void MyLocationListener::printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased) {
-  std::cout << "East, North, Up Velocity VRP based :" << std::endl;
-  std::cout << " East velocity : " << enuVelocityVRPBased[0] << std::endl;
-  std::cout << " North velocity : " << enuVelocityVRPBased[1] << std::endl;
-  std::cout << " Up velocity : " << enuVelocityVRPBased[2] << std::endl;
-}
-
 void MyLocationListener::printAltitudeType(telux::loc::AltitudeType type) {
   std::cout << "Altitude Type is :" << std::endl;
   if (type == telux::loc::AltitudeType::UNKNOWN) {
@@ -1173,18 +963,6 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
 
 void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) {
   LocationUtils::displayCapabilities(capabilityMask);
-}
-
-void MyLocationListener::printDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
-    if(!dgnssStationIds.empty()) {
-        std::cout << "Dgnss Station IDs : ";
-        for(auto id: dgnssStationIds) {
-            std::cout << id << " ";
-        }
-        std::cout << std::endl;
-    } else {
-        std::cout << "No Dgnss Station Id is present\n";
-    }
 }
 
 void MyLocationListener::onBasicLocationUpdate(
@@ -1237,7 +1015,6 @@ void MyLocationListener::recordLocationInfo(
 
     uint8_t leapSeconds = 0;
     locationInfo->getLeapSeconds(leapSeconds);
-    std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
     std::vector<uint16_t> SVIds;
     locationInfo->getSVIds(SVIds);
     std::vector<float> velocityEastNorthUp;
@@ -1278,43 +1055,10 @@ void MyLocationListener::recordLocationInfo(
     locationInfo->getSvUsedInPosition().navic << "," <<
     locationInfo->getSbasCorrection() << "," <<
     locationInfo->getPositionTechnology() << "," <<
-    locationInfo->getBodyFrameData().latAccel << "," <<
-    locationInfo->getBodyFrameData().longAccel << "," <<
-    locationInfo->getBodyFrameData().vertAccel << "," <<
-    locationInfo->getBodyFrameData().yawRate << "," <<
-    locationInfo->getBodyFrameData().pitch << "," <<
-    locationInfo->getBodyFrameData().latAccelUnc << "," <<
-    locationInfo->getBodyFrameData().longAccelUnc << "," <<
-    locationInfo->getBodyFrameData().vertAccelUnc << "," <<
-    locationInfo->getBodyFrameData().yawRateUnc << "," <<
-    locationInfo->getBodyFrameData().pitchUnc << "," <<
-    locationInfo->getBodyFrameData().pitchRate << "," <<
-    locationInfo->getBodyFrameData().pitchRateUnc << "," <<
-    locationInfo->getBodyFrameData().roll << "," <<
-    locationInfo->getBodyFrameData().rollUnc << "," <<
-    locationInfo->getBodyFrameData().rollRate << "," <<
-    locationInfo->getBodyFrameData().rollRateUnc << "," <<
-    locationInfo->getBodyFrameData().yaw << "," <<
-    locationInfo->getBodyFrameData().yawUnc << "," <<
-    locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
     locationInfo->getTimeUncMs() << ",";
     recordStream << static_cast<int>(leapSeconds) << "," <<
-    unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
-    locationInfo->getCalibrationStatus() << "," <<
-    locationInfo->getConformityIndex() << "," <<
-    locationInfo->getVRPBasedLLA().latitude << "," <<
-    locationInfo->getVRPBasedLLA().longitude << "," <<
-    locationInfo->getVRPBasedLLA().altitude << "," <<
-    enuVelocityVRPBased[0] << "," <<
-    enuVelocityVRPBased[1] << "," <<
-    enuVelocityVRPBased[2] << "," <<
     static_cast<int>(locationInfo->getAltitudeType()) << "," <<
-    static_cast<int>(locationInfo->getReportStatus()) << "," <<
-    locationInfo->getIntegrityRiskUsed() << "," <<
-    locationInfo->getProtectionLevelAlongTrack() << "," <<
-    locationInfo->getProtectionLevelCrossTrack() << "," <<
-    locationInfo->getProtectionLevelVertical() << "," <<
-    locationInfo->getSolutionStatus() << ",";
+    static_cast<int>(locationInfo->getReportStatus()) << ",";
 
     auto measInfo = locationInfo->getmeasUsageInfo();
     recordStream << measInfo.size() << ",";
@@ -1368,15 +1112,6 @@ void MyLocationListener::recordLocationInfo(
     recordStream << locationInfo->getNavigationSolution() << "," <<
     locationInfo->getElapsedGptpTime() << "," <<
     locationInfo->getElapsedGptpTimeUnc() << ",";
-
-    std::vector<uint16_t> dgnssStationIds = locationInfo->getDgnssStationIds();
-    recordStream << dgnssStationIds.size() << ",";
-    for (auto id : dgnssStationIds) {
-        recordStream << id << ",";
-    }
-
-    recordStream << locationInfo->getBaselineLength() << "," <<
-    locationInfo->getAgeOfCorrections() << ",";
 
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
@@ -1449,7 +1184,6 @@ void MyLocationListener::onDetailedLocationUpdate(
    printSbasCorrectionEx(locationInfo);
    printNavigationSolutionEx(locationInfo);
    printLocationPositionTech(locationInfo);
-   printLocationPositionDynamics(locationInfo);
    printGnssMeasurementInfo(locationInfo);
    printGnssSystemTime(locationInfo);
    std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
@@ -1489,30 +1223,10 @@ void MyLocationListener::onDetailedLocationUpdate(
    } else {
       std::cout << "East, North, Up velocity uncertainty Not Provided" << std::endl;
    }
-   std::cout << "Calibration confidence percent : " <<
-       unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
-   printCalibrationStatus(locationInfo);
-   printSolutionStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
-   std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
-   printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
-   printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    printAltitudeType(locationInfo->getAltitudeType());
    printReportStatus(locationInfo->getReportStatus());
-   std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
-   std::cout << "Protection level along track : " <<
-       locationInfo->getProtectionLevelAlongTrack() << std::endl;
-   std::cout << "Protection level cross track : " <<
-       locationInfo->getProtectionLevelCrossTrack() << std::endl;
-   std::cout << "Protection level vertical : " <<
-       locationInfo->getProtectionLevelVertical() << std::endl;
-   printDgnssStationIds(locationInfo->getDgnssStationIds());
-   std::cout << "Baseline length : " <<
-       locationInfo->getBaselineLength() << std::endl;
-   std::cout << "Age of corrections : " <<
-       locationInfo->getAgeOfCorrections() << std::endl;
-   std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
    }
@@ -1590,7 +1304,6 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printSbasCorrectionEx(locationInfo);
      printNavigationSolutionEx(locationInfo);
      printLocationPositionTech(locationInfo);
-     printLocationPositionDynamics(locationInfo);
      printGnssMeasurementInfo(locationInfo);
      printGnssSystemTime(locationInfo);
      std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
@@ -1625,30 +1338,10 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
       }
       std::cout << std::endl;
      }
-     std::cout << "Calibration confidence percent : " <<
-       unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
-     printCalibrationStatus(locationInfo);
-     printSolutionStatus(locationInfo);
      printLocOutputEngineType(locationInfo);
      printLocOutputEngineMask(locationInfo);
-     std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
-     printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
-     printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      printAltitudeType(locationInfo->getAltitudeType());
      printReportStatus(locationInfo->getReportStatus());
-     std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
-     std::cout << "Protection level along track : " <<
-         locationInfo->getProtectionLevelAlongTrack() << std::endl;
-     std::cout << "Protection level cross track : " <<
-         locationInfo->getProtectionLevelCrossTrack() << std::endl;
-     std::cout << "Protection level vertical : " <<
-         locationInfo->getProtectionLevelVertical() << std::endl;
-     printDgnssStationIds(locationInfo->getDgnssStationIds());
-     std::cout << "Baseline length : " <<
-         locationInfo->getBaselineLength() << std::endl;
-     std::cout << "Age of corrections : " <<
-         locationInfo->getAgeOfCorrections() << std::endl;
-     std::cout << "*************************************************************" << std::endl;
 
      if(isRecordingEnabled_) {
          recordLocationInfo(locationInfo);

@@ -320,9 +320,12 @@ void NAOIpTrigger::startTCPSever() {
                         newClient.socketFd = clientSocket;
                         newClient.runningOnThread = std::thread(
                             [this, clientSocket, &clientDisconnectedPromise]{
-                                listenNewTriggerClient(clientSocket, true);
-
-                                clientDisconnectedPromise.set_value();
+                                try {
+                                    listenNewTriggerClient(clientSocket, true);
+                                    clientDisconnectedPromise.set_value();
+                                } catch(const std::exception& e) {
+                                    LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
+                                }
                             }
                         );
                         newClient.clientDisconnected = clientDisconnectedPromise.get_future();

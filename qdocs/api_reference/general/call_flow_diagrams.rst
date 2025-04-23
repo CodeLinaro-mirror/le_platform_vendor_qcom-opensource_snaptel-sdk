@@ -1606,6 +1606,66 @@ Call flow to set Ethernet data link state
 6. Application brings down the ethernet data link state.
 7. The change in Ethernet data link state (DOWN) is notified to the application.
 
+Call flow to update ETH mode as result of thermal mitigation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_eth_thermal_mitigation_ack.png
+
+On boot-up, ETH will be available as expected e.g., 10G USXGMII.
+
+1. Obtain the instance of the IDataLinkManager in the NAD/local device.
+2. Acquire an instance of IDataLinkManager on the remote/peer device.
+3. Register a listener with the data link manager to receive updates in the local device.
+4. Register a listener on the peer device.
+5. Get ETH capabilities on the peer device.
+6. Provide the remote device's capabilities to be used in evaluating Ethernet mode updates.
+7. Set the peer device's capabilities in the local/NAD device.
+8. When an Ethernet mode update is needed, ETH becomes unavailable and an ETH mode change request is triggered in the local device.
+   For instance, this can happen due to thermal mitigation for high temperatures. At high temperatures, the ETH module recommends using a lower speed as part of thermal mitigation.
+9. The user app passes the recommended ETH mode to the peer device.
+   Interdevice coordination (9,10,15) should be done on a non-ETH communication interface since the Ethernet is unavailable during mode change activity.
+10. Ideally, the peer device agrees to update the ETH mode and sends an acknowledgment to the local device.
+11. The peer device's intention is informed to the local IDataLinkManager
+12. The peer device starts updating its operating mode.
+13. The peer device successfully updates the ETH operating mode.
+14. A listener is invoked if any other client is interested in the ETH mode transition status.
+15. The user app conveys that the peer device has successfully completed the transition to the recommended ETH mode.
+16. The local device receives an update that the peer has completed the ETH mode, allowing it to proceed with the transition to the recommended mode and restore ETH communication.
+17. Upon successful completion of this mode change transaction, all registered listeners are informed about the ETH mode transition status.
+
+Call flow to update ETH mode as result of thermal mitigation nack
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_eth_thermal_mitigation_nack.png
+
+On boot-up, ETH will be available as expected e.g., 10G USXGMII.
+
+1. Obtain the instance of the IDataLinkManager in the NAD/local device.
+2. Acquire an instance of IDataLinkManager on the remote/peer device.
+3. Register a listener with the data link manager to receive updates in the local device.
+4. Register a listener on the peer device.
+5. Get ETH capabilities on the peer device.
+6. Provide the information about the remote device's capability. This will be considered while evaluating Ethernet mode updates.
+7. Set peer device capabilities in local/NAD device.
+8. When an Ethernet mode update is needed, ETH becomes unavailable and an ETH mode change request is triggered in the local device.
+   For instance, this can happen due to thermal mitigation for high temperatures. At high temperatures, the ETH module recommends using a lower speed as part of thermal mitigation.
+9. The user app passes the recommended ETH mode to the peer device.
+   Interdevice coordination (9,10,15) should be done on a non-ETH communication interface since the Ethernet is unavailable during mode change activity.
+10. In an unexpected scenario, the peer device may reject or fail to update the ETH mode.
+11. The local device receives notification of the intention/status of the peer device.
+12. ETH communication remains unavailable, and the listener is invoked with a failed transition status if any client is interested.
+13. Whenever the ETH mode needs to be updated to a different speed, the notification is sent to the user application with the information about the new mode.
+    For instance, this could happen when temperature mitigation is no longer needed
+14. The user app conveys the recommended ETH mode to the peer device (expecting the user app to use an interconnect other than ETH for this communication).
+15. Ideally, the peer device agrees to update the ETH mode and sends an acknowledgement to the local device.
+16. The local device receives notification of the peer device’s intention and becomes ready for the ETH mode update.
+17. The peer device starts updating the operating mode.
+18. The peer device successfully updates the ETH operating mode.
+19. A listener is invoked if any other client is interested in the ETH mode transition status.
+20. The user app informs that the peer device has successfully completed the transition to the recommended ETH mode.
+21. The local device receives an update that the peer has completed the ETH mode, allowing it to proceed with the transition to the recommended mode and restore ETH communication.
+22. Upon successful completion of this mode change transaction, all registered listeners are informed about the ETH mode transition status.
+
 C-V2X
 -----
 

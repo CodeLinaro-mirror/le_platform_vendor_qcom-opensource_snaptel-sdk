@@ -654,7 +654,7 @@ std::shared_ptr<NtnTestApp> init() {
         return nullptr;
     }
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt", "radio"};
     auto rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;

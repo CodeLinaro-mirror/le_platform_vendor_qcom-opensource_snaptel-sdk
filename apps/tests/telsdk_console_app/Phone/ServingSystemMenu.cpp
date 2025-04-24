@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -200,9 +200,19 @@ bool ServingSystemMenu::init() {
              "17", "Request_NR5G_RRC_UTC_Time_Info", {},
              std::bind(&ServingSystemMenu::requestNr5gRrcUtcTimeInfo, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> setHplmnSearchTimeCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "18", "Set_HPLMN_Search_Time", {},
+             std::bind(&ServingSystemMenu::setHplmnSearchTime, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getHplmnSearchTimeCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "19", "Get_HPLMN_Search_Time", {},
+             std::bind(&ServingSystemMenu::getHplmnSearchTime, this,
+                std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "18", "Select_sim_slot", {},
+             "20", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
@@ -210,7 +220,8 @@ bool ServingSystemMenu::init() {
              getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
              getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
              getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
-             setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand};
+             setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand,
+             setHplmnSearchTimeCommand, getHplmnSearchTimeCommand};
 
        if (servingSystemMgrs_.size() > 1) {
           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -738,5 +749,51 @@ void ServingSystemMenu::requestNr5gRrcUtcTimeInfo(std::vector<std::string> userI
       }
    } else {
       std::cout << "\nGet NR5G RRC UTC time request failed \n";
+   }
+}
+
+void ServingSystemMenu::getHplmnSearchTime(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+       uint32_t time = 0;
+       auto error = servingSystemMgr->getHplmnSearchTime(time);
+       if(error == telux::common::ErrorCode::SUCCESS) {
+           std::cout << "\n getHplmnSearchTime is successful \n time : "
+           << time << std::endl;
+        } else {
+            std::cout << "\n getHplmnSearchTime failed, error: " << static_cast<int>(error);
+        }
+    } else {
+      std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::setHplmnSearchTime(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      std::string timeSelection = "";
+      char delimiter = '\n';
+      uint32_t time = 0;
+
+      std::cout << "Enter HPLMN search time(in minutes) :";
+      std::getline(std::cin, timeSelection, delimiter);
+      if (timeSelection.empty()) {
+         std::cout << " HPLMN search time is empty \n";
+         return;
+      }
+      try {
+         time = std::stoul(timeSelection);
+      } catch (const std::exception &e) {
+         std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+         return;
+      }
+      auto error = servingSystemMgr->setHplmnSearchTime(time);
+      if(error == telux::common::ErrorCode::SUCCESS) {
+         std::cout << "\n setHplmnSearchTime is successful \n" << std::endl;
+      } else {
+         std::cout << "\n setHplmnSearchTime failed, error: " << static_cast<int>(error);
+      }
+   } else {
+      std::cout << "ERROR - ServingSystemManger is null \n";
    }
 }

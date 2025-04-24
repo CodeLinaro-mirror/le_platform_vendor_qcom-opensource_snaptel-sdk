@@ -68,6 +68,14 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "getHplmnSearchTime" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setHplmnSearchTime" :
+        {
+            "error" : "SUCCESS"
         }
     }
 }

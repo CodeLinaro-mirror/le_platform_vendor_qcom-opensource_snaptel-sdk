@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -77,7 +77,8 @@ public:
    void requestRFBandCapability(std::vector<std::string> userInput);
    void requestRFBandPref(std::vector<std::string> userInput);
    void setRFBandPref(std::vector<std::string> userInput);
-
+   void setHplmnSearchTime(std::vector<std::string> userInput);
+   void getHplmnSearchTime(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

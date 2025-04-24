@@ -178,6 +178,8 @@
          returns (SetRFBandPreferencesReply) {}
      rpc RequestRFBandCapability (RequestRFBandCapabilityRequest)
          returns (RequestRFBandCapabilityReply) {}
+     rpc GetHplmnSearchTime (GetHplmnSearchTimeRequest) returns (GetHplmnSearchTimeReply) {}
+     rpc SetHplmnSearchTime (SetHplmnSearchTimeRequest) returns (SetHplmnSearchTimeReply) {}
  }
 
  service NetworkSelectionService {
@@ -3202,6 +3204,24 @@ message RequestRFBandCapabilityReply {
     commonStub.Status status = 6;
     int32 delay = 7;
     bool is_callback = 8;
+}
+
+message GetHplmnSearchTimeRequest {
+    int32 phone_id = 1;
+}
+
+message GetHplmnSearchTimeReply {
+    uint32 time = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message SetHplmnSearchTimeRequest {
+    int32 phone_id = 1;
+    uint32 time = 2;
+}
+
+message SetHplmnSearchTimeReply {
+    commonStub.ErrorCode error = 1;
 }
 
 enum ServiceState {

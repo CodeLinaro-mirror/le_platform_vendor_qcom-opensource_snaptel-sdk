@@ -90,5 +90,6 @@ int main(int argc, char *argv[]) {
     } else {
         cout << "Error : request for telux version failed." << endl;
     }
+    deviceInfoManager = nullptr;
     return 0;
 }

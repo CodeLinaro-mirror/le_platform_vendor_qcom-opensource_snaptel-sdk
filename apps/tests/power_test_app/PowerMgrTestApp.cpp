@@ -137,6 +137,7 @@ PowerMgmtTestApp::PowerMgmtTestApp()
 }
 
 PowerMgmtTestApp::~PowerMgmtTestApp() {
+    tcuActivityMgr_ = nullptr;
 }
 
 void PowerMgmtTestApp::onTcuActivityStateUpdate(TcuActivityState tcuState,

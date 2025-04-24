@@ -118,6 +118,7 @@ telux::common::Status ModemConfigurator::init() {
 
 void ModemConfigurator::cleanup() {
     modemConfigManager_->deregisterListener(shared_from_this());
+    modemConfigManager_ = nullptr;
 }
 
 void ModemConfigurator::requestConfigList() {
@@ -426,15 +427,6 @@ void ModemConfigurator::onConfigUpdateStatus(ConfigUpdateStatus status, int slot
 
 void ModemConfigurator::onServiceStatusChange(telux::common::ServiceStatus status) {
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        bool status = modemConfigManager_->isSubsystemReady();
-
-        // If modem config subsystem is not ready, wait for it to be ready
-        if (!status) {
-            std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = modemConfigManager_->onSubsystemReady();
-            // Waiting for modem config subsystem to be ready
-            status = f.get();
-        }
         std::cout << "Modem Config service AVAILABLE" << std::endl;
     }
     if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {

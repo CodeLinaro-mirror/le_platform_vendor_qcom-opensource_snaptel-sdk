@@ -28,7 +28,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /*
@@ -38,8 +38,8 @@
  * 1. Get a PhoneFactory instance.
  * 2. Get a INetworkSelectionManager instance from the PhoneFactory.
  * 3. Wait for the network selection manager service to become available.
- * 4. Set LTE cell to dubious.
- * 5. Set NR cell to dubious.
+ * 4. Set LTE cells to dubious.
+ * 5. Set NR cells to dubious.
  * 7. Deinit app.
  *
  * Usage:
@@ -99,34 +99,36 @@ class SmartNetworkSelectionApp : public telux::tel::INetworkSelectionListener,
         return 0;
     }
 
-    int userInputForLteCell(telux::tel::LteDubiousCellInfo &lteDbCellInfo) {
-        telux::tel::DubiousCellInfo dbCellInfo;
-        dbCellInfo.mcc   = "10";
-        dbCellInfo.mnc   = "11";
-        dbCellInfo.arfcn = 2;
-        dbCellInfo.pci   = 10;
-        dbCellInfo.activeBand    = telux::tel::RFBand::E_UTRA_OPERATING_BAND_1;
-        dbCellInfo.causeCodeMask = std::bitset<32>(
+    int userInputForLteCell(std::vector<telux::tel::LteDubiousCell> &lteDbCellInfoList) {
+        telux::tel::LteDubiousCell lteDbCellInfo;
+        lteDbCellInfo.ci.mcc   = "10";
+        lteDbCellInfo.ci.mnc   = "11";
+        lteDbCellInfo.ci.arfcn = 2;
+        lteDbCellInfo.ci.pci   = 10;
+        lteDbCellInfo.ci.activeBand    = telux::tel::RFBand::E_UTRA_OPERATING_BAND_1;
+        lteDbCellInfo.ci.causeCodeMask = std::bitset<32>(
                 telux::tel::DubiousCellCauseCode::DUBIOUS_CELL_CAUSE_CEF);
         lteDbCellInfo.cgi = 25;
+        lteDbCellInfoList.push_back(lteDbCellInfo);
         return 0;
     }
 
-    int userInputForNrCell(telux::tel::NrDubiousCellInfo &nrDbCellInfo) {
-        telux::tel::DubiousCellInfo dbCellInfo;
-        dbCellInfo.mcc   = "11";
-        dbCellInfo.mnc   = "12";
-        dbCellInfo.arfcn = 422001;
-        dbCellInfo.pci   = 10;
-        dbCellInfo.activeBand    = telux::tel::RFBand::NR5G_BAND_1;
-        dbCellInfo.causeCodeMask = std::bitset<32>(
+    int userInputForNrCell(std::vector<telux::tel::NrDubiousCell> &nrDbCellInfoList) {
+        telux::tel::NrDubiousCell nrDbCellInfo;
+        nrDbCellInfo.ci.mcc   = "11";
+        nrDbCellInfo.ci.mnc   = "12";
+        nrDbCellInfo.ci.arfcn = 422001;
+        nrDbCellInfo.ci.pci   = 10;
+        nrDbCellInfo.ci.activeBand    = telux::tel::RFBand::NR5G_BAND_1;
+        nrDbCellInfo.ci.causeCodeMask = std::bitset<32>(
                 telux::tel::DubiousCellCauseCode::DUBIOUS_CELL_CAUSE_RLF);
         nrDbCellInfo.cgi = 26;
         nrDbCellInfo.spacing = telux::tel::NrSubcarrierSpacing::SCS_15;
+        nrDbCellInfoList.push_back(nrDbCellInfo);
         return 0;
     }
 
-    int setLteDubiousCell(const  telux::tel::LteDubiousCellInfo &params) {
+    int setLteDubiousCell(const std::vector<telux::tel::LteDubiousCell> &params) {
         auto errCode = nwSelectionMgr_->setLteDubiousCell(params);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
             std::cout << "Can't set LTE dubious cell params, err " <<
@@ -138,7 +140,7 @@ class SmartNetworkSelectionApp : public telux::tel::INetworkSelectionListener,
         return 0;
     }
 
-    int setNrDubiousCell(const telux::tel::NrDubiousCellInfo &params) {
+    int setNrDubiousCell(const std::vector<telux::tel::NrDubiousCell> &params) {
         auto errCode = nwSelectionMgr_->setNrDubiousCell(params);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
             std::cout << "Can't set NR dubious cell params, err " <<
@@ -170,8 +172,8 @@ int main(int argc, char *argv[]) {
 
     int ret,slotId;
     std::shared_ptr<SmartNetworkSelectionApp> app;
-    telux::tel::LteDubiousCellInfo lteDbCellInfo;
-    telux::tel::NrDubiousCellInfo nrDbCellInfo;
+    std::vector<telux::tel::LteDubiousCell> lteDbCellInfoList;
+    std::vector<telux::tel::NrDubiousCell> nrDbCellInfoList;
 
     if (argc != 2) {
         std::cout << "./smart_network_selection_app <SlotId>" << std::endl;
@@ -198,25 +200,25 @@ int main(int argc, char *argv[]) {
     }
 
     /** Step - 2 */
-    ret = app->userInputForLteCell(lteDbCellInfo);
+    ret = app->userInputForLteCell(lteDbCellInfoList);
     if (ret < 0) {
         return ret;
     }
 
     /** Step - 3 */
-    ret = app->setLteDubiousCell(lteDbCellInfo);
+    ret = app->setLteDubiousCell(lteDbCellInfoList);
     if (ret < 0) {
         return ret;
     }
 
     /** Step - 4 */
-    ret = app->userInputForNrCell(nrDbCellInfo);
+    ret = app->userInputForNrCell(nrDbCellInfoList);
     if (ret < 0) {
         return ret;
     }
 
     /** Step - 5 */
-    ret = app->setNrDubiousCell(nrDbCellInfo);
+    ret = app->setNrDubiousCell(nrDbCellInfoList);
     if (ret < 0) {
         return ret;
     }

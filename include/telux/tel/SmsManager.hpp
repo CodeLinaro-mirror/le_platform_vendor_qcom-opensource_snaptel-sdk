@@ -126,8 +126,7 @@ enum class DeleteType {
  */
 enum class StorageType {
    UNKNOWN = -1,     /**< Unknown storage type */
-   NONE,             /**< This indicates SMS not stored on any of storage and is directly
-                          notified to client. This is the default storage type */
+   NONE,             /**< This indicates SMS not stored on any of storage and is directly notified to client. This is the default storage type */
    SIM,              /**< This indicates SMS is stored on SIM */
 };
 
@@ -135,16 +134,9 @@ enum class StorageType {
  * @brief Specify delete information used for deleting message on storage.
  */
 struct DeleteInfo {
-   DeleteType delType;         /**< Specifies the type of delete operation to be performed */
-   SmsTagType tagType;         /**< 1.If SMS tag type is set to @ref telux::tel::SmsTagType::UNKNOWN
-                                      and delType is set to @ref telux::tel::DeleteType::DELETE_ALL
-                                      then all messages on the storage would be deleted.
-                                    2.To delete all messages of a particular tag, set tagType to the
-                                      particular tag like @ref telux::tel::SmsTagType::MT_READ and
-                                      delType to @ref telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG
-                                      */
-   uint32_t msgIndex;          /**< To delete message at specific index, specify msgIndex and
-                                    delType as @ref telux::tel::DeleteType::DELETE_MSG_AT_INDEX*/
+    DeleteType delType; /**< Specifies the type of delete operation to be performed */
+    SmsTagType tagType; /**< 1. If SMS tag type is set to @ref telux::tel::SmsTagType::UNKNOWN and delType is set to @ref telux::tel::DeleteType::DELETE_ALL then all messages on the storage would be deleted.\n 2. To delete all messages of a particular tag, set tagType to the particular tag like @ref telux::tel::SmsTagType::MT_READ and delType to @ref telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG */
+    uint32_t msgIndex;  /**< To delete message at specific index, specify msgIndex and delType as @ref telux::tel::DeleteType::DELETE_MSG_AT_INDEX */
 };
 
 /**
@@ -176,9 +168,7 @@ using PduBuffer = std::vector<uint8_t>;
  */
 
 struct MessagePartInfo {
-   uint16_t refNumber;                     /**< Concatenated message reference number as per spec
-                                           3GPP TS 23.040 9.2.3.24.1. For each part of multipart
-                                           message this message reference will be the same */
+   uint16_t refNumber;                     /**< Concatenated message reference number as per spec 3GPP TS 23.040 9.2.3.24.1. For each part of multipart message this message reference will be the same */
    uint8_t numberOfSegments;               /**< Number of segments */
    uint8_t segmentNumber;                  /**< Segment Number */
 
@@ -275,15 +265,12 @@ private:
    std::string sender_;                                  /**< Originating address (sender) */
    std::string receiver_;                                /**< Destination address (receiver) */
    SmsEncoding encoding_;                                /**< Encoding of the SMS message */
-   std::string pdu_;                                     /**< Raw PDU content. This is
-                                                              deprecated use rawPdu_ */
+   std::string pdu_;                                     /**< Raw PDU content. This is deprecated use rawPdu_ */
    PduBuffer rawPdu_;                                    /**< Raw PDU content */
    std::shared_ptr<MessagePartInfo> msgPartInfo_;        /**< Information related to part of
                                                               multi-part message */
-   bool isMetaInfoValid_;                                /**< If true meta information is valid
-                                                              otherwise not */
-   SmsMetaInfo metaInfo_;                                /**< Meta information related to SMS
-                                                              stored on SIM */
+   bool isMetaInfoValid_;                                /**< If true meta information is valid otherwise not */
+   SmsMetaInfo metaInfo_;                                /**< Meta information related to SMS stored on SIM */
 };
 
 /**

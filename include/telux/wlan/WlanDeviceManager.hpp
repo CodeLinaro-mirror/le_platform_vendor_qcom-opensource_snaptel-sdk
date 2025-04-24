@@ -73,8 +73,7 @@ struct RegulatoryParams {
     std::string         country;     /**< Country code according to ISO 3166 alpha-2 standard     */
     float               opChannel;   /**< Operating channel according to IEEE 802.11 Standards    */
     std::vector<float>  opClass;     /**< Operating class according to IEEE 802.11 Standards      */
-    uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts
-                                          Actual transmit power = value set here * 100 milliwatts */
+    uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts Actual transmit power = value set here * 100 milliwatts */
 };
 
 /** @addtogroup telematics_wlan

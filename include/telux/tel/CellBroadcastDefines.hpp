@@ -104,14 +104,10 @@ enum class EtwsWarningType {
  * Defines message class for CMAS cell broadcast message.
  */
 enum class CmasMessageClass {
-   UNKNOWN = -1,                       /**< CMAS category for warning types that
-                                          are reserved for future extension */
-   PRESIDENTIAL_LEVEL_ALERT = 0,       /**< Presidential-level alert
-                                          (Korean Public Alert System Class 0 message) */
-   EXTREME_THREAT = 1,                 /**< Extreme threat to life and property
-                                          (Korean Public Alert System Class 1 message)*/
-   SEVERE_THREAT = 2,                  /**< Severe threat to life and property
-                                         (Korean Public Alert System Class 1 message). */
+   UNKNOWN = -1,                       /**< CMAS category for warning types that are reserved for future extension */
+   PRESIDENTIAL_LEVEL_ALERT = 0,       /**< Presidential-level alert (Korean Public Alert System Class 0 message) */
+   EXTREME_THREAT = 1,                 /**< Extreme threat to life and property (Korean Public Alert System Class 1 message)*/
+   SEVERE_THREAT = 2,                  /**< Severe threat to life and property (Korean Public Alert System Class 1 message). */
    CHILD_ABDUCTION_EMERGENCY = 3,      /**< Child abduction emergency (AMBER Alert) */
    REQUIRED_MONTHLY_TEST = 4,          /**< CMAS test message */
    CMAS_EXERCISE = 5,                  /**< CMAS exercise */

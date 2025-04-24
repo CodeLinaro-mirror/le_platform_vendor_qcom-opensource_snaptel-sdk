@@ -62,17 +62,17 @@ using EthModes = uint32_t;
  * Link mode update request status.
  */
 enum class LinkModeChangeStatus {
-    UNKNOWN         = 0,        /** Unknown status */
-    ACCEPTED        = 1,        /** Request accepted */
-    COMPLETED       = 2,        /** Successfully completed */
-    FAILED          = 3,        /** Request failed */
-    REJECTED        = 4,        /** Request rejected */
-    TIMEOUT         = 5         /** Timed-out */
+    UNKNOWN         = 0,        /**< Unknown status */
+    ACCEPTED        = 1,        /**< Request accepted */
+    COMPLETED       = 2,        /**< Successfully completed */
+    FAILED          = 3,        /**< Request failed */
+    REJECTED        = 4,        /**< Request rejected */
+    TIMEOUT         = 5         /**< Timed-out */
 };
 
 /** Provides Ethernet link capability */
 struct EthCapability {
-    EthModes ethModes;       /** Bitmask containing EthModeType bits */
+    EthModes ethModes;       /**< Bitmask containing EthModeType bits */
 };
 
 

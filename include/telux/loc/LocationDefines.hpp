@@ -2708,9 +2708,9 @@ struct XtraStatus {
 
 /** Enum of all the possible indications invoked by a Location Configurator listener.  */
 enum LocConfigIndicationsType {
-    /**< Register to receive Xtra status updates. */
+    /** Register to receive Xtra status updates. */
     LOC_CONF_IND_XTRA_STATUS = 0,
-    /**< Register to receive Gnss signal updates. */
+    /** Register to receive Gnss signal updates. */
     LOC_CONF_IND_SIGNAL_UPDATE
 };
 

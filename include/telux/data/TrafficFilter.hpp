@@ -17,14 +17,9 @@ namespace data {
  * @brief Specifies the data path through the various internal components.
  */
 enum class DataPath {
-    TETHERED_TO_WAN_HW = 0, /** Data flow between clients tethered to the NAD over ethernet and the
-                                WAN interface using hardware acceleration.
-                                Data path: Eth <=> IPA <=> Modem <=> WAN */
-    TETHERED_TO_APPS_SW,    /** Data flows between clients tethered to the NAD over ethernet and
-                                software running on the application processor using a software path.
-                                Data path: Eth <=> Apps Processor */
-    APPS_TO_WAN             /** Data flow between the application processor and WAN.
-                                Data path: Apps Processor <=> WAN */
+    TETHERED_TO_WAN_HW = 0, /**< Data flow between clients tethered to the NAD over ethernet and the WAN interface using hardware acceleration. Data path: Eth <=> IPA <=> Modem <=> WAN */
+    TETHERED_TO_APPS_SW,    /**< Data flows between clients tethered to the NAD over ethernet and software running on the application processor using a software path. Data path: Eth <=> Apps Processor */
+    APPS_TO_WAN             /**< Data flow between the application processor and WAN. Data path: Apps Processor <=> WAN */
 };
 
 /**

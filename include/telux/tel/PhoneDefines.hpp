@@ -403,8 +403,8 @@ using VoiceServiceTechnologiesMask = std::bitset<16>;
  * Structure contains slotID and RAT capabilities corresponding to slot.
  */
 struct SimRatCapability {
-   int slotId;
-   RATCapabilitiesMask capabilities;
+   int slotId;  /**< Number of slotid's */
+   RATCapabilitiesMask capabilities;  /**< This field indicates RATCapabilitiesMask */
 };
 
 /**
@@ -416,22 +416,11 @@ using DeviceRatCapability = SimRatCapability;
  * Structure contains information about device capability.
  */
 struct CellularCapabilityInfo {
-   VoiceServiceTechnologiesMask voiceServiceTechs;   /**<Indicates voice support
-                                                     capabilities */
-   int simCount;                                     /**<The maximum number of SIMs that can be
-                                                      supported simultaneously */
-   int maxActiveSims;                                /**< The maximum number of SIMs that can be
-                                                     simultaneously active. If this number is less than
-                                                     numberofSims, it implies that any combination
-                                                     of the SIMs can be active and the
-                                                     remaining can be in standby. */
-   std::vector<SimRatCapability> simRatCapabilities; /**< A Sim inserted in a slot allows for
-                        certain rat capabilities. And the UE's HW allows for certain rat
-                        capabilities. This field lists the intersection of capabilities allowed by
-                        the Sim and the HW. The capabilities are indexed based on slotId. */
-   std::vector<DeviceRatCapability> deviceRatCapability; /**< This field lists the Rat capabilities
-                        supported by the HW on a given Sim slot. The capabilities are indexed
-                        based on slotId. */
+    VoiceServiceTechnologiesMask voiceServiceTechs;  /**< Indicates voice support capabilities */
+    int simCount;                                    /**< The maximum number of SIMs that can be supported simultaneously */
+    int maxActiveSims;                               /**< The maximum number of SIMs that can be simultaneously active. If this number is less than numberofSims, it implies that any combination of the SIMs can be active and the remaining can be in standby. */
+    std::vector<SimRatCapability> simRatCapabilities; /**< A Sim inserted in a slot allows for certain rat capabilities. And the UE's HW allows for certain rat capabilities. This field lists the intersection of capabilities allowed by the Sim and the HW. The capabilities are indexed based on slotId. */
+    std::vector<DeviceRatCapability> deviceRatCapability; /**< This field lists the Rat capabilities supported by the HW on a given Sim slot. The capabilities are indexed based on slotId. */
 };
 
 /**
@@ -515,10 +504,8 @@ enum class SignalStrengthMeasurementType {
  * @deprecated Use the thresholdList field from SignalStrengthConfigData.
  */
 struct SignalStrengthThreshold {
-   int32_t lowerRangeThreshold;     /**< Lower threshold for the selected
-                                         radio technology. */
-   int32_t upperRangeThreshold;     /**< Upper threshold for the selected
-                                         radio technology. */
+   int32_t lowerRangeThreshold;     /**< Lower threshold for the selected radio technology. */
+   int32_t upperRangeThreshold;     /**< Upper threshold for the selected radio technology. */
 };
 
 /**
@@ -542,10 +529,8 @@ struct SignalStrengthConfig {
 struct PlmnInfo {
    std::string longName;               /**< Represents long Name for Network */
    std::string shortName;              /**< Represents short Name for Network */
-   std::string plmn;                   /**< Represents PLMN code for Network, consists of a MCC
-                                            and MNC.  */
-   telux::common::BoolValue isHome;    /**< Represents whether the network is the home network,
-                                            default state is STATE_UNKNOWN*/
+   std::string plmn;                   /**< Represents PLMN code for Network, consists of a MCC and MNC.  */
+   telux::common::BoolValue isHome;    /**< Represents whether the network is the home network, default state is STATE_UNKNOWN */
 };
 
 /**
@@ -559,10 +544,7 @@ struct SignalStrengthConfigData {
       struct {
          std::array<int32_t, THRESHOLD_LIST_MAX> thresholdList;
                                                     /**< Signal strength threshold list. */
-         uint16_t hysteresisDb = 0;                 /**< (Optional) Signal strength hysteresis
-                                                         delta; note hysteresis db is not
-                                                         mandatory but hystersis db requires that
-                                                         the threshold list is specified. */
+         uint16_t hysteresisDb = 0;                 /**< (Optional) Signal strength hysteresis delta; note hysteresis db is not mandatory but hystersis db requires that the threshold list is specified. */
       };
    };
 };
@@ -571,11 +553,7 @@ struct SignalStrengthConfigData {
  * Defines the signal strength notification configuration parameters.
  */
 struct SignalStrengthConfigEx {
-   SignalStrengthConfigMask configTypeMask;             /**< Signal strength configuration mask.
-                                                             Both delta and threshold can't be sent
-                                                             in single request. Hysteresis db is
-                                                             applicable only when threshold is
-                                                             configured. */
+   SignalStrengthConfigMask configTypeMask;             /**< Signal strength configuration mask. Both delta and threshold can't be sent in single request. Hysteresis db is applicable only when threshold is configured. */
    RadioTechnology radioTech;                           /**< Radio technology. */
    std::vector<SignalStrengthConfigData> sigConfigData; /**< Signal strength data. */
 };

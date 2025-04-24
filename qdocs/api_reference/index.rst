@@ -7,7 +7,7 @@ Qualcomm Telematics SDK API Reference
 
 .. danger::
    This page is blank except the TOC because the contents of it are removed by the 
-   qdocs transformation. 
+   qdocs transformation.
 
 
 .. toctree::

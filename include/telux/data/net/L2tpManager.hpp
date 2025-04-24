@@ -99,8 +99,8 @@ class IL2tpListener;
  * L2TP session binding to backhaul configuration.
  */
 struct L2tpSessionBindConfig {
-    uint32_t locId;                 /** Local ID of session to be bound to the specified backhaul */
-    BackhaulInfo bhInfo;            /**< Configuration of backhaul to bind L2TP session to        */
+    uint32_t locId;                 /**< Local ID of session to be bound to the specified backhaul */
+    BackhaulInfo bhInfo;            /**< Configuration of backhaul to bind L2TP session*/
 };
 
 /**

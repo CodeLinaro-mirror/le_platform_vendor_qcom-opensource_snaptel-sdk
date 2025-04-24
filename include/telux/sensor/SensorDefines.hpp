@@ -264,12 +264,12 @@ struct SensorConfiguration {
  * @brief Euler angles for a sensor.
  */
 struct EulerAngleConfig {
-    /* rotation around Y [0 , 360] degrees, Positive counter-clockwise. */
     float roll;
-    /* rotation around X [0 , 360] degrees, Positive counter-clockwise. */
+    /**< rotation around Y [0 , 360] degrees, Positive counter-clockwise. */
     float pitch;
-    /* rotation around Z [0 , 360] degrees, Positive counter-clockwise. */
+    /**< rotation around X [0 , 360] degrees, Positive counter-clockwise. */
     float yaw;
+    /**< rotation around Z [0 , 360] degrees, Positive counter-clockwise. */
 };
 
 /**

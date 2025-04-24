@@ -115,21 +115,8 @@ struct ExternalApInfo{
     std::string ssid;               /**< SSID of external AP                          */
     std::string bssid;              /**< BSSID/MAC address of external AP             */
     BandType    band;               /**< Operation band type                          */
-    std::string securityFlags;      /**< Describes the authentication, key management,
-                                         and encryption schemes supported by the
-                                         external access point.
-                                         Below is an example format of the string,
-                                         indicating that the external AP network
-                                         utilizes WPA2 for authentication. PSK denotes
-                                         the key management method, while CCMP specifies
-                                         the encryption protocol employed.
-                                         ESS signifies that the network operates in
-                                         standard infrastructure mode.
-                                         Example: [WPA2-PSK-CCMP][ESS]                */
-    int16_t    signalStrength;      /**< The detected signal level, measured in dBm and
-                                         referred to as RSSI, ranges from -100 dBm for
-                                         the weakest signal to 0 dBm for the strongest
-                                         possible signal strength  */
+    std::string securityFlags;      /**< Describes the authentication, key management, and encryption schemes supported by the external access point. Below is an example format of the string, indicating that the external AP network utilizes WPA2 for authentication. PSK denotes the key management method, while CCMP specifies the encryption protocol employed. ESS signifies that the network operates in standard infrastructure mode. Example: [WPA2-PSK-CCMP][ESS]                */
+    int16_t    signalStrength;      /**< The detected signal level, measured in dBm and referred to as RSSI, ranges from -100 dBm for the weakest signal to 0 dBm for the strongest possible signal strength  */
 };
 
 
@@ -138,17 +125,9 @@ struct ExternalApInfo{
  */
 struct StaScanResult {
     Id                             staId;            /**< Id of station backhaul                 */
-    std::vector<ExternalApInfo>    externalApList;   /**< List of scanned External Access point
-                                                          details                                */
-    uint8_t                        batchIndex;       /**< This value serves as the order index
-                                                          for the batched scan results.
-                                                          Batching is performed when the number
-                                                          of APs in the scan results exceeds the
-                                                          capacity of a single batch, the details
-                                                          are communicated through multiple
-                                                          indications. i.e. in batches           */
-    bool                           isScanComplete;   /**< Indicates this scan result is the last
-                                                          of the batches.                        */
+    std::vector<ExternalApInfo>    externalApList;   /**< List of scanned External Access point details                                */
+    uint8_t                        batchIndex;       /**< This value serves as the order index for the batched scan results. Batching is performed when the number of APs in the scan results exceeds the capacity of a single batch, the details are communicated through multiple indications. i.e. in batches           */
+    bool                           isScanComplete;   /**< Indicates this scan result is the last of the batches.                        */
 };
 
 /** @addtogroup telematics_wlan_station

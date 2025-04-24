@@ -120,36 +120,36 @@ enum class OperationType {
  * Represents a point on an elliptic curve.
  */
 struct ECCPoint {
-    /* X-coordinate */
     uint8_t *x;
-    /* Length of X-coordinate in little endian order */
+    /**< X-coordinate */
     size_t xLength;
-    /* Y-coordinate */
+    /**< Length of X-coordinate in little endian order */
     uint8_t *y;
-    /* Length of Y-coordinate in little endian order */
+    /**< Y-coordinate */
     size_t yLength;
+    /**< Length of Y-coordinate in little endian order */
 };
 
 /**
  * Represents digest of the data whose signature is to be verified.
  */
 struct DataDigest {
-    /* Digest of the data to be processed in little endian order */
     uint8_t *digest;
-    /* Length of the digest */
+    /**< Digest of the data to be processed in little endian order */
     size_t digestLength;
+    /**< Length of the digest */
 };
 
 /**
  * Represents signature of the digest to be verified.
  */
 struct Signature {
-    /* The r-component of the signature {r,s} in little endian order */
     uint8_t *rSignature;
-    /* The s-component of the signature {r,s} in little endian order */
+    /**< The r-component of the signature {r,s} in little endian order */
     uint8_t *sSignature;
-    /* Length of the signature {r,s} */
+    /**< The s-component of the signature {r,s} in little endian order */
     size_t rsLength;
+    /**< Length of the signature {r,s} */
 };
 
 /**

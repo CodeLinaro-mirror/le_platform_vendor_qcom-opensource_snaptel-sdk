@@ -181,7 +181,7 @@ struct CongestionControlCalculations {
     bool sendCriticalMsg;
     /** Alert the user to send at this moment */
     bool sendNow;
-    /**  New priority for the next packet sent OTA *  */
+    /**  New priority for the next packet sent OTA  */
     uint64_t priority;
     /** New transmit power */
     uint64_t txPower;

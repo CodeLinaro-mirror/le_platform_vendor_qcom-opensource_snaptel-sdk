@@ -88,9 +88,9 @@ enum class NetworkType {
  * Specifies operation
  */
 enum class Operation {
-    UNKNOWN = -1,    /** UNKNOWN operation */
-    DISABLE = 0,     /** DISABLE operation */
-    ENABLE  = 1,     /** ENABLE operation  */
+    UNKNOWN = -1,    /**< UNKNOWN operation */
+    DISABLE = 0,     /**< DISABLE operation */
+    ENABLE  = 1,     /**< ENABLE operation  */
 };
 
 /**
@@ -125,8 +125,8 @@ enum class DataRestrictModeType {
 /* Specifies the link state
  */
 enum class LinkState {
-   UP   = 1,   /** link is UP   */
-   DOWN = 2,   /** link is DOWN */
+   UP   = 1,   /**< link is UP   */
+   DOWN = 2,   /**< link is DOWN */
 };
 
 /**
@@ -134,15 +134,16 @@ enum class LinkState {
  * @ref DataRestrictModeType
  */
 struct DataRestrictMode {
-    DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
-                                          data packets will be forwarded from modem to the apps.
-                                          When enabled only the data matching the filters will be
-                                          forwarded from modem to the apps. */
-    DataRestrictModeType filterAutoExit; /**< Disable or enable autoexit feature. When enabled, once
-                                              an incoming packet matching the filter is received,
-                                              filter mode will we disable automatically and any
-                                            packet
-                                              will be allowed to be forwarded from modem to apps.*/
+    DataRestrictModeType filterMode; 
+   /**< Disable or enable data filter mode. When disabled all the
+        data packets will be forwarded from modem to the apps.
+        When enabled only the data matching the filters will be 
+        forwarded from modem to the apps. */
+    DataRestrictModeType filterAutoExit; 
+     /**< Disable or enable autoexit feature. When enabled, once
+          an incoming packet matching the filter is received,
+          filter mode will we disable automatically and any
+          packet will be allowed to be forwarded from modem to apps.*/
 };
 
 /**
@@ -204,10 +205,8 @@ struct ProfileParams {
     std::string apn;                                         /**< APN name */
     std::string userName;                                    /**< APN user name (if any) */
     std::string password;                                    /**< APN password (if any) */
-    TechPreference techPref = TechPreference::UNKNOWN;       /**< Technology preference,
-                                            default is TechPreference::UNKNOWN */
-    AuthProtocolType authType = AuthProtocolType::AUTH_NONE; /**< Authentication protocol type,
-                                      default is AuthProtocolType::AUTH_NONE */
+    TechPreference techPref = TechPreference::UNKNOWN;       /**< Technology preference, default is TechPreference::UNKNOWN */
+    AuthProtocolType authType = AuthProtocolType::AUTH_NONE; /**< Authentication protocol type, default is AuthProtocolType::AUTH_NONE */
     IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN;       /**< Preferred IP family for the call,
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
@@ -413,28 +412,18 @@ enum class IpAssignOperation {
  * Specifies IP configuration parameters
  */
 struct IpConfigParams {
-    InterfaceType ifType;                              /** Interfaces (i.e. ETH, ECM and RNDIS) */
-    IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN; /** Preferred IP family, default is
-                                                           IpFamilyType::UNKNOWN */
-    uint32_t vlanId = -1;                              /** Vlan ID should be provided only if vlan
-                                                           is treated as backhaul. e.g. if the
-                                                           backhaul is Vlan over Ethernet (ETH) with
-                                                           Vlan ID 4, Vlan ID should be set to 4 and
-                                                           interface type should be set to ETH */
+    InterfaceType ifType;                              /**< Interfaces (i.e. ETH, ECM and RNDIS) */
+    IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN; /**< Preferred IP family, default is IpFamilyType::UNKNOWN */
+    uint32_t vlanId = -1;                              /**< Vlan ID should be provided only if vlan is treated as backhaul. e.g. if the backhaul is Vlan over Ethernet (ETH) with Vlan ID 4, Vlan ID should be set to 4 and interface type should be set to ETH */
 };
 
 /**
  * Specifies WAN config
  */
 struct IpConfig {
-    IpAssignType ipType;      /** IP type assignment,
-                                  STATIC_IP:  STATIC IP assignment
-                                  DYNAMIC_IP: DYNAMIC IP assignment */
-    IpAssignOperation ipOpr;  /** IP assign operation,
-                                  DISABLE: if @ref telux::data::DataCallStatus::NET_NO_NET
-                                  ENABLE:  if @ref telux::data::DataCallStatus::NET_CONNECTED
-                                  RECONFIG: if @ref telux::data::DataCallStatus::NET_RECONFIGURED */
-    IpAddrInfo ipAddr;        /** IP configuration, needed only for STATIC type IP */
+    IpAssignType ipType;      /**< IP type assignment, STATIC_IP:  STATIC IP assignment DYNAMIC_IP: DYNAMIC IP assignment */
+    IpAssignOperation ipOpr;  /**< IP assign operation, DISABLE: if @ref telux::data::DataCallStatus::NET_NO_NET ENABLE:  if @ref telux::data::DataCallStatus::NET_CONNECTED RECONFIG: if @ref telux::data::DataCallStatus::NET_RECONFIGURED */
+    IpAddrInfo ipAddr;        /**< IP configuration, needed only for STATIC type IP */
 };
 
 /**
@@ -452,11 +441,9 @@ struct VlanConfig {
     InterfaceType iface;       /**< PHY interfaces (i.e. ETH, ECM and RNDIS)                     */
     int16_t vlanId;            /**< Vlan identifier (i.e 1-4094)                                 */
     bool isAccelerated;        /**< is acceleration allowed                                      */
-    uint8_t priority = 0;      /**< Vlan priority - A 3-bit field which refers to the IEEE 802.1p
-                                    class of service to traffic priority level. Don't care = 0   */
+    uint8_t priority = 0;      /**< Vlan priority - A 3-bit field which refers to the IEEE 802.1p class of service to traffic priority level. Don't care = 0   */
     NetworkType nwType = NetworkType::LAN;        /**< Network type */
-    bool createBridge = true;                     /**< TRUE:  create VLAN with bridge,
-                                                       FALSE: create VLAN without bridge */
+    bool createBridge = true;                     /**< TRUE:  create VLAN with bridge, FALSE: create VLAN without bridge */
 };
 
 /**
@@ -497,9 +484,9 @@ struct FlowDataRate {
  * Specifies QOS IP Flow parameter mask
  */
 enum QosIPFlowMaskType {
-    MASK_IP_FLOW_NONE = 0,                        /** No parameters set  */
-    MASK_IP_FLOW_TRF_CLASS = 1,                   /** Traffic class */
-    MASK_IP_FLOW_DATA_RATE_MIN_MAX = 2,           /** Data rate min/max */
+    MASK_IP_FLOW_NONE = 0,                        /**< No parameters set  */
+    MASK_IP_FLOW_TRF_CLASS = 1,                   /**< Traffic class */
+    MASK_IP_FLOW_DATA_RATE_MIN_MAX = 2,           /**< Data rate min/max */
 };
 
 /**
@@ -512,8 +499,7 @@ using QosIPFlowMask = std::bitset<16>;
  * QOS Flow IP info
  */
 struct QosIPFlowInfo {
-    QosIPFlowMask mask;                     /**< Valid parameters of QosIPFlowInfo
-                                                 @ref QosIPFlowMaskType */
+    QosIPFlowMask mask;                     /**< Valid parameters of QosIPFlowInfo @ref QosIPFlowMaskType */
     IpTrafficClassType tfClass;             /**< IP Traffic class type @ref IpTrafficClassType */
     FlowDataRate dataRate;                  /**< Flow data rate @ref FlowDataRate */
 };
@@ -522,11 +508,11 @@ struct QosIPFlowInfo {
  * Specifies QOS Flow parameter mask
  */
 enum QosFlowMaskType {
-    MASK_FLOW_NONE = 0,           /** No parameters set  */
-    MASK_FLOW_TX_GRANTED = 1,     /** TX Granted flow set */
-    MASK_FLOW_RX_GRANTED = 2,     /** RX Granted flow set */
-    MASK_FLOW_TX_FILTERS = 3,     /** TX filters set */
-    MASK_FLOW_RX_FILTERS = 4,     /** RX filters set */
+    MASK_FLOW_NONE = 0,           /**< No parameters set  */
+    MASK_FLOW_TX_GRANTED = 1,     /**< TX Granted flow set */
+    MASK_FLOW_RX_GRANTED = 2,     /**< RX Granted flow set */
+    MASK_FLOW_TX_FILTERS = 3,     /**< TX filters set */
+    MASK_FLOW_RX_FILTERS = 4,     /**< RX filters set */
 };
 
 /**
@@ -538,27 +524,18 @@ using QosFlowMask = std::bitset<16>;
 /**
  * Possible DDS switch types.
  */
-enum class DdsType
-{
-    PERMANENT = 0, /** Permanently switch the DDS SIM slot. For example, in DSDS mode this is
-                       intended to be used when the client wants to stop data activities on the
-                       current DDS SIM slot and start doing data activities on the other SIM slot.
-                       Permanent switch is persistent across reboots. */
-    TEMPORARY = 1, /** Temporarily switch the DDS SIM slot. For example, in DSDS mode this is
-                       intended be used when there is a voice call on the non-DDS SIM slot and the
-                       client wants to temporarily perform data activity on that non-DDS SIM slot,
-                       for the duration of the call. After the call ends, clients should do a
-                       permanent switch back to the original DDS SIM. Temporary switch is not
-                       persistent across reboots.*/
+
+enum class DdsType {
+    PERMANENT = 0, /**< Permanently switch the DDS SIM slot. Persistent across reboots; used to stop data on current DDS SIM and start on the other in DSDS mode. */
+    TEMPORARY = 1  /**< Temporarily switch the DDS SIM slot. Not persistent across reboots; used for temporary data activity on non-DDS SIM during a voice call. */
 };
 
 /**
  * Specifies the DDS switch information.
  */
-struct DdsInfo
-{
-    DdsType type;   /** Specifies DDS switch type */
-    SlotId slotId;  /** Specifies which slot is the DDS */
+struct DdsInfo {
+    DdsType type;   /**< Specifies DDS switch type */
+    SlotId slotId;  /**< Specifies which slot is the DDS */
 };
 
 /** @} */ /* end_addtogroup telematics_data */

@@ -89,8 +89,7 @@ using RatMask = std::bitset<16>;
 struct PreferredNetworkInfo {
    uint16_t mcc;    /**< mobile country code */
    uint16_t mnc;    /**< mobile network code */
-   RatMask ratMask; /**< bit mask denotes which of the radio access technologies are
-                         set */
+   RatMask ratMask; /**< bit mask denotes which of the radio access technologies are set */
 };
 
 /**
@@ -176,9 +175,7 @@ enum class NetworkScanType {
  */
 struct NetworkScanInfo {
     NetworkScanType scanType;  /**< Network scan type */
-    RatMask ratMask;           /**< Bit mask denotes which of the radio access technologies are
-                                    set. ratMask is valid/set only when scanType is provided as
-                                    NetworkScanType::USER_SPECIFIED_RAT */
+    RatMask ratMask;           /**< Bit mask denotes which of the radio access technologies are set. ratMask is valid/set only when scanType is provided as NetworkScanType::USER_SPECIFIED_RAT */
 };
 
 /**

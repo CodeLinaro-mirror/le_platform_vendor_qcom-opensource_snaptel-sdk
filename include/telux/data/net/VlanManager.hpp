@@ -96,7 +96,7 @@ namespace net {
 class IVlanListener;
 
 struct VlanBindConfig {
-    int vlanId;                         /** VLAN ID to be bound to the specified backhaul     */
+    int vlanId;                         /**< VLAN ID to be bound to the specified backhaul     */
     BackhaulInfo bhInfo;                /**< Configuration of Backhaul to bind VLAN to        */
 };
 

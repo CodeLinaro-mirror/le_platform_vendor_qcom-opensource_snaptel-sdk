@@ -111,28 +111,21 @@ enum LocationFixRequestReason {
  */
 enum class LocationStatus {
     INVALID               = -1,
-    SUCCESS               = 0,  /** The location fix fetch was successful. */
-    INVALID_ARG           = 1,  /** The location fix fetch failed due to invalid
-                                    location request. */
-    INTERNAL_ERR          = 2,  /** The location fix fetch cannot be started due
-                                    to an internal error */
-    NOT_SUPPORTED         = 3,  /** The location fix cannot be provided due to
-                                    missing external GNSS support or other reasons. */
-    RETRY                 = 4,  /** The location fix request should be retried after
-                                    a given hysteresis time. */
-    FAILED                = 5,  /** The location fix fetch was started but failed. */
+    SUCCESS               = 0,  /**< The location fix fetch was successful. */
+    INVALID_ARG           = 1,  /**< The location fix fetch failed due to invalid location request. */
+    INTERNAL_ERR          = 2,  /**< The location fix fetch cannot be started due to an internal error */
+    NOT_SUPPORTED         = 3,  /**< The location fix cannot be provided due to missing external GNSS support or other reasons. */
+    RETRY                 = 4,  /**< The location fix request should be retried after a given hysteresis time. */
+    FAILED                = 5,  /**< The location fix fetch was started but failed. */
 };
 
 /**
  * Velocity parameters
  */
 struct VelocityInfo {
-  bool isEnuValueValid;             /**<  Indicates if the ENU velocity values
-                                          are valid */
-  float enuVel[MAX_DIMENSIONS];     /**<  Velocity in the Easting, Northing,
-                                          and Upward directions */
-  bool isEnuUncerValid;             /**<  Indicates if the uncertainty in the
-                                          ENU values is valid */
+  bool isEnuValueValid;             /**<  Indicates if the ENU velocity values are valid */
+  float enuVel[MAX_DIMENSIONS];     /**<  Velocity in the Easting, Northing, and Upward directions */
+  bool isEnuUncerValid;             /**<  Indicates if the uncertainty in the ENU values is valid */
   float enuUncer[MAX_DIMENSIONS];   /**<  Uncertainty in ENU values */
 };
 

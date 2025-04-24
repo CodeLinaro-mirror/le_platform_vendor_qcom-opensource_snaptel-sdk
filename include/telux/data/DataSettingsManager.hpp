@@ -30,49 +30,47 @@ class IDataSettingsListener;
  * Set priority between N79 5G and Wlan 5GHz Band
  */
 enum class BandPriority {
-    N79  = 0 ,              /** N79 has higher priority  */
-    WLAN = 1 ,              /** Wlan has higher priority */
+    N79  = 0 ,              /**< N79 has higher priority  */
+    WLAN = 1 ,              /**< Wlan has higher priority */
 };
 
 /**
  * N79 5G/Wlan 5GHz interference avoidance configuration
  */
 struct BandInterferenceConfig {
-    BandPriority priority      ;        /** Priority settings for N79/Wlan 5G                    */
-    uint32_t wlanWaitTimeInSec = 30 ;   /** If Wlan 5GHz has higher priority and suffers signal
+    BandPriority priority      ;        /**< Priority settings for N79/Wlan 5G */
+    uint32_t wlanWaitTimeInSec = 30 ;   /**< If Wlan 5GHz has higher priority and suffers signal
                                             drop, modem will wait for period of time specified here
                                             for Wlan signal to recover before enabeling N79 5G.  */
-    uint32_t n79WaitTimeInSec  = 30 ;   /** If N79 has higher priority and suffers signal drop,
+    uint32_t n79WaitTimeInSec  = 30 ;   /**< If N79 has higher priority and suffers signal drop,
                                             modem will wait for period of time specified here for
                                             N79 5G signal to recover before switching Wlan to
-                                            5GHz.                                                */
+                                            5GHz. */
 };
 
 /**
  * Specifies the IP passthrough parameters.
  */
 struct IpptParams {
-    int profileId  = -1;             /** Profile ID to apply the ippt configuration on */
-    int16_t vlanId = -1;             /** Vlan ID associated with network interface for
-                                         @ref telux::data::IpptDeviceConfig */
-    SlotId slotId = DEFAULT_SLOT_ID; /** Slot ID on which the profile ID is available */
+    int profileId  = -1;             /**< Profile ID to apply the ippt configuration on */
+    int16_t vlanId = -1;             /**< Vlan ID associated with network interface for @ref telux::data::IpptDeviceConfig */
+    SlotId slotId = DEFAULT_SLOT_ID; /**< Slot ID on which the profile ID is available */
 };
 
 /**
  * Specifies the IP passthrough device configuration.
  */
 struct IpptDeviceConfig {
-    InterfaceType nwInterface = InterfaceType::UNKNOWN;  /** Network interface on which peer device
-                                                             is connected */
-    std::string macAddr;                                 /** Device MAC address */
+    InterfaceType nwInterface = InterfaceType::UNKNOWN;  /**< Network interface on which peer device is connected */
+    std::string macAddr;                                 /**< Device MAC address */
 };
 
 /**
  * IP passthrough configuration
  */
 struct IpptConfig {
-    Operation ipptOpr = Operation::UNKNOWN; /** Ippt operation */
-    IpptDeviceConfig devConfig;             /** Ippt device configuration */
+    Operation ipptOpr = Operation::UNKNOWN; /**< Ippt operation */
+    IpptDeviceConfig devConfig;             /**< Ippt device configuration */
 };
 
 /**

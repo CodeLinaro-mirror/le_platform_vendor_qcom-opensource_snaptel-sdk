@@ -80,12 +80,7 @@ using ImsServiceConfigValidity = std::bitset<32>;
  * Defines the selected IMS service configuration parameters and their corresponding value
  */
 struct ImsServiceConfig {
-    ImsServiceConfigValidity configValidityMask;   /**< Indicates the configurations type.
-                                                        Bit set to 1 denotes the config is
-                                                        valid.
-                                                        Example: configValidityMask = 0x01
-                                                        denotes ImsServiceConfig::voImsEnabled has
-                                                        a valid value */
+    ImsServiceConfigValidity configValidityMask;   /**< Indicates the configurations type. Bit set to 1 denotes the config is valid. Example: configValidityMask = 0x01 denotes ImsServiceConfig::voImsEnabled has a valid value */
     bool voImsEnabled;                             /**< Enable/Disable VOIMS service */
     bool imsServiceEnabled;                        /**< Enable/Disable IMS service */
     bool smsEnabled;                               /**< Enable/Disable SMS service */

@@ -153,26 +153,12 @@ struct IccFile {
  */
 enum class SessionType {
     UNKNOWN = -1,               /**< Unknown refresh session type */
-    PRIMARY = 0,                /**< Accesses the USIM application (for UICC) used to
-                                     acquire cellular service network on primary slot. */
-    SECONDARY = 2,              /**< Accesses the USIM application (for UICC) used to
-                                     acquire cellular service network on secondary slot. */
-    NONPROVISIONING_SLOT_1 = 4, /**< Accesses a nonprovisioning application available on
-                                     the UICC in slot 1. The nonprovisioning application
-                                     can be an ISIM or a USIM currently not used to acquire
-                                     the network. The application is specified using the
-                                     AID, as reported via telux::tel::ICardApp::getAppId. */
-    NONPROVISIONING_SLOT_2 = 5, /**< Accesses a nonprovisioning application available on
-                                     the UICC in slot 2. The nonprovisioning application
-                                     can be an ISIM or a USIM currently not used to acquire
-                                     the network. The application is specified using the
-                                     AID, as reported via telux::tel::ICardApp::getAppId. */
-    CARD_ON_SLOT_1 = 6,         /**< Accesses files that are not in any application of the
-                                     card in slot 1. (i.e., to access the global phonebook
-                                     or the EF-DIR). */
-    CARD_ON_SLOT_2 = 7,         /**< Accesses files that are not in any application of the
-                                     card in slot 2. (i.e., to access the global phonebook
-                                     or the EF-DIR). */
+    PRIMARY = 0,                /**< Accesses the USIM application (for UICC) used to acquire cellular service network on primary slot. */
+    SECONDARY = 2,              /**< Accesses the USIM application (for UICC) used to acquire cellular service network on secondary slot. */
+    NONPROVISIONING_SLOT_1 = 4, /**< Accesses a nonprovisioning application available on the UICC in slot 1. The nonprovisioning application can be an ISIM or a USIM currently not used to acquire the network. The application is specified using the AID, as reported via telux::tel::ICardApp::getAppId. */
+    NONPROVISIONING_SLOT_2 = 5, /**< Accesses a nonprovisioning application available on the UICC in slot 2. The nonprovisioning application can be an ISIM or a USIM currently not used to acquire the network. The application is specified using the AID, as reported via telux::tel::ICardApp::getAppId. */
+    CARD_ON_SLOT_1 = 6,         /**< Accesses files that are not in any application of the card in slot 1. (i.e., to access the global phonebook or the EF-DIR). */
+    CARD_ON_SLOT_2 = 7          /**< Accesses files that are not in any application of the card in slot 2. (i.e., to access the global phonebook or the EF-DIR). */
 };
 
 /**
@@ -181,9 +167,7 @@ enum class SessionType {
  */
 struct RefreshParams {
    SessionType sessionType;      /**< Session type */
-   std::string aid;              /**< Application identifier, used for
-                                     telux::tel::SessionType::NONPROVISIONING_SLOT_1 or
-                                     telux::tel::SessionType::NONPROVISIONING_SLOT_2 */
+   std::string aid;              /**< Application identifier, used for telux::tel::SessionType::NONPROVISIONING_SLOT_1 or telux::tel::SessionType::NONPROVISIONING_SLOT_2 */
 };
 
 /**
@@ -191,9 +175,7 @@ struct RefreshParams {
  */
 enum class RefreshStage {
     UNKNOWN = -1,              /**< Unknown refresh stage */
-    WAITING_FOR_VOTES = 0,     /**< Waiting for the refresh action to be voted on.
-                                    At this stage, the modem is awaiting votes from
-                                    all clients participating in the voting process.*/
+    WAITING_FOR_VOTES = 0,     /**< Waiting for the refresh action to be voted on. At this stage, the modem is awaiting votes from all clients participating in the voting process.*/
     STARTING = 1,              /**< Refresh procedure starting. */
     ENDED_WITH_SUCCESS = 2,    /**< Refresh ended successfully */
     ENDED_WITH_FAILURE = 3     /**< Refresh failed */
@@ -204,20 +186,13 @@ enum class RefreshStage {
  */
 enum class RefreshMode {
     UNKNOWN = -1,       /**< Unknown refresh mode. */
-    RESET = 0,          /**< Reset the card and complete UICC initialization procedure
-                             is performed. */
+    RESET = 0,          /**< Reset the card and complete UICC initialization procedure is performed. */
     INIT = 1,           /**< Indicates the initialization of card application.*/
-    INIT_FCN = 2,       /**< Indicates the initialization of card application and the
-                             elementary files(EFs) on the card application has changed. */
-    FCN = 3,            /**< Indicates the elementary files(EFs) on the card application has
-                             changed. */
-    INIT_FULL_FCN = 4,  /**< Combination of both INIT and full FCN, i.e., the card application
-                             is initialized and several elementary files (EFs) have been
-                             changed. */
-    RESET_APP = 5,      /**< Reset UICC application and performs initialization of
-                             application. */
-    RESET_3G = 6        /**< Reset 3G session. This mode is equivalent to INIT_FCN and
-                             additionally some applications procedure are followed at modem. */
+    INIT_FCN = 2,       /**< Indicates the initialization of card application and the elementary files(EFs) on the card application has changed. */
+    FCN = 3,            /**< Indicates the elementary files(EFs) on the card application has changed. */
+    INIT_FULL_FCN = 4,  /**< Combination of both INIT and full FCN, i.e., the card application is initialized and several elementary files (EFs) have been changed. */
+    RESET_APP = 5,      /**< Reset UICC application and performs initialization of application. */
+    RESET_3G = 6        /**< Reset 3G session. This mode is equivalent to INIT_FCN and additionally some applications procedure are followed at modem. */
 };
 
 }  // End of namespace tel

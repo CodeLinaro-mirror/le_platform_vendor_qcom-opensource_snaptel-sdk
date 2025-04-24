@@ -38,6 +38,7 @@ extern "C" {
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -91,6 +92,8 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::setLatencyConfig, this, std::placeholders::_1)),
             std::make_pair("Get_Latency_Config",
             std::bind(&DataSettingsMenu::getLatencyConfig, this, std::placeholders::_1)),
+            std::make_pair("Cleanup_Settings",
+            std::bind(&DataSettingsMenu::cleanupSettings, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -586,4 +589,74 @@ void DataSettingsMenu::getLatencyConfig(std::vector<std::string> inputCommand) {
             std::cout << " Uplink Latency Level: NORMAL" << std::endl;
         }
     }
+}
+
+void DataSettingsMenu::cleanupSettings(std::vector<std::string> inputCommand) {
+    std::cout << "\nCleanup data settings" << std::endl;
+#ifdef FEATURE_EXTERNAL_AP
+    OperationType oprType = telux::data::OperationType::DATA_REMOTE;
+#else
+    OperationType oprType = telux::data::OperationType::DATA_LOCAL;
+#endif
+
+    if (dataSettingsManagerMap_.find(oprType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    char delimiter = '\n';
+    std::string cleanupTypes = "";
+    telux::data::CleanupConfigTypes cleanupTypeMask = 0;
+    std::cout << "Available Cleanup Types: " << std::endl;
+    for (int i = 0; i <= 1; ++i) {
+        telux::data::CleanupConfigType cleanupType = static_cast<telux::data::CleanupConfigType>(i);
+        std::cout << i << " - " << cleanupTypeToString(cleanupType) << std::endl;
+    }
+
+    std::cout << "Please specify the cleanup types required\n(e.g., enter 0,1 for WWAN Cache and"
+        " VLAN Bindings): ";
+    std::getline(std::cin, cleanupTypes, delimiter);
+
+    std::stringstream ss(cleanupTypes);
+    int i = -1;
+    while(ss >> i) {
+        if(i >= 0 && i <= 1) {
+            cleanupTypeMask.set(i);
+            if(ss.peek() == ',' || ss.peek() == ' ')
+                ss.ignore();
+        } else {
+            std::cout << "ERROR: invalid input please retry with valid input";
+            return;
+        }
+    }
+
+    telux::common::Status status = telux::common::Status::FAILED;
+    CleanupConfig cleanupConfig;
+    cleanupConfig.mask = cleanupTypeMask;
+    cleanupConfig.slotId = static_cast<SlotId>(slotId);
+
+    telux::common::ErrorCode errCode;
+    errCode = dataSettingsManagerMap_[oprType]->cleanupSettings(cleanupConfig);
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+}
+
+std::string DataSettingsMenu::cleanupTypeToString(telux::data::CleanupConfigType cleanupType) {
+    std::string mode ="";
+    switch(cleanupType) {
+        case telux::data::CleanupConfigType::CLEANUP_CONFIG_WWAN_PROFILE_CACHE:
+            mode = " CLEANUP_CONFIG_WWAN_PROFILE_CACHE";
+            break;
+        case telux::data::CleanupConfigType::CLEANUP_CONFIG_VLAN_BINDINGS:
+            mode = " CLEANUP_CONFIG_VLAN_BINDINGS";
+            break;
+        default:
+            mode = " Unknown";
+            break;
+    }
+    return mode;
 }

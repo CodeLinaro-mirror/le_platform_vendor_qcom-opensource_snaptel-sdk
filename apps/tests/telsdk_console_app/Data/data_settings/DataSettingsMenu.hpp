@@ -75,6 +75,7 @@ class DataSettingsMenu : public ConsoleApp ,
     void requestMacSecState(std::vector<std::string> inputCommand);
     void setLatencyConfig(std::vector<std::string> inputCommand);
     void getLatencyConfig(std::vector<std::string> inputCommand);
+    void cleanupSettings(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
@@ -89,5 +90,6 @@ class DataSettingsMenu : public ConsoleApp ,
     std::mutex mtx_;
     std::condition_variable cv_;
     bool initDataSettingsManager(telux::data::OperationType opType);
+    std::string cleanupTypeToString(telux::data::CleanupConfigType cleanupType);
 };
 #endif

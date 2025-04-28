@@ -94,11 +94,15 @@ public:
      * @param [in] category     ECallCategory
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] variant      ECallVariant
+     * @param [in] msdPdu       MSD PDU that will be transmitted at call connect. If this is empty,
+     *                          either the MSD as per configuration file or the default MSD will
+     *                          be used.
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant,
-                                       bool transmitMsd);
+    telux::common::Status triggerECall(
+        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
+        std::vector<uint8_t> msdPdu);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number
@@ -107,11 +111,16 @@ public:
      * @param [in] category     ECallCategory
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] dialNumber   phone number to be dialed
+     * @param [in] msdPdu       MSD PDU that will be transmitted at call connect. If this is empty,
+     *                          either the MSD as per configuration file or the default MSD will
+     *                          be used.
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category,
-                                       const std::string dialNumber, bool transmitMsd);
+
+    telux::common::Status triggerECall(
+        int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd,
+        std::vector<uint8_t> msdPdu);
 
     /**
      * This function answers an incoming call
@@ -205,6 +214,36 @@ public:
      */
     telux::common::Status setECallConfig(EcallConfig config);
 
+    /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent();
+
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload();
+
+   /**
+    * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+    *
+    * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
+    * @param [in] id          Timer ID
+    * @param [in] duration    Time gap between two successive redial attempts
+    *
+    * @returns Status for restartECallHlapTimer i.e success or suitable status code.
+    *
+    */
+   telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
@@ -259,8 +298,10 @@ private:
 
     /** Represents the phone corresponding to the eCall session */
     int phoneId_;
-    /** Local copy of MSD that will be used in transmission */
+    /** Local copy of MSD data structure that will be used in transmission */
     ECallMsdData msdData_;
+    /** Local copy of MSD raw PDU that will be used in transmission */
+    std::vector<uint8_t> msdPdu_ {};
     /** Interval for which the location-fix updates needs to be received */
     uint32_t locUpdateIntervalMs_;
     std::mutex mutex_;
@@ -272,6 +313,8 @@ private:
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;
     EcnrMode ecnrMode_;
+    /** Local copy of MSD optional additional data content. */
+    ECallOptionalEuroNcapData optionalAdditionalDataContent_;
 };
 
 #endif  // ECALLMANAGER_HPP

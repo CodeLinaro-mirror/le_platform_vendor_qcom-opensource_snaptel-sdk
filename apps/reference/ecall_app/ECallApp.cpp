@@ -88,6 +88,8 @@
 #define ECALL_DO_NOT_TRANSMIT_MSD 2
 #define ECALL_T10_TIMER_MIN 60
 #define ECALL_T10_TIMER_MAX 720
+#define T9 5
+#define T10 6
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -149,10 +151,24 @@ void ECallApp::init() {
         ConsoleAppCommand("11", "Set_ECall_Config", {}, std::bind(&ECallApp::setECallConfig,
         this)));
 
+    std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand =
+        std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("12", "Get_Encoded_Optional_Additional_Data_Content", {},
+        std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent, this)));
+
+    std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Get_ECall_Msd_Payload", {},
+        std::bind(&ECallApp::getECallMsdPayload, this)));
+
+    std::shared_ptr<ConsoleAppCommand> restartECallHlapTimerCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Restart_ECall_Hlap_Timer", {},
+        std::bind(&ECallApp::restartECallHlapTimer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
         hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand,
-        getEcallConfigCommand, setEcallConfigCommand};
+        getEcallConfigCommand, setEcallConfigCommand, getEncodedOADContentCommand,
+        getECallMsdPayloadCommand, restartECallHlapTimerCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -209,7 +225,8 @@ void ECallApp::makeECall() {
     }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
-    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+    std::vector<uint8_t> msdPdu;
+    if (telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd, msdPdu)) {
         return;
     }
 
@@ -217,8 +234,9 @@ void ECallApp::makeECall() {
     int phoneId = getPhoneId();
 
     std::cout << "eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd);
-    if(ret != telux::common::Status::SUCCESS) {
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd,
+        msdPdu);
+    if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
         std::cout << "ECall request is successful" << std::endl;
@@ -241,7 +259,8 @@ void ECallApp::makeCustomNumberECall() {
     }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
-    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+    std::vector<uint8_t> msdPdu;
+    if (telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd, msdPdu)) {
         return;
     }
     // Get phone number from user
@@ -257,8 +276,8 @@ void ECallApp::makeCustomNumberECall() {
     int phoneId = getPhoneId();
 
     std::cout << "Custom number eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber, transmitMsd);
-    if(ret != telux::common::Status::SUCCESS) {
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber, transmitMsd, msdPdu);
+    if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
         std::cout << "ECall request is successful" << std::endl;
@@ -609,6 +628,82 @@ void ECallApp::setECallConfig() {
     }
 }
 
+void ECallApp::restartECallHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    EcallHlapTimerId id = EcallHlapTimerId::UNKNOWN;
+    int duration = 0;
+    char delimiter = '\n';
+    std::string temp = "";
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    std::cout << "Select the timer id to restart eCall HLAP timer \n    \
+        \r\t5 - Timer-id for T9 timer\n  \
+        \r\t6 - Timer-id for T10 timer\n " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            int input = std::stoi(temp);
+            id = static_cast<EcallHlapTimerId>(input);
+            if(input < T9 || input > T10) {
+                std::cout << "ERROR: Invalid timer id is entered" << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << " Enter duration of timer (in seconds) " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            duration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getEncodedOptionalAdditionalDataContent() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getEncodedOptionalAdditionalDataContent();
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get encoded optional additional data content"
+            << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getECallMsdPayload() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallMsdPayload();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall MSD payload" << std::endl;
+        return;
+    }
+}
+
 /**
  * Executes any cleanup procedure if necessary
  */
@@ -673,7 +768,8 @@ int ECallApp::getEcallCategory(telux::tel::ECallCategory &emergencyCategory) {
 /**
  * Function to configure MSD transmission at call connect
  */
-telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
+telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd,
+    std::vector<uint8_t> &msdPdu) {
     char delimiter = '\n';
     std::string temp;
     int opt = -1;
@@ -699,6 +795,10 @@ telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
     } else {
         std::cout << "Invalid MSD transmission configuration" << std::endl;
         return telux::common::Status::FAILED;
+    }
+    if(transmitMsd) {
+        // Request for MSD PDU. If provided, use it for MSD transmission at call connect.
+        msdPdu = getMsdPduInput();
     }
     return telux::common::Status::SUCCESS;
 }
@@ -743,6 +843,23 @@ telux::common::Status ECallApp::getIntegerInput(uint32_t &value, std::string pro
 void signalHandler(int sig) {
     ECallApp::getInstance().cleanup();
     exit(1);
+}
+
+/**
+ * Utility function to get user input for MSD PDU
+ */
+std::vector<uint8_t> ECallApp::getMsdPduInput() {
+    char delimiter = '\n';
+    std::vector<uint8_t> msdPdu;
+    std::string temp = "";
+    std::cout << "Enter MSD PDU in hexadecimal format (optional): ";
+    std::getline(std::cin, temp, delimiter);
+    if (temp.empty()) {
+        std::cout << "No input received for MSD PDU, proceeding with default MSD " << std::endl;
+    } else {
+        msdPdu = Utils::convertHexToBytes(temp);
+    }
+    return msdPdu;
 }
 
 void setupSignalHandler() {

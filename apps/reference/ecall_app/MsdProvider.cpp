@@ -42,7 +42,11 @@
 #include "MsdProvider.hpp"
 #include "ConfigParser.hpp"
 
+#define MSD_VERSION_TWO 2
+#define MSD_VERSION_THREE 3
+
 telux::tel::ECallMsdData MsdProvider::msdData_ = {};
+std::vector<uint8_t> MsdProvider::optionalAdditionalDataContent_ = {};
 
 /**
  * Reads MSD data from file and caches it
@@ -52,30 +56,98 @@ telux::tel::ECallMsdData MsdProvider::getMsd() {
 }
 
 /**
+ * Sets MSD optional additional data content.
+ */
+void MsdProvider::setOptionalAdditionalDataContent(
+    std::vector<uint8_t> optionalAdditionalDataContent) {
+    optionalAdditionalDataContent_ = optionalAdditionalDataContent;
+}
+
+/**
+ * Function to read MSD config file containing optional additional data content key value pairs.
+ */
+telux::tel::ECallOptionalEuroNcapData MsdProvider::readEuroNcapOptionalAdditionalDataContent(
+    std::string filename, std::string filePath) {
+    std::shared_ptr<ConfigParser> msdSettings = nullptr;
+    telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData = {};
+    try {
+        msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    } catch (std::bad_alloc & e) {
+        std::cout << "MSD parsing failed, error: "<< e.what() << std::endl;
+        return optionalEuroNcapData;
+    }
+    // Euro NCAP OPTIONAL_ADDTIONAL_DATA
+    auto locationOfImpactAsString = msdSettings->getValue("EURONCAP_LOCATION_OF_IMPACT");
+    optionalEuroNcapData.locationOfImpact =
+        static_cast<telux::tel::ECallLocationOfImpact>(atoi(locationOfImpactAsString.c_str()));
+    auto rollOverDetectedPresentAsString =
+        msdSettings->getValue("EURONCAP_ROLL_OVER_DETECTED_PRESENT");
+    bool rollOverDetectedPresentAsBool
+        = atoi(rollOverDetectedPresentAsString.c_str()) ? true : false;
+    optionalEuroNcapData.rollOverDetectedPresent =
+        rollOverDetectedPresentAsBool;
+    optionalEuroNcapData.rollOverDetected =
+        atoi(msdSettings->getValue("EURONCAP_ROLL_OVER_DETECTED").c_str());
+    optionalEuroNcapData.deltaV.rangeLimit =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_RANGELIMIT").c_str());
+    optionalEuroNcapData.deltaV.deltaVX =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_DELTAVX").c_str());
+    optionalEuroNcapData.deltaV.deltaVY =
+        atoi(msdSettings->getValue("EURONCAP_DELTAV_DELTAVY").c_str());
+    return optionalEuroNcapData;
+}
+
+/**
  * Function to read MSD config file containing key value pairs
  */
 void MsdProvider::init(std::string filename, std::string filePath) {
-    std::shared_ptr<ConfigParser> msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    std::shared_ptr<ConfigParser> msdSettings = nullptr;
+    try {
+        msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    } catch (std::bad_alloc & e) {
+        std::cout << "MSD parsing failed, error: "<< e.what() << std::endl;
+        return;
+    }
+    // Parse MSD Version. When relevant config is not found, default to MSD version-2
+    if(msdSettings->getValue("MSD_VERSION").empty()) {
+        msdData_.msdVersion = MSD_VERSION_TWO;
+    } else {
+        msdData_.msdVersion = atoi(msdSettings->getValue("MSD_VERSION").c_str());
+    }
+    std::cout << "ECall MSD Version: " << static_cast<int>(msdData_.msdVersion) << std::endl;
 
-    // RECENT_LOCATION_N1_PRESENT
-    auto recentVehicleLocationN1PresentAsString
-      = msdSettings->getValue("RECENT_LOCATION_N1_PRESENT");
-    bool recentVehicleLocationN1PresentAsBool
-      = atoi(recentVehicleLocationN1PresentAsString.c_str()) ? true : false;
-    msdData_.optionals.recentVehicleLocationN1Present = recentVehicleLocationN1PresentAsBool;
+    // Recent location information is optional only in MSD version-2
+    if(msdData_.msdVersion == MSD_VERSION_TWO) {
+        // RECENT_LOCATION_N1_PRESENT
+        auto recentVehicleLocationN1PresentAsString
+          = msdSettings->getValue("RECENT_LOCATION_N1_PRESENT");
+        bool recentVehicleLocationN1PresentAsBool
+          = atoi(recentVehicleLocationN1PresentAsString.c_str()) ? true : false;
+        msdData_.optionals.recentVehicleLocationN1Present = recentVehicleLocationN1PresentAsBool;
 
-    // RECENT_LOCATION_N2_PRESENT
-    auto recentVehicleLocationN2PresentAsString
-      = msdSettings->getValue("RECENT_LOCATION_N2_PRESENT");
-    bool recentVehicleLocationN2PresentAsBool
-      = atoi(recentVehicleLocationN2PresentAsString.c_str()) ? true : false;
-    msdData_.optionals.recentVehicleLocationN2Present = recentVehicleLocationN2PresentAsBool;
+        // RECENT_LOCATION_N2_PRESENT
+        auto recentVehicleLocationN2PresentAsString
+          = msdSettings->getValue("RECENT_LOCATION_N2_PRESENT");
+        bool recentVehicleLocationN2PresentAsBool
+          = atoi(recentVehicleLocationN2PresentAsString.c_str()) ? true : false;
+        msdData_.optionals.recentVehicleLocationN2Present = recentVehicleLocationN2PresentAsBool;
+    } else if(msdData_.msdVersion == MSD_VERSION_THREE) {
+        msdData_.optionals.recentVehicleLocationN1Present = true;
+        msdData_.optionals.recentVehicleLocationN2Present = true;
+    }
 
     // NUMBER_OF_PASSENGERS_PRESENT
     auto numberOfPassengersPresentAsString = msdSettings->getValue("NUMBER_OF_PASSENGERS_PRESENT");
     bool numberOfPassengersPresentAsBool
       = atoi(numberOfPassengersPresentAsString.c_str()) ? true : false;
     msdData_.optionals.numberOfPassengersPresent = numberOfPassengersPresentAsBool;
+
+    // OPTIONAL_ADDITIONAL_DATA_PRESENT
+    auto optionalAdditionalDataPresentAsString =
+        msdSettings->getValue("OPTIONAL_ADDITIONAL_DATA_PRESENT");
+    bool optionalAdditionalDataPresentAsBool
+        = atoi(optionalAdditionalDataPresentAsString.c_str()) ? true : false;
+    msdData_.optionals.optionalDataPresent = optionalAdditionalDataPresentAsBool;
 
     // MESSAGE_IDENTIFIER
     msdData_.messageIdentifier = atoi(msdSettings->getValue("MESSAGE_IDENTIFIER").c_str());
@@ -182,4 +254,16 @@ void MsdProvider::init(std::string filename, std::string filePath) {
     // NUMBER_OF_PASSENGERS
     msdData_.numberOfPassengers = atoi(msdSettings->getValue("NUMBER_OF_PASSENGERS").c_str());
 
+    // OPTIONAL_ADDTIONAL_DATA OID
+    msdData_.optionalPdu.oid = msdSettings->getValue("EUROPEAN_ECALL_OID");
+    // OPTIONAL_ADDTIONAL_DATA OAD
+    // If encoded string is available, directly append to the main MSD, otherwise
+    // encode optional additional data content first and then append to the main MSD.
+    if (!msdSettings->getValue("EUROPEAN_ECALL_OAD").empty()) {
+        std::string str = msdSettings->getValue("EUROPEAN_ECALL_OAD");
+        std::vector<uint8_t> data(str.begin(), str.end());
+        msdData_.optionalPdu.data = data;
+    } else {
+        msdData_.optionalPdu.data = optionalAdditionalDataContent_;
+   }
 }

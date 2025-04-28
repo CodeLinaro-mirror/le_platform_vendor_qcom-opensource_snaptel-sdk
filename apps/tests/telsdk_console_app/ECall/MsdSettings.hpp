@@ -57,10 +57,18 @@ public:
 
    telux::tel::ECallMsdData readMsdFromFile(std::string filename);
 
+   telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
+       std::string filename);
+
+   void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
+
+   std::vector<uint8_t> getOptionalAdditionalDataContent();
+
 private:
    // Hashmap to store all msdSettings as key-value pairs
    static std::map<std::string, std::string> msdSettingsMap_;
    static std::string filename_;
+   std::vector<uint8_t> encodedOptionalAdditionalDataContent_;
 };  // end of class MsdSettings
 
 #endif  // MSDSETTINGS_HPP

@@ -36,6 +36,7 @@
 
 std::map<std::string, std::string> MsdSettings::msdSettingsMap_;
 std::string MsdSettings::filename_;
+
 /**
  * Reads MSD data from file and caches it
  */
@@ -46,6 +47,8 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
    telux::tel::ECallMsdData msdData;
 
    MsdSettings::readMsdSettingsFile();
+
+   std::cout << " ECall MSD Version: " << static_cast<int>(msdData.msdVersion) << std::endl;
 
    // RECENT_LOCATION_N1_PRESENT
    auto recentVehicleLocationN1PresentAsString
@@ -66,6 +69,13 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
    bool numberOfPassengersPresentAsBool
       = atoi(numberOfPassengersPresentAsString.c_str()) ? true : false;
    msdData.optionals.numberOfPassengersPresent = numberOfPassengersPresentAsBool;
+
+   // OPTIONAL_ADDITIONAL_DATA_PRESENT
+   auto optionalAdditionalDataPresentAsString =
+       MsdSettings::getValue("OPTIONAL_ADDITIONAL_DATA_PRESENT");
+   bool optionalAdditionalDataPresentAsBool
+       = atoi(optionalAdditionalDataPresentAsString.c_str()) ? true : false;
+   msdData.optionals.optionalDataPresent = optionalAdditionalDataPresentAsBool;
 
    // MESSAGE_IDENTIFIER
    msdData.messageIdentifier = atoi(MsdSettings::getValue("MESSAGE_IDENTIFIER").c_str());
@@ -171,8 +181,58 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
    // NUMBER_OF_PASSENGERS
    msdData.numberOfPassengers = atoi(MsdSettings::getValue("NUMBER_OF_PASSENGERS").c_str());
 
+   // OPTIONAL_ADDTIONAL_DATA OID
+   msdData.optionalPdu.oid = MsdSettings::getValue("EUROPEAN_ECALL_OID");
+   // OPTIONAL_ADDTIONAL_DATA OAD
+   // If already encoded optional additional data is available, just append to the main MSD,
+   // otherwise endode optional additional data first and then append to the main MSD.
+   if (!MsdSettings::getValue("EUROPEAN_ECALL_OAD").empty()) {
+       std::string str = MsdSettings::getValue("EUROPEAN_ECALL_OAD");
+       std::vector<uint8_t> data(str.begin(), str.end());
+       msdData.optionalPdu.data = data;
+   } else {
+       msdData.optionalPdu.data = getOptionalAdditionalDataContent();
+   }
    return msdData;
 }
+
+telux::tel::ECallOptionalEuroNcapData MsdSettings::readEuroNcapOptionalAdditionalDataContent(
+    std::string filename) {
+    msdSettingsMap_.clear();
+
+    filename_ = filename;
+    MsdSettings::readMsdSettingsFile();
+    telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData;
+    // Euro NCAP OPTIONAL_ADDTIONAL_DATA
+    auto locationOfImpactAsString = MsdSettings::getValue("EURONCAP_LOCATION_OF_IMPACT");
+    optionalEuroNcapData.locationOfImpact =
+        static_cast<telux::tel::ECallLocationOfImpact>(atoi(locationOfImpactAsString.c_str()));
+    auto rollOverDetectedPresentAsString =
+        MsdSettings::getValue("EURONCAP_ROLL_OVER_DETECTED_PRESENT");
+    bool rollOverDetectedPresentAsBool
+        = atoi(rollOverDetectedPresentAsString.c_str()) ? true : false;
+    optionalEuroNcapData.rollOverDetectedPresent =
+        rollOverDetectedPresentAsBool;
+    optionalEuroNcapData.rollOverDetected =
+        atoi(MsdSettings::getValue("EURONCAP_ROLL_OVER_DETECTED").c_str());
+    optionalEuroNcapData.deltaV.rangeLimit =
+        atoi(MsdSettings::getValue("EURONCAP_DELTAV_RANGELIMIT").c_str());
+    optionalEuroNcapData.deltaV.deltaVX =
+        atoi(MsdSettings::getValue("EURONCAP_DELTAV_DELTAVX").c_str());
+    optionalEuroNcapData.deltaV.deltaVY =
+        atoi(MsdSettings::getValue("EURONCAP_DELTAV_DELTAVY").c_str());
+    return optionalEuroNcapData;
+}
+
+void MsdSettings::setOptionalAdditionalDataContent(
+    std::vector<uint8_t> optionalAdditionalDataContent) {
+    encodedOptionalAdditionalDataContent_ = optionalAdditionalDataContent;
+}
+
+std::vector<uint8_t> MsdSettings::getOptionalAdditionalDataContent() {
+    return encodedOptionalAdditionalDataContent_;
+}
+
 /*
  * Get the user defined value for any configuration msdSetting
  */
@@ -194,6 +254,10 @@ std::string MsdSettings::getValue(std::string key) {
 void MsdSettings::readMsdSettingsFile() {
    // Create a file stream from the file name
    std::ifstream configFileStream(filename_);
+   if(!configFileStream.is_open()) {
+       std::cout << " MSD settings file(" << filename_ << ") is not found" << std::endl;
+       return;
+   }
 
    // Iterate through each parameter in the file and read the key value pairs
    std::string param;

@@ -46,9 +46,14 @@ public:
 
     // Function to fetch the MSD Data
     static telux::tel::ECallMsdData getMsd();
+    telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
+        std::string filename, std::string filepath);
+
+    void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
 
 private:
     static telux::tel::ECallMsdData msdData_;
+    static std::vector<uint8_t>  optionalAdditionalDataContent_;
 };  // end of class MsdProvider
 
 #endif  // MSDPROVIDER_HPP

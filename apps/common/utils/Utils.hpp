@@ -172,6 +172,13 @@ public:
 
    // Get the number of nanoseconds elapsed since boot
    static uint64_t getNanosecondsSinceBoot();
+
+   /**
+    * Convert the hexadecimal string to byte array/vector
+    *  Eg: i/p: 0229440680E30A51439E
+    *      o/p: 2,41,68,6,128,227,10,81,67,158
+    */
+   static std::vector<uint8_t> convertHexToBytes(std::string hexData);
 };
 
 #endif

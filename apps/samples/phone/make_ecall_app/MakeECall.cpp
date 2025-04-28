@@ -68,8 +68,30 @@ using namespace telux::common;
 #define NUMBER_OF_PASSENGERS_PRESENT 1
 #define NUMBER_OF_PASSENGERS 2
 #define VIN "ECALLEXAMPLE02013"
-#define OPTIONAL_DATA_PRESENT 1
-#define OPTIONALS_OPTIONAL_DATA_TYPE 1
+#define OPTIONAL_ADDITIONAL_DATA_PRESENT 1
+#define OID_DATA "8.1"
+/*If already encoded optional additional data content is available, fill "OAD_DATA",
+otherwise fill Euro NCAP optional additional data content fields.
+# For example, OAD_DATA = "0832D28480" */
+static const std::string OAD_DATA = " ";
+/* Below are the Euro NCAP optional additional data content fields. */
+#define EURONCAP_LOCATION_OF_IMPACT 2
+/* Possible LOCATION_OF_IMPACT values are 0 to 6
+  0 = unknown
+  1 = none,
+  2 = front,
+  3 = rear,
+  4 = driver_side,
+  5 = non_driver_side,
+  6 = other */
+#define EURONCAP_ROLL_OVER_DETECTED_PRESENT 0
+#define EURONCAP_ROLL_OVER_DETECTED 0
+// range limit is 100 to 255
+#define EURONCAP_DELTAV_RANGELIMIT 125
+// delta VX range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVX -45
+// delta VY range is -255 to 255
+#define EURONCAP_DELTAV_DELTAVY 10
 
 // ##### 6.1. implement IMakeCallCallback interface to receive response for the dial request -
 // optional
@@ -112,7 +134,7 @@ int main(int, char **) {
 
    // Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
+      std::cout << " *** PhoneManager Subsystem Ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
       return 1;
@@ -120,7 +142,7 @@ int main(int, char **) {
 
    // ### 4. Instantiate Phone and call manager
    auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   auto callManager = phoneFactory.getCallManager();
 
    // ### 5. Get unique id of the phone
    int phoneId = DEFAULT_PHONE_ID;
@@ -157,19 +179,43 @@ int main(int, char **) {
    eCallMsdData.vehicleLocation.positionLatitude = VEHICLE_POSITION_LATITUDE;
    eCallMsdData.vehicleLocation.positionLongitude = VEHICLE_POSITION_LONGITUDE;
    eCallMsdData.vehicleDirection = VEHICLE_DIRECTION;
-   eCallMsdData.optionals.optionalDataType = (ECallOptionalDataType)OPTIONALS_OPTIONAL_DATA_TYPE;
-   eCallMsdData.optionals.optionalDataPresent = OPTIONAL_DATA_PRESENT;
+   eCallMsdData.optionals.optionalDataPresent = OPTIONAL_ADDITIONAL_DATA_PRESENT;
    eCallMsdData.recentVehicleLocationN1.latitudeDelta = RECENT_N1_LATITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN1.longitudeDelta = RECENT_N1_LONGITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN2.latitudeDelta = RECENT_N2_LATITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
    eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
+   eCallMsdData.optionalPdu.oid = OID_DATA;
+   if (!OAD_DATA.empty()) {
+       std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
+       eCallMsdData.optionalPdu.data = data;
+   } else {
+       std::vector<uint8_t> data;
+       // get encoded optional additional data content
+       ECallOptionalEuroNcapData optionalEuroNcapData = {};
+       optionalEuroNcapData.locationOfImpact =
+           static_cast<ECallLocationOfImpact>(EURONCAP_LOCATION_OF_IMPACT);
+       optionalEuroNcapData.rollOverDetectedPresent = EURONCAP_ROLL_OVER_DETECTED_PRESENT;
+       optionalEuroNcapData.rollOverDetected = EURONCAP_ROLL_OVER_DETECTED;
+       optionalEuroNcapData.deltaV.rangeLimit = EURONCAP_DELTAV_RANGELIMIT;
+       optionalEuroNcapData.deltaV.deltaVX = EURONCAP_DELTAV_DELTAVX;
+       optionalEuroNcapData.deltaV.deltaVY = EURONCAP_DELTAV_DELTAVY;
+       auto encodeOADContentStatus = callManager->encodeEuroNcapOptionalAdditionalData(
+           optionalEuroNcapData, data);
+       if (encodeOADContentStatus != telux::common::Status::SUCCESS) {
+           std::cout << " Optional additional data content encoding is failed" << std::endl;
+           return 1;
+       }
+       eCallMsdData.optionalPdu.data = data;
+   }
 
    // ### 9. Send a eCall request
-   if(callManager) {
+   if (callManager) {
       auto makeCallStatus
          = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
-      std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+      std::cout << "Dial ECall Status: " << (int)makeCallStatus << std::endl;
+   } else {
+      std::cout << "ERROR: Call Manager is NULL so couldn't make ECall" << std::endl;
    }
 
    // ### 10. Exit logic is specific to an application

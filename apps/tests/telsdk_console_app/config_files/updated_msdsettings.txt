@@ -27,3 +27,28 @@ RECENT_N2_LATITUDE_DELTA = 15
 RECENT_N2_LONGITUDE_DELTA = 25
 NUMBER_OF_PASSENGERS_PRESENT = 1
 NUMBER_OF_PASSENGERS = 2
+OPTIONAL_ADDITIONAL_DATA_PRESENT = 1
+EUROPEAN_ECALL_OID = 8.1
+# If already encoded optional additional data content is available, fill "EUROPEAN_ECALL_OAD",
+# otherwise fill Euro NCAP optional additional data content fields.
+# For example, EUROPEAN_ECALL_OAD = 0832D28480
+#############################################
+# Below are the Euro NCAP optional additional data content fields.
+EURONCAP_LOCATION_OF_IMPACT = 2
+# Possible LOCATION_OF_IMPACT values are 0 to 6
+#  0 = unknown
+#  1 = none,
+#  2 = front,
+#  3 = rear,
+#  4 = driver_side,
+#  5 = non_driver_side,
+#  6 = other
+EURONCAP_ROLL_OVER_DETECTED_PRESENT = 0
+EURONCAP_ROLL_OVER_DETECTED = 0
+# Range limit is 100 to 255
+EURONCAP_DELTAV_RANGELIMIT = 125
+# Delta VX range is -255 to 255
+EURONCAP_DELTAV_DELTAVX = -45
+# Delta VY range is -255 to 255
+EURONCAP_DELTAV_DELTAVY = 10
+#############################################

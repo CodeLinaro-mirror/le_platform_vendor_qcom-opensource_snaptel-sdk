@@ -476,3 +476,32 @@ uint64_t Utils::getNanosecondsSinceBoot() {
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
 }
+
+std::vector<uint8_t> Utils::convertHexToBytes(std::string hexData) {
+   std::vector<uint8_t> output;
+   size_t i = 0, len = 0;
+   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
+
+   len = hexData.length();
+   for(i = 0; i < len; i = i + 2) {
+      if(hexData[i] >= '0' && hexData[i] <= '9') {
+         rawData1 = (hexData[i] - 48) * 16;
+      } else if(hexData[i] >= 'A' && hexData[i] <= 'F') {
+         rawData1 = (hexData[i] - 55) * 16;
+      } else if(hexData[i] >= 'a' && hexData[i] <= 'f') {
+         rawData1 = (hexData[i] - 87) * 16;
+      }
+
+      if(hexData[i + 1] >= '0' && hexData[i + 1] <= '9') {
+         rawData2 = hexData[i + 1] - 48;
+      } else if(hexData[i + 1] >= 'A' && hexData[i + 1] <= 'F') {
+         rawData2 = hexData[i + 1] - 55;
+      } else if(hexData[i + 1] >= 'a' && hexData[i + 1] <= 'f') {
+         rawData2 = hexData[i + 1] - 87;
+      }
+
+      rawData = rawData1 + rawData2;
+      output.emplace_back(rawData);
+   }
+   return output;
+}

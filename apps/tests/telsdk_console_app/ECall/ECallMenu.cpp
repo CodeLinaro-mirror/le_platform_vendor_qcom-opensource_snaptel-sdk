@@ -27,6 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <iomanip>
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -132,11 +133,21 @@ void ECallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ea", "Enable_Audio", {},
          std::bind(&ECallMenu::enableAudio, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("gee",
+      "Get_Encoded_Euro_NCAP_Optional_Additional_Data_Content", {},
+      std::bind(&ECallMenu::getEncodedOptionalAdditionalDataContent, this,
+      std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("gem",
+         "Get_ECall_MSD_Payload", {}, std::bind(&ECallMenu::getECallMsdPayload, this,
+         std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
          hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
-         enableAudioCommand};
-
+         enableAudioCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand};
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
           commandsList.emplace_back(selectPhoneId);
@@ -312,6 +323,28 @@ void ECallMenu::hangup(std::vector<std::string> inputCommand) {
    }
 }
 
+void ECallMenu::updateOptionalAdditionalDataContent(MsdSettings &msdSettings) {
+    // Get Phone from PhoneFactory
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+
+    std::vector<uint8_t> encodedOptionalAdditionalDataContent;
+    auto eCallEuroNcapOAD =
+        msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
+    if (callManager) {
+        telux::common::Status status =
+            callManager->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+                encodedOptionalAdditionalDataContent);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Encoding optional additional data content is failed" << std::endl;
+        }
+        msdSettings.setOptionalAdditionalDataContent(encodedOptionalAdditionalDataContent);
+    } else {
+        std::cout << "ERROR: Call Manager is NULL so couldn't get encoded optional additional"
+            " data content " << std::endl;
+    }
+}
+
 void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
    // Get Phone from PhoneFactory
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
@@ -323,9 +356,11 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
          = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
       telux::tel::ECallVariant eCallVariant = telux::tel::ECallVariant::ECALL_EMERGENCY;
 
-      MsdSettings msdSettings;
-      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
+      MsdSettings msdSettings;
+      updateOptionalAdditionalDataContent(msdSettings);
+      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
+
       if (callManager) {
          AudioClient &audioClient = AudioClient::getInstance();
          if (audioClient.isReady()) {
@@ -385,9 +420,10 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
          return;
       }
 
-      MsdSettings msdSettings;
-      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
+      MsdSettings msdSettings;
+      updateOptionalAdditionalDataContent(msdSettings);
+      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       if (callManager) {
          AudioClient &audioClient = AudioClient::getInstance();
          if (audioClient.isReady()) {
@@ -436,9 +472,10 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
          return;
       }
 
-      MsdSettings msdSettings;
-      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
+      MsdSettings msdSettings;
+      updateOptionalAdditionalDataContent(msdSettings);
+      auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       if (callManager) {
          AudioClient &audioClient = AudioClient::getInstance();
          if (audioClient.isReady()) {
@@ -471,8 +508,9 @@ void ECallMenu::updateECallMSD(std::vector<std::string> inputCommand) {
    auto phoneManager = phoneFactory.getPhoneManager();
    if (phoneManager) {
       auto spDefaultPhone = phoneManager->getPhone();
-      auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
+      updateOptionalAdditionalDataContent(msdSettings);
+      auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
       if (callManager) {
          auto ret = callManager->updateECallMsd(phoneId_, eCallMsdData, updateMsdCommandCallback_);
          std::cout << (ret == telux::common::Status::SUCCESS
@@ -559,7 +597,7 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       std::vector<uint8_t> rawData;
 
       if(!msdData.empty()) {
-         rawData = convertHexToBytes(msdData);
+         rawData = Utils::convertHexToBytes(msdData);
       } else {
          rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
                     128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
@@ -604,7 +642,7 @@ void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
       std::vector<uint8_t> rawData;
 
       if(!msdData.empty()) {
-         rawData = convertHexToBytes(msdData);
+         rawData = Utils::convertHexToBytes(msdData);
       } else {
          rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
                     128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
@@ -748,38 +786,6 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
-/** Convert the hexadecimal string to bytes
- *  Eg: i/p: 0229440680E30A51439E
- *      o/p: 2,41,68,6,128,227,10,81,67,158
- */
-std::vector<uint8_t> ECallMenu::convertHexToBytes(std::string msdData) {
-   std::vector<uint8_t> rawMsd;
-   size_t i, len;
-   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
-
-   len = msdData.length();
-   for(i = 0; i < len; i = i + 2) {
-      if(msdData[i] >= '0' && msdData[i] <= '9') {
-         rawData1 = (msdData[i] - 48) * 16;
-      } else if(msdData[i] >= 'A' && msdData[i] <= 'F') {
-         rawData1 = (msdData[i] - 55) * 16;
-      } else if(msdData[i] >= 'a' && msdData[i] <= 'f') {
-         rawData1 = (msdData[i] - 87) * 16;
-      }
-
-      if(msdData[i + 1] >= '0' && msdData[i + 1] <= '9') {
-         rawData2 = msdData[i + 1] - 48;
-      } else if(msdData[i + 1] >= 'A' && msdData[i + 1] <= 'F') {
-         rawData2 = msdData[i + 1] - 55;
-      } else if(msdData[i + 1] >= 'a' && msdData[i + 1] <= 'f') {
-         rawData2 = msdData[i + 1] - 87;
-      }
-
-      rawData = rawData1 + rawData2;
-      rawMsd.emplace_back(rawData);
-   }
-   return rawMsd;
-}
 
 void ECallMenu::enableAudio(std::vector<std::string> userInput) {
    AudioClient &audioClient = AudioClient::getInstance();
@@ -822,3 +828,62 @@ bool ECallMenu::queryAudioState() {
    return true;
 }
 
+void ECallMenu::getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput) {
+     // Get Phone from PhoneFactory
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager();
+   if (phoneManager) {
+      auto spDefaultPhone = phoneManager->getPhone();
+
+      auto callManager = phoneFactory.getCallManager();
+      MsdSettings msdSettings;
+      auto eCallEuroNcapOAD =
+          msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
+      std::vector<uint8_t> encodedOptionalAdditionalDataContent;
+      if (callManager) {
+          telux::common::Status status =
+              callManager->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+              encodedOptionalAdditionalDataContent);
+          if (status == telux::common::Status::SUCCESS) {
+              std::cout << "Request for encoding ecall msd optional additional data content"
+                  " is successful \n";
+              std::string encodedString(encodedOptionalAdditionalDataContent.begin(),
+                  encodedOptionalAdditionalDataContent.end());
+              std::cout << "Encoded optional additional data content: " << encodedString
+                  << std::endl;
+          } else {
+              std::cout << "ERROR - Failed to encode ecall msd optional additional data content,"
+                      << " Status:" << static_cast<int>(status) << "\n";
+          }
+      } else {
+          std::cout << "ERROR - CallManager is null \n";
+      }
+   } else {
+      std::cout << "ERROR: Phone Manager is NULL, failed to make ECall SOS" << std::endl;
+   }
+}
+
+void ECallMenu::getECallMsdPayload(std::vector<std::string> userInput) {
+    MsdSettings msdSettings;
+    updateOptionalAdditionalDataContent(msdSettings);
+    auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
+    std::vector<uint8_t> msdPdu = {};
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    if (callManager) {
+        ErrorCode errCode = callManager->encodeECallMsd(eCallMsdData, msdPdu);
+        if (errCode == ErrorCode::SUCCESS) {
+            std::cout << "Request for retrieving encoded eCall MSD payload is successful \n";
+            std::stringstream ss;
+            for (auto i : msdPdu) {
+                ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+            }
+            std::cout << "Encoded eCall MSD payload is : " << ss.str() << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to retrieve encoded eCall MSD payload,"
+                << " Error:" << static_cast<int>(errCode) << "\n";
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
+}

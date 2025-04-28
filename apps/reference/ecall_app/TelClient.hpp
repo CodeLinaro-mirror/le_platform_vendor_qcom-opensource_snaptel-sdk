@@ -81,6 +81,8 @@ struct ECallInfo {
    bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
    ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
                                    required to construct an MSD */
+   std::vector<uint8_t> msdPdu;/**< If the transmitMsd is true, msdData will holds all the details
+                                     required to construct an MSD */
    bool isCustomNumber;       /**< Set to true if client is dialing*/
    std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
    ECallCategory category;    /**< ECall Category ie., automatic or normal */
@@ -131,7 +133,9 @@ public:
      * This is typically invoked when an eCall is triggered.
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
-     * @param [in] msdData      MSD data to be used
+     * @param [in] msdPdu       Encoded MSD PDU
+     * @param [in] msdData      MSD data to be used. This will be used only when the msdPdu passed
+     *                          is empty. Either msdPdu or msdData is expected to be provided.
      * @param [in] category     ECallCategory
      * @param [in] variant      ECallVariant
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
@@ -140,16 +144,18 @@ public:
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    ECallVariant variant, bool transmitMsd,
-                    std::shared_ptr<CallStatusListener> callListener);
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
+        ECallCategory category, ECallVariant variant, bool transmitMsd,
+        std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function starts a voice eCall procedure to the specified phone number.
      * This is typically invoked when a TPS eCall is triggered.
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
-     * @param [in] msdData      MSD data to be used
+     * @param [in] msdPdu       Encoded MSD PDU
+     * @param [in] msdData      MSD data to be used. This will be used only when the msdPdu passed
+     *                          is empty. Either msdPdu or msdData is expected to be provided.
      * @param [in] category     ECallCategory
      * @param [in] dialNumber   phone number to be dialed
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
@@ -158,9 +164,27 @@ public:
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    const std::string dialNumber, bool transmitMsd,
-                    std::shared_ptr<CallStatusListener> callListener);
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
+        ECallCategory category, const std::string dialNumber, bool transmitMsd,
+        std::shared_ptr<CallStatusListener> callListener);
+    /**
+     * This function starts a voice eCall procedure to the specified phone number over IMS.
+     * This is typically invoked when a TPS eCall over IMS is triggered.
+     *
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is
+     *                          performed
+     * @param [in] rawData      MSD data at call connect
+     * @param [in] dialNumber   phone number to be dialed
+     * @param [in] contentType  Content type for SIP request
+     * @param [in] acceptInfo   Accept info for SIP request
+     * @param [in] callListener pointer to CallStatusListener to notify call status changes
+     *
+     * @returns Status of startECall i.e success or suitable status code.
+     *
+     */
+    telux::common::Status startECall(int phoneId, const std::vector<uint8_t> rawData,
+        const std::string dialNumber, std::string contentType, std::string acceptInfo,
+        std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function updates the cached MSD data stored in Modem, which would be used in MSD pull
@@ -268,6 +292,31 @@ public:
     telux::common::Status setECallConfig(EcallConfig config);
 
     /**
+     * Gets encoded optional additional data content for eCall MSD.
+     *
+     * @param [in] optionalAdditionalDataConteny  Euro NCAP optional additional data content.
+     * @param [out] data                          Encoded vector of bytes.
+     *
+     * @returns Status of getEncodedOptionalAdditionalDataContent i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::Status getEncodedOptionalAdditionalDataContent(ECallOptionalEuroNcapData
+        optionalAdditionalDataContent, std::vector<uint8_t> &data);
+
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @param [in] eCallMsd    ECall MSD.
+     * @param [out] msdPdu     Encoded vector of bytes.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload(ECallMsdData eCallMsd,
+        std::vector<uint8_t> &msdPdu);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -275,11 +324,30 @@ public:
      */
     bool isECallInProgress();
 
+    /**
+     * This function caches latest MSD recieved after location update.
+     *
+     * @param [in] MSD data
+     *
+     */
+    void setECallMsd(ECallMsdData& msdData_);
+
+    /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(int phoneId,
                     ECallMsdTransmissionStatus msdTransmissionStatus) override;
+    void OnMsdUpdateRequest(int phoneId) override;
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(telux::common::ErrorCode error,
                                     std::shared_ptr<telux::tel::ICall>) override;
@@ -288,7 +356,9 @@ public:
     void stopT10TimerResponse(telux::common::ErrorCode error);
     void setHlapTimerResponse(telux::common::ErrorCode error);
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
+    void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
+    telux::tel::CallDirection getECallDirection();
 
     TelClient();
     ~TelClient();
@@ -330,6 +400,7 @@ private:
 
     //Map to hold the ongoing eCall Info w.r.t phoneId
     std::map<int, ECallInfo> eCallDataMap_;
+    ECallMsdData msdData_;
 
     class EcallScanFailHandler :  public ICallListener,
                                   public std::enable_shared_from_this<EcallScanFailHandler> {

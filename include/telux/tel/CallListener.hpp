@@ -109,6 +109,27 @@ public:
    }
 
    /**
+    * This function is called when an updated MSD is requested by the PSAP during a standard
+    * or NG eCall.
+    *
+    * Client is expected to update the MSD using @ref telux::tel::ICallManager::updateECallMsd
+    * upon receiving this notification. Modem updates its internal cache and responds to PSAP
+    * with the new MSD.
+    * In situations where the client fails to update the MSD, modem will time out and send the
+    * outdated MSD from its cache.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permisson to receive this notification
+    *
+    * @param [in] phoneId - Unique ID of the phone on which this MSD update request is received
+    *
+    * @note  Eval: This is a new API and is being evaluated. It is subject to
+    *        change and could break backwards compatibility.
+    */
+   virtual void OnMsdUpdateRequest(int phoneId){
+   }
+
+   /**
     * This function is called when the eCall High Level Application Protocol(HLAP) timers status
     * is changed.
     *

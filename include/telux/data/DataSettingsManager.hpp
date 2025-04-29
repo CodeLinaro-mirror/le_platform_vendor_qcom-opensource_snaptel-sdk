@@ -111,6 +111,35 @@ struct BandInterferenceConfig {
 };
 
 /**
+ * Specifies the type of configurations that need to be cleaned up.
+ */
+
+ enum CleanupConfigType {
+    CLEANUP_CONFIG_WWAN_PROFILE_CACHE, /**< Cleans cached WWAN data profiles related
+                                            information. If WWAN data profiles cache is cleaned up,
+                                            the information related to VLAN binding to backhaul or
+                                            profiles will also be cleaned up. */
+    CLEANUP_CONFIG_VLAN_BINDINGS        /**< Cleans VLAN backhaul bindings alone. */
+};
+
+/**
+ * Represents a set of configs from CleanupConfigType.
+ * For example, a value of cleanupConfigTypes.set(CleanupConfigType::CLEANUP_CONFIG_VLAN_BINDINGS)
+ * represents that VLAN binding to backhaul/profile needs to be cleaned up.
+ */
+using CleanupConfigTypes = std::bitset<64>;
+
+/**
+ * Cleanup configuration.
+ * The cleanup configuration is subscription-specific, and CleanupConfigTypes can contain one or
+ * more bits of CleanupConfigType.
+ */
+struct CleanupConfig {
+    SlotId slotId = DEFAULT_SLOT_ID;
+    CleanupConfigTypes mask;
+};
+
+/**
  * This function is called with the response to requestBackhaulPreference API.
  *
  * The callback can be invoked from multiple different threads.
@@ -401,6 +430,43 @@ public:
     *           break backwards compatibility.
     */
     virtual telux::common::ErrorCode getLatencyConfig(LatencyConfig& latencyConfig) = 0;
+
+    /**
+     * Cleans up persisted configurations.
+     * This API allows the cleanup of persisted configurations, such as:
+     * - Cached WWAN data profile information
+     * - Data profile to VLAN bindings, etc.
+     * Cleanup will be performed based on the bits set in the @ref CleanupConfigTypes provided in
+     * @ref CleanupConfig.
+     *
+     * SlotId in @ref CleanupConfig:
+     * - Is not needed and can be kept as default on platforms with single active SIM slot
+     *   configurations like DSSA (Dual SIM Single Active).
+     * - Will be utilized on platforms with dual active SIM slots like DSDA (Dual SIM Dual Active)
+     *   or DSDS (Dual SIM Dual Standby) to delete configurations specific to a particular slot.
+     *
+     * Some instances when this API would be invoked:
+     * - SIM switch is done between 2 SIMs in DSSS/DSSA configuration
+     *   @ref telux::tel::IMultiSimManager::switchActiveSlot.
+     * - SIM profiles get updated on an eSIM @ref telux::tel::ISimProfileManager::setProfile.
+     *
+     * @note This API will delete all configurations except those associated with the default
+     *  profile @ref IDataConnectionManager::getDefaultProfile. For example, if the user calls
+     *  cleanupSettings for @ref CleanupConfigType::CLEANUP_CONFIG_WWAN_PROFILE_CACHE and
+     *  @ref CleanupConfigType::CLEANUP_CONFIG_VLAN_BINDINGS, the default profile and VLAN bindings
+     *  associated with the default profile will be maintained.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config   @ref telux::data::CleanupConfig
+     *
+     * @returns             @ref telux::common::ErrorCode success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode cleanupSettings(CleanupConfig config) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

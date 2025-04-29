@@ -26,46 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -105,7 +70,9 @@
  *          It manages the telephony subsystem using Telematics-SDK APIs.
  */
 
+#include <iomanip>
 #include <iostream>
+#include <string>
 
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -123,11 +90,13 @@ TelClient::TelClient()
    , callMgr_(nullptr)
    , eCall_(nullptr)
    , eCallInprogress_(false)
-   , eCallScanFailHdlrInstance_(nullptr) {
+   , eCallScanFailHdlrInstance_(nullptr)
+   , isPrivateEcallTriggered(false) {
 }
 
 TelClient::~TelClient() {
     eCallInprogress_ = false;
+    isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
 }
 
@@ -200,6 +169,9 @@ bool TelClient::isECallInProgress() {
 
 void TelClient::setECallProgressState(bool state) {
     std::unique_lock<std::mutex> lock(mutex_);
+    if (!state) {
+       isPrivateEcallTriggered = false;
+    }
     eCallInprogress_ = state;
 }
 
@@ -209,6 +181,12 @@ telux::tel::CallDirection TelClient::getECallDirection() {
     } else {
         return telux::tel::CallDirection::NONE;
     }
+}
+
+// Update locally cached MSD recieved after location update
+void TelClient::setECallMsd(ECallMsdData& msdData) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    msdData_ = msdData;
 }
 
 // Callback invoked when an incoming call is received
@@ -244,7 +222,10 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
     }
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
         std::cout << CLIENT_NAME << "  Cause of call termination: "
-                  << TelClientUtils::callEndCauseToString(call->getCallEndCause()) << std::endl;
+            << TelClientUtils::callEndCauseToString(call->getCallEndCause())
+            << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
+            << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << std::endl;
         if (eCall_ != nullptr) {
             if (eCall_->getCallIndex() == call->getCallIndex()
                 && eCall_->getPhoneId() == call->getPhoneId()) {
@@ -277,9 +258,28 @@ void TelClient::onECallMsdTransmissionStatus(
               << std::endl;
     eCallDataMap_[phoneId].msdTransmissionStatus = msdTransmissionStatus;
 }
+
 // Callback to notify request from PSAP for MSD update
-void TelClient::OnTpsMsdUpdateRequest(int phoneId) {
-    std::cout << "Request to send the MSD receieved from PSAP for SlotId " << phoneId << std::endl;
+void TelClient::OnMsdUpdateRequest(int phoneId) {
+    std::cout << CLIENT_NAME << "Request to send the MSD receieved from PSAP for SlotId "
+              << phoneId
+              << " for the ecall Type : "
+              << (isPrivateEcallTriggered ? "Private ecall" : "Standard or NG ecall")
+              << std::endl;
+    if (!isPrivateEcallTriggered) {
+       ECallMsdData msdData;
+       if (isECallInProgress()) {
+          {
+             std::lock_guard<std::mutex> lock(mutex_);
+             msdData = msdData_;
+          }
+          auto status = updateECallMSD(phoneId, msdData);
+          if (status != telux::common::Status::SUCCESS) {
+             std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
+             return;
+          }
+       }
+    }
 }
 
 // Callback to notify eCall HLAP timers status
@@ -459,6 +459,17 @@ void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, uint32_t ti
     }
 }
 
+// Callback which provides response for restart of HLAP timer
+void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
+    }
+}
+
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
     ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -469,6 +480,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = false;
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -518,6 +530,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = false;
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -567,6 +580,7 @@ telux::common::Status TelClient::startECall(int phoneId, const std::vector<uint8
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = true;
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
     CustomSipHeader header;
@@ -844,4 +858,42 @@ telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
         TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
     }
     return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to restart eCall HLAP timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->restartECallHlapTimer(phoneId, id, duration,
+        std::bind(&TelClient::restartHlapTimerResponse, this, std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
+    std::vector<uint8_t> &msdPdu) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get encoded eCall"
+            << " MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    auto errCode = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
+    std::vector<uint8_t> msdPayload = msdPdu;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded eCall MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    } else {
+        std::stringstream ss;
+        for (auto i : msdPdu) {
+            ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+        }
+        TelClientUtils::printECallMsdPayload(ss.str());
+    }
+    return telux::common::ErrorCode::SUCCESS;
 }

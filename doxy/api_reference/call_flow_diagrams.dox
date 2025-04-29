@@ -188,7 +188,7 @@ Private eCall:
 6. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
 7. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
 8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
-9. CallManager sends MSD update request recieved from network to the application by using OnTpsMsdUpdateRequest API.
+9. CallManager sends MSD update request recieved from network to the application by using OnMsdUpdateRequest API.
 10. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
 11. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
 12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.

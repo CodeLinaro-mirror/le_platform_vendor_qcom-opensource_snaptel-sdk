@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
@@ -313,6 +314,18 @@ class TelClient : public ICallListener,
         optionalAdditionalDataContent, std::vector<uint8_t> &data);
 
     /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @param [in] eCallMsd    ECall MSD.
+     * @param [out] msdPdu     Encoded vector of bytes.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload(ECallMsdData eCallMsd,
+        std::vector<uint8_t> &msdPdu);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -328,12 +341,30 @@ class TelClient : public ICallListener,
      */
     telux::tel::CallDirection getECallDirection();
 
+    /**
+     * This function caches latest MSD recieved after location update.
+     *
+     * @param [in] MSD data
+     *
+     */
+    void setECallMsd(ECallMsdData& msdData_);
+
+    /**
+     * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+     *
+     * @param [in] id          Timer ID
+     * @param [in] duration    Time gap between two successive redial attempts
+     *
+     * @returns status for restartECallHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(
         int phoneId, ECallMsdTransmissionStatus msdTransmissionStatus) override;
-    void OnTpsMsdUpdateRequest(int phoneId) override;
+    void OnMsdUpdateRequest(int phoneId) override;
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(
         telux::common::ErrorCode error, std::shared_ptr<telux::tel::ICall>) override;
@@ -342,6 +373,7 @@ class TelClient : public ICallListener,
     void stopT10TimerResponse(telux::common::ErrorCode error);
     void setHlapTimerResponse(telux::common::ErrorCode error);
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
+    void restartHlapTimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();
@@ -379,11 +411,13 @@ class TelClient : public ICallListener,
 
     /** Represents eCall status */
     bool eCallInprogress_;
+
     std::mutex mutex_;
     std::shared_ptr<CallStatusListener> callListener_;
 
     // Map to hold the ongoing eCall Info w.r.t phoneId
     std::map<int, ECallInfo> eCallDataMap_;
+    ECallMsdData msdData_;
 
     class EcallScanFailHandler : public ICallListener,
                                  public std::enable_shared_from_this<EcallScanFailHandler> {
@@ -421,6 +455,8 @@ class TelClient : public ICallListener,
     };
 
     std::shared_ptr<EcallScanFailHandler> eCallScanFailHdlrInstance_;
+    /** Represents whether ecall initiated is a private ecall. */
+    bool isPrivateEcallTriggered;
 };
 
 #endif  // TELCLIENT_HPP

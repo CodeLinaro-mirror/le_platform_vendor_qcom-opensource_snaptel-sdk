@@ -63,6 +63,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #ifndef ECALLAPP_HPP
 #define ECALLAPP_HPP
 
@@ -167,9 +168,19 @@ class ECallApp : public ConsoleApp {
     void setECallConfig();
 
     /**
+     * Gets encoded eCall MSD payload.
+     */
+    void getECallMsdPayload();
+
+    /**
      * Function to get eCall category from the user-interface
      */
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
+
+    /**
+     * Function to restart eCall High Level Application Protocol (HLAP) from the user-interface
+     */
+    void restartECallHlapTimer();
 
     /**
      * Function to configure MSD transmission at call connect

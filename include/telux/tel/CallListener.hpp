@@ -159,9 +159,15 @@ public:
    virtual void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
    }
+
    /**
-    * This function is called when MSD update is requested by PSAP during Third Party Service (TPS)
-    * ecall over IMS.
+    * This function is called when MSD update is requested by PSAP.
+    *
+    * Client is expected to update the MSD using @ref telux::tel::ICallManager::updateECallMsd
+    * upon receiving this notification. Modem updates its internal cache and responds to PSAP
+    * with the new MSD.
+    * In situations, where the client fails to update the MSD, modem will time out and send the
+    * outdated MSD from its cache.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to receive this notification.
@@ -171,8 +177,15 @@ public:
     * @note  Eval: This is a new API and is being evaluated. It is subject to
     *        change and could break backwards compatibility.
     */
-   virtual void OnTpsMsdUpdateRequest(int phoneId){
+   virtual void OnMsdUpdateRequest(int phoneId) {
    }
+
+   /**
+    * Note that the API OnTpsMsdUpdateRequest is an alias for OnMsdUpdateRequest and
+    * OnTpsMsdUpdateRequest would deprecated and eventually removed. As of now, it is retained
+    * for backward compatibility.
+    */
+   #define OnTpsMsdUpdateRequest OnMsdUpdateRequest
 
    /**
     * This function is called when the eCall High Level Application Protocol(HLAP) timers status

@@ -361,6 +361,20 @@ public:
    virtual CallEndCause getCallEndCause() = 0;
 
    /**
+    * Get the SIP error code for the termination of the IMS call.
+    * Refer RFC3261 Section 21 for error description.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns integer representing SIP error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual int getSipErrorCode() = 0;
+
+   /**
     * Get id of the phone object which represents the network/SIM on which
     * the call is in progress.
     *

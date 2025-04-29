@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
@@ -88,6 +89,8 @@
 #define ECALL_DO_NOT_TRANSMIT_MSD 2
 #define ECALL_T10_TIMER_MIN 60
 #define ECALL_T10_TIMER_MAX 720
+#define T9 5
+#define T10 6
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -158,11 +161,20 @@ void ECallApp::init() {
         ConsoleAppCommand("13", "Get_Encoded_Optional_Additional_Data_Content", {},
         std::bind(&ECallApp::getEncodedOptionalAdditionalDataContent, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getECallMsdPayloadCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Get_ECall_Msd_Payload", {},
+        std::bind(&ECallApp::getECallMsdPayload, this)));
+
+    std::shared_ptr<ConsoleAppCommand> restartECallHlapTimerCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Restart_ECall_Hlap_Timer", {},
+        std::bind(&ECallApp::restartECallHlapTimer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
             stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
-            setEcallConfigCommand, getEncodedOADContentCommand};
+            setEcallConfigCommand, getEncodedOADContentCommand,
+            getECallMsdPayloadCommand,restartECallHlapTimerCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -623,6 +635,55 @@ void ECallApp::setECallConfig() {
     }
 }
 
+void ECallApp::restartECallHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    EcallHlapTimerId id = EcallHlapTimerId::UNKNOWN;
+    int duration = 0;
+    char delimiter = '\n';
+    std::string temp = "";
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    std::cout << "Select the timer id to restart eCall HLAP timer \n    \
+        \r\t5 - Timer-id for T9 timer\n  \
+        \r\t6 - Timer-id for T10 timer\n " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            int input = std::stoi(temp);
+            id = static_cast<EcallHlapTimerId>(input);
+            if(input < T9 || input > T10) {
+                std::cout << "ERROR: Invalid timer id is entered" << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << " Enter duration of timer (in seconds) " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            duration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
+        return;
+    }
+}
+
 void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
@@ -633,6 +694,19 @@ void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get encoded optional additional data content"
             << std::endl;
+        return;
+    }
+}
+
+void ECallApp::getECallMsdPayload() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+
+    auto ret = eCallMgr_->getECallMsdPayload();
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to get eCall MSD payload" << std::endl;
         return;
     }
 }

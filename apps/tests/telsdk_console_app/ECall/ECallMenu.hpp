@@ -209,6 +209,9 @@ private:
    /* To get the encoded optional additional data content for Euro NCAP */
    void getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput);
 
+   /* To retrieve the encoded eCall MSD payload */
+   void getECallMsdPayload(std::vector<std::string> userInput);
+
    /* Updates static optional additional data content to main MSD. */
    void updateOptionalAdditionalDataContent(MsdSettings &msdSettings);
 

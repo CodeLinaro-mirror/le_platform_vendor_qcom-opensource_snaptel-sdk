@@ -128,9 +128,28 @@ bool SnatMenu::init() {
                         "request_static_nat_entries_v1",
                 {}, std::bind(&SnatMenu::requestStaticNatEntries_V1, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> setNatType =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "set_nat_type",
+            {}, std::bind(&SnatMenu::setNatType, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setNatTimeout =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "set_nat_timeout",
+            {}, std::bind(&SnatMenu::setNatTimeout, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> enableNatConfig =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "enable_nat_config",
+            {}, std::bind(&SnatMenu::enableNatConfig, this, std::placeholders::_1)));
+
+        std::shared_ptr<ConsoleAppCommand> requestNatConfig =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "request_nat_config",
+            {}, std::bind(&SnatMenu::requestNatConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestNatTimeoutValue =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "request_nat_timeout_value",
+            {}, std::bind(&SnatMenu::requestNatTimeoutValue, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {addStaticNatEntry,
             removeStaticNatEntry, reqStaticNatEntries, addStaticNatEntry_V1,
-            removeStaticNatEntry_V1, reqStaticNatEntries_V1};
+            removeStaticNatEntry_V1, reqStaticNatEntries_V1, setNatType, setNatTimeout,
+            enableNatConfig, requestNatConfig, requestNatTimeoutValue
+        };
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -252,7 +271,11 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
-        if (snatEntries.size() > 0) {
+        if(snatEntries.size() == 0) {
+           std::cout<<"Entries Not Found\n";
+           return;
+        }
+        else if (snatEntries.size() > 0) {
             std::cout << "==========================================\n";
         }
         for (auto entry : snatEntries) {
@@ -397,16 +420,242 @@ void SnatMenu::requestStaticNatEntries_V1(std::vector<std::string> inputCommand)
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
-        if (snatEntries.size() > 0) {
-            std::cout << "==========================================\n";
+        if(snatEntries.size() == 0) {
+           std::cout<<"Entries Not Found\n";
+           return;
         }
-        for (auto entry : snatEntries) {
-            std::cout << "Private IP address: " << entry.addr << "\nPrivate port: " << entry.port
-                      << "\nGlobal port: " << entry.globalPort
-                      << "\nProtocol: " << DataUtils::protocolToString(entry.proto)
-                      << "\n==========================================\n";
+        else if (snatEntries.size() > 0) {
+            std::cout << "==========================================\n";
+            for (auto entry : snatEntries) {
+                std::cout << "Private IP address: " << entry.addr << "\nPrivate port: " << entry.port
+                          << "\nGlobal port: " << entry.globalPort
+                          << "\nProtocol: " << DataUtils::protocolToString(entry.proto)
+                          << "\n==========================================\n";
+            }
         }
     };
     retStat = snatManager_->requestStaticNatEntries(profileId, respCb, static_cast<SlotId>(slotId));
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::setNatType(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "Set NAT Type Config : \n";
+
+    int natTypeVal;
+    std::cout << "Select the Type of NAT : \n"
+              << static_cast<int>(telux::data::net::NatType::SYMMETRIC_NAT)
+              <<":SYMMETRIC NAT\n"
+              << static_cast<int>(telux::data::net::NatType::PORT_RESTRICTED_CONE_NAT)
+              <<":PORT RESTRICTED CONE NAT\n"
+              << static_cast<int>(telux::data::net::NatType::FULL_CONE_NAT)
+              << ":FULL CONE NAT\n"
+              << static_cast<int>(telux::data::net::NatType::ADDRESS_RESTRICTED_NAT)
+              <<":ADDRESS RESTRICTED CONE NAT\n";
+
+    std::cin >> natTypeVal;
+    Utils::validateInput(natTypeVal, {
+        static_cast<int>(telux::data::net::NatType::SYMMETRIC_NAT),
+        static_cast<int>(telux::data::net::NatType::PORT_RESTRICTED_CONE_NAT),
+        static_cast<int>(telux::data::net::NatType::FULL_CONE_NAT),
+        static_cast<int>(telux::data::net::NatType::ADDRESS_RESTRICTED_NAT)});
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setNatType Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n NAT already set as desired type "<< std::endl;
+        } else if (error == telux::common::ErrorCode::NO_EFFECT) {
+            std::cout << "\n NAT Type set successfully "<< std::endl;
+        }
+    };
+
+    telux::data::net::NatType natType = static_cast<telux::data::net::NatType>(natTypeVal);
+
+    retStat = snatManager_->setNatType(natType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::setNatTimeout(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "Set NAT Timeout : \n";
+
+    int natTimeoutType;
+    std::cout << "Enter NAT timeoutType :"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_GENERIC)
+              <<"-Generic\n"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMP)
+              <<"-ICMP\n"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_TCP_ESTABLISHED)
+              << "-TCP\n"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP)
+              <<"-UDP\n"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP_STREAM)
+              << "-UDP stream\n"
+              << static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMPV6)
+              <<"-ICMPv6\n";
+
+    std::cin >> natTimeoutType;
+    Utils::validateInput(natTimeoutType,{
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_GENERIC),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMP),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_TCP_ESTABLISHED),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP_STREAM),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMPV6)});
+
+    uint32_t natTimeoutValue = 0;
+    std::cout << "Enter NAT timeout value : ";
+    std::cin >> natTimeoutValue;
+    Utils::validateInput(natTimeoutValue);
+    uint32_t timeoutValue = (uint32_t)natTimeoutValue;
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setNatTimeout"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n NAT Timeout Set Successfully "<< std::endl;
+        } else if (error == telux::common::ErrorCode::NO_EFFECT) {
+            std::cout << "\n MobileAP is not enabled "<< std::endl;
+        } else {
+            std::cout << "\n NAT timeout set fails "<< std::endl;
+        }
+    };
+
+    telux::data::net::NatTimeout timeoutType =
+       static_cast<telux::data::net::NatTimeout>(natTimeoutType);
+
+    retStat = snatManager_->setNatTimeout(timeoutType, timeoutValue, respCb);
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::enableNatConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    bool enable = true ;  //default: TRUE -- NAT will be disabled
+
+    std::cout << "Enable NAT Config\n";
+
+    int enableFlag;
+    std::cout << "Please input enable/disable IPV4 NAT disable configuration "
+              << "(1-Enable/0-Disable): ";
+    std::cin >> enableFlag;
+    Utils::validateInput(enableFlag, {0, 1});
+    if (enableFlag) {
+        enable = false;  //FALSE -- NAT will be enabled
+    }
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "enableNatConfig"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n NAT configuration is set "<< std::endl;
+        } else {
+            std::cout << "\n Not able to set IPV4 NAT enable/disable configuration "<< std::endl;
+        }
+    };
+
+    retStat = snatManager_->enableNatConfig(enable, respCb);
+
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::requestNatConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "Request Nat Config : \n";
+
+    // Callback
+    auto respCb = [](const telux::data::net::NatConfigStatus &natConfigStatus,
+                     telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "getNatConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout<< "\nIPV4 NAT disable configuration: "
+                     << natConfigStatus.isNatEnabled << std::endl;
+
+            if(natConfigStatus.isNatEnabled == false) {
+                std::cout << "NAT Type: ";
+                switch (natConfigStatus.natType){
+                    case telux::data::net::NatType::SYMMETRIC_NAT:
+                      std::cout << " Symmetric NAT\n";
+                      break;
+                    case telux::data::net::NatType::PORT_RESTRICTED_CONE_NAT:
+                      std::cout << " Port Restricted Cone NAT\n";
+                      break;
+                    case telux::data::net::NatType::FULL_CONE_NAT:
+                      std::cout << " Full Cone NAT\n";
+                      break;
+                    case telux::data::net::NatType::ADDRESS_RESTRICTED_NAT:
+                      std::cout << " Address Restricted Cone NAT\n";
+                      break;
+                    default:
+                      std::cout << " Invalid NAT Type Returned:"
+                                << static_cast<int>(natConfigStatus.natType)<<"\n";
+                      break;
+                }
+            }
+        }
+    };
+    retStat = snatManager_->requestNatConfig(respCb);
+    Utils::printStatus(retStat);
+}
+
+void SnatMenu::requestNatTimeoutValue(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "Request Nat Timeout Value : \n";
+
+    int natTimeoutType;
+    std::cout << "Select the Type of Timeout : \n"
+              << "1: GENRIC TIMEOUT\t2: ICMP TIMEOUT\n"
+              << "3: TCP TIMEOUT ESTABLISHED\t4: UDP TIMEOUT\t6: ICMPV6 TIMEOUT\t:::";
+    std::cin >> natTimeoutType;
+    Utils::validateInput(natTimeoutType, {
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_GENERIC),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMP),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_TCP_ESTABLISHED),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_UDP_STREAM),
+        static_cast<int>(telux::data::net::NatTimeout::NAT_TIMEOUT_ICMPV6)});
+
+    // Callback
+    auto respCb = [](const uint32_t  &natTimeoutValue, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "getNatTimeoutValue Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+          std::cout << "\n NAT Timeout "<< natTimeoutValue << std::endl;
+        }
+    };
+
+    telux::data::net::NatTimeout timeoutType =
+        static_cast<telux::data::net::NatTimeout>(natTimeoutType);
+    retStat = snatManager_->requestNatTimeoutValue(timeoutType, respCb);
     Utils::printStatus(retStat);
 }

@@ -74,6 +74,12 @@ class SnatMenu : public ConsoleApp ,
     void removeStaticNatEntry_V1(std::vector<std::string> inputCommand);
     void requestStaticNatEntries_V1(std::vector<std::string> inputCommand);
 
+    void setNatType(std::vector<std::string> inputCommand);
+    void setNatTimeout(std::vector<std::string> inputCommand);
+    void enableNatConfig(std::vector<std::string> inputCommand);
+    void requestNatConfig(std::vector<std::string> inputCommand);
+    void requestNatTimeoutValue(std::vector<std::string> inputCommand);
+
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 

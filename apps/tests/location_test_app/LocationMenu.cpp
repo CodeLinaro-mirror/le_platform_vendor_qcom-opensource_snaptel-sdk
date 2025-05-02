@@ -436,9 +436,10 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
           if(opt > 0) {
               myLocCmdResponseCb_
                   = std::make_shared<MyLocationCommandCallback>("Detailed report request");
-              locationManager_->startDetailedReports(
+              Status status = locationManager_->startDetailedReports(
                   (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
                       myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+              Utils::printStatus(status);
           } else {
               std::cout << " Invalid input \n";
           }
@@ -446,9 +447,10 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
           if(opt > 0) {
               myLocCmdResponseCb_
                   = std::make_shared<MyLocationCommandCallback>("Detailed report request");
-             locationManager_->startDetailedReports(
+             Status status = locationManager_->startDetailedReports(
                  (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
                      myLocCmdResponseCb_, std::placeholders::_1));
+             Utils::printStatus(status);
           } else {
               std::cout << " Invalid input \n";
           }
@@ -536,9 +538,10 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           if(opt > 0) {
               myLocCmdResponseCb_
                   = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
-              locationManager_->startDetailedEngineReports(
+             Status status =  locationManager_->startDetailedEngineReports(
                   (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
                       myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+             Utils::printStatus(status);
           } else {
               std::cout << " Invalid input \n";
           }
@@ -546,9 +549,10 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           if(opt > 0) {
               myLocCmdResponseCb_
                   = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
-              locationManager_->startDetailedEngineReports(
+              Status status = locationManager_->startDetailedEngineReports(
                   (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
                       myLocCmdResponseCb_, std::placeholders::_1));
+              Utils::printStatus(status);
           } else {
               std::cout << " Invalid input \n";
           }
@@ -576,9 +580,10 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
 
       if(optInterval > 0) {
          myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Basic report request");
-         locationManager_->startBasicReports((uint32_t)optInterval,
+         Status status = locationManager_->startBasicReports((uint32_t)optInterval,
                                              std::bind(&MyLocationCommandCallback::commandResponse,
                                                        myLocCmdResponseCb_, std::placeholders::_1));
+         Utils::printStatus(status);
       } else {
          std::cout << " Invalid input \n";
       }
@@ -587,20 +592,23 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
 
 void LocationMenu::registerLocationSystemInfo(std::vector<std::string> userInput) {
   myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Register Location System Info");
-   locationManager_->registerForSystemInfoUpdates(posListener_, std::bind(
+   Status status = locationManager_->registerForSystemInfoUpdates(posListener_, std::bind(
        &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+   Utils::printStatus(status);
 }
 
 void LocationMenu::deRegisterLocationSystemInfo(std::vector<std::string> userInput) {
   myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Deregister Location System Info");
-   locationManager_->deRegisterForSystemInfoUpdates(posListener_, std::bind(
+   Status status = locationManager_->deRegisterForSystemInfoUpdates(posListener_, std::bind(
        &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+   Utils::printStatus(status);
 }
 
 void LocationMenu::stopReports(std::vector<std::string> userInput) {
    myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Stop request");
-   locationManager_->stopReports(std::bind(&MyLocationCommandCallback::commandResponse,
+   Status status = locationManager_->stopReports(std::bind(&MyLocationCommandCallback::commandResponse,
                                            myLocCmdResponseCb_, std::placeholders::_1));
+   Utils::printStatus(status);
 }
 
 void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
@@ -653,9 +661,7 @@ void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureCTunc(enable,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1), optThreshold, optPower);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -680,9 +686,7 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configurePACE(enable,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -709,10 +713,8 @@ void LocationMenu::provideConsentForTerrestrialPositioning(
         telux::common::Status status = locationConfigurator_->
             provideConsentForTerrestrialPositioning(userConsent,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-          std::cout << "FAILED" << std::endl;
-        }
+                   std::placeholders::_1));
+        Utils::printStatus(status);
    }
 }
 
@@ -722,9 +724,7 @@ void LocationMenu::deleteAllAidingData(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->deleteAllAidingData(
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -765,9 +765,7 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
       telux::common::Status status = locationConfigurator_->deleteAidingData(dataType,
           std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
               std::placeholders::_1));
-      if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-      }
+      Utils::printStatus(status);
    }
 }
 
@@ -875,9 +873,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureLeverArm(configInfo,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -984,9 +980,7 @@ void LocationMenu::configureDR(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureDR(
             drConfig, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-          std::cout << "Failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1033,9 +1027,7 @@ void LocationMenu::configureEngineState(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureEngineState(engineType,
             engineState, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-            std::cout << "FAILED" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1082,9 +1074,7 @@ void LocationMenu::configureEngineIntegrityRisk(std::vector<std::string> userInp
         telux::common::Status status = locationConfigurator_->configureEngineIntegrityRisk(
             engineType, intRiskLevel, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::FAILED) {
-            std::cout << "FAILED" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1165,10 +1155,7 @@ void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
         status = locationConfigurator_->configureNmea(nmeaConfigParams,
             std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                 std::placeholders::_1));
-
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Configure Nmea sentence types failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1226,10 +1213,7 @@ void LocationMenu::configureAllNmeaSentence(std::vector<std::string> userInput) 
         status = locationConfigurator_->configureNmea(nmeaConfigParams,
             std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                 std::placeholders::_1));
-
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Configure All Nmea sentence types failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1314,11 +1298,9 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                     std::placeholders::_1), deviceReset);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
+        Utils::printStatus(status);
         }
   }
-}
 
 void LocationMenu::configureConstellationEmpty(std::vector<std::string> userInput) {
   if(locationConfigurator_) {
@@ -1330,9 +1312,7 @@ void LocationMenu::configureConstellationEmpty(std::vector<std::string> userInpu
         telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                     std::placeholders::_1), deviceReset);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
   }
 }
 
@@ -1347,9 +1327,7 @@ void LocationMenu::configureConstellationDeviceDefault(std::vector<std::string> 
         telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1), deviceReset);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
   }
 }
 
@@ -1465,9 +1443,7 @@ void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureRobustLocation(enable,
             enableE911, std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -1478,9 +1454,7 @@ void LocationMenu::requestRobustLocation(std::vector<std::string> userInput) {
         auto robustLocationCb = std::bind(&MyLocationCommandCallback::onRobustLocationInfo,
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status = locationConfigurator_->requestRobustLocation(robustLocationCb);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -1490,7 +1464,8 @@ void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput)
   auto gnssEnergyConsumedCb = std::bind(
       &MyLocationCommandCallback::onGnssEnergyConsumedInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
-   locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
+  Status status = locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
+  Utils::printStatus(status);
 }
 
 void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
@@ -1499,7 +1474,8 @@ void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
   auto getYearOfHwCb = std::bind(
       &MyLocationCommandCallback::onGetYearOfHwInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
-  locationManager_->getYearOfHw(getYearOfHwCb);
+ Status status = locationManager_->getYearOfHw(getYearOfHwCb);
+ Utils::printStatus(status);
 }
 
 void LocationMenu::getCapabilities(std::vector<std::string> userInput) {
@@ -1563,9 +1539,7 @@ void LocationMenu::requestTerrestrialPositioning(std::vector<std::string> userIn
           (uint32_t)optTimeout, techType, terrestrialPositionCb, std::bind(
               &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                   std::placeholders::_1));
-      if (status == telux::common::Status::SUCCESS) {
-          std::cout << "Status SUCCESS" << std::endl;
-      }
+      Utils::printStatus(status);
    }
 }
 
@@ -1577,9 +1551,7 @@ void LocationMenu::cancelTerrestrialPositioning(std::vector<std::string> userInp
       telux::common::Status status = locationManager_->cancelTerrestrialPositionRequest(
           std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
               std::placeholders::_1));
-      if (status == telux::common::Status::SUCCESS) {
-          std::cout << "Status SUCCESS" << std::endl;
-      }
+      Utils::printStatus(status);
    }
 }
 
@@ -1606,9 +1578,7 @@ void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureMinGpsWeek(minGpsWeek,
             std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -1619,10 +1589,8 @@ void LocationMenu::requestMinGpsWeek(std::vector<std::string> userInput) {
         auto minGpsWeekCb = std::bind(&MyLocationCommandCallback::onMinGpsWeekInfo,
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status = locationConfigurator_->requestMinGpsWeek(minGpsWeekCb);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not implemented" << std::endl;
-        }
-   }
+        Utils::printStatus(status);
+  }
 }
 
 void LocationMenu::configureMinSVElevation(std::vector<std::string> userInput) {
@@ -1648,11 +1616,7 @@ void LocationMenu::configureMinSVElevation(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureMinSVElevation(
             minSVElevation, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << __FUNCTION__ << "Not implemented" << std::endl;
-        } else if (status != telux::common::Status::SUCCESS) {
-          std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
+        Utils::printStatus(status);
    }
 }
 
@@ -1664,11 +1628,7 @@ void LocationMenu::requestMinSVElevation(std::vector<std::string> userInput) {
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status =
             locationConfigurator_->requestMinSVElevation(minSVElevationCb);
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << __FUNCTION__ << "Not implemented" << std::endl;
-        } else if (status != telux::common::Status::SUCCESS) {
-          std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1796,9 +1756,7 @@ void LocationMenu::configureXtraParameters(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureXtraParams(
             enable, configParams, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1809,10 +1767,8 @@ void LocationMenu::requestXtraStatus(std::vector<std::string> userInput) {
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status =
             locationConfigurator_->requestXtraStatus(getXtraStatusCb);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        Utils::printStatus(status);
         }
-    }
 }
 
 void LocationMenu::registerConfigListener(std::vector<std::string> userInput) {
@@ -1836,11 +1792,7 @@ void LocationMenu::registerConfigListener(std::vector<std::string> userInput) {
         }
         telux::common::Status status =
             locationConfigurator_->registerListener(indicationsList, locConfigListener_);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Register Listener Failed" << std::endl;
-        } else {
-            std::cout << __FUNCTION__ << " Register Listener Success" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1865,11 +1817,7 @@ void LocationMenu::deRegisterConfigListener(std::vector<std::string> userInput) 
         }
         telux::common::Status status =
             locationConfigurator_->deRegisterListener(indicationsList, locConfigListener_);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " De-Register Listener Failed" << std::endl;
-        } else {
-            std::cout << __FUNCTION__ << " De-Register Listener Success" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1891,6 +1839,7 @@ void LocationMenu::injectMerkleTreeInformation(std::vector<std::string> userInpu
             telux::common::Status status = locationConfigurator_->injectMerkleTreeInformation(
                 merkleTreeStr, std::bind(&MyLocationCommandCallback::commandResponse,
                     myLocCmdResponseCb_, std::placeholders::_1));
+            Utils::printStatus(status);
             if (status == telux::common::Status::FAILED) {
                 std::cout << "FAILED" << std::endl;
             }
@@ -1919,9 +1868,7 @@ void LocationMenu::configureOsnma(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->configureOsnma(
             enable, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -1943,9 +1890,7 @@ void LocationMenu::provideConsentForXtra(std::vector<std::string> userInput) {
         telux::common::Status status = locationConfigurator_->provideConsentForXtra(
             userConsent, std::bind(&MyLocationCommandCallback::commandResponse,
                 myLocCmdResponseCb_, std::placeholders::_1));
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-        }
+        Utils::printStatus(status);
     }
 }
 
@@ -2202,14 +2147,16 @@ telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engine
     std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb =
         std::make_shared<MyLocationCommandCallback>("Detailed report request");
     if (DEFAULT_UNKNOWN == engineType) {
-        locationManager->startDetailedReports(
+        Status status = locationManager->startDetailedReports(
             1000, std::bind(&MyLocationCommandCallback::commandResponse,
             myLocCmdResponseCb, std::placeholders::_1), reportMask);
+        Utils::printStatus(status);
     } else {
-        locationManager->startDetailedEngineReports(
+        Status status = locationManager->startDetailedEngineReports(
             1000, engineType,
             std::bind(&MyLocationCommandCallback::commandResponse,
                       myLocCmdResponseCb, std::placeholders::_1), reportMask);
+        Utils::printStatus(status);
     }
 
     while(1) {

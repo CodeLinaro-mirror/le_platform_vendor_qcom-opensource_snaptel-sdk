@@ -71,4 +71,8 @@ if (TELSDK_FEATURE_CONNECTION_SECURITY)
     add_subdirectory( wifi_connection_security_app )
 endif (TELSDK_FEATURE_CONNECTION_SECURITY)
 
+if (TELSDK_FEATURE_SWUPDATE)
+    add_subdirectory( swupdate_console_app)
+endif (TELSDK_FEATURE_SWUPDATE)
+
 endif(NOT BUILD_FOR_SIMULATION)

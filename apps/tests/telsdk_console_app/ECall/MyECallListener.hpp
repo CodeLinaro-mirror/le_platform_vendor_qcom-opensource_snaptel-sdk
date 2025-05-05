@@ -42,7 +42,9 @@ class MyECallListener : public telux::tel::ICallListener {
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
    void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
+   void onEmergencyNetworkScanFail(int phoneId) override;
    void onEcbmChange(telux::tel::EcbMode mode) override;
+
    /**
     * Get current time
     */

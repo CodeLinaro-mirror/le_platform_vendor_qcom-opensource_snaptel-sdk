@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -94,6 +65,10 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::getLatencyConfig, this, std::placeholders::_1)),
             std::make_pair("Cleanup_Settings",
             std::bind(&DataSettingsMenu::cleanupSettings, this, std::placeholders::_1)),
+            std::make_pair("Set_Autoconnect_Config",
+            std::bind(&DataSettingsMenu::setAutoConnectConfig, this, std::placeholders::_1)),
+            std::make_pair("Get_Autoconnect_Config",
+            std::bind(&DataSettingsMenu::getAutoConnectConfig, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -659,4 +634,83 @@ std::string DataSettingsMenu::cleanupTypeToString(telux::data::CleanupConfigType
             break;
     }
     return mode;
+}
+
+bool DataSettingsMenu::profileUserInput(OperationType &opType,
+    telux::data::AutoConnectProfile &profile) {
+    opType = telux::data::OperationType::DATA_LOCAL;
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    opType = static_cast<telux::data::OperationType>(operationType);
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return false;
+    }
+
+    std::cout << "Enter profile Id : ";
+    std::cin >> profile.profileId;
+    Utils::validateInput(profile.profileId);
+
+    profile.slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+       profile.slotId = static_cast<SlotId>(Utils::getValidSlotId());
+    }
+    return true;
+}
+
+void DataSettingsMenu::setAutoConnectConfig(std::vector<std::string> inputCommand) {
+    std::cout << "setAutoConnectConfig\n";
+    telux::data::AutoConnectSettings settings;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+
+    if (not profileUserInput(opType, settings.profile)) {
+        return;
+    }
+
+    int enable;
+    std::cout << "Enter enable or disable (1 - enable, 0 - disable): ";
+    std::cin >> enable;
+    Utils::validateInput(enable, {0,1});
+    settings.config.enable = enable;
+
+    int persist;
+    std::cout << "is it taking effect persistently (1 - persistent, 0 - non-persistent): ";
+    std::cin >> persist;
+    Utils::validateInput(persist, {0,1});
+    settings.config.persistent = persist;
+
+    /*clear potential leftover characters in the input buffer*/
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    auto res = dataSettingsManagerMap_[opType]->setAutoConnect(settings);
+    if (res != telux::common::Status::SUCCESS) {
+        std::cout << "setAutoConnect failed with " << static_cast<int>(res) << std::endl;
+    } else {
+        std::cout << "setAutoConnect success." << std::endl;
+    }
+}
+
+void DataSettingsMenu::getAutoConnectConfig(std::vector<std::string> inputCommand) {
+    std::cout << "getAutoConnectConfig\n";
+    telux::data::AutoConnectProfile profile;
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+
+    if (not profileUserInput(opType, profile)) {
+        return;
+    }
+    /*clear potential leftover characters in the input buffer*/
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    bool enable = 0;
+    auto res = dataSettingsManagerMap_[opType]->requestAutoConnect(profile, enable);
+    if (res != telux::common::Status::SUCCESS) {
+        std::cout << "getAutoConnect failed with " << static_cast<int>(res) << std::endl;
+    } else {
+        auto str = enable ? "enabled" : "disabled";
+        std::cout << "getAutoConnect success. AutoConnect is " << str << std::endl;
+    }
 }

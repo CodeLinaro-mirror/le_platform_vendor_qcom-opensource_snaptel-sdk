@@ -306,7 +306,7 @@ enum ErrorCode {
    REG_RESULT_ERR_VALID_FLAG_NOT_SET = 2017;            /**< A valid flag is not set */
    REG_RESULT_ERR_OUT_OF_PROFILES = 2018;               /**< Out of profiles */
    REG_RESULT_NO_EMERGENCY_PDN_SUPPORT = 2019;          /**< No emergency PDN support */
-   REG_RESULT_PROFILE_ALREADY_PRESENT = 2020,           /**< Profile already present */
+   REG_RESULT_PROFILE_ALREADY_PRESENT = 2020;           /**< Profile already present */
 
    /*cv2x specific error codes*/
    V2X_ERR_EXCEED_MAX                     = 3000;       /**< Exceed max allowed number */

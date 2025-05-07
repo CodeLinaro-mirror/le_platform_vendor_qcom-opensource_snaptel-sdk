@@ -652,6 +652,7 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
     if(createNewSmp(&thrSmp) < 0){
         if(secVerbosity > 7)
             fprintf(stderr,"Unable to create smp for this thread\n");
+        sem_post(&smpListSem);
         return false;
     }
     // No error in smp creation. Add to <thread,smp> map.
@@ -669,6 +670,7 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
                 if(secVerbosity > 7){
                     fprintf(stderr,"Unable to create smp for this thread\n");
                 }
+                sem_post(&smpListSem);
                 return false;
             }
             sem_init(verifThrSemPtr, 0, 1);

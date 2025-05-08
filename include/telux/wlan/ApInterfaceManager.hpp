@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -88,6 +59,14 @@ struct ApNetConfig {
 struct ApConfig {
     Id          id;                        /**< AP id                                         */
     std::vector<ApNetConfig> network;      /**< Configurations supported by AP                */
+};
+
+/**
+ * Wlan Client Device Indication Info
+ */
+struct DeviceIndInfo {
+    Id           id;                   /**<  AP id device is connected to                      */
+    std::string  macAddress;           /**<  MAC Address of Wi-Fi device                       */
 };
 
 /**
@@ -175,21 +154,6 @@ class IApInterfaceManager {
     virtual telux::common::ErrorCode getConnectedDevices(std::vector<DeviceInfo>& clientsInfo) = 0;
 
     /**
-     * Request statistics for all devices connected to all access points.
-     * Each entry in returned list will contains transmitted and recieved bytes for a device
-     * as defined in @ref telux::common::DeviceStats
-     *
-     * @param [in] clientStats    List of connected clients statistics @ref telux::wlan::DeviceStats
-     *
-     * @returns operation error code (if any). @ref telux::common::ErrorCode
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode getConnectedDevicesStats(
-        std::vector<DeviceStats>& clientsStats) = 0;
-
-    /**
      * Execute an operation on hostapd service. Provides ability for client to either stop/start or
      * restart hostapd service for selected access point. Restarting hostapd service is required
      * for any changes made to hosapd.conf file and changes made by
@@ -234,6 +198,26 @@ class IApInterfaceManager {
     virtual telux::common::ErrorCode deregisterListener(std::weak_ptr<IApListener> listener) = 0;
 
      virtual ~IApInterfaceManager(){};
+
+     /**
+     * Deprecated APIs
+     *
+     */
+
+    /**
+     * Request statistics for all devices connected to all access points.
+     * Each entry in returned list will contains transmitted and recieved bytes for a device
+     * as defined in @ref telux::common::DeviceStats
+     *
+     * @param [in] clientStats    List of connected clients statistics @ref telux::wlan::DeviceStats
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @deprecated This API is no longer supported.
+     *
+     */
+    virtual telux::common::ErrorCode getConnectedDevicesStats(
+        std::vector<DeviceStats>& clientsStats) = 0;
 };
 
 class IApListener {
@@ -242,10 +226,10 @@ public:
      * This function is called when AP device status has changed
      *
      * @param [in] event       Event detected on device @ref telux::wlan::ApDeviceConnectionEvent
-     * @param [in] info        Info about devices @ref telux::wlan::DeviceInfo
+     * @param [in] info        Info about devices @ref telux::wlan::DeviceIndInfo
      */
     virtual void onApDeviceStatusChanged(ApDeviceConnectionEvent event,
-        std::vector<DeviceInfo> info) {}
+        std::vector<DeviceIndInfo> info) {}
 
     /**
      * This function is called when AP switch to different operation band
@@ -255,6 +239,24 @@ public:
     virtual void onApBandChanged(BandType radio) {}
 
     virtual ~IApListener() {}
+
+     /**
+     * Deprecated APIs
+     *
+     */
+
+    /**
+     * This function is called when AP device status has changed
+     *
+     * @param [in] event       Event detected on device @ref telux::wlan::ApDeviceConnectionEvent
+     * @param [in] info        Info about devices @ref telux::wlan::DeviceInfo
+     *
+     * @note The name, ipv4Address, and ipv6Address fields from @ref telux::wlan::DeviceInfo are
+     *       not populated in the indication data. please invoke
+     *       @ref telux::wlan::IApInterfaceManager::getConnectedDevices for these details.
+     */
+     virtual void onApDeviceStatusChanged(ApDeviceConnectionEvent event,
+        std::vector<DeviceInfo> info) {}
 };
 
 /** @} */ /* end_addtogroup telematics_wlan */

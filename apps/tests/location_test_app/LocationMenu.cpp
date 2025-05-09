@@ -1218,8 +1218,8 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             telux::loc::SvBlackListInfo blackListInfo;
             std::string constellation;
             std::cout << " Enter the constellation : " << std::endl;
-            std::cout << " Enter 2 for GALILEO, 3 for SBAS, 5 for GLONASS " << std::endl;
-            std::cout << " 6 for BEIDOU, 7 for QZSS : " << std::endl;
+            std::cout << " Enter 1 for GPS, 2 for GALILEO, 3 for SBAS, 5 for GLONASS " << std::endl;
+            std::cout << " 6 for BEIDOU, 7 for QZSS, 8 for NAVIC : " << std::endl;
             std::getline(std::cin, constellation, delimiter);
             int constellationOption = 2;
             if(!constellation.empty()) {
@@ -1232,11 +1232,13 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             } else {
                  constellationOption = 2;
             }
-            if(constellationOption < 2 or constellationOption > 7 or constellationOption == 4) {
+            if(constellationOption < 1 or constellationOption == 4 or constellationOption > 8 ) {
                 std::cout << "invalid constellation, enter again." << std::endl;
                 continue;
             }
-            if(constellationOption == 2) {
+            if(constellationOption == 1) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::GPS;
+            } else if(constellationOption == 2) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::GALILEO;
             } else if (constellationOption == 3) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::SBAS;
@@ -1244,8 +1246,10 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::GLONASS;
             } else if (constellationOption == 6) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::BDS;
-            } else {
+            } else if (constellationOption == 7) {
                 blackListInfo.constellation = telux::loc::GnssConstellationType::QZSS;
+            } else {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::NAVIC;
             }
             std::cout << " constellationOption : " << constellationOption << std::endl;
             std::string satId;

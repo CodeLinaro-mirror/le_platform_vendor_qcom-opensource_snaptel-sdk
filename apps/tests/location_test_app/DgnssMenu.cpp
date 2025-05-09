@@ -486,7 +486,7 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
               " HTTP/1.1\r\n" + "User-Agent: NTRIP GNR/1.0.0 (Win32)\r\n" +
               "Authorization: Basic " +
               config.getValue("userNamePwdInBase64Format") +
-              "\r\nConnection: close\r\n";
+              "\r\nConnection: close\r\n\r\n";
 
           ret = send(ntcSocketFd_, con_request.c_str(), con_request.size(), 0);
           std::cout << "Sending request: " << con_request << std::endl;

@@ -281,7 +281,7 @@ public:
 /**
  * This API blacklists some constellations or subset of SVs from the constellation from being used
  * by the GNSS standard position engine (SPE).
- * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO, SBAS and NAVIC.
+ * Supported constellations for this API are GPS, GLONASS, QZSS, BEIDOU, GALILEO, SBAS and NAVIC.
  * For other constellations NOTSUPPORTED status will be returned.
  * For SBAS, SVs are not used in positioning by the GNSS standard position engine (SPE) by
  * default. Blacklisting SBAS SV only blocks SBAS data demodulation and will not disable SBAS

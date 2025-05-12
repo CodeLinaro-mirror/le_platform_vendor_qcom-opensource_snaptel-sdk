@@ -1,5 +1,5 @@
 ..
-   *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+   *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
    *  SPDX-License-Identifier: BSD-3-Clause-Clear
 
 .. _simulation-data:
@@ -31,6 +31,7 @@ Data
    enable_ip_passthrough
    set_data_stall_params
    set_eth_datalink_state
+   create_traffic_class_and_add_qos_filter
 
 
 ..
@@ -51,4 +52,5 @@ Data
    * :ref:`get-drb-status-and-indication`
    * :ref:`get-service-status-and-indication`
    * :ref:`get-roaming-status-and-indication`
-   * :ref:`on-demand-pdn-connectivity` 
+   * :ref:`on-demand-pdn-connectivity`
+   * :ref:`create_traffic_class_and_add_qos_filter`

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,7 +43,7 @@ public:
         telux::data::net::DataPath dataPath, int vlanId);
     uint32_t addIPv4QoSFilter(int trafficClass, telux::data::Direction direction,
         telux::data::net::DataPath dataPath, int protocol, std::string srcIPv4, int destPort = -1,
-        int srcPort = -1);
+        int srcPort = -1, int pcp = -1);
     bool parseArguments(int argc, char **argv);
     void printUseCases();
     void runUseCase(int useCase);

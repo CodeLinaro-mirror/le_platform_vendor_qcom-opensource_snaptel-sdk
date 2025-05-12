@@ -1666,6 +1666,45 @@ On boot-up, ETH will be available as expected e.g., 10G USXGMII.
 21. The local device receives an update that the peer has completed the ETH mode, allowing it to proceed with the transition to the recommended mode and restore ETH communication.
 22. Upon successful completion of this mode change transaction, all registered listeners are informed about the ETH mode transition status.
 
+Call flow Create traffic class and add QoS filter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_create_traffic_class_and_add_qos_filter.png
+
+1. Application requests the data factory for a QoS manager object.
+2. Data factory returns a shared pointer to the QoSManager object to the application.
+3. Application registers a listener for getting notifications.
+4. Use the traffic class configuration builder; set respective parameters like Traffic class ID, direction, and data path.
+   The traffic class is uniquely identified using a combination of the traffic class ID and direction. i.e., it can be the same across different traffic classes.
+   Bandwidth configuration/traffic shaping is applicable for the DL direction in the TETHERED_TO_APPS_SW or TETHERED_TO_WAN_HW data path.
+5. Call build in the traffic class configuration builder to get the traffic class configuration.
+6. If parameters are set correctly, the application will get the traffic class configuration object.
+7. The application calls the QoS manager API to create a traffic class and provides the traffic class configuration object from the above step
+8. After successful creation of the traffic class, use the traffic filter builder to identify traffic flow using direction
+   (it should match with the traffic class in step 4), PCP, VLAN, or IPv4 (IPv4 5-tuple) or IPv6 (IPv6 5-tuple) (note: VLAN, IPv4, and IPv6 are mutually exclusive and cannot be used in the same traffic filter.
+   If needed, multiple different filters can be created with respective parameters).
+9. Call build in the traffic filter builder to get the traffic filter object.
+10. If parameters are set correctly, the application will get the traffic filter object.
+11. Use the traffic filter object and traffic class ID to create the QoS filter configuration and call the QoS manager API to add the QoS filter.
+    Successful addition of the QoS filter will return the QoS filter handle as an output parameter
+
+Call flow to Delete QoS filter, Delete traffic class, Delete all QoS config
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_delete_qos_filter_delete_traffic_class_delete_all_qos_config.png
+
+1. Use the get QoS filters API in the QoS manager to get existing QoS filter information.
+2. Get the handle of the respective QoS filter that needs to be deleted.
+3. The application will get the respective QoS filter handle. These steps can be avoided if the application already has the QoS filter handle from when the QoS filter was added.
+4. The application calls the QoS manager API to delete the QoS filter using the respective QoS filter handle.
+5. To delete a traffic class, if the application has not stored the traffic class configuration used while creating the traffic class,
+   it can create a new traffic class configuration using the traffic class configuration builder.
+   The traffic class ID and direction are mandatory to uniquely identify the traffic class that needs to be deleted.
+6. Call build in the traffic class configuration builder to get the traffic class configuration.
+7. If the parameters are set correctly, the application will get the traffic class configuration object.
+8. The application calls the QoS manager API to delete a traffic class and provides the traffic class configuration object from the above step.
+9. To delete the traffic class and all QoS filters in one shot, the delete all QoS Configurations API can be called.
+
 C-V2X
 -----
 

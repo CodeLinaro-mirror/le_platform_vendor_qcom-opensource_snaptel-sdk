@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -36,7 +36,7 @@ union BandwidthValue {
 };
 
 /**
- * @brief Bandwidth configuration
+ * @brief Bandwidth configuration for traffic shaping
  */
 struct BandwidthConfig {
     BandwidthConfigType dlBandwidthConfigType; /**< Type of DL bandwidth */
@@ -154,7 +154,7 @@ class ITcConfig {
     /**
      * @brief Gets the bandwidth configuration.
      *
-     * @return BandwidthConfig representing the andwidth configuration.
+     * @return BandwidthConfig representing the bandwidth configuration.
      */
     virtual BandwidthConfig getBandwidthConfig() = 0;
 
@@ -198,14 +198,30 @@ class TcConfigBuilder {
      * @brief Sets the expected data path ( @ref DataPath ) for the QoS filter. It
      * indicates how data transfers are expected to happen within internal
      * components.
+     * No traffic shaping supported in uplink direction in any module.
+     * - @ref DataPath::TETHERED_TO_WAN_HW (ETH <=> IPA <=> Modem) :
+     *      - Uplink   : Prioritization happens in modem.
+     *      - Downlink : Traffic shaping supported only in ETH.
+     *                   Prioritization happens only in ETH.
+     *      - Traffic classes with data path TETHERED_TO_WAN_HW can be associated with traffic
+     *        filters with data path TETHERED_TO_WAN_HW and APPS_TO_WAN.
      *
-     * - Traffic classes with data path TETHERED_TO_WAN_HW can be associated with traffic filters
-     *   with data path TETHERED_TO_WAN_HW and APPS_TO_WAN.
-     * - Traffic classes with data path TETHERED_TO_APPS_SW can be associated with traffic filters
-     *   with data path TETHERED_TO_APPS_SW and APPS_TO_WAN.
-     * - Traffic classes with data path APPS_TO_WAN can be associated with traffic filters with data
-     *   path APPS_TO_WAN. Traffic classes created with APPS_TO_WAN can only be associated with
-     *   UPLINK data path.
+     * - @ref DataPath::TETHERED_TO_APPS_SW (ETH <=> Apps):
+     *      - Modem and IPA are not in the data path.
+     *      - Uplink   : Prioritization happens in ETH.
+     *      - Downlink : Traffic shaping supported in ETH.
+     *                   Prioritization happens in ETH.
+     *      - Traffic classes with data path TETHERED_TO_APPS_SW can be associated with traffic
+     *        filters with data path TETHERED_TO_APPS_SW and APPS_TO_WAN.
+     *
+     * - @ref DataPath::APPS_TO_WAN  (Apps <=> Modem) :
+     *      - IPA and ETH are not in the data path.
+     *      - Uplink    : Prioritization happens in modem.
+     *      - Downlink  : Traffic shaping not supported.
+     *                    Prioritization is not supported.
+     *      - Traffic classes with data path APPS_TO_WAN can be associated with traffic filters with
+     *        data path APPS_TO_WAN.
+     *      - Traffic classes created with APPS_TO_WAN can only be associated with UPLINK data path.
      *
      * @param [in] dataPath     Expected data path
      * @return Reference to this builder for method chaining.
@@ -217,6 +233,10 @@ class TcConfigBuilder {
 
     /**
      * @brief Sets the bandwidth configuration.
+     *
+     * Bandwidth configuration/traffic shaping is supported only in ETH in the downlink direction.
+     * Paths involving ETH include, for example, @ref TETHERED_TO_WAN_HW or @ref TETHERED_TO_APPS_SW
+     * Bandwidth configuration/traffic shaping is not supported in Modem and IPA modules.
      *
      * @param [in] bandwidthConfig     Expected bandwidth configuration
      * @return Reference to this builder for method chaining.
@@ -317,6 +337,8 @@ class IQoSListener;
  * @brief The QoS Manager class provides a set of APIs related to Quality of Service (QoS) for the
  * various data flows that flow via the NAD. Its purpose is to manage aspects like assigning
  * priority to the data flow, limiting the bandwidth of each flow relative to other flows, etc.
+ * Prioritization of traffic using QoS filters is expected to be done on a limited amount of the
+ * total bandwidth.
  *
  *    - Data Flow Identification @ref ITrafficFilter :
  *          - Data flows can be identified using various parameters from network layers 2, 3, and 4.
@@ -333,7 +355,7 @@ class IQoSListener;
  *            (highest priority) and go up to the maximum allowed traffic class.
  *          - Lower values correspond to higher priorities.
  *
- *    - Traffic bandwidth configuration:
+ *    - Traffic shaping/bandwidth configuration:
  *          - One can specify constraints/limits on the bandwidth that each Traffic class is allowed
  *            using @ref createTrafficClass.
  *          - Currently this is used to configure the bandwidth on the traffic egressing the NAD via
@@ -349,6 +371,31 @@ class IQoSListener;
  *
  *    - QoS filters are added to different modules based on the data path assigned to the traffic
  *      class. These can be Ethernet (Eth), IP Accelerator (IPA), modem.
+ *
+ * QoS support matrix for individual @ref DataPath :
+ *  - Data path: TETHERED_TO_APPS_SW
+ *      - Direction: UPLINK
+ *          - Traffic shaping: No
+ *          - Traffic Prioritization: Yes
+ *      - Direction: DOWNLINK
+ *          - Traffic shaping: Yes
+ *          - Traffic Prioritization: Yes
+ *
+ *  - Data path: APPS_TO_WAN
+ *      - Direction: UPLINK
+ *          - Traffic shaping: No
+ *          - Traffic Prioritization: Yes
+ *      - Direction: DOWNLINK
+ *          - Traffic shaping: No
+ *          - Traffic Prioritization: No
+ *
+ * - Data path: TETHERED_TO_WAN_HW
+ *      - Direction: UPLINK
+ *          - Traffic shaping: No
+ *          - Traffic Prioritization: Yes
+ *      - Direction: DOWNLINK
+ *          - Traffic shaping: Yes
+ *          - Traffic Prioritization: Yes
  */
 class IQoSManager {
  public:

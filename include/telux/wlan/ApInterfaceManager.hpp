@@ -244,6 +244,14 @@ class IApInterfaceManager {
     /**
      * Configure Element Info: Used to change element info configurations of selected network.
      *
+     * A successful response from this API indicates only that the input configuration has been
+     * stored.  It does not validate the correctness or compliance of the provided values with
+     * IEEE 802.11 specifications.
+     *
+     * The caller is responsible for ensuring that the values provided in
+     * @ref telux::wlan::ApElementInfoConfig comply with applicable constraints and
+     * interdependencies as defined in the IEEE 802.11 standard.
+     *
      * @param [in] apId            AP identifier to enable element info on. @ref telux::wlan::Id
      * @param [in] config          Element Info configurations.
      *

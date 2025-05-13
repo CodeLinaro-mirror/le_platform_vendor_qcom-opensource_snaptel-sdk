@@ -68,6 +68,7 @@
 #include <telux/data/net/NetworkSettingManager.hpp>
 #include <telux/data/net/IpsecManager.hpp>
 #include <telux/data/net/QoSManager.hpp>
+#include <telux/data/CellularDeviceManager.hpp>
 
 namespace telux {
 namespace data {
@@ -377,6 +378,18 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get Cellular Device Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Cellular Device manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of ICellularDeviceManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::ICellularDeviceManager> getCellularDeviceManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

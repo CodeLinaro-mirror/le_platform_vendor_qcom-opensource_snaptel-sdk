@@ -370,8 +370,16 @@ void WlanStaInterfaceManagerMenu::disconnect(std::vector<std::string> userInput)
 void WlanStaInterfaceManagerMenu::manageStaService(std::vector<std::string> userInput) {
 
     std::cout << "\nManage Station Service" << std::endl;
+
+    int opr = 0;
+    std::cout << "Select STA Service Operation\
+            (0-STOP, 1-START, 2-RESTART): ";
+    std::cin >> opr;
+    WlanUtils::validateInput(opr, {0, 1, 2});
+    std::cout << std::endl;
+
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->manageStaService(
-        telux::wlan::Id::PRIMARY, telux::wlan::ServiceOperation::RESTART);
+        telux::wlan::Id::PRIMARY, static_cast<telux::wlan::ServiceOperation>(opr));
 
     std::cout << "Manage Station Service Response"
               << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")

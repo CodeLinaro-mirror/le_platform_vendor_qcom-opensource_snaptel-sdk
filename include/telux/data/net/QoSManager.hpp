@@ -649,6 +649,15 @@ class IQoSListener : public telux::common::ISDKListener {
     }
 
     /**
+     * This function is called when the QoS filter status changes.
+     * QoS filter status at each module can be retrieved from @ref IQoSFilter::getStatus().
+     *
+     * @param [in] qosFilter           Shared pointer to QoSFilter.
+     */
+    virtual void onQoSFilterStatusChange(std::shared_ptr<IQoSFilter> qosFilter) {
+    }
+
+    /**
      * Destructor for IQoSListener
      */
     virtual ~IQoSListener(){};

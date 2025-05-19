@@ -14,6 +14,8 @@ extern "C" {
 #include <iostream>
 #include <sstream>
 
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+
 QoSManagementMenu::QoSManagementMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     menuOptionsAdded_ = false;
@@ -532,4 +534,27 @@ void QoSManagementMenu::getPortsFromUser(
             tfBuilder.setPortRange(startPort, portRange, fieldType);
         }
     }
+}
+
+void QoSManagementMenu::onServiceStatusChange(telux::common::ServiceStatus status) {
+    std::string stat ="";
+    switch(status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat =  " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+
+    PRINT_NOTIFICATION <<
+        " ** QoS Manager onServiceStatusChange **\n" << stat << std::endl;
+}
+
+void QoSManagementMenu::onQoSFilterStatusChange(std::shared_ptr<telux::data::net::IQoSFilter> qosFilter) {
+    PRINT_NOTIFICATION <<
+        " ** QoS Manager onQoSFilterStatusChange **\n" << qosFilter->toString() << std::endl;
 }

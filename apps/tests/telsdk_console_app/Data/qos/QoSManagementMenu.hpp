@@ -24,6 +24,8 @@ class QoSManagementMenu : public ConsoleApp,
 
     // Initialization Callback
     void onInitComplete(telux::common::ServiceStatus status);
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onQoSFilterStatusChange(std::shared_ptr<telux::data::net::IQoSFilter> qosFilter) override;
 
     // QoS Manager APIs
     void createTrafficClass(std::vector<std::string> &inputCommand);

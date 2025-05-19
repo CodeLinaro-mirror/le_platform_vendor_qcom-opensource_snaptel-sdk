@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "NatManagerStub.hpp"
@@ -20,7 +20,7 @@ namespace telux {
 namespace data {
 namespace net {
 
-NatManagerStub::NatManagerStub (telux::data::OperationType oprType)
+NatManagerStub::NatManagerStub(telux::data::OperationType oprType)
 : oprType_(oprType) {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
@@ -516,7 +516,7 @@ telux::common::Status NatManagerStub::deregisterListener(
     return listenerMgr_->deRegisterListener(listener);
 }
 
-void NatManagerStub::onServiceStatusChange(ServiceStatus status) {
+void NatManagerStub::onServiceStatusChange(telux::common::ServiceStatus status) {
     LOG(DEBUG, __FUNCTION__);
     if (listenerMgr_) {
         std::vector<std::weak_ptr<INatListener>> listeners;
@@ -529,6 +529,226 @@ void NatManagerStub::onServiceStatusChange(ServiceStatus status) {
             }
         }
     }
+}
+
+telux::common::Status NatManagerStub::requestNatConfig(RequestNatConfigStatusCb requestNatConfigCb) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::RequestNatConfigReply response;
+    ClientContext context;
+
+    grpc::Status reqStatus = stub_->RequestNatConfig(&context, ::google::protobuf::Empty(), &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    status = static_cast<telux::common::Status>(response.reply().status());
+    delay = static_cast<int>(response.reply().delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " requestNatConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        NatConfigStatus natConfigStatus;
+        natConfigStatus.natType = static_cast<NatType>(response.mutable_nat_type()->nat_type());
+        natConfigStatus.isNatEnabled = response.is_nat_enabled();
+
+        if (requestNatConfigCb && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, natConfigStatus, requestNatConfigCb, delay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    requestNatConfigCb(natConfigStatus, error);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::requestNatTimeoutValue(NatTimeout timeoutType,
+    RequestNatTimeoutValueCb requestNatTimeoutValueCb) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::NatTimeoutRequest request;
+    ::dataStub::RequestNatTimeoutValueReply response;
+    ClientContext context;
+
+    request.mutable_timeout_type()->set_timeout_type(static_cast<::dataStub::NatTimeoutEnum>(timeoutType));
+
+    grpc::Status reqStatus = stub_->RequestNatTimeoutValue(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    status = static_cast<telux::common::Status>(response.reply().status());
+    delay = static_cast<int>(response.reply().delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " requestNatTimeoutValue request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        uint32_t natTimeoutValue = response.timeout_value();
+
+        if (requestNatTimeoutValueCb && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, natTimeoutValue, requestNatTimeoutValueCb, delay]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    requestNatTimeoutValueCb(natTimeoutValue, error);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::enableNatConfig(bool enable,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::EnableNatConfigRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_enable(enable);
+
+    grpc::Status reqStatus = stub_->EnableNatConfig(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " enableNatConfig request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::setNatTimeout(NatTimeout timeoutType,
+    uint32_t timeoutValue, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::SetNatTimeoutRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_timeout_type(static_cast<::dataStub::NatTimeoutEnum>(timeoutType));
+    request.set_timeout_value(timeoutValue);
+
+    grpc::Status reqStatus = stub_->SetNatTimeout(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setNatTimeout request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status NatManagerStub::setNatType(NatType natType,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Nat manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::SetNatTypeRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_nat_type(static_cast<::dataStub::NatTypeEnum>(natType));
+
+    grpc::Status reqStatus = stub_->SetNatType(&context, request, &response);
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setNatType request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+    }
+
+    return status;
 }
 
 } // end of namespace net

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -158,6 +158,11 @@ service DataFilterManager {
     rpc RemoveStaticNatEntry(StaticNatRequest) returns (DefaultReply) {}
     rpc RequestStaticNatEntries(RequestStaticNatEntriesRequest) returns
         (RequestStaticNatEntriesReply) {}
+    rpc RequestNatConfig(google.protobuf.Empty) returns (RequestNatConfigReply) {}
+    rpc RequestNatTimeoutValue(NatTimeoutRequest) returns (RequestNatTimeoutValueReply) {}
+    rpc EnableNatConfig(EnableNatConfigRequest) returns (DefaultReply) {}
+    rpc SetNatTimeout(SetNatTimeoutRequest) returns (DefaultReply) {}
+    rpc SetNatType(SetNatTypeRequest) returns (DefaultReply) {}
 }
 
 /*
@@ -1397,6 +1402,58 @@ message SetDataStallParamsRequest {
 
 message SetDataStallParamsReply {
     commonStub.ErrorCode error = 1;
+}
+
+message NatTypeEnum {
+    enum Type {
+        NAT_TYPE_UNKNOWN = 0;
+        SYMMETRIC_NAT = 1;
+        PORT_RESTRICTED_CONE_NAT = 2;
+        FULL_CONE_NAT = 3;
+        ADDRESS_RESTRICTED_NAT = 4;
+    }
+    Type nat_type = 1;
+}
+
+message NatTimeoutEnum {
+    enum Type {
+        NAT_TIMEOUT_UNKNOWN = 0;
+        NAT_TIMEOUT_GENERIC = 1;
+        NAT_TIMEOUT_ICMP = 2;
+        NAT_TIMEOUT_TCP_ESTABLISHED = 3;
+        NAT_TIMEOUT_UDP = 4;
+        NAT_TIMEOUT_UDP_STREAM = 5;
+        NAT_TIMEOUT_ICMPV6 = 6;
+    }
+    Type timeout_type = 1;
+}
+
+message RequestNatConfigReply {
+    NatTypeEnum nat_type = 1;
+    bool is_nat_enabled = 2;
+    DefaultReply reply = 3;
+}
+
+message NatTimeoutRequest {
+    NatTimeoutEnum timeout_type = 1;
+}
+
+message RequestNatTimeoutValueReply {
+    uint32 timeout_value = 1;
+    DefaultReply reply = 2;
+}
+
+message EnableNatConfigRequest {
+    bool enable = 1;
+}
+
+message SetNatTimeoutRequest {
+    NatTimeoutEnum timeout_type = 1;
+    uint32 timeout_value = 2;
+}
+
+message SetNatTypeRequest {
+    NatTypeEnum nat_type = 1;
 }
 
 message BTTetherMode {

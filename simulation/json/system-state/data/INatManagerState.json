@@ -9,6 +9,15 @@
             "backhaulType": "ETH",
             "snatEntries" : [
             ]
+        },
+        {
+            "natConfig": {
+                "nat_type": "FULL_CONE",
+                "is_nat_enabled": true
+            },
+            "natTimeout": {
+                "timeout_value": 30
+            }
         }
     ]
 }

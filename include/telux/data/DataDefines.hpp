@@ -378,6 +378,24 @@ enum class BackhaulType {
 };
 
 /**
+ * Latency Level
+ * Latency level of configured IP packets. LatencyLevel::NORMAL is a default
+ * setting that has no additional priority.
+ */
+enum class LatencyLevel {
+    INVALID     = 0,        /** Not configured */
+    NORMAL      = 1,        /** Default, no priority */
+    LOW         = 2         /** More priority then LatencyLevel::NORMAL */
+};
+
+/**
+ * Latency configuration
+ */
+struct LatencyConfig {
+    LatencyLevel uplink = LatencyLevel::NORMAL;     /** Uplink latency level */
+};
+
+/**
  * Encapsulate backhaul configuration parameters
  */
 struct BackhaulInfo {

@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -97,10 +97,14 @@ class BridgeMenu : public ConsoleApp {
     void addBridge(std::vector<std::string> inputCommand);
     void getBridgeInfo(std::vector<std::string> inputCommand);
     void removeBridge(std::vector<std::string> inputCommand);
+    void setInterfaceBridge(std::vector<std::string> inputCommand);
+    void getInterfaceBridge(std::vector<std::string> inputCommand);
+
 
     BridgeMenu(std::string appName, std::string cursor);
     ~BridgeMenu();
  private:
+    bool menuOptionsAdded_;
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeMgr_;
 };
 #endif

@@ -195,11 +195,26 @@ struct ProfileParams {
     ApnTypes apnTypes;                                       /**< APN Types @ref ApnMaskType */
     bool clatEnabled = false;                                /**< Enable or disable CLAT */
     bool roamingEnabled = true;                              /**< Enable or disable Roaming */
-    IpFamilyType prefHomeIpType  = IpFamilyType::UNKNOWN;    /**< Preferred home network IP type*/
-    IpFamilyType prefLteRoamingIpType = IpFamilyType::UNKNOWN;  /**< Preferred LTE roaming network
-                                                                     IP type*/
-    IpFamilyType prefUmtsRoamingIpType = IpFamilyType::UNKNOWN; /**< Preferred UMTS roaming network
-                                                                     IP type */
+    IpFamilyType prefHomeIpType  = IpFamilyType::UNKNOWN;    /*< Preferred IP family type to be
+                                                                 used when connected to the home
+                                                                 network. If set to
+                                                                 IpFamilyType::UNKNOWN, the value
+                                                                 specified in the ipFamilyType
+                                                                 parameter will be used */
+    IpFamilyType prefLteRoamingIpType = IpFamilyType::UNKNOWN;  /**< Preferred IP family type to be
+                                                                     used when roaming on LTE
+                                                                     networks. If set to
+                                                                     IpFamilyType::UNKNOWN, the
+                                                                     value specified in the
+                                                                     ipFamilyType parameter will be
+                                                                     used */
+    IpFamilyType prefUmtsRoamingIpType = IpFamilyType::UNKNOWN; /**< Preferred IP family type to be
+                                                                     used when roaming on UMTS
+                                                                     networks. If set to
+                                                                     IpFamilyType::UNKNOWN, the
+                                                                     value specified in the
+                                                                     ipFamilyType parameter will be
+                                                                     used */
 };
 
 /**

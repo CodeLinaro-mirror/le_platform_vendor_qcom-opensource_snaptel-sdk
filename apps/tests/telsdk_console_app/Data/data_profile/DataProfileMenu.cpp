@@ -250,36 +250,6 @@ void DataProfileMenu::getProfileParamsFromUser() {
     std::cout << "Enter ROAMING enabled: (0-Disabled, 1-Enabled): ";
     std::cin >> roamingEnabled;
 
-    int prefHomeNwIpFamilyType;
-    std::cout << "Enter Preferred Home network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefHomeNwIpFamilyType;
-    Utils::validateInput(prefHomeNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
-    int prefLTERoamingNwIpFamilyType;
-    std::cout << "Enter Preferred LTE Roaming network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefLTERoamingNwIpFamilyType;
-    Utils::validateInput(prefLTERoamingNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
-    int prefUMTSRoamingNwIpFamilyType;
-    std::cout << "Enter Preferred UMTS Roaming network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefUMTSRoamingNwIpFamilyType;
-    Utils::validateInput(prefUMTSRoamingNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);
     params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
@@ -289,13 +259,46 @@ void DataProfileMenu::getProfileParamsFromUser() {
     params_.userName = username;
     params_.password = password;
     params_.clatEnabled = clatEnabled;
-    params_.roamingEnabled = roamingEnabled;
-    params_.prefHomeIpType =
-        static_cast<telux::data::IpFamilyType>(prefHomeNwIpFamilyType);
-    params_.prefLteRoamingIpType =
-        static_cast<telux::data::IpFamilyType>(prefLTERoamingNwIpFamilyType);
-    params_.prefUmtsRoamingIpType =
-        static_cast<telux::data::IpFamilyType>(prefUMTSRoamingNwIpFamilyType);
+    if (params_.techPref == telux::data::TechPreference::TP_3GPP) {
+        params_.roamingEnabled = roamingEnabled;
+        params_.prefHomeIpType = getPrefIpFamilyType("Preferred Home");
+        params_.prefLteRoamingIpType = getPrefIpFamilyType("Preferred LTE Roaming");
+        params_.prefUmtsRoamingIpType = getPrefIpFamilyType("Preferred UMTS Roaming");
+    }
+}
+
+telux::data::IpFamilyType DataProfileMenu::getPrefIpFamilyType(std::string msg) {
+    char delimiter = '\n';
+    std::string ipFamilyType;
+    const std::string validValues[] = {"-1", "4", "6", "10"};
+    bool isValid = false;
+
+    while (!isValid) {
+        std::cout << "Enter " << msg << " network IP Family: \n"
+        << " ([-1]-DEFAULT(Do not configure), 4-IPv4, 6-IPV6, 10-IPV4V6): ";
+        std::cin >> ipFamilyType;
+
+        for (const std::string& value : validValues) {
+            if (ipFamilyType == value) {
+                if (value == "-1") {
+                    return telux::data::IpFamilyType::UNKNOWN;
+                } else if(value == "4") {
+                    return telux::data::IpFamilyType::IPV4;
+                } else if(value == "6") {
+                    return telux::data::IpFamilyType::IPV6;
+                } else if(value == "10") {
+                    return telux::data::IpFamilyType::IPV4V6;
+                } else {
+                    return telux::data::IpFamilyType::UNKNOWN;
+                }
+            }
+        }
+        if (!isValid) {
+            std::cout << "Invalid input. Please try again.\n";
+        }
+    }
+
+    return telux::data::IpFamilyType::UNKNOWN;
 }
 
 ApnTypes DataProfileMenu::getApnMask() {
@@ -492,36 +495,6 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     std::cout << "Enter ROAMING enabled: (0-Disabled, 1-Enabled): ";
     std::cin >> roamingEnabled;
 
-    int prefHomeNwIpFamilyType;
-    std::cout << "Enter Preferred Home network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefHomeNwIpFamilyType;
-    Utils::validateInput(prefHomeNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
-    int prefLTERoamingNwIpFamilyType;
-    std::cout << "Enter Preferred LTE Roaming network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefLTERoamingNwIpFamilyType;
-    Utils::validateInput(prefLTERoamingNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
-    int prefUMTSRoamingNwIpFamilyType;
-    std::cout << "Enter Preferred UMTS Roaming network IP Family"
-        << " ((-1)-UNKNOWN, 4-IPv4, 6-IPV6, 10-IPV4V6): ";
-    std::cin >> prefUMTSRoamingNwIpFamilyType;
-    Utils::validateInput(prefUMTSRoamingNwIpFamilyType, {
-        static_cast<int>(telux::data::IpFamilyType::UNKNOWN),
-        static_cast<int>(telux::data::IpFamilyType::IPV4),
-        static_cast<int>(telux::data::IpFamilyType::IPV6),
-        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
-
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);
     params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
@@ -530,13 +503,12 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     params_.userName = username;
     params_.password = password;
     params_.clatEnabled = clatEnabled;
-    params_.roamingEnabled = roamingEnabled;
-    params_.prefHomeIpType =
-        static_cast<telux::data::IpFamilyType>(prefHomeNwIpFamilyType);
-    params_.prefLteRoamingIpType =
-        static_cast<telux::data::IpFamilyType>(prefLTERoamingNwIpFamilyType);
-    params_.prefUmtsRoamingIpType =
-        static_cast<telux::data::IpFamilyType>(prefUMTSRoamingNwIpFamilyType);
+    if (params_.techPref == telux::data::TechPreference::TP_3GPP) {
+        params_.roamingEnabled = roamingEnabled;
+        params_.prefHomeIpType = getPrefIpFamilyType("Preferred Home");
+        params_.prefLteRoamingIpType = getPrefIpFamilyType("Preferred LTE Roaming");
+        params_.prefUmtsRoamingIpType = getPrefIpFamilyType("Preferred UMTS Roaming");
+    }
 
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->queryProfile(

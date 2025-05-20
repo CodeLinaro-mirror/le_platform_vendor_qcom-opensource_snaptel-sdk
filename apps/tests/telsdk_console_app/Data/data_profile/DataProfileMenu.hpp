@@ -116,6 +116,7 @@ private:
     bool isDefaultProfile(SlotId slotId, int profileId);
     int getDefaultProfile(SlotId slotId, telux::data::OperationType opr);
     ApnTypes getApnMask();
+    telux::data::IpFamilyType getPrefIpFamilyType(std::string msg);
 
     bool subSystemStatusUpdated_;
     std::mutex mtx_;

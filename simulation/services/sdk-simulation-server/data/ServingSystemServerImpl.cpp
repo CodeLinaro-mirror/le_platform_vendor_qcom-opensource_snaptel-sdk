@@ -15,7 +15,9 @@
 
 #define SLOT_2 2
 
-ServingSystemServerImpl::ServingSystemServerImpl() {
+ServingSystemServerImpl::ServingSystemServerImpl(
+    std::shared_ptr<DataConnectionServerImpl> dcmServerImpl)
+    :dcmServerImpl_(dcmServerImpl) {
     LOG(DEBUG, __FUNCTION__);
 }
 
@@ -45,6 +47,10 @@ grpc::Status ServingSystemServerImpl::InitService(ServerContext* context,
 
     response->set_service_status(static_cast<dataStub::ServiceStatus>(status));
     response->set_delay(cbDelay);
+
+    std::vector<std::string> filters = {"data_connection_server"};
+    auto &serverEventManager = ServerEventManager::getInstance();
+    serverEventManager.registerListener(shared_from_this(), filters);
 
     return grpc::Status::OK;
 }
@@ -190,8 +196,12 @@ grpc::Status ServingSystemServerImpl::MakeDormant(ServerContext* context,
     std::string method = "makeDormant";
     JsonData data;
     telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
-
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data); 
+    if (!dcmServerImpl_->isAnyDataCallActive(static_cast<SlotId>
+        (request->make_dormant_status().slot_id()))) {
+        data.error = telux::common::ErrorCode::GENERIC_FAILURE;
+        data.status = telux::common::Status::FAILED;
+    }
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }

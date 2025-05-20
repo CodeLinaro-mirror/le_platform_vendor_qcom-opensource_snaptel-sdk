@@ -157,7 +157,7 @@ void SimulationServer::startGrpcServer() {
     builder.RegisterService(dataSettingsService.get());
 
     std::shared_ptr<ServingSystemServerImpl> servingSystemService =
-        std::make_shared<ServingSystemServerImpl>();
+        std::make_shared<ServingSystemServerImpl>(dcmService);
     builder.RegisterService(servingSystemService.get());
 
     std::shared_ptr<DataFilterServerImpl> dataFilterService =

@@ -13,6 +13,9 @@
         },
         "requestNrIconType": {
             "type": "BASIC"
+        },
+        "makeDormant": {
+            "response": "SUCCESS"
         }
     }
 }

@@ -90,7 +90,10 @@ public:
      * At least one packet needs to be exchanged between the TCP client and the server after
      * calling this API for the modem to learn the TCP session parameters. The modem needs
      * to learn the TCP session parameters before @ref startTCPKeepAliveOffload is called with
-     * MonitorHandle.
+     * MonitorHandle. For example, consider an application on a UE that uses MQTT over TCP to
+     * communicate with the cloud. After entering MONITOR mode, the client can either send a
+     * dummy PUBLISH message or resend a previous PUBLISH with the same topic. This ensures
+     * that the modem receives a TCP packet after MONITOR mode is initiated.
      *
      * On platforms with access control enabled, the caller needs to have
      * the TELUX_DATA_KA_OFFLOAD_OPS permission to successfully invoke this API.

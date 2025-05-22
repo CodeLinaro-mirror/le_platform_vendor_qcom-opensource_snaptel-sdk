@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -54,6 +54,7 @@
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
 #include <telux/data/net/TetherManager.hpp>
+#include <telux/data/net/EthernetManager.hpp>
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
 #include <telux/data/net/VlanManager.hpp>
@@ -322,6 +323,19 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::ITetherManager> getTetherManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get Ethernet Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              EthernetManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IEthernetManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IEthernetManager> getEthernetManager(
         telux::data::OperationType oprType,
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 

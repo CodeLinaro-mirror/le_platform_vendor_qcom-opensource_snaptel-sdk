@@ -57,6 +57,7 @@ namespace wlan {
 enum class BandType {
     BAND_5GHZ   = 1,
     BAND_2GHZ   = 2,
+    BAND_6GHZ   = 3,
 };
 
 /**
@@ -76,6 +77,27 @@ enum class Id {
     SECONDARY   = 2,
     TERTIARY    = 3,
     QUATERNARY  = 4,
+    ID_1        = 1,  // Equivalent to PRIMARY
+    ID_2        = 2,  // Equivalent to SECONDARY
+    ID_3        = 3,  // Equivalent to TERTIARY
+    ID_4        = 4,  // Equivalent to QUATERNARY
+    ID_5        = 5,
+    ID_6        = 6,
+    ID_7        = 7,
+    ID_8        = 8,
+    ID_9        = 9,
+    ID_10       = 10,
+    ID_11       = 11,
+    ID_12       = 12,
+    ID_13       = 13,
+    ID_14       = 14,
+    ID_15       = 15,
+    ID_16       = 16,
+    ID_17       = 17,
+    ID_18       = 18,
+    ID_19       = 19,
+    ID_20       = 20,
+    ID_21       = 21,
 };
 
 /**
@@ -100,10 +122,27 @@ enum class StaInterfaceStatus {
 };
 
 /**
+ * WLAN Boot Up config state
+ */
+enum class BootUpState{
+    UNKNOWN = -1,   /* wlan bootup state unknow */
+    DISABLE = 0,    /* wlan bootup state disable */
+    ENABLE = 1      /* wlan bootup state enable */
+};
+
+/**
+ * WLAN Boot Up config
+ */
+struct BootupConfig {
+    BootUpState wlanEnabled;        /* wlan bootup config, if enabled, wlan will be enabled
+                                       on bootup by qcmap */
+};
+
+/**
  * AP Info - captures ap type (private/guest)
  */
 struct ApInfo {
-	BandType        apRadio;            /**< Radio type (2.4/5.0 GHz) */
+    BandType        apRadio;            /**< Radio type (2.4/5.0 GHz) */
     ApType          apType;             /**< Ap type (private/guest) */
 };
 

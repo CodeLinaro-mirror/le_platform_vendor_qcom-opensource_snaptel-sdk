@@ -171,10 +171,14 @@ struct ApNetConfig {
     ApInfo               info;              /**< AP type                                          */
     std::string          ssid;              /**< SSID for AP                                      */
     bool                 isVisible;         /**< AP broadcast SSID                                */
-    ApElementInfoConfig  elementInfoConfig; /**< AP broadcast it's capabilities (Such as CarPlay) */
+    ApElementInfoConfig  elementInfoConfig; /**< AP broadcast it's capabilities (Such as CarPlay).
+                                                   Support for this field is subject to platform
+                                                   capability */
     ApInterworking       interworking;      /**< AP network access (internet/local)               */
-    ApSecurity           apSecurity;        /**< AP Security settings                             */
-    std::string          passPhrase;        /**< Passphrase for SSID used                         */
+    ApSecurity           apSecurity;        /**< AP Security settings. Support for this field is
+                                                   subject to platform capability */
+    std::string          passPhrase;        /**< Passphrase for SSID used. Support for this field
+                                                   is subject to platform capability*/
 };
 
 /**
@@ -182,7 +186,8 @@ struct ApNetConfig {
  */
 struct ApConfig {
     Id          id;                        /**< AP id                           */
-    ApVenueInfo venue;                     /**< AP venue info                   */
+    ApVenueInfo venue;                     /**< AP venue info. Support for this field is subject
+                                                  to platform capability */
     std::vector<ApNetConfig> network;      /**< Configurations supported by AP  */
 };
 
@@ -215,7 +220,7 @@ class IApInterfaceManager {
  public:
     /**
      * Set Access Point config: Used to fully configure access points including venue type,
-     * radio type (2.4/5 GHz), private/guest network and all other related settings.
+     * radio type (2.4/5/6 GHz), private/guest network and all other related settings.
      * Configurations will take effect after hostapd service is restarted by calling
      * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
@@ -229,6 +234,23 @@ class IApInterfaceManager {
      *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
      */
      virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;
+
+    /**
+     * Set Access Point config for multiple entry: Used to fully configure access points
+     * including venue type, radio type (2.4/5/6 GHz), private/guest network and all other
+     * related settings. Configurations will take effect after hostapd service is restarted
+     * by calling @ref telux::wlan::IApInterfaceManager::manageApService.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] configList       AP configuration list @ref telux::wlan::ApConfig
+     *
+     * @returns  operation error code (if any). @ref telux::common::ErrorCode
+     *           telux::common::Status::NOTALLOWED is returned if AP to be configured was not
+     *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
+     */
+     virtual telux::common::ErrorCode setConfig(std::vector<ApConfig>& configList) = 0;
 
     /**
      * Set Wlan Security Configuration: Used to change security settings of selected network.
@@ -351,7 +373,9 @@ class IApInterfaceManager {
      *
      * @ref telux::wlan::IDeviceManager::setMode
      *
-     * @param [in] apId          AP identifier to execute operation on. @ref telux::wlan::Id
+     * @param [in] apId          AP identifier to execute operation on. @ref telux::wlan::Id.
+     *                           When apId is set as INVALID_AP_ID, the operation will apply to
+     *                           the hostapd service management for all Aps.
      * @param [in] opr           Operation to be performed on hostapd
      *                           @ref telux::wlan::ServiceOperation
      *

@@ -163,7 +163,7 @@ using StaticNatEntriesCb
  *
  */
 using RequestNatConfigStatusCb
-    = std::function<void(NatConfigStatus &natConfigStatus, telux::common::ErrorCode error)>;
+    = std::function<void(const NatConfigStatus &natConfigStatus, telux::common::ErrorCode error)>;
 
 /**
  * This function is called as a response to @ref requestNatTimeoutValue()
@@ -175,7 +175,7 @@ using RequestNatConfigStatusCb
  *
  */
 using RequestNatTimeoutValueCb
-    =std::function<void(uint32_t  &natTimeoutValue, telux::common::ErrorCode error)>;
+    =std::function<void(const uint32_t &natTimeoutValue, telux::common::ErrorCode error)>;
 
 /**
  *@brief    NatManager is a primary interface for configuring static network address

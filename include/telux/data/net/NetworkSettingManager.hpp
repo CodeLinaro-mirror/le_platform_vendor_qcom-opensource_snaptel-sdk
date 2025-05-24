@@ -38,6 +38,11 @@ class INetworkSettingListener;
  */
 using PortConfigId = int;
 
+/**
+ * @brief This can be passed in requestPortTriggerEntry API to get all the entry.
+ */
+static int ALL_PORT_CONFIGS = 0;
+
 /*
  * Structure represents Port Trigger and forward configuration
  */
@@ -193,7 +198,8 @@ class INetworkSettingManager {
      * This is persistent across object and reboot lifetimes.
      *
      * @param [int] portConfigId     Id to get Port trigger Entry Configuration
-     *                               from the NAT table.
+     *                               from the NAT table. ALL_PORT_CONFIGS var can be used
+     *                               to retrieve all the prort trigger entries.
      * @param [in]  portTriggerCb    Asynchronous callback to get the response
      *                               for requestPortTriggerEntry
      *

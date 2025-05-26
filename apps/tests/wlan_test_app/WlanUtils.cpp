@@ -489,8 +489,8 @@ void WlanUtils::printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoC
              << ((ElementInfoConfig.esr)? "Yes":"No") << std::endl;
    std::cout << "    Unauthenticated emergency service accessible: "
              << ((ElementInfoConfig.uesa)? "Yes":"No") << std::endl;
-   std::cout << "    Venue group: " << ElementInfoConfig.venueGroup << std::endl;
-   std::cout << "    Venue type: " << ElementInfoConfig.venueType << std::endl;
+   std::cout << "    Venue group: " << static_cast<int>(ElementInfoConfig.venueGroup) << std::endl;
+   std::cout << "    Venue type: " << static_cast<int>(ElementInfoConfig.venueType) << std::endl;
    std::cout << "    Homogeneous ESS identifier: " << ElementInfoConfig.hessid << std::endl;
    std::cout << "    Vendor elements for Beacon and Probe Response frames: "
              << ElementInfoConfig.vendorElements << std::endl;

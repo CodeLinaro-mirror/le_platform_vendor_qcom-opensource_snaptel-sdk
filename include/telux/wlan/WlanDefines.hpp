@@ -51,6 +51,8 @@ namespace wlan {
 /** @addtogroup telematics_wlan
  * @{ */
 
+static const int maxLinkNum = 3;   /**< Maximum number AP LINK count per MLD */
+
 /**
  * Radio Band Types:
  */

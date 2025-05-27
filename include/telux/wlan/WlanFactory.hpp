@@ -51,6 +51,7 @@
 #include <telux/wlan/WlanDeviceManager.hpp>
 #include <telux/wlan/ApInterfaceManager.hpp>
 #include <telux/wlan/StaInterfaceManager.hpp>
+#include <telux/wlan/EZMeshManager.hpp>
 
 namespace telux {
 namespace wlan {
@@ -95,6 +96,16 @@ class WlanFactory {
      *
      */
     virtual std::shared_ptr<IStaInterfaceManager> getStaInterfaceManager() = 0;
+
+    /**
+    * Get EZMesh Manager
+    *
+    * @returns instance of IEZMeshManager
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
+    */
+    virtual std::shared_ptr<IEZMeshManager> getEZMeshManager() = 0;
 
  protected:
     WlanFactory();

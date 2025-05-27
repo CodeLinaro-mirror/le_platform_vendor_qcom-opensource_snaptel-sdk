@@ -30,7 +30,10 @@ class IStaListener;
 
 /**
  * Network identifier is a unique serial number assigned to each configured network,
- * It is used as index to reference and manage the persistent network settings.
+ * It serves as an index to reference and manage the persistent network settings.
+ * Network identifiers remain consistent across operations as long as the wpa_supplicant daemon is
+ * active. If the daemon is restarted, these identifiers may be reassigned, which can change their
+ * mapping to specific network configurations.
  */
 using NetworkId = uint16_t;
 
@@ -280,6 +283,8 @@ class IStaInterfaceManager {
     /**
      * Remove the specified network configuration entry from the saved network configurations.
      * Subsequently, disconnect from the external AP if it is the active connection.
+     * Upon disconnection, an attempt is made to connect to another saved network, based on
+     * priority or availability.
      * Connection status is notified via @ref telux::wlan::IStaListener::onStationStatusChanged.
      * This API should be called only after WLAN is enabled using
      * @ref telux::wlan::IWlanDeviceManager::enable API and required number of STAs are
@@ -408,8 +413,10 @@ public:
 
     /**
      * This function is triggered upon receiving the station scan results. The results may be
-     * received in batches. The final indication in the sequence is marked by setting
-     * @ref telux::wlan::StaScanResult::isScanComplete to true.
+     * received in batches. The final indication in the sequence is identified by the flag
+     * @ref telux::wlan::StaScanResult::isScanComplete being set to true.
+     * This indication is sent exclusively to the client that initiated the scan request via
+     * @ref telux::wlan::IStaInterfaceManager::startScan
      *
      * @param [in] staScanResult     Station scan result @ref telux::wlan::StaScanResult
      *

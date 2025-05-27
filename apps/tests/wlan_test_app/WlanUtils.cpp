@@ -431,7 +431,7 @@ void WlanUtils::printScanResult(const telux::wlan::StaScanResult &staScanResult)
     std::cout << "Id                                  : "
               << WlanUtils::getWlanId(staScanResult.staId) << std::endl;
     std::cout << "Batch index                         : "
-              << staScanResult.batchIndex << std::endl;
+              << static_cast<int>(staScanResult.batchIndex) << std::endl;
     std::cout << "Is last indication of the sequence? : "
               << ((staScanResult.isScanComplete)? "Yes":"No") << std::endl;
     if(staScanResult.externalApList.size() > 0) {

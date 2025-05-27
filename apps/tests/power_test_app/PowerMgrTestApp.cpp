@@ -104,7 +104,7 @@ std::cout << "-----------------------------------------------" << std::endl;
                  "        e.g. telux_power_test_app -l -A -n testApp_123 " << std::endl;
     std::cout << "   -t : get Tcu activity state for the local machine as a slave" << std::endl <<
                  "        e.g. If PVM is local machine-" <<
-                 "        telux_power_test_app -t qcom,mdm" << std::endl;
+                 "        telux_power_test_app -t " << std::endl;
     std::cout << "   -T : get Tcu activity state for any machine as a master" << std::endl <<
                  "        e.g. telux_power_test_app -T qcom,mdm" << std::endl <<
                  "             telux_power_test_app -T qcom,televm" << std::endl;

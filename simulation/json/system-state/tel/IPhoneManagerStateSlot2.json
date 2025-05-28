@@ -34,7 +34,8 @@
                         "gsmSignalStrengthInfo" :
                         {
                             "gsmSignalStrength" : 2147483647,
-                            "gsmBitErrorRate" : 2147483647
+                            "gsmBitErrorRate" : 2147483647,
+                            "gsmRssi" : 2147483647
                         }
                     },
                     "wcdmaCellInfo" :
@@ -53,7 +54,8 @@
                             "signalStrength" : 2147483647,
                             "bitErrorRate" : 2147483647,
                             "ecio" : 2147483647,
-                            "rscp" : 2147483647
+                            "rscp" : 2147483647,
+                            "rssi" : 214748364
                         }
                     },
                     "lteCellInfo" :
@@ -74,7 +76,8 @@
                             "lteRsrq" : -9,
                             "lteRssnr" : 28,
                             "lteCqi" : 2147483647,
-                            "timingAdvance" : 1
+                            "timingAdvance" : 1,
+                            "lteRssi" : -51
                         }
                     },
                     "nr5gCellInfo" :
@@ -110,7 +113,8 @@
                             "signalStrength" : 2147483647,
                             "rsrp" : 2147483647,
                             "rsrq" : 2147483647,
-                            "rssnr" : 2147483647
+                            "rssnr" : 2147483647,
+                            "rssi" : 2147483647
                         }
                     }
                 }
@@ -127,14 +131,16 @@
             "gsmSignalStrengthInfo" :
             {
                 "gsmSignalStrength" : 2147483647,
-                "gsmBitErrorRate" : 2147483647
+                "gsmBitErrorRate" : 2147483647,
+                "gsmRssi" : 2147483647
             },
             "wcdmaSignalStrengthInfo" :
             {
                 "signalStrength" : 2147483647,
                 "bitErrorRate" : 2147483647,
                 "ecio" : 2147483647,
-                "rscp" : 2147483647
+                "rscp" : 2147483647,
+                "rssi" : 2147483647
             },
             "lteSignalStrengthInfo" :
             {
@@ -143,7 +149,8 @@
                 "lteRsrq" : -9,
                 "lteRssnr" : 28,
                 "lteCqi" : 2147483647,
-                "timingAdvance" : 1
+                "timingAdvance" : 1,
+                "lteRssi" : -51
             },
             "nr5gSignalStrengthInfo" :
             {
@@ -156,7 +163,8 @@
                 "signalStrength" : 2147483647,
                 "rsrp" : 2147483647,
                 "rsrq" : 2147483647,
-                "rssnr" : 2147483647
+                "rssnr" : 2147483647,
+                "rssi" : 2147483647
             }
         },
 

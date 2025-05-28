@@ -2794,6 +2794,7 @@ message GsmSignalStrengthInfo {
     int32 gsm_signal_strength = 1;
     int32 gsm_bit_error_rate = 2;
     int32 timing_advance = 3;
+    int32 gsm_rssi = 4;
 }
 
 message WcdmaCellInfo {
@@ -2815,6 +2816,7 @@ message WcdmaSignalStrengthInfo {
     int32 bit_error_rate = 2;
     int32 ecio = 3;
     int32 rscp = 4;
+    int32 rssi = 5;
 }
 
 message LteCellInfo {
@@ -2838,6 +2840,7 @@ message LteSignalStrengthInfo {
     int32 lte_rssnr = 4;
     int32 lte_cqi = 5;
     int32 timing_advance = 6;
+    int32 lte_rssi = 7;
 }
 
 message Nr5gCellInfo {
@@ -2878,6 +2881,7 @@ message Nb1NtnSignalStrengthInfo {
     int32 rsrp = 2;
     int32 rsrq = 3;
     int32 rssnr = 4;
+    int32 rssi = 5;
 }
 
 message CellInfoList {

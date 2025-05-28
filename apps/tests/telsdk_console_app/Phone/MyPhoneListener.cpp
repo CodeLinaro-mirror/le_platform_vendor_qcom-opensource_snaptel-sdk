@@ -150,6 +150,14 @@ void MyPhoneListener::onSignalStrengthChanged(
                 << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
         }
 
+        if(signalStrength->getGsmSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
+                << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
+        }
+
         if(signalStrength->getGsmSignalStrength()->getTimingAdvance()
             == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE"
@@ -186,6 +194,14 @@ void MyPhoneListener::onSignalStrengthChanged(
         } else {
             PRINT_NOTIFICATION << "LTE Reference Signal Receive Power(in dBm): "
                  << signalStrength->getLteSignalStrength()->getDbm() << std::endl;
+        }
+
+        if(signalStrength->getLteSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "LTE Received Signal Strength Indicator(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "LTE Received Signal Strength Indicator(in dBm): "
+                << signalStrength->getLteSignalStrength()->getRssi() << std::endl;
         }
 
         if(signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
@@ -229,6 +245,14 @@ void MyPhoneListener::onSignalStrengthChanged(
                  << signalStrength->getWcdmaSignalStrength()->getDbm() << std::endl;
         }
 
+        if(signalStrength->getWcdmaSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "WCDMA Received Signal Strength Indicator(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "WCDMA Received Signal Strength Indicator(in dBm): "
+                << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
+        }
+
         if(signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
             == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
@@ -264,6 +288,13 @@ void MyPhoneListener::onSignalStrengthChanged(
     if (signalStrength->getNr5gSignalStrength() != nullptr) {
         std::shared_ptr<telux::tel::Nr5gSignalStrengthInfo> nr5GSigInfo =
             signalStrength->getNr5gSignalStrength();
+        if(nr5GSigInfo->getNr5gSignalStrength()
+            == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "5G NR Signal Strength: "<< "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "5G NR Signal Strength: "
+                 << nr5GSigInfo->getNr5gSignalStrength() << std::endl;
+        }
         if(nr5GSigInfo->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_NOTIFICATION << "5G NR Signal Strength(in dBm): " << "UNAVAILABLE" << std::endl;
         } else {
@@ -305,6 +336,14 @@ void MyPhoneListener::onSignalStrengthChanged(
                 << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
             PRINT_NOTIFICATION << "NB1 NTN Reference Signal Receive Power(in dBm): "
                  << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
+        }
+
+        if(signalStrength->getNb1NtnSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_NOTIFICATION << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                << "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_NOTIFICATION << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                << signalStrength->getNb1NtnSignalStrength()->getRssi() << std::endl;
         }
 
         if (signalStrength->getNb1NtnSignalStrength()->getRsrq()
@@ -757,6 +796,14 @@ void MyPhoneHelper::printCellInfoDetails(
                    << gsmCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(gsmCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
+                    << gsmCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE"
@@ -807,6 +854,14 @@ void MyPhoneHelper::printCellInfoDetails(
             } else {
                PRINT_NOTIFICATION << "LTE Signal Strength(in dBm): "
                     << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "LTE Received Signal Strength Indicator(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "LTE Received Signal Strength Indicator(in dBm): "
+                    << lteCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
             if(lteCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
@@ -880,6 +935,14 @@ void MyPhoneHelper::printCellInfoDetails(
                     << wcdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(wcdmaCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "WCDMA Received Signal Strength Indicator(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "WCDMA Received Signal Strength Indicator(in dBm): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
@@ -917,6 +980,14 @@ void MyPhoneHelper::printCellInfoDetails(
             PRINT_NOTIFICATION << "NR5G arfcn: "
                 << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
             // NR5G Signal Strength
+            if(nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_NOTIFICATION << "NR5G Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "NR5G Signal Strength: "
+                    << nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength() << std::endl;
+            }
+
             if(nr5gCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_NOTIFICATION << "NR5G Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
             } else {
@@ -1001,6 +1072,15 @@ void MyPhoneHelper::printCellInfoDetails(
                     << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
                PRINT_NOTIFICATION << "NB1 NTN Reference Signal Receive Power(in dBm): "
                    << nb1NtnCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(nb1NtnCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE)
+            {
+                PRINT_NOTIFICATION << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                    << nb1NtnCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
             if (nb1NtnCellInfo->getSignalStrengthInfo().getRsrq() == INVALID_SIGNAL_STRENGTH_VALUE)

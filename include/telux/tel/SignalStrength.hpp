@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -195,7 +195,7 @@ private:
 class LteSignalStrengthInfo {
 public:
    LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp, int lteRsrq, int lteRssnr, int lteCqi,
-                         int timingAdvance);
+                         int timingAdvance, int lteRssi = INVALID_SIGNAL_STRENGTH_VALUE);
    /**
     * Get signal level in the range.
     *
@@ -206,23 +206,31 @@ public:
 
    /**
     * Get the signal strength in dBm.
-    * (Valid value range [-140, -44] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (Valid value range [-140, -43] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns LTE dBm value.
     */
    const int getDbm() const;
 
    /**
-    * Get the LTE signal strength.
-    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * Get the LTE signal strength which is calculated based on RSRP.
+    * (Valid value range [0, 97] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns LTE signal strength.
     */
    const int getLteSignalStrength() const;
 
    /**
+    * Get the Received Signal Strength Indicator(RSSI) in dBm
+    * (Valid value range [-100, -25] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns LTE RSSI in dBm.
+    */
+   const int getRssi() const;
+
+   /**
     * Get LTE reference signal receive quality in dB.
-    * (Valid value range [-20, -3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (Valid value range [-34, 3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns LteRsrq.
     */
@@ -262,7 +270,9 @@ public:
 
 private:
    int lteSignalStrength_;
+   int lteRssi_;
    int lteRsrp_;
+   int lteAsu_;
    int lteRsrq_;
    int lteRssnr_;
    int lteCqi_;
@@ -275,7 +285,8 @@ private:
  */
 class GsmSignalStrengthInfo {
 public:
-   GsmSignalStrengthInfo(int gsmSignalStrength, int gsmBitErrorRate, int timingAdvance);
+   GsmSignalStrengthInfo(int gsmSignalStrength, int gsmBitErrorRate, int timingAdvance,
+       int gsmRssi = INVALID_SIGNAL_STRENGTH_VALUE);
    /**
     * Get signal level in the range.
     *
@@ -292,6 +303,15 @@ public:
     * @returns GSM signal strength in dBm.
     */
    const int getDbm() const;
+
+   /**
+    * Get the Received Signal Strength Indicator(RSSI) in dBm.
+    * (Valid value range [-100, -25] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    *
+    * @returns GSM RSSI in dBm.
+    */
+   const int getRssi() const;
 
    /**
     * Get the GSM signal strength.
@@ -324,6 +344,7 @@ public:
 
 private:
    int gsmSignalStrength_;
+   int rssi_;
    int gsmBitErrorRate_;
    int timingAdvance_;
 };
@@ -396,7 +417,8 @@ private:
 class WcdmaSignalStrengthInfo {
 public:
    WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate);
-   WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate, int wcdmaEcio, int wcdmaRscp);
+   WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate, int wcdmaEcio, int wcdmaRscp,
+       int wcdmaRssi = INVALID_SIGNAL_STRENGTH_VALUE);
    /**
     * Get signal level in the range.
     *
@@ -408,7 +430,8 @@ public:
 
    /**
     * Get the signal strength in dBm.
-    * (Valid value range [-113, -51] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (Valid value range: RSCP [-120, 24] or RSSI [-113, -51] if RSCP is unavailable.
+    * INVALID_SIGNAL_STRENGTH_VALUE indicates the signal strength is unavailable.)
     *
     * @returns WCDMA signal strength in dBm.
     *
@@ -416,8 +439,16 @@ public:
    const int getDbm() const;
 
    /**
-    * Get the WCDMA signal strength.
-    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * Get the Received Signal Strength Indicator(RSSI) in dBm.
+    * (Valid value range [-100, -25] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns WCDMA RSSI in dBm.
+    */
+   const int getRssi() const;
+
+   /**
+    * Get the WCDMA signal strength based on Received Signal Code Power(RSCP).
+    * (Valid value range [0, 96] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns WCDMA signal strength.
     *
@@ -458,6 +489,7 @@ private:
    int bitErrorRate_;
    int ecio_;
    int rscp_;
+   int rssi_;
 };
 
 /**
@@ -497,8 +529,16 @@ public:
    const SignalStrengthLevel getLevel() const;
 
    /**
+    * Get the NR signal strength which is calculated based on RSRP.
+    * (Valid value range [0, 97] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns 5G NR signal strength.
+    */
+   const int getNr5gSignalStrength() const;
+
+   /**
     * Get the signal strength in dBm.
-    * (Valid value range [-140, -44] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (Valid value range [-156, -31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
     *
     * @returns 5G NR dBm value.
@@ -525,6 +565,7 @@ public:
    const int getReferenceSignalSnr() const;
 
 private:
+   int nr5gAsu_;
    int rsrp_;
    int rsrq_;
    int rssnr_;
@@ -537,7 +578,8 @@ private:
  */
 class Nb1NtnSignalStrengthInfo {
 public:
-   Nb1NtnSignalStrengthInfo(int signalStrength, int rsrp, int rsrq, int rssnr);
+   Nb1NtnSignalStrengthInfo(int signalStrength, int rsrp, int rsrq, int rssnr,
+       int rssi = INVALID_SIGNAL_STRENGTH_VALUE);
    /**
     * Get signal level in the range.
     *
@@ -553,6 +595,14 @@ public:
     * @returns NB1 NTN dBm value.
     */
    const int getDbm() const;
+
+   /**
+    * Get the Received Signal Strength Indicator(RSSI) in dBm
+    * (Valid value range [-100, -25] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @returns NB1 NTN RSSI in dBm.
+    */
+   const int getRssi() const;
 
    /**
     * Get the NB1 NTN signal strength.
@@ -584,6 +634,7 @@ private:
    int rsrp_;
    int rsrq_;
    int rssnr_;
+   int rssi_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

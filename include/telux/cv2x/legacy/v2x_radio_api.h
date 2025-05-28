@@ -1828,12 +1828,12 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
     permission to successfully invoke this API.
 
     @detdesc
-    This function will not update reservation priority.
-    Can be used as follows:
+    This function can be used as follows:
     - When the bandwidth requirement changes in periodicity (for example, due
       to an application layer DCC algorithm)
     - Because the packet size is increasing (for example, due to a growing path
         history size in a BSM).
+    - When user wants to update reservation priority.
     @par
     When the reservation change is complete, a callback to the structure is passed
     in a v2x_radio_init() or v2x_radio_init_v2() call.
@@ -2297,12 +2297,12 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
     @param[in]  updated_flow_info  Pointer to the new reservation information.
 
     @detdesc
-    This function will not update reservation priority.
-    Can be used as follows:
+    This function can be used as follows:
     - When the bandwidth requirement changes in periodicity (for example, due
       to an application layer DCC algorithm)
     - Because the packet size is increasing (for example, due to a growing path
       history size in a BSM).
+    - When user wants to update reservation priority.
     @par
     When the reservation change is complete, a callback to the structure is
     passed in a v2x_radio_init() or v2x_radio_init_v2() call.

@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <bitset>
@@ -51,6 +51,7 @@ using namespace telux::loc;
     std::cout << "###" \
               << (std::chrono::high_resolution_clock::now().time_since_epoch().count()) / 1000000 \
               << ","
+#define CONFIDENCE_VALUE "68"
 
 void MyLocationListener::printSbasCorrectionEx(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
@@ -1386,6 +1387,63 @@ void MyLocationListener::recordLocationInfo(
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
 
+void MyLocationListener::recordNtnLocationInfo(
+    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
+    //Recording Data.
+    std::ostringstream recordStream;
+
+    std::vector<float> velocityEastNorthUp;
+    std::vector<float> velocityUncertaintyEastNorthUp;
+    locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp);
+    locationInfo->getVelocityEastNorthUp(velocityEastNorthUp);
+
+    telux::loc::LocationInfoValidity validityMask = locationInfo->getLocationInfoValidity();
+    telux::loc::LocationInfoExValidity validityMaskEx = locationInfo->getLocationInfoExValidity();
+
+    recordStream << locationInfo->getLatitude() << "," <<
+    locationInfo->getLongitude() << "," <<
+    locationInfo->getAltitude() << "," <<
+    locationInfo->getHorizontalUncertainty() << ",";
+    if((validityMaskEx & telux::loc::HAS_NORTH_VEL) && (validityMaskEx & telux::loc::HAS_EAST_VEL)
+        && (validityMaskEx & telux::loc::HAS_UP_VEL)) {
+        recordStream << "1" << ",";
+    } else {
+        recordStream << "0" << ",";
+    }
+    for (auto vel : velocityEastNorthUp) {
+        recordStream << vel << ",";
+    }
+    if((validityMaskEx & telux::loc::HAS_NORTH_VEL_UNC) &&
+        (validityMaskEx & telux::loc::HAS_EAST_VEL_UNC)
+            && (validityMaskEx & telux::loc::HAS_UP_VEL_UNC)) {
+            recordStream << "1" << ",";
+        } else {
+            recordStream << "0" << ",";
+        }
+    for (auto velUncert : velocityUncertaintyEastNorthUp) {
+        recordStream << velUncert << ",";
+    }
+    if((validityMask & telux::loc::HAS_HEADING_BIT)) {
+        recordStream << "1" << ",";
+    } else {
+        recordStream << "0" << ",";
+    }
+    recordStream << locationInfo->getHeading() << ",";
+    if((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
+        recordStream << "1" << ",";
+    } else {
+        recordStream << "0" << ",";
+    }
+    recordStream << locationInfo->getHeadingUncertainty() << ",";
+    if((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
+        recordStream << "1" << ",";
+    } else {
+        recordStream << "0" << ",";
+    }
+    recordStream << CONFIDENCE_VALUE;
+    std::cout << "###" << recordStream.str() << std::endl;
+}
+
 void MyLocationListener::onDetailedLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
    if(!isDetailedReportFlagEnabled_) {
@@ -1522,6 +1580,9 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "*************************************************************" << std::endl;
    if(isRecordingEnabled_) {
        recordLocationInfo(locationInfo);
+   }
+   if(isNtnRecordingEnabled_) {
+        recordNtnLocationInfo(locationInfo);
    }
 }
 
@@ -2334,4 +2395,8 @@ void MyLocationListener::setRecordingFlag(bool enable) {
 
 void MyLocationListener::setExtendedInfoFlag(bool enable) {
     isExtendedInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setNtnRecordingFlag(bool enable) {
+    isNtnRecordingEnabled_ = enable;
 }

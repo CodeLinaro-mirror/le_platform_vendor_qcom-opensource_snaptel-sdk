@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef LOCATIONMENU_HPP
@@ -127,6 +127,7 @@ public:
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
    void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
    telux::common::Status launchAsRecordingUtility(LocReqEngine engineType);
+   telux::common::Status launchAsNtnRecordingUtility();
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>
         &locationManager, std::shared_ptr<MyLocationListener> &posListener);

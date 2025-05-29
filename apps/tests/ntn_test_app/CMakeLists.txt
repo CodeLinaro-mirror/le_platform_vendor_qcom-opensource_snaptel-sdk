@@ -27,6 +27,9 @@ include_directories(BEFORE
 add_executable (${TARGET_NTN_TEST_APP} ${SOURCES})
 target_compile_options(${TARGET_NTN_TEST_APP} PRIVATE -std=c++11 -Wall -Werror -g)
 target_link_libraries(${TARGET_NTN_TEST_APP} pthread telux_satcom)
+if (TELSDK_FEATURE_LOC)
+target_link_libraries(${TARGET_NTN_TEST_APP} telux_loc)
+endif (TELSDK_FEATURE_LOC)
 
 # install to target
 install ( TARGETS ${TARGET_NTN_TEST_APP}

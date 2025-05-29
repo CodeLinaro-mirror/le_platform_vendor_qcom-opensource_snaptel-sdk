@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYLOCATIONLISTENER_HPP
@@ -83,6 +83,7 @@ public:
    void setEngineNmeaInfoFlag(bool enable);
    void setRecordingFlag(bool enable);
    void setExtendedInfoFlag(bool enable);
+   void setNtnRecordingFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -99,6 +100,7 @@ private:
    bool isRecordingEnabled_ = false;
    bool isExtendedInfoFlagEnabled_ = false;
    std::string extendedDataPayload_ = "1,2,3,4,5,6,7,8,9,10";
+   bool isNtnRecordingEnabled_ = false;
 
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printNavigationSolutionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -140,6 +142,7 @@ private:
    void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
 
    void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
+   void recordNtnLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

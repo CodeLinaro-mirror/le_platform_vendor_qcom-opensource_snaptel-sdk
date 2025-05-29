@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -2218,6 +2218,57 @@ telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engine
     }
 }
 
+telux::common::Status LocationMenu::launchAsNtnRecordingUtility() {
+    std::cout << "Launching location test app as a NTN recording utility \n";
+    std::shared_ptr<MyLocationListener> posListener = std::make_shared<MyLocationListener>();
+    std::shared_ptr<ILocationManager> locationManager = nullptr;
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    auto &locationFactory = LocationFactory::getInstance();
+    locationManager = locationFactory.getLocationManager([&](ServiceStatus status) {
+          if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
+    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+    startTime = std::chrono::system_clock::now();
+    ServiceStatus locMgrStatus = locationManager->getServiceStatus();
+    if(locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Location subsystem is not ready, Please wait" << std::endl;
+    }
+    locMgrStatus = prom.get_future().get();
+    if(locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        endTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedTime = endTime - startTime;
+        std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
+            << "s\n" << std::endl;
+    } else {
+        std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+
+    posListener->setDetailedLocationReportFlag(true);
+
+    posListener->setNtnRecordingFlag(true);
+    //Registering listener for fixes
+    locationManager->registerListenerEx(posListener);
+
+    GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
+    reportMask |= LOCATION;
+
+    std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb =
+        std::make_shared<MyLocationCommandCallback>("Detailed report request");
+    locationManager->startDetailedReports(
+            1000, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb, std::placeholders::_1), reportMask);
+
+    while(1) {
+        //Infinite polling to keep retrieving position reports.
+        std::this_thread::sleep_for(std::chrono::seconds(RECORDING_MODE_SLEEP));
+    }
+}
+
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
     auto sdkVersion = telux::common::Version::getSdkVersion();
@@ -2264,6 +2315,11 @@ int main(int argc, char **argv) {
 
         std::cout << "engineType : " << engineType << std::endl;
         telux::common::Status status = locationMenu.launchAsRecordingUtility(engineType);
+        if(status != telux::common::Status::SUCCESS) {
+            std::cout << "Exiting \n";
+        }
+    } else if((argc > 1) && (strcmp(argv[1], "-n") == 0)) {
+        telux::common::Status status = locationMenu.launchAsNtnRecordingUtility();
         if(status != telux::common::Status::SUCCESS) {
             std::cout << "Exiting \n";
         }

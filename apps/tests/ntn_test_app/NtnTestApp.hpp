@@ -12,9 +12,18 @@
 
 #include "ConsoleApp.hpp"
 #include <telux/satcom/NtnManager.hpp>
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+#include <telux/loc/LocationManager.hpp>
+#include <telux/loc/LocationListener.hpp>
+#include <telux/loc/LocationDefines.hpp>
+#endif
 
 using namespace telux::satcom;
 using namespace telux::common;
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+using namespace telux::loc;
+class NtnLocationListener;
+#endif
 
 class NtnTestApp : public INtnListener,
                    public ConsoleApp,
@@ -55,11 +64,23 @@ class NtnTestApp : public INtnListener,
     void locationFixResponse(std::vector<std::string> inputCommand);
     void autoSetLocationFixFromFile(std::vector<std::string> inputCommand);
     void stopAutoSetLocationFixFromFile(std::vector<std::string> inputCommand);
+    void setLiveLocationFix();
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+    void triggerLocationReports();
+    bool initLocationManager();
+#endif
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::satcom::INtnManager> ntnMgr_ = nullptr;
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+    std::shared_ptr<NtnLocationListener> posListener_ = nullptr;
+#endif
 
 private:
     std::atomic<bool> autoSetLocationFix_ {false};
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+    std::atomic<bool> setLiveLocationFix_ {false};
+#endif
     std::atomic<int> lastIndex_ {0};
     std::atomic<int> currentIndex_ {0};
     std::vector<std::map<std::string, std::string>> rows_;
@@ -68,6 +89,21 @@ private:
     void updateLocationFixFromRow(telux::satcom::LocationFix& fixParams);
     void readData(const std::string& filename,
         std::vector<std::map<std::string, std::string>>& rows);
+
 };
+
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+class NtnLocationListener : public telux::loc::ILocationListener {
+  public:
+    void onDetailedLocationUpdate(
+        const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
+    std::mutex locMtx_;
+    std::condition_variable locCv_;
+    bool isReportReceived_ = false;
+    telux::satcom::LocationFix locFix_;
+    //Needed to prevent overwriting of the first snapshot data received via the updates.
+    int reportCount_ = 0;
+};
+#endif
 
 #endif  // NTNTESTAPP_HPP

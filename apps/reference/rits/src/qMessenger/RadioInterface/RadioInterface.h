@@ -109,9 +109,6 @@ using telux::cv2x::SocketInfo;
 using telux::cv2x::EventFlowInfo;
 using telux::cv2x::L2FilterInfo;
 
-class Cv2xStatusListener;
-class CommonCallback;
-
 typedef void (*v2x_src_l2_addr_update)(uint32_t newAddr);
 
 enum class RadioType {
@@ -138,6 +135,29 @@ private:
     ErrorCode err_ = ErrorCode::GENERIC_FAILURE;
 };
 
+
+class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
+public:
+
+    Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity);
+    telux::cv2x::Cv2xStatus getCurrentStatus();
+    uint8_t getCurrentCbr();
+    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
+    int waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
+    int waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
+    void onStatusChanged(telux::cv2x::Cv2xStatus status) override;
+    void deinit();
+
+    // avoid potential stuck in case deinit is not invoked
+    ~Cv2xStatusListener();
+private:
+    std::condition_variable cv_;
+    std::mutex mtx_;
+    telux::cv2x::Cv2xStatus cv2xStatus_;
+    int radioVerbosity = 0;
+};
+
+
 class RadioInterface {
 
 private:
@@ -150,8 +170,7 @@ private:
      */
     shared_ptr<ICv2xRadioListener> radioListener_ = nullptr;
 
-    //variable to store cv2x status listener
-    std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
+
     std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
 
     /*
@@ -165,6 +184,8 @@ private:
     shared_ptr<ICv2xRadio> cv2xRadio_ = nullptr;
 
 protected:
+    //variable to store cv2x status listener
+    static std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
     TrafficCategory category;
     bool enableCsvLog_ = false;
     static bool enableDiagLogPacket_;
@@ -220,7 +241,7 @@ public:
      * @return 0 if wait for cv2x active success
      * @return -1 if error occurs
      */
-    int waitForCv2xToActivate(bool& restartFlow);
+    virtual int waitForCv2xToActivate(bool& restartFlow);
 
     telux::cv2x::Cv2xStatus getCurrentStatus();
 

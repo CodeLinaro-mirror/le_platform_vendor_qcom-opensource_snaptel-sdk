@@ -144,6 +144,15 @@ public:
     */
     RadioReceive(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port);
     ~RadioReceive();
+
+    /**
+     * @brief Wait for rx cv2x status to be active
+     * @param bool restartFlow indicate whether need to restart flows
+     * @return 0 if wait for cv2x active success
+     * @return -1 if error occurs
+     */
+    int waitForCv2xToActivate(bool& restartFlow) override;
+
     /**
     * Blocking mehtod that receives from created flow's socket.
     * @param buf - a char pointer to store the data received.

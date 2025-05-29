@@ -203,44 +203,48 @@ SaeApplication::~SaeApplication() {
     printf("Total number of transmitted packets: %d\n",totalTxSuccess);
     printf("Total number of received packets: %d\n",totalRxSuccess);
     exit_ = true;
-    {
-        if(enableCsvLog_ && writeMutexCvSae && ApplicationBase::csvfp){
-            std::unique_lock<std::mutex> csvLk(csvMutex);
-            if(writeLogFinishSae != nullptr){
-                writeMutexCvSae->wait(csvLk, [&]{ return *writeLogFinishSae; });
-            }
-            fclose(ApplicationBase::csvfp);
-            ApplicationBase::csvfp = nullptr;
-        }
-    }
-    // notify the wraThread to exit
-    #ifdef WITH_WSA
-    if(MsgType == MessageType::WSA){
+    if(badRadioSetup){
+        std::cerr << "radio flows were not set up properly\n";
+    }else{
         {
-            std::unique_lock<std::mutex> lk(wraMutex);
-            wraCv.notify_all();
+            if(enableCsvLog_ && writeMutexCvSae && ApplicationBase::csvfp){
+                std::unique_lock<std::mutex> csvLk(csvMutex);
+                if(writeLogFinishSae != nullptr){
+                    writeMutexCvSae->wait(csvLk, [&]{ return *writeLogFinishSae; });
+                }
+                fclose(ApplicationBase::csvfp);
+                ApplicationBase::csvfp = nullptr;
+            }
         }
-        if (wraThread.joinable() == true) {
-            wraThread.join();
+        // notify the wraThread to exit
+        #ifdef WITH_WSA
+        if(MsgType == MessageType::WSA){
+            {
+                std::unique_lock<std::mutex> lk(wraMutex);
+                wraCv.notify_all();
+            }
+            if (wraThread.joinable() == true) {
+                wraThread.join();
+            }
+            // delete default route in OBU if previously set
+            deleteDefaultRouteInObu();
         }
-        // delete default route in OBU if previously set
-        deleteDefaultRouteInObu();
-    }
-    #endif
-    if (isTxSim) {
-        freeMsg(txSimMsg);
-    }
-    for (auto mc : eventContents) {
-        freeMsg(mc);
-    }
-    for (auto mc : spsContents) {
-        freeMsg(mc);
-    }
-    if (isRxSim) {
-        freeMsg(rxSimMsg);
-    }
-    for (auto mc : receivedContents) {
-        freeMsg(mc);
+        #endif
+        if (isTxSim) {
+            freeMsg(txSimMsg);
+        }
+        for (auto mc : eventContents) {
+            freeMsg(mc);
+        }
+        for (auto mc : spsContents) {
+            freeMsg(mc);
+        }
+        if (isRxSim) {
+            freeMsg(rxSimMsg);
+        }
+        for (auto mc : receivedContents) {
+            freeMsg(mc);
+        }
     }
 }
 

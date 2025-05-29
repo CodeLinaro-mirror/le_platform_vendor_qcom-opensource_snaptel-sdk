@@ -164,6 +164,15 @@ public:
                   const uint16_t port,
                   const uint32_t serviceId);
     ~RadioTransmit();
+
+        /**
+     * @brief Wait for rx cv2x status to be active
+     * @param bool restartFlow indicate whether need to restart flows
+     * @return 0 if wait for cv2x active success
+     * @return -1 if error occurs
+     */
+    int waitForCv2xToActivate(bool& restartFlow) override;
+
     /**
     * Method that transmits data in a buffer based in the constructed flow.
     * @param buf a char pointer of the data buffer to be sent.

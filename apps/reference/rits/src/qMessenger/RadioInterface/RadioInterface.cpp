@@ -79,7 +79,7 @@
 #define INVALID_CBR_VALUE (255)
 
 shared_ptr<ICv2xRadioManager> RadioInterface::cv2xRadioManager_ = nullptr;
-
+shared_ptr<Cv2xStatusListener> RadioInterface::cv2xStatusListener_ = nullptr;
 bool RadioInterface::enableDiagLogPacket_ = false;
 
 class Cv2xRadioListener : public ICv2xRadioListener {
@@ -120,88 +120,127 @@ private:
     std::vector<v2x_src_l2_addr_update> l2Cbs_;
 };
 
-class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
-public:
 
-    Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity) {
+Cv2xStatusListener::Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity) {
+    cv2xStatus_ = status;
+    radioVerbosity = rVerbosity;
+};
+
+telux::cv2x::Cv2xStatus Cv2xStatusListener::getCurrentStatus() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return cv2xStatus_;
+}
+
+uint8_t Cv2xStatusListener::getCurrentCbr() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (cv2xStatus_.cbrValueValid) {
+        return cv2xStatus_.cbrValue;
+    }
+    return INVALID_CBR_VALUE;
+}
+
+int Cv2xStatusListener::waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+
+    while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
+        // return false if status is unknow
+        if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN or
+            tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE or
+            tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+int Cv2xStatusListener::waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+    while (tmpStatus.txStatus != status) {
+        // return false if status is unknown
+        if(tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
+            std::cout << "Tx is inactive\n";
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+
+int Cv2xStatusListener::waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+    while (tmpStatus.rxStatus != status) {
+        // return false if status is unknown
+        if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE) {
+            std::cout << "Rx is inactive\n";
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+void Cv2xStatusListener::onStatusChanged(telux::cv2x::Cv2xStatus status) {
+    telux::cv2x::Cv2xStatus preStatus;
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        preStatus = cv2xStatus_;
         cv2xStatus_ = status;
-        radioVerbosity = rVerbosity;
-    };
-
-    telux::cv2x::Cv2xStatus getCurrentStatus() {
-        std::lock_guard<std::mutex> lock(mtx_);
-        return cv2xStatus_;
     }
 
-    uint8_t getCurrentCbr() {
-        std::lock_guard<std::mutex> lock(mtx_);
-        if (cv2xStatus_.cbrValueValid) {
-            return cv2xStatus_.cbrValue;
+    if (status.rxStatus != preStatus.rxStatus or
+        status.txStatus != preStatus.txStatus) {
+        if (radioVerbosity) {
+            cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
+            cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
         }
-        return INVALID_CBR_VALUE;
-    }
-
-    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
-        // get initial status
-        telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
-
-        while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
-            // return false if status is unknow
-            if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN or
-               tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
-                return -1;
-            }
-
-            // if status is inactive, need to recreate flows
-            if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE or
-               tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
-                restartFlow = true;
-            }
-
-            // wait for status change
-            std::unique_lock<std::mutex> cvLock(mtx_);
-            cv_.wait(cvLock);
-            tmpStatus = cv2xStatus_;
-        }
-        return 0;
-    }
-
-    void onStatusChanged(telux::cv2x::Cv2xStatus status) override {
-        telux::cv2x::Cv2xStatus preStatus;
-        {
-            std::lock_guard<std::mutex> lock(mtx_);
-            preStatus = cv2xStatus_;
-            cv2xStatus_ = status;
-        }
-
-        if (status.rxStatus != preStatus.rxStatus or
-            status.txStatus != preStatus.txStatus) {
-            if (radioVerbosity) {
-                cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
-                cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
-            }
-            cv_.notify_all();
-        }
-    }
-
-    void deinit() {
-        // set cv2x status to unknown during exit
-        std::lock_guard<std::mutex> lock(mtx_);
-        cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
-        cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
         cv_.notify_all();
     }
+}
 
-    // avoid potential stuck in case deinit is not invoked
-    ~Cv2xStatusListener() {
-        deinit();
-    }
-private:
-    std::condition_variable cv_;
-    std::mutex mtx_;
-    telux::cv2x::Cv2xStatus cv2xStatus_;
-    int radioVerbosity = 0;
-};
+void Cv2xStatusListener::deinit() {
+    // set cv2x status to unknown during exit
+    std::lock_guard<std::mutex> lock(mtx_);
+    cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
+    cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
+    cv_.notify_all();
+}
+
+// avoid potential stuck in case deinit is not invoked
+Cv2xStatusListener::~Cv2xStatusListener() {
+    deinit();
+}
 
 void CommonCallback::onResponse(ErrorCode error) {
     std::unique_lock<std::mutex> cvLock(cbMtx_);
@@ -347,10 +386,12 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     }
 
     // register listener for cv2x status change
-    cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
-    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
-        cerr << "Error : register Cv2x status listener failed!" << endl;
-        return false;
+    if(cv2xStatusListener_ == nullptr){
+        cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
+        if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
+            cerr << "Error : register Cv2x status listener failed!" << endl;
+            return false;
+        }
     }
 
     // Get handle to Cv2xRadio

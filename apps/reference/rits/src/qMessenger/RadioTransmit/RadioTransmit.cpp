@@ -193,6 +193,14 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress) 
     }
 }
 
+int RadioTransmit::waitForCv2xToActivate(bool& restartFlow) {
+    if (cv2xStatusListener_) {
+        return cv2xStatusListener_->waitForCv2xTxStatus(Cv2xStatusType::ACTIVE, restartFlow);
+    }
+    return -1;
+}
+
+
 int RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
     struct timespec ts;
     if (isSim)

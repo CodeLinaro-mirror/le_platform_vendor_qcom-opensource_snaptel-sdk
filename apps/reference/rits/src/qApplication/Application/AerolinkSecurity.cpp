@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -256,19 +256,26 @@ void printVerifStats(std::thread::id thrId){
 
 static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
     // on call back, this function provides the new cert index for the complete id change cb fn
-    static uint8_t rng_data = 0;
+    uint8_t rng_data = 0;
     int rng_ret = -1;
-    auto app = static_cast<QUtils*>(userData);
-    rng_ret = app->hwTRNGChar(&rng_data);
-    if(rng_ret){
-        printf("Failure in Randon Number Generation for Cert ID \n");
+    auto idChangeData = static_cast<IDChangeData*>(userData);
+    if(idChangeData){
+        QUtils* rngUtils = static_cast<QUtils*>(idChangeData->rngUtils);
+        rng_ret = rngUtils->hwTRNGChar(rng_data);
+        if(rng_ret == -1){
+            printf("Failure in Randon Number Generation for Cert ID \n");
+            return;
+        }
+        rng_data = (rng_data % numCerts) + 1;
+        if(secVerbosity > 1)
+        {
+            printf(" Random CertIndex within 1 to %d is :%d \n ", numCerts , rng_data);
+            std::cout << " total certs are: " << (int)numCerts << " and selected cert is: " << (int)rng_data << "\n";
+        }
+        memcpy(certIndxCb,&rng_data,1);
+    }else{
+        std::cerr << " id change data is null\n";
     }
-    rng_data = (rng_data % numCerts) + 1;
-    if(secVerbosity > 1)
-    {
-        printf(" Random CertIndex within 1 to %d is :%d \n ", numCerts , rng_data);
-    }
-    memcpy(certIndxCb,&rng_data,sizeof(rng_data));
 }
 
 /* The following type defines a callback function prototype for completion of the ID-change
@@ -285,12 +292,12 @@ static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned ch
 static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, const unsigned char *certIdCb){
     // tells the user whether the id change was completed successfully or not.
     completeChangeId_status = returnCode;
-    IDChangeData* tempPtr = (IDChangeData*)userData;
+    auto idChangeData = static_cast<IDChangeData*>(userData);
     if(returnCode == WS_SUCCESS){
         // cast userdata to the user data type struct
-        memcpy(tempPtr->certId, certIdCb, sizeof(tempPtr->certId));
-        memcpy(tempPtr->tempId, certIdCb, sizeof(tempPtr->tempId)); // start at offset of 2 to get last 6 bytes
-        tempPtr->idChanged = true;
+        memcpy(idChangeData->certId, certIdCb, sizeof(idChangeData->certId));
+        memcpy(idChangeData->tempId, certIdCb, sizeof(idChangeData->tempId)); // start at offset of 2 to get last 6 bytes
+        idChangeData->idChanged = true;
         if(secVerbosity > 1){
             struct timeval currTime;
             gettimeofday(&currTime, NULL);
@@ -298,8 +305,8 @@ static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, con
                 (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
             std::cout << "ID changed completed at: " << endTime <<"\n";
             std::cout << "New cert hash ID is: " ;
-            for(int i = 0 ; i < sizeof(tempPtr->certId); i++){
-                printf("%02x:", tempPtr->certId[i]);
+            for(int i = 0 ; i < sizeof(idChangeData->certId); i++){
+                printf("%02x:", idChangeData->certId[i]);
             }
             std::cout << "\n\n";
         }
@@ -312,8 +319,8 @@ static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, con
     // let any other pending id change continue
     sem_post(&idChangeSem);
     // let the its stack continue msg generation
-    if(tempPtr->idChangeCbSem != nullptr){
-        sem_post(tempPtr->idChangeCbSem);
+    if(idChangeData->idChangeCbSem != nullptr){
+        sem_post(idChangeData->idChangeCbSem);
     }
 }
 
@@ -381,8 +388,8 @@ AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCo
 }
 // overloaded ctor for aerolink w/ idchange enabled
 AerolinkSecurity::AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
-                     char const* lcmName, IDChangeData& idChangeData):
-    SecurityService(ctxName, countryCode), idChangeData_(&idChangeData){
+                     char const* lcmName, IDChangeData* idChangeData):
+    SecurityService(ctxName, countryCode), idChangeData_(idChangeData){
     if(lcmName == nullptr){
         throw std::runtime_error
             ("Invalid lcm name provided\n");
@@ -434,7 +441,7 @@ AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
 // Create new aerolinksecurity instance with optional crypto key method
 AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
                             uint16_t countryCode,  char const* lcmName,
-                            IDChangeData& idChangeData) {
+                            IDChangeData* idChangeData) {
     if(pInstance == nullptr){
         AerolinkSecurity::pInstance =
             new AerolinkSecurity(ctxName, countryCode, lcmName, idChangeData);

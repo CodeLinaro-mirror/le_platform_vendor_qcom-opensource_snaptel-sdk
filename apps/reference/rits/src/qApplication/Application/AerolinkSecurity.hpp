@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -104,7 +104,7 @@ class AerolinkSecurity : public SecurityService {
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              uint8_t keyGenMethod);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
-                                             char const* lcmName, IDChangeData& idChangeData);
+                                             char const* lcmName, IDChangeData* idChangeData);
         int ExtractMsg( void* smp,
                         const SecurityOpt &opt,
                         const uint8_t * msg,
@@ -142,7 +142,7 @@ class AerolinkSecurity : public SecurityService {
                            uint8_t keyGenMethod);
        // overloaded ctor for aerolink w/ idchange enabled
        AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
-                           char const* lcmName, IDChangeData& idChangeData);
+                           char const* lcmName, IDChangeData* idChangeData);
 
        static void signCallback(AEROLINK_RESULT returnCode, void *userCallbackData,
                             uint8_t* cbSignedSpduData, uint32_t cbSignedSpduDataLen);

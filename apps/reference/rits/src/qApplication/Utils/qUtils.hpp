@@ -1,7 +1,7 @@
 /*
- *Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -47,6 +47,8 @@
 #include <string.h>
 #include "v2x_diag.h"
 #include "qDiagLogPacketDef.h"
+#include <telux/sec/RandomNumberManager.hpp>
+#include <telux/sec/SecurityFactory.hpp>
 
 #define V2X_APPS_DIAG_LOG_PKT(type, pbuf, buf_size)                            \
     v2x_diag_log_state_et ec = v2x_diag_log_packet(type, pbuf, buf_size);      \
@@ -58,12 +60,14 @@ class QUtils
 {
 private:
     void fillVersion(uint32_t *version);
+    std::shared_ptr<telux::sec::IRandomNumberManager> rngMgr_ = nullptr;
 
 public:
+    QUtils();
     void initDiagLog();
     void deInitDiagLog();
     int hwTRNGInt(uint32_t &randomNumber);
-    int hwTRNGChar(uint8_t* randomNumber);
+    int hwTRNGChar(uint8_t &randomNumber);
 
     template<typename InfoType>
     void sendLogPacket(InfoType *info, v2x_diag_log_packet_et type)

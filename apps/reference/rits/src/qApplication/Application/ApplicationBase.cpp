@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -579,11 +579,11 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
 ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     bool enableCsvLog, bool enableDiagLog){
     generalInfo = {0};
+    if (!utility_) {
+        utility_ = std::make_shared<QUtils>();
+    }
     if (enableDiagLog) {
         enableDiagLog_ = enableDiagLog;
-        if (!utility_) {
-            utility_ = std::make_shared<QUtils>();
-        }
         utility_->initDiagLog();
     }
     enableCsvLog_ = enableCsvLog;
@@ -600,11 +600,11 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
             char* fileConfiguration, bool enableCsvLog, bool enableDiagLog) {
     generalInfo = {0};
+    if (!utility_) {
+        utility_ = std::make_shared<QUtils>();
+    }
     if (enableDiagLog) {
         enableDiagLog_ = enableDiagLog;
-        if (!utility_) {
-            utility_ = std::make_shared<QUtils>();
-        }
         utility_->initDiagLog();
     }
     enableCsvLog_ = enableCsvLog;
@@ -643,6 +643,8 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 bool ApplicationBase::init() {
+    sem_init(&this->rx_sem, 0, 1);
+    sem_init(&this->log_sem, 0, 1);
     if(configuration.enableL2Filtering) {
         cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
@@ -657,6 +659,7 @@ bool ApplicationBase::init() {
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
     }
+
     if (!(isTxSim || isRxSim)) {
         // setup radio flows
         if (0 != setup(MsgType, false)) {
@@ -669,25 +672,27 @@ bool ApplicationBase::init() {
         if (this->configuration.enableSecurity == true) {
         #ifdef AEROLINK
             try{
-              // LCM Constructor for Aerolink
-              idChangeData.idChangeCbSem = &idChangeCbSem;
-              sem_init(idChangeData.idChangeCbSem, 0, 1);
-              if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
-                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                          configuration.securityContextName,
-                          configuration.securityCountryCode,
-                          configuration.lcmName.c_str(),
-                          std::ref(idChangeData)
-                          ));
-              }else{
-                  // Non-LCM Constructor for Aerolink
-                  SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                          configuration.securityContextName,
-                          configuration.securityCountryCode));
-              }
-              ApplicationBase::securityInitialized = true;
-              // set the verbosity of aerolink
-              SecService->setSecVerbosity(this->configuration.secVerbosity);
+                // LCM Constructor for Aerolink
+                sem_init(&idChangeData.idSem, 0, 1);
+                idChangeData.idChangeCbSem = &idChangeCbSem;
+                sem_init(idChangeData.idChangeCbSem, 0, 1);
+                idChangeData.rngUtils = utility_.get();
+                if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+                    SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                            configuration.securityContextName,
+                            configuration.securityCountryCode,
+                            configuration.lcmName.c_str(),
+                            &idChangeData
+                            ));
+                }else{
+                    // Non-LCM Constructor for Aerolink
+                    SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                            configuration.securityContextName,
+                            configuration.securityCountryCode));
+                }
+                ApplicationBase::securityInitialized = true;
+                // set the verbosity of aerolink
+                SecService->setSecVerbosity(this->configuration.secVerbosity);
             }catch(const std::runtime_error& error){
                 fprintf(stderr, "Aerolink init failed: Please check config params \n");
                 fprintf(stderr, "Attempting to close all radio flows\n");
@@ -730,9 +735,6 @@ bool ApplicationBase::init() {
         }
     }
 
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
-    sem_init(&idChangeData.idSem, 0, 1);
     cb =
         [this](bool emergent,
                const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
@@ -1028,7 +1030,12 @@ void ApplicationBase::prepareForExit() {
     }else{
         sem_post(&this->rx_sem);
         sem_post(&this->log_sem);
-        sem_post(&idChangeData.idSem);
+        if (this->configuration.enableSecurity == true) {
+        #ifdef AEROLINK
+            sem_post(&idChangeData.idSem);
+            sem_post(idChangeData.idChangeCbSem);
+        #endif
+        }
 
         if(configuration.enableCongCtrl &&
                     congestionControlManager && congCtrlInitialized){

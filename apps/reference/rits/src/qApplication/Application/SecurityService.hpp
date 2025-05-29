@@ -28,9 +28,9 @@
  */
 
 /*
- *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -73,6 +73,7 @@
 #include <cstdint>
 #include <string>
 #include <semaphore.h>
+#include "qUtils.hpp"
 
 const uint8_t NO_KEY_GEN=0;
 const uint8_t ASYMMETRIC_KEY_GEN=1;
@@ -159,6 +160,7 @@ typedef struct IDChangeData {
     bool idChanged;
     sem_t idSem;
     sem_t* idChangeCbSem;
+    QUtils* rngUtils;
 } IDChangeData_t;
 
 class SecurityService {

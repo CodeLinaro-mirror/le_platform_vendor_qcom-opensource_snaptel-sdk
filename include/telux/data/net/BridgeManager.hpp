@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -202,6 +202,47 @@ class IBridgeManager {
      */
     virtual telux::common::Status removeBridge( std::string ifaceName,
                         telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Associates a bridge with the specified hardware interface @ref telux::data::InterfaceType.
+     *
+     * For tethered traffic, the default route always flows through the default bridge (bridge0).
+     * This API provides the ability to use a non-default route for data traffic, using on-demand
+     * bridges instead.
+     *
+     * The client shall specify the interface type on which the operation has to be executed and
+     * provide the bridgeId that needs to be associated with that particular interface type.
+     * If the client provides a bridgeId for a bridge that doesn't exist the bridge is created
+     * and then the interface is mapped to it.
+     *
+     * The mapping is persistent across reboots.
+     * In case of WLAN_AP, this API should be used before the AP configuration is done.
+     * If WLAN is enabled and this API is invoked, changes only reflect when WLAN is re-enabled.
+     *
+     * @param [in] ifaceType      @ref telux::data::InterfaceType
+     * @param [in] bridgeId       Bridge ID that will be mapped to the hardware interface
+     *
+     * @returns Operation @ref telux::common::ErrorCode (if any).
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setInterfaceBridge(InterfaceType ifaceType,
+        uint32_t bridgeId) = 0;
+
+    /**
+     * Retrieves the bridge ID currently mapped to the specified interface type.
+     *
+     * @param [in] ifaceType      @ref telux::data::InterfaceType
+     * @param [out] bridgeId      Bridge ID mapped to the hardware interface
+     *
+     * @returns Operation @ref telux::common::ErrorCode (if any).
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getInterfaceBridge(InterfaceType ifaceType,
+        uint32_t& bridgeId) = 0;
 
     /**
      * Register Bridge Manager as listener for Data Service heath events like data service available

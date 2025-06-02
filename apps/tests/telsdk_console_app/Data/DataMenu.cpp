@@ -136,10 +136,12 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "12", "Client_Menu",
             {}, std::bind(&DataMenu::clientMenu, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> dualDataManagementMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "13", "Dual_Data_Management_Menu",
             {}, std::bind(&DataMenu::dualDataManagementMenu, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> dataControlMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "14", "Data_Control_Menu",
@@ -155,11 +157,17 @@ void DataMenu::init() {
             "16", "Tether_Menu",
             {}, std::bind(&DataMenu::tetherMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> ethernetMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "17", "Ethernet_Menu",
+            {}, std::bind(&DataMenu::ethernetMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand};
+        dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
+        ethernetMenuCommand};
 
     addCommands(commandsList);
 
@@ -331,6 +339,16 @@ void DataMenu::tetherMenu(std::vector<std::string> userInput) {
         tetherMenu_->mainLoop();
     }
     tetherMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::ethernetMenu(std::vector<std::string> userInput) {
+    ethernetMenu_ =
+        make_shared<EthernetMenu>("Ethernet Control Menu", "ethernet> ");
+    if(ethernetMenu_->init()) {
+        ethernetMenu_->mainLoop();
+    }
+    ethernetMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 

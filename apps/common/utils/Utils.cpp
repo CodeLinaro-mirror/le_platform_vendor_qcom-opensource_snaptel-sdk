@@ -79,6 +79,17 @@ void Utils::validateNumericString(std::string &input) {
    } while(invalidChar);
 }
 
+bool Utils::validateCharString(std::string &input) {
+   bool validString = true;
+   for(size_t index = 0; index < input.size(); index++) {
+      if(!VALID_IF_NAME_CHAR(input[index])) {
+         validString = false;
+         break;
+      }
+    }
+    return validString;
+}
+
 bool Utils::validateDigitString(std::string &input) {
    bool validChar = true;
    for(size_t index = 0; index < input.size(); index++) {

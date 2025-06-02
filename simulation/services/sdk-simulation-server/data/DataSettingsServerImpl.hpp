@@ -93,6 +93,12 @@ public:
     grpc::Status SetIpPassThroughNatConfig(ServerContext* context,
             const dataStub::setIpptNatConfigRequest* request,
             dataStub::setIpptNatConfigReply* response) override;
+
+    grpc::Status SetLatencyConfig(ServerContext* context,
+        const dataStub::LatencyConfig* request, dataStub::DefaultReply* response)  override;
+
+    grpc::Status GetLatencyConfig(ServerContext* context,
+        const google::protobuf::Empty* request, dataStub::LatencyConfig* response) override;
 private:
 
     struct IpConfigStruct {

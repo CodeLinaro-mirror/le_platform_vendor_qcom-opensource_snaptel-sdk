@@ -877,6 +877,60 @@ telux::common::Status DataSettingsManagerStub::requestMacSecState(
     return status;
 }
 
+telux::common::ErrorCode DataSettingsManagerStub::setLatencyConfig(const LatencyConfig &latencyConfig) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::LatencyConfig request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_uplink(static_cast<::dataStub::LatencyConfig_LatencyLevel>(latencyConfig.uplink));
+    LOG(DEBUG, __FUNCTION__, " Setting uplink latency to ", static_cast<int>(latencyConfig.uplink));
+    grpc::Status reqStatus = stub_->SetLatencyConfig(&context, request, &response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " gRPC call failed: ", reqStatus.error_message());
+        return telux::common::ErrorCode::INTERNAL_ERROR;
+    }
+
+    telux::common::ErrorCode error =
+        static_cast<telux::common::ErrorCode>(response.error());
+
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::getLatencyConfig(LatencyConfig& latencyConfig) {
+    LOG(DEBUG,__FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::google::protobuf::Empty request;
+    ::dataStub::LatencyConfig response;
+    ClientContext context;
+
+    grpc::Status reqStatus = stub_->GetLatencyConfig(&context, request, &response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " gRPC call failed: ", reqStatus.error_message());
+        return telux::common::ErrorCode::INTERNAL_ERROR;
+    }
+
+    telux::common::ErrorCode error =
+        static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        latencyConfig.uplink = static_cast<LatencyLevel>(response.uplink());
+    }
+
+    return error;
+}
+
 void DataSettingsManagerStub::getAvailableListeners(
     std::vector<std::shared_ptr<IDataSettingsListener>> &listeners) {
     LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners_.size());

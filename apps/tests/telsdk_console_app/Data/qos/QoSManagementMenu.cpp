@@ -235,7 +235,7 @@ void QoSManagementMenu::createTrafficClass(std::vector<std::string> &inputComman
         "\n0 - TETHERED_TO_WAN_HW: Traffic classes with data path TETHERED_TO_WAN_HW can be"
         " associated with traffic filters with data path TETHERED_TO_WAN_HW and APPS_TO_WAN\n"
         "\n1 - TETHERED_TO_APPS_SW: Traffic classes with data path TETHERED_TO_APPS_SW can be"
-        " associated with traffic filters with data path TETHERED_TO_APPS_SW and APPS_TO_WAN\n"
+        " associated with traffic filters with data path TETHERED_TO_APPS_SW\n"
         "\n2 - APPS_TO_WAN: Traffic classes with data path APPS_TO_WAN can be associated with"
         " traffic filters with data path APPS_TO_WAN"
         "\n    Traffic classes created with APPS_TO_WAN can only be associated with UPLINK data"

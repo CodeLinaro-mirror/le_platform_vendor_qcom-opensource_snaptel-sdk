@@ -212,7 +212,7 @@ class TcConfigBuilder {
      *      - Downlink : Traffic shaping supported in ETH.
      *                   Prioritization happens in ETH.
      *      - Traffic classes with data path TETHERED_TO_APPS_SW can be associated with traffic
-     *        filters with data path TETHERED_TO_APPS_SW and APPS_TO_WAN.
+     *        filters with data path TETHERED_TO_APPS_SW.
      *
      * - @ref DataPath::APPS_TO_WAN  (Apps <=> Modem) :
      *      - IPA and ETH are not in the data path.

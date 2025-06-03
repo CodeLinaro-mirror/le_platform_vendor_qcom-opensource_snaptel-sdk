@@ -572,18 +572,18 @@ void PowerMgmtTestApp::regForWakeupReason() {
             [&p](telux::common::ServiceStatus srvStatus) {
             p.set_value(srvStatus);
         });
-    }
-    if (!wakeupMgr_) {
-        std::cout << "Can't get IWakeupManager" << std::endl;
-        return;
-    }
+        if (!wakeupMgr_) {
+            std::cout << "Can't get IWakeupManager" << std::endl;
+            return;
+        }
 
-    serviceStatus = p.get_future().get();
-    if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Power service unavailable, status " <<
-            static_cast<int>(serviceStatus) << std::endl;
-        wakeupMgr_ = nullptr;
-        return;
+        serviceStatus = p.get_future().get();
+        if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Power service unavailable, status " <<
+                static_cast<int>(serviceStatus) << std::endl;
+            wakeupMgr_ = nullptr;
+            return;
+        }
     }
 
     try {

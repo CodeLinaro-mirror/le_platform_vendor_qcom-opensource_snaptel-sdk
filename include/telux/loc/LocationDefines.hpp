@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
  * @file       LocationDefines.hpp
@@ -678,7 +678,7 @@ struct GnssMeasurementInfo {
    *  For QZSS:     193 to 197.
    *  For BDS:      201 to 263.
    *  For GAL:      301 to 336.
-   *  For NAVIC:    401 to 414.*/
+   *  For NAVIC:    401 to 420.*/
   uint16_t gnssSvId;
 };
 
@@ -707,7 +707,7 @@ struct SvUsedInPosition {
     uint64_t qzss;
     /** Specify the set of SVs from NAVIC constellation that are used
      *  to compute the position.
-     *  Bit 0 to Bit 13 corresponds to NAVIC SV id 401 to 414.*/
+     *  Bit 0 to Bit 19 corresponds to NAVIC SV id 401 to 420.*/
     uint64_t navic;
 };
 
@@ -1132,10 +1132,10 @@ struct SvBlackListInfo {
      * GPS SV id range: 1 to 32
      * GLONASS SV id range: 65 to 96
      * QZSS SV id range: 193 to 197
-     * BDS SV id range: 201 to 237
+     * BDS SV id range: 201 to 263
      * GAL SV id range: 301 to 336
      * SBAS SV id range: 120 to 158 and 183 to 191
-     * NAVIC SV id range: 401 to 414
+     * NAVIC SV id range: 401 to 420
      */
     uint32_t              svId;
 };
@@ -2825,7 +2825,7 @@ public:
 /**
  * Retrieves heading/bearing.
  *    - Units: Degrees
- *    - Range: 0 to 359.999
+ *    - Range: 0 to 360
  *
  * @returns Heading if available else returns NaN.
  *
@@ -2874,7 +2874,7 @@ public:
 /**
  * Retrieves heading uncertainty.
  *    - Units: Degrees
- *    - Range: 0 to 359.999
+ *    - Range: 0 to 360
  * Uncertainty is defined with 68% confidence level.
  *
  * @returns Heading uncertainty if available else returns NaN.
@@ -2964,7 +2964,7 @@ public:
  * Retrieves position dilution of precision.
  *
  * @returns Position dilution of precision if available else returns NaN.
- * Range: 1 (highest accuracy) to 50 (lowest accuracy)
+ * Range: 0 (highest accuracy) to 50 (lowest accuracy)
  *
  */
   virtual float getPositionDop() = 0;
@@ -2973,7 +2973,7 @@ public:
  * Retrieves horizontal dilution of precision.
  *
  * @returns Horizontal dilution of precision if available else returns NaN.
- * Range: 1 (highest accuracy) to 50 (lowest accuracy)
+ * Range: 0 (highest accuracy) to 50 (lowest accuracy)
  *
  */
   virtual float getHorizontalDop() = 0;
@@ -2982,7 +2982,7 @@ public:
  * Retrieves vertical dilution of precision.
  *
  * @returns Vertical dilution of precision if available else returns NaN
- * Range: 1 (highest accuracy) to 50 (lowest accuracy)
+ * Range: 0 (highest accuracy) to 50 (lowest accuracy)
  *
  */
   virtual float getVerticalDop() = 0;
@@ -2990,6 +2990,7 @@ public:
  * Retrieves geometric dilution of precision.
  *
  * @returns geometric dilution of precision.
+ * Range: 0 (highest accuracy) to 50 (lowest accuracy)
  *
  */
   virtual float getGeometricDop() = 0;
@@ -2997,6 +2998,7 @@ public:
  * Retrieves time dilution of precision.
  *
  * @returns Time dilution of precision.
+ * Range: 0 (highest accuracy) to 50 (lowest accuracy)
  *
  */
   virtual float getTimeDop() = 0;

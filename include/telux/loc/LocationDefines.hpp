@@ -1806,6 +1806,10 @@ public:
  */
   virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
+/**
+ * Destructor for ILocationInfoBase
+ */
+  virtual ~ILocationInfoBase(){};
 };
 
 /**
@@ -2168,6 +2172,10 @@ public:
  */
   virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
+/**
+ * Destructor for ILocationInfoEx
+ */
+  virtual ~ILocationInfoEx(){};
 };
 
 /**
@@ -2285,6 +2293,11 @@ public:
  * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
  */
   virtual GnssSignal getSignalType() = 0;
+
+/**
+ * Destructor for ISVInfo
+ */
+  virtual ~ISVInfo(){};
 };
 
 /**
@@ -2310,6 +2323,11 @@ public:
  *
  */
   virtual std::vector<std::shared_ptr<ISVInfo> > getSVInfoList() = 0;
+
+/**
+ * Destructor for IGnssSVInfo
+ */
+  virtual ~IGnssSVInfo(){};
 };
 
 /**
@@ -2328,6 +2346,11 @@ public:
  */
 
   virtual GnssData getGnssData() = 0;
+
+  /**
+  * Destructor for IGnssSignalInfo
+  */
+  virtual ~IGnssSignalInfo(){};
 };
 
 /** @} */ /* end_addtogroup telematics_location */

@@ -77,6 +77,21 @@ struct BandInterferenceConfig {
                                             5GHz.                                                */
 };
 
+struct AutoConnectProfile {
+    int    profileId;
+    SlotId slotId;
+};
+
+struct AutoConnectConfig {
+    bool enable;     /** flag indicate if automatic connect enabled */
+    bool persistent; /** flag indicate if new configuration taking effect persistently */
+};
+
+struct AutoConnectSettings {
+    AutoConnectProfile  profile;
+    AutoConnectConfig   config;
+};
+
 /**
  * Specifies the IP passthrough parameters.
  */
@@ -525,6 +540,52 @@ public:
      */
     virtual telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
             IpConfig &ipConfig) = 0;
+
+    /*
+     * This API allows the client to set AutoConnect configuration.
+     *
+     * - If client enables the AutoConnect configuration, the data call would automatically attempt
+     * to connect.
+     * - If client disables the AutoConnect configuration, and no one else has requested connect
+     * the data call, the data call would be down.
+     *
+     * This API is used to set autoconnect for wwan connectivity.
+     *
+     * - If persistent flag set and enable flag is true, on next powerups the data call would up
+     * if condition meet, if persistent flag set and enable flag is false, on next powerups the
+     * data call would NOT up.
+     * - If persistent flag not set, the behavior would not be persistent, on next powerups
+     * autoconnect behavior would be same with previous settings.
+     *
+     * It can be set for only one profile at a time. If called 2nd time for same profile, it will
+     * override previous value for that particular profile.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_DATA_SETTING
+     * permission to successfully invoke this API.
+     *
+     * @param [in] settings      specify the new settings for auto connect.
+     *
+     * @returns Status of setAutoConnect i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setAutoConnect(const AutoConnectSettings &settings) = 0;
+
+    /**
+     * Request the current auto connect configuration for specified profile.
+     *
+     * @param [in]  profile   parameters to specify which profile it request.
+     *                        For specific platform, only support default profile.
+     * @param [out] enable    result indicate if auto connect enabled.
+     *
+     * @returns Status of requestAutoConnect i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestAutoConnect(
+        const AutoConnectProfile &profile, bool &enable) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

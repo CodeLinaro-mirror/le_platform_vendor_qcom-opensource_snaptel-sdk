@@ -717,6 +717,16 @@ void NtnTestApp::locationFixResponse(std::vector<std::string> inputCommand) {
     std::cout << "locationFixResponse errno = " << Utils::getErrorCodeAsString(err) << std::endl;
 }
 
+void NtnTestApp::getSignalStrength(std::vector<std::string> inputCommand) {
+    SignalStrength signalStrength;
+    auto err = ntnMgr_->getSignalStrength(signalStrength);
+    if (err == ErrorCode::SUCCESS) {
+        std::cout << "Signal Strength: " << toString(signalStrength) << std::endl;
+    } else {
+        std::cout << "Error getting signal strength: " << Utils::getErrorCodeAsString(err) << std::endl;
+    }
+}
+
 void NtnTestApp::consoleInit() {
     std::shared_ptr<ConsoleAppCommand> isNtnSupportedCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "isNtnSupported", {},
@@ -768,13 +778,17 @@ void NtnTestApp::consoleInit() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "14", "setLiveLocationFix", {}, std::bind(
             &NtnTestApp::setLiveLocationFix, this)));
+    std::shared_ptr<ConsoleAppCommand> getSignalStrengthCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "15", "getSignalStrength", {}, std::bind(&NtnTestApp::getSignalStrength,
+            this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsNtn
         = {isNtnSupportedCmd, enableNtnCmd, getNtnStateCmd,
             getNtnCapabilitiesCmd, updateSflCmd, sendDataStringCmd, sendDataRawCmd, abortDataCmd,
             enableCellularScanCmd, locationFixResponseCmd, setLocationFixCmd,
             autoSetLocationFixFromFileCmd, stopAutoSetLocationFixFromFileCmd,
-            setLiveLocationFixCmd};
+            setLiveLocationFixCmd, getSignalStrengthCmd};
     ConsoleApp::addCommands(commandsNtn);
     ConsoleApp::displayMenu();
 }
@@ -933,3 +947,4 @@ int main(int argc, char **argv) {
     std::cout << "Exiting application..." << std::endl;
     return 0;
 }
+

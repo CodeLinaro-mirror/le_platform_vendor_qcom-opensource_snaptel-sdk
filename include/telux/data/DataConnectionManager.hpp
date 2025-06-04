@@ -101,8 +101,8 @@ class IDataCall;
  * IP Family related Info
  */
 struct IpFamilyInfo {
-    DataCallStatus status;
-    IpAddrInfo addr;
+    DataCallStatus status;  /**< Data call status */
+    IpAddrInfo addr;       /**< IP address info */
 };
 
 /**
@@ -111,9 +111,7 @@ struct IpFamilyInfo {
 struct QosFilterRule{
     std::vector<std::shared_ptr<IIpFilter>> filter; /**< @ref IIpFilter */
     uint16_t filterId;                              /**< Unique identifier for each filter. */
-    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are
-                                                         applied. A lower numerical value has a
-                                                         higher precedence. */
+    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are applied. A lower numerical value has a higher precedence. */
 };
 
 /**
@@ -124,18 +122,17 @@ struct TrafficFlowTemplate {
     QosFlowId qosId;                            /**< defines current flow id */
     QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
 
-    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields
-                                                     in TrafficFlowTemplate are valid */
+    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields in TrafficFlowTemplate are valid */
     /** Optional */
-    QosIPFlowInfo txGrantedFlow;                /* Tx Granted Flow IP info */
-    QosIPFlowInfo rxGrantedFlow;                /* Rx Granted Flow IP info */
+    QosIPFlowInfo txGrantedFlow;                /**< Tx Granted Flow IP info */
+    QosIPFlowInfo rxGrantedFlow;                /**< Rx Granted Flow IP info */
 
-    uint32_t txFiltersLength;                   /* Tx Filters length */
-    QosFilterRule txFilters[MAX_QOS_FILTERS];   /* Tx QoS Filters that apply to a
+    uint32_t txFiltersLength;                   /**< Tx Filters length */
+    QosFilterRule txFilters[MAX_QOS_FILTERS];   /**< Tx QoS Filters that apply to a
                                                    granted Tx QoS flow. */
 
-    uint32_t rxFiltersLength;                   /* Rx Filters length*/
-    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /* Rx QoS Filters that apply to a
+    uint32_t rxFiltersLength;                   /**< Rx Filters length*/
+    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /**< Rx QoS Filters that apply to a
                                                    granted Rx QoS flow. */
 };
 

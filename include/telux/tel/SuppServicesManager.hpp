@@ -125,14 +125,10 @@ struct ForwardInfo {
  */
 struct ForwardReq {
     ForwardOperation operation;    /**< Type of operation for forwarding */
-    ForwardReason reason;          /**< Reason for call forwarding
-                                        @ref telux::tel::ForwardReason */
+    ForwardReason reason;          /**< Reason for call forwarding @ref telux::tel::ForwardReason */
     ServiceClass serviceClass;     /**< Service Class for operation @ref telux::tel::ServiceClass */
-    std::string number = "";       /**< Number to which call has to be forwarded. This parameter is
-                                        required only for registration purpose only.
-                                        @ref telux::tel::ForwardOperation::REGISTER */
-    uint8_t noReplyTimer = 0;      /**< Timer for no reply operation. Required only for no reply
-                                        forward reason. @ref telux::tel::ForwardReason::NOREPLY. */
+    std::string number = "";       /**< Number to which call has to be forwarded. This parameter is required only for registration purpose only. @ref telux::tel::ForwardOperation::REGISTER */
+    uint8_t noReplyTimer = 0;      /**< Timer for no reply operation. Required only for no reply forward reason. @ref telux::tel::ForwardReason::NOREPLY. */
 };
 
 /**

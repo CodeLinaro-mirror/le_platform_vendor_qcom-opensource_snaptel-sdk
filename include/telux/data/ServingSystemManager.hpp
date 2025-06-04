@@ -158,13 +158,12 @@ enum class NrIconType {
  * @brief LTE attach failure information.
  */
 struct LteAttachFailureInfo {
-    /* PLMN ID that was rejected during the attach */
     std::vector<uint8_t> plmnId;
-
+    /**< PLMN ID that was rejected during the attach */
     DataCallEndReason rejectReason;
 
-    /* Primary PLMN for the shared network */
     std::vector<uint8_t> primaryPlmnId;
+    /**< Primary PLMN for the shared network */
 };
 
 /**

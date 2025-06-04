@@ -454,7 +454,7 @@ struct ChannelVolume {
     /** @ref ChannelType to which the volume level is associated. */
     ChannelType channelType;
 
-    /** Volume level -- minimum 0.0 and maximum 1.0 */
+    /** Volume level — minimum 0.0 and maximum 1.0 */
     float vol;
 };
 

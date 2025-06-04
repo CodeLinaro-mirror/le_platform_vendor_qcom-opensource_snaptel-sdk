@@ -65,8 +65,7 @@ enum class SlotState {
 struct SlotStatus {
    SlotState slotState;         /**< State of the physical SIM slot */
    CardState cardState;         /**< Status of the card in the physical slot */
-   CardError cardError;         /**< Indicates the reason for the card error, and is valid
-                                     only when the card state is CARDSTATE_ERROR. */
+   CardError cardError;         /**< Indicates the reason for the card error, and is valid only when the card state is CARDSTATE_ERROR. */
 };
 
 /** @} */ /* end_addtogroup telematics_multi_sim */

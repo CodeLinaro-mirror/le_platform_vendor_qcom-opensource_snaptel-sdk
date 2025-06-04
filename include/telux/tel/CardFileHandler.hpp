@@ -68,10 +68,8 @@ enum class EfType {
  */
 struct FileAttributes {
     uint16_t fileSize;     /**< File size of transparent or linear fixed file.*/
-    uint16_t recordSize;   /**< Size of the file record. Applicable only for
-                                telux::tel::EfType::LINEAR_FIXED.*/
-    uint16_t recordCount;  /**< The number of records in a file. Applicable only for
-                                telux::tel::EfType::LINEAR_FIXED.*/
+    uint16_t recordSize;   /**< Size of the file record. Applicable only for telux::tel::EfType::LINEAR_FIXED.*/
+    uint16_t recordCount;  /**< The number of records in a file. Applicable only for telux::tel::EfType::LINEAR_FIXED.*/
 };
 
 /**

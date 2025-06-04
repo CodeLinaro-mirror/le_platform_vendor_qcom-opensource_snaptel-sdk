@@ -197,22 +197,17 @@ struct NetworkTimeInfo {
    uint8_t minute;        /**< Minute. Range: 0 to 59. */
    uint8_t second;        /**< Second. Range: 0 to 59. */
    uint8_t dayOfWeek;     /**< Day of the week. 0 is Monday and 6 is Sunday. */
-   int8_t timeZone;       /**< Offset between UTC and local time in units of 15 minutes (signed
-                               value). Actual value = field value * 15 minutes. */
-   uint8_t dstAdj;        /**< Daylight saving adjustment in hours to obtain local time.
-                               Possible values: 0, 1, and 2.*/
-   std::string nitzTime;  /**< Network Identity and Time Zone(NITZ) information in the form
-                               "yyyy/mm/dd,hh:mm:ss(+/-)tzh:tzm,dt */
+   int8_t timeZone;       /**< Offset between UTC and local time in units of 15 minutes (signed value). Actual value = field value * 15 minutes. */
+   uint8_t dstAdj;        /**< Daylight saving adjustment in hours to obtain local time. Possible values: 0, 1, and 2.*/
+   std::string nitzTime;  /**< Network Identity and Time Zone(NITZ) information in the form "yyyy/mm/dd,hh:mm:ss(+/-)tzh:tzm,dt */
 };
 
 /**
  * Defines network registration reject information
  */
 struct NetworkRejectInfo {
-    ServingSystemInfo rejectSrvInfo; /**< Serving system information where the registration is
-                                          rejected.*/
-    uint8_t rejectCause;             /**< Reject cause values as specified in 3GPP TS 24.008,
-                                          3GPP TS 24.301 and 3GPP TS 24.501. */
+    ServingSystemInfo rejectSrvInfo; /**< Serving system information where the registration is rejected.*/
+    uint8_t rejectCause;             /**< Reject cause values as specified in 3GPP TS 24.008, 3GPP TS 24.301 and 3GPP TS 24.501. */
     std::string mcc;                 /**< Mobile Country Code for rejection*/
     std::string mnc;                 /**< Mobile Network Code for rejection*/
 };
@@ -261,8 +256,7 @@ enum class CallsAllowedInCell {
  */
 struct CallBarringInfo {
    RadioTechnology rat;  /**< Current serving RAT */
-   ServiceDomain domain; /**< Current service domain registered on the system for the
-                              serving RAT; valid values are CS_ONLY and PS_ONLY*/
+   ServiceDomain domain; /**< Current service domain registered on the system for the serving RAT; valid values are CS_ONLY and PS_ONLY*/
    CallsAllowedInCell callType; /**< Current allowed call type for the cell*/
 
    bool operator==(const CallBarringInfo& cb) const {
@@ -296,10 +290,8 @@ enum class NtnSmsStatus {
  */
 struct SmsCapability {
    RadioTechnology rat;  /**< Current serving RAT */
-   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network,
-                              not applicable for NB1 NTN RAT. */
-   NtnSmsStatus smsStatus;  /**< SMS service status for NB1 NTN RAT, not applicable for other
-                                 RATs. */
+   SmsDomain domain;     /**< Supported SMS domain for currently registered RAT on the network, not applicable for NB1 NTN RAT. */
+   NtnSmsStatus smsStatus;  /**< SMS service status for NB1 NTN RAT, not applicable for other RATs. */
 };
 
 /**
@@ -310,8 +302,7 @@ enum class LteCsCapability {
    FULL_SERVICE,        /**< Full service on CS domain is available */
    CSFB_NOT_PREFERRED,  /**< CSFB is not preferred */
    SMS_ONLY,            /**< CS registation is for SMS only */
-   LIMITED,             /**< CS registation failed for max attach or tracking area updating(TAU)
-                             attempts */
+   LIMITED,             /**< CS registation failed for max attach or tracking area updating(TAU) attempts */
    BARRED,              /**< CS domain not available */
 };
 

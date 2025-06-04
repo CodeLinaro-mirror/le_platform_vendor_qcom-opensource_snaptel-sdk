@@ -121,8 +121,7 @@ enum class ReasonType {
  */
 
 struct ECallRedialInfo {
-   bool willECallRedial; /**< Indicates whether redial of eCall will be attempted by modem or
-                              not */
+   bool willECallRedial; /**< Indicates whether redial of eCall will be attempted by modem or not */
    ReasonType reason; /**< Indicates the reason for redial of eCall to be performed or not */
 };
 
@@ -191,18 +190,10 @@ enum class ECallOptionalDataType {
 struct ECallMsdOptionals {
 
    ECallOptionalDataType optionalDataType; /**< Type of optional data */
-   bool optionalDataPresent;               /**< Availability of Optional data:
-                                                true - Present or false - Absent */
-   bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
-                                                true - Present or false - Absent. In MSD version-3
-                                                (as per EN 15722:2020), as recentVehicleLocationN1
-                                                is mandatory, this should be set to true by client*/
-   bool recentVehicleLocationN2Present;    /**< Availability of Recent Vehicle Location N2 data:
-                                                true - Present or false - Absent. In MSD version-3
-                                                (as per EN 15722:2020), as recentVehicleLocationN2
-                                                is mandatory, this should be set to true by client*/
-   bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data:
-                                                true - Present or false - Absent*/
+   bool optionalDataPresent;               /**< Availability of Optional data: true - Present or false - Absent */
+   bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data: true - Present or false - Absent. In MSD version-3 (as per EN 15722:2020), as recentVehicleLocationN1 is mandatory, this should be set to true by client*/
+   bool recentVehicleLocationN2Present;    /**< Availability of Recent Vehicle Location N2 data: true - Present or false - Absent. In MSD version-3 (as per EN 15722:2020), as recentVehicleLocationN2 is mandatory, this should be set to true by client*/
+   bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data: true - Present or false - Absent*/
    ECallMsdOptionals() : optionalDataType(ECallOptionalDataType::ECALL_DEFAULT),
         optionalDataPresent(false),
         recentVehicleLocationN1Present(false),
@@ -324,14 +315,9 @@ enum class ECallLocationOfImpact {
  * Defines delta-v parameters as per Euro NCAP Technical Bulletin TB 040.
  */
 struct ECallDeltaV {
-   uint8_t rangeLimit;   /**< Upper limit of the detection range for delta-v.
-                              The range is unsigned integer[100 to 255]. */
-   int16_t deltaVX;      /**< Difference in velocity just before and just after (start of the)
-                              triggering incident measured over the X-axis of the vehicle
-                              coordinate system. The range is signed integer[-255 to 255]. */
-   int16_t deltaVY;      /**< Difference in velocity just before and just after (start of the)
-                              triggering incident measured over the Y-axis of the vehicle
-                              coordinate system. The range is signed integer[-255 to 255]. */
+   uint8_t rangeLimit;   /**< Upper limit of the detection range for delta-v. The range is unsigned integer[100 to 255]. */
+   int16_t deltaVX;      /**< Difference in velocity just before and just after (start of the) triggering incident measured over the X-axis of the vehicle coordinate system. The range is signed integer[-255 to 255]. */
+   int16_t deltaVY;      /**< Difference in velocity just before and just after (start of the) triggering incident measured over the Y-axis of the vehicle coordinate system. The range is signed integer[-255 to 255]. */
 };
 
 /**
@@ -341,21 +327,16 @@ struct ECallOptionalEuroNcapData {
    ECallLocationOfImpact locationOfImpact;  /**< The impact location of the triggering incident. */
    bool rollOverDetectedPresent = false;    /**< Availability of rollover detected:
                                                  true - Present or false - Absent */
-   bool rollOverDetected = false;           /**< (Optional) Omitted if vehicle is not able to
-                                                 detect a rollover, else true or false. */
-   ECallDeltaV deltaV;                      /**< Difference between velocity just after and just
-                                                 before impact (delta-v). */
+   bool rollOverDetected = false;           /**< (Optional) Omitted if vehicle is not able to detect a rollover, else true or false. */
+   ECallDeltaV deltaV;                      /**< Difference between velocity just after and just before impact (delta-v). */
 };
 
 /**
  * Optional additional data information for the emergency rescue service.
  */
 struct ECallOptionalPdu {
-   ECallDefaultOptions eCallDefaultOptions; /**< Optional information. This field is
-                                                 unused and deprecated. Use the other
-                                                 fields below, instead. */
-   std::string oid;                     /**< Relative object identifier(OID) as per
-                                             European standard i.e. EN 15722 */
+   ECallDefaultOptions eCallDefaultOptions; /**< Optional information. This field is unused and deprecated. Use the other fields below, instead. */
+   std::string oid;                     /**< Relative object identifier(OID) as per European standard i.e. EN 15722 */
    std::vector<uint8_t> data;           /**< Optional additional data content. */
 };
 
@@ -364,37 +345,27 @@ struct ECallOptionalPdu {
  * Supports MSD version-2(as per EN 15722:2015) and MSD version-3(as per EN 15722:2020)
  */
 struct ECallMsdData {
-   ECallMsdOptionals optionals; /**< Indicates presence of optional data fields in ECall MSD.
-                                     In MSD version-2 (as per EN 15722:2015), the following data
-                                     fields are optional:
-                                     recentVehicleLocationN1, recentVehicleLocationN2,
-                                     numberOfPassengers and optionalAdditionalData.
-                                     However, in MSD version-3 (as per EN 15722:2020), the
-                                     following data fields are optional:
-                                     numberOfOccupants (replacing numberOfPassengers) and
-                                     optionalAdditionalData. */
-   uint8_t messageIdentifier = 1;   /**< Starts with 1 for each new eCall and to be incremented with
-                                     every retransmission */
-   ECallMsdControlBits control; /**< ECallMsdControlBits structure as per European standard i.e. EN
-                                   15722 */
-   ECallVehicleIdentificationNumber vehicleIdentificationNumber; /**< VIN (vehicle identification
-                                                                    number) according to ISO3779 */
-   ECallVehiclePropulsionStorageType vehiclePropulsionStorage;   /**< VehiclePropulsionStorageType
-                                                                    structure as per European standard
-                                                                    i.e. EN 15722 */
+   ECallMsdOptionals optionals; 
+    /**< Indicates presence of optional data fields in ECall MSD.
+         In MSD version-2 (as per EN 15722:2015), the following data
+         fields are optional:
+         recentVehicleLocationN1, recentVehicleLocationN2,
+         numberOfPassengers and optionalAdditionalData.
+         However, in MSD version-3 (as per EN 15722:2020), the
+         following data fields are optional:
+         numberOfOccupants (replacing numberOfPassengers) and
+         optionalAdditionalData. */
+   uint8_t messageIdentifier = 1;   /**< Starts with 1 for each new eCall and to be incremented with every retransmission */
+   ECallMsdControlBits control; /**< ECallMsdControlBits structure as per European standard i.e. EN 15722 */
+   ECallVehicleIdentificationNumber vehicleIdentificationNumber; /**< VIN (vehicle identification number) according to ISO3779 */
+   ECallVehiclePropulsionStorageType vehiclePropulsionStorage;   /**< VehiclePropulsionStorageType structure as per European standard i.e. EN 15722 */
    uint32_t timestamp = 0;                   /**< Seconds elapsed since midnight 01.01.1970 UTC */
-   ECallVehicleLocation vehicleLocation; /**< VehicleLocation structure as per European standard.
-                                            i.e. EN 15722 */
+   ECallVehicleLocation vehicleLocation; /**< VehicleLocation structure as per European standard. i.e. EN 15722 */
    uint8_t vehicleDirection = 0; /**< Direction of travel in 2 degrees steps from magnetic north */
 
-   ECallVehicleLocationDelta recentVehicleLocationN1; /**< Change in latitude and longitude compared
-                                                         to the last MSD transmission. Optional
-                                                         field for MSD version-2 */
-   ECallVehicleLocationDelta recentVehicleLocationN2; /**< Change in latitude and longitude compared
-                                                         to the last but one MSD transmission.
-                                                         Optional field for MSD version-2 */
-   uint8_t numberOfPassengers = 0;   /**< Number of occupants in the vehicle. Optional field for MSD
-                                      version-2 and version-3 */
+   ECallVehicleLocationDelta recentVehicleLocationN1; /**< Change in latitude and longitude compared to the last MSD transmission. Optional field for MSD version-2 */
+   ECallVehicleLocationDelta recentVehicleLocationN2; /**< Change in latitude and longitude compared to the last but one MSD transmission. Optional field for MSD version-2 */
+   uint8_t numberOfPassengers = 0;   /**< Number of occupants in the vehicle. Optional field for MSD version-2 and version-3 */
    /** Optional information for the emergency rescue service
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located
     */
@@ -435,10 +406,8 @@ struct ECallModeInfo {
  */
 enum class HlapTimerStatus {
    UNKNOWN = -1,             /**< Unknown */
-   INACTIVE,                 /**< eCall Timer is Inactive i.e
-                                  it has not started or it has stopped/expired */
-   ACTIVE,                   /**< eCall Timer is Active i.e
-                                  it has started but not yet stopped/expired */
+   INACTIVE,                 /**< eCall Timer is Inactive i.e it has not started or it has stopped/expired */
+   ACTIVE,                   /**< eCall Timer is Active i.e it has started but not yet stopped/expired */
 };
 
 /**
@@ -500,8 +469,7 @@ struct ECallHlapTimerEvents {
  * otherwise no acknowledgement would be received by device.
  */
 struct CustomSipHeader {
-   std::string contentType;    /**< Type of data being transmitted and should be filled as per
-                                    RFC 8147 i.e MSD. Max Length 128 bytes */
+   std::string contentType;    /**< Type of data being transmitted and should be filled as per RFC 8147 i.e MSD. Max Length 128 bytes */
    std::string acceptInfo;     /**< SIP Accept header. Max length 128 bytes */
 };
 static const std::string CONTENT_HEADER = "application/EmergencyCallData.eCall.MSD"; /**< Default
@@ -558,11 +526,8 @@ enum EcallConfigType {
  */
 enum class EcallHlapTimerId {
     UNKNOWN = 0,                  /**< Unknown timer ID. */
-    T9 = 5,                       /**< Timer ID for T9 timer for a regulatory eCall or test eCall.
-                                       Applicable for both the eCall operating modes
-                                       ( Normal and eCall only ). */
-    T10 = 6,                      /**< Timer ID for T10 timer for a regulatory eCall or test eCall.
-                                       Applicable for eCall only operating mode. */
+    T9 = 5,                       /**< Timer ID for T9 timer for a regulatory eCall or test eCall. Applicable for both the eCall operating modes ( Normal and eCall only ). */
+    T10 = 6,                      /**< Timer ID for T10 timer for a regulatory eCall or test eCall. Applicable for eCall only operating mode. */
 };
 
 /**
@@ -577,24 +542,16 @@ using EcallConfigValidity = std::bitset<ECALL_CONFIG_COUNT>;
  * Represents various configuration parameters related to automotive emergency call
  */
 struct EcallConfig {
-   EcallConfigValidity configValidityMask;   /**< Indicates the valid configuration parameters in
-                                                  the structure. A bit set to 1 denotes that the
-                                                  corresponding configuration parameter is valid */
-   bool muteRxAudio;    /* Mute the local audio device(ex: speaker) during MSD transmission */
-   ECallNumType numType;    /* Represents the type of number to be dialed when eCall is initiated */
-   std::string overriddenNum; /* User configured/overridden number that will be dialed when
-                                 ECallNumType configuration parameter is set to OVERRIDE */
-   bool useCannedMsd;   /* Use the pre-defined MSD in modem for eCall */
-   uint32_t gnssUpdateInterval; /* Time interval in milliseconds at which the modem updates the
-                                   GNSS information, in its internally generated MSD */
-   uint32_t t2Timer;    /* T2 timer value in milliseconds, according to EN 16062:2015 standard */
-   uint32_t t7Timer;    /* T7 timer value in milliseconds, according to EN 16062:2015 standard */
-   uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard.
-                           Minimum value should be 3600000 */
-   uint8_t msdVersion;  /* MSD version to be used by modem when it internally generates MSD for
-                           transmission. Supported values are 1 and 2 only. This setting has no
-                           relevance when an eCall is initiated using @ref ICallManager APIs, which
-                           expects a valid MSD from the application */
+   EcallConfigValidity configValidityMask;   /**< Indicates the valid configuration parameters in the structure. A bit set to 1 denotes that the corresponding configuration parameter is valid */
+   bool muteRxAudio;    /**< Mute the local audio device(ex: speaker) during MSD transmission */
+   ECallNumType numType;    /**< Represents the type of number to be dialed when eCall is initiated */
+   std::string overriddenNum; /**< User configured/overridden number that will be dialed when ECallNumType configuration parameter is set to OVERRIDE */
+   bool useCannedMsd;   /**< Use the pre-defined MSD in modem for eCall */
+   uint32_t gnssUpdateInterval; /**< Time interval in milliseconds at which the modem updates the GNSS information, in its internally generated MSD */
+   uint32_t t2Timer;    /**< T2 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t7Timer;    /**< T7 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t9Timer;    /**< T9 timer value in milliseconds, according to EN 16062:2015 standard. Minimum value should be 3600000 */
+   uint8_t msdVersion;  /**< MSD version to be used by modem when it internally generates MSD for transmission. Supported values are 1 and 2 only. This setting has no relevance when an eCall is initiated using @ref ICallManager APIs, which expects a valid MSD from the application */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

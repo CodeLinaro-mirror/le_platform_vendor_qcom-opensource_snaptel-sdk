@@ -89,23 +89,15 @@ enum class VoiceServiceDenialCause {
 
    // Cause codes related to MS identification
    IMSI_UNKNOWN = 2,      /**< IMSI unknown in HLR */
-   ILLEGAL_MS = 3,        /**< Illegal Mobile Station (MS), network
-                                refuses service to the MS either because an
-                                identity of the MS is not acceptable to the network
-                                or because the MS does not pass the authentication
-                                check */
+   ILLEGAL_MS = 3,        /**< Illegal Mobile Station (MS), network refuses service to the MS either because an identity of the MS is not acceptable to the network or because the MS does not pass the authentication check */
    IMSI_UNKNOWN_VLR = 4,  /**< IMSI unknown in Visitors Location Register (VLR) */
-   IMEI_NOT_ACCEPTED = 5, /**< Network does not accept emergency call
-                               establishment using an IMEI or not accept attach
-                               procedure for emergency services using an IMEI */
+   IMEI_NOT_ACCEPTED = 5, /**< Network does not accept emergency call establishment using an IMEI or not accept attach procedure for emergency services using an IMEI */
    ILLEGAL_ME = 6,        /**< ME used is not acceptable to the network */
 
    // Cause codes related non-GPRS and GPRS services (GMM)
    GPRS_SERVICES_NOT_ALLOWED = 7,      /**< Not allowed to operate GPRS services. */
-   GPRS_NON_GPRS_NOT_ALLOWED = 8,      /**< Not allowed to operate either GPRS or
-                                             non-GPRS services */
-   MS_IDENTITY_FAILED = 9,             /**< the network cannot derive the MS's identity
-                                             from the P-TMSI/GUTI. */
+   GPRS_NON_GPRS_NOT_ALLOWED = 8,      /**< Not allowed to operate either GPRS or non-GPRS services */
+   MS_IDENTITY_FAILED = 9,             /**< the network cannot derive the MS's identity from the P-TMSI/GUTI. */
    IMPLICITLY_DETACHED = 10,           /**< network has implicitly detached the MS */
    GPRS_NOT_ALLOWED_IN_PLMN = 14,      /**< GPRS services not allowed in this PLMN */
    MSC_TEMPORARILY_NOT_REACHABLE = 16, /**< MSC temporarily not reachable */
@@ -113,16 +105,8 @@ enum class VoiceServiceDenialCause {
    NO_PDP_CONTEXT_ACTIVATED = 40,      /**< No PDP context activated */
 
    // Cause codes related to subscription options
-   PLMN_NOT_ALLOWED = 11,          /**<  if the network initiates a detach request or UE
-                                         requests a services, in a PLMN where
-                                         the MS, by subscription or due to operator
-                                         determined barring is not allowed to operate. */
-   LOCATION_AREA_NOT_ALLOWED = 12, /**<  network initiates a detach request, in a
-                                         location area where the HPLMN determines that
-                                         the MS, by subscription, is not allowed to
-                                         operate  or roaming subscriber the subscriber is
-                                         denied service even if other PLMNs are available
-                                         on which registration was possible*/
+   PLMN_NOT_ALLOWED = 11,          /**<  if the network initiates a detach request or UE requests a services, in a PLMN where the MS, by subscription or due to operator determined barring is not allowed to operate. */
+   LOCATION_AREA_NOT_ALLOWED = 12, /**<  network initiates a detach request, in a location area where the HPLMN determines that the MS, by subscription, is not allowed to operate  or roaming subscriber the subscriber is denied service even if other PLMNs are available on which registration was possible*/
    ROAMING_NOT_ALLOWED = 13,       /**< Roaming not allowed in this Location Area */
    NO_SUITABLE_CELLS = 15,         /**< No Suitable Cells in this Location Area */
    NOT_AUTHORIZED = 25,            /**< Not Authorized for this CSG */
@@ -131,12 +115,8 @@ enum class VoiceServiceDenialCause {
    // congestion/Authentication Failures
    NETWORK_FAILURE = 17,                 /**< Network Failure */
    MAC_FAILURE = 20,                     /**< MAC failure */
-   SYNC_FAILURE = 21,                    /**< USIM detects that the SQN in the
-                                               AUTHENTICATION REQUEST or
-                                               AUTHENTICATION_AND_CIPHERING REQUEST
-                                               message is out of range */
-   CONGESTION = 22,                      /**< network cannot serve a request from the MS
-                                              because of congestion */
+   SYNC_FAILURE = 21,                    /**< USIM detects that the SQN in the AUTHENTICATION REQUEST or AUTHENTICATION_AND_CIPHERING REQUEST message is out of range */
+   CONGESTION = 22,                      /**< network cannot serve a request from the MS because of congestion */
    GSM_AUTHENTICATION_UNACCEPTABLE = 23, /**< GSM Authentication unacceptable */
 
    // Causes related to nature of request

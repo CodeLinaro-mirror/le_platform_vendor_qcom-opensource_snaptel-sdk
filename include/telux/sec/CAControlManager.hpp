@@ -73,20 +73,16 @@ struct LoadConfig {
  */
 struct CACapacity {
 
-    /* SM2 ISO/IEC 14888 */
     uint32_t sm2;
-
-    /* NIST curve P-256 */
+    /**< SM2 ISO/IEC 14888 */
     uint32_t nist256;
-
-    /* NIST curve P-396 */
+    /**< NIST curve P-256 */
     uint32_t nist384;
-
-    /* Brainpool 256-bit curve */
+    /**< NIST curve P-396 */
     uint32_t bp256;
-
-    /* Brainpool 384-bit curve */
+    /**< Brainpool 256-bit curve */
     uint32_t bp384;
+    /**< Brainpool 384-bit curve */
 };
 
 /**
@@ -97,20 +93,16 @@ struct CACapacity {
  */
 struct CALoad {
 
-    /* SM2 ISO/IEC 14888 */
     uint32_t sm2;
-
-    /* NIST curve P-256 */
+    /**< SM2 ISO/IEC 14888 */
     uint32_t nist256;
-
-    /* NIST curve P-396 */
+    /**< NIST curve P-256 */
     uint32_t nist384;
-
-    /* Brainpool 256-bit curve */
+    /**< NIST curve P-396 */
     uint32_t bp256;
-
-    /* Brainpool 384-bit curve */
+    /**< Brainpool 256-bit curve */
     uint32_t bp384;
+    /**< Brainpool 384-bit curve */
 };
 
 /**

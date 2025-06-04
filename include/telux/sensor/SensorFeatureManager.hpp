@@ -131,10 +131,10 @@ class ISensorFeatureEventListener : public telux::common::ISDKListener {
      * @param [in] events - List of sensor events
      * @param [in] isLast - Indicate if this is last notification for the buffered events.
      *
-     *                      Multiple @ref telux::sensor::SensorFeature can be enabled using
-     *                      @ref telux::sensor::enableFeature, whose notification will be delivered
-     *                      in sequence.
-     *                      isLast will be set to true to signify last event of a SensorFeature.
+     * Multiple @ref telux::sensor::SensorFeature can be enabled using
+     * @ref telux::sensor::enableFeature, whose notification will be delivered
+     * in sequence.
+     * isLast will be set to true to signify last event of a SensorFeature.
      *
      */
     virtual void onBufferedEvent(std::string sensorName,

@@ -100,13 +100,10 @@ enum class TripType {
     UNKNOWN,           /**< Trip type is unknown */
     CRITICAL,          /**< Trip point at which system shuts down */
     HOT,               /**< Trip point to notify emergency */
-    PASSIVE,           /**< Trip point at which kernel lowers the CPU's frequency and throttle
-                            the processor down */
+    PASSIVE,           /**< Trip point at which kernel lowers the CPU's frequency and throttle the processor down */
     ACTIVE,            /**< Trip point at which processor fan turns on */
-    CONFIGURABLE_HIGH, /**< Triggering threshold at which mitigation starts.
-                            This type is added to support legacy targets*/
-    CONFIGURABLE_LOW   /**< Clearing threshold at which mitigation stops.
-                            This type is added to support legacy targets*/
+    CONFIGURABLE_HIGH, /**< Triggering threshold at which mitigation starts. This type is added to support legacy targets*/
+    CONFIGURABLE_LOW   /**< Clearing threshold at which mitigation stops. This type is added to support legacy targets*/
 };
 
 /**

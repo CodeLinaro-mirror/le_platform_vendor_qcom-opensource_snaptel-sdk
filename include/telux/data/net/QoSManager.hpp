@@ -30,9 +30,7 @@ struct BandwidthRange {
 };
 
 union BandwidthValue {
-    BandwidthRange bandwidthRange; /**< Bandwidth in range
-                                        The sum of the minimum bandwidths across all traffic
-                                      classes should not exceed the link capacity. */
+    BandwidthRange bandwidthRange; /**< Bandwidth in range The sum of the minimum bandwidths across all traffic classes should not exceed the link capacity. */
 };
 
 /**
@@ -54,12 +52,9 @@ struct BandwidthConfig {
  */
 enum class QoSFilterErrorCode {
     SUCCESS = 0,
-    MISSING_DIRECTION,                 /** The mandatory 'data traffic direction' field is
-                                            missing */
-    INVALID_MULTIPLE_SOURCE_INFO,      /** If traffic descriptor is set, only one of the following
-                                          sources is expected: IPv4, IPv6, or VLAN */
-    INVALID_MULTIPLE_DESTINATION_INFO, /** If traffic descriptor is set, only one of the following
-                                          destinations is expected: IPv4, IPv6, or VLAN */
+    MISSING_DIRECTION,                 /**< The mandatory 'data traffic direction' field is missing */
+    INVALID_MULTIPLE_SOURCE_INFO,     /**< If traffic descriptor is set, only one of the following sources is expected: IPv4, IPv6, or VLAN */
+    INVALID_MULTIPLE_DESTINATION_INFO /**< If traffic descriptor is set, only one of the following destinations is expected: IPv4, IPv6, or VLAN */
 };
 
 /**
@@ -67,9 +62,9 @@ enum class QoSFilterErrorCode {
  */
 enum class TcConfigErrorCode {
     SUCCESS = 0,
-    MISSING_TRAFFIC_CLASS, /** The mandatory 'traffic class' field is missing */
-    MISSING_DATA_PATH,     /** The mandatory 'data path' field is missing */
-    MISSING_DIRECTION,     /** The mandatory 'data traffic direction' field is missing */
+    MISSING_TRAFFIC_CLASS, /**< The mandatory 'traffic class' field is missing */
+    MISSING_DATA_PATH,     /**< The mandatory 'data path' field is missing */
+    MISSING_DIRECTION,     /**< The mandatory 'data traffic direction' field is missing */
 };
 
 /**
@@ -78,13 +73,8 @@ enum class TcConfigErrorCode {
 enum class FilterInstallationStatus {
     SUCCESS = 0,    /** QoS filter installed successfully. */
     FAILED,         /** QoS filter installation failed. */
-    PENDING,        /** QoS filter is saved and will be installed when necessary conditions are met.
-                        For example, if no data calls are active and the QoS filter installation is
-                        requested on the modem, the status would be PENDING until a data call is
-                        brought up. */
-    NOT_APPLICABLE, /** QoS filter is not applicable for the module.
-                        For example, in the case of @ref DataPath::TETHERED_TO_APPS_SW, filters will
-                        not be applicable for the modem. */
+    PENDING,        /** QoS filter is saved and will be installed when necessary conditions are met. For example, if no data calls are active and the QoS filter installation is requested on the modem, the status would be PENDING until a data call is brought up. */
+    NOT_APPLICABLE, /** QoS filter is not applicable for the module. For example, in the case of @ref DataPath::TETHERED_TO_APPS_SW, filters will not be applicable for the modem. */
 };
 
 /**

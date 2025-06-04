@@ -61,19 +61,11 @@ enum class ConfigType {
 };
 
 struct ConfigInfo {
-   /**
-    * id      -    stores the id of the configuration
-    * type    -    stores config type
-    * size    -    stores the size of the configuration
-    * desc    -    stores the configuration description
-    * version -    stores version of the config file
-    */
-
-    ConfigId id;
-    ConfigType type;
-    uint32_t size;
-    std::string desc;
-    uint32_t version;
+    ConfigId id;  /**< stores the id of the configuration */
+    ConfigType type; /**< stores config type */
+    uint32_t size;   /**< stores the size of the configuration */
+    std::string desc; /**< stores the configuration description */
+    uint32_t version; /**< stores version of the config file */
 };
 
 /**

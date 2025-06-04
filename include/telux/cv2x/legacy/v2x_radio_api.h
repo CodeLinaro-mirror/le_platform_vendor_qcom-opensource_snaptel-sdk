@@ -944,13 +944,10 @@ typedef struct {
     Parameters to identify a Tx or Rx socket.
  */
 typedef struct {
-    int sock;
-    /**< Pointer to the file descriptor for the socket. */
+    int sock; /**< Pointer to the file descriptor for the socket. */
 
-    struct sockaddr_in6 sockaddr;
-    /**< IPv6 socket address. The sockaddr_in6 buffer is
-    initialized with the IPv6 source address and source port
-    that are used for the bind() function. */
+    struct sockaddr_in6 sockaddr; /**< IPv6 socket address. The sockaddr_in6 buffer is initialized with the IPv6 source address and source port that are used for the bind() function. */
+
 } v2x_sock_info_t;
 
 /**
@@ -1001,13 +998,13 @@ typedef traffic_ip_type_t traffic_ip_type;
  * Contains remote UE source L2 ID that expecting to filter.
  */
 typedef struct src_l2_filter_info_t {
-    /**< remote UE L2 addr to filter. */
+    /** remote UE L2 addr to filter. */
     uint32_t src_l2_id;
 
-    /**< Duration, in millisec (resolution 100 msec). */
+    /** Duration, in millisec (resolution 100 msec). */
     uint32_t duration_ms;
 
-    /**</* Proximity service per packet priority (PPPP), packets with priority above this value
+    /** Proximity service per packet priority (PPPP), packets with priority above this value
          will be dropped. Range 0-7, 0 mean all of the pkts will be dropped. */
     uint8_t pppp;
 } src_l2_filter_info;

@@ -124,31 +124,22 @@ enum class Cv2xStatusType {
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xCauseType {
-    TIMING,            /**< CV2X is suspended due to the outage of timing reference. */
-    CONFIG,            /**< CV2X is inactive due to v2x.xml is missing, invalid,
-                            or expired. */
-    UE_MODE,           /**< CV2X is inactive due to CV2X mode is not started. */
-    GEOPOLYGON,        /**< CV2X is inactive due to UE enters a geo-polygon that
-                            does not support cv2x. */
-    THERMAL,           /**< CV2X is suspended when the device's temperature is high. */
-    THERMAL_ECALL,     /**< CV2X is suspended when the device's temperature is high
-                            and emergency call is ongoing. */
-    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that
-                            also supports CV2X and UE is already in CV2X active status,
-                            CV2X status will change to active after the update is done. */
-    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode
-                            just starts. UE needs sensing for 1 second before Tx can begin,
-                            Tx status will change to active after sensing is done. */
-    LPM,               /**< CV2X is inactive due to unexpected operating mode. */
-    DISABLED,          /**< CV2X is inactive due to CV2X is disabled in the EFS. */
-    NO_GNSS,           /**< CV2X is inactive due to GNSS signal is not available when
-                            starting CV2X. */
-    INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
-    NOT_READY,         /**< CV2X is inactive due to low layer is not ready to start CV2X. */
-    NTN,               /**< CV2X is suspended due to NTN is in progress. */
-
-    NO_DATA_CALL,      /**< CV2X is inactive due to no cv2x data call. */
-    UNKNOWN,           /**< Invalid cause type only used internally. */
+    TIMING,             /**< CV2X is suspended due to the outage of timing reference. */
+    CONFIG,             /**< CV2X is inactive due to v2x.xml is missing, invalid, or expired. */
+    UE_MODE,            /**< CV2X is inactive due to CV2X mode is not started. */
+    GEOPOLYGON,         /**< CV2X is inactive due to UE enters a geo-polygon that does not support cv2x. */
+    THERMAL,            /**< CV2X is suspended when the device's temperature is high. */
+    THERMAL_ECALL,      /**< CV2X is suspended when the device's temperature is high and emergency call is ongoing. */
+    GEOPOLYGON_SWITCH,  /**< CV2X is suspended when UE switches to a new geopolygon that also supports CV2X and UE is already in CV2X active status, CV2X status will change to active after the update is done. */
+    SENSING,            /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just starts. UE needs sensing for 1 second before Tx can begin, Tx status will change to active after sensing is done. */
+    LPM,                /**< CV2X is inactive due to unexpected operating mode. */
+    DISABLED,           /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    NO_GNSS,            /**< CV2X is inactive due to GNSS signal is not available when starting CV2X. */
+    INVALID_LICENSE,    /**< CV2X is inactive due to invalid license. */
+    NOT_READY,          /**< CV2X is inactive due to low layer is not ready to start CV2X. */
+    NTN,                /**< CV2X is suspended due to NTN is in progress. */
+    NO_DATA_CALL,       /**< CV2X is inactive due to no cv2x data call. */
+    UNKNOWN             /**< Invalid cause type only used internally. */
 };
 
 /**
@@ -550,7 +541,7 @@ struct TrustedUEInfoList {
  * Used in @ref DataSessionSettings
  */
 struct IPv6Address {
-    uint8_t addr[16];
+    uint8_t addr[16];  /**< Contains IPv6 address */
 };
 
 /**
@@ -611,13 +602,13 @@ struct ConfigEventInfo {
  * Used in @ref ICv2xRadioManager::setL2Filters
  */
 struct L2FilterInfo {
-    /**< remote UE L2 MAC addr to filter. */
+    /** remote UE L2 MAC addr to filter. */
     uint32_t srcL2Id;
 
-    /**< Duration, in millisec (resolution 100 msec). 0 means delete the filter. */
+    /** Duration, in millisec (resolution 100 msec). 0 means delete the filter. */
     uint32_t durationMs;
 
-    /**< Proximity service per packet priority (PPPP), packets with priority above this value
+    /** Proximity service per packet priority (PPPP), packets with priority above this value
          will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped. */
     uint8_t pppp;
 };
@@ -720,7 +711,7 @@ struct TxStatusReport {
  */
 struct IPv6AddrType
 {
-    /**< ipv6 address prefix length in bits, range [64, 128] */
+    /** ipv6 address prefix length in bits, range [64, 128] */
     uint8_t prefixLen;
     uint8_t ipv6Addr[CV2X_IPV6_ADDR_ARRAY_LEN];
 };
@@ -732,7 +723,7 @@ struct IPv6AddrType
  */
 struct GlobalIPUnicastRoutingInfo
 {
-    /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order. */
+    /** Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order. */
     uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 

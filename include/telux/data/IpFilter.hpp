@@ -110,15 +110,10 @@ struct IPv6Info {
     std::string destAddr;       /**< address of receiving end */
     uint8_t dstPrefixLen;       /**< destination prefix length used to create subnet */
     IpProtocol nextProtoId = 0; /**< Protocol ID (i.e TCP, UDP or ICMP ) */
-    TrafficClass val = 0;       /**< indicates the class or priority of the IPv6 packet,
-                                     enables the ability to track specific traffic flows
-                                     at the network layer. */
+    TrafficClass val = 0;       /**< indicates the class or priority of the IPv6 packet, enables the ability to track specific traffic flows at the network layer. */
 
     TrafficClass mask = 0;
-    FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of
-                             packets between a source and destination, requiring special
-                             handling by intermediate IPv6 routers.
-                             Note: FlowLabel is currently ignored in the firewall configuration */
+    FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of packets between a source and destination, requiring special handling by intermediate IPv6 router. Note: FlowLabel is currently ignored in the firewall configuration */
     uint8_t natEnabled = 0;
 };
 

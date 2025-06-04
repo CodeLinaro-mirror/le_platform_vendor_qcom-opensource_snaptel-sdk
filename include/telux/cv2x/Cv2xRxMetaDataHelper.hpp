@@ -101,15 +101,15 @@ using RxMetaDataValidity = uint32_t;
  *
  **/
 struct RxPacketMetaDataReport {
-    RxMetaDataValidity metaDataMask; /* Contains meta data validity */
-    uint16_t sfn;                    /* System Frame Number * 10 + subframe number */
-    uint8_t subChannelIndex;         /* The subchannel used for transmission */
-    uint8_t subChannelNum;           /* Number of subchannels in the Rx pool */
-    int8_t prxRssi;                  /* RSSI of PRx in dBm */
-    int8_t drxRssi;                  /* RSSI of DRx in dBm */
-    uint32_t l2DestinationId;        /* L2 destination ID */
-    uint32_t sciFormat1Info;         /* SCI format1, 3GPP TS 36.213 section 14.1 */
-    int32_t delayEstimation;         /* Packet delay estimation, in Ts (1/(15000 * 2048) seconds) */
+    RxMetaDataValidity metaDataMask; /**< Contains meta data validity */
+    uint16_t sfn;                    /**< System Frame Number * 10 + subframe number */
+    uint8_t subChannelIndex;         /**< The subchannel used for transmission */
+    uint8_t subChannelNum;           /**< Number of subchannels in the Rx pool */
+    int8_t prxRssi;                  /**< RSSI of PRx in dBm */
+    int8_t drxRssi;                  /**< RSSI of DRx in dBm */
+    uint32_t l2DestinationId;        /**< L2 destination ID */
+    uint32_t sciFormat1Info;         /**< SCI format1, 3GPP TS 36.213 section 14.1 */
+    int32_t delayEstimation;         /**< Packet delay estimation, in Ts (1/(15000 * 2048) seconds) */
 };
 
 /*

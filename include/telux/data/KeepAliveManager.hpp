@@ -41,17 +41,17 @@ namespace data {
  * @{ */
 
 struct TCPKAParams {
-    std::string srcIp;      /* Source IPv4/IPv6 address */
-    std::string dstIp;      /* Destination IPv4/IPv6 address */
+    std::string srcIp;      /**< Source IPv4/IPv6 address */
+    std::string dstIp;      /**< Destination IPv4/IPv6 address */
     int srcPort;            /* Source port */
-    int dstPort;            /* Destination port */
+    int dstPort;            /**< Destination port */
 };
 
 struct TCPSessionParams {
-    uint32_t recvNext;     /* Next sequence number expected on the incoming packet. */
-    uint32_t recvWindow;   /* Receive window */
-    uint32_t sendNext;     /* Next sequence number to be sent */
-    uint32_t sendWindow;   /* Send window */
+    uint32_t recvNext;     /**< Next sequence number expected on the incoming packet. */
+    uint32_t recvWindow;   /**< Receive window */
+    uint32_t sendNext;     /**< Next sequence number to be sent */
+    uint32_t sendWindow;   /**< Send window */
 };
 
 using MonitorHandleType = uint32_t;

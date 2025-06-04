@@ -86,14 +86,78 @@ ECallMenu::~ECallMenu() {
    updateMsdCommandCallback_ = nullptr;
    hangupCommandCallback_ = nullptr;
    answerCommandCallback_ = nullptr;
+   phoneManager_ = nullptr;
+   callManager_ = nullptr;
 }
 
 /**
  * Initializing Commands and Display
  */
-void ECallMenu::init() {
-   // below commands are used to add menu options like below
+bool ECallMenu::init() {
+   if (phoneManager_ == nullptr) {
+      std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+      startTime = std::chrono::steady_clock::now();
+      // Get the PhoneFactory and PhoneManager instances.
+      auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+      phoneManager_ = phoneFactory.getPhoneManager();
+      if(!phoneManager_) {
+         std::cout << "ERROR - Failed to get Phone Manager \n";
+         return false;
+      }
+      // Check if telephony subsystem is ready
+      bool subSystemStatus = phoneManager_->isSubsystemReady();
 
+      // If telephony subsystem is not ready, wait for it to be ready
+      if(!subSystemStatus) {
+         std::cout << "\nTelephony subsystem is not ready, Please wait" << std::endl;
+         std::future<bool> f = phoneManager_->onSubsystemReady();
+         // Wait unconditionally for telephony subsystem to be ready
+         subSystemStatus = f.get();
+      }
+
+      // Exit the application, if SDK is unable to initialize telephony subsystems
+      if(subSystemStatus) {
+         endTime = std::chrono::steady_clock::now();
+         std::chrono::duration<double> elapsedTime = endTime - startTime;
+         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
+                  << std::endl;
+         phoneManager_->getPhoneIds(phoneIds_);
+      } else {
+         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+         return false;
+      }
+   }
+   if (callManager_ == nullptr) {
+      std::promise<telux::common::ServiceStatus> callProm;
+      //  Get the PhoneFactory and PhoneManager instances.
+      auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+         callManager_ = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
+         callProm.set_value(status);
+      });
+      if (!callManager_) {
+         std::cout << "ERROR - Failed to get Call Manager \n";
+         return false;
+      }
+      telux::common::ServiceStatus callMgrStatus = callManager_->getServiceStatus();
+      if (callMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+         std::cout << "Call Manager subsystem is not ready, Please wait \n";
+      }
+      callMgrStatus = callProm.get_future().get();
+      if (callMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+         std::cout << "Call Manager subsystem is ready \n";
+      } else {
+         std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+         return false;
+      }
+   }
+   callListener_ = std::make_shared<MyECallListener>();
+   callCommandCallback_ = std::make_shared<CallCommandCallback>();
+   updateMsdCommandCallback_ = std::make_shared<UpdateMsdCommandCallback>();
+   hangupCommandCallback_ = std::make_shared<HangupCommandCallback>();
+   answerCommandCallback_ = std::make_shared<AnswerCommandCallback>();
+   phoneId_ = DEFAULT_PHONE_ID;
+
+   // below commands are used to add menu options like below
    std::shared_ptr<ConsoleAppCommand> eCallSosCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "s", "ECall-SOS", {}, std::bind(&ECallMenu::eCallSos, this, std::placeholders::_1)));
@@ -167,60 +231,33 @@ void ECallMenu::init() {
       addCommands(commandsList);
       ConsoleApp::displayMenu();
    }
+   return true;
 }
 
 void ECallMenu::registerCallListener(std::shared_ptr<telux::tel::ICallListener> listener) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto callManager = phoneFactory.getCallManager();
-   if(callManager) {
-       callManager->registerListener(listener);
+   if(callManager_) {
+       callManager_->registerListener(listener);
    } else {
        std::cout << " Call Manager is NULL, failed to register a listener" << std::endl;
    }
 }
 
 void ECallMenu::removeCallListener(std::shared_ptr<telux::tel::ICallListener> listener) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto callManager = phoneFactory.getCallManager();
-   if(callManager) {
-       callManager->removeListener(listener);
+   if(callManager_) {
+       callManager_->removeListener(listener);
    } else {
        std::cout << " Call Manager is NULL, failed to remove listener" << std::endl;
    }
 }
 
 bool ECallMenu::initalizeSDK() {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-   //  Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   if(phoneManager) {
-       //  Check if telephony subsystem is ready
-       bool subSystemStatus = phoneManager->isSubsystemReady();
-
-       //  If telephony subsystem is not ready, wait for it to be ready
-       if(!subSystemStatus) {
-          std::future<bool> f = phoneManager->onSubsystemReady();
-          // If we want to wait unconditionally for telephony subsystem to be ready
-          subSystemStatus = f.get();
-       }
-
-       //  Exit the application, if SDK is unable to initialize telephony subsystems
-       if(subSystemStatus) {
-          endTime = std::chrono::system_clock::now();
-          std::chrono::duration<double> elapsedTime = endTime - startTime;
-          registerCallListener(callListener_);
-          phoneManager->getPhoneIds(phoneIds_);
-          return true;
-       } else {
-          std::cout << "Unable to initialize subSystem" << std::endl;
-          exit(1);
-       }
+   if(phoneManager_) {
+      registerCallListener(callListener_);
+      phoneManager_->getPhoneIds(phoneIds_);
+      return true;
    } else {
-       std::cout << " Phone Manager is NULL, failed to initialize the subSystem" << std::endl;
-       exit(1);
+      std::cout << " Phone Manager is NULL, failed to initialize the subSystem" << std::endl;
+      return false;
    }
 }
 
@@ -228,16 +265,13 @@ bool ECallMenu::initalizeSDK() {
  * Sample dial application
  */
 void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto callManager = phoneFactory.getCallManager();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if(phoneManager) {
-       auto spDefaultPhone = phoneManager->getPhone();
+   if(phoneManager_) {
+       auto spDefaultPhone = phoneManager_->getPhone();
        std::cout << "dialing " << inputCommand[1] << std::endl;  // Phone Number entered by user
        std::shared_ptr<telux::tel::ICall> spCall;
        const std::string phoneNumber = inputCommand[1];  // Phone Number mandatory
-       if(callManager) {
-          telux::common::Status status = callManager->makeCall(phoneId_, phoneNumber,
+       if(callManager_) {
+          telux::common::Status status = callManager_->makeCall(phoneId_, phoneNumber,
                                                         callCommandCallback_);
           std::cout
              << (status == telux::common::Status::SUCCESS ? GREEN + "  Dial request is successful"
@@ -252,32 +286,26 @@ void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
 }
 
 void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   try {
-      std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-      auto callManager = phoneFactory.getCallManager();
-      if (callManager) {
-          std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
-             = callManager->getInProgressCalls();
-          // Fetch the list of in prgress calls from CallManager and accept the incoming call.
-          for(auto callIterator = std::begin(inProgressCalls);
-              callIterator != std::end(inProgressCalls); ++callIterator) {
-              if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
-                  spCall = *callIterator;
-                  break;
-              }
-          }
-          if(spCall) {
-             std::cout << "Sending request to accept call " << std::endl;
-             spCall->answer(answerCommandCallback_);
-          } else {
-             std::cout << "No incoming call to accept " << std::endl;
-          }
-      } else {
-          std::cout << "Call manager is NULL, failed to accept the incoming call" << std::endl;
-      }
-   } catch(const std::exception &e) {
-      std::cout << "ERROR: Exception caught -" << e.what() << std::endl;
+   std::shared_ptr<telux::tel::ICall> spCall = nullptr;
+   if (callManager_) {
+         std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+            = callManager_->getInProgressCalls();
+         // Fetch the list of in prgress calls from CallManager and accept the incoming call.
+         for(auto callIterator = std::begin(inProgressCalls);
+            callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+               spCall = *callIterator;
+               break;
+            }
+         }
+         if(spCall) {
+            std::cout << "Sending request to accept call " << std::endl;
+            spCall->answer(answerCommandCallback_);
+         } else {
+            std::cout << "No incoming call to accept " << std::endl;
+         }
+   } else {
+         std::cout << "Call manager is NULL, failed to accept the incoming call" << std::endl;
    }
 }
 
@@ -285,49 +313,36 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
  * Sample hangup operation
  */
 void ECallMenu::hangup(std::vector<std::string> inputCommand) {
-   try {
-
-      std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-      // Iterate through the call list in the application and hangup the first Call that is
-      // Active or on Hold
-      auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-      auto callManager = phoneFactory.getCallManager();
-      if (callManager) {
-          std::vector<std::shared_ptr<telux::tel::ICall>> callList
-             = callManager->getInProgressCalls();
-          for(auto callIterator = std::begin(callList); callIterator != std::end(callList);
-              ++callIterator) {
-             telux::tel::CallState callState = (*callIterator)->getCallState();
-             if(callState != telux::tel::CallState::CALL_ENDED) {
-                spCall = *callIterator;
-                break;
-             }
-          }
-          if(spCall) {
-             std::cout << "Sending request to hangup call " << std::endl;
-             spCall->hangup(hangupCommandCallback_);
-          } else {
-             std::cout << "No active or on-hold call found" << std::endl;
-          }
-      } else {
-          std::cout << "Call manager is NULL, failed to hangup the call" << std::endl;
-      }
-   } catch(const std::exception &e) {
-      std::cout << "ERROR: Exception caught -" << e.what();
+   std::shared_ptr<telux::tel::ICall> spCall = nullptr;
+   if (callManager_) {
+         std::vector<std::shared_ptr<telux::tel::ICall>> callList
+            = callManager_->getInProgressCalls();
+         for(auto callIterator = std::begin(callList); callIterator != std::end(callList);
+            ++callIterator) {
+            telux::tel::CallState callState = (*callIterator)->getCallState();
+            if(callState != telux::tel::CallState::CALL_ENDED) {
+               spCall = *callIterator;
+               break;
+            }
+         }
+         if(spCall) {
+            std::cout << "Sending request to hangup call " << std::endl;
+            spCall->hangup(hangupCommandCallback_);
+         } else {
+            std::cout << "No active or on-hold call found" << std::endl;
+         }
+   } else {
+         std::cout << "Call manager is NULL, failed to hangup the call" << std::endl;
    }
 }
 
 void ECallMenu::updateOptionalAdditionalDataContent(MsdSettings &msdSettings) {
-    // Get Phone from PhoneFactory
-    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    auto callManager = phoneFactory.getCallManager();
-
     std::vector<uint8_t> encodedOptionalAdditionalDataContent;
     auto eCallEuroNcapOAD =
         msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
-    if (callManager) {
+    if (callManager_) {
         telux::common::Status status =
-            callManager->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+            callManager_->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
                 encodedOptionalAdditionalDataContent);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Encoding optional additional data content is failed" << std::endl;
@@ -340,23 +355,19 @@ void ECallMenu::updateOptionalAdditionalDataContent(MsdSettings &msdSettings) {
 }
 
 void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
-   // Get Phone from PhoneFactory
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if (phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
+   if (phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
 
       telux::tel::ECallCategory emergencyCategory
          = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
       telux::tel::ECallVariant eCallVariant = telux::tel::ECallVariant::ECALL_EMERGENCY;
 
-      auto callManager = phoneFactory.getCallManager();
       MsdSettings msdSettings;
       updateOptionalAdditionalDataContent(msdSettings);
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
 
-      if (callManager) {
-         auto ret = callManager->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
+      if (callManager_) {
+         auto ret = callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
          std::cout
             << (ret == telux::common::Status::SUCCESS ? GREEN + "  ECall request is successful"
@@ -374,11 +385,8 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
  * Sample eCall operation
  */
 void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
-   // Get Phone from PhoneFactory
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if(phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
+   if(phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
 
       // Fetch eCall category and variant
       std::string category = toLowerCase(inputCommand[1]);
@@ -406,12 +414,11 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
          return;
       }
 
-      auto callManager = phoneFactory.getCallManager();
       MsdSettings msdSettings;
       updateOptionalAdditionalDataContent(msdSettings);
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
-      if (callManager) {
-         auto ret = callManager->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
+      if (callManager_) {
+         auto ret = callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
          std::cout
             << (ret == telux::common::Status::SUCCESS ? GREEN + "  ECall request is successful"
@@ -429,11 +436,8 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
  * Sample eCall operation to a custom phone number
  */
 void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
-   // Get Phone from PhoneFactory
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if(phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
+   if(phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
 
       // Fetch eCall category and variant
       std::string category = toLowerCase(inputCommand[1]);
@@ -450,12 +454,11 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
          return;
       }
 
-      auto callManager = phoneFactory.getCallManager();
       MsdSettings msdSettings;
       updateOptionalAdditionalDataContent(msdSettings);
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
-      if (callManager) {
-         auto ret = callManager->makeECall(phoneId_, dialNumber, eCallMsdData,
+      if (callManager_) {
+         auto ret = callManager_->makeECall(phoneId_, dialNumber, eCallMsdData,
                                             (int)emergencyCategory, callCommandCallback_);
          std::cout
             << (ret == telux::common::Status::SUCCESS ? GREEN + "  ECall request is successful"
@@ -474,15 +477,12 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
  */
 void ECallMenu::updateECallMSD(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if (phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
-      auto callManager = phoneFactory.getCallManager();
+   if (phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
       updateOptionalAdditionalDataContent(msdSettings);
       auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
-      if (callManager) {
-         auto ret = callManager->updateECallMsd(phoneId_, eCallMsdData, updateMsdCommandCallback_);
+      if (callManager_) {
+         auto ret = callManager_->updateECallMsd(phoneId_, eCallMsdData, updateMsdCommandCallback_);
          std::cout << (ret == telux::common::Status::SUCCESS
                        ? GREEN + "  Update MSD request is successful" + DONE
                        : RED + "  Update MSD request failed" + DONE)
@@ -525,11 +525,8 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       std::cout << "Empty input going with default Emergency variant\n";
       opt2 = VARIANT_EMERGENCY;
    }
-   // Get Phone from PhoneFactory
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if (phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
+   if (phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
 
       telux::tel::ECallCategory emergencyCategory;
       telux::tel::ECallVariant eCallVariant;
@@ -559,8 +556,6 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
          return;
       }
 
-      auto callManager = phoneFactory.getCallManager();
-
       std::string msdData;
       std::cout << "Enter MSD PDU: ";
       std::getline(std::cin, msdData, delimiter);
@@ -576,10 +571,10 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
 
       telux::common::Status ret;
       if(eCallVariant != telux::tel::ECallVariant::ECALL_VOICE) {
-         ret = callManager->makeECall(phoneId_, rawData, (int)emergencyCategory, (int)eCallVariant,
+         ret = callManager_->makeECall(phoneId_, rawData, (int)emergencyCategory, (int)eCallVariant,
                                         &makeEcallResponse);
       } else {
-         ret = callManager->makeECall(phoneId_, dialNumber, rawData, (int)emergencyCategory,
+         ret = callManager_->makeECall(phoneId_, dialNumber, rawData, (int)emergencyCategory,
                                    &makeEcallResponse);
       }
       std::cout
@@ -592,11 +587,8 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
 }
 
 void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if (phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
-      auto callManager = phoneFactory.getCallManager();
+   if (phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
       char delimiter = '\n';
       std::string msdData;
       std::cout << "Enter raw msd: ";
@@ -611,8 +603,8 @@ void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
                     65,  104, 16, 24, 8,   32,  19, 198, 68, 0,   0,   48,  20};
       }
 
-      if(callManager) {
-         auto ret = callManager->updateECallMsd(phoneId_, rawData, &updateEcallResponse);
+      if(callManager_) {
+         auto ret = callManager_->updateECallMsd(phoneId_, rawData, &updateEcallResponse);
          std::cout << (ret == telux::common::Status::SUCCESS
                        ? GREEN + "  Update MSD request is successful" + DONE
                        : RED + "  Update MSD request failed" + DONE)
@@ -629,11 +621,9 @@ void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
  * Sample get in progress calls operations
  */
 void ECallMenu::getCalls(std::vector<std::string> inputCommand) {
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto callManager = phoneFactory.getCallManager();
-   if(callManager) {
+   if(callManager_) {
       std::vector<std::shared_ptr<telux::tel::ICall>> callList
-          = callManager->getInProgressCalls();
+          = callManager_->getInProgressCalls();
       if(callList.size() == 0) {
          std::cout << "No calls detected in the system" << std::endl;
       } else {
@@ -750,20 +740,15 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
 }
 
 void ECallMenu::getEncodedOptionalAdditionalDataContent(std::vector<std::string> userInput) {
-     // Get Phone from PhoneFactory
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   if (phoneManager) {
-      auto spDefaultPhone = phoneManager->getPhone();
-
-      auto callManager = phoneFactory.getCallManager();
+   if (phoneManager_) {
+      auto spDefaultPhone = phoneManager_->getPhone();
       MsdSettings msdSettings;
       auto eCallEuroNcapOAD =
           msdSettings.readEuroNcapOptionalAdditionalDataContent(MSDSETTINGS_FILE);
       std::vector<uint8_t> encodedOptionalAdditionalDataContent;
-      if (callManager) {
+      if (callManager_) {
           telux::common::Status status =
-              callManager->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
+              callManager_->encodeEuroNcapOptionalAdditionalData(eCallEuroNcapOAD,
               encodedOptionalAdditionalDataContent);
           if (status == telux::common::Status::SUCCESS) {
               std::cout << "Request for encoding ecall msd optional additional data content"

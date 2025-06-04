@@ -510,6 +510,7 @@ void WlanUtils::printNetworkConfigs(
            std::cout << "Radio Type          : "
                      << RadioTypeToString(networkConfig.band) << std::endl;
            std::cout << "Priority            : " << networkConfig.priority << std::endl;
+           std::cout << "isCurrent           : " << networkConfig.isCurrent << std::endl;
        }
        std::cout << std::endl;
    } else {

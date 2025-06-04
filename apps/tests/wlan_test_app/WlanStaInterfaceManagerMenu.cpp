@@ -257,11 +257,19 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     Utils::validateInput(ssid);
     staNetConfigEntry.ssid = ssid;
 
-    std::string passPhrase = "";
-    std::cout << "Enter passphrase (Without Quotes): ";
-    std::cin >> passPhrase;
-    Utils::validateInput(passPhrase);
-    staNetConfigEntry.passPhrase = passPhrase;
+    int input = 0;
+    std::cout << "Is WLAN accesspoint password protected? (0-NO, 1-YES): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1});
+    if(input) {
+        std::string passPhrase = "";
+        std::cout << "Enter passphrase (Without Quotes): ";
+        std::cin >> passPhrase;
+        Utils::validateInput(passPhrase);
+        staNetConfigEntry.passPhrase = passPhrase;
+    }
+
 
     int userResp = 0;
     std::cout << "Enter STA operational band type \
@@ -294,6 +302,13 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
 
     std::cout << "Enter BSSID (optional) : ";
     std::getline(std::cin, staNetConfigEntry.bssid, delimiter);
+
+    int enable;
+    std::cout << "Enable the configured network?  (1-YES, 0-NO): ";
+    std::cin >> enable;
+    std::cout << std::endl;
+    WlanUtils::validateInput(enable, {0, 1});
+    staNetConfigEntry.enable = static_cast<bool>(enable);
 
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->addNetworkConfig(
         telux::wlan::Id::PRIMARY, staNetConfigEntry);

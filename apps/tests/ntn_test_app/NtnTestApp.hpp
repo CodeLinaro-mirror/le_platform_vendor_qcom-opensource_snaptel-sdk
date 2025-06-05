@@ -57,6 +57,7 @@ class NtnTestApp : public INtnListener,
     void sendDataRaw(std::vector<std::string> inputCommand);
     void abortData(std::vector<std::string> inputCommand);
     void getNtnCapabilities(std::vector<std::string> inputCommand);
+    void getSignalStrength(std::vector<std::string> inputCommand);
     void updateSystemSelectionSpecifiers(std::vector<std::string> inputCommand);
     void getNtnState(std::vector<std::string> inputCommand);
     void enableCellularScan(std::vector<std::string> inputCommand);

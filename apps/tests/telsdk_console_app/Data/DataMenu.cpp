@@ -167,13 +167,17 @@ void DataMenu::init() {
             "18", "IPsec_Menu",
             {}, std::bind(&DataMenu::ipsecMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> statsMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "19", "Stats_Menu",
+            {}, std::bind(&DataMenu::statsMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
         dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
-        ethernetMenuCommand, ipsecMenuCommand};
-
+        ethernetMenuCommand, ipsecMenuCommand, statsMenuCommand};
     addCommands(commandsList);
 
     if (DataMenu::initializeSDK()) {
@@ -366,3 +370,14 @@ void DataMenu::ipsecMenu(std::vector<std::string> inputCommand) {
     ipsecMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
+
+void DataMenu::statsMenu(std::vector<std::string> userInput) {
+    statsMenu_ =
+        make_shared<StatsMenu>("Stats Menu", "stats> ");
+    if(statsMenu_->init()) {
+        statsMenu_->mainLoop();
+    }
+    statsMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+

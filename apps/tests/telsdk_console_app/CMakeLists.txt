@@ -109,6 +109,7 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/tether/TetherMenu.cpp
    Data/ethernet/EthernetMenu.cpp
    Data/ipsec/IpsecMenu.cpp
+   Data/stats/StatsMenu.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

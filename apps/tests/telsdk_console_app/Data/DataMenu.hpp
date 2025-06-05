@@ -71,6 +71,7 @@
 #include "dual_data/DualDataManagementMenu.hpp"
 #include "data_control/DataControlMenu.hpp"
 #include "network_setting/NetworkSettingMenu.hpp"
+#include "tether/TetherMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -109,9 +110,9 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void dualDataManagementMenu(std::vector<std::string> inputCommand);
     void dataControlMenu(std::vector<std::string> inputCommand);
     void networkSettingMenu(std::vector<std::string> inputCommand);
+    void tetherMenu(std::vector<std::string> userInput);
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-
     std::shared_ptr<DataConnectionMenu> dataConnectionMenu_;
     std::shared_ptr<DataProfileMenu> dataProfileMenu_;
     std::shared_ptr<DataServingSystemMenu> dataServingSystemMenu_;
@@ -127,5 +128,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<DualDataManagementMenu> dualDataManagementMenu_;
     std::shared_ptr<DataControlMenu> dataControlMenu_;
     std::shared_ptr<NetworkSettingMenu> networkSettingMenu_;
+    std::shared_ptr<TetherMenu> tetherMenu_;
 };
 #endif

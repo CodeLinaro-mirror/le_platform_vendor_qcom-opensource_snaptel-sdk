@@ -106,6 +106,7 @@ set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Data/dual_data/DualDataManagementMenu.cpp
    Data/data_control/DataControlMenu.cpp
    Data/network_setting/NetworkSettingMenu.cpp
+   Data/tether/TetherMenu.cpp
 )
 endif (TELSDK_FEATURE_DATA)
 

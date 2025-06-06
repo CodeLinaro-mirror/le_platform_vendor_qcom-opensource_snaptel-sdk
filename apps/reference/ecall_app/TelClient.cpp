@@ -705,6 +705,9 @@ telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTim
     }
     auto status = callMgr_->restartECallHlapTimer(phoneId, id, duration,
         std::bind(&TelClient::restartHlapTimerResponse, this, std::placeholders::_1));
+    if (status == telux::common::Status::NOTSUPPORTED) {
+        return status;
+    }
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer" << std::endl;
         return telux::common::Status::FAILED;

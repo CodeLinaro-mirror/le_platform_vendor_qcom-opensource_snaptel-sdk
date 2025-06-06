@@ -309,6 +309,10 @@ telux::common::Status ECallManager::restartECallHlapTimer(int phoneId, EcallHlap
         return telux::common::Status::FAILED;
     }
     auto status = telClient_->restartECallHlapTimer(phoneId, id, duration);
+    if (status == telux::common::Status::NOTSUPPORTED) {
+        return status;
+    }
+
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME
             << "Failed to send request to restart eCall HLAP timer" << std::endl;

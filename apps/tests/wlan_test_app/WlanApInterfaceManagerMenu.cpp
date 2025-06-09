@@ -548,18 +548,11 @@ void WlanApInterfaceManagerMenu::populateApElementInfo(
             ElementInfoConfig.venueType = input;
         }
 
-        userPrompt = 0;
-        std::cout << "Do you want to enter Homogeneous ESS identifier (0-NO, 1-YES)?: ";
-        std::cin >> userPrompt;
-        std::cout << std::endl;
-        WlanUtils::validateInput(userPrompt, {0, 1});
         std::string inStr = "";
-        if(userPrompt) {
-            std::cout << "Enter input Homogeneous ESS identifier (without quotes): ";
-            std::cin >> inStr;
-            std::cout << std::endl;
-            ElementInfoConfig.hessid = inStr;
-        }
+        std::cout << "Enter input Homogeneous ESS identifier (without quotes): ";
+        std::cin >> inStr;
+        std::cout << std::endl;
+        ElementInfoConfig.hessid = inStr;
 
         inStr = "";
         std::cout << "Enter additional vendor elements for Beacon and Probe response ";

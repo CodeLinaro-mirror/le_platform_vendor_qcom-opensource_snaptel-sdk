@@ -9,6 +9,7 @@
 #include "FileInfo.hpp"
 
 #include <fstream>
+#include <sys/stat.h>
 
 std::mutex JsonParser::fileMutex_;
 
@@ -48,10 +49,23 @@ telux::common::ErrorCode JsonParser::writeToJsonFile(Json::Value rootNode,
 
     std::lock_guard<std::mutex> lk(JsonParser::fileMutex_);
     std::string filePath = std::string(DEFAULT_JSON_FILE_PATH) + path;
+
     std::ofstream ofs(filePath);
     if (!ofs.good()) {
         filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
             + std::string(DEFAULT_JSON_FILE_PATH) + path;
+        // Create the directory if it doesn't exist
+        size_t pos = filePath.find_last_of('/');
+        if (pos != std::string::npos) {
+            std::string dirPath = filePath.substr(0, pos);
+            if (mkdir(dirPath.c_str(), 0777) == -1) {
+                if (errno != EEXIST) {
+                    LOG(ERROR, "Failed to create directory");
+                    error = telux::common::ErrorCode::INTERNAL_ERR;
+                    return error;
+                }
+            }
+        }
         ofs.open(filePath);
         if (!ofs.good())
         {

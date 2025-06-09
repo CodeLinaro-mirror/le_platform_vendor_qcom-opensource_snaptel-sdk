@@ -642,7 +642,7 @@ public:
  * should be thread safe.
  *
  */
-class IDataSettingsListener : public telux::common::ISDKListener {
+class IDataSettingsListener : virtual public telux::common::ISDKListener {
  public:
     /**
      * This function is called when service status changes.

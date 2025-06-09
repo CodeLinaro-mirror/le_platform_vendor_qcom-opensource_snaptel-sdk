@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -139,6 +139,16 @@ std::shared_ptr<ITcuActivityManager> PowerFactoryImpl::getTcuActivityManager(
     auto manager = getManager<ITcuActivityManager>(type, tcuActivityManagerClientsMap_[config],
         tcuActivityMgrClientsCallbacks_[config], callback, createAndInit);
     return manager;
+}
+
+/*
+ * Not supported for simulation.
+ * @return nullptr always.
+ */
+std::shared_ptr<IWakeupManager> PowerFactoryImpl::getWakeupManager(
+    telux::common::InitResponseCb initCallback) {
+
+    return nullptr;
 }
 
 }  // end namespace power

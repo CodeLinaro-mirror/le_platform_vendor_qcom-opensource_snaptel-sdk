@@ -32,8 +32,7 @@ public:
 
     telux::common::Status requestRoamingStatus(RequestRoamingStatusResponseCb callback) override;
 
-    telux::common::Status makeDormant(
-       telux::common::ResponseCallback callback) override;
+    telux::common::Status makeDormant(telux::common::ResponseCallback callback) override;
 
     telux::common::Status requestNrIconType(RequestNrIconTypeResponseCb callback) override;
     SlotId getSlotId() override;

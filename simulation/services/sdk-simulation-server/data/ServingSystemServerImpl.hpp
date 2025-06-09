@@ -8,6 +8,7 @@
 
 #include <telux/data/ServingSystemManager.hpp>
 
+#include "data/DataConnectionServerImpl.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
@@ -17,9 +18,11 @@ using grpc::ServerContext;
 using grpc::Status;
 
 class ServingSystemServerImpl final:
-    public dataStub::DataServingSystemManager::Service {
+    public dataStub::DataServingSystemManager::Service,
+    public IServerEventListener,
+    public std::enable_shared_from_this<ServingSystemServerImpl> {
 public:
-    ServingSystemServerImpl();
+    ServingSystemServerImpl(std::shared_ptr<DataConnectionServerImpl> dcmServerImpl);
     ~ServingSystemServerImpl();
 
     grpc::Status InitService(ServerContext* context,
@@ -50,6 +53,7 @@ private:
     dataStub::DrbStatus::Status convertDrbStatusStringToEnum(std::string status);
     dataStub::DataServiceState::ServiceState convertServiceStateStringToEnum(
         std::string ServiceState);
+    std::shared_ptr<DataConnectionServerImpl> dcmServerImpl_;
     dataStub::NetworkRat::Rat convertNetworkRatStringToEnum(
         std::string nwRat);
     dataStub::RoamingType::Type convertRoamingTypeStringToEnum(

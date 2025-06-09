@@ -39,7 +39,6 @@ telux::common::Status ServingSystemManagerStub::init(telux::common::InitResponse
         std::async(std::launch::async, [this, callback]() {
         this->initSync(callback);}).share();
     taskQ_->add(f);
-
     return telux::common::Status::SUCCESS;
 }
 
@@ -236,9 +235,42 @@ telux::common::Status ServingSystemManagerStub::requestRoamingStatus(
 }
 
 telux::common::Status ServingSystemManagerStub::makeDormant(
-    telux::common::ResponseCallback callback = nullptr) {
+     telux::common::ResponseCallback callback = nullptr) {
     LOG(DEBUG, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
+
+    DrbStatus dormantstatus = DrbStatus::UNKNOWN;
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+         LOG(ERROR, __FUNCTION__, " Serving System is not available");
+          return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    ::dataStub::MakeDormantStatusRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.mutable_make_dormant_status()->set_slot_id(slotId_);
+    grpc::Status reqStatus = stub_->MakeDormant(&context, request, &response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Dormancy request failed");
+        error = telux::common::ErrorCode::INVALID_STATE;
+        return telux::common::Status::FAILED;
+    }
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (callback && (delay != SKIP_CALLBACK)) {
+        auto f = std::async(std::launch::async, [this, error, dormantstatus, delay, callback]() {
+             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+             callback(error); }).share(); taskQ_->add(f);
+    }
+    return status;
 }
 
 telux::common::Status ServingSystemManagerStub::requestNrIconType(

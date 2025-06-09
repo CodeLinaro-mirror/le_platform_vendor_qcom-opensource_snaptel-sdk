@@ -18,6 +18,10 @@
         "requestNrIconType": {
             "error": "SUCCESS",
             "status": "SUCCESS"
+        },
+        "makeDormant": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

@@ -492,6 +492,10 @@ void ECallApp::restartECallHlapTimer() {
         return;
     }
     auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
+    if (ret == telux::common::Status::NOTSUPPORTED) {
+        std::cout << " Restart ecall hlap timer is NOT_SUPPORTED " << std::endl;
+        return;
+    }
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
         return;

@@ -48,8 +48,6 @@ void WiFiSecurityManagerImpl::setServiceStatus(ServiceStatus status) {
         serviceStatus_ = status;
         if (status != ServiceStatus::SERVICE_AVAILABLE) {
             isInitsyncTriggered_  = false;
-            secReportListenerMgr_ = nullptr;
-            listenerExist_        = false;
         }
 
         if (initCb_) {
@@ -158,6 +156,13 @@ void WiFiSecurityManagerImpl::initSync() {
 ErrorCode WiFiSecurityManagerImpl::registerListener(
     std::weak_ptr<IServiceStatusListener> listener) {
     telux::common::Status status;
+
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
+
     status = serviceStatusListenerMgr_->registerListener(listener);
 
     return telux::common::CommonUtils::toErrorCode(status);
@@ -169,6 +174,13 @@ ErrorCode WiFiSecurityManagerImpl::registerListener(
 ErrorCode WiFiSecurityManagerImpl::deregisterListener(
     std::weak_ptr<IServiceStatusListener> listener) {
     telux::common::Status status;
+
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
+
     status = serviceStatusListenerMgr_->deRegisterListener(listener);
 
     return telux::common::CommonUtils::toErrorCode(status);
@@ -185,6 +197,12 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::registerListener(
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
+
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
 
     {
         std::lock_guard<std::mutex> lock(WiFiSecurityManagerImpl::operationGuard_);
@@ -238,6 +256,12 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::deregisterListener(
     telux::common::ErrorCode ec;
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
+
     {
         std::lock_guard<std::mutex> lock(WiFiSecurityManagerImpl::operationGuard_);
 
@@ -277,11 +301,18 @@ void WiFiSecurityManagerImpl::onReportAvailable(telux::sec::WiFiSecurityReport r
 
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    secReportListenerMgr_->getAvailableListeners(listenerList);
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        return;
+    }
 
-    for (auto &wp : listenerList) {
-        if (auto sp = wp.lock()) {
-            sp->onReportAvailable(report);
+    if (secReportListenerMgr_) {
+        secReportListenerMgr_->getAvailableListeners(listenerList);
+
+        for (auto &wp : listenerList) {
+            if (auto sp = wp.lock()) {
+                sp->onReportAvailable(report);
+            }
         }
     }
 }
@@ -293,11 +324,18 @@ void WiFiSecurityManagerImpl::onDeauthenticationAttack(DeauthenticationInfo deau
 
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    secReportListenerMgr_->getAvailableListeners(listenerList);
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        return;
+    }
 
-    for (auto &wp : listenerList) {
-        if (auto sp = wp.lock()) {
-            sp->onDeauthenticationAttack(deauthenticationInfo);
+    if (secReportListenerMgr_) {
+        secReportListenerMgr_->getAvailableListeners(listenerList);
+
+        for (auto &wp : listenerList) {
+            if (auto sp = wp.lock()) {
+                sp->onDeauthenticationAttack(deauthenticationInfo);
+            }
         }
     }
 }
@@ -309,16 +347,23 @@ void WiFiSecurityManagerImpl::isTrustedAP(ApInfo accessPoint, bool &isTrusted) {
     telux::common::ErrorCode ec{};
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    secReportListenerMgr_->getAvailableListeners(listenerList);
-    for (auto &wp : listenerList) {
-        if (auto sp = wp.lock()) {
-            sp->isTrustedAP(accessPoint, isTrusted);
-            LOG(DEBUG, __FUNCTION__, " isTrusted: ", isTrusted);
-            /* Send the information to the server required to mark AP as trusted. */
-            ec = addApToTrustedList(accessPoint, isTrusted);
-            if (ec != telux::common::ErrorCode::SUCCESS) {
-                LOG(ERROR, __FUNCTION__, " failed to send if AP is trusted ");
-                continue;
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        return;
+    }
+
+    if (secReportListenerMgr_) {
+        secReportListenerMgr_->getAvailableListeners(listenerList);
+        for (auto &wp : listenerList) {
+            if (auto sp = wp.lock()) {
+                sp->isTrustedAP(accessPoint, isTrusted);
+                LOG(DEBUG, __FUNCTION__, " isTrusted: ", isTrusted);
+                /* Send the information to the server required to mark AP as trusted. */
+                ec = addApToTrustedList(accessPoint, isTrusted);
+                if (ec != telux::common::ErrorCode::SUCCESS) {
+                    LOG(ERROR, __FUNCTION__, " failed to send if AP is trusted ");
+                    continue;
+                }
             }
         }
     }
@@ -338,6 +383,12 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::getTrustedApList(
     grpc::ClientContext clientCtx{};
     ::google::protobuf::Empty request{};
     ::securityStub::TrustedAPList response{};
+
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
 
     {
         std::lock_guard<std::mutex> lock(WiFiSecurityManagerImpl::operationGuard_);
@@ -375,6 +426,12 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::removeApFromTrustedList(ApInfo
     grpc::ClientContext clientCtx{};
     ::securityStub::ApInfo request{};
     ::commonStub::ErrorCodeMsg response{};
+
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
+        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
 
     {
         std::lock_guard<std::mutex> lock(WiFiSecurityManagerImpl::operationGuard_);

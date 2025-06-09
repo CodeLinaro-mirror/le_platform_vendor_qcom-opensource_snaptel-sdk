@@ -34,14 +34,6 @@ telux::common::ErrorCode CellularSecurityManagerImpl::init() {
     commonStub::ErrorCodeMsg response{};
 
     telux::common::ErrorCode ec;
-    telux::common::Status status;
-
-    status = clientEventMgr_.registerListener(shared_from_this(), CCS_FILTER);
-    if ((status != telux::common::Status::SUCCESS) &&
-        (status != telux::common::Status::ALREADY)) {
-        LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
-        return telux::common::CommonUtils::toErrorCode(status);
-    }
 
     stub_ = CommonUtils::getGrpcStub<securityStub::SecurityCCSService>();
 
@@ -59,6 +51,7 @@ telux::common::ErrorCode CellularSecurityManagerImpl::init() {
         return ec;
     }
 
+    serviceStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
     return telux::common::ErrorCode::SUCCESS;
 }
 
@@ -82,6 +75,7 @@ telux::common::ErrorCode CellularSecurityManagerImpl::disconnectCCS(bool isExiti
             LOG(ERROR, __FUNCTION__, " can't deregister with ClientEventManager");
             /* don't treat fatal */
         }
+        return telux::common::ErrorCode::SUCCESS;
     }
 
     reqStatus = stub_->DeInit(&clientCtx, request, &response);
@@ -109,6 +103,14 @@ telux::common::ErrorCode CellularSecurityManagerImpl::reconnectCCS() {
     commonStub::ErrorCodeMsg response{};
 
     telux::common::ErrorCode ec;
+    telux::common::Status status;
+
+    status = clientEventMgr_.registerListener(shared_from_this(), CCS_FILTER);
+    if ((status != telux::common::Status::SUCCESS) &&
+        (status != telux::common::Status::ALREADY)) {
+        LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
+        return telux::common::CommonUtils::toErrorCode(status);
+    }
 
     reqStatus = stub_->registerCCSListener(&clientCtx, request, &response);
     if (!reqStatus.ok()) {
@@ -138,6 +140,12 @@ telux::common::ErrorCode CellularSecurityManagerImpl::registerListener(
     telux::common::ErrorCode ec;
     telux::common::Status status;
     std::vector<std::weak_ptr<telux::common::ISDKListener>> listenerList;
+
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
+        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
 
     {
         std::lock_guard<std::mutex> lock(CellularSecurityManagerImpl::operationGuard_);
@@ -207,6 +215,12 @@ telux::common::ErrorCode CellularSecurityManagerImpl::deRegisterListener(
     telux::common::Status status;
     std::vector<std::weak_ptr<ICellularScanReportListener>> listenerList;
 
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
+        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
+
     reqStatus = stub_->deRegisterCCSListener(&clientCtx, request, &response);
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " communication error");
@@ -256,6 +270,12 @@ telux::common::ErrorCode CellularSecurityManagerImpl::getCurrentSessionStats(
 
     telux::common::ErrorCode ec{};
     ::securityStub::SessionStats response{};
+
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
+        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+        LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
+        return telux::common::ErrorCode::SYSTEM_ERR;
+    }
 
     {
         reqStatus = stub_->GetCurrentSessionStats(&clientCtx, request, &response);
@@ -324,14 +344,12 @@ int32_t CellularSecurityManagerImpl::rawReportHandler(::securityStub::CCSReport 
 
 void CellularSecurityManagerImpl::ssrHandler(ssgccs_state_t ccsState, void *cookie) {
 
-    telux::common::ServiceStatus serviceStatus;
-
     switch (ccsState) {
         case SSGCCS_OFFLINE:
-            serviceStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+            serviceStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
             break;
         case SSGCCS_ONLINE:
-            serviceStatus = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+            serviceStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
             break;
         default:
             /* just emit log for debugging */
@@ -340,7 +358,7 @@ void CellularSecurityManagerImpl::ssrHandler(ssgccs_state_t ccsState, void *cook
     };
 
     deliverReportOrSSREvent(
-        false, serviceStatus, CellularSecurityReport(), EnvironmentInfo(), cookie);
+        false, serviceStatus_, CellularSecurityReport(), EnvironmentInfo(), cookie);
 }
 
 void CellularSecurityManagerImpl::deliverReportOrSSREvent(bool isReport,

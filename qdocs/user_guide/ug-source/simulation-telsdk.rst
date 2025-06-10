@@ -1,7 +1,7 @@
 .. #=============================================================================
    #
-   #  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-   #  SPDX-License-Identifier: BSD-3-Clause-Clear
+   # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+   # SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
 
@@ -82,8 +82,11 @@ To build various components of the Simulation framework:
 
 .. code-block::
 
-  $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0.r11-rel telux
+  $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git telux
   $ cd telux/
+  $ git checkout <commit_hash>
+
+The commit_hash can be obtained from the latest tag for the corresponding SI. Tags are listed here: https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk/-/tags. You can filter all tags based on the SI and check for a specific tag. For example, LE.UM.7.4.1.1.c1-06800-sa525m-tele is the tag for LE.UM.7.4.1.1.c1 SI.
 
 2. Set up Build dependencies
 
@@ -204,8 +207,11 @@ To build various components of the Simulation framework inside docker
 
   .. code-block::
 
-    $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0.r11-rel telux
+    $ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git telux
     $ cd telux/
+    $ git checkout <commit_hash>
+
+The commit_hash can be obtained from the latest tag for the corresponding SI. TAGS are listed here: https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk/-/tags. You can filter all tags based on the SI and check for a specific tag. For example, LE.UM.7.4.1.1.c1-06800-sa525m-tele is the tag for LE.UM.7.4.1.1.c1 SI.
 
 2. Build docker development image
 

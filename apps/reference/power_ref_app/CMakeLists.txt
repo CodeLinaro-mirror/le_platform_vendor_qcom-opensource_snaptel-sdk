@@ -17,11 +17,17 @@ set(TARGET_POWER_REF_DAEMON_SOURCES
     Event.cpp
     EventManager.cpp
     PowerRefDaemon.cpp
+    TCPKeepAliveHandler.cpp
     trigger/GPIO/GPIOTrigger.cpp
     trigger/NAOIP/filter/DataConfigParser.cpp
     trigger/NAOIP/filter/DataFilterController.cpp
     trigger/NAOIP/NAOIpTrigger.cpp
     trigger/SMS/SMSTrigger.cpp
+    common/socket/ConnectionHandler.cpp
+    common/socket/TCPClient.cpp
+    common/socket/TCPServer.cpp
+    common/socket/UDPClient.cpp
+    common/socket/UDPServer.cpp
 )
 
 if (CAN_WRAPPER_LIB_FOUND)
@@ -31,6 +37,9 @@ endif (CAN_WRAPPER_LIB_FOUND)
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/socket
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/
+    ${CMAKE_CURRENT_SOURCE_DIR}/trigger/NAOIP/filter/
 )
 
 # Set global variables

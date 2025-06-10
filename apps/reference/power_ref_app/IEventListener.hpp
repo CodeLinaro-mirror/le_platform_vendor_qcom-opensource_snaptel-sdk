@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -43,8 +43,9 @@
  */
 class IEventListener {
     public:
-        virtual void onEventRejected(shared_ptr<Event> event,EventStatus reason) = 0;
-        virtual void onEventProcessed(shared_ptr<Event> event,bool success) = 0;
+        virtual void onEventRejected(shared_ptr<Event> event,EventStatus reason) {};
+        virtual void onEventProcessed(shared_ptr<Event> event,bool success) {};
+        virtual void preProcessEvent(shared_ptr<Event> event) {};
 };
 
 #endif

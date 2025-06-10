@@ -990,6 +990,9 @@ public:
     * It will be treated like a regular voice call by the UE and the network.
     * When an ERA-GLONASS emergency eCall is triggered by user during a self test ECALL, self test
     * eCall will terminate.
+    * Application must not trigger ERA-GLONASS self test automotive eCall when T10 HLAP timer
+    * @ref telux::tel::ECallHlapTimerStatus::t10 is active @ref telux::tel::HlapTimerStatus::ACTIVE
+    * due to a previous activation of automotive emergency eCall.
     *
     * Self test ECall can be triggered in both the eCall operating mode
     * @ref telux::tel::ECallMode::ECALL_ONLY and @ref telux::tel::ECallMode::NORMAL.

@@ -120,6 +120,36 @@ telux::common::Status ECallManager::triggerECall(
     if(!msdPdu.empty()) {
         msdPdu_ = msdPdu;
     }
+    // Get dial duration and redial attempts from user
+    char delimiter = '\n';
+    std::string temp = "";
+    int dialDuration = 5;
+    int autoAnswerDuration = 0;
+    if (telClient_->isEraGlonassEnabled()) {
+        std::cout << "Enter dial duration (in minutes): ";
+        std::getline(std::cin, temp, delimiter);
+        if(!temp.empty()) {
+            try {
+                dialDuration = std::stoi(temp);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+            }
+        } else {
+            std::cout << "No input" << std::endl;
+        }
+
+        std::cout << "Enter auto answer timer duration (in minutes): ";
+        std::getline(std::cin, temp, delimiter);
+        if(!temp.empty()) {
+            try {
+                autoAnswerDuration = std::stoi(temp);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+            }
+        } else {
+            std::cout << "No input" << std::endl;
+        }
+    }
     setup(phoneId);
     if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
@@ -130,7 +160,8 @@ telux::common::Status ECallManager::triggerECall(
         }
     }
     auto status = telClient_->startECall(
-        phoneId, msdPdu_, msdData_, category, variant, transmitMsd, shared_from_this());
+        phoneId, msdPdu_, msdData_, category, variant, transmitMsd, dialDuration,
+        autoAnswerDuration, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();

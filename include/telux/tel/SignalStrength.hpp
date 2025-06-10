@@ -556,8 +556,8 @@ public:
 
    /**
     * Get 5G NR reference signal signal-to-noise ratio, multiply by 0.1 to get SNR in dB.
-    * (Valid value range [-200, +300] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-    * (-200 = -20.0 dB, +300 = 30dB).
+    * (Valid value range [-230, +400] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (-230 = -23.0 dB, +400 = 40dB).
     * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
     *
     * @returns 5G NR signal-to-noise.

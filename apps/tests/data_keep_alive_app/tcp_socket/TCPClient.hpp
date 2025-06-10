@@ -37,22 +37,31 @@ template<typename T>
 class TCPClient {
 
     public:
-    TCPClient(std::shared_ptr<TCPClientWorker<T>> worker, int serverPort, std::string serverIpAddr,
-    int clientPort = 0, std::string clientIpAddr = "") : worker_(worker), serverPort_(serverPort),
-    strServerAddr_(serverIpAddr), clientPort_(clientPort), strClientAddr_(clientIpAddr)
-    {}
+    TCPClient(std::shared_ptr<TCPClientWorker<T>> worker, int serverPort,
+        std::string serverIpAddr, int clientPort = 0, std::string clientIpAddr = "",
+        std::string clientInterface = "") : worker_(worker), serverPort_(serverPort),
+        strServerAddr_(serverIpAddr), clientPort_(clientPort), strClientAddr_(clientIpAddr),
+        clientInterface_(clientInterface) {
+
+        if (pipe(exitPipe_) == -1) {
+            std::cout << "pipe: " << std::string(strerror(errno)) << std::endl;
+        }
+    }
     ~TCPClient() { disconnect(); }
 
     bool connectTo() {
         std::cout << " connectTo " << strServerAddr_ << ":" << serverPort_
         << "  via " << strClientAddr_ << ":" << clientPort_ << std::endl;
-        receivedStopClient_ = false;
         int domain = 0;
         socklen_t sockSize = 0;
         struct sockaddr *sockAddrBind = NULL;
         struct sockaddr *sockAddrConnect = NULL;
         int reuse = 1;
         int bnd = 0;
+        {
+            std::lock_guard<std::mutex> lock(clientExitMutex_);
+            clientExited_ = false;
+        }
 
         v4ServerAddr_ = {};
         v6ServerAddr_ = {};
@@ -106,6 +115,14 @@ class TCPClient {
             }
         }
 
+        if(!clientInterface_.empty()) {
+            if (setsockopt(socket_, SOL_SOCKET, SO_BINDTODEVICE,
+                clientInterface_.c_str(), clientInterface_.size()) != 0) {
+                std::cout << "Failed to bind to device: ", strerror(errno);
+                return false;
+            }
+        }
+
         if (connect(socket_, sockAddrConnect, sockSize) == -1 ) {
             std::cout << "connect : "<< std::string(strerror(errno));
             return false;
@@ -114,25 +131,52 @@ class TCPClient {
         int no = 0;
         setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int));
         worker_->onConnected();
-        while(!receivedStopClient_) {
-            T msg;
-            memset(&msg, 0, sizeof(msg));
-            ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg), 0);
-            std::cout <<" length : " << n << " ";
-            if (n <= 0) {
-                worker_->onDisconnect();
+        while(true) {
+            fd_set read_fds;
+            FD_ZERO(&read_fds);
+            FD_SET(socket_, &read_fds);
+            FD_SET(exitPipe_[0], &read_fds); // Add the exit pipe to the read set
+
+            int retval = select(std::max(socket_, exitPipe_[0]) + 1, &read_fds, NULL, NULL, NULL);
+            if (retval == -1) {
+                std::cout << "select: " << std::string(strerror(errno)) << std::endl;
                 break;
             }
-            worker_->messageReceived(msg);
+
+            if (FD_ISSET(socket_, &read_fds)) {
+                T msg;
+                memset(&msg, 0, sizeof(msg));
+                ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg), 0);
+                std::cout <<" length : " << n << " ";
+                if (n <= 0) {
+                    worker_->onDisconnect();
+                        std::lock_guard<std::mutex> lock(clientExitMutex_);
+                        clientExited_ = true;
+                        clientExitCondition_.notify_one();
+                        break;
+                }
+                worker_->messageReceived(msg);
+            }
+
+            if (FD_ISSET(exitPipe_[0], &read_fds)) {
+                // Read from the exit pipe to clear the signal
+                std::lock_guard<std::mutex> lock(clientExitMutex_);
+                clientExited_ = true;
+                clientExitCondition_.notify_one();
+                break; // Exit the loop
+            }
         }
         return true;
     }
 
     void disconnect() {
         std::cout << " Stopping TCP client " << std::endl;
-        receivedStopClient_ = true;
-
-        if(socket_) {
+        char signal = 'x';
+        ssize_t bytesWritten = write(exitPipe_[1], &signal, 1);
+        if (bytesWritten == -1) {
+            std::cout << "write: " << std::string(strerror(errno)) << std::endl;
+        }
+        if(socket_ != -1) {
             if (shutdown(socket_, SHUT_RDWR) == -1) {
                 std::cout << " shutdown : " << std::string(strerror(errno))<< std::endl;
             }
@@ -140,16 +184,19 @@ class TCPClient {
                 std::cout << " close : " << std::string(strerror(errno)) << std::endl;
             }
         }
-        socket_ = 0;
+        socket_ = -1;
+
+        std::unique_lock<std::mutex> lock(clientExitMutex_);
+        clientExitCondition_.wait(lock, [&]{ return clientExited_; });
     }
 
     void sendMessage(T *msg) {
-        if(socket_) {
+        if(socket_ != -1) {
             if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T)) {
                 std::cout << " send : " << std::string(strerror(errno)) << std::endl;
                 worker_->onDisconnect();
                 close(socket_);
-                socket_ = 0;
+                socket_ = -1;
             }
         } else {
             std::cout << " Socket is not connected " << std::endl;
@@ -162,12 +209,16 @@ class TCPClient {
     std::string strServerAddr_;
     int clientPort_;
     std::string strClientAddr_;
+    std::string clientInterface_;
     struct sockaddr_in v4ServerAddr_;
     struct sockaddr_in6 v6ServerAddr_;
     struct sockaddr_in v4ClientAddr_;
     struct sockaddr_in6 v6ClientAddr_;
-    int socket_;
-    std::atomic<bool> receivedStopClient_ = {false};
+    int socket_ = -1;
+    int exitPipe_[2];
+    std::condition_variable clientExitCondition_;
+    std::mutex clientExitMutex_;
+    bool clientExited_ = false;
 };
 };
 #endif // TEST_TCPCLIENT_HPP

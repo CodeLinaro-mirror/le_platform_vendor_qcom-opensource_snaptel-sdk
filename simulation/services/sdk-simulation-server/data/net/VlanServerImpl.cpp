@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -237,6 +237,20 @@ grpc::Status VlanServerImpl::BindToBackhaul(ServerContext* context,
 
     if (request->operation_type() == REMOTE) {
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    int idx = 0;
+    ::dataStub::VlanConfig req;
+    req.set_vlan_id(request->vlan_id());
+
+    bool isFound = isConfigAvailable(subsystem, "vlanConfig", data, &req, idx);
+
+    if (isFound) {
+        bool isWanNwType =
+            (data.stateRootObj[subsystem]["vlanConfig"][idx]["networkType"] == "WAN");
+        if (isWanNwType) {
+            data.error = telux::common::ErrorCode::INVALID_ARG;
+        }
     }
 
     if (data.status == telux::common::Status::SUCCESS &&

@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * All rights reserved.
- * Confidential and Proprietary - Qualcomm Technologies, Inc.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef VLAN_MANAGER_SERVER_HPP
@@ -67,7 +66,8 @@ private:
             if (config[idx]["vlanId"].asInt() != request->vlan_id()) {
                 continue;
             }
-            if (config[idx]["ifaceType"].asInt() != request->interface_type()) {
+            if ((request->interface_type() != ::dataStub::InterfaceType::UNKNOWN) &&
+                config[idx]["ifaceType"].asInt() != request->interface_type()) {
                 continue;
             }
             isFound = true;

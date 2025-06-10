@@ -62,6 +62,7 @@
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
 #include <telux/data/ClientManager.hpp>
+#include <telux/data/net/StatsManager.hpp>
 #include <telux/data/DualDataManager.hpp>
 #include <telux/data/DataControlManager.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
@@ -274,6 +275,18 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get Stats Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              StatsManager @ref telux::common::InitResponseCb.
+     *
+     * @returns instance of IStatsManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IStatsManager> getStatsManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
     /**

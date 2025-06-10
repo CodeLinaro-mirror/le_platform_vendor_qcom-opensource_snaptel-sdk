@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -577,6 +547,39 @@ struct DdsInfo
 {
     DdsType type;   /** Specifies DDS switch type */
     SlotId slotId;  /** Specifies which slot is the DDS */
+};
+
+/**
+ * The event/reason that can trigger the data usage reset.
+ */
+enum class UsageResetReason {
+    SUBSYSTEM_UNAVAILABLE = 0x00,   /**<  Subsystem is unavailable */
+    BACKHAUL_SWITCHED = 0x01,       /**<  Backhaul is switched */
+    DEVICE_DISCONNECTED =  0x02,    /**<  Device is disconnected */
+    WLAN_DISABLED = 0x03,           /**<  WLAN is disabled  */
+    WWAN_DISCONNECTED = 0x04,       /**<  WWAN is disconnected. This will be sent even if only IPv4
+                                          or IPv6 goes down on an Ipv4v6 connection*/
+};
+
+/**
+ * Data usage statistics.
+ */
+struct DataUsage {
+    uint64_t bytesRx;               /**<   Bytes received by client */
+    uint64_t bytesTx;               /**<   Bytes transmitted by client . */
+};
+
+/**
+ * Client Data usage statistics for device.
+ */
+struct ClientDataUsage {
+    std::string   v4Addr;            /**<   IPv4 Address of client.
+                                              This field is applicable for IP-based stats */
+    std::vector<std::string> v6Addr; /**<   IPv6 Address pool of client.
+                                              This field is applicable for IP-based stats */
+    std::string macAddress;          /**<   MAC address of the client.
+                                              This field is applicable for Mac-based stats */
+    DataUsage usage;                 /**<   Data usage statistics */
 };
 
 /** @} */ /* end_addtogroup telematics_data */

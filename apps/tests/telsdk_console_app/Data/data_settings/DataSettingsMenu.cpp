@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -37,6 +8,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <sstream>
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
@@ -94,6 +66,10 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::requestMacSecState, this, std::placeholders::_1)),
             std::make_pair("Switch_Backhaul",
             std::bind(&DataSettingsMenu::switchBackHaul, this, std::placeholders::_1)),
+            std::make_pair("Set_URL_ID_To_Backhaul_Mapping",
+            std::bind(&DataSettingsMenu::setUrlIdToBackhaulMapping, this, std::placeholders::_1)) ,
+            std::make_pair("Get_URL_ID_To_Backhaul_Mapping",
+            std::bind(&DataSettingsMenu::getUrlIdToBackhaulMapping, this, std::placeholders::_1)) ,
             std::make_pair("Restore_Factory_Settings",
             std::bind(&DataSettingsMenu::restoreFactorySettings, this, std::placeholders::_1)),
             std::make_pair("Is_Device_Data_Usage_Monitoring_Enabled",
@@ -747,6 +723,142 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
 
     retStat = dataSettingsManagerMap_[opType]->switchBackHaul(source, dest, applyToAll, respCb);
     Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setUrlIdToBackhaulMapping(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Set URL ID to Backhaul Mapping \n";
+
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    // Read multiple URL IDs from the user
+    std::cout << "Enter URL IDs (comma-separated): ";
+    std::string input;
+    std::getline(std::cin, input);
+
+    // Trim leading/trailing whitespace from the entire input
+    input.erase(0, input.find_first_not_of(" \t\n\r\f\v"));
+    input.erase(input.find_last_not_of(" \t\n\r\f\v") + 1);
+
+    // Split the input string into individual URL IDs
+    std::stringstream ss(input);
+    std::string token;
+    std::vector<uint32_t> urlIds;
+    while (std::getline(ss, token, ',')) {
+        // Trim each token
+        token.erase(0, token.find_first_not_of(" \t\n\r\f\v"));
+        token.erase(token.find_last_not_of(" \t\n\r\f\v") + 1);
+
+        if (!token.empty()) {
+            uint32_t urlId = std::stoul(token);
+            Utils::validateInput(urlId);
+            urlIds.push_back(urlId);
+        }
+    }
+
+    // Create the UrlIdToBackhaulMapping object
+    telux::data::UrlIdToBackhaulMapping urlToBackhaulMapping;
+    urlToBackhaulMapping.urlIds = urlIds;
+
+    int backhaul;
+    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+    std::cin >> backhaul;
+    DataUtils::validateInput(backhaul, {0, 1});
+    if (backhaul) {
+        urlToBackhaulMapping.backhaul.backhaul = telux::data::BackhaulType::WWAN;
+        int slotId = DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+            slotId = Utils::getValidSlotId();
+        }
+        urlToBackhaulMapping.backhaul.slotId = static_cast<SlotId>(slotId);
+        int profileId;
+        std::cout << "Enter Profile Id: ";
+        std::cin >> profileId;
+        Utils::validateInput(profileId);
+        urlToBackhaulMapping.backhaul.profileId = profileId;
+    } else {
+        urlToBackhaulMapping.backhaul.backhaul = telux::data::BackhaulType::WLAN;
+    }
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setUrlIdToBackhaulMapping Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->setUrlIdToBackhaulMapping(urlToBackhaulMapping, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::getUrlIdToBackhaulMapping(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    int operationType;
+
+    std::cout << "Get URL ID to Backhaul Mapping \n";
+
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    telux::data::BackhaulType backhaulType = {};
+    int backhaul;
+    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+    std::cin >> backhaul;
+    Utils::validateInput(backhaul, {0, 1});
+    std::cout << std::endl;
+    if (backhaul == 1) {
+        backhaulType = telux::data::BackhaulType::WWAN;
+    } else {
+        backhaulType = telux::data::BackhaulType::WLAN;
+    }
+
+    std::vector<telux::data::UrlIdToBackhaulMapping> urlToBackhaulMappingList;
+    error = dataSettingsManagerMap_[opType]->getUrlIdToBackhaulMapping(backhaulType, urlToBackhaulMappingList);
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "RESPONSE: getUrlIdToBackhaulMapping is successful" << std::endl;
+        std::cout << "URL ID to Backhaul Mapping:" << std::endl;
+        for (const auto& mapping : urlToBackhaulMappingList) {
+            std::cout << "URL IDs : ";
+            bool isFirst = true;
+            for (const auto& urlId : mapping.urlIds) {
+                if (!isFirst) {
+                    std::cout << " ";
+                }
+                std::cout << urlId;
+                isFirst = false;
+            }
+            std::cout << std::endl;
+            std::cout << "Backhaul: " << DataUtils::backhaulToString(mapping.backhaul.backhaul) << std::endl;
+            if (mapping.backhaul.backhaul == telux::data::BackhaulType::WWAN) {
+                std::cout << "Slot ID: " << mapping.backhaul.slotId << std::endl;
+                std::cout << "Profile ID: " << mapping.backhaul.profileId << std::endl;
+            }
+        }
+    } else {
+        std::cout << "RESPONSE: getUrlIdToBackhaulMapping failed"
+            << ", ErrorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
 }
 
 void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {

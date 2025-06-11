@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -53,6 +24,11 @@ namespace data {
 
 // Forward declarations
 class IDataSettingsListener;
+
+using urlId = uint32_t;    /** URL identifier.
+                               Unique identifier for a group of URLs defined in the system
+                               configuration files. This ID is used to reference a specific list
+                               of URLs and is immutable from the API. */
 
 /**
  * Set priority between N79 5G and Wlan 5GHz Band
@@ -99,6 +75,20 @@ struct BandInterferenceConfig {
                                             modem will wait for period of time specified here for
                                             N79 5G signal to recover before switching Wlan to
                                             5GHz.                                                */
+};
+
+/**
+ * Represents a mapping between a vector of URL IDs and its associated backhaul.
+ *
+ * Each URL ID corresponds to a distinct group of URLs defined in the system configuration files.
+ * This structure specifies the destination backhaul to which traffic for the
+ * associated URL IDs should be routed.
+ */
+struct UrlIdToBackhaulMapping {
+    std::vector<urlId> urlIds;             /** List of URL IDs representing distinct URL groups. */
+
+    BackhaulInfo     backhaul;             /** Destination backhaul to which the traffic for the URL
+                                            ID should be routed. */
 };
 
 /**
@@ -451,6 +441,69 @@ public:
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Sets the backhaul preference for a specific URL ID or all URL IDs.
+     *
+     * Enables dynamic reassignment of a backhaul to a URL ID. The URL ID represents a fixed
+     * group of distinct URLs defined in the system configuration files. These mappings are
+     * immutable post deployment, and individual URLs cannot be altered via any API.
+     *
+     * This configuration is persistent across reboots or subsystem restart (SSR).
+     * @note The new mapping takes effect after the backhaul is restarted.
+     *
+     * @details The configuration is stored in the mobileap_urlset XML file, which includes the
+     * following elements:
+     * - UrlSetConfig : Encapsulates a single configuration set for a URL ID.
+     * - UrlID: Unique identifier for a URL group.
+     * - BackhaulInfo: Preferred backhaul.
+     * - UrlList: URLs associated with the ID.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] urlToBackhaulMapping  @ref telux::data::UrlIdToBackhaulMapping structure.
+     * @param [in] callback             Optional callback to get the response for
+     *                                  setUrlIdToBackhaulMapping.
+     *
+     * @returns Status of setUrlIdToBackhaulMapping, i.e., success or applicable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+
+    virtual telux::common::Status setUrlIdToBackhaulMapping(
+        const UrlIdToBackhaulMapping &urlToBackhaulMapping,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Retrieves the current mapping of URL IDs to their configured backhauls.
+     *
+     * This API returns a list of mappings, where each entry represents a unique URL ID
+     * with its corresponding destination backhaul.
+     *
+     * This API provides a snapshot of the persisted configuration and does not reflect
+     * runtime state unless the backhaul has been restarted after a configuration update.
+     *
+     * @note The API currently supports filtering URL to backhaul mappings by backhaul type.
+     *       Consequently, this API is limited to retrieving mappings for a specific backhaul type.
+     *
+     * @param [in] backhaulType               Backhaul for which to query URL ID binding.
+     * @param [out] urlToBackhaulMappingList  A vector of UrlToBackhaulMapping structures. Each
+     *                                        structure contains a URL ID and the associated
+     *                                        backhaul information.
+     *
+     * @returns telux::common::ErrorCode indicating the outcome of the operation:
+     *         - @ref telux::common::ErrorCode::SUCCESS if the operation is successful.
+     *         - @ref telux::common::ErrorCode::GENERIC_FAILURE if the Operation failed due to
+     *           an internal error.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getUrlIdToBackhaulMapping(
+        const BackhaulType &backhaulType,
+        std::vector<UrlIdToBackhaulMapping>& urlToBackhaulMappingList) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

@@ -1833,7 +1833,7 @@ IFirewallManager is used to access all Firewall APIs.
 7. Application is notified of the Status of the IVlanManager::createVlan request (either SUCCESS or FAILED) via the application-supplied callback.
 8. Application calls IVlanManager::bindWithProfile with Vlan id and profile id.
 9. Application receives synchronous Status which indicates if the IVlanManager::bindWithProfile request was sent successfully.
-7. Application is notified of the Status of the IVlanManager::bindWithProfile request (either SUCCESS or FAILED) via the application-supplied callback.
+10. Application is notified of the Status of the IVlanManager::bindWithProfile request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_vlan_lan2lan_eap LAN-LAN VLAN Configuration from EAP usecase call flow
 
@@ -2386,6 +2386,35 @@ On boot-up, ETH will be available as expected e.g., 10G USXGMII.
 20. The user app informs that the peer device has successfully completed the transition to the recommended ETH mode.
 21. The local device receives an update that the peer has completed the ETH mode, allowing it to proceed with the transition to the recommended mode and restore ETH communication.
 22. Upon successful completion of this mode change transaction, all registered listeners are informed about the ETH mode transition status.
+
+@subsubsection data_get_set_url_id_to_backhaul_mapping Get and set URL ID to Backhaul mapping call flow
+
+@anchor fig_data_get_set_url_id_to_backhaul_mapping
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{data_get_set_url_id_to_backhaul_mapping.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get and set URL ID to Backhaul mapping call flow}
+  \label{fig_data_get_set_url_id_to_backhaul_mapping}
+\end{figure}
+@endlatexonly
+
+@html_image{data_get_set_url_id_to_backhaul_mapping.png,Get and set URL ID to Backhaul mapping call flow,60,60,Get and set URL ID to Backhaul mapping call flow}
+
+1. Application requests data factory for IDataSettingsManager object.
+   1.1. If the IDataSettingsManager object does not exist, the data factory creates a new instance.
+2. The data factory returns a shared pointer to the IDataSettingsManager object.
+3. The application requests the current service status from the IDataSettingsManager instance
+4. IDataSettingsManager returns the current service status.
+  4.1 If the status is SERVICE_UNAVAILABLE (i.e., the manager is not ready), the application should wait for
+      the initialization callback provided in step 1.
+  4.2 IDataSettingsManager invokes the application’s callback with the initialization result (success or failure).
+5. The application calls IDataSettingsManager::setUrlIdToBackhaulMapping to associate URL IDs with the desired backhaul.
+6. The application receives a synchronous Status indicating whether the setUrlIdToBackhaulMapping request was sent successfully.
+7. The application is notified of the final Status of the setUrlIdToBackhaulMapping request (either SUCCESS or FAILED) via the callback it provided.
+8. The application calls IDataSettingsManager::getUrlIdToBackhaulMapping to retrieve the mapping details for the specified backhaul type.
+9. The application receives a synchronous Status indicating whether the getUrlIdToBackhaulMapping request was sent successfully.
 
 @section cv2x_call_flows C-V2X
 

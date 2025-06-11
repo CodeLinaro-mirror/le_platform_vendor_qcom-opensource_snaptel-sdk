@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -30,6 +31,7 @@ namespace prop {
  * uin64_t refers to the a vehicle's identity field provided in messages
  */
 using CongestionControlMap = std::map<uint64_t, CongestionControlData>;
+
 /**
  * @brief Utility class for congestion control logging and testing purposes.
  */
@@ -81,13 +83,19 @@ public:
      *      which manager will fill. Lets the user know they should immediately
      *      send a new message. If SPS enhancements are enabled, they may
      *      also need to perform SPS periodicity change.
-     * @param [in] critEvent - tells the listener that there is a critical event
+     * @param [in] trackErrEvent - tells the listener that there is a tracking error event
      * @note -  Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
     virtual void onCongestionControlDataReady(
         std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool critEvent) {}
+        bool trackErrEvent) {}
+
+    /** @param [in] newItt - updated inter-transmit time in milliseconds that the library computes
+    * @note -  Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+    virtual void onIttUpdate (uint64_t newItt) {}
 
     /**
      * Destructor for ICongestionControlListener

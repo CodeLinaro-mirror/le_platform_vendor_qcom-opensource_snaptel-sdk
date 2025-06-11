@@ -14,6 +14,8 @@
 #define VLAN_MANAGER_STATE_JSON "system-state/data/IVlanManagerState.json"
 
 #define REMOTE 1
+#define BACKHAUL_WWAN "WWAN"
+
 
 VlanServerImpl::VlanServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -376,8 +378,17 @@ grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
             std::string reqBackhaul = DataUtilsStub::convertEnumToBackhaulPrefString(
                 static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
             auto backhaul = requestedBinding["backhaul"].asString();
-            if ((slotId == request->slot_id()) && (reqBackhaul == backhaul)) {
+
+            if ( reqBackhaul == backhaul) {
+                if ((reqBackhaul == BACKHAUL_WWAN) && (slotId != request->slot_id())) {
+                    continue;
+                }
                 dataStub::VlanMapping *config = response->add_vlan_mapping();
+                if (!config) {
+                    LOG(ERROR, __FUNCTION__, "Failed to add vlan_mapping");
+                    data.error = telux::common::ErrorCode::INTERNAL;
+                    break; // Exit the loop on allocation failure
+                }
                 config->set_vlan_id(requestedBinding["vlanId"].asInt());
                 config->set_profile_id(requestedBinding["profileId"].asInt());
                 config->set_backhaul_vlan_id(requestedBinding["backhaul_vlanId"].asInt());

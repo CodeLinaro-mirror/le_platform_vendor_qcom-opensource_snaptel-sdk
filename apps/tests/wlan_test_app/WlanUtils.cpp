@@ -57,6 +57,12 @@ std::string WlanUtils::getWlanDeviceName(telux::wlan::HwDeviceType device) {
       case telux::wlan::HwDeviceType::QCA6595:
          retStr = "QCA6595";
          break;
+      case telux::wlan::HwDeviceType::WCN7851:
+         retStr = "WCN7851";
+         break;
+      case telux::wlan::HwDeviceType::QCN9274:
+         retStr = "QCN9274";
+         break;
       default:
          retStr = "CUSTOM";
          break;
@@ -96,6 +102,57 @@ std::string WlanUtils::getWlanId(telux::wlan::Id id) {
          break;
       case telux::wlan::Id::QUATERNARY:
          retStr = "QUATERNARY";
+         break;
+      case telux::wlan::Id::ID_5:
+         retStr = "ID_5";
+         break;
+      case telux::wlan::Id::ID_6:
+         retStr = "ID_6";
+         break;
+      case telux::wlan::Id::ID_7:
+         retStr = "ID_7";
+         break;
+      case telux::wlan::Id::ID_8:
+         retStr = "ID_8";
+         break;
+      case telux::wlan::Id::ID_9:
+         retStr = "ID_9";
+         break;
+      case telux::wlan::Id::ID_10:
+         retStr = "ID_10";
+         break;
+      case telux::wlan::Id::ID_11:
+         retStr = "ID_11";
+         break;
+      case telux::wlan::Id::ID_12:
+         retStr = "ID_12";
+         break;
+      case telux::wlan::Id::ID_13:
+         retStr = "ID_13";
+         break;
+      case telux::wlan::Id::ID_14:
+         retStr = "ID_14";
+         break;
+      case telux::wlan::Id::ID_15:
+         retStr = "ID_15";
+         break;
+      case telux::wlan::Id::ID_16:
+         retStr = "ID_16";
+         break;
+      case telux::wlan::Id::ID_17:
+         retStr = "ID_17";
+         break;
+      case telux::wlan::Id::ID_18:
+         retStr = "ID_18";
+         break;
+      case telux::wlan::Id::ID_19:
+         retStr = "ID_19";
+         break;
+      case telux::wlan::Id::ID_20:
+         retStr = "ID_20";
+         break;
+      case telux::wlan::Id::ID_21:
+         retStr = "ID_21";
          break;
    }
    return retStr;

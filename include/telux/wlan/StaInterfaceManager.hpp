@@ -87,6 +87,13 @@ struct StaNetworkConfig {
  */
 struct StaNetworkConfigEntry : StaNetworkConfig {
     std::string passPhrase;     /**< Passphrase of external Access point    */
+    bool        enable;        /**< Flag to control connection behavior.
+                                    When set to true, initiates a connection to this configured
+                                    network if the station is not already connected, regardless
+                                    of its priority, and also updates the network configuration
+                                    to persistent settings.
+                                    When set to false, only updates the network configuration to
+                                    persistent settings without attempting a connection. */
 };
 
 /**
@@ -94,6 +101,8 @@ struct StaNetworkConfigEntry : StaNetworkConfig {
  */
 struct StaNetworkConfigInfo : StaNetworkConfig {
     NetworkId   networkId;      /**< Identifier associated with network     */
+    bool        isCurrent;      /**< Indicates whether this is the active
+                                     network configuration                  */
 };
 
 /**
@@ -238,8 +247,9 @@ class IStaInterfaceManager {
      * Add a network configuration entry to configure various parameters associated with a
      * specific network and store the saved network settings persistently. This request will
      * internally attempt to connect to the SSID tied to the configured network if there is no
-     * active connection, regardless of its priority compared to other configured networks, and
-     * the connection status is notified via @ref telux::wlan::IStaListener::onStationStatusChanged.
+     * active connection, regardless of its priority compared to other configured networks,
+     * provided that the network is not disabled. The connection status is notified via
+     * @ref telux::wlan::IStaListener::onStationStatusChanged.
      * This API should be called only after WLAN is enabled using
      * @ref telux::wlan::IWlanDeviceManager::enable API and required number of STAs are
      * configured using @ref telux::wlan::IDeviceManager::setMode

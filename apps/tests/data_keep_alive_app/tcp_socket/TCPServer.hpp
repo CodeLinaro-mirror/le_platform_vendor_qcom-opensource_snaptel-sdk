@@ -33,9 +33,14 @@ template<typename T>
 class TCPServer {
 
     public:
-    TCPServer(std::shared_ptr<TCPServerWorker<T>> worker, int serverPort, std::string serverIpAddr)
-    : serverPort_(serverPort), worker_(worker), strServerAddr_(serverIpAddr)
-    {}
+    TCPServer(std::shared_ptr<TCPServerWorker<T>> worker, int serverPort, std::string strServerAddr,
+        std::string serverIpInterface) : serverPort_(serverPort), worker_(worker),
+        strServerAddr_(strServerAddr), strServerInterface_(serverIpInterface) {
+
+        if (pipe(exitPipe_) == -1) {
+            std::cout << "pipe: " << std::string(strerror(errno)) << std::endl;
+        }
+    }
 
     ~TCPServer() { disconnect(); }
 
@@ -94,6 +99,14 @@ class TCPServer {
             int no = 0;
             setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int));
 
+            if (!strServerInterface_.empty()) {
+                if (setsockopt(socket_, SOL_SOCKET, SO_BINDTODEVICE,
+                    strServerInterface_.c_str(), strServerInterface_.size()) != 0) {
+                    std::cout <<  " Failed to bind to device: ", strerror(errno);
+                    return false;
+                }
+            }
+
             char addrbuf[40];
             switch(clientAddr->sa_family) {
                 case AF_INET:
@@ -109,17 +122,36 @@ class TCPServer {
             }
             strClientAddr_ = addrbuf;
             worker_->onAccept(strClientAddr_, clientPort_);
-            while(!receivedStopServer_) {
-                T msg;
-                memset(&msg, 0, sizeof(msg));
-                ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg)-1, 0);
-                std::cout <<" length : " << n << " ";
-                if (n <= 0) {
-                    std::cout << " recv : "<< std::string(strerror(errno));
-                    worker_->onDisconnect();
+
+            while (true) {
+                fd_set read_fds;
+                FD_ZERO(&read_fds);
+                FD_SET(socket_, &read_fds);
+                FD_SET(exitPipe_[0], &read_fds); // Add the exit pipe to the read set
+
+                int retval = select(std::max(socket_, exitPipe_[0]) + 1, &read_fds,
+                    NULL, NULL, NULL);
+                if (retval == -1) {
+                    std::cout << "select: " << std::string(strerror(errno)) << std::endl;
                     break;
                 }
-                worker_->messageReceived(msg);
+
+                if (FD_ISSET(socket_, &read_fds)) {
+                    T msg;
+                    memset(&msg, 0, sizeof(msg));
+                    ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg)-1, 0);
+                    std::cout <<" length : " << n << " ";
+                    if (n <= 0) {
+                        std::cout << " recv : "<< std::string(strerror(errno));
+                        worker_->onDisconnect();
+                        break;
+                    }
+                    worker_->messageReceived(msg);
+                }
+
+                if (FD_ISSET(exitPipe_[0], &read_fds)) {
+                    break; // Exit the loop
+                }
             }
         } while (!receivedStopServer_);
 
@@ -127,12 +159,12 @@ class TCPServer {
     }
 
     void sendMessage(T *msg) {
-        if(socket_) {
+        if(socket_ != -1) {
             if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T)) {
                 std::cout << " send : "<< std::string(strerror(errno));
                 worker_->onDisconnect();
                 close(socket_);
-                socket_ = 0;
+                socket_ = -1;
             }
         } else {
             std::cout << " Socket is not connected " << std::endl;
@@ -141,8 +173,12 @@ class TCPServer {
 
     void disconnect() {
         std::cout << " Stopping TCP Server " << std::endl;
-        receivedStopServer_ = true;
-        if(listenSocket_) {
+        char signal = 'x';
+        ssize_t bytesWritten = write(exitPipe_[1], &signal, 1);
+        if (bytesWritten == -1) {
+            std::cout << "write: " << std::string(strerror(errno)) << std::endl;
+        }
+        if(listenSocket_ != -1) {
             if(shutdown(listenSocket_, SHUT_RDWR) == -1) {
                 std::cout << " shutdown " << std::string(strerror(errno))
                 << std::endl;
@@ -153,7 +189,7 @@ class TCPServer {
             }
         }
 
-        if(socket_) {
+        if(socket_ != -1) {
             if (shutdown(socket_, SHUT_RDWR) == -1) {
                 std::cout << "client  shutdown  "
                 << std::string(strerror(errno))<< std::endl;
@@ -163,8 +199,8 @@ class TCPServer {
                 << std::endl;
             }
         }
-        listenSocket_ = 0;
-        socket_ = 0;
+        listenSocket_ = -1;
+        socket_ = -1;
     }
 
     private:
@@ -178,9 +214,11 @@ class TCPServer {
     struct sockaddr_in6 v6ServerAddr_;
     struct sockaddr_in v4ClientAddr_;
     struct sockaddr_in6 v6ClientAddr_;
-    int listenSocket_ = 0;
-    int socket_ = 0;
+    int listenSocket_ = -1;
+    int socket_ = -1;
     std::atomic<bool> receivedStopServer_ = {false};
+    int exitPipe_[2];
+    std::string strServerInterface_;
 };
 
 };

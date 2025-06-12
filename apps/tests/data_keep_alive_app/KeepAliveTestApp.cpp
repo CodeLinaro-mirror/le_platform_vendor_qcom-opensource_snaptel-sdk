@@ -25,10 +25,15 @@ using namespace telux::common;
  *
  * @brief: Test application to demonstrate TCP KeepAlive offloading.
  */
-
-static std::mutex mutex;
-static std::condition_variable cv;
 std::shared_ptr<KeepAliveTestApp> myKeepAliveTestApp;
+
+std::condition_variable clientExitCondition;
+std::mutex clientExitMutex;
+std::atomic<bool> clientExited = {true};
+
+std::condition_variable serverExitCondition;
+std::mutex serverExitMutex;
+std::atomic<bool> serverExited = {true};
 
 void KeepAliveTestApp::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::cout << "\n";
@@ -58,7 +63,13 @@ void KeepAliveTestApp::onKeepAliveStatusChange(ErrorCode error, TCPKAOffloadHand
 }
 
 void KeepAliveTestApp::startServerThread() {
-    server_->startServer();
+    serverThread_ = std::thread([this] {
+        serverExited = false;
+        server_->startServer();
+        std::lock_guard<std::mutex> lock(serverExitMutex);
+        serverExited = true;
+        serverExitCondition.notify_one();
+    });
 }
 
 void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
@@ -69,13 +80,24 @@ void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
 
     std::string ipaddr;
     int port;
+    std::string serverInterface = "";
+    int userChoice = 0;
 
     std::cout << "Enter IPv4/IPV6 address: ";
     std::cin >> ipaddr;
     std::cout << "Enter port number: ";
     std::cin >> port;
+
+    std::cout << "Bind server to specific interface? (1-Yes, 0-No): ";
+    std::cin >> userChoice;
+    Utils::validateInput(userChoice, {0, 1});
+    std::cout << std::endl;
+    if(userChoice) {
+        std::cout << "Enter server interface to bind to (e.g. rmnet_data0): ";
+        std::cin >> serverInterface;
+    }
     serverWorker_ = std::make_shared<TCPServerWorker<kaproto>>();
-    server_ = std::make_shared<TCPServer<kaproto>>(serverWorker_, port, ipaddr);
+    server_ = std::make_shared<TCPServer<kaproto>>(serverWorker_, port, ipaddr, serverInterface);
     serverWorker_->setServer(server_);
     serverThread_ = std::thread{&KeepAliveTestApp::startServerThread, this};
     serverThread_.detach();
@@ -85,6 +107,11 @@ void KeepAliveTestApp::stopTCPServer(std::vector<std::string> inputCommand) {
     if(server_) {
         server_->disconnect();
         server_ = nullptr;
+    }
+    std::unique_lock<std::mutex> lock(serverExitMutex);
+    serverExitCondition.wait(lock, [&]{ return (bool)serverExited; });
+    if (serverThread_.joinable()) {
+        serverThread_.join();
     }
 }
 
@@ -110,7 +137,13 @@ void KeepAliveTestApp::sendMessage(std::vector<std::string> inputCommand) {
 }
 
 void KeepAliveTestApp::startClientThread() {
-    client_->connectTo();
+    clientThread_ = std::thread([this] {
+        clientExited = false;
+        client_->connectTo();
+        std::lock_guard<std::mutex> lock(clientExitMutex);
+        clientExited = true;
+        clientExitCondition.notify_one();
+    });
 }
 
 void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
@@ -124,6 +157,7 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
     int serverPort;
     std::string clientIpAddr = "";
     int clientPort = 0;
+    std::string clientInterface = "";
 
     std::cout << "Enter IPv4/IPV6 server address to connect to: ";
     std::cin >> serverIpAddr;
@@ -142,9 +176,18 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
         std::cin >> clientPort;
     }
 
+    std::cout << "Bind client interface? (1-Yes, 0-No): ";
+    std::cin >> userChoice;
+    Utils::validateInput(userChoice, {0, 1});
+    std::cout << std::endl;
+    if(userChoice) {
+        std::cout << "Enter client interface to bind to (e.g. rmnet_data0): ";
+        std::cin >> clientInterface;
+    }
+
     clientWorker_ = std::make_shared<TCPClientWorker<kaproto>>();
     client_ = std::make_shared<TCPClient<kaproto>>(clientWorker_, serverPort, serverIpAddr,
-        clientPort, clientIpAddr);
+        clientPort, clientIpAddr, clientInterface);
     clientThread_ = std::thread{&KeepAliveTestApp::startClientThread, this};
     clientThread_.detach();
 }
@@ -153,6 +196,11 @@ void KeepAliveTestApp::stopTCPClient(std::vector<std::string> inputCommand) {
     if(client_) {
         client_->disconnect();
         client_ = nullptr;
+    }
+    std::unique_lock<std::mutex> lock(clientExitMutex);
+    clientExitCondition.wait(lock, [&]{ return (bool)clientExited; });
+    if (clientThread_.joinable()) {
+        clientThread_.join();
     }
 }
 

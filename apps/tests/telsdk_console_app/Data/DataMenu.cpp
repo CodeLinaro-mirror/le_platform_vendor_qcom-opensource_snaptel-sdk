@@ -162,12 +162,17 @@ void DataMenu::init() {
             "17", "Ethernet_Menu",
             {}, std::bind(&DataMenu::ethernetMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> ipsecMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "18", "IPsec_Menu",
+            {}, std::bind(&DataMenu::ipsecMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
         dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
-        ethernetMenuCommand};
+        ethernetMenuCommand, ipsecMenuCommand};
 
     addCommands(commandsList);
 
@@ -352,3 +357,12 @@ void DataMenu::ethernetMenu(std::vector<std::string> userInput) {
     ConsoleApp::displayMenu();
 }
 
+void DataMenu::ipsecMenu(std::vector<std::string> inputCommand) {
+    ipsecMenu_ =
+        make_shared<IpsecMenu>("IPsec Menu", "ipsec> ");
+    if (ipsecMenu_->init()) {
+        ipsecMenu_->mainLoop();
+    }
+    ipsecMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}

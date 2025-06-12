@@ -91,6 +91,7 @@ struct StaConfig {
     StaIpConfig         ipConfig;         /**< IP configuration of station backhaul   */
     StaStaticIpConfig   staticIpConfig;   /**< Static IP configuration if selected    */
     StaBridgeMode       bridgeMode;       /**< Station configuration as Router/bridge */
+    BandType            staBand;          /**< Station Band type, 2G/5G/6G            */
 };
 
 /** @addtogroup telematics_wlan_station
@@ -101,6 +102,25 @@ struct StaConfig {
  */
 class IStaInterfaceManager {
  public:
+    /**
+     * setConfig to set full suite of Station config, including the station mode (router or bridge),
+     * static/dynamic IP config, Station band type.
+     *
+     * If API is called when WLAN is disabled, changes will take effect when WLAN is enabled using
+     * @ref telux::wlan::IWlanDeviceManager::enable API.
+     * If API is called when WLAN is enabled, changes will take effect after restarting
+     * wpa_supplicant by calling @ref telux::wlan::IStaInterfaceManager::manageStaService
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_STA_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] staCfg                   Station config @ref telux::wlan::StaConfig
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode.
+     *
+     */
+    virtual telux::common::ErrorCode setConfig(StaConfig staCfg) = 0;
+
     /**
      * Set Station IP Configurations: Set Station IP configuration dynamic/static and static IP
      * address if selected. If API is called when WLAN is disabled, changes will take effect when
@@ -183,6 +203,7 @@ class IStaInterfaceManager {
      * stop/start or restart wpa_supplicant service for selected station.
      * Restarting wpa_supplicant service is required for any changes made to wpa_supplicant.conf
      * file to take effect.
+     * Certain platforms might not support all possible operations.
      * Station selected to execute operation on, will temporarily go out of service when this
      * API is called.
      * This API should be called only when station mode is configured through

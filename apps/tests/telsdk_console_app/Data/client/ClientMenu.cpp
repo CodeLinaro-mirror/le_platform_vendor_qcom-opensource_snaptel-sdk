@@ -76,8 +76,13 @@ bool ClientMenu::init() {
                 ConsoleAppCommand("2", "Reset_Data_Usage_Stats",
                 {}, std::bind(&ClientMenu::resetDataUsageStats, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> getConnectedDevicesInfo
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("3", "Get_Connected_Devices_Info",
+                {}, std::bind(&ClientMenu::getConnectedDevicesInfo, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = { getDeviceDataUsageStatsCmd,
-            resetDataUsageStatsCmd };
+            resetDataUsageStatsCmd , getConnectedDevicesInfo};
 
         addCommands(commandsList);
     }
@@ -161,3 +166,48 @@ void ClientMenu::resetDataUsageStats(std::vector<std::string> inputCommand) {
             << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
+
+void ClientMenu::getConnectedDevicesInfo(std::vector<std::string> inputCommand) {
+    std::cout << "\nGet Connected Device Info" << std::endl;
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    std::vector<telux::data::DeviceInfo> clientsInfo;
+
+    error = clientManager_->getConnectedDevicesInfo(clientsInfo);
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << " RESPONSE: getConnectedDevicesInfo is successful" << std::endl;
+        if (clientsInfo.size() > 0) {
+            std::cout <<"\n Printing Connected Device Info for this Device \n" ;
+            std::cout <<"\n----------------------------------------------\n" ;
+            for (size_t i = 0; i < clientsInfo.size(); ++i) {
+                std::cout << " Device No: " <<i + 1 << std::endl;
+                std::cout << " MAC Address: "<< clientsInfo[i].macAddr << std::endl;
+                std::cout << " IPv4 Address: " << clientsInfo[i].v4Addr << std::endl;
+                std::cout << " Link Local IPv6 Address : "<< clientsInfo[i].llV6Addr
+                          << std::endl;
+                std::cout << " ULA IPv6 Address: "<< clientsInfo[i].ulaV6Addr << std::endl;
+                std::cout << " IPv6 Address: "<< std::endl;
+                for (const auto& addr : clientsInfo[i].v6Addr) {
+                    std::cout << addr <<" ";
+                }
+                std::cout << std::endl;
+                std::cout << " Host Name: "<< clientsInfo[i].hostName << std::endl;
+                std::cout << " rx bytes: " << clientsInfo[i].statsInfo.bytesRx
+                          << " tx bytes: "<< clientsInfo[i].statsInfo.bytesTx << std::endl;
+                std::cout << " Lease Expiry Time (in minutes): " 
+                          << clientsInfo[i].leaseExpiryTime << std::endl;
+                std::cout << " VLAN ID: " << clientsInfo[i].vlanId << std::endl;
+                std::cout << " if type: " << static_cast<int>(clientsInfo[i].ifType)<<std::endl;
+                std::cout <<"\n----------------------------------------------\n" ;
+            }
+        } else if(clientsInfo.size() == 0) {
+              std::cout << "\n No Connected Device to this Access Point \n" ;
+              std::cout << "\n----------------------------------------------" << std::endl;
+        }
+    } else {
+        std::cout << " RESPONSE: getConnectedDevicesInfo failed"
+            << ", ErrorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+

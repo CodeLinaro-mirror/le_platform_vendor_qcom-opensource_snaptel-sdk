@@ -472,6 +472,7 @@ int main(int argc, char *argv[]) {
     }
     staNetworkConfigEntry.priority = priority;
     staNetworkConfigEntry.bssid = bssid;
+    staNetworkConfigEntry.enable = true;
 
     ret = app->addNetworkConfig(staNetworkConfigEntry);
     if (ret < 0) {

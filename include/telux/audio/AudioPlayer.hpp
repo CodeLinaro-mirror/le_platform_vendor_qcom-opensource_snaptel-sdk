@@ -61,7 +61,14 @@ struct PlaybackConfig {
 
     /** Absolute path of the audio file. Supports playback of audio files with the following
      *  standard header lengths:
-     *  1. AudioFormat::PCM_16BIT_SIGNED: 44 bytes (RIFF)
+     *  1. AudioFormat::PCM_16BIT_SIGNED: Raw PCM files with no header or PCM files which follow
+     *       RIFF format
+     *     - Only RIFF WAVE files containing a single, continuous data chunk are supported.
+     *     - Fragmented or multiple data chunks are not supported.
+     *     - In RIFF WAVE files, only chunks that adhere to the standard RIFF
+     *       chunk structure are supported. This includes structures such as the
+     *       LIST/INFO chunk, which adhere to the standard RIFF format of a 4-byte
+     *       data, that is associated with the chunk.
      *  2. AudioFormat::AMRWB_PLUS: 2 bytes (ETSI TS 126 290 V8.0.0 (2009-01) section 8.3)
      *  3. AudioFormat::AMRWB: 9 bytes (RFC4867)
      *  4. AudioFormat::AMRNB: 6 bytes (RFC4867)

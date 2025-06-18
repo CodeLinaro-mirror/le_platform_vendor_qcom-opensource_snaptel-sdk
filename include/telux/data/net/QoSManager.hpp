@@ -531,6 +531,12 @@ class IQoSManager {
      *
      * Once a QoS filter is added, it remains persistent across reboots.
      *
+     * - To verify the status of the QoS filter after addition, use @ref getQosFilter to retrieve
+     *   the QoS filter information via its handle.
+     * - Check the QoS filter status at individual modules using @ref IQoSFilter::getStatus.
+     * - If the filter is not applicable in all modules, it is considered unnecessary and can be
+     *   deleted using @ref deleteQosFilter to free up resources.
+     *
      * On platforms with access control enabled, the caller needs to have TELUX_DATA_QOS_OPS
      * permission to successfully invoke this API.
      *

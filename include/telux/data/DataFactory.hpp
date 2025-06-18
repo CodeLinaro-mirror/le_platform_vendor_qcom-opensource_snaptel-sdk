@@ -67,6 +67,7 @@
 #include <telux/data/DataControlManager.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
 #include <telux/data/net/IpsecManager.hpp>
+#include <telux/data/net/QoSManager.hpp>
 
 namespace telux {
 namespace data {
@@ -364,6 +365,18 @@ class DataFactory {
      */
     virtual std::shared_ptr<telux::data::net::IIpsecManager> getIpsecManager(
         telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Gets the QoS manager instance.
+     *
+     *  @param [in] clientCallback   Optional callback to get the initialization status of
+     *                               IQoSManager @ref telux::common::InitResponseCb
+     *
+     * @returns IQoSManager instance.
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

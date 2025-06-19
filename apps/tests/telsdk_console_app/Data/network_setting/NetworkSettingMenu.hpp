@@ -23,7 +23,7 @@
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
-
+#define MAX_IFACE_NAME_SIZE 16
 
 using namespace telux::data;
 using namespace telux::common;
@@ -43,6 +43,20 @@ class NetworkSettingMenu : public ConsoleApp ,
     void updateAlg(std::vector<std::string> inputCommand);
     void setDataPathOptStatus(std::vector<std::string> inputCommand);
     void requestDataPathOptStatus(std::vector<std::string> inputCommand);
+
+    // New API functions
+    void addSWIpChannelConfig(std::vector<std::string> inputCommand);
+    void removeSWIpChannelConfig(std::vector<std::string> inputCommand);
+    void requestSWIpChannelConfig(std::vector<std::string> inputCommand);
+    void allowIpFamily(std::vector<std::string> inputCommand);
+    void addDHCPReservationRecord(std::vector<std::string> inputCommand);
+    void editDHCPReservationRecord(std::vector<std::string> inputCommand);
+    void requestDHCPReservationRecords(std::vector<std::string> inputCommand);
+    void deleteDHCPReservationRecord(std::vector<std::string> inputCommand);
+    void activateLAN(std::vector<std::string> inputCommand);
+
+    int getIpFamilyTypeV4V6();
+    bool setIfaceName(std::string &interfaceName);
 
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);

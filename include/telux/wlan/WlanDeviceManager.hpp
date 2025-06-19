@@ -74,6 +74,8 @@ enum class HwDeviceType {
     QCA6574   = 1,                  /**<  Wlan device is QCA6574   */
     QCA6696   = 2,                  /**<  Wlan device is QCA6696   */
     QCA6595   = 3,                  /**<  Wlan device is QCA6595   */
+    WCN7851   = 4,                  /**<  Wlan device is WCN7851   */
+    QCN9274   = 5,                  /**<  Wlan device is QCN9274   */
 };
 
 /**
@@ -170,6 +172,30 @@ class IWlanDeviceManager {
      *
      */
     virtual  telux::common::ErrorCode setMode(int numOfAp, int numOfSta) = 0;
+
+    /**
+     * Set Wlan boot up config.
+     * If set wlan bootup config as enable, wlan will be automatically enabled on bootup.
+     *
+     * @param [in] config          Wlan bootup config @ref telux::wlan::BootupConfig
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_DEVICE_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode.
+     *
+     */
+    virtual  telux::common::ErrorCode setBootupConfig(BootupConfig &config) = 0;
+
+    /**
+     * This API is used to get the wlan boot up config.
+     *
+     * @param [out] config          Wlan bootup config @ref telux::wlan::BootupConfig
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode.
+     *
+     */
+    virtual  telux::common::ErrorCode getBootupConfig(BootupConfig &config) = 0;
 
     /**
      * Request Wlan configuration: Returns the configuration that was set using

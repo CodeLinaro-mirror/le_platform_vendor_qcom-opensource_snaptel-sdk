@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 /**
@@ -70,6 +70,10 @@
 #include "client/ClientMenu.hpp"
 #include "dual_data/DualDataManagementMenu.hpp"
 #include "data_control/DataControlMenu.hpp"
+#include "network_setting/NetworkSettingMenu.hpp"
+#include "tether/TetherMenu.hpp"
+#include "ethernet/EthernetMenu.hpp"
+#include "ipsec/IpsecMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -107,9 +111,12 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void clientMenu(std::vector<std::string> inputCommand);
     void dualDataManagementMenu(std::vector<std::string> inputCommand);
     void dataControlMenu(std::vector<std::string> inputCommand);
+    void networkSettingMenu(std::vector<std::string> inputCommand);
+    void tetherMenu(std::vector<std::string> userInput);
+    void ethernetMenu(std::vector<std::string> inputCommand);
+    void ipsecMenu(std::vector<std::string> inputCommand);
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-
     std::shared_ptr<DataConnectionMenu> dataConnectionMenu_;
     std::shared_ptr<DataProfileMenu> dataProfileMenu_;
     std::shared_ptr<DataServingSystemMenu> dataServingSystemMenu_;
@@ -124,5 +131,9 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<ClientMenu> clientMenu_;
     std::shared_ptr<DualDataManagementMenu> dualDataManagementMenu_;
     std::shared_ptr<DataControlMenu> dataControlMenu_;
+    std::shared_ptr<NetworkSettingMenu> networkSettingMenu_;
+    std::shared_ptr<TetherMenu> tetherMenu_;
+    std::shared_ptr<EthernetMenu> ethernetMenu_;
+    std::shared_ptr<IpsecMenu> ipsecMenu_;
 };
 #endif

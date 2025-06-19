@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -53,7 +53,8 @@
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/DataSettingsManager.hpp>
 #include <telux/data/IpFilter.hpp>
-
+#include <telux/data/net/TetherManager.hpp>
+#include <telux/data/net/EthernetManager.hpp>
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
 #include <telux/data/net/VlanManager.hpp>
@@ -61,10 +62,11 @@
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
 #include <telux/data/ClientManager.hpp>
+#include <telux/data/net/StatsManager.hpp>
 #include <telux/data/DualDataManager.hpp>
 #include <telux/data/DataControlManager.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
-
+#include <telux/data/net/IpsecManager.hpp>
 
 namespace telux {
 namespace data {
@@ -276,6 +278,18 @@ class DataFactory {
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
     /**
+     * Get Stats Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              StatsManager @ref telux::common::InitResponseCb.
+     *
+     * @returns instance of IStatsManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IStatsManager> getStatsManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
      * Get DualData Manager
      *
      * @param [in] clientCallback   Optional callback to get the initialization status of
@@ -311,6 +325,46 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::net::INetworkSettingManager> getNetworkSettingManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb
         clientCallback = nullptr) = 0;
+
+    /**
+     * Get Tether Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              TetherManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of ITetherManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::ITetherManager> getTetherManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get Ethernet Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              EthernetManager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IEthernetManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IEthernetManager> getEthernetManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get IPsec Manager
+     *
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              IPsec manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IpsecManager
+     *
+     */
+    virtual std::shared_ptr<telux::data::net::IIpsecManager> getIpsecManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

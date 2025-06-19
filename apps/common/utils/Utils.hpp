@@ -54,6 +54,9 @@
 
 #define SEC_TO_NANOS 1000000000
 #define SEC_TO_MICROS 1000000
+#define VALID_IF_NAME_CHAR(s) ((((s >= 'a') && (s <= 'z')) || \
+                                ((s >= '0') && (s <= '9')) || \
+                                (s == '-') || (s == '_')) ? true : false)
 
 class Utils {
 public:
@@ -125,6 +128,7 @@ public:
    // Validate the slot id and in case of invalid slot id request
    // for proper input from user.
    static int getValidSlotId();
+   static bool validateCharString(std::string &input);
 
    /**
     * Get error description for given ErrorCode

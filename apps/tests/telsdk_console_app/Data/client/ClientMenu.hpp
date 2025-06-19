@@ -71,6 +71,7 @@ public:
     // Client Manager APIs
     void getDeviceDataUsageStats(std::vector<std::string> inputCommand);
     void resetDataUsageStats(std::vector<std::string> inputCommand);
+    void getConnectedDevicesInfo(std::vector<std::string> inputCommand);
     ClientMenu(std::string appName, std::string cursor);
     ~ClientMenu();
 private:

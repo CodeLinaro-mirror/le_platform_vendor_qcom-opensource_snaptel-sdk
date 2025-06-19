@@ -67,7 +67,9 @@
  * @file       NatManager.hpp
  *
  * @brief      NatManager is a primary interface for configuring static network
- *             address translation(SNAT) and DMZ (demilitarized zone)
+ *             address translation(SNAT), DMZ (demilitarized zone), enable or
+ *             disable NAT, set and get NAT timeout value for given NAT type,
+ *             set and get NAT type.
  *
  */
 
@@ -94,6 +96,31 @@ namespace net {
 // Forward declarations
 class INatListener;
 
+/*
+ * enum represents Network Address Translation (NAT) type
+ */
+enum class NatType{
+    SYMMETRIC_NAT             = 0x01,  /**<  NAT type is symmetric  */
+    PORT_RESTRICTED_CONE_NAT  = 0x02,  /**<  NAT type is Port-Restricted
+                                             Cone NAT  */
+    FULL_CONE_NAT             = 0x03,  /**<  NAT type is Full Cone NAT  */
+    ADDRESS_RESTRICTED_NAT    = 0x04,  /**<  NAT type is Address-Restricted
+                                             NAT */
+};
+
+/**
+ * enum represents Network Address Translation (NAT) timeout type
+ */
+enum class NatTimeout{
+    NAT_TIMEOUT_GENERIC           = 0x01, /**<   Generic NAT timeout  */
+    NAT_TIMEOUT_ICMP              = 0x02, /**<   NAT timeout for ICMP  */
+    NAT_TIMEOUT_TCP_ESTABLISHED   = 0x03, /**<   NAT timeout for the
+                                                 TCP established  */
+    NAT_TIMEOUT_UDP               = 0x04, /**<   NAT timeout for UDP  */
+    NAT_TIMEOUT_UDP_STREAM        = 0x05, /**<   NAT timeout for UDP stream  */
+    NAT_TIMEOUT_ICMPV6            = 0x06, /**<   NAT timeout for ICMPv6  */
+};
+
 /**
  * Structure represents Network Address Translation (NAT) configuration
  */
@@ -102,6 +129,15 @@ struct NatConfig {
     uint16_t port;       /**< Private port */
     uint16_t globalPort; /**< Global port */
     IpProtocol proto;    /**< IP protocol @ref telux::data::IpProtocol */
+};
+
+/**
+ * Structure represents nat type and flag to check NAT enable/disable status
+ */
+struct NatConfigStatus {
+    NatType   natType;              /**< NAT type (Symmetric/Port-Restricted
+                                         Cone/Full Cone/Address-Restricted) */
+    bool      isNatEnabled;         /**< flag to check NAT is enabled/disabled */
 };
 
 /**
@@ -116,8 +152,35 @@ using StaticNatEntriesCb
     = std::function<void(const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called as a response to @ref requestNatConfig()
+ *
+ * @param [in] natConfigStatus   Detail of static Network Address Translation (NAT)
+ *                               configuration i.e NAT is enable/disable, configured
+ *                               NAT type (Symmetric/Port-Restricted Cone/Full Cone/
+ *                               Address-Restricted)
+ * @param [in] error             Return code which indicates whether the operation
+ *                               succeeded or not @ref telux::common::ErrorCode
+ *
+ */
+using RequestNatConfigStatusCb
+    = std::function<void(const NatConfigStatus &natConfigStatus, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref requestNatTimeoutValue()
+ *
+ * @param [in] natTimeoutValue   timeout value of given NAT timeout type(ICMP/
+ *                               TCP_ESTABLISHED/UDP/UDP_STREAM/ICMPV6)
+ * @param [in] error             Return code which indicates whether the operation
+ *                               succeeded or not @ref telux::common::ErrorCode
+ *
+ */
+using RequestNatTimeoutValueCb
+    =std::function<void(const uint32_t &natTimeoutValue, telux::common::ErrorCode error)>;
+
+/**
  *@brief    NatManager is a primary interface for configuring static network address
- *          translation(SNAT) and DMZ (demilitarized zone).
+ *          translation(SNAT) and DMZ (demilitarized zone), enable or disable NAT,
+ *          set and get NAT timeout value for given NAT type, set and get NAT type.
  *          It also provides interface to Subsystem Restart events by registering as listener.
  *          Notifications will be received when modem is ready/not ready.
  */
@@ -211,6 +274,98 @@ class INatManager {
      *
      */
     virtual telux::data::OperationType getOperationType() = 0;
+
+    /**
+     * Request to get NAT type and enable/disable status configuration.
+     *
+     * @param [in] RequestNatConfigStatusCb  Asynchronous callback to get the response for
+     *                                       getNatConfig
+     *
+     * @returns Status of requestNatConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestNatConfig(RequestNatConfigStatusCb
+        requestNatConfigCb) = 0;
+
+    /**
+     * Request to get NAT timeout value of given NAT connection type(ICMP/TCP_ESTABLISHED/UDP
+     * /UDP_STREAM/ICMPV6). This is persistent across object, connection and reboot lifetimes.
+     *
+     * @param [in] timeoutType               NAT timeout type(ICMP/TCP_ESTABLISHED
+     *                                       /UDP/UDP_STREAM/ICMPV6)
+     * @param [in] RequestNatTimeoutValueCb  Asynchronous callback to get the response for
+     *                                       getNatTimeoutValue
+     *
+     * @returns Status of requestNatConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestNatTimeoutValue(NatTimeout timeoutType,
+        RequestNatTimeoutValueCb requestNatTimeoutValueCb) = 0;
+
+    /**
+     * Update Network Address Translation (NAT) config to enable or disable it.
+     * This is persistent across object, connection and reboot lifetimes. By default
+     * it is enabled. Currently it supports IPv4 only.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] enable            flag to enable/disable IPv4 NAT.
+     * @param [in] callback          optional callback to enable/disable IPv4 NAT.
+     *
+     * @returns Status of enableNatConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status enableNatConfig(bool enable,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Update Network Address Translation (NAT) timeout value of given NAT connection type.
+     * This is persistent across object, connection and reboot lifetimes. NAT timeout value
+     * can be set only after NAT has been enabled.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] timeout_type      NAT timeout type.(ICMP/TCP_ESTABLISHED/UDP/
+     *                               UDP_STREAM/ICMPV6)
+     * @param [in] timeout_value     NAT timeout value. timeout value should be >= 30 sec
+     * @param [in] callback          optional callback to set NAT timeout.
+     *
+     * @returns Status of setNatTimeout i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *            and could break backwards compatibility.
+     */
+    virtual telux::common::Status setNatTimeout(NatTimeout timeoutType,
+        uint32_t timeoutValue,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Update Network Address Translation (NAT) type in the NAT table. This
+     * is persistent across object, connection and reboot lifetimes. By
+     * default NAT type is syymetric. NAT type can be set only after NAT has been enabled.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] natType           set NAT type (symmetric/Port-Restricted Cone/
+     *                               Full Cone/Address-Restricted).
+     * @param [in] callback          optional callback to set NAT type.
+     *
+     * @returns Status of setNatType i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setNatType(NatType natType,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
      * Checks if the NAT manager subsystem is ready.

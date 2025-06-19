@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -136,20 +136,43 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "12", "Client_Menu",
             {}, std::bind(&DataMenu::clientMenu, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> dualDataManagementMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "13", "Dual_Data_Management_Menu",
             {}, std::bind(&DataMenu::dualDataManagementMenu, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> dataControlMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "14", "Data_Control_Menu",
             {}, std::bind(&DataMenu::dataControlMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> networkSettingMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "15", "Network_Setting_Menu",
+            {}, std::bind(&DataMenu::networkSettingMenu, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> tetherMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "16", "Tether_Menu",
+            {}, std::bind(&DataMenu::tetherMenu, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> ethernetMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "17", "Ethernet_Menu",
+            {}, std::bind(&DataMenu::ethernetMenu, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> ipsecMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "18", "IPsec_Menu",
+            {}, std::bind(&DataMenu::ipsecMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
-        dataControlMenuCommand};
+        dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
+        ethernetMenuCommand, ipsecMenuCommand};
 
     addCommands(commandsList);
 
@@ -301,5 +324,45 @@ void DataMenu::dataControlMenu(std::vector<std::string> userInput) {
         dataControlMenu_->mainLoop();
     }
     dataControlMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::networkSettingMenu(std::vector<std::string> userInput) {
+    networkSettingMenu_ =
+        make_shared<NetworkSettingMenu>("Network Setting Menu", "network_setting> ");
+    if(networkSettingMenu_->init()) {
+        networkSettingMenu_->mainLoop();
+    }
+    networkSettingMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::tetherMenu(std::vector<std::string> userInput) {
+    tetherMenu_ =
+        make_shared<TetherMenu>("Tether Control Menu", "tether> ");
+    if(tetherMenu_->init()) {
+        tetherMenu_->mainLoop();
+    }
+    tetherMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::ethernetMenu(std::vector<std::string> userInput) {
+    ethernetMenu_ =
+        make_shared<EthernetMenu>("Ethernet Control Menu", "ethernet> ");
+    if(ethernetMenu_->init()) {
+        ethernetMenu_->mainLoop();
+    }
+    ethernetMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::ipsecMenu(std::vector<std::string> inputCommand) {
+    ipsecMenu_ =
+        make_shared<IpsecMenu>("IPsec Menu", "ipsec> ");
+    if (ipsecMenu_->init()) {
+        ipsecMenu_->mainLoop();
+    }
+    ipsecMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

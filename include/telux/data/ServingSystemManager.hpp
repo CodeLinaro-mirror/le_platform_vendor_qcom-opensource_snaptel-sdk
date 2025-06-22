@@ -194,6 +194,20 @@ using RequestNrIconTypeResponseCb
     = std::function<void(NrIconType type, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called in response to @ref requestBearerTechType API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] DataBearerTechnology   Current Bearer Tech Type @ref
+ *                                    telux::data::DataBearerTechnology
+ * @param [in] error                  Return code for whether the operation succeeded or failed.
+ *
+*/
+using RequestBearerTechTypeCb
+    = std::function<void(DataBearerTechnology dataBearerTechType, telux::common::ErrorCode error)>;
+
+/**
  * @brief Serving System Manager class provides APIs related to the serving system for data
  *        functionality. For example, ability to query or be notified about the state of
  *        the platform's WWAN PS data serving information
@@ -275,6 +289,20 @@ public:
      */
     virtual telux::common::Status makeDormant(
         telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Request to get current Bearer Tech Type.
+    *
+    * @param [in] RequestBearerTechTypeCb Asynchronous callback to get the response for
+    *                                     requestBearerTechType.
+    *
+    * @returns Status of requestBearerTechType i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+    virtual telux::common::Status requestBearerTechType(
+        RequestBearerTechTypeCb callback) = 0;
 
    /**
     * Register a listener for specific updates from serving system.

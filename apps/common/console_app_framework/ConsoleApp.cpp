@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -37,6 +37,7 @@
 #include <iomanip>
 #include <iterator>
 #include <sstream>
+#include <limits>
 
 #include "ConsoleApp.hpp"
 #include "ConsoleAppCommand.hpp"
@@ -91,8 +92,8 @@ std::vector<std::string> ConsoleApp::readCommand() {
    std::getline(std::cin, command);
    if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
       std::cin.clear();
-      std::cin.ignore();
-      std::cout << "\ncin has entered bad state" << std::endl;
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      std::cerr << "\ncin has entered bad state" << std::endl;
       command = "quit";
    }
 

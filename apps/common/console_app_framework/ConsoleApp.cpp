@@ -27,9 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -37,11 +37,10 @@
 #include <iomanip>
 #include <iterator>
 #include <sstream>
-#include <unistd.h>
+#include <limits>
+
 #include "ConsoleApp.hpp"
 #include "ConsoleAppCommand.hpp"
-
-#define MAX_INPUT_BUFFER_SIZE 1024
 
 const std::string MENU_DIVIDER = "------------------------------------------------";
 
@@ -87,28 +86,23 @@ void ConsoleApp::displayBanner() {
  */
 std::vector<std::string> ConsoleApp::readCommand() {
    ConsoleApp::displayCursor();
-
-   // Buffer to store input
-   char buffer[MAX_INPUT_BUFFER_SIZE];
+   // input string
    std::string command;
-   ssize_t bytesRead;
 
-   // Blocking read call
-   bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
-   if (bytesRead > 0) {
-      buffer[bytesRead] = '\0';
-      command += buffer;
-   } else {
-      std::cerr << "\nError reading input" << std::endl;
+   std::getline(std::cin, command);
+   if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      std::cerr << "\ncin has entered bad state" << std::endl;
       command = "quit";
    }
 
-   // Separate input string based on whitespace
+   // separate input string based on whitespace
    std::istringstream iss(command);
 
-   // Iterate on a stream and store collection of substring into vector of strings
+   // iterate on a stream and store collection of substring into vector of strings
    std::vector<std::string> userInput(std::istream_iterator<std::string>{iss},
-                                       std::istream_iterator<std::string>());
+                                      std::istream_iterator<std::string>());
    return userInput;
 }
 

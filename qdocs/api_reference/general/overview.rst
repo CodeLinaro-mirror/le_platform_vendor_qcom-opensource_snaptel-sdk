@@ -64,9 +64,6 @@ The Telematics library runs in the user space of the Linux system. It interacts 
    The platform sub-system provides APIs to configure and control platform functionalities, like starting an EFS backup, control filesystem for ECALL and OTA operations.
    This sub-system also provides notifications about certain system related events, for instance filesystem events such as EFS restore and backup events.
 
-:ref:`Remote SIM Provisioning<general/overview:Remote SIM Provisioning>`
-   Remote SIM provisioning provides API to add profile, delete profile, activate/deactivate profile on the embedded SIMs (eUICC) , get list of profiles, get server address like SMDP+ and SMDS and update SMDP+ address, update nick name of profile and retrieve Embedded Identity Document(EID) of the SIM.
-
 :ref:`Debug Logger<general/overview:Debug Logger>`
    Logger consists of API that can be utilized to log messages from SDK Applications.
 
@@ -485,32 +482,6 @@ The platform sub-system provides APIs to
 - Register and listen to filesystem events such as EFS backup and restore notifications
 - Request EFS backup
 
-Remote SIM Provisioning
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/rsp_block_diagram.png
-   :scale: 75
-
-   **Remote SIM Provisioning**
-
-The Telematics Application can leverage Remote SIM Provisioning (RSP) APIs to perform eUICC profile management operations.
-
-Remote SIM Provisioning APIs in Telematics SDK provides operations such as
-
-- Download a profile on the eUICC. Allow downloading of profile based on activation code and confirmation code. Also provide user consent for downloading of profile.
-- Enable or disable a profile to activate/deactivate subscription corresponding to profile.
-- Delete a profile from an eUICC.
-- Query list of profile on the eUICC.
-- Get and update the server address( SMDP+ and SMDS)
-- Get EID of the eUICC.
-- Update nickname of the profile.
-- Perform memory reset which allows to delete test and operational profiles or reset to default SMDP+ address.
-
-When modem LPA/eUICC needs to reach SMDP+/SMDS server on the cloud for HTTP transaction, the HTTP
-request is sent to RSP service i.e RSP HTTP daemon. The RSP HTTP Daemon performs these HTTP
-transactions on behalf of modem with SMDP+/SMDS server running on the cloud. The HTTP response from
-cloud is sent back to modem LPA/eUICC to take appropriate action.
-
 Debug Logger
 ~~~~~~~~~~~~
 Logging APIs in the Telematics SDK provides logging related functionalities such as
@@ -684,16 +655,6 @@ To determine which permission type to be used for a API, please refer to the doc
 |              +------------------------------------+------------------------------------------+
 |              | TELUX_TEL_CELL_BROADCAST_LISTEN    | telux_allow_tel_cell_broadcast_listen    |
 |              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SIM_PROFILE_OPS          | telux_allow_tel_sim_profile_ops          |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SIM_PROFILE_USER_CONSENT | telux_allow_tel_sim_profile_user_consent |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SIM_PROFILE_CONFIG       | telux_allow_tel_sim_profile_config       |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SIM_PROFILE_READ         | telux_allow_tel_sim_profile_read         |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SIM_PROFILE_HTTP_PROXY   | telux_allow_tel_sim_profile_http_proxy   |
-|              +------------------------------------+------------------------------------------+ 
 |              | TELUX_TEL_REMOTE_SIM               | telux_allow_tel_remote_sim               |
 |              +------------------------------------+------------------------------------------+
 |              | TELUX_TEL_SMS_OPS                  | telux_allow_tel_sms_ops                  |

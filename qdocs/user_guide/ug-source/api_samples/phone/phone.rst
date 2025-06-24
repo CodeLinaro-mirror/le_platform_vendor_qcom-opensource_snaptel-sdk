@@ -25,9 +25,6 @@ Telephony
    ../remote_sim/remote_sim_reference_apps
    ../sms/send_sms
    ../sms/listen_sms
-   ../rsp/remote_sim_provisioning
-   ../rsp/rsp_reference_apps
-
 
 ..
    * :ref:`make-call`
@@ -45,6 +42,4 @@ Telephony
    * :ref:`remote-sim-reference-apps`
    * :ref:`send-sms`
    * :ref:`listen-sms`
-   * :ref:`remote-sim-provisioning`
-   * :ref:`rsp-reference-apps`
 

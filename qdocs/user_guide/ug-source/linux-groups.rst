@@ -148,8 +148,6 @@ Telephony
 |             |                                          |                                  |
 |             |  telux::tel::ISapCardManager,            |                                  |
 |             |                                          |                                  |
-|             |  telux::tel::ISimProfileManager,         |                                  |
-|             |                                          |                                  |
 |             |  telux::tel::ICellBroadcastManager,      |                                  |
 |             |                                          |                                  |
 |             |  telux::tel::IRemoteSimManager           |                                  |

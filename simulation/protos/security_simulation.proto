@@ -1,0 +1,199 @@
+/*
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+syntax = "proto3";
+
+package securityStub;
+
+import "google/protobuf/empty.proto";
+import "common_simulation.proto";
+
+/* Random number generator service */
+service RandomNumberGeneratorService {
+    rpc Init (RNGSource) returns (RNGInitInfo) {}
+    rpc GetRandomNumber (RandomNumber) returns (RandomNumber) {}
+    rpc GetRandomData (RandomData) returns (RandomData) {}
+    rpc RNGClientCleanup (RNGClientInfo) returns (google.protobuf.Empty) {}
+}
+
+/* Cellular connection security service */
+service SecurityCCSService {
+    rpc Init (CCSConnectInfo) returns (commonStub.ErrorCodeMsg) {}
+    rpc DeInit (CCSDisconnectInfo) returns (commonStub.ErrorCodeMsg) {}
+    rpc GetCurrentSessionStats (google.protobuf.Empty) returns (SessionStats) {}
+    rpc registerCCSListener (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc deRegisterCCSListener (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+}
+
+/* WiFi connection security service */
+service SecurityWCSService {
+    rpc Init (google.protobuf.Empty) returns (InitInfo) {}
+    rpc DeInit (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc RegisterClientForReport (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc DeregisterClientForReport (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc GetTrustedApList (google.protobuf.Empty) returns (TrustedAPList) {}
+    rpc SetTrustedAp (IsTrustedUserResponse) returns (commonStub.ErrorCodeMsg) {}
+    rpc RemoveApFromTrustedList (ApInfo) returns (commonStub.ErrorCodeMsg) {}
+}
+
+/* Crypto accelerator control service */
+service SecurityCALCService {
+    rpc Init (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc DeInit (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc RegisterClient (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc DeregisterClient (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc GetOperationsCount (google.protobuf.Empty) returns (LoadCount) {}
+    rpc GetCapacity (google.protobuf.Empty) returns (Capacity) {}
+}
+
+/* Random number generator messages */
+message RNGSource {
+    enum Source {
+        RNG_SRC_DEFAULT = 0;
+        QTI_HW_TRNG = 1;
+        DEV_RANDOM = 2;
+    }
+    Source source = 1;
+}
+
+message RNGInitInfo {
+    int32 rng_fd = 1;
+    commonStub.ErrorCode error_code = 2;
+}
+
+message RandomNumber {
+    int32 rng_fd = 1;
+    oneof Number {
+        uint32 number32 = 2;
+        uint64 number64 = 3;
+    }
+    commonStub.ErrorCode error_code = 4;
+}
+
+message RandomData {
+    int32 rng_fd = 1;
+    uint32 length = 2;
+    repeated bytes data = 3;
+    commonStub.ErrorCode error_code = 4;
+}
+
+message RNGClientInfo {
+    int32 rng_fd = 1;
+}
+
+/* CCS messages */
+message CCSConnectInfo {
+    uint32 trailing_indication_queue_size = 1;
+}
+
+message CCSDisconnectInfo {
+}
+
+message SessionStats {
+  uint32 indication_count = 1;
+  uint32 hostile_score_count = 2;
+  string session_start_time = 3;
+  float average_score = 4;
+  uint32 categories_detected = 5;
+  string most_recent_policy_acted = 6;
+  bool was_countermeasure_enacted = 7;
+  commonStub.ErrorCode ec = 8;
+}
+
+message CCSReport {
+    int32 score = 1;
+    uint32 cid = 2;
+    uint32 pid = 3;
+    uint32 mcc = 4;
+    uint32 mnc = 5;
+    uint32 category = 6;
+    uint32 policy_acted = 7;
+    enum EnvState {
+        UNKNOWN = 0;
+        SAFE = 1;
+        ALERT = 2;
+        HOSTILE = 3;
+    }
+    EnvState env_state = 8;
+    enum RadioTech {
+        RADIO_UKNOWN = 0;
+        RADIO_1 = 1;
+        RADIO_GERAN = 2;
+        RADIO_WCDMA = 3;
+        RADIO_LTE = 4;
+        RADIO_NR = 5;
+    }
+    RadioTech radio = 9;
+}
+
+message CCSServiceState {
+    enum Value {
+        SSGCCS_OFFLINE = 0;
+        SSGCCS_ONLINE = 1;
+    }
+    Value value = 1;
+}
+
+/* WCS messages */
+message InitInfo {
+    uint32 ss_ready_delay = 1;
+    commonStub.ServiceStatus service_status = 2;
+    commonStub.ErrorCode error_code = 3;
+}
+
+message WCSReport {
+    string ssid = 1;
+    string bssid = 2;
+    bool is_connected_to_ap = 3;
+    bool is_open_ap = 4;
+    uint32 mlalgo_threat_score = 5;
+    int32 mlalgo_analysis_result = 6;
+    int32 summoning_analysis_result = 7;
+}
+
+message DeauthenticationInfo {
+    int32 deauthentication_reason = 1;
+    bool did_ap_initiate_disconnect = 2;
+    uint32 threat_score = 3;
+}
+
+message ApInfo {
+    string ssid = 1;
+    string bssid = 2;
+}
+
+message IsTrustedUserResponse {
+    string ssid = 1;
+    string bssid = 2;
+    bool is_trusted = 3;
+}
+
+message TrustedAPList {
+    repeated ApInfo ap_list = 1;
+    commonStub.ErrorCode ec = 2;
+}
+
+message WCSServiceStatus {
+    commonStub.ServiceStatus service_status = 1;
+}
+
+/* Crypto accelerator control service messages */
+message LoadCount {
+    uint32 sm2 = 1;
+    uint32 nist256 = 2;
+    uint32 nist384 = 3;
+    uint32 bp256 = 4;
+    uint32 bp384 = 5;
+    commonStub.ErrorCode error_code = 6;
+}
+
+message Capacity {
+    uint32 sm2 = 1;
+    uint32 nist256 = 2;
+    uint32 nist384 = 3;
+    uint32 bp256 = 4;
+    uint32 bp384 = 5;
+    commonStub.ErrorCode error_code = 6;
+}

@@ -1,14 +1,11 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-
 /**
- * @file       SimulationServer.cpp
- *
- * @brief      Implements the @ref SimulationServer class.
- *
+ * @file   SimulationServer.cpp
+ * @brief  Implements the @ref SimulationServer class.
  */
 
 #include <iostream>
@@ -62,6 +59,10 @@
 #include "platform/DeviceInfoManagerServerImpl.hpp"
 #include "platform/AntennaManagerServerImpl.hpp"
 #include "platform/FsManagerServerImpl.hpp"
+#include "sec/SecurityRNGServerImpl.hpp"
+#include "sec/SecurityCCSServerImpl.hpp"
+#include "sec/SecurityWCSServerImpl.hpp"
+#include "sec/SecurityCALCServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -276,6 +277,22 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<FsManagerServerImpl> FsManagerService =
         std::make_shared<FsManagerServerImpl>();
     builder.RegisterService(FsManagerService.get());
+
+    std::shared_ptr<SecurityRNGServerImpl> securityRNGService =
+        std::make_shared<SecurityRNGServerImpl>();
+    builder.RegisterService(securityRNGService.get());
+
+    std::shared_ptr<SecurityCCSServerImpl> securityCCSService =
+        std::make_shared<SecurityCCSServerImpl>();
+    builder.RegisterService(securityCCSService.get());
+
+    std::shared_ptr<SecurityWCSServerImpl> securityWCSService =
+        std::make_shared<SecurityWCSServerImpl>();
+    builder.RegisterService(securityWCSService.get());
+
+    std::shared_ptr<SecurityCALCServerImpl> securityCALCService =
+        std::make_shared<SecurityCALCServerImpl>();
+    builder.RegisterService(securityCALCService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

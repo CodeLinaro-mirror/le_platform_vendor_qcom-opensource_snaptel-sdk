@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.10.2)
+
 add_subdirectory(ecc_verify_sync)
 add_subdirectory(ecc_verify_async_poll)
 add_subdirectory(ecc_verify_async_listener)

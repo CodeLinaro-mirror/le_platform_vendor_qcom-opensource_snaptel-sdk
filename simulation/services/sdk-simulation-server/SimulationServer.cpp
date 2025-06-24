@@ -30,6 +30,7 @@
 #include "tel/ImsSettingsManagerServerImpl.hpp"
 #include "tel/ServingManagerServerImpl.hpp"
 #include "tel/NetworkSelectionManagerServerImpl.hpp"
+#include "data/ClientManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
 #include "data/DataSettingsServerImpl.hpp"
@@ -201,6 +202,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<DataLinkServerImpl> dataLinkService =
         std::make_shared<DataLinkServerImpl>();
     builder.RegisterService(dataLinkService.get());
+
+    std::shared_ptr<ClientManagerServerImpl> ClientMgrService =
+        std::make_shared<ClientManagerServerImpl>();
+    builder.RegisterService(ClientMgrService.get());
 
     auto& locEventService = LocationReportService::getInstance();
     builder.RegisterService(&locEventService);

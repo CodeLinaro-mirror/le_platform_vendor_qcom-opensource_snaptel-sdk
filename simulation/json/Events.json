@@ -358,6 +358,25 @@
             "recommendation:  string, ALLOWED :dual data is allowed, NOT_ALLOWED :dual data is not allowed, NOT_RECOMMENDED :dual data is not recommended"
         ]
     },
+    "client_manager": {
+        "deviceDataUsageStatsUpdate": [
+            "telsdk_event_injector -f client_manager -e deviceDataUsageStatsUpdate <macAddress> <bytesRx> <bytesTx>",
+            "macAddress: string, MAC address of the device, end user reponsiblity to input legal value",
+            "bytesRx: integer, bytes received by the device, end user reponsiblity to input legal value",
+            "bytesTx: integer, bytes transmitted by the device, end user reponsiblity to input legal value"
+        ],
+        "deviceDataUsageReset": [
+            "telsdk_event_injector -f client_manager -e deviceDataUsageReset <macAddress> <reason>",
+            "macAddress: string, MAC address of the device whose data usage is to be reset",
+            "reason: string, reason for reset of the device. Valid values: SUBSYSTEM_UNAVAILABLE, BACKHAUL_SWITCHED, DEVICE_DISCONNECTED, WLAN_DISABLED, WWAN_DISCONNECTED"
+        ]
+    },
+    "data_settings": {
+        "deviceDataUsageMonitoringUpdate": [
+            "telsdk_event_injector -f data_settings -e deviceDataUsageMonitoringUpdate <enable>",
+            "enable:   bool, 1 :Devicedata usage monitoring enable, 0 :Devicedata usage monitoring disable"
+        ]
+    },
     "data_connection": {
         "throttle_apn_event" : [
             "telsdk_event_injector -f data_connection -e throttle_apn_event <state>",

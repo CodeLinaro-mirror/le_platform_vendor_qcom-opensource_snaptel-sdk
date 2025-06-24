@@ -111,6 +111,17 @@ service DataFilterManager {
 }
 
 /*
+  * This service is used to execute ClientManager related APIs.
+  */
+
+  service ClientManager {
+    rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc GetDeviceDataUsageStats(google.protobuf.Empty) returns
+        (GetDeviceDataUsageStatsResponse);
+    rpc ResetDataUsageStats(ResetDataUsageStatsRequest) returns (ResetDataUsageStatsResponse);
+}
+
+/*
   * This service is used to execute BridgeManager related APIs.
   */
 
@@ -222,6 +233,10 @@ service DataFilterManager {
     rpc SetEthDataLinkState(SetEthDatalinkStateRequest) returns (SetEthDatalinkStateReply) {}
     rpc GetEthDataLinkState(google.protobuf.Empty) returns (GetEthDataLinkStateReply) {}
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
+    rpc SetLocalEthOperatingMode(SetLocalEthOperatingModeRequest) returns
+        (SetLocalEthOperatingModeReply) {}
+    rpc GetEthCapability(google.protobuf.Empty) returns (GetEthCapabilityReply);
+
   }
 
   service QoSManager {
@@ -1378,3 +1393,82 @@ message OnEthDataLinkStateChangeReply {
     LinkStateEnum eth_datalink_state = 1;
 }
 
+message GetEthCapabilityReply {
+    EthCapability capability = 1;
+    commonStub.Status status = 2;
+}
+
+message SetLocalEthOperatingModeRequest {
+    EthModeEnum eth_mode = 1;
+}
+
+message SetLocalEthOperatingModeReply {
+    commonStub.ErrorCode error = 1;
+    ModeChangeStatusEnum status = 2;
+}
+
+message EthCapability {
+    repeated EthModeEnum eth_modes = 1;
+    EthModeEnum current_mode = 2;
+}
+
+enum EthModeEnum {
+    EthModeEnum_UNKNOWN = 0;
+    EthModeEnum_USXGMII_10G = 1;
+    EthModeEnum_USXGMII_5G = 2;
+    EthModeEnum_USXGMII_2_5G = 3;
+    EthModeEnum_USXGMII_1G = 4;
+    EthModeEnum_USXGMII_100M = 5;
+    EthModeEnum_USXGMII_10M = 6;
+    EthModeEnum_SGMII_2_5G = 7;
+    EthModeEnum_SGMII_1G = 8;
+    EthModeEnum_SGMII_100M = 9;
+}
+
+
+enum ModeChangeStatusEnum {
+    ModeChangeStatusEnum_UNKNOWN = 0;
+    ModeChangeStatusEnum_COMPLETED = 1;
+    ModeChangeStatusEnum_FAILED = 2;
+}
+
+message GetDeviceDataUsageStatsResponse {
+    repeated DeviceDataUsage usage_stats = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DataUsage {
+    uint64 bytes_rx = 1;
+    uint64 bytes_tx = 2;
+}
+
+message DeviceDataUsage {
+    string mac_address = 1;
+    DataUsage usage = 2;
+}
+message ResetDataUsageStatsRequest {}
+
+message ResetDataUsageStatsResponse {
+    commonStub.ErrorCode error = 1;
+}
+
+message DeviceDataUsageMonitoringUpdateEvent {
+    bool enabled  = 1;
+}
+
+message DeviceDataUsageStatsUpdateEvent {
+    string mac_address = 1;
+    uint64 bytes_rx = 2;
+    uint64 bytes_tx = 3;
+}
+
+message DeviceDataUsageResetEvent {
+    string mac_address = 1;
+    uint64 bytes_rx = 2;
+    uint64 bytes_tx = 3;
+    string reason = 4;
+}
+
+message ResetDeviceDataUsageStatsEvent {
+    string mac_address = 1;
+}

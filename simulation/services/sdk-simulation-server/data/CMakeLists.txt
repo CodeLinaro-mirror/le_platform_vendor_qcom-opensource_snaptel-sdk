@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_SIMULATION_SERVER_APP_SRC
+    data/ClientManagerServerImpl.cpp
     data/DataConnectionServerImpl.cpp
     data/DataProfileServerImpl.cpp
     data/DataSettingsServerImpl.cpp

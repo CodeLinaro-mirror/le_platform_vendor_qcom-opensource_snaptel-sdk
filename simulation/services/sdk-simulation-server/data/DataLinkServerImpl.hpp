@@ -47,6 +47,15 @@ public:
     grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
             commonStub::GetServiceStatusReply* response) override;
 
+    grpc::Status GetEthCapability(ServerContext* context,
+    const ::google::protobuf::Empty* request,
+    dataStub::GetEthCapabilityReply* response) override;
+
+    grpc::Status SetLocalEthOperatingMode(
+    ServerContext* context,
+    const dataStub::SetLocalEthOperatingModeRequest* request,
+    dataStub::SetLocalEthOperatingModeReply* response) override;
+
     void onEventUpdate(::eventService::UnsolicitedEvent event);
 
 private:

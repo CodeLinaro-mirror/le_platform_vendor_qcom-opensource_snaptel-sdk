@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11,15 +11,20 @@
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/CommonUtils.hpp"
 #include "libs/data/DataUtilsStub.hpp"
+#include "common/event-manager/EventParserUtil.hpp"
+#include "event/EventService.hpp"
+#include "event/ServerEventManager.hpp"
 
 #define DATA_SETTINGS_API_LOCAL_JSON "api/data/IDataSettingsManagerLocal.json"
 #define DATA_SETTINGS_STATE_JSON "system-state/data/IDataSettingsManagerState.json"
 #define DBG_LOG_LEVEL_1 0
-
+#define DATASETTINGS_MANAGER_FILTER "data_settings"
 #define SLOT_2 2
 #define REMOTE 1
 #define PERM "PERMANENT"
 #define TEMP "TEMPORARY"
+
+
 
 DataSettingsServerImpl::DataSettingsServerImpl(
     std::shared_ptr<DataConnectionServerImpl> dcmServerImpl):
@@ -31,6 +36,9 @@ DataSettingsServerImpl::DataSettingsServerImpl(
 
 DataSettingsServerImpl::~DataSettingsServerImpl() {
     LOG(DEBUG, __FUNCTION__);
+     if (taskQ_) {
+        taskQ_ = nullptr;
+    }
 }
 
 grpc::Status DataSettingsServerImpl::InitService(ServerContext* context,
@@ -51,6 +59,10 @@ grpc::Status DataSettingsServerImpl::InitService(ServerContext* context,
         rootObj["IDataSettingsManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
+
+    std::vector<std::string> filters = {DATASETTINGS_MANAGER_FILTER};
+    auto &serverEventManager = ServerEventManager::getInstance();
+    serverEventManager.registerListener(shared_from_this(), filters);
 
     response->set_service_status(static_cast<dataStub::ServiceStatus>(status));
     response->set_delay(cbDelay);
@@ -1158,4 +1170,59 @@ bool DataSettingsServerImpl::isIpConfigSame(const telux::data::IpAddrInfo &newIp
         return false;
     }
     return true;
+}
+
+
+void DataSettingsServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
+     LOG(DEBUG, __FUNCTION__, "Event Called");
+    if (message.filter() == DATASETTINGS_MANAGER_FILTER) {
+        onEventUpdate(message.event());
+    }
+}
+
+void DataSettingsServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__, "String is ", event);
+    std::string token = EventParserUtil::getNextToken(event, " ");
+    if (token == "deviceDataUsageMonitoringUpdate") {
+        handleDeviceDataUsageMonitoringUpdate(event);
+    } else {
+        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+    }
+}
+
+void DataSettingsServerImpl::handleDeviceDataUsageMonitoringUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__);
+    bool enabled = true;
+    std::string param = EventParserUtil::getNextToken(event, " ");
+    try {
+        enabled = (std::stoi(param) == 1)? true : false;
+    } catch(const std::exception & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        return;
+    }
+    std::string stateJsonPath = "system-state/data/IDataSettingsManagerState.json";
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "isDeviceDataUsageMonitoringEnabled";
+    Json::Value rootObj;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, stateJsonPath);
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Error in reading json file");
+        return;
+    } else {
+        if (!rootObj.isMember(subsystem)) {
+            rootObj[subsystem] = Json::Value(Json::objectValue);
+        }
+        if (!rootObj[subsystem].isMember(method)) {
+            rootObj[subsystem][method] = Json::Value(Json::objectValue);
+        }
+        rootObj[subsystem][method]["enabled"] = enabled;
+        JsonParser::writeToJsonFile(rootObj, stateJsonPath);
+    }
+    ::dataStub::DeviceDataUsageMonitoringUpdateEvent deviceDataUsageMonitoringUpdateEvent;
+    ::eventService::EventResponse anyResponse;
+    deviceDataUsageMonitoringUpdateEvent.set_enabled(enabled);
+    anyResponse.set_filter(DATASETTINGS_MANAGER_FILTER);
+    anyResponse.mutable_any()->PackFrom(deviceDataUsageMonitoringUpdateEvent);
+    auto& eventImpl = EventService::getInstance();
+    eventImpl.updateEventQueue(anyResponse);
 }

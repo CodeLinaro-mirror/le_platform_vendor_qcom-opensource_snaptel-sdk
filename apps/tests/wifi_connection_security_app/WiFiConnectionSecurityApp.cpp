@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <cstdio>
@@ -271,26 +271,26 @@ void WiFiConnectionSecurityApp::init() {
         });
 
     if (!wifiConSecMgr_) {
-        std::cout << "Failed to get IWiFiSecurityManager " << std::endl;
+        std::cout << "failed to get IWiFiSecurityManager" << std::endl;
         return;
     }
 
     // Wait for the subsystem to be available.
     serviceStatus = prom.get_future().get();
+
     //  Exit the application, if SDK is unable to initialize security subsystems.
     if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Security Subsystems ready" << std::endl;
+        std::cout << "security service is ready" << std::endl;
     } else {
-        std::cout << "Unable to initialize security subsystem, err: " << static_cast<int>(
-            serviceStatus) << std::endl;
+        std::cout << "can't initialize IWiFiSecurityManager, status: " <<
+            static_cast<int>(serviceStatus) << std::endl;
         return;
     }
 
-    // Register for service status events
+    // Register for security service status events
     auto ec = wifiConSecMgr_->registerListener(shared_from_this());
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "Security listener registeration failed, err: " << static_cast<int>(
-            ec) << std::endl;
+        std::cout << "can't register listener, err: " << static_cast<int>(ec) << std::endl;
     }
 
     initConsole();
@@ -298,10 +298,10 @@ void WiFiConnectionSecurityApp::init() {
 
 void WiFiConnectionSecurityApp::onServiceStatusChange(telux::common::ServiceStatus status) {
     if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-        std::cout << "Security service UNAVAILABLE" << std::endl;
+        std::cout << "security service : unavailable" << std::endl;
     }
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Security service AVAILABLE" << std::endl;
+        std::cout << "security service : available" << std::endl;
     }
 }
 

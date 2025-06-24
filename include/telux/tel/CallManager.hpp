@@ -829,7 +829,7 @@ public:
    /**
     * Configure eCall redial parameters.
     * Redial of an eCall can be attempted by the modem during an eCall origination failure or when
-    * it gets terminated before receipt of the MSD transmission status.
+    * it gets dropped before receipt of the MSD transmission status.
     * The eCall redial parameters should be configured before initiating a regulatory eCall and
     * this configuration is not persistent after modem reset.
     *
@@ -840,42 +840,62 @@ public:
     *                            @ref telux::tel::RedialConfigType
     * @param [in] timeGap        Indicates time gap between successive redial attempts in
     *                            milliseconds.
-    *                            Redial attempts can range from 1 to 10 for eCall origination
-    *                            failures. For eCall termination before the receipt of MSD
-    *                            Transmission status, the range is between 1 and 2 attempts.
-    *                            The redial minimum time duration between the successive redial
-    *                            attempts is set as per 3GPP TS22.001 annex 6 and the user is
-    *                            expected to provide a suitable value of timeGap.
+    *                            @note Redial attempts can range from 1 to 10 for eCall origination
+    *                            failures. For eCall drops occurring before the receipt of the MSD
+    *                            transmission status, the number of attempts ranges between 1
+    *                            and 2. The application is expected to determine an appropriate
+    *                            value for time gap based on the tables below, which specifies the
+    *                            range required between successive redial attempts for CS eCall
+    *                            only or both NG eCall and CS eCall configuration. The time gap
+    *                            values are in milliseconds.
     * ---------------------------------------------------------------------------------------------
-    * -----------------------------------ECALL ORIGINATION FAILURE---------------------------------
-    * -------------------( @ref telux::tel::RedialConfigType::CALL_ORIG )--------------------------
+    * Refer below table when platform supports CS eCall only configuration
+    * ECALL ORIGINATION FAILURE-( @ref telux::tel::RedialConfigType::CALL_ORIG )
     * ---------------------------------------------------------------------------------------------
-    * Call attempt                                                    Minimum duration between
-    *                                                                       call attempt
-    *                                                              ( in milliseconds as per
-    *                                                                3GPP TS22.001 annex 6 )
-    *----------------------------------------------------------------------------------------------
-    * Initial call attempt                                                     NA
-    *     1                                                                    5000
-    *     2                                                                    60000
-    *     3                                                                    60000
-    *     4                                                                    60000
-    *     5 attempt and                                                        180000
-    *     subsequent attempts
+    * @details
+    * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
+    * |----------------------|----------------------------------|---------------------------------|
+    * | Initial call attempt | NA                               | NA                              |
+    * | 1                    | 5000                             | 60000                           |
+    * | 2                    | 60000                            | 180000                          |
+    * | 3                    | 60000                            | 180000                          |
+    * | 4                    | 60000                            | 180000                          |
+    * | 5 attempts and       | 180000                           | 300000                          |
+    * | subsequent attempts  |                                  |                                 |
     * ---------------------------------------------------------------------------------------------
-    * -----------------------------------------ECALL DROP -----------------------------------------
-    * -----------------------( @ref telux::tel::RedialConfigType::CALL_DROP )----------------------
+    * Refer below table when platform supports CS eCall only configuration
+    * ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
     * ---------------------------------------------------------------------------------------------
-    * Call attempt                                                    Minimum duration between
-    *                                                                       call attempt
-    *                                                              ( in milliseconds as per
-    *                                                                3GPP TS22.001 annex 6 )
-    *----------------------------------------------------------------------------------------------
-    * Initial call attempt                                                      NA
-    *     1                                                                     5000
-    *     2                                                                     60000
-    *----------------------------------------------------------------------------------------------
-
+    * @details
+    * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
+    * |----------------------|----------------------------------|---------------------------------|
+    * | Initial call attempt | NA                               | NA                              |
+    * | 1                    | 5000                             | 60000                           |
+    * | 2                    | 60000                            | 180000                          |
+    * ---------------------------------------------------------------------------------------------
+    * Refer below table when platform supports both NG eCall and CS eCall configuration
+    * ECALL ORIGINATION FAILURE-( @ref telux::tel::RedialConfigType::CALL_ORIG )
+    * ---------------------------------------------------------------------------------------------
+    * @details
+    * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
+    * |----------------------|----------------------------------|---------------------------------|
+    * | Initial call attempt | NA                               | NA                              |
+    * | 1                    | 5000                             | 30000                           |
+    * | 2                    | 30000                            | 60000                           |
+    * | 3                    | 30000                            | 60000                           |
+    * | 4                    | 30000                            | 60000                           |
+    * | 5 attempts and       | 30000                            | 60000                           |
+    * | subsequent attempts  |                                  |                                 |
+    * ---------------------------------------------------------------------------------------------
+    * Refer below table when platform supports both NG eCall and CS eCall configuration
+    * ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
+    * ---------------------------------------------------------------------------------------------
+    * @details
+    * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
+    * |----------------------|----------------------------------|---------------------------------|
+    * | Initial call attempt | NA                               | NA                              |
+    * | 1                    | 5000                             | 30000                           |
+    * | 2                    | 30000                            | 60000                           |
     *
     * @param [in] callback       Callback function to get the response of the configureECallRedial
     *                            request.

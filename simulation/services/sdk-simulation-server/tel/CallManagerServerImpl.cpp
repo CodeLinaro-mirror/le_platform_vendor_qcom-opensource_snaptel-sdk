@@ -233,10 +233,14 @@ void CallManagerServerImpl::handleCallMachine(int phoneId, int callIndex) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     if(size == 1) {
         changeCallState(phoneId , "CALL_DIALING", callIndex);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
     } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         changeCallState(phoneId ,"CALL_DIALING", callIndex);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         changeCallState(phoneId ,"CALL_ALERTING", callIndex);
         changeCallStateofActiveCalls(phoneId, callIndex);
     }
@@ -290,6 +294,7 @@ void CallManagerServerImpl::changeCallStateofActiveCalls(int phoneId, int callIn
         ++callIterator) {
         if (((*callIterator)->index != callIndex) && ((*callIterator)->phoneId == phoneId)) {
             if((*callIterator)->callState == CallState::CALL_ACTIVE) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
                 (*callIterator)->index);
             }
@@ -297,6 +302,7 @@ void CallManagerServerImpl::changeCallStateofActiveCalls(int phoneId, int callIn
             newCall = (*callIterator);
         }
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
     changeCallState(newCall->phoneId, "CALL_ACTIVE", newCall->index);
 }
 

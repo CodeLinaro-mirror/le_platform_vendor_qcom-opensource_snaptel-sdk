@@ -65,6 +65,8 @@ class WlanStaInterfaceManagerMenu : public ConsoleApp ,
     void enableHotspot2(std::vector<std::string> userInput);
     void setBridgeMode(std::vector<std::string> userInput);
     void manageStaService(std::vector<std::string> userInput);
+    void setConfig(std::vector<std::string> userInput);
+
     void onStationStatusChanged(std::vector<telux::wlan::StaStatus> status) override;
     void onStationBandChanged(telux::wlan::BandType radio) override;
  private:

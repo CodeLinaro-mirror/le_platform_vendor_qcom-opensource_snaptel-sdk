@@ -90,8 +90,13 @@ void WlanStaInterfaceManagerMenu::showMenu() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "manage_service", {},
             std::bind(&WlanStaInterfaceManagerMenu::manageStaService, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_Config", {},
+            std::bind(&WlanStaInterfaceManagerMenu::setConfig, this, std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, manageStaService};
+            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, manageStaService, 
+            setConfig};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -258,5 +263,76 @@ void WlanStaInterfaceManagerMenu::onStationBandChanged(telux::wlan::BandType rad
    } else {
        std::cout << "Station has switched to 5G band" << std::endl;
    }
+}
+
+void WlanStaInterfaceManagerMenu::setConfig(std::vector<std::string> userInput) {
+    telux::wlan::StaConfig  staConfig = {};
+    telux::wlan::StaIpConfig staIpConfig = {};
+    telux::wlan::StaStaticIpConfig staticIpConfig;
+
+    std::cout << "Set Station Configuration " << std::endl;
+
+    int staBand = 0;
+    std::cout << "Enter Band 2.4/5/6 GHz band -> (0/1/2): ";
+    std::cin >> staBand;
+    WlanUtils::validateInput(staBand, {0, 1, 2});
+
+    int staId ;
+    std::cout << "Set Station ID (1-21)";
+    std::cin >> staId;
+    Utils::validateInput(staId);
+
+    int ipConfig = 1;
+    std::cout << "Select Station IP Type (1-Dynamic IP, 2-Static IP): ";
+    std::cin >> ipConfig;
+    WlanUtils::validateInput(ipConfig, {1, 2});
+
+    if(ipConfig == 2){
+        staIpConfig = telux::wlan::StaIpConfig::STATIC_IP;
+        std::string userInput{};
+        std::cout << "Enter IPv4 Address: ";
+        std::cin >> userInput;
+        Utils::validateInput(userInput);
+        staticIpConfig.ipAddr = userInput;
+        std::cout << std::endl;
+
+        std::cout << "Enter Gateway IPv4 Address: ";
+        std::cin >> userInput;
+        Utils::validateInput(userInput);
+        staticIpConfig.gwIpAddr = userInput;
+        std::cout << std::endl;
+
+        std::cout << "Enter Subnet Mask: ";
+        std::cin >> userInput;
+        Utils::validateInput(userInput);
+        staticIpConfig.netMask = userInput;
+        std::cout << std::endl;
+
+        std::cout << "Enter DNS IPv4 Address: ";
+        std::cin >> userInput;
+        Utils::validateInput(userInput);
+        staticIpConfig.dnsAddr = userInput;
+        std::cout << std::endl;
+    }else{
+        staIpConfig = telux::wlan::StaIpConfig::DYNAMIC_IP;
+    }
+
+    int bridgeMode = 0;
+    std::cout << "Enter Bridge Mode (0-Router Mode, 1-Bridge Mode): ";
+    std::cin >> bridgeMode;
+    WlanUtils::validateInput(bridgeMode, {0, 1});
+
+    staConfig.staId = static_cast<telux::wlan::Id>(staId);
+    staConfig.ipConfig = staIpConfig;
+    staConfig.staticIpConfig = staticIpConfig;
+    staConfig.bridgeMode = static_cast<telux::wlan::StaBridgeMode>(bridgeMode);
+    staConfig.staBand = static_cast<telux::wlan::BandType>(staBand);
+
+    telux::common::ErrorCode retCode = wlanStaInterfaceManager_->setConfig(staConfig);
+
+    std::cout << "\nSet Station Configuration Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 

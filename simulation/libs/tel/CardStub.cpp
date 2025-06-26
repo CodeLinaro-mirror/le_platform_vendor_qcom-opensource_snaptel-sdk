@@ -51,6 +51,12 @@ telux::common::Status CardStub::getState(CardState &cardState) {
     return error;
 }
 
+void CardStub::getMepInfo(MepInfo &info) {
+    info.isMep = false;
+    info.portId = 0;
+    info.negotiatedMepMode = Mode::NONE;
+}
+
 std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(telux::common::Status *status) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<ICardApp>> applications;

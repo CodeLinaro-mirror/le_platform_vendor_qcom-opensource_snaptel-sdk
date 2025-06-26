@@ -55,6 +55,7 @@ class CardStub : public ICard {
     telux::common::Status requestEid(EidResponseCallback callback) override;
     std::shared_ptr<ICardFileHandler> getFileHandler() override;
     bool isNtnProfileActive() override;
+    void getMepInfo(MepInfo &info) override;
     void updateSimStatus();
     void setlisteners(std::vector<std::weak_ptr<ICardListener>> listeners);
     std::vector<std::weak_ptr<ICardListener>> listeners_;

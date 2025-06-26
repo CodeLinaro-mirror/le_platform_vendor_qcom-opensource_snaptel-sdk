@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "telux/tel/MultiSimManager.hpp"
-
+#include "telux/common/CommonDefines.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
@@ -61,12 +61,15 @@ class MultiSimMenu : public ConsoleApp {
     void requestHighCapability(std::vector<std::string> userInput);
     void setHighCapability(std::vector<std::string> userInput);
     void switchActiveSlot(std::vector<std::string> userInput);
-    void requestsSlotStatus(std::vector<std::string> userInput);
+    void configureLogicalSlotMapping(std::vector<std::string> userInput);
+    void getLogicalSlotMapping(std::vector<std::string> userInput);
+    void getPhysicalSlotStatus(std::vector<std::string> userInput);
 
  private:
     // Member variable to keep the Listener object alive till application ends.
     std::shared_ptr<telux::tel::IMultiSimListener> multiSimListener_;
     std::shared_ptr<telux::tel::IMultiSimManager> multiSimMgr_;
+    LogicalSlotId logicalIdFromIndex(int idx);
 };
 
 #endif  // MULTISIMMENU_HPP

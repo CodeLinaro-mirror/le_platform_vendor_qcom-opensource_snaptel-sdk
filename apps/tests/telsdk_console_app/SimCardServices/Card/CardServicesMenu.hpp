@@ -41,6 +41,7 @@
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MyCardListener.hpp"
 #include "telux/tel/CardApp.hpp"
+#include "telux/common/CommonDefines.hpp"
 
 class CardServicesMenu : public ConsoleApp {
  public:
@@ -69,6 +70,7 @@ class CardServicesMenu : public ConsoleApp {
     std::string appTypeToString(telux::tel::AppType appType);
     std::string appStateToString(telux::tel::AppState appState);
     std::string cardStateToString(telux::tel::CardState state);
+    void getMepInformation(std::vector<std::string> userInput);
 
     std::shared_ptr<telux::tel::ICardListener> cardListener_;
     std::shared_ptr<MyOpenLogicalChannelCallback> myOpenLogicalChannelCb_;

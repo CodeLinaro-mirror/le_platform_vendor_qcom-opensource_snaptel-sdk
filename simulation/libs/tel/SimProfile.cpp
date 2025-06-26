@@ -17,7 +17,7 @@ namespace tel {
 SimProfile::SimProfile(int profileId, ProfileType profileType, const std::string &iccid,
     bool isActive, const std::string &nickName, const std::string &spn, const std::string &name,
     IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
-    PolicyRuleMask policyRuleMask, int slotId)
+    PolicyRuleMask policyRuleMask, int slotId, uint8_t portId)
    : profileId_(profileId)
    , profileType_(profileType)
    , iccid_(iccid)
@@ -29,7 +29,8 @@ SimProfile::SimProfile(int profileId, ProfileType profileType, const std::string
    , icon_(icon)
    , profileClass_(profileClass)
    , policyRuleMask_(policyRuleMask)
-   , slotId_(slotId) {
+   , slotId_(slotId)
+   , portId_(portId) {
 }
 
 int SimProfile::getSlotId() {
@@ -155,8 +156,13 @@ std::string SimProfile::toString() {
        << ", SPN: " << spn_ << ", Profile Name: " << name_
        << ", Profile Icon Type: " << iconTypeToString(iconType_)
        << ", Profile Class: " << profileClassToString(profileClass_)
-       << ", \n Policy Rules: " << convertPolicyRuleMaskToString(policyRuleMask_);
+       << ", \n Policy Rules: " << convertPolicyRuleMaskToString(policyRuleMask_)
+       << ", \n Port Id: " << static_cast<int>(portId_);
     return ss.str();
+}
+
+uint8_t SimProfile::getPortId() {
+    return portId_;
 }
 
 }  // end of namespace tel

@@ -107,9 +107,62 @@ bool NetworkSettingMenu::init() {
             {}, std::bind(&NetworkSettingMenu::requestDataPathOptStatus, this,
                 std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> addSWIpChannelConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
+                "addSWIpChannelConfig",
+            {}, std::bind(&NetworkSettingMenu::addSWIpChannelConfig, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeSWIpChannelConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8",
+                "removeSWIpChannelConfig",
+            {}, std::bind(&NetworkSettingMenu::removeSWIpChannelConfig, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestSWIpChannelConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9",
+                "requestSWIpChannelConfig",
+            {}, std::bind(&NetworkSettingMenu::requestSWIpChannelConfig, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> allowIpFamily
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10",
+                "allowIpFamily",
+            {}, std::bind(&NetworkSettingMenu::allowIpFamily, this,
+                std::placeholders::_1)));
+
+
+        std::shared_ptr<ConsoleAppCommand> addDHCPReservationRecord
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11",
+                "addDHCPReservationRecord",
+            {}, std::bind(&NetworkSettingMenu::addDHCPReservationRecord, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> editDHCPReservationRecord
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12",
+                "editDHCPReservationRecord",
+            {}, std::bind(&NetworkSettingMenu::editDHCPReservationRecord, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestDHCPReservationRecords
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13",
+                "requestDHCPReservationRecords",
+            {}, std::bind(&NetworkSettingMenu::requestDHCPReservationRecords, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> deleteDHCPReservationRecord
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14",
+                "deleteDHCPReservationRecord",
+            {}, std::bind(&NetworkSettingMenu::deleteDHCPReservationRecord, this,
+                std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> activateLAN
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15",
+                "activateLAN",
+            {}, std::bind(&NetworkSettingMenu::activateLAN, this,
+                std::placeholders::_1)));
+
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
             addPortTriggerEntry, requestPortTriggerEntry, deletePortTriggerEntry,
-            updateAlg, setDataPathOptStatus, requestDataPathOptStatus };
+            updateAlg, setDataPathOptStatus, requestDataPathOptStatus,
+            addSWIpChannelConfig, removeSWIpChannelConfig, requestSWIpChannelConfig,
+            allowIpFamily, addDHCPReservationRecord, editDHCPReservationRecord,
+            requestDHCPReservationRecords, deleteDHCPReservationRecord, activateLAN
+        };
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -419,4 +472,384 @@ void NetworkSettingMenu::requestDataPathOptStatus(std::vector<std::string> input
     retStat = networkSettingManager_->requestDataPathOptStatus(respCb);
     Utils::printStatus(retStat);
 }
+
+void NetworkSettingMenu::addSWIpChannelConfig(std::vector<std::string> inputCommand) {
+    std::cout << "\n Add SWIP Channel Config " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    telux::data::net::SWIpChannelConfig swIpChCfg {} ;
+
+    std::cout<<"   Please input logical IF(eg: mhi_swip0), Max Length - "
+             << MAX_IFACE_NAME_SIZE-1 <<": ";
+    setIfaceName(swIpChCfg.ifName);
+
+    char delimiter = '\n';
+    std::string staticIpAddr;
+    std::cout << "   Please input ip address (xxx.xxx.xxx.xxx) for interface."
+              "   (EX: 169.250.25.26): ";
+    std::getline(std::cin, staticIpAddr, delimiter);
+    swIpChCfg.staticIpAddr= staticIpAddr ;
+    std::cout<<"   Default netmask of 255.255.255.252 will be applied!"<<std::endl;
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+     std::cout << std::endl << std::endl;
+     std::cout << "CALLBACK: "
+                 << "addSWIpChannelConfig Response"
+                 << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                 << ". ErrorCode: " << static_cast<int>(error)
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl ;
+                 if (error == telux::common::ErrorCode::SUCCESS) {
+                     std::cout << "\n SW IP channel is set up successfully \n";
+                 } else {
+                     std::cout << "\n SW IP channel is set up failed \n";
+                 }
+    };
+
+    retStat = networkSettingManager_->addSWIpChannelConfig(swIpChCfg, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::removeSWIpChannelConfig(std::vector<std::string> inputCommand) {
+    std::cout << "\n Remove SWIP Channel Config " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    string ifName {} ;
+
+    std::cout<<"   Please input logical IF(eg: mhi_swip0), Max Length - "
+             << MAX_IFACE_NAME_SIZE-1 <<": ";
+    setIfaceName(ifName);
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+    std::cout << std::endl << std::endl;
+    std::cout << "CALLBACK: "
+              << "removeSWIpChannelConfig Response"
+              << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(error)
+              << ", description: " << Utils::getErrorCodeAsString(error) << std::endl ;
+              if (error == telux::common::ErrorCode::SUCCESS) {
+                  std::cout << "\n Successfully deleted configuration parameters \n";
+              } else {
+                  std::cout << "\n Delete operation failed \n";
+              }
+    };
+
+    retStat = networkSettingManager_->removeSWIpChannelConfig(ifName, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::requestSWIpChannelConfig(std::vector<std::string> inputCommand) {
+    std::cout << "\nRequest SWIp Channel Config" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
+    auto respCb = [](const telux::data::net::SWIpChannelConfig& swIpChCfg,
+                     telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestSWIpChannelConfig Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            if (swIpChCfg.ifName.size() != 0 && swIpChCfg.staticIpAddr.size() != 0 ) {
+               std::cout<<"\n SW IP Channel Interface name : "<< swIpChCfg.ifName <<"\n";
+               std::cout<<"\n SW IP Channel Interface IP address:  : "<< swIpChCfg.staticIpAddr <<"\n";
+               std::cout<<"\n SW IP Channel Neighbor link local address : "<< swIpChCfg.neighLinkLocalAddr <<"\n";
+               std::cout<<"\n SW IP Channel Neighbor IP address:  : "<< swIpChCfg.neighIpAddr <<"\n";
+            } 
+            else {
+                std::cout<<" SW IP config parameters are not present "<<std::endl;
+            }
+        }   else {
+                std::cout<<"\n ERROR: Did not receive SW IP Channel config "<< std::endl;
+        }
+    };
+
+    retStat = networkSettingManager_->requestSWIpChannelConfig(respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::allowIpFamily(std::vector<std::string> inputCommand) {
+    std::cout << "\n Allow IP Family " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    bool allow = false;
+
+    int allowIP;
+    std::cout << "Enter (1-Allow IP/0-To Dsiallow IP) : \n";
+    std::cin >> allowIP;
+    Utils::validateInput(allowIP,{0,1});
+    if(allowIP == 1) {
+        allow = true;
+    }
+
+    telux::data::IpFamilyType ipFamilyType = static_cast<telux::data::IpFamilyType>((int)getIpFamilyTypeV4V6());
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "allowIpFamily Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = networkSettingManager_->allowIpFamily(allow, ipFamilyType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::addDHCPReservationRecord(std::vector<std::string> inputCommand) {
+    std::cout << "\n Add Prefix Delegation Config " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    telux::data::net::DHCPReservationInfo dhcpReserveInfo {};
+
+    int device_type = 0;
+    std::cout<<"Enter the device type(0-USB/1-Other LAN clients):   ";
+    std::cin >> device_type;
+    Utils::validateInput(device_type);
+
+    std::string clientDeviceName;
+    std::string clientMacAddr;
+    std::string clientReservedIp;
+    char delimiter = '\n';
+
+    if(device_type == 1) {
+        std::cout<<"Please input the MAC address :";
+        std::getline(std::cin, clientMacAddr, delimiter);
+    }
+
+    std::cout<<"\nPlease input the client reserved IP(xxx.xxx.xxx.xxx) : ";
+    std::getline(std::cin, clientReservedIp, delimiter);
+
+    if(device_type == 0){
+        std::cout<<" \nEnter device name USB client : "<< std::endl;
+        std::getline(std::cin, clientDeviceName, delimiter);
+    }
+
+    int enableReservationFlag;
+    bool enableReservation = false;
+    std::cout << "Enable/disable reservation for this client(1-Enable/0-Disable): ";
+    std::cin >> enableReservationFlag;
+    Utils::validateInput(enableReservationFlag, {0, 1});
+    if (enableReservationFlag) {
+        enableReservation = true;
+    }
+
+    dhcpReserveInfo.clientDeviceName = clientDeviceName;
+    dhcpReserveInfo.clientMacAddr = clientMacAddr;
+    dhcpReserveInfo.clientReservedIp = clientReservedIp;
+    dhcpReserveInfo.enable = enableReservation;
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "addDHCPReservRecord Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n DHCP Reservation Record added successfully \n";
+        } else {
+            std::cout << "\n Failed to add DHCP Reservation record \n";
+        }
+    };
+
+    retStat = networkSettingManager_->addDHCPReservationRecord(dhcpReserveInfo, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::editDHCPReservationRecord(std::vector<std::string> inputCommand) {
+    std::cout << "\n Edit DHCP Reservation Record " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    telux::data::net::DHCPReservationInfo dhcpReserveInfo {};
+
+    char delimiter = '\n';
+    std::string addrToEdit;
+    std::cout<< "Please input the client reserved IP(xxx.xxx.xxx.xxx) :";
+    std::getline(std::cin, addrToEdit, delimiter);
+
+    while(true){
+       int options;
+       std::cout<<"\nPlease enter the field to edit:  ";
+       std::cout<<"\n\t1. MAC Address\n\t2. IP Addr\n\t3. Device Name\n\t4. Enable/Disable\n\t:";
+       std::cin >> options;
+       Utils::validateInput(options, {1, 2, 3, 4});
+       std::string clientMacAddr;
+       std::string clientReservedIp;
+       std::string clientDeviceName;
+       int enableReservationFlag;
+       switch (options) {
+         case 1:
+             std::cout<<"Please input the MAC address :";
+             std::getline(std::cin, clientMacAddr, delimiter);
+             dhcpReserveInfo.clientMacAddr = clientMacAddr;
+             break;
+         case 2:
+             std::cout<<"\nPlease input the client reserved IP(xxx.xxx.xxx.xxx) :";
+             std::getline(std::cin, clientReservedIp, delimiter);
+             break;
+         case 3:
+             while(true) {
+                 std::cout<<"Please input the device name :";
+                 std::getline(std::cin, clientDeviceName, delimiter);
+                 dhcpReserveInfo.clientDeviceName = clientDeviceName;
+                 if(clientDeviceName.size() > 0){ //check if enter is blocked or not
+                     break;
+                 }
+                 else{
+                    std::cout<<"\nInvalid Device name entered"<<std::endl;
+                 }
+             }
+             break;
+         case 4:
+             std::cout<<"Enable/disable reservation for this client(1-Enable/0-Disable) :";
+             dhcpReserveInfo.enable = false;
+             std::cin >> enableReservationFlag;
+             Utils::validateInput(enableReservationFlag, {0, 1});
+             if (enableReservationFlag) {
+                 dhcpReserveInfo.enable = true;
+             }
+             break;
+         default:
+             std::cout<<"Invalid response \n" << options << std::endl;
+       }
+
+       int continueFlag = 0;
+       std::cout<<"Do you wish to Edit more fields(Enter-(0 to skipped/1-to continue):";
+       std::cin >> continueFlag;
+       Utils::validateInput(continueFlag, {0, 1});
+       if ( continueFlag == 0){
+          break;
+       }
+       else {
+          continue;
+       }
+    }
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "editDHCPReservRecord Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << std::endl;
+            std::cout << "DHCP  Reservation Record edited successfully"<< std::endl;
+        } else {
+            std::cout << "Failed to edit DHCP Reservation record." << std::endl;
+        }
+    };
+
+    retStat = networkSettingManager_->editDHCPReservationRecord(addrToEdit, dhcpReserveInfo, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::requestDHCPReservationRecords(std::vector<std::string> inputCommand) {
+    std::cout << "\n Request DHCP Reservation Records " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
+    auto respCb = [](const std::vector<telux::data::net::DHCPReservationInfo>& records,
+                     telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "requestDHCPReservationRecords Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            int numEntries = records.size();
+            if ( numEntries == 0 )  {
+              std::cout <<" No DHCP Reservation Records" << std::endl;
+            } else {
+                for (int i = 0;i < numEntries; i++){
+                 std::cout <<"\n Entry number : "<< i << std::endl;
+                 std::cout <<"MAC address of the client: "<< records[i].clientMacAddr << std::endl;
+                 std::cout <<"IP address of the client: "<< records[i].clientReservedIp << std::endl;
+                 std::cout <<"Device Name of the client: "<< records[i].clientDeviceName << std::endl;
+                 std::cout <<"DHCP Reservation enabled: " << records[i].enable <<std::endl;
+               }
+             }
+          }
+    };
+
+    retStat = networkSettingManager_->requestDHCPReservationRecords(respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::deleteDHCPReservationRecord(std::vector<std::string> inputCommand) {
+    std::cout << "\n Add Prefix Delegation Config " << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
+    char delimiter = '\n';
+    std::string addrToEdit;
+    std::cout<< "Please input the client reserved IP(xxx.xxx.xxx.xxx)  :";
+    std::getline(std::cin, addrToEdit, delimiter);
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "deleteDHCPReservationRecord Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << std::endl;
+            std::cout << "DHCP  Reservation Record deleted successfully"<< std::endl;
+        } else {
+            std::cout << "Failed to delete DHCP Reservation record." << std::endl;
+        }
+    };
+
+    retStat = networkSettingManager_->deleteDHCPReservationRecord(addrToEdit, respCb);
+    Utils::printStatus(retStat);
+}
+
+void NetworkSettingMenu::activateLAN(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    std::cout << "ActivateLAN Triggered \n";
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "activateLAN Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = networkSettingManager_->activateLAN(respCb);
+    Utils::printStatus(retStat);
+}
+
+int NetworkSettingMenu::getIpFamilyTypeV4V6() {
+    int ipFamilyType;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
+    std::cin >> ipFamilyType;
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6)});
+    return ipFamilyType;
+}
+
+bool NetworkSettingMenu::setIfaceName(std::string &interfaceName) {
+    std::string ifaceName;
+    char delimiter = '\n';
+
+    std::getline(std::cin, ifaceName, delimiter);
+
+    if(ifaceName.length() == 0 || ifaceName.length() >= MAX_IFACE_NAME_SIZE-1) {
+        std::cout<<"ERROR: Invalid Size, Supports only 1-16 char interface size\n";
+        return false;
+    } else {
+        //Special char check
+        if(Utils::validateCharString(ifaceName)) {
+            interfaceName = ifaceName;
+        }  else {
+            std::cout<<"\nERROR: special char found in interface name\n";
+            return false;
+        }
+    }
+    return true;
+}
+
 

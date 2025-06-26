@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file: Cv2xL2IdFilter.cpp
@@ -154,7 +160,7 @@ int main(int argc, char *argv[]) {
     if (parseOpts(argc, argv) < 0) {
         return EXIT_FAILURE;
     }
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
     int rc = Utils::setSupplementaryGroups(groups);
     if (rc == -1){
         cout << "Adding supplementary group failed!" << std::endl;

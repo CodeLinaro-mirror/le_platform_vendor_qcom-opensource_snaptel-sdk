@@ -75,4 +75,3 @@ endif (TELSDK_FEATURE_CONNECTION_SECURITY)
 if (TELSDK_FEATURE_SATCOM)
     add_subdirectory( ntn_test_app )
 endif (TELSDK_FEATURE_SATCOM)
-

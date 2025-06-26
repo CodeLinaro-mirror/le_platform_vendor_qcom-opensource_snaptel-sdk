@@ -427,5 +427,51 @@
             "optionalMinFreqPool1: integer, optional, Minimum EARFCN of pool 1, end user reponsiblity input legal value",
             "optionalMaxFreqPool1: integer, optional, Maxmum  EARFCN of pool 1, end user reponsiblity input legal value"
         ]
+    },
+    "sec": {
+        "calc" : {
+            "load": [
+                "telsdk_event_injector -f calc -e load sm2 <load> nist256 <load> nist384 <load> bp256 <load> bp384 <load>",
+                "load: integer, curve-wise absolute load. For example, a value of 1000 for sm2 means, 1000 sm2 type verification were completed."
+            ],
+            "capacity": [
+                "telsdk_event_injector -f calc -e capacity sm2 <capacity> nist256 <capacity> nist384 <capacity> bp256 <capacity> bp384 <capacity>",
+                "capacity: integer, curve-wise absolute capacity. For example, a value of 1000 for sm2 means, 1000 sm2 type verification can be completed."
+            ]
+        },
+        "ccs" : {
+            "ssr" : [
+                "telsdk_event_injector -f ccs -e ssr <serviceStatus>",
+                "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+            ],
+            "sec_report": [
+                "telsdk_event_injector -f ccs -e sec_report threat_score <threat_score> cell_id <cell_id> pid <pid_value>",
+                "threat_score:   integer, the higher the score higher the possibility of a compromised/malicious base station.The default range is 0 to 500.",
+                "cell_id:        integer, cell id of the compromised base station.",
+                "pid_value:      integer, Physical cell id of the compromised base station."
+            ]
+        },
+        "wcs" : {
+            "ssr" : [
+                "telsdk_event_injector -f wcs -e ssr <serviceStatus>",
+                "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+            ],
+            "sec_report": [
+                "telsdk_event_injector -f wcs -e sec_report ssid <wifiname> bssid <bssid>",
+                "ssid:       Network interface name of the AP.",
+                "bssid:      MAC address of the AP"
+            ],
+            "deauth_attack" : [
+                "telsdk_event_injector -f wcs -e deauth_attack deauth_reason <deauth_reason> ap_init_disconnect <disc_value> score <score>",
+                "deauth_reason: Reason code why disassociation or deauthentication occurred as specified by the IEEE 802.11 standard.",
+                "disc_value: True if the AP initiated the disconnection.",
+                "score: possibility that this is a deauthentication attack; range is 0 to 100."
+            ],
+            "is_trusted_ap" : [
+                "telsdk_event_injector -f wcs -e is_trusted_ap ssid <wifiname> bssid <bssid>",
+                "ssid:       Network interface name of the AP.",
+                "bssid:      MAC address of the AP"
+            ]
+        }
     }
 }

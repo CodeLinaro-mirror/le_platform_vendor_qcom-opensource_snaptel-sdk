@@ -22,3 +22,4 @@ simulation/protos/proto-src/*.cc
 simulation/protos/proto-src/*.h
 build/
 rootfs/
+tel.log

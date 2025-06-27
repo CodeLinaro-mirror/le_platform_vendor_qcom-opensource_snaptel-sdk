@@ -547,7 +547,7 @@ public:
 
    /**
     * Get 5G NR reference signal receive quality in dB.
-    * (Valid value range [-20, -3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (Valid value range [-43, 20] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
     *
     * @returns 5G NR rsrq.

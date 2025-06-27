@@ -507,6 +507,9 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                         cellInfo->mutable_gsm_cell_info()->mutable_gsm_signal_strength_info()->
                             set_gsm_bit_error_rate(requestedCell["gsmCellInfo"]\
                             ["gsmSignalStrengthInfo"]["gsmBitErrorRate"].asInt());
+                        cellInfo->mutable_gsm_cell_info()->mutable_gsm_signal_strength_info()->
+                            set_gsm_rssi(requestedCell["gsmCellInfo"]\
+                            ["gsmSignalStrengthInfo"]["gsmRssi"].asInt());
                         break;
                     }
                     case telStub::CellInfo_CellType_LTE: {
@@ -542,6 +545,9 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                         cellInfo->mutable_lte_cell_info()->mutable_lte_signal_strength_info()->
                             set_timing_advance(requestedCell["lteCellInfo"]\
                             ["lteSignalStrengthInfo"]["timingAdvance"].asInt());
+                        cellInfo->mutable_lte_cell_info()->mutable_lte_signal_strength_info()->
+                            set_lte_rssi(requestedCell["lteCellInfo"]\
+                            ["lteSignalStrengthInfo"]["lteRssi"].asInt());
                         break;
                     }
                     case telStub::CellInfo_CellType_WCDMA: {
@@ -572,6 +578,9 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                         cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                             set_rscp(requestedCell["wcdmaCellInfo"]\
                             ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
+                        cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                            set_rssi(requestedCell["wcdmaCellInfo"]\
+                            ["wcdmaSignalStrengthInfo"]["rssi"].asInt());
                         break;
                     }
                     case telStub::CellInfo_CellType_NR5G: {
@@ -634,6 +643,10 @@ JsonData TelUtil::readCellInfoListRespFromJsonFile(int phoneId,
                             mutable_nb1_ntn_signal_strength_info()->
                             set_rssnr(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
                             ["rssnr"].asInt());
+                        cellInfo->mutable_nb1_ntn_cell_info()->
+                            mutable_nb1_ntn_signal_strength_info()->
+                            set_rssi(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                            ["rssi"].asInt());
                         break;
                     }
                     case telStub::CellInfo_CellType_CDMA:
@@ -999,6 +1012,9 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
                     cellInfo->mutable_gsm_cell_info()->mutable_gsm_signal_strength_info()->
                         set_gsm_bit_error_rate(requestedCell["gsmCellInfo"]\
                         ["gsmSignalStrengthInfo"]["gsmBitErrorRate"].asInt());
+                    cellInfo->mutable_gsm_cell_info()->mutable_gsm_signal_strength_info()->
+                        set_gsm_rssi(requestedCell["gsmCellInfo"]\
+                        ["gsmSignalStrengthInfo"]["gsmRssi"].asInt());
                     break;
                 }
                 case telStub::CellInfo_CellType_LTE: {
@@ -1034,6 +1050,9 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
                     cellInfo->mutable_lte_cell_info()->mutable_lte_signal_strength_info()->
                         set_timing_advance(requestedCell["lteCellInfo"]\
                         ["lteSignalStrengthInfo"]["timingAdvance"].asInt());
+                    cellInfo->mutable_lte_cell_info()->mutable_lte_signal_strength_info()->
+                        set_lte_rssi(requestedCell["lteCellInfo"]\
+                        ["lteSignalStrengthInfo"]["lteRssi"].asInt());
                     break;
                 }
                 case telStub::CellInfo_CellType_WCDMA: {
@@ -1064,6 +1083,9 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
                     cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
                         set_rscp(requestedCell["wcdmaCellInfo"]\
                         ["wcdmaSignalStrengthInfo"]["rscp"].asInt());
+                    cellInfo->mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
+                        set_rssi(requestedCell["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["rssi"].asInt());
                     break;
                 }
                 case telStub::CellInfo_CellType_NR5G: {
@@ -1118,6 +1140,9 @@ telux::common::ErrorCode TelUtil::readCellInfoListEventFromJsonFile(int phoneId,
                     cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
                         set_rssnr(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
                         ["rssnr"].asInt());
+                    cellInfo->mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
+                        set_rssi(requestedCell["nb1NtnCellInfo"]["nb1NtnSignalStrengthInfo"]\
+                        ["rssi"].asInt());
                     break;
                 }
                 case telStub::CellInfo_CellType_CDMA:
@@ -2059,8 +2084,11 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int bitErrorRate = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rssi = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__," signalStrength: ", signalStrength," bitErrorRate: ",
-                    bitErrorRate);
+                    bitErrorRate," rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_GSM)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
@@ -2073,6 +2101,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["gsmSignalStrength"] = signalStrength;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]\
                     ["gsmBitErrorRate"] = bitErrorRate;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["gsmSignalStrengthInfo"]\
+                    ["gsmRssi"] = rssi;
             } else if(rat == "WCDMA") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -2086,15 +2116,18 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int rscp = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rssi = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength, " bitErrorRate: ",
-                    bitErrorRate, " ecio: ", ecio, " rscp: ", rscp);
+                    bitErrorRate, " ecio: ", ecio, " rscp: ", rscp, " rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_UMTS)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
-                        ["wcdmaSignalStrengthInfo"]["signalStrength"].asInt();
+                        ["wcdmaSignalStrengthInfo"]["rssi"].asInt();
                     notify = checkSignalStrengthCriteriaAndNotify(phoneId,
                         telStub::RadioTechnology::RADIO_TECH_UMTS,
-                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+                        telStub::SignalStrengthMeasurementType::RSSI, -oldValue, -rssi);
 
                     if (!notify) { // if any one field changes, need to notify,
                                   // skip next field check
@@ -2121,6 +2154,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["ecio"] = ecio;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
                     ["rscp"] = rscp;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["wcdmaSignalStrengthInfo"]\
+                    ["rssi"] = rssi;
             } else if(rat == "LTE") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -2140,16 +2175,19 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int timingAdvance = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rssi = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__," signalStrength: ", signalStrength," rsrp: ",
                     rsrp, " rsrq: ", rsrq," rssnr: ", rssnr, " cqi: ", cqi," timingAdvance: ",
-                    timingAdvance);
+                    timingAdvance," rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_LTE)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
-                        ["lteSignalStrengthInfo"]["lteSignalStrength"].asInt();
+                        ["lteSignalStrengthInfo"]["lteRssi"].asInt();
                     notify = checkSignalStrengthCriteriaAndNotify(phoneId,
                         telStub::RadioTechnology::RADIO_TECH_LTE,
-                        telStub::SignalStrengthMeasurementType::RSSI, oldValue, signalStrength);
+                        telStub::SignalStrengthMeasurementType::RSSI, -oldValue, -rssi);
                     if (!notify) { // if any one field changes, need to notify
                                    // skip next field check
                         oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
@@ -2187,6 +2225,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["lteCqi"] = cqi;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
                     ["timingAdvance"] = timingAdvance;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["lteSignalStrengthInfo"]\
+                    ["lteRssi"] = rssi;
             } else if(rat == "NR5G") {
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
@@ -2241,8 +2281,11 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                 token = telux::common::EventParserUtil::getNextToken(params[index],
                     DEFAULT_DELIMITER);
                 int rssnr = std::stoi(token);
+                token = telux::common::EventParserUtil::getNextToken(params[index],
+                    DEFAULT_DELIMITER);
+                int rssi = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__, " signalStrength ", signalStrength, " rsrp: ", rsrp,
-                    " rsrq: ", rsrq, " rssnr: ", rssnr);
+                    " rsrq: ", rsrq, " rssnr: ", rssnr, " rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_NB1_NTN)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]\
@@ -2283,6 +2326,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(std::vector<std:
                     ["rsrq"] = rsrq;
                 rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
                     ["rssnr"] = rssnr;
+                rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]["nb1NtnSignalStrengthInfo"]\
+                    ["rssi"] = rssi;
             } else {
                 LOG(ERROR, " Invalid or deprecated RAT");
             }
@@ -2367,10 +2412,12 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                     int signalStrength = std::stoi(token);
                     token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int bitErrorRate = std::stoi(token);
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
 
                     LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " lac:", lac, " cid:",
                         cid, " arfcn:", arfcn, " bsic:", bsic, " signalStrength:", signalStrength
-                        , " bitErrorRate:", bitErrorRate);
+                        , " bitErrorRate:", bitErrorRate, " rssi:", rssi);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["gsmCellInfo"]\
                         ["gsmCellIdentity"]["mcc"] = mcc;
@@ -2388,7 +2435,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                         ["gsmSignalStrengthInfo"]["gsmSignalStrength"] = signalStrength;
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["gsmCellInfo"]\
                         ["gsmSignalStrengthInfo"]["gsmBitErrorRate"] = bitErrorRate;
-
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["gsmCellInfo"]\
+                        ["gsmSignalStrengthInfo"]["gsmRssi"] = rssi;
                     break;
                 }
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_WCDMA:
@@ -2411,10 +2459,12 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                     int ecio = std::stoi(token);
                     token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int rscp = std::stoi(token);
-
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
                     LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " lac:", lac, " cid:",
                         cid, " psc:", psc, " uarfcn:", uarfcn, " signalStrength:", signalStrength
-                        , " bitErrorRate:", bitErrorRate, " ecio:", ecio, "rscp:", rscp);
+                        , " bitErrorRate:", bitErrorRate, " ecio:", ecio, "rscp:", rscp
+                        , "rssi:", rssi);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
                         ["wcdmaCellIdentity"]["mcc"] = mcc;
@@ -2436,7 +2486,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                         ["wcdmaSignalStrengthInfo"]["ecio"] = ecio;
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
                         ["wcdmaSignalStrengthInfo"]["rscp"] = rscp;
-
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["wcdmaCellInfo"]\
+                        ["wcdmaSignalStrengthInfo"]["rssi"] = rssi;
                     break;
                 }
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_LTE:
@@ -2463,11 +2514,12 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                     int lteCqi = std::stoi(token);
                     token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int timingAdvance = std::stoi(token);
-
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
                     LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " ci:", ci, " pci:",
                         pci, " tac:", tac, " earfcn:", earfcn, " signalStrength:", signalStrength
                         , "lteRsrp:", lteRsrp, "lteRsrq:", lteRsrq, "lteRssnr:", lteRssnr
-                        , "lteCqi:", lteCqi, "timingAdvance:", timingAdvance);
+                        , "lteCqi:", lteCqi, "timingAdvance:", timingAdvance, "rssi:", rssi);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["lteCellInfo"]\
                         ["lteCellIdentity"]["mcc"] = mcc;
@@ -2493,7 +2545,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                         ["lteSignalStrengthInfo"]["lteCqi"] = lteCqi;
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["lteCellInfo"]\
                         ["lteSignalStrengthInfo"]["timingAdvance"] = timingAdvance;
-
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["lteCellInfo"]\
+                        ["lteSignalStrengthInfo"]["lteRssi"] = rssi;
                     break;
                 }
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_NR5G:
@@ -2558,10 +2611,11 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                     int rsrq = std::stoi(token);
                     token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int rssnr = std::stoi(token);
-
+                    token = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
                     LOG(DEBUG, __FUNCTION__," mcc:", mcc," mnc:", mnc, " ci:", ci, " tac:", tac,
                         " earfcn:", earfcn, " signalStrength:", signalStrength
-                        , "rsrp:", rsrp, "rsrq:", rsrq, "rssnr:", rssnr);
+                        , "rsrp:", rsrp, "rsrq:", rsrq, "rssnr:", rssnr, "rssi:", rssi);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
                         ["nb1NtnCellIdentity"]["mcc"] = mcc;
@@ -2581,6 +2635,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(std::vector<std::s
                         ["nb1NtnSignalStrengthInfo"]["rsrq"] = rsrq;
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
                         ["nb1NtnSignalStrengthInfo"]["rssnr"] = rssnr;
+                    rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i-1]["nb1NtnCellInfo"]\
+                        ["nb1NtnSignalStrengthInfo"]["rssi"] = rssi;
                     break;
                  }
                 case ::telStub::CellInfo_CellType::CellInfo_CellType_CDMA:

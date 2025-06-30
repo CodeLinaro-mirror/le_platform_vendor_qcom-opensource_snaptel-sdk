@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -38,8 +9,8 @@
  *
  */
 
-#ifndef WLANDEFINES_HPP
-#define WLANDEFINES_HPP
+#ifndef TELUX_WLAN_WLANDEFINES_HPP
+#define TELUX_WLAN_WLANDEFINES_HPP
 
 #include <string>
 #include <vector>
@@ -57,6 +28,7 @@ namespace wlan {
 enum class BandType {
     BAND_5GHZ   = 1,
     BAND_2GHZ   = 2,
+    BAND_6GHZ   = 3,
 };
 
 /**
@@ -100,10 +72,22 @@ enum class StaInterfaceStatus {
 };
 
 /**
+ * Station Connection Status
+ */
+enum class StaConnectionStatus {
+    UNKNOWN              = 0,           /**< Station connection status is unknown              */
+    SUCCESS              = 1,           /**< Station connection attempt was successful         */
+    INCORRECT_PSK        = 2,           /**< Station connection attempt failed with incorrect
+                                             password/passkey */
+    AP_NOT_FOUND         = 3,           /**< Station connection attempt failed with AP not in
+                                             range */
+};
+
+/**
  * AP Info - captures ap type (private/guest)
  */
 struct ApInfo {
-	BandType        apRadio;            /**< Radio type (2.4/5.0 GHz) */
+    BandType        apRadio;            /**< Radio type (2.4/5.0/6.0 GHz) */
     ApType          apType;             /**< Ap type (private/guest) */
 };
 
@@ -130,12 +114,13 @@ struct ApStatus {
  * Station Status
  */
 struct StaStatus {
-    Id                  id;              /**< Station Id                       */
-    std::string         name;            /**< Network interface name           */
-    std::string         ipv4Address;     /**< Public IP V4 address             */
-    std::string         ipv6Address;     /**< Public IP V6 address             */
-    std::string         macAddress;      /**< MAC address                      */
-    StaInterfaceStatus  status;          /**< Interface status                 */
+    Id                  id;               /**< Station Id                       */
+    std::string         name;             /**< Network interface name           */
+    std::string         ipv4Address;      /**< Public IP V4 address             */
+    std::string         ipv6Address;      /**< Public IP V6 address             */
+    std::string         macAddress;       /**< MAC address                      */
+    StaInterfaceStatus  status;           /**< Interface status                 */
+    StaConnectionStatus connectionStatus; /**< Station connection status        */
 };
 
 /**
@@ -173,4 +158,4 @@ enum class ServiceOperation {
 }
 }
 
-#endif  // WLANDEFINES_HPP
+#endif // TELUX_WLAN_WLANDEFINES_HPP

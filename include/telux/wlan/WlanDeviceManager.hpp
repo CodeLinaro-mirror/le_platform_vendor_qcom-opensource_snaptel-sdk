@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -98,7 +69,7 @@ struct InterfaceStatus {
  * Wlan Regulatory Setting
  */
 struct RegulatoryParams {
-    std::string         country;     /**< Country code according to ISO 3166 standard             */
+    std::string         country;     /**< Country code according to ISO 3166 alpha-2 standard     */
     float               opChannel;   /**< Operating channel according to IEEE 802.11 Standards    */
     std::vector<float>  opClass;     /**< Operating class according to IEEE 802.11 Standards      */
     uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts
@@ -178,10 +149,10 @@ class IWlanDeviceManager {
 
     /**
      * Request Wlan configuration: Returns the configuration that was set using
-     * @ref telus::wlan::IWlanDeviceManager::setMode.
-     * This might differ from what configuration is has actually been enabled in the system, for
+     * @ref telux::wlan::IWlanDeviceManager::setMode.
+     * This might differ from the configuration that is actually enabled in the system, for
      * instance, when the hardware cannot fully support the configuration that was set.
-     * To get the status of current configuration an Wlan enablement,
+     * To get the status of the current configuration on Wlan enablement,
      * @ref telux::wlan::IWlanDeviceManager::getStatus should be used.
      *
      * @param [in] numAp                Num of configured APs
@@ -218,7 +189,7 @@ class IWlanDeviceManager {
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_DEVICE_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] country                 Active country code according to ISO 3166 standard
+     * @param [in] country              Active country code according to ISO 3166 alpha-2 standard
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
@@ -228,6 +199,10 @@ class IWlanDeviceManager {
     virtual telux::common::ErrorCode setActiveCountry(std::string country) = 0;
     /**
      * Request Regulatory Parameters
+     *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
      *
      * @param [out] regulatoryParams    Current Regulatory Settings @ref RegulatoryParams.
      *
@@ -240,10 +215,20 @@ class IWlanDeviceManager {
 
     /**
      * Set Transmit Power
-     * Immediately changes WLAN transmit power. The setting will not be persistent across power
-     * cycles. To restore default power associated with country set by
-     * telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or wpa_supplicant daemons
-     * need to be restarted via telux::wlan::IApInterfaceManager::manageApService or
+     *
+     * Immediately changes WLAN transmit power for the current session. This setting is not
+     * persistent across power cycles or service restarts.
+     *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
+     *
+     * This requirement exists because the underlying driver or firmware applies transmit
+     * power settings only when the interface is fully initialized and actively handling traffic.
+     *
+     * To restore the default transmit power as defined by the regulatory domain associated with
+     * the active country set by telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or
+     * wpa_supplicant daemons need to be restarted via telux::wlan::IApInterfaceManager::manageApService or
      * telux::wlan::IStaInterfaceManager::manageStaService
      *
      * @param [in] txPower              Transmit Power to be set in mutiple of 100 milliwatts.
@@ -261,6 +246,13 @@ class IWlanDeviceManager {
     virtual telux::common::ErrorCode setTxPower(uint32_t txPowerMw) = 0;
     /**
      * Request Transmit Power
+     *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
+     *
+     * This restriction exists because the driver or firmware provides transmit power information
+     * only when an interface is fully initialized and actively transmitting or receiving data.
      *
      * @param [out] txPowerMw           Current Transmit Power in mutiple of 100 milliwatts.
      *

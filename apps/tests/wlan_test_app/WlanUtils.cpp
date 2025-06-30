@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -39,6 +10,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include "WlanUtils.hpp"
 
 std::string WlanUtils::getWlanDeviceName(telux::wlan::HwDeviceType device) {
@@ -101,7 +73,7 @@ std::string WlanUtils::getWlanId(telux::wlan::Id id) {
    return retStr;
 }
 
-std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaInterfaceStatus status) {
+std::string WlanUtils::getStaInterfaceStatus(telux::wlan::StaInterfaceStatus status) {
    std::string retStr = "";
    switch(status) {
       case telux::wlan::StaInterfaceStatus::UNKNOWN:
@@ -128,6 +100,27 @@ std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaInterfaceStatus st
    return retStr;
 }
 
+std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaConnectionStatus status) {
+   std::string retStr = "UNKNOWN";
+   switch(status) {
+      case telux::wlan::StaConnectionStatus::UNKNOWN:
+         retStr = "UNKNOWN";
+         break;
+      case telux::wlan::StaConnectionStatus::SUCCESS:
+         retStr = "SUCCESS";
+         break;
+      case telux::wlan::StaConnectionStatus::INCORRECT_PSK:
+         retStr = "INCORRECT_PSK";
+         break;
+      case telux::wlan::StaConnectionStatus::AP_NOT_FOUND:
+         retStr = "AP_NOT_FOUND";
+         break;
+      default:
+         break;
+   }
+   return retStr;
+}
+
 std::string WlanUtils::apAccessToString(telux::wlan::ApInterworking interworking) {
    std::string retString = "";
    switch(interworking) {
@@ -143,7 +136,7 @@ std::string WlanUtils::apAccessToString(telux::wlan::ApInterworking interworking
    return retString;
 }
 
-std::string WlanUtils::apRadioTypeToString(telux::wlan::BandType radio) {
+std::string WlanUtils::RadioTypeToString(telux::wlan::BandType radio) {
    std::string retString = "";
    switch(radio) {
       case telux::wlan::BandType::BAND_5GHZ:
@@ -151,6 +144,9 @@ std::string WlanUtils::apRadioTypeToString(telux::wlan::BandType radio) {
          break;
       case telux::wlan::BandType::BAND_2GHZ:
          retString = "2.4 GHZ";
+         break;
+      case telux::wlan::BandType::BAND_6GHZ:
+         retString = "6 GHZ";
          break;
       default:
          break;
@@ -284,21 +280,6 @@ telux::wlan::ApType WlanUtils::convertIntToApType(int type) {
    return retType;
 }
 
-telux::wlan::BandType WlanUtils::convertIntToApBand(int band) {
-   telux::wlan::BandType retBand = telux::wlan::BandType::BAND_5GHZ;
-   switch(band) {
-      case 1:
-         retBand = telux::wlan::BandType::BAND_5GHZ;
-         break;
-      case 2:
-         retBand = telux::wlan::BandType::BAND_2GHZ;
-         break;
-      default:
-         break;
-   }
-   return retBand;
-}
-
 telux::wlan::ApInterworking WlanUtils::convertIntToInterworking(int interworking) {
    telux::wlan::ApInterworking retInterworking = telux::wlan::ApInterworking::INTERNET_ACCESS;
    switch(interworking) {
@@ -413,7 +394,7 @@ void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus) {
            for(auto& netInfo:ap.network) {
                std::cout << "SSID               : " << netInfo.ssid << std::endl;
                std::cout << "Radio Type         : "
-                  << apRadioTypeToString(netInfo.info.apRadio) << std::endl;
+                  << RadioTypeToString(netInfo.info.apRadio) << std::endl;
                std::cout << "AP Type            : "
                   << WlanUtils::getWlanApType(netInfo.info.apType) << std::endl;
            }
@@ -434,12 +415,43 @@ void WlanUtils::printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus) {
            std::cout << "IPv4 Addr         : " << sta.ipv4Address << std::endl;
            std::cout << "IPv6 Addr         : " << sta.ipv6Address << std::endl;
            std::cout << "MAC Addr          : " << sta.macAddress  << std::endl;
-           std::cout << "Status            : "
-                     << WlanUtils::getStaConnectionStatus(sta.status) << std::endl;
+           std::cout << "Interface Status  : "
+                     << WlanUtils::getStaInterfaceStatus(sta.status) << std::endl;
+           std::cout << "Connection status : "
+                     << WlanUtils::getStaConnectionStatus(sta.connectionStatus) << std::endl;
        }
        std::cout << std::endl;
    } else {
        std::cout << "No Station is currently active" << std::endl;
+   }
+}
+
+void WlanUtils::printScanResult(const telux::wlan::StaScanResult &staScanResult) {
+    std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "Id                                  : "
+              << WlanUtils::getWlanId(staScanResult.staId) << std::endl;
+    std::cout << "Batch index                         : "
+              << static_cast<int>(staScanResult.batchIndex) << std::endl;
+    std::cout << "Is last indication of the sequence? : "
+              << ((staScanResult.isScanComplete)? "Yes":"No") << std::endl;
+    if(staScanResult.externalApList.size() > 0) {
+       std::cout << "List of External APs:" << std::endl;
+       std::cout << std::left << std::setw(18) << "\nBSSID "
+       << std::setw(10) << " | Frequency "
+       << std::setw(10) << " | Signal Level "
+       << std::setw(23) << " | Flags "
+       << " | SSID\n" << std::endl;
+
+      for(auto& externalAp:staScanResult.externalApList) {
+         std::cout << std::left << std::setw(20) << externalAp.bssid
+         << std::setw(10) << RadioTypeToString(externalAp.band)
+         << std::setw(10) << externalAp.signalStrength
+         << std::setw(30) << externalAp.securityFlags
+         << externalAp.ssid << std::endl;
+     }
+       std::cout << std::endl;
+   } else {
+       std::cout << "No External APs were found" << std::endl;
    }
 }
 
@@ -477,13 +489,32 @@ void WlanUtils::printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoC
              << ((ElementInfoConfig.esr)? "Yes":"No") << std::endl;
    std::cout << "    Unauthenticated emergency service accessible: "
              << ((ElementInfoConfig.uesa)? "Yes":"No") << std::endl;
-   std::cout << "    Venue group: " << ElementInfoConfig.venueGroup << std::endl;
-   std::cout << "    Venue type: " << ElementInfoConfig.venueType << std::endl;
+   std::cout << "    Venue group: " << static_cast<int>(ElementInfoConfig.venueGroup) << std::endl;
+   std::cout << "    Venue type: " << static_cast<int>(ElementInfoConfig.venueType) << std::endl;
    std::cout << "    Homogeneous ESS identifier: " << ElementInfoConfig.hessid << std::endl;
    std::cout << "    Vendor elements for Beacon and Probe Response frames: "
              << ElementInfoConfig.vendorElements << std::endl;
    std::cout << "    Vendor elements for (Re)Association Response frames: "
              << ElementInfoConfig.assocRespElements << std::endl;
+}
+
+void WlanUtils::printNetworkConfigs(
+   std::vector<telux::wlan::StaNetworkConfigInfo> networkConfigsInfo) {
+   if(networkConfigsInfo.size() > 0) {
+       std::cout << "List of saved network configs:" << std::endl;
+       for(auto& networkConfig:networkConfigsInfo) {
+           std::cout << "--------------------------------------------" << std::endl;
+           std::cout << "NetworkId           : " << networkConfig.networkId << std::endl;
+           std::cout << "SSID                : " << networkConfig.ssid << std::endl;
+           std::cout << "BSSID               : " << networkConfig.bssid << std::endl;
+           std::cout << "Radio Type          : "
+                     << RadioTypeToString(networkConfig.band) << std::endl;
+           std::cout << "Priority            : " << networkConfig.priority << std::endl;
+       }
+       std::cout << std::endl;
+   } else {
+       std::cout << "No Saved network configs were found" << std::endl;
+   }
 }
 
 std::string WlanUtils::apElementInfoAccessTypeToString(telux::wlan::NetAccessType accessType) {

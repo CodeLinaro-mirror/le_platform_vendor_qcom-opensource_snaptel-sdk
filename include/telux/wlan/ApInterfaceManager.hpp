@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -214,7 +185,7 @@ class IApInterfaceManager {
  public:
     /**
      * Set Access Point config: Used to fully configure access points including venue type,
-     * radio type (2.4/5 GHz), private/guest network and all other related settings.
+     * radio type (2.4/5/6 GHz), private/guest network and all other related settings.
      * Configurations will take effect after hostapd service is restarted by calling
      * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
@@ -274,6 +245,14 @@ class IApInterfaceManager {
     /**
      * Configure Element Info: Used to change element info configurations of selected network.
      *
+     * A successful response from this API indicates only that the input configuration has been
+     * stored.  It does not validate the correctness or compliance of the provided values with
+     * IEEE 802.11 specifications.
+     *
+     * The caller is responsible for ensuring that the values provided in
+     * @ref telux::wlan::ApElementInfoConfig comply with applicable constraints and
+     * interdependencies as defined in the IEEE 802.11 standard.
+     *
      * @param [in] apId            AP identifier to enable element info on. @ref telux::wlan::Id
      * @param [in] config          Element Info configurations.
      *
@@ -302,6 +281,12 @@ class IApInterfaceManager {
 
     /**
      * Request Access Point Configurations
+     *
+     * If @ref telux::wlan::IApInterfaceManager::setConfig was previously used to update the
+     * access point configuration, it is required to wait for the
+     * @ref telux::wlan::IApConfigListener::onApConfigChanged notification before calling
+     * getConfig(). This ensures that the configuration changes have been fully applied
+     * and synchronized internally.
      *
      * @param [in] config         Vector of AP configurations @ref telux::wlan::ApConfig as set by
      *                            @ref telux::wlan::IApInterfaceManager::setConfig

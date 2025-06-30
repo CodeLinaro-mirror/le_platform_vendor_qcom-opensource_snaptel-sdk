@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "WlanApInterfaceManagerMenu.hpp"
@@ -139,16 +110,20 @@ void WlanApInterfaceManagerMenu::setConfig(std::vector<std::string> userInput) {
     config.venue.group = venue;
 
     int userResp = 0;
-    std::cout << "Ap configured for 2.4 GHz band? (0-YES, 1-NO): ";
+    std::cout << "Enter Ap Band type \
+                    (1-2.4GHz, 2-5 GHz, 3-6GHz): ";
     std::cin >> userResp;
-    WlanUtils::validateInput(userResp, {0, 1});
+    WlanUtils::validateInput(userResp, {1, 2, 3});
     std::cout << std::endl;
     telux::wlan::ApNetConfig apNetConfig = {};
-    if(userResp == 0) {
+    if(userResp == 1) {
         apNetConfig.info.apRadio = telux::wlan::BandType::BAND_2GHZ;
-    } else {
+    } else if (userResp == 2) {
         std::cout << "Ap configured for 5 GHz band" << std::endl;
         apNetConfig.info.apRadio = telux::wlan::BandType::BAND_5GHZ;
+    } else {
+        std::cout << "Ap configured for 6 GHz band" << std::endl;
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_6GHZ;
     }
     populateApConfigNet(apNetConfig);
     config.network.push_back(apNetConfig);
@@ -239,7 +214,7 @@ void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
                 std::cout << "AP Type: "
                     << WlanUtils::getWlanApType(netCfg.info.apType) << std::endl;
                 std::cout << "AP Radio: "
-                    << WlanUtils::apRadioTypeToString(netCfg.info.apRadio) << std::endl;
+                    << WlanUtils::RadioTypeToString(netCfg.info.apRadio) << std::endl;
                 std::cout << "AP SSID: " << netCfg.ssid << std::endl;
                 std::cout << "AP is Visible: "
                     << ((netCfg.isVisible)? "Yes":"No") << std::endl;
@@ -318,9 +293,11 @@ void WlanApInterfaceManagerMenu::onApBandChanged(telux::wlan::BandType band) {
    PRINT_NOTIFICATION << " ** Wlan onApOperBandChanged **\n";
 
    if(band == telux::wlan::BandType::BAND_2GHZ) {
-       std::cout << "AP has switched to 2G band" << std::endl;
-   } else {
+       std::cout << "AP has switched to 2.4G band" << std::endl;
+   } else if(band == telux::wlan::BandType::BAND_5GHZ) {
        std::cout << "AP has switched to 5G band" << std::endl;
+   } else {
+       std::cout << "AP has switched to 6G band" << std::endl;
    }
 }
 
@@ -571,18 +548,11 @@ void WlanApInterfaceManagerMenu::populateApElementInfo(
             ElementInfoConfig.venueType = input;
         }
 
-        userPrompt = 0;
-        std::cout << "Do you want to enter Homogeneous ESS identifier (0-NO, 1-YES)?: ";
-        std::cin >> userPrompt;
-        std::cout << std::endl;
-        WlanUtils::validateInput(userPrompt, {0, 1});
         std::string inStr = "";
-        if(userPrompt) {
-            std::cout << "Enter input Homogeneous ESS identifier (without quotes): ";
-            std::cin >> inStr;
-            std::cout << std::endl;
-            ElementInfoConfig.hessid = inStr;
-        }
+        std::cout << "Enter input Homogeneous ESS identifier (without quotes): ";
+        std::cin >> inStr;
+        std::cout << std::endl;
+        ElementInfoConfig.hessid = inStr;
 
         inStr = "";
         std::cout << "Enter additional vendor elements for Beacon and Probe response ";

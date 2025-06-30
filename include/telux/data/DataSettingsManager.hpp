@@ -99,6 +99,40 @@ struct V6ExtRouterModeConfig{
 };
 
 /**
+ * Data structure for adding LAN configuration.
+ */
+struct LANv4Config {
+    std::string gwIp;          /**<   IP address of the gateway. */
+    DhcpConfig dhcpConfig;     /**<   DHCP configuration. Used only when DHCP is enabled. */
+    uint32_t netmask;          /**<   Subnet mask (0-32). */
+    uint8_t enableDhcp;        /**<   Whether to enable DHCP; boolean value (0 or 1). */
+};
+
+struct LANv6Config {
+    std::string  addr;         /**<   IPv6 address in standard notation. */
+    uint8_t  prefixLen;        /**<   IPv6 prefix length (0-128). */
+};
+
+struct LanConfig {
+    LANv4Config lanV4Config;
+    LANv6Config lanV6Config;
+};
+
+/** Data type for ETH PDU configuration. */
+struct EthNetworkConfig
+{
+    uint16_t vlanStart;       /**< Starting VLAN ID for ETH PDU configuration. */
+    uint16_t vlanEnd;         /**< Ending VLAN ID for ETH PDU configuration. */
+};
+
+/** Data type for network configuration. */
+struct NwParams
+{
+    IpAddrInfo ipAddrInfo;      /**< IPv4/IPv6 addr configuration. */
+    EthNetworkConfig ethConf;  /**< Eth PDU configuration. */
+};
+
+/**
  * Config for coex channel avoidance
  */
 struct CoExChannelAvoidanceConfig{
@@ -200,6 +234,36 @@ using RequestPrefixDelegationConfigResponseCb =
  */
 using RequestIPv6ExtRouterModeResponseCb = std::function<void(
     const V6ExtRouterModeConfig config, telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref getLANConfig API.
+ *
+ *  @param [in] LanConfig      LAN Config info
+ *  @param [in] error          Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestLANConfigCb = std::function<void(const LanConfig &lanConfig,
+    telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref getNetworkConfiguration API.
+ *
+ *  @param [in] NwParams       union to get v4/v6 NW configuration
+ *  @param [in] error          Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestNetworkConfigurationCb = std::function<void(const NwParams &nwParams,
+    telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref requestDhcpv6DNSConfig API.
+ *
+ *  @param [in] DhcpConfigState   IPv6 DHCP DNS Config State
+ *  @param [in] error             Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestDhcpv6DNSConfigurationCb = std::function<void(const DhcpConfigState
+    &dhcpConfigState, telux::common::ErrorCode error)>;
 
 /**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
@@ -718,6 +782,89 @@ public:
      */
     virtual telux::common::Status requestAutoConnect(
         const AutoConnectProfile &profile, bool &enable) = 0;
+
+    /**
+     * Set the LAN Config information.
+     * This is persistent across object and reboot lifetimes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
+     *
+     * @param [in] ipFamilyType   IPType v4/v6
+     * @param [in] lanConfig      LanConfig info to set the LAN configuration
+     * @param [in] callback       optional callback to set the LAN Configuration
+     *
+     * @returns Status of setLANConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setLANConfig(IpFamilyType ipFamilyType, LanConfig lanConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+     /**
+     * Request the current LAN Config information.
+     *
+     * @param [in] ipFamilyType   IPType v4/v6
+     * @param [in] callback       Asynchronous callback to get the response for requestLANConfig
+     *
+     * @returns Status of requestLANConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+
+     */
+    virtual telux::common::Status requestLANConfig(IpFamilyType ipFamilyType,
+        RequestLANConfigCb callback) = 0;
+
+    /**
+    * Request the current IPv4/IPv6/ETH PDU Network Config information.
+    *
+    * @param [in] ipFamilyType                    IPType v4/v6
+    * @param [in] requestNetworkConfigurationCb   Asynchronous callback to get the response
+    *                                             for requestNetworkConfiguration
+    *
+    * @returns Status of requestNetworkConfiguration i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+    virtual telux::common::Status requestNetworkConfiguration(const IpFamilyType ipFamilyType,
+        RequestNetworkConfigurationCb requestNetworkConfigurationCb) = 0;
+
+    /**
+     * Set the IPv6 DHCP DNS Config information.
+     * This is persistent across object and reboot lifetimes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
+     *
+     * @param [in] DhcpConfigState  DhcpConfigState info to set the IPv6 DHCP DNS Config
+     * @param [in] callback         optional callback to set the IPv6 DHCP DNS Configuration
+     *
+     * @returns Status of setDhcpv6DNSConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setDhcpv6DNSConfig(const DhcpConfigState dhcpConfigState,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+    * Request the current IPv6 DHCP DNS config information.
+    *
+    * @param [in] callback   Asynchronous callback to get the response
+    *                        for requestDhcpv6DNSConfig.
+    *
+    * @returns Status of requestDhcpv6DNSConfig i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+    virtual telux::common::Status requestDhcpv6DNSConfig(
+        RequestDhcpv6DNSConfigurationCb callback) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

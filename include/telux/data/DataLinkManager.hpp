@@ -1,6 +1,6 @@
-/*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -194,7 +194,9 @@ public:
     virtual telux::common::Status setPeerModeChangeRequestStatus(LinkModeChangeStatus status) = 0;
 
     /**
-     * Bring up or bring down the ethernet link.
+     * Bring up or bring down the ethernet data link for MAC-to-MAC connections on the eth0
+     * interface.
+     *
      * The Ethernet data link can be brought up by the client once the peer entity is ready to
      * establish the ethernet data connection. To prevent packet loss, it's recommended to set the
      * ethernet data link state to UP after peer entity initialization.
@@ -211,6 +213,25 @@ public:
      *                                              error code
      */
     virtual telux::common::ErrorCode setEthDataLinkState(LinkState ethLinkState) = 0;
+
+    /**
+     * Retrieves the current state of the ethernet data link for MAC-to-MAC connections on the eth0
+     * interface.
+     *
+     * This API allows the clients to query the current state of the ethernet data link,
+     * which can be either UP, DOWN or UNKNOWN. The state of the ethernet data link is
+     * determined by the platform and is influenced by various factors such as
+     * network connectivity, peer availability, and system configuration.
+     *
+     * On platforms with access control enabled, the caller needs to have the
+     * TELUX_DATA_LINK_INFO permission to successfully invoke this API.
+     *
+     * @param [out] ethLinkState     current state of the ethernet data link.
+     *
+     * @return ErrorCode of getEthDataLinkState, i.e., OPERATION_NOT_ALLOWED/SUCCESS or applicable
+     *                                              error code
+     */
+    virtual telux::common::ErrorCode getEthDataLinkState(LinkState &ethLinkState) = 0;
 
     /**
      * Registers with the Data Link Manager as a listener for service statuses and other events.

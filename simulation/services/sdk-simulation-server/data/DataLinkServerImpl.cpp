@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -264,6 +264,53 @@ grpc::Status DataLinkServerImpl::SetEthDataLinkState(ServerContext* context,
     anyResponse.mutable_any()->PackFrom(indication);
     clientEvent_.updateEventQueue(anyResponse);
 
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+
+    return grpc::Status::OK;
+}
+
+
+grpc::Status DataLinkServerImpl::GetEthDataLinkState(ServerContext* context,
+    const google::protobuf::Empty* request,
+    dataStub::GetEthDataLinkStateReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string subsystem = "IDataLinkManager";
+    std::string method = "getEthDataLinkState";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(DATA_LINK_MANAGER_API_JSON, DATA_LINK_MANAGER_STATE_JSON,
+                                  subsystem, method, data);
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Failed to read JSON data");
+        response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+        return grpc::Status::OK;
+    }
+
+    auto &ethConfig = data.stateRootObj[subsystem]["eth0Config"];
+    if (!ethConfig.isMember("ethLinkState")) {
+        LOG(ERROR, __FUNCTION__, "Missing ethLinkState in JSON");
+        response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+        return grpc::Status::OK;
+    }
+
+    std::string linkStateStr = ethConfig["ethLinkState"].asString();
+    dataStub::LinkStateEnum_LinkState linkState;
+
+    if (linkStateStr == "UP") {
+        linkState = dataStub::LinkStateEnum_LinkState_UP;
+    } else if (linkStateStr == "DOWN") {
+        linkState = dataStub::LinkStateEnum_LinkState_DOWN;
+    } else {
+        linkState = dataStub::LinkStateEnum_LinkState_UNKNOWN;
+        LOG(ERROR, __FUNCTION__, "Invalid ethLinkState value in JSON: ", linkStateStr);
+        response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    }
+    LOG(DEBUG,__FUNCTION__,"linkState: ",linkState);
+    response->mutable_eth_datalink_state()->set_link_state(linkState);
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
 
     return grpc::Status::OK;

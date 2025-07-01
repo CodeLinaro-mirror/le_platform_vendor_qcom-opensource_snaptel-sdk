@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -22,6 +22,7 @@ extern "C" {
 using namespace std;
 
 #define PRINT_NOTIFICATION std::cout << "\n\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_LINK_STATE std::cout << "\n\033[1;47;30mLink State is: \033[0m"
 
 DataLinkMenu::DataLinkMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -66,10 +67,14 @@ bool DataLinkMenu::init() {
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
             "set_eth_datalink", {},
             std::bind(&DataLinkMenu::setEthDataLink, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getEthDataLink =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8",
+            "get_eth_datalink", {},
+            std::bind(&DataLinkMenu::getEthDataLink, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getEthCapability,
             setPeerEthCapability, setPeerModeChangeRequestStatus, registerListener,
-            deregisterListener, setLocalEthOperatingMode, setEthDataLink};
+            deregisterListener, setLocalEthOperatingMode, setEthDataLink, getEthDataLink};
         addCommands(commandsList);
     }
 
@@ -187,6 +192,25 @@ void DataLinkMenu::setPeerEthCapability(std::vector<std::string> inputCommand) {
         return;
     }
 
+}
+
+void DataLinkMenu::getEthDataLink(std::vector<std::string> inputCommand) {
+    LinkState state;
+    telux::common::ErrorCode errCode = telux::common::ErrorCode::GENERIC_FAILURE;
+
+    errCode = dataLinkManager_->getEthDataLinkState(state);
+
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << " *** ERROR - Failed to get eth data link" << std::endl;
+    }
+
+    if (state == LinkState::UP) {
+        PRINT_LINK_STATE << " UP" << std::endl;
+    } else if (state == LinkState::DOWN) {
+        PRINT_LINK_STATE << " DOWN" << std::endl;
+    } else {
+        PRINT_LINK_STATE << " UNKNOWN" << std::endl;
+    }
 }
 
 void DataLinkMenu::setEthDataLink(std::vector<std::string> inputCommand) {

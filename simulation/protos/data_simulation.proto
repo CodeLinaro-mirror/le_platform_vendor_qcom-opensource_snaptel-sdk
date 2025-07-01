@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 syntax = "proto3";
@@ -220,6 +220,7 @@ service DataFilterManager {
   service DataLinkManager {
     rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
     rpc SetEthDataLinkState(SetEthDatalinkStateRequest) returns (SetEthDatalinkStateReply) {}
+    rpc GetEthDataLinkState(google.protobuf.Empty) returns (GetEthDataLinkStateReply) {}
     rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
   }
 
@@ -252,6 +253,7 @@ message UsageRecommendation {
 message LinkStateEnum {
     enum LinkState {
         DUMMY = 0;
+        UNKNOWN = -1;
         UP = 1;
         DOWN = 2;
     }
@@ -1363,6 +1365,11 @@ message SetEthDatalinkStateRequest {
     LinkStateEnum eth_datalink_state = 1;
 }
 
+message GetEthDataLinkStateReply {
+    LinkStateEnum eth_datalink_state = 1;
+    commonStub.ErrorCode error = 2;
+}
+
 message SetEthDatalinkStateReply {
     commonStub.ErrorCode error = 1;
 }
@@ -1370,3 +1377,4 @@ message SetEthDatalinkStateReply {
 message OnEthDataLinkStateChangeReply {
     LinkStateEnum eth_datalink_state = 1;
 }
+

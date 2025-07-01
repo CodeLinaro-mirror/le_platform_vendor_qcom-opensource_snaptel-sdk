@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -35,6 +35,7 @@ public:
     void setLocalEthOperatingMode(std::vector<std::string> inputCommand);
     void setPeerModeChangeRequestStatus(std::vector<std::string> inputCommand);
     void setEthDataLink(std::vector<std::string> inputCommand);
+    void getEthDataLink(std::vector<std::string> inputCommand);
     void registerListener(std::vector<std::string> inputCommand);
     void deregisterListener(std::vector<std::string> inputCommand);
 

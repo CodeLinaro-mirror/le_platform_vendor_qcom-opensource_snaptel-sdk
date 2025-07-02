@@ -123,7 +123,6 @@ std::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
-std::condition_variable statusCv;
 bool haltRx = false;
 std::mutex cv2xStatusMtx;
 bool simMode = false;
@@ -300,17 +299,37 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
     }).detach();
 }
 
-int reSetupRadio(MessageType msgType) {
+// restart only the necessary flows or subscriptions needed
+int reSetupRadio(MessageType msgType, bool txRestart, bool rxRestart) {
     if (!application) {
         return -1;
     }
 
+    // restart flows accordingly
     for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
-        if (0 == application->setup(msgType, true)) {
-            return 0;
+        if(txRestart){
+            if (0 == application->restartTxFlows()) {
+                return 0;
+            }
         }
         if (application->configuration.driverVerbosity) {
-            cout << "radio setup fail, retry later!" << endl;
+            cout << "radio re-setup fail, retry later!" << endl;
+        }
+        std::unique_lock<std::mutex> lck(gTerminateMtx);
+        if (gTerminateCv.wait_for(lck,
+                std::chrono::milliseconds(SETUP_RETRY_INTERVAL_MS),
+                []{return (stopThread == true);})) {
+            break;
+        }
+    }
+    for (int retryTimes = 0; retryTimes < SETUP_RETRY_TIMES; ++retryTimes) {
+        if(rxRestart){
+            if (0 == application->restartRxSubs()) {
+                return 0;
+            }
+        }
+        if (application->configuration.driverVerbosity) {
+            cout << "radio re-setup fail, retry later!" << endl;
         }
         std::unique_lock<std::mutex> lck(gTerminateMtx);
         if (gTerminateCv.wait_for(lck,
@@ -353,26 +372,17 @@ void receive(MessageType msgType, int index) {
     }
     while (!stopThread) {
         if(!simMode) {
-            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
             sem_wait(&cnt_sem);
-            //Check CV2X RX status when only RX is enabled
-            if (!application->configuration.enableTxAlways) {
-                bool restartFlow = false;
-                if (application->radioReceives[index].waitForCv2xToActivate(restartFlow)) {
-                    // break out if return fail
-                    break;
-                }
-                if (restartFlow) {
-                    if (reSetupRadio(msgType)) {
-                        sem_post(&cnt_sem);
-                        break;
-                    }
-                }
-            } else {
-                // if TX is also enabled check the CV2X status in TX only
-                std::unique_lock<std::mutex> lk(cv2xStatusMtx);
-                statusCv.wait(lk, []{return (!haltRx or stopThread);});
-                if (stopThread) {
+            bool restartFlow = false;
+            // Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            // only wait for RX
+            if (application->radioReceives[index].waitForCv2xToActivate(restartFlow)) {
+                // break out if return fail
+                sem_post(&cnt_sem);
+                break;
+            }
+            if (restartFlow) {
+                if (reSetupRadio(msgType, false, true)) {
                     sem_post(&cnt_sem);
                     break;
                 }
@@ -736,41 +746,26 @@ void transmit(MessageType msgType) {
 
             if(!simMode){
                 //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-                auto status = application->spsTransmits[0].getCurrentStatus();
-                if (Cv2xStatusType::ACTIVE != status.txStatus) {
-                    // if both Tx and Rx thread exist, check status in Tx thread
-                    // halt Rx if Tx status is not active because flows may need to restart
-                    {
-                        std::unique_lock<std::mutex> lk(cv2xStatusMtx);
-                        haltRx = true;
-                    }
-                    bool restartFlow = false;
-                    if (application->spsTransmits[0].waitForCv2xToActivate(restartFlow)) {
-                        // break out if return fail
+                bool restartFlow = false;
+                // wait for TX only, don't wait for RX
+                if (application->spsTransmits[0].waitForCv2xToActivate(restartFlow)) {
+                    // break out if return fail
+                    sem_post(&cnt_sem);
+                    break;
+                }
+                if (restartFlow) {
+                    if (reSetupRadio(msgType, true, false)) {
                         break;
                     }
-                    if (restartFlow) {
-                        if (reSetupRadio(msgType)) {
-                            break;
-                        }
-
-                        {
-                            // notify rx thread to resume
-                            std::lock_guard<std::mutex> lk(cv2xStatusMtx);
-                            haltRx = false;
-                            statusCv.notify_all();
-                        }
-
-                        if(!application->configuration.enableCongCtrl){
-                            close(tx_timer_fd);
-                            tx_timer_fd = startTimerMs(txInterval);
-                        }
-                        // need to re-set the WSA Tx after the radio instance is re-created
-                        if (MessageType::WSA == msgType
-                            and prepareWsaTx() < 0) {
-                            cerr << "Failed to prepare WSA Tx" << endl;;
-                            break;
-                        }
+                    if(!application->configuration.enableCongCtrl){
+                        close(tx_timer_fd);
+                        tx_timer_fd = startTimerMs(txInterval);
+                    }
+                    // need to re-set the WSA Tx after the radio instance is re-created
+                    if (MessageType::WSA == msgType
+                        and prepareWsaTx() < 0) {
+                        cerr << "Failed to prepare WSA Tx" << endl;;
+                        break;
                     }
                 }
             }
@@ -801,9 +796,6 @@ void transmit(MessageType msgType) {
             }
         }
     }
-
-    // notify rx thread in case it's waiting for status notification
-    statusCv.notify_all();
 
     if(msgType == MessageType::WSA) {
         clearWsaTxSettings();
@@ -1621,8 +1613,8 @@ int main(int argc, char** argv) {
         preRecordedFile, txSim, rxSim, tunnelTx, tunnelRx, txSimIp, rxSimIp,
         txSimPort, rxSimPort, (char*)configFile.data()) < 0) {
         cout << "Failed to launch program" << endl;
+        stopThreads();
     }
-
     joinThreads();
 
     if(!rxSim && !txSim && application){

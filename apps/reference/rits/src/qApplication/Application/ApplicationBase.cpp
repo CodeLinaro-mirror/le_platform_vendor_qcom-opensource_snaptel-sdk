@@ -660,7 +660,9 @@ bool ApplicationBase::init() {
     if (!(isTxSim || isRxSim)) {
         // setup radio flows
         if (0 != setup(MsgType, false)) {
-            printf("radio setup failed\n");
+            std::cerr << "radio flow setup failed\n";
+            closeAllRadio();
+            badRadioSetup = true;
             return false;
         }
         // one-time initialization for security ; if any
@@ -782,39 +784,45 @@ ApplicationBase::~ApplicationBase() {
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
     }
-
-    // call prepare for exit here again in case it wasn't called previously
-    prepareForExit();
-
-    if(SecService){
-        SecService->lockIdChange();
-        SecService->deinit();
-        SecService.reset();
-    }
-    if (enableDiagLog_ && utility_) {
-        utility_->deInitDiagLog();
-    }
-
-    if (ldm) {
-        delete ldm;
-        ldm = nullptr;
-    }
-    {
-        std::unique_lock<std::mutex> loc(stateMtx);
-        exitApp = true;
-        stateCv.notify_all();
-        if(nullptr != this->currVehState){
-            free(currVehState);
+    if(badRadioSetup){
+        if(appVerbosity){
+            std::cerr << "radio flows were not set up properly\n";
+            exitApp = true;
         }
-    }
+    }else{
+        // call prepare for exit here again in case it wasn't called previously
+        prepareForExit();
 
-    {
-       std::unique_lock<std::mutex> lock(csvMutex);
-       if (nullptr != csvfp && !configuration.enableAsync) {
-           writeMutexCv.wait(lock, []{ return writeLogFinish; });
-           fclose(csvfp);
-           csvfp = nullptr;
-       }
+        if(SecService){
+            SecService->lockIdChange();
+            SecService->deinit();
+            SecService.reset();
+        }
+        if (enableDiagLog_ && utility_) {
+            utility_->deInitDiagLog();
+        }
+
+        if (ldm) {
+            delete ldm;
+            ldm = nullptr;
+        }
+        {
+            std::unique_lock<std::mutex> loc(stateMtx);
+            exitApp = true;
+            stateCv.notify_all();
+            if(nullptr != this->currVehState){
+                free(currVehState);
+            }
+        }
+
+        {
+            std::unique_lock<std::mutex> lock(csvMutex);
+            if (nullptr != csvfp && !configuration.enableAsync) {
+                writeMutexCv.wait(lock, []{ return writeLogFinish; });
+                fclose(csvfp);
+                csvfp = nullptr;
+            }
+        }
     }
 }
 
@@ -1013,42 +1021,48 @@ void ApplicationBase::vehicleEventReport(bool emergent,
 }
 void ApplicationBase::prepareForExit() {
     exitApp = true; 
-    sem_post(&this->rx_sem);
-    sem_post(&this->log_sem);
-    sem_post(&idChangeData.idSem);
-
-    if(configuration.enableCongCtrl &&
-                congestionControlManager && congCtrlInitialized){
-        if(congestionControlManager->
-                    getCongestionControlUserData()->congestionControlSem){
-            sem_post(congestionControlManager->
-                        getCongestionControlUserData()->congestionControlSem);
+    if(badRadioSetup){
+        if(appVerbosity){
+            exitApp = true;
         }
-        congestionControlManager->stopCongestionControl();
-        congCtrlInitialized = false;
-    }
+    }else{
+        sem_post(&this->rx_sem);
+        sem_post(&this->log_sem);
+        sem_post(&idChangeData.idSem);
 
-    {
-        std::unique_lock<std::mutex> loc(stateMtx);
-        stateCv.notify_all();
-    }
-    {
-        lock_guard<std::mutex> lock(csvMutex);
-        writeLogFinish = true;
-        writeMutexCv.notify_all();
-    }
-    // notify all radio interface to prepare for exit
-    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
-        this->eventTransmits[i].prepareForExit();
-    }
-    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
-        this->spsTransmits[i].prepareForExit();
-    }
-    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
-        this->radioReceives[i].prepareForExit();
-    }
-    if (kinematicsReceive != nullptr) {
-        kinematicsReceive->close();
+        if(configuration.enableCongCtrl &&
+                    congestionControlManager && congCtrlInitialized){
+            if(congestionControlManager->
+                        getCongestionControlUserData()->congestionControlSem){
+                sem_post(congestionControlManager->
+                            getCongestionControlUserData()->congestionControlSem);
+            }
+            congestionControlManager->stopCongestionControl();
+            congCtrlInitialized = false;
+        }
+
+        {
+            std::unique_lock<std::mutex> loc(stateMtx);
+            stateCv.notify_all();
+        }
+        {
+            lock_guard<std::mutex> lock(csvMutex);
+            writeLogFinish = true;
+            writeMutexCv.notify_all();
+        }
+        // notify all radio interface to prepare for exit
+        for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+            this->eventTransmits[i].prepareForExit();
+        }
+        for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
+            this->spsTransmits[i].prepareForExit();
+        }
+        for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
+            this->radioReceives[i].prepareForExit();
+        }
+        if (kinematicsReceive != nullptr) {
+            kinematicsReceive->close();
+        }
     }
 }
 
@@ -2227,6 +2241,123 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
         return 1000;
     }
     return (ret * 100);
+}
+
+int ApplicationBase::restartTxFlows(){
+    uint8_t i = 0;
+    EventFlowInfo eventInfo;
+    SpsFlowInfo spsInfo;
+    // close all flows before re-setup
+    std::cout << "Closing and restarting all tx flows\n";
+    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+        this->eventTransmits[i].closeFlow();
+    }
+    eventTransmits.clear();
+
+    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
+        this->spsTransmits[i].closeFlow();
+    }
+    spsTransmits.clear();
+    spsInfo.periodicityMs = this->configuration.spsPeriodicity;
+    spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
+    // set sps priority to user specified value
+    spsInfo.priority = this->configuration.spsPriority;
+    spsInfo.nbytesReserved = this->configuration.spsReservationSize;
+    if(appVerbosity > 3) {
+        cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
+        cout << "SPS priority set to " << static_cast<uint32_t>(spsInfo.priority) << endl;
+        cout << "SPS reservation size set to " << spsInfo.nbytesReserved << endl;
+    }
+    // restart tx sps flows
+    for (auto port : this->configuration.spsPorts)
+    {
+        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
+                         port, this->configuration.spsServiceIDs[i]);
+        // save Tx instance only if create Tx flow succeeded
+        if (tx.flow) {
+            this->spsTransmits.push_back(std::move(tx));
+        } else {
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" <<
+                    " with spsServiceId: " << this->configuration.spsServiceIDs[i]
+                    << endl;
+            return -1;
+        }
+
+        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
+                this->configuration.spsDestAddrs[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->spsTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+        i += 1;
+    }
+    // restart tx event flows
+    i = 0;
+    for (auto port : this->configuration.eventPorts)
+    {
+        RadioTransmit tx(eventInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
+                         port, this->configuration.eventServiceIDs[i]);
+        // save Tx instance only if create Tx flow succeeded
+        if (tx.flow) {
+            this->eventTransmits.push_back(std::move(tx));
+        } else {
+            cerr << "ApplicationBase::setup error in creating Tx event flow!"
+                    << endl;
+            return -1;
+        }
+        this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
+                this->configuration.eventDestAddrs[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->eventTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+        i += 1;
+    }
+
+    return 0;
+}
+
+int ApplicationBase::restartRxSubs(){
+    uint8_t i = 0;
+    // restart rx subscriptions
+    std::cout << "Closing and restarting all rx subscriptions\n";
+
+    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
+        this->radioReceives[i].closeFlow();
+    }
+    radioReceives.clear();
+    for (auto port : this->configuration.receivePorts)
+    {
+        std::shared_ptr<std::vector<uint32_t>> ids = nullptr;
+        if (configuration.wildcardRx == false) {
+            ids = std::make_shared<std::vector<uint32_t>>(this->configuration.receiveSubIds);
+        }
+        RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port, ids);
+        // save Rx instance only if create Rx flow succeeded
+        if (nullptr != rx.gRxSub) {
+            this->radioReceives.push_back(rx);
+        } else {
+            cerr << "ApplicationBase::setup error in creating Rx subscription!";
+            if (configuration.wildcardRx == false) {
+                cerr << " with receiveSubIds: ";
+                for(int j = 0; j < configuration.receiveSubIds.size(); j++){
+                    cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
+                }
+            }
+            cerr << "" << endl;
+            return -1;
+        }
+
+        /* radio debug */
+        if (this->configuration.codecVerbosity && radioReceives.size()) {
+            this->radioReceives[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+        i += 1;
+    }
+    return 0;
 }
 
 int ApplicationBase::setup(MessageType msgType, bool reSetup) {

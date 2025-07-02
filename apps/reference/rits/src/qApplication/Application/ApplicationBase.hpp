@@ -660,6 +660,8 @@ public:
 
     void printRxStats();
     void printTxStats();
+    int restartRxSubs();
+    int restartTxFlows();
     int setup(MessageType msgType, bool reSetup = false);
     void setupLdm();
     virtual bool pendingTillEmergency();
@@ -812,6 +814,7 @@ protected:
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
     bool enableDiagLog_ = false;
+    bool badRadioSetup = false;
     // congestionControl cong ctrl
     static CongestionControlData congestionControlOut;
     CongestionControlCalculations qitsCongControlCalculations;

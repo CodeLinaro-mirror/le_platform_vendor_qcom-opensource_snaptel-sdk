@@ -200,6 +200,14 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
 
 RadioReceive::~RadioReceive(){}
 
+int RadioReceive::waitForCv2xToActivate(bool& restartFlow) {
+    if (cv2xStatusListener_) {
+        return cv2xStatusListener_->waitForCv2xRxStatus(Cv2xStatusType::ACTIVE, restartFlow);
+    }
+    return -1;
+}
+
+
 uint32_t RadioReceive::receive(const char* buf, int len) {
     uint8_t sourceMac[CV2X_MAC_ADDR_LEN];
     int cv2x_mac_addr_len = CV2X_MAC_ADDR_LEN;

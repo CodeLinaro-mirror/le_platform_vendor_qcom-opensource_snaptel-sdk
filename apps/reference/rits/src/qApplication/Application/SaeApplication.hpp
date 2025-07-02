@@ -26,41 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -74,34 +42,19 @@
 #include <condition_variable>
 #include <chrono>
 #include <atomic>
-
-
-struct asyncCbData_t{
-    int indexToData;
-    bool verifSuccess;
-    AsyncCbState AsyncState=FREE;
-    signed int   Latitude;      // Degrees * 10^7
-    signed int   Longitude;     // Degrees * 10^7
-    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
-    unsigned int Speed;                     // value (in kmph) * 250/18
-    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
-    unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
-    unsigned int tmpId;
-    bsm_data bs = {0};
-    uint32_t psid;
-    uint8_t msg_index;
-    uint64_t timestamp;
-    uint32_t l2SrcAddr;
-    double distFromRV;
-};
+#include <climits>
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false);
-    SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
+    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false,
+        bool enableDiagLog = false);
+    SaeApplication(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+        const uint16_t rxPort, char* fileConfiguration, MessageType msgType,
+        bool enableCsvLog = false, bool enableDiagLog = false);
     ~SaeApplication();
+
+    /* Initialization */
+    bool init() override;
 
     /**
     * Method that decodes bsm from raw buffer to bsm contents data structure in ldm.
@@ -141,9 +94,18 @@ public:
 
     int setGlobalIPv6Prefix(void);
     int clearGlobalIPv6Prefix(void);
-    logData log_data;
-    asyncCbData_t asyncCbData[SHARED_BUFFER_MAX_SIZE];
+    static std::vector<asyncCbData_t> asyncCbData;
+    static bool exitAsync;
+    void AsyncPostProcessing(bool overridePsidCheck, bool enableCongCtrl,
+        bool enableMisbehavior, void* asyncSecService,
+        shared_ptr<ICongestionControlManager> congestionControlManager,
+        shared_ptr<QMonitor> qMon,
+        int secVerbosity, RadioReceive* radioReceive);
+    static void postprocessing_cleanup();
+    void PostProcessingThread();
 private:
+    uint32_t fakeTmpId = 0;
+    bool exit_ = false;
     uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     std::atomic<bool>  GlobalIpSessionActive{false};
     std::chrono::milliseconds wraInterval;
@@ -152,18 +114,16 @@ private:
     std::condition_variable wraCv;
     std::chrono::time_point<std::chrono::high_resolution_clock> now;
     void wraThreadFunc(int routerLifetime);
-    bool initialized = false;   // used to initialize temp id
+    bool initialized = false;   // used to initialize temp id randomly
     unsigned int msgCount = 0;      // Ranges from 1 - 127 in cyclic fashion.
     unsigned int tempId = 0;        // 32 bit identifier
     string rsuGateway_;    // used to store the RSU gateway parsed from received wsa
     string rsuPrimaryDns_; // used to store the RSU primray DNS parsed from received wsa
     std::atomic<bool> obuRouteSet_ {false}; // indicate whether the default route is set in OBU
-    bool exit_ = false;
-    void PostProcessingThread();
-    void (SaeApplication::*AsyncthrFn)()=&SaeApplication::AsyncPostProcessing;
-    void AsyncPostProcessing();
-    void postprocessing_cleanup();
-    void printStats(std::thread::id thrId);
+    static void printStats(std::thread::id thrId, int secVerbosity);
+    void basicFilterAndSafetyChecks(int l2SrcAddr, double distFromRV);
+    void fillLoggingData(bsm_value_t* bsm, bsm_data* bs);
+    void prepareForSecurityChecks(bsm_value_t* bsm, SecurityOpt_t* sopt);
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -189,13 +149,15 @@ private:
     int receive(const uint8_t index, const uint16_t bufLen,
                      const uint32_t ldmIndex);
 
+#ifdef AEROLINK
     /**
     * Method to setup and perform reception with LDM for SAE packets.
     * @param mc - A shared pointer to a v2x message contents struct
     * @param l2SrcAddr - the l2 src address of the RV; needed for flooding detection
     */
-    int decodeAndVerify(msg_contents* mc, int l2SrcAddr, logData *log_data);
-
+    int decodeAndVerify(msg_contents* mc, int l2SrcAddr,
+        uint8_t index, uint64_t timestamp);
+#endif
 #ifdef WITH_WSA
     int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);
     /**
@@ -236,13 +198,13 @@ private:
     * @param mc - A shared pointer to the msg_contents struct
     * @param isRx - A flag to indicate if the packet is used for Rx
     */
-    void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false);
+    bool initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) override;
 
     /**
     * Method to delete and free SAE packet memory in msg_contents struct.
     * @param mc - A shared pointer to the msg_contents struct
     */
-    void freeMsg(std::shared_ptr<msg_contents> mc);
+    void freeMsg(std::shared_ptr<msg_contents> mc) override;
 
     /**
     * Method to setup and fill BSM related information.
@@ -290,6 +252,5 @@ private:
     * @param str    - A string that includes the IPv6 address
     */
     int convertIpv6Addr2Str(char* buf, int bufLen, string& addr);
-
     std::mutex wramutex;
 };

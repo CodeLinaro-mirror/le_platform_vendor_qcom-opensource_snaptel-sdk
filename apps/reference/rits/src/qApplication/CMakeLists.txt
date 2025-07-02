@@ -1,6 +1,6 @@
 macro(SYSR_INCLUDE_DIR subdir)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -I =/usr/include/${subdir}")
 endmacro()
 
 SYSR_INCLUDE_DIR(telux)
@@ -11,6 +11,7 @@ set(LIBQAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/SaeApplication.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/NullSecurity.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Ldm/Ldm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/./Utils/qUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./SafetyApps/safetyapp_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Monitor/qMonitor.cpp
 
@@ -27,8 +28,8 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
 endif()
 
 add_library(qapplication ${LIBQAPPLICATION_SOURCES})
-
-target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc telux_sec telux-squish v2xcodec ${LIBAERO} rt pthread json-c)
+#target_link_libraries(qapplication cv2x-diag)
+target_link_libraries(qapplication)
 
 install(TARGETS qapplication
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -27,39 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
  /**
   * @file: RadioTransmit.h
@@ -71,6 +40,7 @@
 #define __RADIO_TRANSMIT_H__
 
 #include "RadioInterface.h"
+#include <telux/common/CommonDefines.hpp>
 #include <vector>
 #include <ifaddrs.h>
 #include <unistd.h>
@@ -162,31 +132,52 @@ public:
                   const TrafficIpType trafficType,
                   const uint16_t port,
                   const uint32_t serviceId);
+    ~RadioTransmit();
+
+        /**
+     * @brief Wait for rx cv2x status to be active
+     * @param bool restartFlow indicate whether need to restart flows
+     * @return 0 if wait for cv2x active success
+     * @return -1 if error occurs
+     */
+    int waitForCv2xToActivate(bool& restartFlow) override;
 
     /**
     * Method that transmits data in a buffer based in the constructed flow.
     * @param buf a char pointer of the data buffer to be sent.
     * @param bufLen a uint16_t value representing the length of the data buffer.
     * @param priority a enum value representing the priority to be mapped to traffic class.
-    * @return result value 0 on success and 1 on fail.
+    * @return result value is length of transmitted data on success and -1 on fail.
     */
-    uint8_t transmit(const char* buf, const uint16_t bufLen, Priority priority);
+    int transmit(const char* buf, const uint16_t bufLen, Priority priority);
 
     /**
     * Method that transmits data in a buffer based in the constructed flow.
     * @param buf a char pointer of the data buffer to be sent.
     * @param bufLen a uint16_t value representing the length of the data buffer.
-    * @return result value 0 on success and 1 on fail.
+    * @return result Status::SUCCESS on success and Status::FAILED on fail.
     */
-    uint8_t updateSpsFlow(const SpsFlowInfo spsInfo);
-
+    Status updateSpsFlow(const SpsFlowInfo spsInfo);
+    /**
+    * Method that returns shared pointer to SpsFlowInfo struct for the Sps Flow.
+    * @return shared_ptr<SpsFlowInfo> containing SpsFlowInfo struct for Sps Flow.
+    */
+    shared_ptr<SpsFlowInfo> getSpsFlowInfo();
+    /**
+    * Method that returns priority of sps flow.
+    * @return Priority of sps flow.
+    */
     Priority getSpsPriority();
+    /**
+    * Method that returns current sps flow reservation size.
+    * @return result sps reservation size unsigned integer
+    */
     uint32_t getSpsResSize();
     /**
     * Method that closes flow.
-    * @return result value 0 on success and 1 on fail.
+    * @return result Status::SUCCESS on success and Status::FAILED on fail.
     */
-    uint8_t closeFlow();
+    Status closeFlow();
 
     /**
     * Method that configures ipv6 destination sock for TCP/IP Simulations

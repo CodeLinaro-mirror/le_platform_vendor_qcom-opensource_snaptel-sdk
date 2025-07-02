@@ -27,43 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
 #include <sys/time.h>
+#include "qUtils.hpp"
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */
@@ -255,6 +225,19 @@ void printVerifStats(std::thread::id thrId){
 
 static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
     // on call back, this function provides the new cert index for the complete id change cb fn
+    static uint8_t rng_data = 0;
+    int rng_ret = -1;
+    auto app = static_cast<QUtils*>(userData);
+    rng_ret = app->hwTRNGChar(&rng_data);
+    if(rng_ret){
+        printf("Failure in Randon Number Generation for Cert ID \n");
+    }
+    rng_data = (rng_data % numCerts) + 1;
+    if(secVerbosity > 1)
+    {
+        printf(" Random CertIndex within 1 to %d is :%d \n ", numCerts , rng_data);
+    }
+    memcpy(certIndxCb,&rng_data,sizeof(rng_data));
 }
 
 /* The following type defines a callback function prototype for completion of the ID-change
@@ -776,42 +759,44 @@ void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
 
-int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
+int AerolinkSecurity::ExtractMsg(
+                void* smp,
+                const SecurityOpt &opt,
                 const uint8_t * msg,
                 uint32_t msgLen,
                 uint8_t const *payload,
                 uint32_t       payloadLen,
                 uint32_t       &dot2HdrLen){
-
-    // Add new smp (if none exists) for this thread
-    std::thread::id thrId = std::this_thread::get_id();
-    try{
-        addNewThrSmp(thrId);
-    }
-    catch (std::exception& e)
-    {
-        if(secVerbosity > 4){
-            print_exception(e);
-        }
-        return -1;
-    }
-    AEROLINK_RESULT result;
-
     // Get corresponding smp for this thread
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
+    // Add new smp (if none exists) for this thread
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        try{
+            addNewThrSmp(thrId);
+        }
+        catch (std::exception& e)
+        {
+            if(secVerbosity > 4){
+                print_exception(e);
+            }
+            return -1;
+        }
+        smp = getThrSmp(thrId);
+    }
+    // return nullptr if still nullptr
     if(smp == nullptr){
         if(secVerbosity > 4)
             fprintf(stderr,"Unable to retreive smp for this thread\n");
         return -1;
     }
 
+    AEROLINK_RESULT result;
     // smp_extract
     PayloadType    spduType, payloadType;
     uint8_t const *externData;
     ExternalDataHashAlg edhAlg;
     result = smp_extract(
-        *smp, msg, msgLen,
+        (*(SecuredMessageParserC*)smp), msg, msgLen,
         &spduType, &payload, &payloadLen, &payloadType,
         &externData, &edhAlg);
     if (result != WS_SUCCESS)
@@ -904,7 +889,6 @@ int AerolinkSecurity::syncVerify(
     }
 
     // smp_verifySignatures
-    //startLatencyTime
     gettimeofday(&currTime, NULL);
     double startLatencyTime =
             (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
@@ -927,7 +911,7 @@ int AerolinkSecurity::syncVerify(
         }
         //Misbehavior detection if enabled
         if(this->enableMisbehavior){
-            mbdCheck(&rvKine, misbehaviorStat);
+            mbdCheck(&rvKine, misbehaviorStat, smp);
         }
 
         // track overall security performance
@@ -948,37 +932,34 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkRelevance
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
-int AerolinkSecurity::asyncVerify(
-    Kinematics hvKine, Kinematics rvKine,
-    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
-
+int AerolinkSecurity::checkConsistencyandRelevancy(void* smp, const SecurityOpt &opt) {
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
-    int priority = 1;
-    std::thread::id thrId = std::this_thread::get_id();
-    addNewThrSmp(thrId);
-    sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
-
-    // Get corresponding smp for this thread
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
-    if(smp == nullptr || thrVerifSemPtr == nullptr){
-        if(secVerbosity > 4)
-        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
-        return -1;
+    if(smp == nullptr){
+        std::thread::id thrId = std::this_thread::get_id();
+        addNewThrSmp(thrId);
+        sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
+        // Get corresponding smp for this thread
+        smp = getThrSmp(thrId);
+        if(smp == nullptr || thrVerifSemPtr == nullptr){
+            if(secVerbosity > 4)
+            fprintf(stderr,"Unable to retrieve SMP for this thread\n");
+            return -1;
+        }
     }
 
     // set the generation location
     if(secVerbosity > 7){
         fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
-            hvKine.latitude, hvKine.longitude, hvKine.elevation);
+            opt.hvKine.latitude, opt.hvKine.longitude, opt.hvKine.elevation);
 
         fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
-            rvKine.latitude, rvKine.longitude, rvKine.elevation);
+            opt.rvKine.latitude, opt.rvKine.longitude, opt.rvKine.elevation);
     }
 
-    result = smp_setGenerationLocation(*smp, rvKine.latitude, rvKine.longitude,
-            rvKine.elevation);
+    result = smp_setGenerationLocation((*(SecuredMessageParserC*)smp),
+            opt.rvKine.latitude, opt.rvKine.longitude,
+            opt.rvKine.elevation);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -986,9 +967,12 @@ int AerolinkSecurity::asyncVerify(
         return -1;
     }
 
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking relevance of signed message\n");
+    }
     // smp_checkRelevance
-    if(this->enableRelevance){
-        result = smp_checkRelevance(*smp);
+    if(opt.enableRelevance){
+        result = smp_checkRelevance((*(SecuredMessageParserC*)smp));
         if (result != WS_SUCCESS)
         {
             if(secVerbosity > 4)
@@ -1001,16 +985,40 @@ int AerolinkSecurity::asyncVerify(
         fprintf(stdout, "Now checking consistency of signed message\n");
     }
     // smp_checkConsistency
-    if(this->enableConsistency){
-        result = smp_checkConsistency(*smp);
+    if(opt.enableConsistency){
+        result = smp_checkConsistency((*(SecuredMessageParserC*)smp));
         if(result != WS_SUCCESS){
             if(secVerbosity > 4)
                 fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
             return -1;
         }
     }
+
+    return 1;
+}
+
+// A function to verify a signed packet that can handle multi-threading:
+//   smp_verifySignaturesAsync
+int AerolinkSecurity::asyncVerify(
+    Kinematics rvKine,
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData ,uint8_t sopt_priority,
+    ValidateCallback callBackFunction, SecuredMessageParserC* msgParseContext) {
+
+    // Add new smp (if none exists) for this thread
+    AEROLINK_RESULT result;
+    uint8_t aerolinkPriority = (sopt_priority <= 4) ? 0 : 1;
+    if (secVerbosity > 6)
+        printf("Aerolink Priority %d \n",aerolinkPriority);
+
+    SecuredMessageParserC* smp = msgParseContext;
+    if(smp == nullptr){
+        if(createNewSmp(smp) == -1){
+            return -1;
+        }
+    }
     // async verification
-    result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);
+    result = smp_verifySignaturesAsyncPriority
+        (*smp, aerolinkPriority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -1018,18 +1026,14 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
-    //Misbehavior detection if enabled
-    if(this->enableMisbehavior){
-        mbdCheck(&rvKine, misbehaviorStat);
-    }
+
     return 1;
 }
 
-void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat) {
+AEROLINK_RESULT AerolinkSecurity::mbdCheck(Kinematics* rvBsmInfo,
+    MisbehaviorStats* misbehaviorStat, SecuredMessageParserC* smp) {
     AEROLINK_RESULT result;
-    std::thread::id thrId = std::this_thread::get_id();
-    SecuredMessageParserC* smp;
-    smp = getThrSmp(thrId);
+
     if (misbehaviorAppDataPtr == nullptr){
         misbehaviorAppDataPtr = std::make_shared<BsmData>();
     }
@@ -1050,7 +1054,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
                 fprintf(stderr, "Error in checking misbehavior\n");
         }else{
             if(secVerbosity > 4){
-                fprintf(stdout, "Detected Misbehavior Class is %lu\n",
+                fprintf(stdout, "Detected Misbehavior Class is %llu\n",
                 misbehaviorResultPtr->detectedMisbehavior);
             }
         }
@@ -1059,6 +1063,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
             misbehaviorStat->misbehaviorLatency = endLatencyTime-startLatencyTime;
         }
     }
+    return result;
 }
 
 void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
@@ -1078,7 +1083,7 @@ void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
 }
 
 // Verifies a signed message and returns payload length of actual packet
-int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
+int AerolinkSecurity::VerifyMsg(const SecurityOpt &opt) {
     setSecVerbosity(opt.secVerbosity);
     this->enableMisbehavior = opt.enableMbd;
     this->enableConsistency = opt.enableConsistency;
@@ -1111,7 +1116,7 @@ void AerolinkSecurity::signCallback(
 }
 
 // Sign and return signed message
-int AerolinkSecurity::SignMsg(const SecurityOpt opt,
+int AerolinkSecurity::SignMsg(const SecurityOpt &opt,
                               const uint8_t *msg, uint32_t msgLen,
                               uint8_t *signedSpdu, uint32_t &signedSpduLen,
                               SecurityService::SignType t) {

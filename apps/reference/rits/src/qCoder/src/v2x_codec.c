@@ -26,43 +26,10 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /**
  * @file v2x_codec.c
  * @brief top-level ASN.1 encode/decode APIs
@@ -114,11 +81,14 @@ int decode_msg(msg_contents *mc)
             return ret;
         } else {
             ieee1609_2_data *ie = mc->ieee1609_2data;
-            if (ie->content != unsecuredData)
+            if (ie->content != unsecuredData){
+                if(gVerbosity)
+                    fprintf(stderr, "IEEE1609.2 contains signed data\n");
                 return 1;
+            }
         }
         if(gVerbosity)
-            printf("PSID of received message is: %02x\n", wsmpp->psid); 
+            printf("PSID of received message is: %02x\n", wsmpp->psid);
         if (wsmpp->psid == PSID_WSA && mc->msgId == ((int)WSA_MSG_ID)) {
 #ifdef WITH_WSA
             if ((ret = decode_as_wsa(mc)) < 0) {
@@ -140,8 +110,7 @@ int decode_msg(msg_contents *mc)
                     if(gVerbosity)
                         fprintf(stderr, "J2735 decode failure\n");
                     return -1;
-                } else {
-                    // decode_as_j2735 returned msg_id after successful decoding.
+                }else{
                     ret = 0;
                 }
             }
@@ -160,7 +129,6 @@ int decode_msg(msg_contents *mc)
         }
 #endif
     }
-
     return ret;
 }
 /**

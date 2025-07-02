@@ -26,43 +26,10 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /**
  * @file bsm_utils.c
  * @purpose some BSM utilities.
@@ -104,6 +71,7 @@ const char* get_wall_time(char* result)
 
 double get_CPU_percentage(uint64_t monotonicTime)
 {
+ #if 0
     static uint64_t last_monotonicTime = 0;
     static double percent = 0.0;
     FILE* file;
@@ -119,6 +87,8 @@ double get_CPU_percentage(uint64_t monotonicTime)
         fclose(file);
         last_monotonicTime = monotonicTime;
     }
+#endif
+    static double percent = 0.0;
     return percent;
 }
 
@@ -324,7 +294,7 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
         (bs->SemiMinorAxisAccuracy / 20.0), (bs->SemiMajorAxisOrientation * 0.0054932479), "",
         ((bs->Speed / 50.0) * 3.6), (bs->Heading_degrees * 0.0125),
         (bs->SteeringWheelAngle * 1.5), (bs->AccelLon_cm_per_sec_squared / 100.0),
-        (bs->AccelLat_cm_per_sec_squared / 100.0), (bs->AccelVert_two_centi_gs / 50.0), 
+        (bs->AccelLat_cm_per_sec_squared / 100.0), (bs->AccelVert_two_centi_gs / 50.0),
         (bs->AccelYaw_centi_degrees_per_sec / 100.0),
         bs->brakes.bits.antilock_brake_status, bs->brakes.bits.brake_boost_applied,
         bs->brakes.bits.stability_control_status, bs->brakes.bits.traction_control_status);
@@ -989,7 +959,7 @@ unsigned int id_shift(unsigned int a)
 }
 // Take a line in CSV file and encode its contents into buf and return its length.
 // len parameter just shows the size of buf created by caller.
-int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
+int encode_singleline_fromCSV(char *line, msg_contents *mc, bool bsmLog)
 {
     int i = 0, m = 0;
     wsmp_data_t *wsmpp = (wsmp_data_t*)(mc->wsmp);
@@ -1015,7 +985,7 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     }
     int j = 0;
     while (j < 1000){
-        tokens[j] = "";
+        tokens[j] = NULL;
         j++;
     }
     while ((tok = strsep(&tmp, ",")) != NULL) {
@@ -1027,7 +997,7 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
     bsm->suppvehopts = 0;
     bsm_init(bsm);
 
-    if (minLog) {
+    if (!bsmLog) {
         bsm->timestamp_ms = strtoull(tokens[1], NULL, 0);
         bsm->MsgCount = strtoul(tokens[8], NULL, 0);
         bsm->id = id_shift(strtoul(tokens[9], NULL, 0));
@@ -1345,8 +1315,14 @@ int encode_singleline_fromCSV(char *line, msg_contents *mc, bool minLog)
         bsm->vehsafeopts &= (1 << 0) - 1;
     }
 
-
     int size = encode_msg(mc);
+
+    while ((--i) >= 0) {
+        if (NULL != tokens[i]) {
+            free(tokens[i]);
+        }
+    }
+
     free(tokens);
     free(tmp);
     return size;

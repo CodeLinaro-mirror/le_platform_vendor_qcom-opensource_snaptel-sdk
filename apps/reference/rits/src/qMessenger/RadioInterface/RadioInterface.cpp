@@ -26,43 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
  /**
   * @file: RadioInterface.cpp
@@ -79,6 +46,8 @@
 #define INVALID_CBR_VALUE (255)
 
 shared_ptr<ICv2xRadioManager> RadioInterface::cv2xRadioManager_ = nullptr;
+shared_ptr<Cv2xStatusListener> RadioInterface::cv2xStatusListener_ = nullptr;
+bool RadioInterface::enableDiagLogPacket_ = false;
 
 class Cv2xRadioListener : public ICv2xRadioListener {
 public:
@@ -118,88 +87,127 @@ private:
     std::vector<v2x_src_l2_addr_update> l2Cbs_;
 };
 
-class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
-public:
 
-    Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity) {
+Cv2xStatusListener::Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity) {
+    cv2xStatus_ = status;
+    radioVerbosity = rVerbosity;
+};
+
+telux::cv2x::Cv2xStatus Cv2xStatusListener::getCurrentStatus() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return cv2xStatus_;
+}
+
+uint8_t Cv2xStatusListener::getCurrentCbr() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (cv2xStatus_.cbrValueValid) {
+        return cv2xStatus_.cbrValue;
+    }
+    return INVALID_CBR_VALUE;
+}
+
+int Cv2xStatusListener::waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+
+    while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
+        // return false if status is unknow
+        if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN or
+            tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE or
+            tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+int Cv2xStatusListener::waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+    while (tmpStatus.txStatus != status) {
+        // return false if status is unknown
+        if(tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
+            std::cout << "Tx is inactive\n";
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+
+int Cv2xStatusListener::waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+    // get initial status
+    telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
+    while (tmpStatus.rxStatus != status) {
+        // return false if status is unknown
+        if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN) {
+            return -1;
+        }
+
+        // if status is inactive, need to recreate flows
+        if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE) {
+            std::cout << "Rx is inactive\n";
+            restartFlow = true;
+        }
+
+        // wait for status change
+        std::unique_lock<std::mutex> cvLock(mtx_);
+        cv_.wait(cvLock);
+        tmpStatus = cv2xStatus_;
+    }
+    return 0;
+}
+
+void Cv2xStatusListener::onStatusChanged(telux::cv2x::Cv2xStatus status) {
+    telux::cv2x::Cv2xStatus preStatus;
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        preStatus = cv2xStatus_;
         cv2xStatus_ = status;
-        radioVerbosity = rVerbosity;
-    };
-
-    telux::cv2x::Cv2xStatus getCurrentStatus() {
-        std::lock_guard<std::mutex> lock(mtx_);
-        return cv2xStatus_;
     }
 
-    uint8_t getCurrentCbr() {
-        std::lock_guard<std::mutex> lock(mtx_);
-        if (cv2xStatus_.cbrValueValid) {
-            return cv2xStatus_.cbrValue;
+    if (status.rxStatus != preStatus.rxStatus or
+        status.txStatus != preStatus.txStatus) {
+        if (radioVerbosity) {
+            cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
+            cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
         }
-        return INVALID_CBR_VALUE;
-    }
-
-    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
-        // get initial status
-        telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
-
-        while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
-            // return false if status is unknow
-            if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN or
-               tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
-                return -1;
-            }
-
-            // if status is inactive, need to recreate flows
-            if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE or
-               tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
-                restartFlow = true;
-            }
-
-            // wait for status change
-            std::unique_lock<std::mutex> cvLock(mtx_);
-            cv_.wait(cvLock);
-            tmpStatus = cv2xStatus_;
-        }
-        return 0;
-    }
-
-    void onStatusChanged(telux::cv2x::Cv2xStatus status) override {
-        telux::cv2x::Cv2xStatus preStatus;
-        {
-            std::lock_guard<std::mutex> lock(mtx_);
-            preStatus = cv2xStatus_;
-            cv2xStatus_ = status;
-        }
-
-        if (status.rxStatus != preStatus.rxStatus or
-            status.txStatus != preStatus.txStatus) {
-            if (radioVerbosity) {
-                cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
-                cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
-            }
-            cv_.notify_all();
-        }
-    }
-
-    void deinit() {
-        // set cv2x status to unknown during exit
-        std::lock_guard<std::mutex> lock(mtx_);
-        cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
-        cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
         cv_.notify_all();
     }
+}
 
-    // avoid potential stuck in case deinit is not invoked
-    ~Cv2xStatusListener() {
-        deinit();
-    }
-private:
-    std::condition_variable cv_;
-    std::mutex mtx_;
-    telux::cv2x::Cv2xStatus cv2xStatus_;
-    int radioVerbosity = 0;
-};
+void Cv2xStatusListener::deinit() {
+    // set cv2x status to unknown during exit
+    std::lock_guard<std::mutex> lock(mtx_);
+    cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
+    cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
+    cv_.notify_all();
+}
+
+// avoid potential stuck in case deinit is not invoked
+Cv2xStatusListener::~Cv2xStatusListener() {
+    deinit();
+}
 
 void CommonCallback::onResponse(ErrorCode error) {
     std::unique_lock<std::mutex> cvLock(cbMtx_);
@@ -345,10 +353,12 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     }
 
     // register listener for cv2x status change
-    cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
-    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
-        cerr << "Error : register Cv2x status listener failed!" << endl;
-        return false;
+    if(cv2xStatusListener_ == nullptr){
+        cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
+        if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
+            cerr << "Error : register Cv2x status listener failed!" << endl;
+            return false;
+        }
     }
 
     // Get handle to Cv2xRadio
@@ -450,6 +460,10 @@ uint64_t RadioInterface::latestTxRxTimeMonotonic() {
 
 void RadioInterface::enableCsvLog(bool enable) {
     enableCsvLog_ = enable;
+}
+
+void RadioInterface::enableDiagLog(bool enable) {
+    enableDiagLogPacket_ = enable;
 }
 
 /* set the Global IP addres prefix */
@@ -620,10 +634,6 @@ shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
 }
 
 shared_ptr<ICv2xRadio> RadioInterface::getCv2xRadio() {
-    if (nullptr == cv2xRadio_ or not cv2xRadio_->isReady()) {
-        cout << "cv2x radio is not ready." << endl;
-        return nullptr;
-    }
     return cv2xRadio_;
 }
 

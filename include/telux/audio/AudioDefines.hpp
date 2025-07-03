@@ -75,8 +75,16 @@ const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
  *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
  * @tr @td DEVICE_TYPE_SPEAKER @tdend @td RX @tdend
  *  @tdlast AUDIO_DEVICE_OUT_SPEAKER @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_2 @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_EARPIECE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_3 @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_WIRED_HEADSET @tdlastend @trend
  * @tr @td DEVICE_TYPE_MIC @tdend @td TX @tdend
  *  @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_2 @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_BUILTIN_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_3 @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_WIRED_HEADSET @tdlastend @trend
  * @tableend
  */
 enum DeviceType {
@@ -84,8 +92,16 @@ enum DeviceType {
     DEVICE_TYPE_NONE = -1,
     /** Sink device as per above mapping */
     DEVICE_TYPE_SPEAKER = 1,
+    /** Sink device as per above mapping */
+    DEVICE_TYPE_SPEAKER_2 = 2,
+    /** Sink device as per above mapping */
+    DEVICE_TYPE_SPEAKER_3 = 3,
     /** Source device as per above mapping */
     DEVICE_TYPE_MIC = 257,
+    /** Source device as per above mapping */
+    DEVICE_TYPE_MIC_2 = 258,
+    /** Source device as per above mapping */
+    DEVICE_TYPE_MIC_3 = 259,
 };
 
 /**

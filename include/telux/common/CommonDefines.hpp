@@ -29,38 +29,8 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -75,9 +45,26 @@
 
 #include <functional>
 
+/** @addtogroup telematics_common
+ * @{ */
 /**
  * Specifies the slot id where the Uicc card is inserted
+ * A physical slot refers to the actual hardware slot available on a device.
+ *
+ * A logical slot refers to the logical modem stack that is mapped to a physical slot.
+ *
+ * For multi-SIM configurations like DSDA and DSDS, where two logical modem stacks
+ * require two SIMs, there is a 1:1 mapping between logical and physical slots.
+ *
+ * Device configurations like DSSS/DSSA have a single logical modem stack and multiple
+ * physical slots. In this case, it may be necessary to map the logical slot to one of the
+ * physical slots. This can be achieved using @ref telux::tel::IMultiSimManager::switchActiveSlot.
+ *
+ * Most of the APIs use the logical slot ID. When an API requires the physical slot ID
+ * (for example, @ref telux::tel::IMultiSimManager::switchActiveSlot), the documentation for those
+ * APIs will explicitly mention this.
  */
+
 typedef enum {
    INVALID_SLOT_ID = -1,
    DEFAULT_SLOT_ID =  1,
@@ -88,8 +75,6 @@ typedef enum {
 namespace telux {
 namespace common {
 
-/** @addtogroup telematics_common
- * @{ */
 /**
  * Defines all the status codes that all Telematics SDK APIs can return
  */

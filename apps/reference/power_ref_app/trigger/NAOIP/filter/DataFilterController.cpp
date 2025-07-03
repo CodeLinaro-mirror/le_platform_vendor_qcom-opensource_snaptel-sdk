@@ -1,37 +1,7 @@
 /*
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 extern "C"
 {
 #include "unistd.h"
@@ -41,6 +11,7 @@ extern "C"
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 
 #include "../../../common/RefAppUtils.hpp"
 
@@ -52,29 +23,27 @@ using namespace telux::data::net;
 
 DataFilterController::DataFilterController() {
     LOG(DEBUG, __FUNCTION__);
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slots_ = MAX_SLOT_ID;
+    } else {
+        slots_ = DEFAULT_SLOT_ID;
+    }
 }
 
 DataFilterController::~DataFilterController() {
     LOG(DEBUG, __FUNCTION__);
-    if (dataConnectionManager_ && dataConnectionListener_) {
-        dataConnectionManager_->deregisterListener(dataConnectionListener_);
-    }
 
-    if (dataFilterListener_ && dataFilterMgr_) {
-        dataFilterMgr_->deregisterListener(dataFilterListener_);
+    for(SlotId i = SLOT_ID_1; i <= slots_;  i = static_cast<SlotId>(static_cast<int>(i) + 1)) {
+        if (dataFilterListener_ && dataFilterMgrMap_[i]) {
+            dataFilterMgrMap_[i]->deregisterListener(dataFilterListener_);
+        }
+        dataFilterMgrMap_[i] = nullptr;
     }
-
-    dataConnectionManager_ = nullptr;
-    dataFilterMgr_ = nullptr;
-    dataConnectionListener_ = nullptr;
     dataFilterListener_ = nullptr;
-
 }
 
-bool DataFilterController::initializeSDK(std::function<void(bool isActive)> defaultDataCallUpdateCb) {
-    LOG(INFO, __FUNCTION__, " isDataFilterMgrReady = ", (int)isDataFilterMgrReady_,
-        " ,isConnectionMgrReady = ", isConnectionMgrReady_);
-    defaultDataCallUpdateCb_ = defaultDataCallUpdateCb;
+bool DataFilterController::initializeSDK() {
+    LOG(INFO, __FUNCTION__, " isDataFilterMgrReady = ", (int)isDataFilterMgrReady_);
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     std::weak_ptr<DataFilterController> weakFromThis = shared_from_this();
 
@@ -83,106 +52,67 @@ bool DataFilterController::initializeSDK(std::function<void(bool isActive)> defa
 
     do {
         if (!isDataFilterMgrReady_) {
-            // data filter mananger
-            std::promise<telux::common::ServiceStatus> dfsProm;
-            // Get data filter manager object
-            dataFilterMgr_ =
-                dataFactory.getDataFilterManager(DEFAULT_SLOT_ID,
-                                                [&dfsProm](telux::common::ServiceStatus status)
-                                                { dfsProm.set_value(status); });
-            if (!dataFilterMgr_) {
-                LOG(ERROR, __FUNCTION__, " Failed to get DataFilterManager object");
-                break;
-            }
-
-            //wait for filter manager to get ready
-            LOG(DEBUG, __FUNCTION__, " Initializing Data filter manager subsystem Please wait");
-            subSystemStatus = dfsProm.get_future().get();
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                LOG(DEBUG, __FUNCTION__, " Data Filter Manager is ready");
-                dataFilterListener_ = std::make_shared<DataFilterListener>(weakFromThis);
-                if (!dataFilterListener_) {
-                    LOG(ERROR, __FUNCTION__, " unable to instantiate data filter listener");
-                }
-                telux::common::Status status =
-                    dataFilterMgr_->registerListener(dataFilterListener_);
-                if (status != telux::common::Status::SUCCESS) {
-                    LOG(ERROR, __FUNCTION__, " Unable to register data filter manager listener");
+            for(SlotId i = SLOT_ID_1; i <= slots_;
+                i = static_cast<SlotId>(static_cast<int>(i) + 1)) {
+                // data filter mananger
+                std::promise<telux::common::ServiceStatus> dfsProm;
+                // Get data filter manager object
+                dataFilterMgrMap_[i] =
+                    dataFactory.getDataFilterManager(i,
+                                                    [&dfsProm](telux::common::ServiceStatus status)
+                                                    { dfsProm.set_value(status); });
+                if (!dataFilterMgrMap_[i]) {
+                    LOG(ERROR, __FUNCTION__, " Failed to get DataFilterManager object");
                     break;
                 }
-                isDataFilterMgrReady_ = true;
-                // To be sure deactivating filer while starting
-                telux::data::DataRestrictMode mode;
-                mode.filterMode = DataRestrictModeType::DISABLE;
-                sendSetDataRestrictMode(mode);
 
-            } else {
-                LOG(ERROR, __FUNCTION__, " Data Filter Manager is failed");
-                dataFilterMgr_ = nullptr;
-                break;
+                //wait for filter manager to get ready
+                LOG(DEBUG, __FUNCTION__, " Initializing Data filter manager subsystem Please wait");
+                subSystemStatus = dfsProm.get_future().get();
+                if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                    LOG(DEBUG, __FUNCTION__, " Data Filter Manager is ready");
+                    dataFilterListener_ = std::make_shared<DataFilterListener>(weakFromThis);
+                    if (!dataFilterListener_) {
+                        LOG(ERROR, __FUNCTION__, " unable to instantiate data filter listener");
+                    }
+                    telux::common::Status status =
+                        dataFilterMgrMap_[i]->registerListener(dataFilterListener_);
+                    if (status != telux::common::Status::SUCCESS) {
+                        LOG(ERROR, __FUNCTION__,
+                            " Unable to register data filter manager listener");
+                    }
+                } else {
+                    LOG(ERROR, __FUNCTION__, " Data Filter Manager is failed");
+                    dataFilterMgrMap_[i] = nullptr;
+                    return false;
+                }
             }
+            isDataFilterMgrReady_ = true;
+            // To be sure deactivating filer while starting
+            telux::data::DataRestrictMode mode;
+            mode.filterMode = DataRestrictModeType::DISABLE;
+            sendSetDataRestrictMode(mode);
         }
-
-
-        if (!isConnectionMgrReady_) {
-
-            std::promise<telux::common::ServiceStatus> dcmProm;
-            SlotId slotId = DEFAULT_SLOT_ID;
-            // data connection mananger
-            dataConnectionManager_ =
-                dataFactory.getDataConnectionManager(slotId,
-                                                    [&dcmProm](telux::common::ServiceStatus status)
-                                                    { dcmProm.set_value(status); });
-
-            if (!dataConnectionManager_) {
-                LOG(ERROR, __FUNCTION__, " Failed to get DataConnectionManager object");
-                break;
-            }
-
-            //wait for connection manager to get ready
-            LOG(DEBUG, __FUNCTION__, " Initializing Data connection manager subsystem Please wait");
-            subSystemStatus = dcmProm.get_future().get();
-
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                LOG(DEBUG, __FUNCTION__, " Data Connection Manager is ready");
-
-                dataConnectionListener_ =
-                    std::make_shared<DataConnectionListener>(weakFromThis);
-                if (!dataConnectionListener_) {
-                    LOG(ERROR, __FUNCTION__, " unable to instantiate data connection listener");
-                }
-                telux::common::Status status =
-                    dataConnectionManager_->registerListener(dataConnectionListener_);
-
-                if (status != telux::common::Status::SUCCESS) {
-                    LOG(ERROR, __FUNCTION__,
-                        " Unable to register data connection manager listener");
-                    break;
-                }
-                isConnectionMgrReady_ = true;
-
-                // check if data call on default profile is already active
-                if (isDefaultDataCallUp()) {
-                    defaultDataCallUpdateCb_(true);
-                }
-            } else {
-                LOG(ERROR, __FUNCTION__, " Data Connection Manager is failed");
-                dataConnectionManager_ = nullptr;
-                break;
-            }
-        }
-
     } while (0);
 
-    LOG(INFO, __FUNCTION__, " isDataFilterMgrReady = ", (int)isDataFilterMgrReady_,
-        " ,isConnectionMgrReady = ", isConnectionMgrReady_);
-    return isDataFilterMgrReady_ && isConnectionMgrReady_;
+    LOG(INFO, __FUNCTION__, " isDataFilterMgrReady = ", (int)isDataFilterMgrReady_);
+    return isDataFilterMgrReady_;
+}
+
+void DataFilterController::registerListener(std::weak_ptr<IDataFilterListener> listner) {
+    LOG(DEBUG, __FUNCTION__);
+    for(SlotId i = SLOT_ID_1; (i <= slots_) && dataFilterMgrMap_[i];
+        i = static_cast<SlotId>(static_cast<int>(i) + 1)) {
+        telux::common::Status status = dataFilterMgrMap_[i]->registerListener(listner);
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Unable to register data filter manager listener");
+            break;
+        }
+    }
 }
 
 bool DataFilterController::sendSetDataRestrictMode(DataRestrictMode mode) {
     LOG(DEBUG, __FUNCTION__);
-    std::promise<telux::common::ErrorCode> prom;
-
     if (!isDataFilterMgrReady_) {
         LOG(ERROR, __FUNCTION__, " Data restrict filter feature is not supported.");
         return false;
@@ -195,78 +125,42 @@ bool DataFilterController::sendSetDataRestrictMode(DataRestrictMode mode) {
     }
 
     if (mode.filterAutoExit == DataRestrictModeType::ENABLE) {
-        LOG(DEBUG, __FUNCTION__, "  Sending command to enable filter auto exit");
+        LOG(DEBUG, __FUNCTION__, " auto exit is enable");
     }
-    telux::common::Status status = telux::common::Status::FAILED;
 
-    status = dataFilterMgr_->setDataRestrictMode(mode, [&prom](ErrorCode errorCode) {
-        if (errorCode == telux::common::ErrorCode::SUCCESS) {
-            LOG(DEBUG," sendSetDataRestrictMode command success callback ");
-        } else {
-            LOG(ERROR," sendSetDataRestrictMode command failed callback");
-        };
-        prom.set_value(errorCode);
-    });
-
-    if (status != telux::common::Status::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, "  *** ERROR - Failed to send Data Restrict command");
-        return false;
-    } else {
-        telux::common::ErrorCode errCode = prom.get_future().get();
-        if (errCode != telux::common::ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " callback Error = ",
-                RefAppUtils::getErrorCodeAsString(errCode));
-                return false;
-        } else {
-            return true;
-        }
-    }
-}
-
-bool DataFilterController::getFilterMode() {
-    LOG(DEBUG, __FUNCTION__);
-    if (!isDataFilterMgrReady_) {
-        LOG(DEBUG, __FUNCTION__, " Data restrict filter feature is not ready");
-        return false;
-    }
-    std::promise<telux::common::ErrorCode> prom{};
-    DataRestrictMode drMode;
-    LOG(DEBUG, __FUNCTION__, "  Sending command to get Data Filter");
-    // pass empty interface name as string.
-    telux::common::Status status = dataFilterMgr_->requestDataRestrictMode(
-        "", [&prom, &drMode](DataRestrictMode mode, telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                LOG(DEBUG, __FUNCTION__, " requestDataRestrictMode Response is successful ");
-                LOG(DEBUG, __FUNCTION__, " DataRestrictMode ", RefAppUtils::dataRestrictModeTypeToString(mode.filterMode));
+    for(SlotId i = SLOT_ID_1; i <= slots_; i = static_cast<SlotId>(static_cast<int>(i) + 1)) {
+        // data filter mananger
+        std::promise<telux::common::ErrorCode> prom;
+        telux::common::Status status = telux::common::Status::FAILED;
+        // Get data filter manager object
+        status = dataFilterMgrMap_[i]->setDataRestrictMode(mode, [&prom](ErrorCode errorCode) {
+            if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                LOG(DEBUG," sendSetDataRestrictMode command success callback ");
             } else {
-                LOG(ERROR, __FUNCTION__, " requestDataRestrictMode Response failed");
-                LOG(ERROR, __FUNCTION__,
-                   " description: ", RefAppUtils::getErrorCodeAsString(error));
-            }
-            drMode = mode;
-            prom.set_value(error);
-    });
+                LOG(ERROR," sendSetDataRestrictMode command failed callback");
+            };
+            prom.set_value(errorCode);
+        });
 
-    if (status == telux::common::Status::SUCCESS) {
-        telux::common::ErrorCode errCode = prom.get_future().get();
-        if (errCode != telux::common::ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " callback Error = ",
-                RefAppUtils::getErrorCodeAsString(errCode));
-                return false;
+        if (status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, "  *** ERROR - Failed to send Data Restrict command");
+            return false;
         } else {
-            return drMode.filterMode == telux::data::DataRestrictModeType::ENABLE;
+            telux::common::ErrorCode errCode = prom.get_future().get();
+            if (errCode != telux::common::ErrorCode::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " callback Error = ",
+                    RefAppUtils::getErrorCodeAsString(errCode));
+                    return false;
+            }
         }
-    } else {
-        LOG(ERROR, __FUNCTION__, "  *** ERROR - Failed to send Data Restrict command");
-        return false;
     }
-
+    return true;
 }
 
 IpProtocol DataFilterController::getTypeOfFilter(
     DataConfigParser instance, std::map<std::string, std::string> filter) {
     LOG(DEBUG, __FUNCTION__);
-    IpProtocol type = PROTO_UDP;
+    IpProtocol type = 0;
     if (instance.getValue(filter, "FILTER_PROTOCOL_TYPE") != "") {
         std::string protoType = instance.getValue(filter, "FILTER_PROTOCOL_TYPE");
         if (strcmp(protoType.c_str(), "UDP") == 0) {
@@ -274,9 +168,23 @@ IpProtocol DataFilterController::getTypeOfFilter(
         } else if (strcmp(protoType.c_str(), "TCP") == 0) {
             type = PROTO_TCP;
         }
-        LOG(DEBUG, __FUNCTION__, " Set TCP Port and Range combination");
+        LOG(DEBUG, __FUNCTION__, " protocol : ", protoType);
     }
     return type;
+}
+
+SlotId DataFilterController::getSlotIdOfFilter(
+    DataConfigParser instance, std::map<std::string, std::string> filter) {
+    LOG(DEBUG, __FUNCTION__);
+    SlotId slotId = DEFAULT_SLOT_ID;
+    if (instance.getValue(filter, "SLOT_ID") != "") {
+        std::string slotStr = instance.getValue(filter, "SLOT_ID");
+        if (strcmp(slotStr.c_str(), "2") == 0) {
+            slotId = SLOT_ID_2;
+        }
+        LOG(DEBUG, __FUNCTION__, " slot id : ", slotStr);
+    }
+    return slotId;
 }
 
 void DataFilterController::addIPParameters(
@@ -321,11 +229,46 @@ int DataFilterController::getPortInfo(DataConfigParser cfgParser,
     return value;
 }
 
+bool DataFilterController::addFilter(std::vector<std::shared_ptr<Connection>> connectionList) {
+    LOG(DEBUG, __FUNCTION__);
+    if(RefAppUtils::isDataFilterInstallationEnabled()) {
+        telux::common::Status retStat = telux::common::Status::SUCCESS;
+        if (!isDataFilterMgrReady_) {
+            LOG(ERROR, __FUNCTION__, " data filter manager is not ready ");
+            return false;
+        }
+        // Add data filter for socket connections
+        for(auto connection: connectionList) {
+            LOG(DEBUG, __FUNCTION__, " connection: ", connection->toString());
+            std::shared_ptr<telux::data::IIpFilter> dataFilter =
+                configureConnectionToDataFilter(connection);
+
+            std::promise<telux::common::ErrorCode> prom{};
+            retStat = dataFilterMgrMap_[connection->slotId]
+                ->addDataRestrictFilter(dataFilter, [&prom] (telux::common::ErrorCode error) {
+                    prom.set_value(error);
+                }
+            );
+            if (retStat == telux::common::Status::SUCCESS) {
+                telux::common::ErrorCode errCode = prom.get_future().get();
+                if (errCode != telux::common::ErrorCode::SUCCESS) {
+                    LOG(ERROR, __FUNCTION__, " callback Error = ",
+                        RefAppUtils::getErrorCodeAsString(errCode));
+                }
+            } else {
+                LOG(ERROR, __FUNCTION__, " Error = ", RefAppUtils::teluxStatusToString(retStat));
+            }
+        }
+    }
+    return addFilter();
+}
+
+// Add data filter from config file
 bool DataFilterController::addFilter() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status retStat = telux::common::Status::SUCCESS;
 
-    bool isSuccess = false;
+    bool isSuccess = true;
     do {
         if (!isDataFilterMgrReady_) {
             LOG(ERROR, __FUNCTION__, " data filter manager is not ready ");
@@ -354,12 +297,12 @@ bool DataFilterController::addFilter() {
             } else {
                 LOG(DEBUG, __FUNCTION__, "  *** ERROR - Invalid conf file parameters");
                 isSuccess = false;
-                break;
+                continue;
             }
             LOG(DEBUG, __FUNCTION__, "  Sending command to Add Data Filter");
             std::promise<telux::common::ErrorCode> prom{};
-            retStat = dataFilterMgr_->addDataRestrictFilter(dataFilter, [&prom]
-                    (telux::common::ErrorCode error) {
+            retStat = dataFilterMgrMap_[getSlotIdOfFilter(cfgParser, vectorFilter[i])]
+                ->addDataRestrictFilter(dataFilter, [&prom] (telux::common::ErrorCode error) {
                     prom.set_value(error);
                 }
             );
@@ -369,20 +312,90 @@ bool DataFilterController::addFilter() {
                     LOG(ERROR, __FUNCTION__, " callback Error = ",
                         RefAppUtils::getErrorCodeAsString(errCode));
                         isSuccess = false;
-                        break;
-                } else {
-                    isSuccess = true;
+                        continue;
                 }
             } else {
                 LOG(ERROR, __FUNCTION__, " Error = ", RefAppUtils::teluxStatusToString(retStat));
                 isSuccess = false;
-                break;
+                continue;
             }
         }
     } while(0);
     LOG(INFO, __FUNCTION__, " add data filter status " );
     return isSuccess;
 
+}
+
+std::shared_ptr<telux::data::IIpFilter> DataFilterController::configureConnectionToDataFilter(
+    std::shared_ptr<Connection> connection) {
+    LOG(DEBUG, __FUNCTION__);
+    std::shared_ptr<telux::data::IIpFilter> dataFilter;
+
+    if (connection->protocol == Protocol::TCP) {
+        dataFilter = telux::data::DataFactory::getInstance().getNewIpFilter(PROTO_TCP);
+        auto tcpRestrictFilter = std::dynamic_pointer_cast<ITcpFilter>(dataFilter);
+
+        telux::data::TcpInfo tcpInfo = {};
+        if(connection->connectionRole == ConnectionRole::CLIENT) {
+            tcpInfo.src.port = connection->serverPort;
+        } else {
+            tcpInfo.src.port = connection->clientPort;
+        }
+
+        tcpInfo.src.range = 0;
+        tcpInfo.dest.range = 0;
+
+        if (tcpRestrictFilter) {
+            tcpRestrictFilter->setTcpInfo(tcpInfo);
+        } else {
+            LOG(ERROR, __FUNCTION__, "  *** ERROR - Invalid tcp filter");
+        }
+    } else if (connection->protocol == Protocol::UDP) {
+        dataFilter = telux::data::DataFactory::getInstance().getNewIpFilter(PROTO_UDP);
+        auto udpRestrictFilter = std::dynamic_pointer_cast<IUdpFilter>(dataFilter);
+
+        telux::data::UdpInfo udpInfo = {};
+        if(connection->connectionRole == ConnectionRole::CLIENT) {
+            udpInfo.src.port = connection->serverPort;
+        } else {
+            udpInfo.src.port = connection->clientPort;
+        }
+
+        udpInfo.src.range = 0;
+        udpInfo.dest.range = 0;
+
+        if (udpRestrictFilter) {
+            udpRestrictFilter->setUdpInfo(udpInfo);
+        } else {
+            LOG(ERROR, __FUNCTION__, "  *** ERROR - Invalid udp filter");
+        }
+    }
+
+    if (connection->ipFamily == telux::data::IpFamilyType::IPV4) {
+        telux::data::IPv4Info ipv4Info = {};
+        if(connection->connectionRole == ConnectionRole::CLIENT) {
+            ipv4Info.srcAddr = connection->serverIpAddr;
+            ipv4Info.destAddr = connection->clientIpAddr;
+        } else {
+            ipv4Info.srcAddr = connection->clientIpAddr;
+            ipv4Info.destAddr = connection->serverIpAddr;
+        }
+
+        dataFilter->setIPv4Info(ipv4Info);
+    } else if (connection->ipFamily == telux::data::IpFamilyType::IPV6) {
+        telux::data::IPv6Info ipv6Info = {};
+        if(connection->connectionRole == ConnectionRole::CLIENT) {
+            ipv6Info.srcAddr = connection->serverIpAddr;
+            ipv6Info.destAddr = connection->clientIpAddr;
+        } else {
+            ipv6Info.srcAddr = connection->clientIpAddr;
+            ipv6Info.destAddr = connection->serverIpAddr;
+        }
+        dataFilter->setIPv6Info(ipv6Info);
+    } else {
+        LOG(ERROR, __FUNCTION__, "  *** ERROR - Invalid IP family");
+    }
+    return dataFilter;
 }
 
 std::shared_ptr<telux::data::IIpFilter> DataFilterController::configureTCPFilter(
@@ -441,13 +454,6 @@ std::shared_ptr<telux::data::IIpFilter> DataFilterController::configureUDPFilter
     addIPParameters(dataFilter, cfgParser, filter);
 
     auto udpRestrictFilter = std::dynamic_pointer_cast<IUdpFilter>(dataFilter);
-    PortInfo srcPort;
-    PortInfo destPort;
-
-    srcPort.port = 0;
-    srcPort.range = 0;
-    destPort.port = 0;
-    destPort.range = 0;
     telux::data::UdpInfo udpInfo_ = {};
     udpInfo_.src.range = 0;
     udpInfo_.dest.range = 0;
@@ -493,178 +499,33 @@ bool DataFilterController::removeAllFilter() {
         return false;
     }
     LOG(DEBUG, __FUNCTION__, " Remove data filters");
-    telux::common::Status status = telux::common::Status::FAILED;
-    bool isSuccess = false;
-    promise<ErrorCode> prom;
-    status = dataFilterMgr_->removeAllDataRestrictFilters([&](ErrorCode errorCode) {
-        if (errorCode == telux::common::ErrorCode::SUCCESS) {
-            LOG(DEBUG," removeAllFilter command success callback");
-        } else {
-            LOG(ERROR," removeAllFilter command failed callback");
-        };
-        prom.set_value(errorCode);
-    });
-
-
-    if (status == telux::common::Status::SUCCESS) {
-        telux::common::ErrorCode errCode = prom.get_future().get();
-        if (errCode != telux::common::ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " callback Error = ",
-                RefAppUtils::getErrorCodeAsString(errCode));
-                isSuccess = false;
-        } else {
-            isSuccess = true;
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " Error = ", RefAppUtils::teluxStatusToString(status));
-        isSuccess = false;
-
-    }
-    return isSuccess;
-}
-
-int DataFilterController::getDefaultProfile() {
-    LOG(DEBUG, __FUNCTION__);
-    std::promise<telux::common::ErrorCode> prom;
-    int profileId = DEFAULT_PROFILE;
-
-    do {
-        if (!isConnectionMgrReady_) {
-            LOG(ERROR, __FUNCTION__, " data connection manager is not ready ");
-            break;
-        }
-
-        telux::common::Status status =
-            dataConnectionManager_->getDefaultProfile(OperationType::DATA_LOCAL,
-                [&prom, &profileId](int pId, SlotId slotId, telux::common::ErrorCode error) {
-                    if (error == telux::common::ErrorCode::SUCCESS) {
-                        profileId = pId;
-                    }
-                    prom.set_value(error);
-                }
-            );
+    bool isSuccess = true;
+    for(SlotId i = SLOT_ID_1; i <= slots_;  i = static_cast<SlotId>(static_cast<int>(i) + 1)) {
+        telux::common::Status status = telux::common::Status::FAILED;
+        promise<ErrorCode> prom;
+        status = dataFilterMgrMap_[i]->removeAllDataRestrictFilters([&](ErrorCode errorCode) {
+            if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                LOG(DEBUG," removeAllFilter command success callback");
+            } else {
+                LOG(ERROR," removeAllFilter command failed callback");
+            };
+            prom.set_value(errorCode);
+        });
 
         if (status == telux::common::Status::SUCCESS) {
             telux::common::ErrorCode errCode = prom.get_future().get();
             if (errCode != telux::common::ErrorCode::SUCCESS) {
                 LOG(ERROR, __FUNCTION__, " callback Error = ",
                     RefAppUtils::getErrorCodeAsString(errCode));
+                    isSuccess = false;
             }
         } else {
             LOG(ERROR, __FUNCTION__, " Error = ", RefAppUtils::teluxStatusToString(status));
+            isSuccess = false;
+
         }
-    }while (0);
-    LOG(INFO, __FUNCTION__, " profileId = ", profileId);
-    return profileId;
-}
-
-bool DataFilterController::isDefaultDataCallUp() {
-    LOG(DEBUG, __FUNCTION__);
-    telux::common::Status retStat = telux::common::Status::SUCCESS;
-    std::promise<telux::common::ErrorCode> prom;
-    bool isDefaultDataCall = false;
-    int defaultProfileId = getDefaultProfile();
-
-    do {
-        if (!isConnectionMgrReady_) {
-            LOG(ERROR, __FUNCTION__, " data connection manager is not ready ");
-            break;
-        }
-
-        retStat = dataConnectionManager_->requestDataCallList( OperationType::DATA_LOCAL,
-            [&prom, &isDefaultDataCall, &defaultProfileId]
-                (const std::vector<std::shared_ptr<IDataCall>> &dataCallList,
-                                        telux::common::ErrorCode error) {
-
-                for(std::shared_ptr<IDataCall> dataCall : dataCallList) {
-                    LOG(DEBUG, __FUNCTION__, " \n data call profile ",
-                        dataCall->getProfileId(), " defaultProfileId = ", defaultProfileId);
-                    if (dataCall->getProfileId() == defaultProfileId &&
-                        dataCall->getDataCallStatus() ==
-                            telux::data::DataCallStatus::NET_CONNECTED) {
-                        isDefaultDataCall = true;
-                    }
-                }
-                prom.set_value(error);
-            }
-        );
-
-        if (retStat == telux::common::Status::SUCCESS) {
-            telux::common::ErrorCode errCode = prom.get_future().get();
-            if (errCode != telux::common::ErrorCode::SUCCESS) {
-                LOG(ERROR, __FUNCTION__, " callback Error = ",
-                    RefAppUtils::getErrorCodeAsString(errCode));
-            }
-        } else {
-            LOG(ERROR, __FUNCTION__, " Error = ", RefAppUtils::teluxStatusToString(retStat));
-        }
-    }while(0);
-    LOG(INFO, __FUNCTION__, " isDefaultDataCall = ",(int)isDefaultDataCall);
-    return isDefaultDataCall;
-}
-
-DataFilterController::DataConnectionListener::DataConnectionListener(
-    std::weak_ptr<DataFilterController> dataController): dataController_(dataController) {
-    LOG(DEBUG, __FUNCTION__);
-}
-
-void DataFilterController::DataConnectionListener::onDataCallInfoChanged(
-    const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-    LOG(DEBUG, __FUNCTION__);
-    logDataCallDetails(dataCall);
-    if (std::shared_ptr<DataFilterController> dataController = dataController_.lock()) {
-        if (dataCall->getProfileId() == dataController->getDefaultProfile()) {
-            if (dataCall->getDataCallStatus() == telux::data::DataCallStatus::NET_CONNECTED) {
-                dataController->defaultDataCallUpdateCb_(true);
-            } else {
-                dataController->defaultDataCallUpdateCb_(false);
-            }
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " unable to lock dataController");
     }
-}
-
-void DataFilterController::DataConnectionListener::onServiceStatusChange(
-    telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " DataConnectionListener status = ",
-        RefAppUtils::serviceStatusToString(status));
-    bool dcmStatus = status == telux::common::ServiceStatus::SERVICE_AVAILABLE ? true : false;
-
-    if (std::shared_ptr<DataFilterController> dataController = dataController_.lock()) {
-        dataController->isConnectionMgrReady_ = dcmStatus;
-    } else {
-        LOG(ERROR, __FUNCTION__, " unable to lock dataController");
-    }
-
-    LOG(INFO, __FUNCTION__, " isConnectionMgrReady_ = ",
-        (int)dcmStatus);
-}
-
-void DataFilterController::DataConnectionListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-    LOG(DEBUG, __FUNCTION__);
-    std::string tmpLog;
-    tmpLog = " ** DataCall etails **\n SlotID: " + std::to_string((int)dataCall->getSlotId()) +
-                "\n ProfileID: " + std::to_string((int)dataCall->getProfileId()) +
-                "\n interfaceName: " + dataCall->getInterfaceName() +
-                "\n DataCallStatus: " + std::to_string((int)dataCall->getDataCallStatus()) +
-                "\n DataCallEndReason: Type = " +
-                std::to_string(static_cast<int>(dataCall->getDataCallEndReason().type));
-
-    LOG(DEBUG, __FUNCTION__, tmpLog);
-    std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
-    for (auto &it : ipAddrList) {
-        tmpLog = "\n ifAddress: " + it.ifAddress + "\n primaryDnsAddress: " +
-                            it.primaryDnsAddress + "\n secondaryDnsAddress: " +
-                            it.secondaryDnsAddress;
-        LOG(DEBUG, __FUNCTION__, tmpLog);
-    }
-    tmpLog = " IpFamilyType: " + std::to_string(static_cast<int>(dataCall->getIpFamilyType())) +
-                "\nTechPreference: " +
-                std::to_string(static_cast<int>(dataCall->getTechPreference())) +
-                "\n DataBearerTechnology: " +
-                std::to_string(static_cast<int>(dataCall->getCurrentBearerTech()));
-    LOG(DEBUG, __FUNCTION__, tmpLog);
+    return isSuccess;
 }
 
 DataFilterController::DataFilterListener::DataFilterListener(std::weak_ptr<DataFilterController>
@@ -698,33 +559,4 @@ void DataFilterController::DataFilterListener::onServiceStatusChange(
 
     LOG(INFO, __FUNCTION__, " isDataFilterMgrReady_ = ",
         (int)dfmStatus);
-}
-
-/*
- * Returns true, if the TRANSPORT_PROTOCOL is set to UDP under [communication]
- * section in the file defined by NAOIP_FILTER_CONFIG_FILE.
- *
- * Returns false in all other cases.
- */
-bool DataFilterController::isUDP() {
-
-    std::string configFilterFile = ConfigParser::getInstance()->getValue(
-        "NAOIP_TRIGGER", "NAOIP_FILTER_CONFIG_FILE");
-    if (configFilterFile.empty()) {
-        configFilterFile = DEFAULT_DATA_CONFIG_FILE_NAME;
-    }
-
-    DataConfigParser cfgParser("communication", configFilterFile);
-    std::vector<std::map<std::string, std::string>> keyValMaps = cfgParser.getFilters();
-
-    if (keyValMaps.size() > 0) {
-        std::string proto = cfgParser.getValue(keyValMaps[0], "TRANSPORT_PROTOCOL");
-        if (!proto.compare("UDP")) {
-            LOG(DEBUG, __FUNCTION__, "Using UDP communication");
-            return true;
-        }
-    }
-
-    LOG(DEBUG, __FUNCTION__, "Using TCP communication");
-    return false;
 }

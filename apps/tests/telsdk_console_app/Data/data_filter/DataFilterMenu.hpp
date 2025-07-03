@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * Data Filter Manager Sample Application using Telematics SDK
@@ -76,6 +81,9 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
     void getFilterMode();
     void addFilter();
     void removeAllFilter();
+
+    SlotId getSlotIdOfFilter(
+        DataConfigParser instance, std::map<std::string, std::string> filter);
 
     IpProtocol getTypeOfFilter(DataConfigParser instance,
             std::map<std::string, std::string> filter);

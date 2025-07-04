@@ -106,7 +106,9 @@ bool EtsiApplication::init() {
 }
 
 EtsiApplication::~EtsiApplication() {
-    GnRouter->Stop();
+    if (GnRouter) {
+        GnRouter->Stop();
+    }
 
     if (isTxSim) {
         freeMsg(txSimMsg);

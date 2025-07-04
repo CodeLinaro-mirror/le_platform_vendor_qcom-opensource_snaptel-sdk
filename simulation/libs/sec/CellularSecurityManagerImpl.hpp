@@ -60,6 +60,7 @@ class CellularSecurityManagerImpl : public ICellularSecurityManager,
     std::atomic<bool> exitNow_;
 
  private:
+    telux::common::ServiceStatus serviceStatus_;
     const uint32_t LAST_INDICATION_QUEUE_SIZE = 5;
     telux::common::ErrorCode reconnectCCS();
     telux::common::ErrorCode disconnectCCS(bool isExiting_);

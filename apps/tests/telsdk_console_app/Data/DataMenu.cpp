@@ -172,12 +172,17 @@ void DataMenu::init() {
             "19", "Stats_Menu",
             {}, std::bind(&DataMenu::statsMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> backhaulMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "20", "Backhaul_Menu",
+            {}, std::bind(&DataMenu::backhaulMenu, this, std::placeholders::_1)));
+			
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
         dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
-        ethernetMenuCommand, ipsecMenuCommand, statsMenuCommand};
+        ethernetMenuCommand, ipsecMenuCommand, statsMenuCommand, backhaulMenuCommand};
     addCommands(commandsList);
 
     if (DataMenu::initializeSDK()) {
@@ -378,6 +383,15 @@ void DataMenu::statsMenu(std::vector<std::string> userInput) {
         statsMenu_->mainLoop();
     }
     statsMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::backhaulMenu(std::vector<std::string> userInput) {
+    backhaulMenu_ = std::make_shared<BackhaulMenu>("BACKHAUL Menu", "backhaul> ");
+    if(backhaulMenu_->init()) {
+        backhaulMenu_->mainLoop();
+    }
+    backhaulMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 

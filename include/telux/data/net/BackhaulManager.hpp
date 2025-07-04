@@ -54,6 +54,35 @@ struct BackhaulStatusInfo {
     BackhaulType backhaulType;
 };
 
+/**
+ * Structure for backhaul load balance info
+ */
+struct BHLoadBalanceInfo {
+    bool     enable;  /**< backhaul load balance enable status. */
+    int      wan;     /**< mwan3 wan weight. */
+    int      waneth;  /**< mwan3 waneth weight. */
+
+    BHLoadBalanceInfo()
+        : enable(false), wan(0), waneth(0) {}
+
+    BHLoadBalanceInfo(bool status, int wanWeight, int wanethWeight)  /* structure constructor */
+        : enable(status), wan(wanWeight), waneth(wanethWeight) {}
+};
+
+/**
+ * This function is called in response to requestBHLoadBalanceStatus.
+ * Returned bhLoadBalanceInfoResp contains @ref telux::data::BHLoadBalanceInfo.
+*
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] bhLoadBalanceInfoResp   Load balance info
+ * @param [in] error                   Return code for whether the operation succeeded or failed
+ *
+ */
+using RequestBHLoadBalanceStatusResponseCb =
+    std::function<void(const BHLoadBalanceInfo& bhLoadBalanceInfoResp, telux::common::ErrorCode error)>;
+
 using RequestBackhaulStatusInfoCb =
     std::function<void(const BackhaulStatusInfo &backhaulStatusInfo,
         telux::common::ErrorCode error)>;
@@ -125,6 +154,30 @@ public:
 
     virtual telux::common::Status requestBackhaulStatus(RequestBackhaulStatusInfoCb
         callback) = 0;
+
+    /**
+     * Set backhaul load balance info, including enable status, LTE and ETH backhaul weight
+     *
+     * @param [in] bhLoadBalanceInfoReq  BH load balance info to set, including enable status,
+                                         LTE and ETH backhaul weight
+     * @param [out] callback             optional callback to set the bh load balance response
+     *
+     * @returns immediate status of the setBHLoadBalance() request sent, i.e., success or
+     *          the suitable status code returned by QCMAP server and convert to telux error code.
+     */
+    virtual telux::common::Status setBHLoadBalance(const BHLoadBalanceInfo &bhLoadBalanceInfoReq,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Get backhaul load balance info, including enable status, LTE and ETH backhaul weight
+     *
+     * @param [out] callback             callback to get the bh load balance status response
+     *
+     * @returns immediate status of the requestBHLoadBalanceStatus() request sent, i.e., success or
+     *          the suitable status code returned by QCMAP server and convert to telux error code.
+     */
+    virtual telux::common::Status requestBHLoadBalanceStatus(
+        RequestBHLoadBalanceStatusResponseCb callback) = 0;
 
     /**
      * Destructor for IBackhaulManager

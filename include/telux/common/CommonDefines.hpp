@@ -77,18 +77,26 @@
 #include <functional>
 #include "SDKListener.hpp"
 
+/** @addtogroup telematics_common
+ * @{ */
 /**
- * In case of @ref telux::tel::IMultiSimManager::switchActiveSlot, slotId represents physical
- * UICC/SIM slot.
+ * A physical slot refers to the actual hardware slot available on a device.
  *
- * For all the other APIs slotId represents the logical UICC/SIM slot.
+ * A logical slot refers to the logical modem stack that is mapped to a physical slot.
  *
- * For multi-SIM configurations, logical and physical slot IDs are identical.
+ * For multi-SIM configurations like DSDA and DSDS,
+ * where two logical modem stacks require two SIMs, there is a 1:1 mapping between
+ * logical and physical slots.
  *
- * On single-SIM TCU platforms, a logical slot can be mapped to any available physical slot.
- * Use the @ref telux::tel::IMultiSimManager::switchActivePhysicalSlot API to set up the logical
- * to physical slot mapping.
+ * Device configurations like DSSS/DSSA have a single logical
+ * modem stack and multiple physical slots. In this case,
+ * it may be necessary to map the logical slot to one of the physical slots. This can be achieved
+ * using @ref telux::tel::IMultiSimManager::switchActiveSlot.
  *
+ * Most of the APIs use the logical slot ID. When an API requires
+ * the physical slot ID (for example, @ref telux::tel::IMultiSimManager::switchActiveSlot),
+ * the documentation for those
+ * APIs will explicitly mention this.
  */
 typedef enum {
    INVALID_SLOT_ID = -1,
@@ -101,8 +109,6 @@ typedef enum {
 namespace telux {
 namespace common {
 
-/** @addtogroup telematics_common
- * @{ */
 /**
  * Defines all the status codes that all Telematics SDK APIs can return
  */

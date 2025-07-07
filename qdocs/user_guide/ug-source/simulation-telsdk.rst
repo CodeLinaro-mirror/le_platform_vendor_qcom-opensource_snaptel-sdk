@@ -445,6 +445,7 @@ The details on how simulation of individual areas can be used and controlled are
 6. :ref:`sim-reference-power`
 7. :ref:`sim-reference-sensor`
 8. :ref:`sim-reference-platform`
+9. :ref:`sim-reference-security`
 
 .. _sim-reference-telephony:
 
@@ -457,7 +458,7 @@ Overview of Telephony Simulation
 """""""""""""""""""""""""""""""""
 
 This page and the sub-pages provide information about usage of simulation for the telephony
-sub-system that are part of the telux::tel namespace of the Telematics SDK.
+sub-system that is part of the telux::tel namespace of the Telematics SDK.
 
 .. _fig-tel-sim-overview:
 .. figure:: ../../images/simulation_telephony_overview.png
@@ -2137,3 +2138,173 @@ Sample input:
 
  telsdk_event_injector -f fs_manager -e efsBackup <eventName> <status>
  telsdk_event_injector -f fs_manager -e efsBackup EFS_BACKUP_START SUCCESS
+
+.. _sim-reference-security:
+
+Security Simulation
+~~~~~~~~~~~~~~~~~~~
+
+Overview of Security Simulation
+"""""""""""""""""""""""""""""""
+
+This page and the sub-pages provide information about usage of simulation for the Security
+sub-system that are part of the telux::sec namespace of the Telematics SDK.
+
+.. _fig-security-sim-overview:
+.. figure:: ../../images/simulation_security_overview.png
+  :width: 500
+
+  Security Simulation Framework
+
+Managers/Interfaces Supported
+"""""""""""""""""""""""""""""
+
+The following managers are currently available in the simulation:
+
+1. IRandomNumberManager
+2. ICellularSecurityManager
+3. IWiFiSecurityManager
+4. ICAControlManager
+
+Security APIs Response handling
+"""""""""""""""""""""""""""""""
+
+The framework allows responses of each API to be configured using a JSON file.
+
+Each manager has its own JSON configuration file present under ``simulation/json/api/sec/``, For example
+
+**Random number manager:** configured via simulation/json/api/sec/IRandomNumberManager.json has API command response for telux::sec::IRandomNumberManager::getRandomNumber
+
+.. code-block::
+
+ "getRandomNumber": {
+    "error": "SUCCESS",
+ },
+
+The JSON file holds the default values and could be updated dynamically by the users of the simulation.
+
+Security event handling
+"""""""""""""""""""""""
+
+ICellularSecurityManager events
+'''''''''''''''''''''''''''''''
+
+**Cellular security scan reports**
+
+.. code-block::
+
+  telsdk_event_injector -f ccs -e sec_report threat_score <score> cell_id <cid> pid <pid> mcc <mcc> mnc <mnc> threats <threats> action_type <action> rat <rat> env_state <state>
+
+- **score:** An integer representing threat score from 0 to 500.
+- **cid:** An integer representing unique identifier of a cell operated by a mobile network operator.
+- **pid:** An integer representing physical cell id.
+- **mcc:** An integer representing mobile country code.
+- **mnc:** An integer representing mobile network code.
+- **threats:** Bitmask of the threat types described in telux::sec::CellularThreatType.
+- **action:** An integer representing an enumerator from telux::sec::ActionType.
+- **rat:** An integer representing an enumerator from telux::sec::RATType.
+- **state:** An integer representing an enumerator from telux::sec::EnvironmentState.
+
+Example: ``telsdk_event_injector -f ccs -e sec_report threat_score 250 cell_id 3 pid 1 mcc 311 mnc 030 threats 12 action_type 0 rat 4 env_state 2``
+
+**Modem SSR**
+
+.. code-block::
+
+  telsdk_event_injector -f ccs -e ssr <status>
+
+- **status:** should be SERVICE_AVAILABLE or SERVICE_UNAVAILABLE.
+
+Example: ``telsdk_event_injector -f ccs -e ssr SERVICE_UNAVAILABLE``
+
+IWiFiSecurityManager events
+'''''''''''''''''''''''''''
+
+**WiFi security scan reports**
+
+.. code-block::
+
+  telsdk_event_injector -f wcs -e sec_report ssid <wifiname> bssid <bssid> is_connected <coninfo> is_open <openinfo> ml_algo_analysis_threat_score <score> ml_analysis_result <ml_result> summoning_analysis_result <summoning_result>
+
+- **wifiname:** Name of the WiFi network (service set identifier).
+- **bssid:** MAC address of the AP.
+- **coninfo:** true if the device is connected to this AP otherwise false.
+- **openinfo:** true if devices can connect to this AP without authentication otherwise false.
+- **score:** An integer representing threat score determined by ML algorithm from 0 to 100.
+- **ml_result:** An integer representing an enumerator from telux::sec::AnalysisResult.
+- **summoning_result:** An integer representing an enumerator from telux::sec::AnalysisResult.
+
+Example: ``telsdk_event_injector -f wcs -e sec_report ssid wifiname bssid 02:13:37:a9:50:09 is_connected false is_open true ml_algo_analysis_threat_score 100 ml_analysis_result 3 summoning_analysis_result 2``
+
+**Deauthentication report**
+
+.. code-block::
+
+  telsdk_event_injector -f wcs -e deauth_attack deauth_reason <reason> ap_init_disconnect <info> score <score>
+
+- **reason:** An integer representing reason code why disassociation or deauthentication occurred.
+- **info:** true if the AP initiated the disconnection otherwise false.
+- **score:** An integer representing threat score from 0 to 100.
+
+Example: ``telsdk_event_injector -f wcs -e deauth_attack deauth_reason 7 ap_init_disconnect true score 25``
+
+**Trusting an access point**
+
+.. code-block::
+
+  telsdk_event_injector -f wcs -e is_trusted_ap ssid <wifiname> bssid <bssid>
+
+- **wifiname:** Name of the WiFi network (service set identifier).
+- **bssid:** MAC address of the AP.
+
+Example: ``telsdk_event_injector -f wcs -e is_trusted_ap ssid wifiname bssid 02:13:37:a9:50:09``
+
+**IWiFiSecurityManager service SSR**
+
+.. code-block::
+
+  telsdk_event_injector -f wcs -e ssr <status>
+
+- **status:** should be SERVICE_AVAILABLE or SERVICE_UNAVAILABLE.
+
+Example: ``telsdk_event_injector -f ccs -e ssr SERVICE_UNAVAILABLE``
+
+ICAControlManager events
+''''''''''''''''''''''''
+
+**Reporting load**
+
+A precalculated load is reported whenever load is reported to the application as per time interval passed in telux::sec::startMonitoring() API.
+
+.. code-block::
+
+  telsdk_event_injector -f calc -e load sm2 <c1> nist256 <c2> nist384 <c3> bp256 <c4> bp384 <c5>
+
+- **c1:** An integer representing how many SM2 operations have been performed until now.
+- **c2:** An integer representing how many NIST256 operations have been performed until now.
+- **c3:** An integer representing how many NIST384 operations have been performed until now.
+- **c4:** An integer representing how many BP256 operations have been performed until now.
+- **c5:** An integer representing how many BP384 operations have been performed until now.
+
+Example: ``telsdk_event_injector -f calc -e load sm2 12 nist256 5 nist384 9 bp256 7 bp384 21``
+
+**Reporting capacity**
+
+By default platform supported capacity is reported. This can be altered as shown below.
+
+.. code-block::
+
+  telsdk_event_injector -f calc -e capacity sm2 <c1> nist256 <c2> nist384 <c3> bp256 <c4> bp384 <c5>
+
+- **c1:** An integer representing how many SM2 operations can be performed.
+- **c2:** An integer representing how many NIST256 operations can be performed.
+- **c3:** An integer representing how many NIST384 operations can be performed.
+- **c4:** An integer representing how many BP256 operations can be performed.
+- **c5:** An integer representing how many BP384 operations can be performed.
+
+Example: ``telsdk_event_injector -f calc -e capacity sm2 4000 nist256 4000 nist384 2200 bp256 4000 bp384 1500``
+
+Additional Notes
+""""""""""""""""
+
+1. If the host computer doesn't have the correct permissions, please execute "chmod 0666 /dev/hwrng" to set the correct permissions for the random number generator feature.

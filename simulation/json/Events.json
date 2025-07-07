@@ -58,6 +58,22 @@
             "text:             valid text"
         ]
     },
+    "tel_apsimprofile": {
+       "profileListRequest":[
+            "telsdk_event_injector -f tel_apsimprofile -e profileListRequest <slotId> <referenceId>",
+            "slotId:           valid slotIds are 1 & 2 only",
+            "referenceId:      valid reference id for profile list request, positive integer greater than zero",
+            "example: telsdk_event_injector -f  tel_apsimprofile -e profileListRequest 1 512"
+       ],
+       "profileOperationRequest":[
+             "telsdk_event_injector -f tel_apsimprofile -e profileOperationRequest <slotId> <referenceId> <iccid> <isEnable>",
+             "slotId:           valid slotIds are 1 & 2 only",
+             "referenceId:      valid reference id for profile operation request, positive integer greater than zero",
+             "iccid:            valid iccid value",
+             "isEnable:         valid profile operation are 0 & 1 only. 0-Disable, 1-Enable",
+             "step1: If any profile is active, disable it before enabling other profile, since single profile can be active at a time, MEP FR is yet to come (example: telsdk_event_injector -f tel_apsimprofile -e profileOperationRequest 1 512 89010020000011293999 0) step2: Execute subscription info changed after profile disablement (example: telsdk_event_injector -f tel_sub -e subscriptionInfoChanged 1 '' '' '' '' '' '' '' '' '') step3: Enable new profile(example: telsdk_event_injector -f tel_apsimprofile -e profileOperationRequest 1 512 89010020000011294999 1) step4: Execute subscription info changed for profile enablement (example: telsdk_event_injector -f tel_sub -e subscriptionInfoChanged 1 carrier-1 1234567890 89010020000011294999 310 01 310012345566677 ffffffffffffffff ffffffffffffffff)"
+       ]
+    },
     "loc_config":{
         "xtra_status":[
             "telsdk_event_injector -f loc_config -e xtra_status <validity> <dataStatus>",

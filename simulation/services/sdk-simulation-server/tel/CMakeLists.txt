@@ -14,7 +14,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/PhoneManagerServerImpl.cpp
     tel/OperatingModeTransitionManager.cpp
     tel/TelUtil.cpp
-
+    tel/ApSimProfileManagerServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

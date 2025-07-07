@@ -276,12 +276,38 @@
             "onChannelResponseSw2" : 0
         },
         "transmitApduLogicalChannel" :
-        {
-            "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",
-            "onChannelResponsePayload" : "ffff2d43373859435aa",
-            "onChannelResponseSw1" : 144,
-            "onChannelResponseSw2" : 0
-        },
+        [
+            {
+                "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",
+                "onChannelResponsePayload" : "ffff2d43373859435aa",
+                "onChannelResponseSw1" : 144,
+                "onChannelResponseSw2" : 0
+            },
+            {
+                 "onChannelResponseData" : " ",
+                 "onChannelResponsePayload" : " ",
+                 "onChannelResponseSw1" : 97,
+                 "onChannelResponseSw2" : 59
+            },
+            {
+                "onChannelResponseData" : "191 45 56 160 54 227 16 90 10 152 16 0 2 0 0 17 146 147 153 159 112 1 1 227 16 90 10 152 16 0 2 0 0 17 146 148 153 159 112 1 0 227 16 90 10 152 16 0 2 0 0 17 146 149 153 159 112 1 0",
+                "onChannelResponsePayload" : "bf2d38a036e3105a0a981000020000119293999f700101e3105a0a981000020000119294999f700100e3105a0a981000020000119295999f700100",
+                "onChannelResponseSw1" : 144,
+                "onChannelResponseSw2" : 0
+            },
+            {
+                 "onChannelResponseData" : "191 49 3 128 1 0",
+                 "onChannelResponsePayload" : "bf3103800100",
+                 "onChannelResponseSw1" : 144,
+                 "onChannelResponseSw2" : 0
+            },
+            {
+                 "onChannelResponseData" : "191 50 3 128 1 0",
+                 "onChannelResponsePayload" : "bf3203800100",
+                 "onChannelResponseSw1" : 144,
+                 "onChannelResponseSw2" : 0
+            }
+        ],
         "exchangeSimIO" :
         {
             "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",

@@ -1,36 +1,36 @@
 /*
-* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted (subject to the limitations in the
-* disclaimer below) provided that the following conditions are met:
-*
-*     * Redistributions of source code must retain the above copyright
-*       notice, this list of conditions and the following disclaimer.
-*
-*     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following
-*       disclaimer in the documentation and/or other materials provided
-*       with the distribution.
-*
-*     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
-*       contributors may be used to endorse or promote products derived
-*       from this software without specific prior written permission.
-*
-* NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-* GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-* HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-* GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-* IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-* IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include"SubscriptionManagerServerImpl.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
@@ -39,6 +39,7 @@
 
 #define PATH "system-state/tel/ISubscriptionManagerState.json"
 #define SUBSCRIPTION_EVENT "subscriptionInfoChanged"
+
 SubscriptionManagerServerImpl::SubscriptionManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     readJson();
@@ -108,6 +109,7 @@ grpc::Status SubscriptionManagerServerImpl::IsSubsystemReady(ServerContext* cont
     }
     return readStatus;
 }
+
 grpc::Status SubscriptionManagerServerImpl::GetSubscription(ServerContext* context,
     const ::telStub::GetSubscriptionRequest* request, telStub::Subscription* response) {
     LOG(DEBUG, __FUNCTION__);
@@ -117,36 +119,49 @@ grpc::Status SubscriptionManagerServerImpl::GetSubscription(ServerContext* conte
     if(slotId == 2) {
         i = slotId - 1;
     }
-    std::string carrier_name =
-        rootObj["ISubscriptionManager"]["Subscription"][i]["carrierName"].asString();
-    LOG(DEBUG, __FUNCTION__, "Carrier name is",carrier_name);
-    std::string phone_number =
-        rootObj["ISubscriptionManager"]["Subscription"][i]["phoneNumber"].asString();
-    LOG(DEBUG, __FUNCTION__, "Phone number is",phone_number);
     std::string icc_id =
         rootObj["ISubscriptionManager"]["Subscription"][i]["iccId"].asString();
     LOG(DEBUG, __FUNCTION__, "iccid is",icc_id);
-    int mcc = rootObj["ISubscriptionManager"]["Subscription"][i]["mcc"].asInt();
-    LOG(DEBUG, __FUNCTION__, "mcc is",mcc);
-    int mnc = rootObj["ISubscriptionManager"]["Subscription"][i]["mnc"].asInt();
-    LOG(DEBUG, __FUNCTION__, "mnc is",mnc);
-    std::string imsi = rootObj["ISubscriptionManager"]["Subscription"][i]["imsi"].asString();
-    LOG(DEBUG, __FUNCTION__, "imsi is",imsi);
-    std::string gid_1 = rootObj["ISubscriptionManager"]["Subscription"][i]["gid1"].asString();
-    LOG(DEBUG, __FUNCTION__, "gid1 is",gid_1);
-    std::string gid_2 = rootObj["ISubscriptionManager"]["Subscription"][i]["gid2"].asString();
-    LOG(DEBUG, __FUNCTION__, "gid2 is",gid_2);
 
-    // Create response
-    response->set_carrier_name(carrier_name);
-    response->set_icc_id(icc_id);
-    response->set_mcc(mcc);
-    response->set_mnc(mnc);
-    response->set_phone_number(phone_number);
-    response->set_imsi(imsi);
-    response->set_gid_1(gid_1);
-    response->set_gid_2(gid_2);
+    if (!icc_id.empty()) {
+        std::string carrier_name =
+            rootObj["ISubscriptionManager"]["Subscription"][i]["carrierName"].asString();
+        LOG(DEBUG, __FUNCTION__, "Carrier name is",carrier_name);
+        std::string phone_number =
+            rootObj["ISubscriptionManager"]["Subscription"][i]["phoneNumber"].asString();
+        LOG(DEBUG, __FUNCTION__, "Phone number is",phone_number);
+        int mcc = rootObj["ISubscriptionManager"]["Subscription"][i]["mcc"].asInt();
+        LOG(DEBUG, __FUNCTION__, "mcc is",mcc);
+        int mnc = rootObj["ISubscriptionManager"]["Subscription"][i]["mnc"].asInt();
+        LOG(DEBUG, __FUNCTION__, "mnc is",mnc);
+        std::string imsi = rootObj["ISubscriptionManager"]["Subscription"][i]["imsi"].asString();
+        LOG(DEBUG, __FUNCTION__, "imsi is",imsi);
+        std::string gid_1 = rootObj["ISubscriptionManager"]["Subscription"][i]["gid1"].asString();
+        LOG(DEBUG, __FUNCTION__, "gid1 is",gid_1);
+        std::string gid_2 = rootObj["ISubscriptionManager"]["Subscription"][i]["gid2"].asString();
+        LOG(DEBUG, __FUNCTION__, "gid2 is",gid_2);
 
+        // Create response
+        response->set_carrier_name(carrier_name);
+        response->set_icc_id(icc_id);
+        response->set_mcc(mcc);
+        response->set_mnc(mnc);
+        response->set_phone_number(phone_number);
+        response->set_imsi(imsi);
+        response->set_gid_1(gid_1);
+        response->set_gid_2(gid_2);
+    } else {
+       LOG(DEBUG, __FUNCTION__, " Subscription is empty");
+       // Set empty values for all fields
+       response->set_carrier_name("");
+       response->set_icc_id("");
+       response->set_mcc(0);
+       response->set_mnc(0);
+       response->set_phone_number("");
+       response->set_imsi("");
+       response->set_gid_1("");
+       response->set_gid_2("");
+    }
     return grpc::Status::OK;
 }
 

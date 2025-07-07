@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -112,7 +112,7 @@ telux::common::Status CardStub::openLogicalChannel(
     std::string applicationId, std::shared_ptr<ICardChannelCallback> callback) {
     if (validateAppId(applicationId) == true) {
         LOG(DEBUG, __FUNCTION__,
-            "Send request to open the channel for application: ", applicationId);
+            " Send request to open the channel for application: ", applicationId);
 
         ::telStub::OpenLogicalChannelRequest request;
         ::telStub::OpenLogicalChannelReply response;
@@ -137,13 +137,13 @@ telux::common::Status CardStub::openLogicalChannel(
         std::vector<int> store;
         for (auto &r : (response.result()).data()) {
             int tmp =  static_cast<uint8_t>(r);
-            LOG(DEBUG, __FUNCTION__,"data response is  " ,tmp );
+            LOG(DEBUG, __FUNCTION__," data response is  " ,tmp );
             store.emplace_back(tmp);
         }
         (iccresult.data).assign(store.begin(), store.end());
 
-        LOG(DEBUG, __FUNCTION__,"sw1 " ,iccresult.sw1, "sw2 " ,iccresult.sw2,
-            "payload " ,iccresult.payload );
+        LOG(DEBUG, __FUNCTION__," sw1 " ,iccresult.sw1, " sw2 " ,iccresult.sw2,
+            " payload " ,iccresult.payload );
 
         if((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
             auto f = std::async(std::launch::async,
@@ -154,7 +154,6 @@ telux::common::Status CardStub::openLogicalChannel(
         }
         return status;
     } else {
-
        LOG(ERROR, __FUNCTION__, " Not a Valid application Id:", applicationId);
        return telux::common::Status::INVALIDPARAM;
     }
@@ -238,13 +237,13 @@ telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t 
     std::vector<int> store;
     for(auto &r : (response.result()).data()) {
         int tmp =  static_cast<uint8_t>(r);
-        LOG(DEBUG, __FUNCTION__,"data response is  " ,tmp );
+        LOG(DEBUG, __FUNCTION__," data response is  " ,tmp );
         store.emplace_back(tmp);
     }
     (iccresult.data).assign(store.begin(), store.end());
 
-    LOG(DEBUG, __FUNCTION__,"sw1 " ,iccresult.sw1,
-        "sw2 " ,iccresult.sw2,"payload " ,iccresult.payload, "status", static_cast<int>(status));
+    LOG(DEBUG, __FUNCTION__," sw1 " ,iccresult.sw1, " sw2 " ,iccresult.sw2,
+        " payload " ,iccresult.payload, " status ", static_cast<int>(status));
 
     if((isCallbackNeeded) && (status == telux::common::Status::SUCCESS )) {
         auto f = std::async(std::launch::async,

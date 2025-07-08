@@ -3,40 +3,42 @@ Request service domain preference {#serving_system}
 
 This sample application demonstrates how to request current service domain preference.
 
-### 1. Get phone factory and serving system manager instances
+### 1. Get the phone factory instance
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto servingSystemMgr
-      = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID);
    ~~~~~~
 
-### 2. Wait for the serving subsystem initialization
+### 2. Get serving system manager instance and wait for sub system initialization
 
    ~~~~~~{.cpp}
-   bool subSystemStatus = servingSystemMgr->isSubsystemReady();
-   ~~~~~~
+   std::promise<telux::common::ServiceStatus> prom{};
+   auto servingSystemMgr = phoneFactory.getServingSystemManager(
+       [&prom](telux::common::ServiceStatus status) {
+           prom.set_value(status);
+   });
 
-### 2.1 If serving subsystem is not ready, wait for it to be ready
-
-   ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::cout << "Serving subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = servingSystemMgr->onSubsystemReady();
-      subSystemsStatus = f.get();
+   if (!servingSystemMgr) {
+       std::cout << "Failed to get serving system manager" << std::endl;
+       return;
    }
+
+   // Check if serving system subsystem is ready
+   // If serving system subsystem is not ready, wait for it to be ready
+   telux::common::ServiceStatus managerStatus = servingSystemMgr->getServiceStatus();
+   if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "\nServing system manager is not ready, Please wait ..." << std::endl
+       managerStatus = prom.get_future().get();
+   }
+
    ~~~~~~
 
 ### 3. Exit the application, if serving subsystem can not be initialized
 
    ~~~~~~{.cpp}
-   if(subSystemsStatus) {
-      std::cout << " *** Serving subsystem ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize serving subsystem"
-                << std::endl;
-      return 1;
+   if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+       return;
    }
    ~~~~~~
 

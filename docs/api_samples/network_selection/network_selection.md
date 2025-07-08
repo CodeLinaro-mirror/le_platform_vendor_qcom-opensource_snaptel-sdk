@@ -3,40 +3,42 @@ Request network selection mode {#network_selection}
 
 This sample application demonstrates how to request current network selection mode.
 
-### 1. Get phone factory and network selection manager instances
+### 1. Get the phone factory instance
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto networkMgr
-      = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID);
    ~~~~~~
 
-### 2. Wait for the network selection subsystem initialization
+### 2. Get NetworkSelectionManager instance and Wait for sub system initialization
 
-   ~~~~~~{.cpp}
-   bool subSystemStatus = networkMgr->isSubsystemReady();
-   ~~~~~~
+    ~~~~~~{.cpp}
+    std::promise<telux::common::ServiceStatus> prom{};
+    auto networkMgr = phoneFactory.getNetworkSelectionManager(
+         [&prom](telux::common::ServiceStatus status) {
+             prom.set_value(status);
+    });
 
-### 2.1 If network selection subsystem is not ready, wait for it to be ready
+    if (!networkMgr) {
+        std::cout << "Failed to get network selection manager" << std::endl;
+        return;
+    }
 
-   ~~~~~~{.cpp}
-   if(!subSystemStatus) {
-      std::cout << "network selection subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = networkMgr->onSubsystemReady();
-      // If we want to wait unconditionally for network selection subsystem to be ready
-      subSystemStatus = f.get();
-   }
+    // Check if network selection subsystem is ready
+    // If network selection subsystem is not ready, wait for it to be ready
+    telux::common::ServiceStatus managerStatus = networkMgr->getServiceStatus();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nNetwork selection manager is not ready, Please wait ..." << std::endl
+        managerStatus = prom.get_future().get();
+    }
+
    ~~~~~~
 
 ### 3. Exit the application, if network selection subsystem can not be initialzed
 
    ~~~~~~{.cpp}
-   if(subSystemsStatus) {
-      std::cout << " *** Network selection subsystem ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize network selection subsystem" << std::endl;
-      return 1;
+   if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+       return;
    }
    ~~~~~~
 

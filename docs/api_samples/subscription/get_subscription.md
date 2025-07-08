@@ -33,8 +33,8 @@ This sample application demonstrates how to get modem network subscription infor
       std::cout << " CountryISO : " << subscription->getCountryISO() << std::endl;
       std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
       std::cout << " IccId : " << subscription->getIccId() << std::endl;
-      std::cout << " Mcc : " << subscription->getMcc() << std::endl;
-      std::cout << " Mnc : " << subscription->getMnc() << std::endl;
+      std::cout << " Mcc : " << subscription->getMobileCountryCode() << std::endl;
+      std::cout << " Mnc : " << subscription->getMobileNetworkCode() << std::endl;
       std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
       std::cout << " SubscriptionId : " << subscription->getSubscriptionId() << std::endl;
    }

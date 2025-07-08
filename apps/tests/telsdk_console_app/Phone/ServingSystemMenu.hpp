@@ -96,7 +96,6 @@ public:
    void getSystemInfo(std::vector<std::string> userInput);
    void requestNetworkInfo(std::vector<std::string> userInput);
    void requestRFBandInfo(std::vector<std::string> userInput);
-   void getNetworkRejectInfo(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

@@ -217,6 +217,81 @@ telux::common::Status SmsManagerStub::sendSms(const std::string &message,
 }
 
 telux::common::Status SmsManagerStub::sendSms(std::string message, std::string receiverAddress,
+    bool deliveryReportNeeded, SmsResponseCbEx sentCallback, std::string smscAddr) {
+    LOG(DEBUG, __FUNCTION__);
+    if (message.empty() || receiverAddress.empty()) {
+        LOG(ERROR, __FUNCTION__, " either message or receiver address is empty");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
+        LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+    if (!sentCallback) {
+        LOG(DEBUG, __FUNCTION__, " Sent callback is null");
+    }
+    ::telStub::SendSmsRequest request;
+    ::telStub::SendSmsReply response;
+    ClientContext context;
+
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->SendSms(&context, request, &response);
+    if (!reqstatus.ok()) {
+        return telux::common::Status::FAILED;
+    }
+
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    int noofsegments = static_cast<int>(response.noofsegments());
+    telux::common::ErrorCode smsResponsecbErrorCode =
+    static_cast<telux::common::ErrorCode>(response.smsresponsecb_errorcode());
+    int smsResponseCbDelay = static_cast<int>(response.smsresponsecb_callbackdelay());
+    std::string ref = static_cast<std::string>(response.sentcallback_msgrefs());
+    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
+    std::vector<smsDeliveryInfo> infos;
+    SmsFailureCause cause = {};
+
+    for (int i = 0; i < response.records_size(); i++) {
+        smsDeliveryInfo info;
+        info.errorCode  = static_cast<telux::common::ErrorCode>
+            (response.mutable_records(i)->ondeliveryreport_errorcode());
+        info.cbDelay  =  static_cast<int>
+            (response.mutable_records(i)->deliverycallbackdelay());
+        info.msgRef = static_cast<int>(response.mutable_records(i)->ondeliveryreportmsgref());
+        LOG(DEBUG, __FUNCTION__, "errorCode " ,
+            static_cast<int>(info.errorCode), "cbDelay ", info.cbDelay,
+            "msgRef " ,info.msgRef);
+        infos.emplace_back(info);
+    }
+
+    if (status == telux::common::Status::SUCCESS) {
+        // Invoking response callback
+        if (smsResponsecbErrorCode != telux::common::ErrorCode::SUCCESS) {
+            cause.gwCause = static_cast<RpCause>(response.smsresponsecb_rejectgwcode());
+            cause.imsCause = response.smsresponsecb_rejectimscode();
+        }
+        auto f1 = std::async(std::launch::async,
+        [this, smsResponseCbDelay, smsResponsecbErrorCode, refs, cause, sentCallback]() {
+            this->invokeCallbackExt(smsResponseCbDelay,
+            smsResponsecbErrorCode, refs, cause, sentCallback);
+        }).share();
+        taskQ_->add(f1);
+
+        // Notifying listeners about the change event.
+        if((deliveryReportNeeded) &&
+            (smsResponsecbErrorCode == telux::common::ErrorCode::SUCCESS)) {
+            auto f2 = std::async(std::launch::async,
+                [this, receiverAddress, noofsegments, infos]() {
+                    this->invokeDeliveryReportListener(receiverAddress, noofsegments,
+                    infos);
+                }).share();
+            taskQ_->add(f2);
+        }
+    }
+    return status;
+}
+
+telux::common::Status SmsManagerStub::sendSms(std::string message, std::string receiverAddress,
     bool deliveryReportNeeded, SmsResponseCb sentCallback, std::string smscAddr) {
     LOG(DEBUG, __FUNCTION__);
     if (message.empty() || receiverAddress.empty()) {
@@ -329,6 +404,86 @@ void SmsManagerStub::invokeDeliveryReportListener(std::string receiverAddress,
 }
 
 telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> rawPdus,
+    SmsResponseCbEx sentCallback) {
+    LOG(DEBUG, __FUNCTION__);
+    if (rawPdus.empty()) {
+        LOG(ERROR, __FUNCTION__, " Raw PDU is empty");
+        return telux::common::Status::INVALIDPARAM;
+    }
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
+        LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
+        return telux::common::Status::NOTREADY;
+    }
+    if (!sentCallback) {
+        LOG(DEBUG, __FUNCTION__, " Sent callback is null");
+    }
+
+    ::telStub::SendRawSmsRequest request;
+    ::telStub::SendRawSmsReply response;
+    int size = rawPdus.size();
+    ClientContext context;
+
+    request.set_phone_id(phoneId_);
+    request.set_size(size);
+
+    grpc::Status reqstatus = stub_->SendRawSms(&context, request, &response);
+    if (!reqstatus.ok()) {
+        return telux::common::Status::FAILED;
+    }
+
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    int noofsegments = size;
+    std::string receiverAddress = static_cast<std::string>(response.reciever_address());
+    telux::common::ErrorCode smsResponsecbErrorCode =
+    static_cast<telux::common::ErrorCode>(response.smsresponsecb_errorcode());
+    int smsResponseCbDelay = static_cast<int>(response.smsresponsecb_callbackdelay());
+    std::string ref = static_cast<std::string>(response.sentcallback_msgrefs());
+    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
+    SmsFailureCause cause = {};
+    std::vector<smsDeliveryInfo> infos;
+
+    for (int i = 0; i < response.records_size(); i++) {
+        smsDeliveryInfo info;
+        info.errorCode  =  static_cast<telux::common::ErrorCode>
+            (response.mutable_records(i)->ondeliveryreport_errorcode());
+        info.cbDelay  =  static_cast<int>
+            (response.mutable_records(i)->deliverycallbackdelay());
+        info.msgRef = static_cast<int>
+            (response.mutable_records(i)->ondeliveryreportmsgref());
+        LOG(DEBUG, __FUNCTION__, "errorCode " ,
+            static_cast<int>(info.errorCode), "cbDelay ", info.cbDelay,
+            "msgRef " ,info.msgRef);
+        infos.emplace_back(info);
+    }
+
+    if (status == telux::common::Status::SUCCESS) {
+        // Invoking response callback
+        if (smsResponsecbErrorCode != telux::common::ErrorCode::SUCCESS) {
+            cause.gwCause = static_cast<RpCause>(response.smsresponsecb_rejectgwcode());
+            cause.imsCause = response.smsresponsecb_rejectimscode();
+        }
+        auto f1 = std::async(std::launch::async,
+        [this, smsResponseCbDelay, smsResponsecbErrorCode, refs,
+        cause, sentCallback]() {
+            this->invokeCallbackExt(smsResponseCbDelay,
+                smsResponsecbErrorCode, refs, cause, sentCallback);
+        }).share();
+        taskQ_->add(f1);
+
+        // Notifying listeners about the change event.
+        if(smsResponsecbErrorCode == telux::common::ErrorCode::SUCCESS) {
+            auto f2 = std::async(std::launch::async,
+                [this, receiverAddress, noofsegments, infos]() {
+                    this->invokeDeliveryReportListener(receiverAddress, noofsegments,
+                    infos);
+                }).share();
+            taskQ_->add(f2);
+        }
+    }
+    return status;
+}
+
+telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> rawPdus,
     SmsResponseCb sentCallback) {
     LOG(DEBUG, __FUNCTION__);
     if (rawPdus.empty()) {
@@ -407,6 +562,15 @@ void SmsManagerStub::invokeCallback(int cbDelay, ErrorCode error, std::vector<in
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
     if (sentCallback) {
         sentCallback(msgRefs,error);
+    }
+}
+
+void SmsManagerStub::invokeCallbackExt(int cbDelay, ErrorCode error, std::vector<int> msgRefs,
+    SmsFailureCause info, SmsResponseCbEx sentCallback) {
+    LOG(DEBUG, __FUNCTION__);
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    if (sentCallback) {
+        sentCallback(msgRefs, error, info);
     }
 }
 

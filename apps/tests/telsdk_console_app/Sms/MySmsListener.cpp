@@ -147,6 +147,22 @@ void MySmsListener::onMemoryFull(int phoneId, telux::tel::StorageType type) {
        "  for Storage Type: " << SmsStorageCallback::convertStorageTypeToString(type) << "\n";
 }
 
+void MySmsListener::onOutgoingSmsFailure(int phoneId, bool isOverIms,
+   telux::tel::SmsFailureCause info) {
+   std::cout << std::endl << std::endl;
+   PRINT_NOTIFICATION << "Received internal SMS failure indication from phone ID "
+      << phoneId << std::endl;
+   if(!isOverIms && (static_cast<int>(info.gwCause) > 0)) {
+      PRINT_NOTIFICATION << " GW failure cause: " << static_cast<int>(info.gwCause)
+        << std::endl;
+   } else if (isOverIms && (info.imsCause > 0)) {
+      PRINT_NOTIFICATION << " IMS failure cause: " << static_cast<int>(info.imsCause)
+        << std::endl;
+   } else {
+      PRINT_NOTIFICATION << " Unknown failure cause" << std::endl;
+   }
+}
+
 // Notify SmsManager subsystem status
 void MySmsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
@@ -177,7 +193,7 @@ void MySmsCommandCallback::commandResponse(telux::common::ErrorCode error) {
 
 // Implementation of My SMS callback
 void MySmsCommandCallback::sendSmsResponse(std::vector<int> msgRefs,
-   telux::common::ErrorCode error) {
+   telux::common::ErrorCode error, telux::tel::SmsFailureCause info) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "sendSmsResponse successfully" << std::endl;
@@ -188,6 +204,11 @@ void MySmsCommandCallback::sendSmsResponse(std::vector<int> msgRefs,
    } else {
       PRINT_CB << "sendSmsResponse failed, errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+      if(static_cast<int>(info.gwCause) > 0) {
+          PRINT_CB << " GW failure cause: " << static_cast<int>(info.gwCause) << std::endl;
+      } else if (info.imsCause > 0) {
+          PRINT_CB << " IMS failure cause: " << static_cast<int>(info.imsCause) << std::endl;
+      }
    }
 }
 

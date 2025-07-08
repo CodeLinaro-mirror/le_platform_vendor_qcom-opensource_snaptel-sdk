@@ -38,6 +38,7 @@
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include "event/EventService.hpp"
 #include <telux/common/DeviceConfig.hpp>
+#include "TelUtil.hpp"
 
 #define JSON_PATH1 "system-state/tel/ISmsManagerStateSlot1.json"
 #define JSON_PATH2 "system-state/tel/ISmsManagerStateSlot2.json"
@@ -823,6 +824,8 @@ grpc::Status SmsManagerServerImpl::SendSms(ServerContext *context,
             ["smsResponseCbDelay"].asInt();
         std::string refs = rootObj[TEL_SMS_MANAGER]["sendSms"][1]\
             ["smsResponseCbMsgRefs"].asString();
+        int smsResponseCbRejectCode = rootObj[TEL_SMS_MANAGER]["sendSms"][1]\
+            ["smsResponseCbRejectCode"].asInt();
 
         for (int i = 1; i <= noOfSegments ;i++) {
             SmsDeliveryInfo records;
@@ -848,6 +851,20 @@ grpc::Status SmsManagerServerImpl::SendSms(ServerContext *context,
             (static_cast<commonStub::ErrorCode>(sentCallbackErrorCode));
         response->set_smsresponsecb_callbackdelay(smsResponseCbDelay);
         response->set_sentcallback_msgrefs(refs);
+        response->set_smsresponsecb_rejectgwcode(-1);
+        response->set_smsresponsecb_rejectimscode(-1);
+        telStub::RadioTechnology rat = telStub::RadioTechnology::RADIO_TECH_UNKNOWN;
+        if(telux::common::ErrorCode::SUCCESS ==
+            telux::tel::TelUtil::readVoiceRadioTechnologyFromJsonFile(phoneId, rat)) {
+            std::vector<telStub::RadioTechnology> imsRatList =
+                {telStub::RadioTechnology::RADIO_TECH_NR5G,
+                telStub::RadioTechnology::RADIO_TECH_LTE};
+            if (std::find(imsRatList.begin(), imsRatList.end(), rat) != imsRatList.end()) {
+               response->set_smsresponsecb_rejectimscode(smsResponseCbRejectCode);
+            } else {
+               response->set_smsresponsecb_rejectgwcode(smsResponseCbRejectCode);
+            }
+        }
     }
     return readStatus;
 }
@@ -879,6 +896,8 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
             ["smsResponseCbDelay"].asInt();
         std::string refs = rootObj[TEL_SMS_MANAGER]["sendRawSms"][1]\
             ["smsResponseCbMsgRefs"].asString();
+        int smsResponseCbRejectCode = rootObj[TEL_SMS_MANAGER]["sendRawSms"][1]\
+            ["smsResponseCbRejectCode"].asInt();
 
         for (int i = 1; i <= size ;i++) {
             SmsDeliveryInfo records;
@@ -905,6 +924,20 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
             (static_cast<commonStub::ErrorCode>(sentCallbackErrorCode));
         response->set_smsresponsecb_callbackdelay(smsResponseCbDelay);
         response->set_sentcallback_msgrefs(refs);
+        response->set_smsresponsecb_rejectgwcode(-1);
+        response->set_smsresponsecb_rejectimscode(-1);
+        telStub::RadioTechnology rat = telStub::RadioTechnology::RADIO_TECH_UNKNOWN;
+        if(telux::common::ErrorCode::SUCCESS ==
+            telux::tel::TelUtil::readVoiceRadioTechnologyFromJsonFile(phoneId, rat)) {
+            std::vector<telStub::RadioTechnology> imsRatList =
+                {telStub::RadioTechnology::RADIO_TECH_NR5G,
+                telStub::RadioTechnology::RADIO_TECH_LTE};
+            if (std::find(imsRatList.begin(), imsRatList.end(), rat) != imsRatList.end()) {
+               response->set_smsresponsecb_rejectimscode(smsResponseCbRejectCode);
+            } else {
+               response->set_smsresponsecb_rejectgwcode(smsResponseCbRejectCode);
+            }
+        }
     }
     return readStatus;
 }

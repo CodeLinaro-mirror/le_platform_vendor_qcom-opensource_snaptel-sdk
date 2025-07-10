@@ -292,6 +292,22 @@ using Ipv6ReasonCode = telux::common::Ipv6ReasonCode;
 using HandoffReasonCode = telux::common::HandoffReasonCode;
 using DataCallEndReason = telux::common::DataCallEndReason;
 
+/**
+ * Specifies TSN capability mask types.
+ */
+enum class TsnCapabilityMaskType : uint64_t {
+    TX_PROPAG_DELAY = 0x01ull, /**< tx_propag_delay is supported */
+    TX_PROPAG_DELAY_DELTA_THRESHOLD = 0x02ull, /**< tx_propag_delay_delta_threshold is supported */
+    TIME_DOMAIN_NUMBER = 0x04ull, /**< ts_time_domain_number is supported */
+    MAX_TIME_CFG = 0x08ull, /**< max_time_domain_configurations is supported */
+    TIME_DOMAIN_CFG_TBL = 0x10ull /**< time_domain_configuration_table is supported */
+};
+
+/**
+ * 16 bit mask to set tsn capability types paramater.
+ * TsnCapabilityMaskType enum are used to set tsn capability types.
+ */
+using TsnCapabilityMask = std::bitset<16>;
 
 /**
  * Event due to which change in profile happened.

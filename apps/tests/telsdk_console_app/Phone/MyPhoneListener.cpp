@@ -26,77 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -114,34 +47,6 @@ extern "C" {
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
-void MyPhoneListener::onServiceStateChanged(int phoneId, telux::tel::ServiceState state) {
-    std::cout << "\n";
-    PRINT_NOTIFICATION << "OnServiceStateChanged for PhoneId = " << phoneId
-                       << " ,ServiceState = " << serviceStateToString(state) << std::endl;
-}
-
-std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState serviceState) {
-    std::string state = "";
-    switch (serviceState) {
-    case telux::tel::ServiceState::EMERGENCY_ONLY:
-        state = "Emergency Only";
-        break;
-    case telux::tel::ServiceState::IN_SERVICE:
-        state = "In Service";
-        break;
-    case telux::tel::ServiceState::OUT_OF_SERVICE:
-        state = "Out Of Service";
-        break;
-    case telux::tel::ServiceState::RADIO_OFF:
-        state = "Radio Off";
-        break;
-    default:
-        state = "Unknown";
-        break;
-    }
-    return state;
-}
-
 void MyPhoneListener::onSignalStrengthChanged(
     int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) {
     std::cout << std::endl << std::endl;
@@ -155,28 +60,11 @@ void MyPhoneListener::onSignalStrengthChanged(
                  << signalStrength->getGsmSignalStrength()->getGsmSignalStrength() << std::endl;
         }
 
-        if(signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "GSM Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()<< std::endl;
-        }
-
         if(signalStrength->getGsmSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_NOTIFICATION << "GSM Signal Strength(in dBm): " << "UNAVAILABLE" << std::endl;
         } else {
             PRINT_NOTIFICATION << "GSM Signal Strength(in dBm): "
                 << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
-        }
-
-        if(signalStrength->getGsmSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE"
-            << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                << signalStrength->getGsmSignalStrength()->getTimingAdvance() << std::endl;
         }
 
         PRINT_NOTIFICATION << "GSM Signal Level: "
@@ -249,13 +137,6 @@ void MyPhoneListener::onSignalStrengthChanged(
                  << signalStrength->getWcdmaSignalStrength()->getDbm() << std::endl;
         }
 
-        if(signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                 << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
-        }
         PRINT_NOTIFICATION
             << "WCDMA Signal Level: "
             << MyPhoneHelper::signalLevelToString(
@@ -311,25 +192,6 @@ std::string MyPhoneListener::getCurrentTime() {
     char currTime[120];
     snprintf(currTime, 120, "%s.%ld", buffer, tod.tv_usec / 1000);
     return std::string(currTime);
-}
-
-std::string MyPhoneListener::radioStateToString(telux::tel::RadioState radioState) {
-    std::string state = "";
-    switch (radioState) {
-    case telux::tel::RadioState::RADIO_STATE_OFF:
-        state = "Off";
-        break;
-    case telux::tel::RadioState::RADIO_STATE_UNAVAILABLE:
-        state = "Unavailable";
-        break;
-    case telux::tel::RadioState::RADIO_STATE_ON:
-        state = "On";
-        break;
-    default:
-        state = "Unknown";
-        break;
-    }
-    return state;
 }
 
 std::string MyPhoneHelper::radioTechToString(
@@ -454,14 +316,6 @@ std::string MyPhoneHelper::voiceServiceStateToString(telux::tel::VoiceServiceSta
         break;
     }
     return state;
-}
-
-void MyPhoneListener::onVoiceRadioTechnologyChanged(
-    int phoneId, telux::tel::RadioTechnology radioTechnology) {
-    std::cout << "\n";
-    PRINT_NOTIFICATION << "Received unsol response, PhoneId " << phoneId << std::endl;
-    PRINT_NOTIFICATION << "Changed Radio technology " << static_cast<int>(radioTechnology)
-                       << std::endl;
 }
 
 void MyPhoneListener::onVoiceServiceStateChanged(
@@ -612,10 +466,20 @@ void MyGetOperatingModeCallback::operatingModeResponse(
         PRINT_CB << "requestOperatingMode response successful" << std::endl;
         PRINT_CB << "Operating Mode: " << MyPhoneHelper::operatingModeToString(operatingMode)
                  << std::endl;
+        operatingMode_ = operatingMode;
     } else {
         PRINT_CB << "requestOperatingMode is failed, errorCode: " << static_cast<int>(error)
                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
+    try {
+        opCallbackPromise_.set_value(error);
+    } catch (const std::future_error& e) {
+        // Already satisfied, ignore
+    }
+}
+
+telux::tel::OperatingMode MyGetOperatingModeCallback::getOperatingMode() {
+    return operatingMode_;
 }
 
 void MyPhoneListener::onOperatingModeChanged(telux::tel::OperatingMode mode) {
@@ -676,28 +540,11 @@ void MyPhoneHelper::printCellInfoDetails(
                     << gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength() << std::endl;
             }
 
-            if(gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "GSM Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                   << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()<< std::endl;
-            }
-
             if(gsmCellInfo->getSignalStrengthInfo().getDbm()== INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_NOTIFICATION << "GSM Signal Strength(in dBm): " << "UNAVAILABLE" << std::endl;
             } else {
                PRINT_NOTIFICATION << "GSM Signal Strength(in dBm): "
                    << gsmCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
-            }
-
-            if(gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE"
-                << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                   << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance() << std::endl;
             }
 
             PRINT_NOTIFICATION << "GSM Signal Level: "
@@ -761,17 +608,9 @@ void MyPhoneHelper::printCellInfoDetails(
                    << std::endl;
             }
 
-            if(lteCellInfo->getSignalStrengthInfo().getTimingAdvance() ==
-                INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "LTE Timing Advance: "
-                    << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                    << std::endl;
-            }
             PRINT_NOTIFICATION << "LTE Signal Level: "
-            << signalLevelToString(lteCellInfo->getSignalStrengthInfo().getLevel())
-             << std::endl;
+                << signalLevelToString(lteCellInfo->getSignalStrengthInfo().getLevel())
+                    << std::endl;
         } else if (cellinfo->getType() == telux::tel::CellType::WCDMA) {
             auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
             PRINT_NOTIFICATION << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered()
@@ -814,13 +653,6 @@ void MyPhoneHelper::printCellInfoDetails(
                     << wcdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
-            if(wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                    << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate() << std::endl;
-            }
             PRINT_NOTIFICATION
                << "WCDMA Signal Level: "
                << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())

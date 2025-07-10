@@ -31,14 +31,14 @@ This sample application demonstrates how to request voice service state of the d
    auto phone = phoneManager->getPhone();
    ~~~~~~
 
-### 4. Check for radio state
+### 4. Check for operating mode
 
-If radio is in OFF state turn it to ON in order to perform any operations on the phone. Either wait for radio to be turned on or else pass the callback to receive the response for setRadioPower.
+If operating mode is not ONLINE turn it to ON in order to perform any operations on the phone. Either wait for operating mode to be on or set operating mode to ONLINE.
 
    ~~~~~~{.cpp}
-   RadioState radioState = phone->getRadioState();
-   if(radioState == RadioState::RADIO_STATE_OFF){
-      phone->setRadioPower(true);
+   OperatingMode opMode = phoneManager->requestOperatingMode();
+   if (opMode != OperatingMode::ONLINE){
+      phone->setOperatingMode(OperatingMode::ONLINE);
    }
    ~~~~~~
 

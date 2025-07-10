@@ -26,42 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * PhoneMenu provides menu options to invoke Phone functions such as
@@ -124,15 +93,7 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
               }
           }
       }
-      // Turn on the radio if it's not available
-      for (auto index = 0; index < phones_.size(); index++) {
-         if(phones_[index]->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
-            phones_[index]->setRadioPower(true);
-         }
-      }
-
       phoneListener_ = std::make_shared<MyPhoneListener>();
-
       subscriptionMgr_ = telux::tel::PhoneFactory::getInstance().getSubscriptionManager();
       subscriptionListener_ = std::make_shared<MySubscriptionListener>();
       if(!subscriptionMgr_->isSubsystemReady()) {
@@ -154,6 +115,23 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
       myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
       myGetOperatingModeCb_ = std::make_shared<MyGetOperatingModeCallback>();
       mySetOperatingModeCb_ = std::make_shared<MySetOperatingModeCallback>();
+
+      // Turn on the radio if it's not available
+      status = phoneManager_->requestOperatingMode(myGetOperatingModeCb_);
+      if (status == telux::common::Status::SUCCESS) {
+          try {
+              if (myGetOperatingModeCb_->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
+                 auto opMode = myGetOperatingModeCb_->getOperatingMode();
+                 if (opMode != telux::tel::OperatingMode::ONLINE) {
+                     phoneManager_->setOperatingMode(telux::tel::OperatingMode::ONLINE, nullptr);
+                 }
+              }
+          } catch (const std::exception& e) {
+              std::cout << "Failed to get operating mode: " << e.what() << std::endl;
+          }
+      } else {
+          std::cout << "Failed to request operating mode" << std::endl;
+      }
    }
 }
 
@@ -261,27 +239,6 @@ void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
    } else {
       std::cout << "No default phone found" << std::endl;
    }
-}
-
-std::string PhoneMenu::getServiceStateAsString(telux::tel::ServiceState serviceState) {
-   std::string serviceStateString = "";
-   switch(serviceState) {
-      case telux::tel::ServiceState::EMERGENCY_ONLY:
-         serviceStateString = "Emergency Only";
-         break;
-      case telux::tel::ServiceState::IN_SERVICE:
-         serviceStateString = "In Service";
-         break;
-      case telux::tel::ServiceState::OUT_OF_SERVICE:
-         serviceStateString = "Out Of Service";
-         break;
-      case telux::tel::ServiceState::RADIO_OFF:
-         serviceStateString = "Radio Off";
-         break;
-      default:
-         break;
-   }
-   return serviceStateString;
 }
 
 void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {

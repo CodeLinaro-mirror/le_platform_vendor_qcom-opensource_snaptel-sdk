@@ -28,39 +28,8 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -169,17 +138,13 @@ void SapCardServicesMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "9", "Close_sap_connection", {},
          std::bind(&SapCardServicesMenu::closeSapConnection, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getStateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Get_sap_state", {},
-                        std::bind(&SapCardServicesMenu::getState, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("11", "Select_sim_slot", {}, std::bind(&SapCardServicesMenu::selectSimSlot,
+      ConsoleAppCommand("10", "Select_sim_slot", {}, std::bind(&SapCardServicesMenu::selectSimSlot,
                                                                this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSapManagerSubMenu
       = {openSapConnectionCommand, getSapAtrCommand,           requestSapStateCommand,
          transmitSapApduCommand,   sapSimPowerOffCommand,      sapSimPowerOnCommand,
-         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand,
-         getStateCommand};
+         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand};
 
    if (sapManagers_.size() > 1) {
        commandsListSapManagerSubMenu.emplace_back(selectSimSlotCommand);
@@ -187,22 +152,6 @@ void SapCardServicesMenu::init() {
 
    addCommands(commandsListSapManagerSubMenu);
    ConsoleApp::displayMenu();
-}
-
-void SapCardServicesMenu::logSapState(telux::tel::SapState sapState) {
-   if(sapState == telux::tel::SapState::SAP_STATE_NOT_ENABLED) {
-      std::cout << "Sap state not enabled \n";
-   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTING) {
-      std::cout << "Sap state connecting \n";
-   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTED_SUCCESSFULLY) {
-      std::cout << "Sap state connected successfully \n";
-   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTION_ERROR) {
-      std::cout << "Sap state connection error \n";
-   } else if(sapState == telux::tel::SapState::SAP_STATE_DISCONNECTING) {
-      std::cout << "Sap state disconnecting \n";
-   } else if(sapState == telux::tel::SapState::SAP_STATE_DISCONNECTED_SUCCESSFULLY) {
-      std::cout << "Sap state disconnected successfully \n";
-   }
 }
 
 void SapCardServicesMenu::openSapConnection(std::vector<std::string> userInput) {
@@ -319,28 +268,12 @@ void SapCardServicesMenu::closeSapConnection(std::vector<std::string> userInput)
 
 void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   telux::tel::SapState sapstate;
    if (sapCardMgr) {
       if(sapCardMgr->requestSapState(MySapStateCallback::sapStateResponse)
          == telux::common::Status::SUCCESS) {
          std::cout << "Request sap state success \n";
       } else {
          std::cout << "Request sap state failed \n";
-      }
-   } else {
-      std::cout << "ERROR: Unable to get SAP Manager instance";
-   }
-}
-
-void SapCardServicesMenu::getState(std::vector<std::string> userInput) {
-   auto sapCardMgr = sapManagers_[slot_ - 1];
-   if (sapCardMgr) {
-      telux::tel::SapState sapstate;
-      if(sapCardMgr->getState(sapstate) == telux::common::Status::SUCCESS) {
-         logSapState(sapstate);
-         std::cout << "Get sap state success \n";
-      } else {
-         std::cout << "Get sap state failed \n";
       }
    } else {
       std::cout << "ERROR: Unable to get SAP Manager instance";

@@ -1,6 +1,5 @@
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -54,6 +53,8 @@ bool EventManager::init() {
                 LOG(ERROR,  " Setting resume in beginning Command failed !!!"  );
             }
         });
+
+        tcuActivityStateMgr_->getMachineName(localMachineName_);
     } else {
         LOG(ERROR, __FUNCTION__, " Failed to initialize TCU-activity manager");
         initSucceed = false;
@@ -156,6 +157,19 @@ void EventManager::printQueue() {
 // event management
 void EventManager::pushEvent(shared_ptr<Event> event) {
     LOG(DEBUG, __FUNCTION__, " event = ", event->toString());
+
+    LOG(DEBUG, __FUNCTION__, " local machine name: ", localMachineName_,
+        "local state: ", RefAppUtils::tcuActivityStateToString(localState_),
+        " incoming machine name: ",
+        event->getMachineName(), " incoming state: ",
+        RefAppUtils::tcuActivityStateToString(event->getTriggeredState()));
+    if((localMachineName_.compare(event->getMachineName()) == 0)
+        || event->getMachineName().empty()
+        ||(event->getMachineName().compare(ALL_MACHINES) == 0)
+        || (event->getMachineName().compare(LOCAL_MACHINE))) {
+        localState_ = event->getTriggeredState();
+    }
+
     std::lock_guard<std::mutex> lk(eventQueueUpdate_);
     printQueue();
     TcuActivityState newState = event->getTriggeredState();
@@ -281,10 +295,19 @@ void EventManager::holdWakeLock() {
         strlen(WAKE_LOCK));
 }
 
+void EventManager::holdWakeLock(const std::string& wakeLockValue) {
+    LOG(DEBUG, __FUNCTION__);
+    writeToSystemNode((char *)WAKELOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
+}
+
 void EventManager::releaseWakeLock() {
     LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)WAKE_LOCK,
         strlen(WAKE_LOCK));
+}
+void EventManager::releaseWakeLock(const std::string& wakeLockValue) {
+    LOG(DEBUG, __FUNCTION__);
+    writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
 }
 
 void EventManager::processedEventHandler(EventStatus status) {
@@ -391,4 +414,9 @@ void EventManager::onTcuActivityStateUpdate(TcuActivityState state, std::string 
     // state change. Other concerned slave clients will get this indication, and it is expected that
     // the slave acknowledges this indication via (sendActivityStateAck).
     LOG(ERROR, __FUNCTION__, " ", RefAppUtils::tcuActivityStateToString(state));
+}
+
+TcuActivityState EventManager::getActivityState() {
+    LOG(ERROR, __FUNCTION__, " ", RefAppUtils::tcuActivityStateToString(localState_));
+    return localState_;
 }

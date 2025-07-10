@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -44,6 +15,10 @@
 #include <algorithm>
 
 #include "RefAppUtils.hpp"
+#include "ConfigParser.hpp"
+#include "DataConfigParser.hpp"
+
+#define DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL "60000"
 
 std::map<telux::common::ErrorCode, std::string> RefAppUtils::errorCodeToStringMap_ = {
 
@@ -701,4 +676,165 @@ std::string RefAppUtils::dataRestrictModeTypeToString(telux::data::DataRestrictM
    }
 
    return returnStingValue;
+}
+
+bool RefAppUtils::isUDP() {
+   std::string proto = ConfigParser::getInstance()->getValue("communication", "TRANSPORT_PROTOCOL");
+   if (!proto.compare("UDP")) {
+      LOG(DEBUG, __FUNCTION__, "Using UDP communication");
+      return true;
+   }
+   LOG(DEBUG, __FUNCTION__, "Using TCP communication");
+   return false;
+}
+
+bool RefAppUtils::isClient() {
+   std::string value = ConfigParser::getInstance()->getValue("communication", "ROLE");
+   if (!value.compare("SERVER")) {
+      LOG(DEBUG, __FUNCTION__, " configured as server");
+      return false;
+   }
+   LOG(DEBUG, __FUNCTION__, " not server default config as client ", value);
+   return true;
+}
+
+bool RefAppUtils::isKeepAliveEnabled() {
+   std::string value = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE");
+   LOG(DEBUG, __FUNCTION__, " value: ", value);
+   return RefAppUtils::stringToBool(value);
+}
+
+bool RefAppUtils::isAutoExitEnabled() {
+   std::string value =
+      ConfigParser::getInstance()->getValue("communication", "DATA_FILTER_AUTO_EXIT");
+   LOG(DEBUG, __FUNCTION__, " value: ", value);
+   return RefAppUtils::stringToBool(value);
+}
+
+uint32_t RefAppUtils::getKeepAliveInterval() {
+   std::string interval = ConfigParser::getInstance()->getValue(
+      "communication", "TCP_KEEP_ALIVE_PACKET_INTERVAL");
+   return interval.empty() ? std::stoul(DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL) :
+      std::stoul(interval);
+}
+
+std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
+   std::vector<std::shared_ptr<Connection>> connectionList;
+   std::shared_ptr<Connection> commonConnection = std::make_shared<Connection>();
+   auto config = ConfigParser::getInstance();
+
+   std::string value = config->getValue("communication", "ROLE");
+   commonConnection->connectionRole = (!value.compare("SERVER")) ? ConnectionRole::SERVER :
+      ConnectionRole::CLIENT;
+
+   value = config->getValue("communication", "IP_FAMILY");
+   commonConnection->ipFamily = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 :
+      telux::data::IpFamilyType::IPV4;
+
+   value = config->getValue("communication", "TRANSPORT_PROTOCOL");
+   commonConnection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
+
+   value = config->getValue("communication", "CLIENT_ADDRESS");
+   commonConnection->clientIpAddr = (!value.empty()) ? value : "";
+
+   value = config->getValue("communication", "SERVER_PORT");
+   commonConnection->serverPort = (!value.empty()) ? std::stoi(value) : 0;
+
+   value = config->getValue("communication", "CLIENT_PORT");
+   commonConnection->clientPort = (!value.empty()) ? std::stoi(value) : 0;
+
+   try {
+      std::string ipValue = config->getValue("communication", "SERVER_ADDRESS");
+      std::string portValue = config->getValue("communication", "SERVER_PORT");
+      std::string profileIdValue = config->getValue(
+         "communication", "START_DATA_CALL_ON_PROFILE_ID");
+
+      std::vector<std::string> ipList;
+      std::vector<std::string> portList;
+      std::vector<std::string> profileIdList;
+
+      // Split and clean IP addresses
+      if (!ipValue.empty()) {
+         std::stringstream ss(ipValue);
+         std::string ip;
+         while (std::getline(ss, ip, ',')) {
+               ip.erase(std::remove_if(ip.begin(), ip.end(), ::isspace), ip.end());
+               ipList.push_back(ip);
+         }
+      }
+
+      // Split and clean ports
+      if (!portValue.empty()) {
+         std::stringstream ss(portValue);
+         std::string port;
+         while (std::getline(ss, port, ',')) {
+               port.erase(std::remove_if(port.begin(), port.end(), ::isspace), port.end());
+               portList.push_back(port);
+         }
+      }
+
+      // Split and clean ports
+      if (!profileIdValue.empty()) {
+         std::stringstream ss(profileIdValue);
+         std::string profileId;
+         while (std::getline(ss, profileId, ',')) {
+               profileId.erase(
+                  std::remove_if(profileId.begin(), profileId.end(), ::isspace), profileId.end());
+               profileIdList.push_back(profileId);
+         }
+      }
+
+      // Match IPs and ports by index
+      size_t count = std::max(ipList.size(), portList.size());
+      for (size_t i = 0; i < count; ++i) {
+         std::shared_ptr<Connection> connection = std::make_shared<Connection>(*commonConnection);
+
+
+         if (i < ipList.size()) {
+            connection->serverIpAddr = ipList[i];
+         }
+
+         if (i < portList.size()) {
+            try {
+               connection->serverPort = std::stoi(portList[i]);
+            } catch (const std::exception &e) {
+               LOG(WARNING, __FUNCTION__, "Invalid port format: ", portList[i]);
+               connection->serverPort = 0;
+            }
+         }
+
+         if (i < profileIdList.size()) {
+            try {
+               connection->profileId = std::stoi(profileIdList[i]);
+            } catch (const std::exception &e) {
+               LOG(WARNING, __FUNCTION__, "Invalid profile id format: ", profileIdList[i]);
+               connection->profileId = 0;
+            }
+         }
+         connection->slotId = static_cast<SlotId>(i+1);
+         connectionList.push_back(connection);
+      }
+
+   } catch (const std::exception &e) {
+      LOG(ERROR, __FUNCTION__, e.what());
+   }
+   return connectionList;
+}
+
+bool RefAppUtils::isDataFilterInstallationEnabled() {
+   std::string value =
+      ConfigParser::getInstance()->getValue("communication", "INSTALL_DATA_FILTER");
+   LOG(DEBUG, __FUNCTION__, " value: ", value);
+   return RefAppUtils::stringToBool(value);
+}
+
+bool RefAppUtils::stringToBool(std::string enable) {
+    if (!enable.compare("ENABLE")) {
+        return true;
+    } else if (!enable.compare("DISABLE")) {
+        return false;
+    } else {
+        LOG(ERROR, __FUNCTION__, " Invalid value ");
+        return false;
+    }
 }

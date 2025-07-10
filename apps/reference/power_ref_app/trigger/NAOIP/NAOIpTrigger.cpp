@@ -1,38 +1,10 @@
 /*
- *  Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "NAOIpTrigger.hpp"
+#include "common/RefAppUtils.hpp"
 
 NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
     LOG(DEBUG, __FUNCTION__);
@@ -41,15 +13,12 @@ NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
 
 NAOIpTrigger::~NAOIpTrigger() {
     LOG(DEBUG, __FUNCTION__);
-    stopServer();
 }
 
 bool NAOIpTrigger::init() {
     LOG(DEBUG, __FUNCTION__);
     config_ = ConfigParser::getInstance();
-
     bool returnValue = false;
-
     do {
         if (!loadConfig()) {
             break;
@@ -59,39 +28,48 @@ bool NAOIpTrigger::init() {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");
             break;
         }
-        dataController_ = std::make_shared<DataFilterController>();
-        if (dataController_ ) {
-            isUDP_ = dataController_->isUDP();
-            for (size_t i = 0; i < RETRY_INIT_SDK; i++) {
-                returnValue = dataController_->initializeSDK(
-                    // callback to actually start naoip trigger after default data call is available
-                    [&](bool isDefaultDataCall) {
-                        LOG(INFO, __FUNCTION__, "isDefaultDataCall = ",(int)isDefaultDataCall,
-                            " , isServerRunning = ", (int)isServerRunning_);
-                        //Note: Don't hold the callback thread for long.
-                        if (isDefaultDataCall) {
-                            if (!isServerRunning_) {
-                                std::thread server = std::thread([this] { startServer(); });
-                                {
-                                    std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
-                                    server_ = std::move(server);
-                                }
-                            }
-                        } else {
-                            std::thread stopServerTh([this] { stopServer(); });
-                            stopServerTh.detach();
-                        }
-                    }
-                );
+        // Connection handler initialisation
+        connectionHandler_ = ConnectionHandler::getInstance();
+        if(!connectionHandler_){
+            return false;
+        }
+        std::shared_ptr<ISocketConnectionListener> listener = shared_from_this();
+        // connectionHandler_->registerListener(listener);
+        std::vector<std::shared_ptr<Connection>> connectionConfigList =
+            RefAppUtils::getConnectionConfigs();
+        connectionHandler_->start(connectionConfigList);
+        for (const auto &connection : connectionConfigList) {
+            if(connection->socketConnection && connection->dataConnectionManager) {
+                connection->socketConnection->registerListener(shared_from_this());
+                connection->dataConnectionManager->registerListener(shared_from_this());
+            } else {
+                LOG(ERROR, __FUNCTION__, " error on connection");
+                return false;
+            }
+        }
+        if (!RefAppUtils::isUDP() && RefAppUtils::isKeepAliveEnabled()) {
+            tcpKeepAliveHandler_ = TCPKeepAliveHandler::getInstance(eventManager_);
+            if (tcpKeepAliveHandler_ && tcpKeepAliveHandler_->init()) {
+                LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+            } else {
+                LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+                return false;
+            }
+        } else {
+            LOG(DEBUG, __FUNCTION__, " keep alive is not enabled");
+        }
 
-                if (returnValue) {
-                    //Listen to all triggers to be able to add and remove data filters.
-                    eventManager_->registerListener(weakFromThis, TriggerType::UNKNOWN);
-                    break;
-                } else {
-                    //telsdk initialisation failed wait for some time and retry
-                    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                }
+        dataFilterController_ = std::make_shared<DataFilterController>();
+        if (dataFilterController_ ) {
+            returnValue = dataFilterController_->initializeSDK();
+            dataFilterController_->registerListener(weakFromThis);
+            if (returnValue) {
+                //Listen to all triggers to be able to add and remove data filters.
+                eventManager_->registerListener(weakFromThis, TriggerType::UNKNOWN);
+                break;
+            } else {
+                //telsdk initialisation failed wait for some time and retry
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             }
         } else {
             LOG(ERROR, __FUNCTION__, "  Unable to instantiate data controller ");
@@ -104,23 +82,26 @@ bool NAOIpTrigger::init() {
 
 bool NAOIpTrigger::enableFilter() {
     LOG(DEBUG, __FUNCTION__);
-    if (dataController_) {
-        if (dataController_->addFilter()) {
-            DataRestrictMode mode;
-            // Note: If filter auto exit is enabled, it will disable the filter if any packets pass
-            //       through a whitelisted filter, even if it is an unexpected packet.
-            //       @ref DataRestrictMode
-            // ex. mode.filterAutoExit = DataRestrictModeType::ENABLE;
-            mode.filterAutoExit = DataRestrictModeType::DISABLE;
-            mode.filterMode = DataRestrictModeType::ENABLE;
-
-            if (dataController_->sendSetDataRestrictMode(mode)) {
-                return true;
-            }
-            LOG(ERROR, __FUNCTION__, " sendSetDataRestrictMode failed");
-        } else {
+    if (dataFilterController_) {
+        if (!dataFilterController_->addFilter(connectionHandler_->getConnectionList())) {
             LOG(ERROR, __FUNCTION__, " addFilter failed");
         }
+        DataRestrictMode mode;
+        // Note: If filter auto exit is enabled, it will disable the filter if any packets pass
+        //       through a whitelisted filter, even if it is an unexpected packet.
+        //       @ref DataRestrictMode
+        // ex. mode.filterAutoExit = DataRestrictModeType::ENABLE;
+        if(RefAppUtils::isAutoExitEnabled()) {
+            mode.filterAutoExit = DataRestrictModeType::ENABLE;
+        } else {
+            mode.filterAutoExit = DataRestrictModeType::DISABLE;
+        }
+        mode.filterMode = DataRestrictModeType::ENABLE;
+
+        if (dataFilterController_->sendSetDataRestrictMode(mode)) {
+            return true;
+        }
+        LOG(ERROR, __FUNCTION__, " sendSetDataRestrictMode failed");
     } else {
         LOG(ERROR, __FUNCTION__, " dataFilterController is not ready");
     }
@@ -129,10 +110,10 @@ bool NAOIpTrigger::enableFilter() {
 
 bool NAOIpTrigger::disableFilter() {
     LOG(DEBUG, __FUNCTION__);
-    if (dataController_) {
+    if (dataFilterController_) {
         DataRestrictMode mode;
         mode.filterMode = DataRestrictModeType::DISABLE;
-        if (!dataController_->sendSetDataRestrictMode(mode)) {
+        if (!dataFilterController_->sendSetDataRestrictMode(mode)) {
             LOG(ERROR, __FUNCTION__, " sendSetDataRestrictMode is failed");
         }
         return true;
@@ -146,10 +127,16 @@ void NAOIpTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) 
     LOG(DEBUG, __FUNCTION__, " reason = ", (int)reason);
     if (event->getTriggeredState() == TcuActivityState::SUSPEND
         && reason == EventStatus::REJECTED_INVALID_STATE_TRANSITION) {
+        if (tcpKeepAliveHandler_) {
+            tcpKeepAliveHandler_->startKAOffload();
+        }
         enableFilter();
     }
     if (event->getTriggeredState() == TcuActivityState::RESUME
         && reason == EventStatus::REJECTED_INVALID_STATE_TRANSITION) {
+        if (tcpKeepAliveHandler_) {
+            tcpKeepAliveHandler_->stopKAOffload();
+        }
         disableFilter();
     }
 }
@@ -159,8 +146,14 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
 
     if (success) {
         if (event->getTriggeredState() == TcuActivityState::SUSPEND) {
+            if(tcpKeepAliveHandler_) {
+                tcpKeepAliveHandler_->startKAOffload();
+            }
             enableFilter();
         } else if (event->getTriggeredState() == TcuActivityState::RESUME) {
+            if(tcpKeepAliveHandler_) {
+                tcpKeepAliveHandler_->stopKAOffload();
+            }
             disableFilter();
         }
     }
@@ -206,261 +199,44 @@ bool NAOIpTrigger::validateTrigger(char *buffer, int length,
     return false;
 }
 
-void NAOIpTrigger::listenNewTriggerClient(int triggerSocket, bool closeSocket) {
+void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode){
     LOG(DEBUG, __FUNCTION__);
-    char buffer[BUFFER_SIZE] = {0};
-    try{
-        do {
-            int length = read(triggerSocket, buffer, BUFFER_SIZE);
-            LOG(DEBUG, __FUNCTION__, " buffer = ", buffer, "\nlength = ", length);
-            if (length <= 0) {
-                LOG(ERROR, __FUNCTION__, " trigger connection interrupted ");
-                break;
-            }
-            TcuActivityState triggerState = TcuActivityState::UNKNOWN;
-            std::string machineName = ALL_MACHINES;
-            if (validateTrigger(buffer, length, triggerState, machineName)) {
-                triggerEvent(triggerState, machineName);
-            } else {
-                LOG(ERROR, __FUNCTION__, " trigger not match ");
-            }
-            memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
-        } while (true);
-
-        if (closeSocket) {
-            if (shutdown(triggerSocket, SHUT_RDWR) == -1) {
-                std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
-                LOG(ERROR, __FUNCTION__, logTmp);
-            }
-            if (close(triggerSocket) == -1) {
-                std::string logTmp = "close failed errno = " + string(strerror(errno));
-                LOG(ERROR, __FUNCTION__, logTmp);
+    if(mode.filterMode == DataRestrictModeType::DISABLE) {
+        eventManager_->holdWakeLock("DataFilterDisabled");
+        std::unique_lock<std::mutex> lock(messageMtx_);
+        if (messageCv_.wait_for(lock, std::chrono::seconds(2)) == std::cv_status::timeout) {
+            if(eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+                if(tcpKeepAliveHandler_) {
+                    tcpKeepAliveHandler_->stopKAOffload();
+                    tcpKeepAliveHandler_->startKAOffload();
+                }
+                enableFilter();
             }
         }
-    } catch(const std::exception& e) {
-        LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
+        eventManager_->releaseWakeLock("DataFilterDisabled");
     }
-
-    LOG(DEBUG, __FUNCTION__, " exit ");
 }
 
-void NAOIpTrigger::startServer() {
+void NAOIpTrigger::messageReceived(IPMessage msg, int length,
+    std::shared_ptr<Connection> connection) {
     LOG(DEBUG, __FUNCTION__);
-
-    if (isUDP_) {
-        startUDPSever();
+    eventManager_->holdWakeLock("MessageReceived");
+    TcuActivityState triggerState = TcuActivityState::UNKNOWN;
+    std::string machineName = ALL_MACHINES;
+    if (validateTrigger(msg.msg, length, triggerState, machineName)) {
+        triggerEvent(triggerState, machineName);
     } else {
-        startTCPSever();
-    }
-
-    LOG(DEBUG, __FUNCTION__, " exit");
-}
-
-void NAOIpTrigger::startTCPSever() {
-    LOG(DEBUG, __FUNCTION__);
-    struct sockaddr_in address = {0};
-    int opt = 1;
-    int addrlen = sizeof(address);
-    int port = DEFAULT_PORT;
-
-    try {
-        do {
-            {
-                std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
-                if (isServerRunning_) {
-                    LOG(ERROR, __FUNCTION__, " server already running ");
-                    break;
-                }
-
-                isServerRunning_ = true;
-                if ((serverSocket_ = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
-                    LOG(ERROR, __FUNCTION__, " socket failed return value = ", serverSocket_);
-                    throw std::runtime_error("Error: socket failed");
-                }
-
-                int returnValue = 0;
-                if ( (returnValue = setsockopt(serverSocket_, SOL_SOCKET,
-                            SO_REUSEADDR | SO_REUSEPORT, &opt,
-                            sizeof(opt)))) {
-                    LOG(ERROR, __FUNCTION__, " setsockopt failed return value = ", returnValue);
-                    throw std::runtime_error("Error: setsockopt failed");
-                }
-                address.sin_family = AF_INET;
-                address.sin_addr.s_addr = INADDR_ANY;
-
-                string portString = config_->getValue("NAOIP_TRIGGER", "NAOIP_FILTER_SERVER_PORT");
-                if (portString != "") {
-                    port = stoi(portString);
-                }
-                address.sin_port = htons(port);
-
-                if ((returnValue = bind(serverSocket_, (struct sockaddr *)&address,
-                        sizeof(address))) < 0) {
-                    LOG(ERROR, __FUNCTION__, " bind failed return value = ", returnValue);
-                    throw std::runtime_error("Error: bind failed");
-                }
-                if ((returnValue = listen(serverSocket_, 3)) < 0) {
-                    LOG(ERROR, __FUNCTION__, " listen failed return value = ", returnValue);
-                    throw std::runtime_error("Error: listen failed");
-                }
-
+        LOG(ERROR, __FUNCTION__, " trigger not match ");
+        if(eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+            if(tcpKeepAliveHandler_) {
+                tcpKeepAliveHandler_->stopKAOffload();
+                tcpKeepAliveHandler_->startKAOffload();
             }
-
-            do {
-                int clientSocket = 0;
-                LOG(INFO, __FUNCTION__, " server is accepting clients on port = ", port);
-                if ((clientSocket = accept(serverSocket_, (struct sockaddr *)&address,
-                                        (socklen_t *)&addrlen)) < 0) {
-                    LOG(ERROR, __FUNCTION__, " accept failed return value = ", clientSocket);
-                } else {
-                    cleanOldDisconnectedClientThreads();
-                    if (clientsSocketInfo_.size() <= MAX_CLIENT_CONNECT) {
-                        std::promise<void> clientDisconnectedPromise;
-                        ClientSocketInfo newClient = {0};
-                        newClient.socketFd = clientSocket;
-                        newClient.runningOnThread = std::thread(
-                            [this, clientSocket, &clientDisconnectedPromise]{
-                                listenNewTriggerClient(clientSocket, true);
-
-                                clientDisconnectedPromise.set_value();
-                            }
-                        );
-                        newClient.clientDisconnected = clientDisconnectedPromise.get_future();
-                        clientsSocketInfo_.push_back(std::move(newClient));
-                    } else {
-                        if (close(clientSocket) == -1) {
-                            LOG(ERROR, __FUNCTION__,
-                                "close failed errno = ", string(strerror(errno)));
-                        }
-                        LOG(ERROR, __FUNCTION__, " max client limit reached ");
-                    }
-                }
-            } while (isServerRunning_);
-        } while (0);
-
-    } catch(const std::exception& e) {
-        LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
-        stopServer();
-    }
-    LOG(DEBUG, __FUNCTION__, " exit");
-}
-
-void NAOIpTrigger::startUDPSever() {
-    LOG(DEBUG, __FUNCTION__);
-
-    int ret;
-    int port = DEFAULT_PORT;
-    std::string portString;
-    struct sockaddr_in serverAddr;
-
-    {
-        std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
-        if (isServerRunning_) {
-            LOG(ERROR, __FUNCTION__, " server already running ");
-            return;
-        }
-        isServerRunning_ = true;
-
-        ret = socket(AF_INET, SOCK_DGRAM, 0);
-        if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, " can't create socket, lnx err ", errno);
-            stopServer();
-        }
-
-        serverSocket_ = ret;
-
-        memset(&serverAddr, 0, sizeof(serverAddr));
-
-        serverAddr.sin_family = AF_INET;
-        serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-        portString = config_->getValue("NAOIP_TRIGGER", "NAOIP_FILTER_SERVER_PORT");
-        if (portString != "") {
-            port = std::stoi(portString);
-        }
-        serverAddr.sin_port = htons(port);
-
-        ret = bind(serverSocket_, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
-        if (ret < 0) {
-            LOG(ERROR, __FUNCTION__, " can't bind socket, lnx err ", errno);
-            stopServer();
+            enableFilter();
         }
     }
-
-    listenNewTriggerClient(serverSocket_, false);
-}
-
-void NAOIpTrigger::cleanOldDisconnectedClientThreads() {
-    LOG(DEBUG, __FUNCTION__);
-    for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end(); it++) {
-        if ((*it).clientDisconnected.wait_for(std::chrono::milliseconds(0)) ==
-            std::future_status::ready && (*it).runningOnThread.joinable()) {
-            (*it).runningOnThread.join();
-            clientsSocketInfo_.erase(it--);
-        }
-    }
-    LOG(DEBUG, __FUNCTION__, " exit");
-}
-
-void NAOIpTrigger::stopServer() {
-    LOG(DEBUG, __FUNCTION__);
-    try {
-        std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
-        disableFilter();
-        if (dataController_) {
-            dataController_->removeAllFilter();
-        }
-        if (!isServerRunning_) {
-            LOG(ERROR, __FUNCTION__, " server already stoped ");
-            return;
-        }
-        for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end();it++) {
-            if (shutdown((*it).socketFd, SHUT_RDWR) == -1) {
-                std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
-                LOG(ERROR, __FUNCTION__, logTmp);
-            }
-            if (close((*it).socketFd) == -1) {
-                std::string logTmp = "close failed errno = " + string(strerror(errno));
-                LOG(ERROR, __FUNCTION__, logTmp);
-            }
-        }
-        LOG(DEBUG, __FUNCTION__, " clients closed ");
-        isServerRunning_ = false;
-        if (shutdown(serverSocket_, SHUT_RD) == -1) {
-            std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
-            LOG(ERROR, __FUNCTION__, logTmp);
-        }
-        if (close(serverSocket_) == -1) {
-            std::string logTmp = "close failed errno = " + string(strerror(errno));
-            LOG(ERROR, __FUNCTION__, logTmp);
-        }
-
-        serverSocket_ = 0;
-        LOG(DEBUG, __FUNCTION__, " server closed ");
-
-        for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end();) {
-            // even after socket shutdown and close if client is connected it take some time to get
-            // out of read operation
-            if ((*it).clientDisconnected.wait_for(std::chrono::milliseconds(
-                    1000)) == std::future_status::ready &&
-                (*it).runningOnThread.joinable()) {
-                (*it).runningOnThread.join();
-            } else {
-                LOG(ERROR, __FUNCTION__, " unable to join client thread ");
-            }
-            clientsSocketInfo_.erase(it);
-        }
-        LOG(DEBUG, __FUNCTION__, " clients joined ");
-        if(server_.joinable()) {
-            server_.join();
-            LOG(DEBUG, __FUNCTION__, " server joined ");
-        } else {
-            LOG(ERROR, __FUNCTION__, " unable to join server thread ");
-        }
-    } catch(const std::exception& e) {
-        LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
-    }
-    LOG(DEBUG, __FUNCTION__," exit");
+    eventManager_->releaseWakeLock("MessageReceived");
+    messageCv_.notify_all();
 }
 
 bool NAOIpTrigger::loadConfig() {
@@ -486,4 +262,24 @@ bool NAOIpTrigger::loadConfig() {
         return false;
     }
     return true;
+}
+
+void NAOIpTrigger::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
+    eventManager_->holdWakeLock("DataCallInfoChanged");
+    if((dataCall->getDataCallStatus() == DataCallStatus::NET_CONNECTED) &&
+        (eventManager_->getActivityState() == TcuActivityState::SUSPEND)) {
+        for (auto connection : connectionHandler_->getConnectionList()) {
+            if (dataCall->getProfileId() == connection->profileId &&
+                dataCall->getSlotId() == connection->slotId) {
+                if(tcpKeepAliveHandler_) {
+                    tcpKeepAliveHandler_->startKAOffload();
+                }
+            }
+
+            // The data filter is disabled if all data calls go down.
+            // When a new data call is brought up during suspend, re-enable the data filter
+            enableFilter();
+        }
+    }
+    eventManager_->releaseWakeLock("DataCallInfoChanged");
 }

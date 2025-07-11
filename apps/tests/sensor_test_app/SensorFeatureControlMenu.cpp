@@ -64,6 +64,23 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
         std::cout << " Received events from " << sensorName << " count - " << events->size()
                   << " isLast - " << isLast << std::endl;
     }
+
+    void onMotionDetectionEnabled(std::vector<MotionDetectionConfig> motionDetectionConfigs) {
+        std::cout << "Received onMotionDetectionEnabled event" << std::endl;
+        SensorUtils::printMotionDetectionConfigs(motionDetectionConfigs);
+    }
+
+    void onMotionDetectionDisabled() {
+        std::cout << "Received onMotionDetectionDisabled event - No active configurations"
+                  << std::endl;
+    }
+
+    void onMotionDetected(int sensorId, struct iio_event_data event) {
+        std::cout << "Received onMotionDetected event" << std::endl;
+        std::cout << "Sensor ID: " << sensorId << std::endl;
+        std::cout << "Event ID: " << event.id << std::endl;
+        std::cout << "Timestamp: " << event.timestamp << std::endl;
+    }
 };
 
 void SensorFeatureControlMenu::onTcuActivityStateUpdate(
@@ -235,10 +252,40 @@ void SensorFeatureControlMenu::initConsole() {
                 std::bind(&SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend, this,
                     std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand,
-            listActiveFeaturesCommand, enableSensorFeatureFifoCommand,
-            skipSensorFeatureOnSuspendCommand, listSensorFeaturesQueuedOnSuspendCommand};
+    std::shared_ptr<ConsoleAppCommand> listAvailableSensorsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "List_Available_Sensors", {},
+            std::bind(
+                &SensorFeatureControlMenu::listAvailableSensors, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getMotionDetectionConfigLimitsCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("9", "Get_Motion_Detection_Config_Limits", {},
+                std::bind(&SensorFeatureControlMenu::getMotionDetectionConfigLimits, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> enableMotionDetectionCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Enable_Motion_Detection", {},
+            std::bind(
+                &SensorFeatureControlMenu::enableMotionDetection, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> disableMotionDetectionCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("11", "Disable_Motion_Detection", {},
+                std::bind(&SensorFeatureControlMenu::disableMotionDetection, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getMotionDetectionConfigsCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("12", "Get_Motion_Detection_Configs", {},
+                std::bind(&SensorFeatureControlMenu::getMotionDetectionConfigs, this,
+                    std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
+        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand,
+        enableSensorFeatureFifoCommand, skipSensorFeatureOnSuspendCommand,
+        listSensorFeaturesQueuedOnSuspendCommand, listAvailableSensorsCommand,
+        getMotionDetectionConfigLimitsCommand, enableMotionDetectionCommand,
+        disableMotionDetectionCommand, getMotionDetectionConfigsCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -358,4 +405,73 @@ void SensorFeatureControlMenu::cleanup() {
     }
     sensorFeatureManager_ = nullptr;
     tcuActivityMgr_       = nullptr;
+}
+
+void SensorFeatureControlMenu::listAvailableSensors(std::vector<std::string> userInput) {
+    std::vector<SensorInfo> info;
+    telux::common::Status status = sensorFeatureManager_->getAvailableSensorInfo(info);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "getAvailableSensorInfo failed: " << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << "Sensor info request successful" << std::endl;
+    for (SensorInfo i : info) {
+        SensorUtils::printSensorInfo(i);
+    }
+}
+
+void SensorFeatureControlMenu::getMotionDetectionConfigLimits(std::vector<std::string> userInput) {
+    int sensorId;
+    SensorUtils::getInput("Enter sensorId: ", sensorId);
+    MotionDetectionConfigLimits motionDetectionConfigLimits = {};
+    telux::common::Status ret = sensorFeatureManager_->getMotionDetectionConfigLimits(
+        sensorId, motionDetectionConfigLimits);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success " << std::endl;
+        SensorUtils::printMotionDetectionConfigLimits(motionDetectionConfigLimits);
+    }
+}
+
+void SensorFeatureControlMenu::enableMotionDetection(std::vector<std::string> userInput) {
+    MotionDetectionConfig motionDetectionConfig = {};
+    SensorUtils::getInput("Enter sensorId: ", motionDetectionConfig.sensorId);
+    SensorUtils::getInput("Enter threshold: ", motionDetectionConfig.threshold);
+    SensorUtils::getInput("Enter duration: ", motionDetectionConfig.duration);
+    SensorUtils::getInput("Enter samplingRate: ", motionDetectionConfig.samplingRate);
+    telux::common::Status ret = sensorFeatureManager_->enableMotionDetection(motionDetectionConfig);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::disableMotionDetection(std::vector<std::string> userInput) {
+    int sensorId;
+    SensorUtils::getInput("Enter sensorId: ", sensorId);
+    telux::common::Status ret = sensorFeatureManager_->disableMotionDetection(sensorId);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::getMotionDetectionConfigs(std::vector<std::string> userInput) {
+    std::vector<MotionDetectionConfig> motionDetectionConfigs;
+    telux::common::Status ret
+        = sensorFeatureManager_->getMotionDetectionConfigs(motionDetectionConfigs);
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+        SensorUtils::printMotionDetectionConfigs(motionDetectionConfigs);
+    }
 }

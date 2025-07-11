@@ -17,9 +17,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -388,6 +387,68 @@ struct SelfTestResultParams {
     SensorResultType sensorResultType_;
     /** Boot timestamp in ns. Represents the timestamp of the self-test. */
     uint64_t timestamp_;
+};
+
+/**
+ * @brief Represents the upper and lower bound limits for
+ * each configuration required to detect motion. The limits can be retrieved using
+ * @ref telux::sensor::ISensorFeatureManager::getMotionDetectionConfigLimits API.
+ *
+ */
+struct MotionDetectionConfigLimits {
+    /** Minimum threshold that can be set for @ref MotionDetectionConfig::threshold */
+    float minThreshold;
+    /** Maximum threshold that can be set for @ref MotionDetectionConfig::threshold */
+    float maxThreshold;
+    /** Minimum duration that can be set for @ref MotionDetectionConfig::duration */
+    int minDuration;
+    /** Maximum duration that can be set for @ref MotionDetectionConfig::duration */
+    int maxDuration;
+    /** Minimum frequency that can be set for @ref MotionDetectionConfig::samplingRate */
+    float minSamplingRate;
+    /** Maximum frequency that can be set for @ref MotionDetectionConfig::samplingRate */
+    float maxSamplingRate;
+};
+
+/**
+ * @brief Represents the parameters that should be used to detect motion for a sensor.
+ *
+ * A client can set the motion detection parameters using
+ * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API
+ * and can retrieve the parameters if it was already set using
+ * @ref telux::sensor::ISensorFeatureManager::getMotionDetectionConfig API.
+ *
+ */
+struct MotionDetectionConfig {
+    /**
+     * Threshold is the minimum value that must be exceeded to generate an event.
+     * Units - In mg.
+     */
+    float threshold;
+    /**
+     * Duration is the period for which the sensor data should be above the threshold,
+     * to generate the motion detection event. If this is 0, this means, the sensor event
+     * would be immediately triggered after the threshold is crossed.
+     * Units - In ms.
+     */
+    int duration;
+    /**
+     * Sampling rate is the frequency at which the sensor should generate samples
+     * for the purpose of motion detection.
+     * Units - In Hz.
+     */
+    float samplingRate;
+    /**
+     * When a client enables the motion detection configuration using
+     * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API,
+     * the sensor id points to the id of the sensor for which the configuration is being set.
+     *
+     * When a client requests the motion detection configuration using
+     * @ref telux::sensor::ISensorFeatureManager::getMotionDetectionConfigs API,
+     * the sensor id points to the id of the sensor for which the configuration is already set.
+     *
+     */
+    int sensorId;
 };
 
 /** @} */ /* end_addtogroup telematics_sensor_service */

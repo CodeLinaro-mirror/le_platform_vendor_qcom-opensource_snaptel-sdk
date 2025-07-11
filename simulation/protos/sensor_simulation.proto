@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -19,6 +19,11 @@ service SensorFeatureManagerService {
    rpc GetFeatureList (google.protobuf.Empty) returns (GetFeatureListReply) {}
    rpc EnableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
    rpc DisableFeature (SensorEnableFeature) returns (SensorFeatureManagerCommandReply) {}
+   rpc GetSensorList (google.protobuf.Empty) returns (SensorInfoResponse) {}
+   rpc GetMotionDetectionLimits (MotionDetectionRequest) returns (MotionDetectionLimitsReply) {}
+   rpc EnableMotionDetection (EnableMotionDetectionRequest) returns (SensorFeatureManagerCommandReply) {}
+   rpc DisableMotionDetection (MotionDetectionRequest) returns (SensorFeatureManagerCommandReply) {}
+   rpc GetMotionDetectionConfig (google.protobuf.Empty) returns (MotionDetectionConfigReply) {}
 }
 
 service SensorClientService {
@@ -142,3 +147,47 @@ message SelfTestResponse {
 message SelfTestFailedEvent {
     int32 sensor_mask = 1;
 }
+
+message MotionDetectionRequest {
+    int32 sensor_id = 1;
+}
+
+message MotionDetectionLimitsReply {
+    commonStub.Status status = 1;
+    float min_threshold = 2;
+    float max_threshold = 3;
+    int32 min_duration = 4;
+    int32 max_duration = 5;
+    float min_samplingrate = 6;
+    float max_samplingrate = 7;
+}
+
+message EnableMotionDetectionRequest {
+    int32 sensor_id = 1;
+    float threshold = 2;
+    int32 duration = 3;
+    float sampling_rate = 4;
+}
+
+message MotionDetectionConfigReply {
+    commonStub.Status status = 1;
+    int32 sensor_id = 2;
+    float threshold = 3;
+    int32 duration = 4;
+    float sampling_rate = 5;
+}
+
+message MotionDetectionEvent {
+    int32 sensor_id = 1;
+    int32 event_id = 2;
+    int32 timestamp = 3;
+}
+
+message MotionDetectionEnabledEvent {
+    int32 sensor_id = 1;
+    float threshold = 2;
+    int32 duration = 3;
+    float sampling_rate = 4;
+}
+
+message MotionDetectionDisabledEvent {}

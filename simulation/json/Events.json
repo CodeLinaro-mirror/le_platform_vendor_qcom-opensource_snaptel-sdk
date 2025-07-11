@@ -106,6 +106,10 @@
             "telsdk_event_injector -f sensor_feature -e sensor_event <featureName> <eventId>",
             "featureName       string, Valid features are available from JSON configuration.",
             "eventId           Integer, valid event Id are available from csv data file"
+        ],"motion_detection_event":[
+            "telsdk_event_injector -f sensor_feature -e motion_detection_event <eventId> <timestamp>",
+            "eventId         Integer, valid event Id as per the Linux IIO subsystem",
+            "timestamp       Integer, boot Timestamp of the event occurence in nanoseconds"
         ]
     },
     "sensor_mgr": {

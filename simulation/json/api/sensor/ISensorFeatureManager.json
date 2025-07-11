@@ -11,6 +11,14 @@
         },
         "getAvailableFeatures":{
             "status": "SUCCESS"
+        },
+        "getMotionDetectionLimits":{
+            "minThreshold": 138,
+            "maxThreshold": 1200,
+            "minDuration": 35,
+            "maxDuration": 116,
+            "minSamplingRate": 20,
+            "maxSamplingRate": 30
         }
     }
 }

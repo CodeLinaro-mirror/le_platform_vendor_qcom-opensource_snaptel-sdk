@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -18,6 +18,8 @@
 #include <telux/common/CommonDefines.hpp>
 #include <chrono>
 #include <time.h>
+#include <linux/iio/events.h>
+#include <linux/iio/types.h>
 
 //Default cb delay.
 #define DEFAULT_CALLBACK_DELAY 100
@@ -155,6 +157,41 @@ void SensorFeatureManagerStub::initSync(telux::common::InitResponseCb callback){
         auto myself = shared_from_this();
         myself_ = myself;
         initTcuPowerManager();
+        LOG(DEBUG, "Sensor sub-system is now available, retrieving sensor list");
+        const ::google::protobuf::Empty request;
+        ::sensorStub::SensorInfoResponse response;
+        ClientContext context;
+        ::grpc::Status reqstatus = stub_->GetSensorList(&context, request, &response);
+        if(reqstatus.ok()) {
+            for (const auto& Sensorinfo : response.sensor_info()) {
+                SensorInfo info;
+                info.id = Sensorinfo.id();
+                info.type = static_cast<SensorType>(Sensorinfo.sensor_type());
+                info.name = Sensorinfo.name();
+                info.vendor = Sensorinfo.vendor();
+                for (const auto& samplingRate : Sensorinfo.sampling_rates()) {
+                    info.samplingRates.push_back(samplingRate);
+                }
+                info.maxSamplingRate = Sensorinfo.max_sampling_rate();
+                info.maxBatchCountSupported = Sensorinfo.max_batch_count_supported();
+                info.minBatchCountSupported = Sensorinfo.min_batch_count_supported();
+                info.range = Sensorinfo.range();
+                info.version = Sensorinfo.version();
+                info.resolution = Sensorinfo.resolution();
+                info.maxRange = Sensorinfo.max_range();
+
+                sensorInfo_.push_back(info);
+            }
+            if (sensorInfo_.empty()) {
+                LOG(ERROR, "Received sensor list with ", sensorInfo_.size(), " sensors");
+                serviceStatus_ = telux::common::ServiceStatus::SERVICE_FAILED;
+            } else {
+                LOG(DEBUG, "Received sensor list with ", sensorInfo_.size(), " sensors");
+            }
+        } else {
+            LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+            serviceStatus_ = telux::common::ServiceStatus::SERVICE_FAILED;
+        }
     }
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
@@ -169,6 +206,21 @@ void SensorFeatureManagerStub::onEventUpdate(google::protobuf::Any event){
         ::sensorStub::FeatureEvent featureEvent;
         event.UnpackTo(&featureEvent);
         handleFeatureEvent(featureEvent);
+    } else if (event.Is<::sensorStub::MotionDetectionEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " MotionDetectionEvent update");
+        ::sensorStub::MotionDetectionEvent motionDetectionEvent;
+        event.UnpackTo(&motionDetectionEvent);
+        handleMotionDetectionEvent(motionDetectionEvent);
+    } else if (event.Is<::sensorStub::MotionDetectionEnabledEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " MotionDetectionEnabledEvent update");
+        ::sensorStub::MotionDetectionEnabledEvent motionDetectionEnabledEvent;
+        event.UnpackTo(&motionDetectionEnabledEvent);
+        handleMotionDetectionEnabledEvent(motionDetectionEnabledEvent);
+    } else if (event.Is<::sensorStub::MotionDetectionDisabledEvent>()) {
+        LOG(DEBUG, __FUNCTION__, " MotionDetectionDisabledEvent update");
+        ::sensorStub::MotionDetectionDisabledEvent motionDetectionDisabledEvent;
+        event.UnpackTo(&motionDetectionDisabledEvent);
+        handleMotionDetectionDisabledEvent();
     }
 }
 
@@ -351,6 +403,115 @@ telux::common::Status SensorFeatureManagerStub::deregisterListener(
     return status;
 }
 
+telux::common::Status SensorFeatureManagerStub::getAvailableSensorInfo(
+    std::vector<SensorInfo> &info) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    if (sensorInfo_.empty()) {
+        LOG(ERROR, "sensorInfo_ is empty");
+        return telux::common::Status::FAILED;
+    }
+    info = sensorInfo_;
+    return status;
+}
+
+telux::common::Status SensorFeatureManagerStub::getMotionDetectionConfigLimits(int sensorId,
+    MotionDetectionConfigLimits &motionDetectionConfigLimits) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    ::sensorStub::MotionDetectionRequest request {};
+    ::sensorStub::MotionDetectionLimitsReply response {};
+    ClientContext context{};
+    request.set_sensor_id(sensorId);
+    grpc::Status reqStatus;
+    reqStatus = stub_->GetMotionDetectionLimits(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+    } else {
+        status = static_cast<telux::common::Status>(response.status());
+        if(status == telux::common::Status::SUCCESS) {
+            motionDetectionConfigLimits.minThreshold = static_cast<float>(response.min_threshold());
+            motionDetectionConfigLimits.maxThreshold = static_cast<float>(response.max_threshold());
+            motionDetectionConfigLimits.minDuration = static_cast<int>(response.min_duration());
+            motionDetectionConfigLimits.maxDuration = static_cast<int>(response.max_duration());
+            motionDetectionConfigLimits.minSamplingRate = static_cast<float>(response.min_samplingrate());
+            motionDetectionConfigLimits.maxSamplingRate = static_cast<float>(response.max_samplingrate());
+        } else {
+            LOG(ERROR, __FUNCTION__, " Failed to get motion detection config limits");
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status SensorFeatureManagerStub::enableMotionDetection(
+    MotionDetectionConfig motionDetectionConfig) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    ::sensorStub::EnableMotionDetectionRequest request {};
+    ::sensorStub::SensorFeatureManagerCommandReply response {};
+    ClientContext context{};
+    request.set_sensor_id(motionDetectionConfig.sensorId);
+    request.set_threshold(motionDetectionConfig.threshold);
+    request.set_duration(motionDetectionConfig.duration);
+    request.set_sampling_rate(motionDetectionConfig.samplingRate);
+    grpc::Status reqStatus;
+    reqStatus = stub_->EnableMotionDetection(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+    } else {
+        status = static_cast<telux::common::Status>(response.status());
+    }
+
+    return status;
+}
+
+telux::common::Status SensorFeatureManagerStub::disableMotionDetection(int sensorId) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    ::sensorStub::MotionDetectionRequest request {};
+    ::sensorStub::SensorFeatureManagerCommandReply response {};
+    ClientContext context{};
+    request.set_sensor_id(sensorId);
+    grpc::Status reqStatus;
+    reqStatus = stub_->DisableMotionDetection(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+    } else {
+        status = static_cast<telux::common::Status>(response.status());
+    }
+
+    return status;
+}
+
+telux::common::Status SensorFeatureManagerStub::getMotionDetectionConfigs(
+    std::vector<MotionDetectionConfig> &motionDetectionConfigs) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status status = telux::common::Status::FAILED;
+    const ::google::protobuf::Empty request {};
+    ::sensorStub::MotionDetectionConfigReply response {};
+    ClientContext context{};
+    grpc::Status reqStatus;
+    reqStatus = stub_->GetMotionDetectionConfig(&context, request, &response);
+    if (!reqStatus.ok()) {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
+    } else {
+        status = static_cast<telux::common::Status>(response.status());
+        if(status == telux::common::Status::SUCCESS) {
+            MotionDetectionConfig motionDetectionConfig;
+            motionDetectionConfig.sensorId = static_cast<int>(response.sensor_id());
+            motionDetectionConfig.threshold = static_cast<float>(response.threshold());
+            motionDetectionConfig.duration = static_cast<int>(response.duration());
+            motionDetectionConfig.samplingRate = static_cast<float>(response.sampling_rate());
+            motionDetectionConfigs.push_back(motionDetectionConfig);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Failed to get motion detection configs");
+        }
+    }
+
+    return status;
+}
+
 void SensorFeatureManagerStub::invokeEventListener(SensorFeatureEvent event){
     LOG(DEBUG, __FUNCTION__);
     for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
@@ -363,6 +524,7 @@ void SensorFeatureManagerStub::invokeEventListener(SensorFeatureEvent event){
         }
     }
 }
+
 void SensorFeatureManagerStub::invokeBufferedEventListener(std::string sensorName,
     std::shared_ptr<std::vector<SensorEvent>> events, bool isLast){
     LOG(DEBUG, __FUNCTION__);
@@ -375,7 +537,58 @@ void SensorFeatureManagerStub::invokeBufferedEventListener(std::string sensorNam
             iter = listeners_.erase(iter);
         }
     }
+}
 
+void SensorFeatureManagerStub::handleMotionDetectionEvent(
+    ::sensorStub::MotionDetectionEvent motionDetectionEvent) {
+    LOG(DEBUG, __FUNCTION__);
+    int sensorId = motionDetectionEvent.sensor_id();
+    struct iio_event_data event;
+    event.id = motionDetectionEvent.event_id();
+    event.timestamp = motionDetectionEvent.timestamp();
+    for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
+        auto spt = (*iter).lock();
+        if (spt != nullptr) {
+            spt->onMotionDetected(sensorId, event);
+            ++iter;
+        } else {
+            iter = listeners_.erase(iter);
+        }
+    }
+}
+
+void SensorFeatureManagerStub::handleMotionDetectionEnabledEvent(
+    ::sensorStub::MotionDetectionEnabledEvent motionDetectionEnabledEvent) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<MotionDetectionConfig> motionDetectionConfigs;
+    telux::sensor::MotionDetectionConfig motionDetectionConfig;
+    motionDetectionConfig.sensorId = motionDetectionEnabledEvent.sensor_id();
+    motionDetectionConfig.threshold = motionDetectionEnabledEvent.threshold();
+    motionDetectionConfig.duration = motionDetectionEnabledEvent.duration();
+    motionDetectionConfig.samplingRate = motionDetectionEnabledEvent.sampling_rate();
+    motionDetectionConfigs.push_back(motionDetectionConfig);
+    for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
+        auto spt = (*iter).lock();
+        if (spt != nullptr) {
+            spt->onMotionDetectionEnabled(motionDetectionConfigs);
+            ++iter;
+        } else {
+            iter = listeners_.erase(iter);
+        }
+    }
+}
+
+void SensorFeatureManagerStub::handleMotionDetectionDisabledEvent() {
+    LOG(DEBUG, __FUNCTION__);
+    for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
+        auto spt = (*iter).lock();
+        if (spt != nullptr) {
+            spt->onMotionDetectionDisabled();
+            ++iter;
+        } else {
+            iter = listeners_.erase(iter);
+        }
+    }
 }
 
 }

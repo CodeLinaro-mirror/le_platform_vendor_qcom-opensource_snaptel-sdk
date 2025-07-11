@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -93,6 +62,22 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
         }
         std::cout << " Received events from " << sensorName << " count - " << events->size()
                   << " isLast - " << isLast << std::endl;
+    }
+
+    void onMotionDetectionEnabled(std::vector<MotionDetectionConfig> motionDetectionConfigs) {
+        std::cout << "Received onMotionDetectionEnabled event" << std::endl;
+        SensorUtils::printMotionDetectionConfigs(motionDetectionConfigs);
+    }
+
+    void onMotionDetectionDisabled() {
+        std::cout << "Received onMotionDetectionDisabled event - No active configurations" << std::endl;
+    }
+
+    void onMotionDetected(int sensorId, struct iio_event_data event) {
+        std::cout << "Received onMotionDetected event" << std::endl;
+        std::cout << "Sensor ID: " << sensorId << std::endl;
+        std::cout << "Event ID: " << event.id << std::endl;
+        std::cout << "Timestamp: " << event.timestamp << std::endl;
     }
 };
 
@@ -266,10 +251,43 @@ void SensorFeatureControlMenu::initConsole() {
                 std::bind(&SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend, this,
                     std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> listAvailableSensorsCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("8", "List_Available_Sensors", {},
+                std::bind(&SensorFeatureControlMenu::listAvailableSensors, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getMotionDetectionConfigLimitsCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("9", "Get_Motion_Detection_Config_Limits", {},
+                std::bind(&SensorFeatureControlMenu::getMotionDetectionConfigLimits, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> enableMotionDetectionCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("10", "Enable_Motion_Detection", {},
+                std::bind(&SensorFeatureControlMenu::enableMotionDetection, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> disableMotionDetectionCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("11", "Disable_Motion_Detection", {},
+                std::bind(&SensorFeatureControlMenu::disableMotionDetection, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getMotionDetectionConfigsCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("12", "Get_Motion_Detection_Configs", {},
+                std::bind(&SensorFeatureControlMenu::getMotionDetectionConfigs, this,
+                    std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand,
             listActiveFeaturesCommand, enableSensorFeatureFifoCommand,
-            skipSensorFeatureOnSuspendCommand, listSensorFeaturesQueuedOnSuspendCommand};
+            skipSensorFeatureOnSuspendCommand, listSensorFeaturesQueuedOnSuspendCommand,
+            listAvailableSensorsCommand, getMotionDetectionConfigLimitsCommand,
+            enableMotionDetectionCommand, disableMotionDetectionCommand,
+            getMotionDetectionConfigsCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -389,4 +407,73 @@ void SensorFeatureControlMenu::cleanup() {
     }
     sensorFeatureManager_ = nullptr;
     tcuActivityMgr_ = nullptr;
+}
+
+void SensorFeatureControlMenu::listAvailableSensors(std::vector<std::string> userInput) {
+    std::vector<SensorInfo> info;
+    telux::common::Status status = sensorFeatureManager_->getAvailableSensorInfo(info);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "getAvailableSensorInfo failed: " << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << "Sensor info request successful" << std::endl;
+    for (SensorInfo i : info) {
+        SensorUtils::printSensorInfo(i);
+    }
+}
+
+void SensorFeatureControlMenu::getMotionDetectionConfigLimits(std::vector<std::string> userInput) {
+    int sensorId;
+    SensorUtils::getInput("Enter sensorId: ", sensorId);
+    MotionDetectionConfigLimits motionDetectionConfigLimits = {};
+    telux::common::Status ret = sensorFeatureManager_->getMotionDetectionConfigLimits(sensorId,
+        motionDetectionConfigLimits);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success " << std::endl;
+        SensorUtils::printMotionDetectionConfigLimits(motionDetectionConfigLimits);
+    }
+}
+
+void SensorFeatureControlMenu::enableMotionDetection(std::vector<std::string> userInput) {
+    MotionDetectionConfig motionDetectionConfig = {};
+    SensorUtils::getInput("Enter sensorId: ", motionDetectionConfig.sensorId);
+    SensorUtils::getInput("Enter threshold: ", motionDetectionConfig.threshold);
+    SensorUtils::getInput("Enter duration: ", motionDetectionConfig.duration);
+    SensorUtils::getInput("Enter samplingRate: ", motionDetectionConfig.samplingRate);
+    telux::common::Status ret = sensorFeatureManager_->enableMotionDetection(motionDetectionConfig);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::disableMotionDetection(std::vector<std::string> userInput) {
+    int sensorId;
+    SensorUtils::getInput("Enter sensorId: ", sensorId);
+    telux::common::Status ret = sensorFeatureManager_->disableMotionDetection(sensorId);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::getMotionDetectionConfigs(std::vector<std::string> userInput) {
+    std::vector<MotionDetectionConfig> motionDetectionConfigs;
+    telux::common::Status ret =
+        sensorFeatureManager_->getMotionDetectionConfigs(motionDetectionConfigs);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Request failed with: ";
+        Utils::printStatus(ret);
+    } else {
+        std::cout << "Request success" << std::endl;
+        SensorUtils::printMotionDetectionConfigs(motionDetectionConfigs);
+    }
 }

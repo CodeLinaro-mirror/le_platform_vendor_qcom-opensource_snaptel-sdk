@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CAPTUREMENU_HPP
 #define CAPTUREMENU_HPP
 
@@ -36,10 +42,11 @@
 class CaptureMenu : public ConsoleApp {
 public:
     CaptureMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
     ~CaptureMenu();
-
     void init();
+    void cleanup();
+    void setSystemReady();
+
 private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
@@ -65,7 +72,9 @@ private:
     uint32_t bufferRecordedTillNow_;
     FILE * file_;
     std::vector<std::thread> runningThreads_;
-    bool captureStatus_;
+    std::atomic<bool> captureStatus_;
+    std::atomic<bool> ready_;
+    std::atomic<bool> readFail_;
 };
 
 #endif // CAPTUREMENU_HPP

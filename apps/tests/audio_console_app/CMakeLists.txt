@@ -11,8 +11,12 @@ set(AUDIO_CONSOLE_APP_SOURCES
     LoopbackMenu.cpp
     ToneMenu.cpp
     TransCodeMenu.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
+    ../../common/Audio/VoiceSession.cpp
+    ../../common/Audio/AudioSession.cpp
+    ../../common/Audio/AudioHelper.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -31,7 +35,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_AUDIO_CONSOLE_APP} ${AUDIO_CONSOLE_APP_SOURCES})
-target_link_libraries(${TARGET_AUDIO_CONSOLE_APP} telux_audio pthread)
+target_link_libraries(${TARGET_AUDIO_CONSOLE_APP} telux_audio telux_common pthread)
 
 # install to target
 install ( TARGETS ${TARGET_AUDIO_CONSOLE_APP}

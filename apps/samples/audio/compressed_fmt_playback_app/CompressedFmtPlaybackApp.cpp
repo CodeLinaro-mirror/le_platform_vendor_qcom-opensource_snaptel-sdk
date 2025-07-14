@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <future>
 #include <iostream>
 #include <condition_variable>
@@ -233,7 +239,7 @@ void AmrPlaybackApp::play() {
     }
 }
 
-int main(int, char **) {
+int main(int argc, char ** argv) {
     // Creating an instance of application
     std::shared_ptr<AmrPlaybackApp> app = std::make_shared<AmrPlaybackApp>();
     // Initialing the object

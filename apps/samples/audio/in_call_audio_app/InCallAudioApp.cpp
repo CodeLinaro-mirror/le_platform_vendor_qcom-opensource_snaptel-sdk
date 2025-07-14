@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <future>
 #include <iostream>
 #include <condition_variable>
@@ -292,7 +298,7 @@ void InCallAudioApp::play() {
     }
 }
 
-int main(int, char **) {
+int main(int argc, char ** argv) {
     // Creating an instance of application
     std::shared_ptr<InCallAudioApp> app = std::make_shared<InCallAudioApp>();
     // Initialing the object

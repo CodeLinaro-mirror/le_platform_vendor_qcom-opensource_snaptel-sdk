@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef PLAYMENU_HPP
 #define PLAYMENU_HPP
 
@@ -40,14 +46,13 @@ class PlayMenu : public ConsoleApp,
                  public std::enable_shared_from_this<PlayMenu>{
 public:
     PlayMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
     ~PlayMenu();
-
+    void init();
+    void cleanup();
+    void setSystemReady();
     void onReadyForWrite() override;
-
     void onPlayStopped() override;
 
-    void init();
 private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
@@ -67,6 +72,8 @@ private:
 
     void registerListener();
     void deRegisterListener();
+    void closeFile();
+    bool isAMR();
 
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<AudioClient> audioClient_;
@@ -75,10 +82,15 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     std::vector<std::thread> runningThreads_;
-    bool playStatus_;
+    std::atomic<bool> playStatus_;
+    std::mutex playStopMutex_;
+    std::condition_variable playStopcv_;
+    std::atomic<bool> playInProgress_;
     AudioFormat playFormat_;
-    bool pipeLineEmpty_;
+    std::atomic<bool> pipeLineEmpty_;
     FILE * file_;
+    std::atomic<bool> ready_;
+    std::atomic<bool> writeFail_;
 };
 
 #endif // PLAYMENU_HPP

@@ -81,5 +81,7 @@ if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
 if(NOT MACHINE_HAS_CV2X_ONLY)
-    add_subdirectory( tests/audio_console_app )
+    if (TELSDK_FEATURE_AUDIO)
+        add_subdirectory( tests/audio_console_app )
+    endif (TELSDK_FEATURE_AUDIO)
 endif(NOT MACHINE_HAS_CV2X_ONLY)

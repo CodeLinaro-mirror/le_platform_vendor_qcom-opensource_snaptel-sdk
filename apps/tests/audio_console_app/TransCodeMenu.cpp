@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 #include <dirent.h>
@@ -44,48 +50,72 @@ TransCodeMenu::TransCodeMenu(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
     pipeLineEmpty_ = true;
     writeStatus_ = false;
-    readStatus_ = true;
+    readStatus_ = false;
+    ready_ = false;
+    stopTranscoder_ = false;
 }
 
 TransCodeMenu::~TransCodeMenu() {
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
-    transcoder_ = nullptr;
-    writeStatus_ = false;
-    readStatus_ = true;
-    pipeLineEmpty_ = true;
+   cleanup();
 }
 
 void TransCodeMenu::init() {
     std::shared_ptr<ConsoleAppCommand> startTranscodingCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", " Start Transcoding",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", " Start transcoder",
          {}, std::bind(&TransCodeMenu::startTranscoding, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> abortTranscodingCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", " Abort Transcoding",
-         {}, std::bind(&TransCodeMenu::abortTranscoding, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", " Stop transcoder",
+         {}, std::bind(&TransCodeMenu::tearDown, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> transCodeMenuCommandList
       = {startTranscodingCommand, abortTranscodingCommand};
     ConsoleApp::addCommands(transCodeMenuCommandList);
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
     audioManager_ = audioFactory.getAudioManager();
+    if (audioManager_) {
+        ready_ = true;
+    }
+}
+
+void TransCodeMenu::cleanup() {
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+    ready_ = false;
+    writeStatus_ = false;
+    readStatus_ = false;
+    cvRead_.notify_all();
+    cvWrite_.notify_all();
+    for (std::thread &th : runningThreads_) {
+        if (th.joinable()) {
+            th.join();
+        }
+    }
+    transcoder_ = nullptr;
+    pipeLineEmpty_ = true;
+    runningThreads_.resize(0);
+}
+
+void TransCodeMenu::setSystemReady() {
+    ready_ = true;
 }
 
 void TransCodeMenu::createTranscoder() {
     std::promise<bool> p;
+    DIR* directory;
+    FILE* file;
+    AmrwbpParams* inputParams = new AmrwbpParams();
+    AmrwbpParams* outputParams = new AmrwbpParams();
+
+    stopTranscoder_ = false;
+
     std::cout << "Enter configuration for input samples" << std::endl;
     std::cout << "-------------------------------------" << std::endl;
     while (1) {
         std::cout << "Enter file path : "  ;
         if (std::getline(std::cin, writeFilePath_)) {
-            DIR* directory = opendir(writeFilePath_.c_str());
+            directory = opendir(writeFilePath_.c_str());
             if (directory != NULL) {
                 std::cout << "Please enter valid path" << std::endl;
             } else {
-                FILE* file;
                 file = fopen(writeFilePath_.c_str(),"r");
                 if (file) {
                     break;
@@ -95,28 +125,28 @@ void TransCodeMenu::createTranscoder() {
                 }
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
     takeFormatData(inputConfig_);
+
     std::cout << "Enter configuration for output samples" << std::endl;
     std::cout << "-------------------------------------" << std::endl;
     while (1) {
         std::cout << "Enter file path : "  ;
         if (std::getline(std::cin, readFilePath_)) {
-            DIR* directory = opendir(readFilePath_.c_str());
+            directory = opendir(readFilePath_.c_str());
             if (directory != NULL) {
                 std::cout << "Please enter valid path" << std::endl;
             } else {
                 break;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
     takeFormatData(outputConfig_);
-    AmrwbpParams* inputParams = new AmrwbpParams();
-    AmrwbpParams* outputParams = new AmrwbpParams();
+
     if (inputParams && outputParams) {
         if (inputConfig_.format == AudioFormat::AMRWB_PLUS) {
         inputParams->bitWidth = 16;
@@ -134,7 +164,7 @@ void TransCodeMenu::createTranscoder() {
             outputConfig_.params = nullptr;
         }
 
-        audioManager_->createTranscoder(inputConfig_, outputConfig_,
+        auto status = audioManager_->createTranscoder(inputConfig_, outputConfig_,
             [&p,this](std::shared_ptr<telux::audio::ITranscoder> &transcoder,
             telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -146,15 +176,19 @@ void TransCodeMenu::createTranscoder() {
                 std::cout << "failed to create transcoder" << std::endl;
             }
             });
-        if (p.get_future().get()) {
-            std::cout << "Transcoder Created" << std::endl;
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Request to create transcoder sent" << std::endl;
+            if (p.get_future().get()) {
+                std::cout << "Transcoder Created" << std::endl;
+            }
+        } else {
+            std::cout << "Request to create transcoder failed" << std::endl;
         }
     } else {
         std::cout << "Memory allocation failure" << std::endl;
     }
     delete inputParams;
     delete outputParams;
-    return;
 }
 
 void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
@@ -165,30 +199,45 @@ void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> bu
             "Bytes Requested " << buffer->getDataSize() << " Bytes Written " << bytes << std::endl;
         // We are seeking back so that left over buffer can be resent again.
         long offset = -1 * (static_cast<long>((buffer->getDataSize() - bytes)));
-        fseek(writeFile_, offset, SEEK_CUR);
+        {
+            std::lock_guard<std::mutex> lock(writeFileM_);
+            if (writeFile_) {
+                fseek(writeFile_, offset, SEEK_CUR);
+            } else {
+                std::cout << "invalid write file"<< std::endl;
+            }
+        }
     }
     buffer->reset();
     writeBuffers_.push(buffer);
-    cv_.notify_all();
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        stopTranscoder_ = true;
+    }
+    cvWrite_.notify_all();
     return;
 }
 
 void TransCodeMenu::write() {
+    uint32_t size = 0;
+    std::string userInput ="";
+    uint32_t numBytes =0;
+    uint32_t isEof = 0;
+    std::shared_ptr<telux::audio::IAudioBuffer> audioBuffer;
+
     while (!writeBuffers_.empty()) {
         writeBuffers_.pop();
     }
+
     writeFile_ = fopen(writeFilePath_.c_str(),"r");
     if (writeFile_) {
         fseek(writeFile_, 0, SEEK_SET);
     } else {
         std::cout <<"Unable to open file for reading samples" << std::endl;
+        stopTranscoder_ = true;
         return;
     }
-    std::unique_lock<std::mutex> lock(mutex_);
-    uint32_t size = 0;
-    std::string userInput ="";
-    uint32_t numBytes =0;
-    std::shared_ptr<telux::audio::IAudioBuffer> audioBuffer;
+
+    std::unique_lock<std::mutex> lock(writeM_);
     for(int i = 0; i < TOTAL_WRITE_BUFFERS; i++) {
         audioBuffer = transcoder_->getWriteBuffer();
         if (audioBuffer != nullptr) {
@@ -199,53 +248,69 @@ void TransCodeMenu::write() {
             writeBuffers_.push(audioBuffer);
         } else {
             std::cout << "Failed to get Buffers for Write operation " << std::endl;
+            stopTranscoder_ = true;
+            fclose(writeFile_);
             return;
         }
     }
 
     writeStatus_ = true;
-    while (!feof(writeFile_) && writeStatus_) {
+    auto writeCb = std::bind(&TransCodeMenu::writeCallback, this, std::placeholders::_1,
+                    std::placeholders::_2, std::placeholders::_3);
+
+    while (!feof(writeFile_) && writeStatus_ && !stopTranscoder_) {
         if (!writeBuffers_.empty() && (pipeLineEmpty_)) {
             audioBuffer = writeBuffers_.front();
             writeBuffers_.pop();
             numBytes = fread(audioBuffer->getRawBuffer(), 1, size, writeFile_);
+            /* If the number of bytes read from the file is less than the buffer size and EOF is not
+               reached then throw an error. */
             if (numBytes != size && !feof(writeFile_)) {
                 std::cout << "Unable to read specified bytes, bytes read: " << numBytes<< std::endl;
                 audioBuffer->reset();
                 writeBuffers_.push(audioBuffer);
                 writeStatus_ = false;
+                stopTranscoder_ = true;
                 break;
             }
+            //Set the length of the data sent for write operation.
             audioBuffer->setDataSize(numBytes);
-            auto writeCb = std::bind(&TransCodeMenu::writeCallback, this, std::placeholders::_1,
-                        std::placeholders::_2, std::placeholders::_3);
             telux::common::Status status = telux::common::Status::FAILED;
-            if (feof(writeFile_)) {
-                status = transcoder_->write(audioBuffer, EOF_REACHED,  writeCb);
-            } else {
-                status = transcoder_->write(audioBuffer, EOF_NOT_REACHED,  writeCb);
-            }
+
+            isEof = (feof(writeFile_) == true) ? EOF_REACHED : EOF_NOT_REACHED;
+            status = transcoder_->write(audioBuffer, isEof,  writeCb);
             if (status != telux::common::Status::SUCCESS) {
                 std::cout << "write() failed with error" << static_cast<unsigned int>(status)
-                <<std::endl;
+                    <<std::endl;
+                audioBuffer->reset();
+                writeBuffers_.push(audioBuffer);
+                writeStatus_ = false;
+                stopTranscoder_ = true;
+                break;
+            }
+            /* Check if the last buffer is written by waiting for write callback for the buffer.*/
+            if (isEof) {
+                cvWrite_.wait(lock);
             }
         } else {
-            cv_.wait(lock);
+            cvWrite_.wait(lock);
         }
     }
     writeStatus_ = false;
-    fflush(writeFile_);
+    std::lock_guard<std::mutex> lock1(writeFileM_);
     fclose(writeFile_);
+    writeFile_ = nullptr;
 }
 
 void TransCodeMenu::read() {
     uint32_t bytesToRead = 0;
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::shared_ptr<telux::audio::IAudioBuffer> audioBuffer;
 
     while (!readBuffers_.empty()) {
         readBuffers_.pop();
     }
-    std::shared_ptr<telux::audio::IAudioBuffer> audioBuffer;
+
+    std::unique_lock<std::mutex> lock(readM_);
     for (int i = 0; i < TOTAL_READ_BUFFERS; i++) {
         audioBuffer = transcoder_->getReadBuffer();
         if (audioBuffer != nullptr) {
@@ -260,86 +325,146 @@ void TransCodeMenu::read() {
             readBuffers_.push(audioBuffer);
         } else {
             std::cout << "Failed to get Stream Buffer " << std::endl;
+            stopTranscoder_ = true;
             return;
         }
     }
-    // numChannels here stores num of channels;
-    int sampleRate = outputConfig_.sampleRate;;
+
+    // numChannels here stores num of channels
+    int sampleRate = outputConfig_.sampleRate;
     int numChannels = (outputConfig_.mask == 3) ? 2 : 1;
     readFile_ = fopen(readFilePath_.c_str(),"w");
     if (readFile_) {
             fseek(readFile_, 0, SEEK_SET);
     } else {
         std::cout << "Unable to open file for writing samples " <<std::endl;
+        stopTranscoder_ = true;
         return;
     }
+
     readStatus_ = true;
-    while (readStatus_) {
+    auto readCb =  std::bind(&TransCodeMenu::readCallback, this,
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
+    while (readStatus_ && !stopTranscoder_) {
         if (!readBuffers_.empty()) {
             audioBuffer = readBuffers_.front();
             readBuffers_.pop();
-            auto readCb =  std::bind(&TransCodeMenu::readCallback, this,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
             telux::common::Status status = transcoder_->read(audioBuffer, bytesToRead, readCb);
             if (status != telux::common::Status::SUCCESS) {
                 std::cout << "read() failed with error" << static_cast<unsigned int>(status)
                 <<std::endl;
+                audioBuffer->reset();
+                readBuffers_.push(audioBuffer);
+                readStatus_ = false;
+                stopTranscoder_ = true;
             }
         } else {
-            cv_.wait(lock);
+            cvRead_.wait(lock);
         }
     }
-    // waitTime is time required to receive one last remaining buffer
+
+    /* WaitTime is time required to receive one last remaining transcoded buffer. When the write
+       thread sends last buffer, post that readStatus is set to false. WaitTime is added for reading
+       the last written buffer from lower layer.
+       We calculate the total time by converting max buffer size in bytes to bits, then we divide
+       this by frame size which is numChannel(mono/setero)*16(2 byte per analog sample) and
+       samplerate to get time.*/
     int waitTime = (8*(audioBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*16);
     waitTime = waitTime+ GAURD_FOR_WAITING;
-    while (readBuffers_.size() != TOTAL_READ_BUFFERS) {
-        cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+    while (readBuffers_.size() != TOTAL_READ_BUFFERS && ready_) {
+        cvRead_.wait_for(lock, std::chrono::milliseconds(waitTime));
     }
+
+    std::lock_guard<std::mutex> lock1(readFileM_);
     fflush(readFile_);
     fclose(readFile_);
-    readStatus_ = false;
+    readFile_ = nullptr;
+
+    //if read or write fail then stop transcoding
+    if(stopTranscoder_){
+        std::cout << "Transcoding Stopped" <<std::endl;
+        return;
+    }
     std::cout << "Transcoding Successful" <<std::endl;
-    abortTranscoding({});
 }
 
 void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
          uint32_t isLastBuffer, telux::common::ErrorCode error) {
+    uint32_t bytesWrittenToFile = 0;
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "read() returned with error " << static_cast<unsigned int>(error) << std::endl;
+        stopTranscoder_ = true;
+    } else {
+        uint32_t size = buffer->getDataSize();
+        {
+            std::lock_guard<std::mutex> lock(readFileM_);
+            if (readFile_) {
+                bytesWrittenToFile = fwrite(buffer->getRawBuffer(), 1, size, readFile_);
+            } else {
+                std::cout << "invalid output file"<< std::endl;
+                stopTranscoder_ = true;
+            }
+        }
+        if (bytesWrittenToFile != size) {
+            std::cout << "Write Size mismatch while writing to output file" << std::endl;
+            stopTranscoder_ = true;
+        }
+    }
+
+    buffer->reset();
+    readBuffers_.push(buffer);
 
     if (isLastBuffer) {
         readStatus_ = false;
     }
-    uint32_t bytesWrittenToFile = 0;
-    if (error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "read() returned with error " << static_cast<unsigned int>(error) << std::endl;
-    } else {
-        uint32_t size = buffer->getDataSize();
-        bytesWrittenToFile = fwrite(buffer->getRawBuffer(), 1, size, readFile_);
-        if (bytesWrittenToFile != size) {
-            std::cout << "Write Size mismatch while writing to file" << std::endl;
-        }
-    }
-    buffer->reset();
-    readBuffers_.push(buffer);
-    cv_.notify_all();
+
+    cvRead_.notify_all();
     return;
 }
 
 void TransCodeMenu::startTranscoding(std::vector<std::string> userInput) {
-    createTranscoder();
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+
     if (transcoder_) {
-        std::thread writeThread(&TransCodeMenu::write, this);
-        runningThreads_.emplace_back(std::move(writeThread));
-        std::thread readThread(&TransCodeMenu::read, this);
-        runningThreads_.emplace_back(std::move(readThread));
-    } else {
-        std::cout << "Transcoder not avaialble !!" << std::endl;
+        std::cout << "Transcoding in progress" << std::endl;
+        return;
     }
+
+    if (ready_) {
+        createTranscoder();
+        if (transcoder_) {
+            std::thread writeThread(&TransCodeMenu::write, this);
+            runningThreads_.emplace_back(std::move(writeThread));
+            std::thread readThread(&TransCodeMenu::read, this);
+            runningThreads_.emplace_back(std::move(readThread));
+        } else {
+            std::cout << "Transcoder not avaialble" << std::endl;
+        }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    }
+
 }
 
-void TransCodeMenu::abortTranscoding(std::vector<std::string> userInput) {
+void TransCodeMenu::tearDown(std::vector<std::string> userInput) {
+    std::promise<bool> p;
+
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
     if (transcoder_) {
-        std::promise<bool> p;
+        writeStatus_ = false;
+        readStatus_ = false;
+        cvRead_.notify_all();
+        cvWrite_.notify_all();
+        for (std::thread &th : runningThreads_) {
+            if (th.joinable()) {
+                th.join();
+            }
+        }
+        runningThreads_.resize(0);
+
         auto status = transcoder_->tearDown([&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
@@ -350,16 +475,15 @@ void TransCodeMenu::abortTranscoding(std::vector<std::string> userInput) {
             });
         if (status == telux::common::Status::SUCCESS) {
             std::cout << "Request to Teardown transcoder sent" << std::endl;
+            if (p.get_future().get()) {
+                transcoder_ = nullptr;
+                std::cout << "Tear Down successful" << std::endl;
+            }
         } else {
             std::cout << "Request to Teardown transcoder failed" << std::endl;
         }
-        if (p.get_future().get()) {
-            transcoder_ = nullptr;
-            std::cout << "Tear Down successful !!" << std::endl;
-        }
-        readStatus_ = false;
     } else {
-        std::cout << "No transcoder Exists !!!" << std::endl;
+        std::cout << "No transcoder Exists" << std::endl;
     }
 }
 
@@ -368,7 +492,7 @@ void TransCodeMenu::onReadyForWrite() {
     // buffer pipeline is ready to accept new buffers.
     std::cout << "Pipeline Ready to receive buffer " << std::endl;
     pipeLineEmpty_ = true;
-    cv_.notify_all();
+    cvWrite_.notify_all();
 }
 
 void TransCodeMenu::registerListener() {
@@ -393,15 +517,15 @@ void TransCodeMenu::takeFormatData(FormatInfo &info) {
             std::stringstream inputStream(userInput);
             if((inputStream >> info.mask)) {
                 if (info.mask < 1 && info.mask > 3) {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 } else {
                     break;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 
@@ -410,12 +534,12 @@ void TransCodeMenu::takeFormatData(FormatInfo &info) {
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(!(inputStream >> info.sampleRate)) {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             } else {
                 break;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 
@@ -426,7 +550,7 @@ void TransCodeMenu::takeFormatData(FormatInfo &info) {
             std::stringstream inputStream(userInput);
             if((inputStream >> audioFormat)) {
                 if (audioFormat < 0 && audioFormat > 3) {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 } else {
                     if (audioFormat == 0) {
                         info.format = AudioFormat::PCM_16BIT_SIGNED;
@@ -440,10 +564,10 @@ void TransCodeMenu::takeFormatData(FormatInfo &info) {
                     break;
                 }
             } else {
-                std::cout << "Invalid input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }

@@ -27,418 +27,536 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 
 #include "VoiceMenu.hpp"
 
-VoiceMenu::VoiceMenu(std::string appName, std::string cursor,
-                                            std::shared_ptr<AudioClient> audioClient)
-    : ConsoleApp(appName, cursor),
-      audioClient_(audioClient) {
-        audioStarted_ = false;
+VoiceMenu::VoiceMenu(std::string appName, std::string cursor)
+   : ConsoleApp(appName, cursor)
+   , ready_(false)
+   , slotId_(DEFAULT_SLOT_ID) {
 }
 
 VoiceMenu::~VoiceMenu() {
-    audioClient_ = nullptr;
 }
 
 void VoiceMenu::init() {
     std::shared_ptr<ConsoleAppCommand> createStreamCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Create Stream",
-         {}, std::bind(&VoiceMenu::createStream, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Create Stream", {},
+            std::bind(&VoiceMenu::createStream, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> deleteStreamCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Delete Stream",
-         {}, std::bind(&VoiceMenu::deleteStream, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Delete Stream", {},
+            std::bind(&VoiceMenu::deleteStream, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> getDeviceCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Get Device",
-         {}, std::bind(&VoiceMenu::getDevice, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "3", "Get Device", {}, std::bind(&VoiceMenu::getDevice, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setDeviceCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Set Device",
-         {}, std::bind(&VoiceMenu::setDevice, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "4", "Set Device", {}, std::bind(&VoiceMenu::setDevice, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> getVolumeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Get Volume",
-         {}, std::bind(&VoiceMenu::getVolume, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "5", "Get Volume", {}, std::bind(&VoiceMenu::getVolume, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setVolumeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Set Volume",
-         {}, std::bind(&VoiceMenu::setVolume, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "6", "Set Volume", {}, std::bind(&VoiceMenu::setVolume, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> getMuteCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get Mute Status",
-         {}, std::bind(&VoiceMenu::getMute, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get Mute Status", {},
+            std::bind(&VoiceMenu::getMute, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setMuteCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Set Mute",
-         {}, std::bind(&VoiceMenu::setMute, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "8", "Set Mute", {}, std::bind(&VoiceMenu::setMute, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> startAudioCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Start Audio",
-         {}, std::bind(&VoiceMenu::startAudio, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Start Audio", {},
+            std::bind(&VoiceMenu::startAudio, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> stopAudioCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Stop Audio",
-         {}, std::bind(&VoiceMenu::stopAudio, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "10", "Stop Audio", {}, std::bind(&VoiceMenu::stopAudio, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> startDtmfCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "Start Dtmf Tone",
-         {}, std::bind(&VoiceMenu::startDtmf, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "Start Dtmf Tone", {},
+            std::bind(&VoiceMenu::startDtmf, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> stopDtmfCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "Stop Dtmf Tone",
-         {}, std::bind(&VoiceMenu::stopDtmf, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "Stop Dtmf Tone", {},
+            std::bind(&VoiceMenu::stopDtmf, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> regListenerCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Register Listener",
-         {}, std::bind(&VoiceMenu::registerListener, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Register Listener", {},
+            std::bind(&VoiceMenu::registerListener, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> deregListenerCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Deregister Listener",
-         {}, std::bind(&VoiceMenu::deRegisterListener, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Deregister Listener", {},
+            std::bind(&VoiceMenu::deRegisterListener, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> changeSlotIdCmd = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("15", "Switch Slot ID", {}, std::bind(&VoiceMenu::changeSlotId, this)));
 
-     std::vector<std::shared_ptr<ConsoleAppCommand>> voiceMenuCommandsList
-      = {createStreamCommand,
-         deleteStreamCommand,
-         getDeviceCommand,
-         setDeviceCommand,
-         getVolumeCommand,
-         setVolumeCommand,
-         getMuteCommand,
-         setMuteCommand,
-         startAudioCommand,
-         stopAudioCommand,
-         startDtmfCommand,
-         stopDtmfCommand,
-         regListenerCmd,
-         deregListenerCmd};
-   if(audioClient_){
-        audioVoiceStream_ =std::dynamic_pointer_cast<IAudioVoiceStream>(
-           audioClient_->getStream(StreamType::VOICE_CALL));
-        ConsoleApp::addCommands(voiceMenuCommandsList);
-   } else {
-       std::cout << "AudioClient not initialized " << std::endl;
-   }
+    std::vector<std::shared_ptr<ConsoleAppCommand>> voiceMenuCommandsList = {createStreamCommand,
+        deleteStreamCommand, getDeviceCommand, setDeviceCommand, getVolumeCommand, setVolumeCommand,
+        getMuteCommand, setMuteCommand, startAudioCommand, stopAudioCommand, startDtmfCommand,
+        stopDtmfCommand, regListenerCmd, deregListenerCmd, changeSlotIdCmd};
+    ready_ = true;
+    ConsoleApp::addCommands(voiceMenuCommandsList);
+}
+
+void VoiceMenu::setSystemReady() {
+    ready_ = true;
+}
+
+void VoiceMenu::cleanup() {
+    std::lock_guard<std::mutex> lk(mutex_);
+    ready_ = false;
+    voiceSessions_.clear();
+    activeSession_ = nullptr;
 }
 
 void VoiceMenu::createStream(std::vector<std::string> userInput) {
-    telux::common::Status status = telux::common::Status::FAILED;
-    if(audioClient_){
-        if(!audioVoiceStream_) {
-            status = audioClient_->createStream(telux::audio::StreamType::VOICE_CALL);
-            if(status == telux::common::Status::SUCCESS) {
-                audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
-                    audioClient_->getStream(StreamType::VOICE_CALL));
+    if (ready_) {
+        if (createActiveSession(slotId_) == Status::SUCCESS) {
+            StreamConfig config;
+            config.modemSubId = slotId_;
+            config.type = StreamType::VOICE_CALL;
+            AudioHelper::getUserCreateStreamInput(config);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->createStream(config);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Stream created on slotId : " << slotId_ << std::endl;
+                } else if(status == Status::ALREADY) {
+                    std::cout << "Stream exist please delete first" << std::endl;
+                } else {
+                    deleteActiveSession(slotId_);
+                    std::cout << "Stream creation failed on slotId : " << slotId_ << std::endl;
+                }
+            } else {
+                std::cout << "Audio Service UNAVAILABLE" << std::endl;
+                mutex_.unlock();
             }
-        } else {
-            std::cout << "Stream exist please delete first" << std::endl;
         }
-   } else {
-       std::cout << "AudioClient not initialized " << std::endl;
-   }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    }
 }
 
 void VoiceMenu::deleteStream(std::vector<std::string> userInput) {
-    telux::common::Status status = telux::common::Status::FAILED;
-    if(audioVoiceStream_) {
-       status = audioClient_->deleteStream(StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->deleteStream();
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    deleteActiveSession(slotId_);
+                    std::cout << "Voice stream deleted on slotId : " << slotId_ << std::endl;
+                } else {
+                    std::cout << "Voice stream deletion failed on slotId : " << slotId_ << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
-    }
-
-    if(status == telux::common::Status::SUCCESS) {
-        audioVoiceStream_ = nullptr;
-        audioStarted_ = false;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::getDevice(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->getStreamDevice(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            std::vector<DeviceType> devices;
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->getStreamDevice(devices);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    for (auto deviceType : devices) {
+                        std::string deviceName;
+                        std::cout << "Device Type" << (static_cast<uint32_t>(deviceType)) << std::endl;
+                    }
+                } else {
+                    std::cout << "Get Device Request Failed." << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::setDevice(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->setStreamDevice(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            std::vector<DeviceType> devices;
+            AudioHelper::getUserDeviceInput(devices);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->setStreamDevice(devices);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Device set successfully." << std::endl;
+                } else {
+                    std::cout << "Device set failed." << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::getVolume(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->getVolume(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            StreamVolume volume;
+            AudioHelper::getUserDirectionInput(volume.dir);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->getVolume(volume);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    for (auto channelVolume : volume.volume) {
+                        std::cout << "volume: " << channelVolume.vol << std::endl;
+                    }
+                } else {
+                    std::cout << "Get Volume Failed." << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                        << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::setVolume(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->setVolume(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            StreamVolume volume;
+            AudioHelper::getUserVolumeInput(volume);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->setVolume(volume);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Set Volume succeeded" << std::endl;
+                } else {
+                    std::cout << "Set Volume Failed" << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
-
 }
 
 void VoiceMenu::getMute(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->getMute(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            StreamMute muteStatus;
+            AudioHelper::getUserDirectionInput(muteStatus.dir);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->getMute(muteStatus);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Mute Status is : " << muteStatus.enable << std::endl;
+                } else {
+                    std::cout << "Get Mute Failed" << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
-
 }
 
 void VoiceMenu::setMute(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        audioClient_->setMute(telux::audio::StreamType::VOICE_CALL);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            StreamMute muteStatus;
+            AudioHelper::getUserMuteStatusInput(muteStatus);
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->setMute(muteStatus);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    if (muteStatus.enable) {
+                        std::cout << "Stream Muted" << std::endl;
+                    } else {
+                        std::cout << "Stream Unmuted" << std::endl;
+                    }
+                } else {
+                    std::cout << "Mute Operation Failed" << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::startAudio(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        if(!audioStarted_) {
-            std::promise<bool> p;
-            Status status =
-                    audioVoiceStream_->startAudio( [&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                Status status = activeSession_->startAudio();
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Audio started on slotId : " << slotId_ << std::endl;
+                } else if(status == Status::ALREADY) {
+                    std::cout << "Audio already started on slotId : " << slotId_ << std::endl;
+                } else {
+                    std::cout << "Failed to start audio on slotId : " << slotId_ << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to start audio" << std::endl;
-            }
-            });
-            if(status == Status::SUCCESS){
-                std::cout << "Request to start Audio sent" << std::endl;
-            } else {
-                std::cout << "Request to start Audio Failed" << std::endl;
-            }
-
-            if (p.get_future().get()) {
-                audioStarted_ = true;
-                std::cout << "Audio Stream is Started" << std::endl;
-                // Registering for the Dtmf Detection, not required if detection is not required
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
             }
         } else {
-            std::cout << "Audio already started" << std::endl;
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
         }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
-    if(audioVoiceStream_) {
-        if(audioStarted_) {
-            std::promise<bool> p;
-            Status status = audioVoiceStream_->stopAudio([&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                Status status = activeSession_->stopAudio();
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Audio stopped on slotId : " << slotId_ << std::endl;
+                } else {
+                    std::cout << "Failed to stop audio on slotId : " << slotId_ << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to stop audio" << std::endl;
-            }
-            });
-            if(status == Status::SUCCESS){
-                std::cout << "Request to stop Audio sent" << std::endl;
-            } else {
-                std::cout << "Request to stop Audio Failed" << std::endl;
-            }
-
-            if (p.get_future().get()) {
-                std::cout << "Audio Stream is Stopped" << std::endl;
-                audioStarted_ = false;
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
             }
         } else {
-            std::cout << "Audio not started yet" << std::endl;
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
         }
     } else {
-        std::cout << "No running voice session please create one" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
-
 void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
-    if(audioStarted_) {
-        std::promise<bool> p;
-        std::string userInput = "";
-        // Start Means we are enabling DTMF and  direction is RX
-
-        uint16_t gain = 0;
-        std::cout << "Enter the Gain : ";
-        if (std::getline(std::cin, userInput)) {
-            std::stringstream inputStream(userInput);
-            if(!(inputStream >> gain)) {
-                std::cout << "Invalid Input!" << std::endl;
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            DtmfTone tone;
+            tone.direction = StreamDirection::RX;
+            uint32_t duration = 0;
+            uint16_t gain = 0;
+            auto status = AudioHelper::getUserDtmfInput(tone, duration, gain);
+            if (status != Status::SUCCESS) {
                 return;
             }
-        } else {
-            std::cout << "Invalid input!" << std::endl;
-        }
-
-        uint32_t lowFreq = 0;
-        std::cout << "Enter the Low Frequency (697, 770, 852, 941) : ";
-        if (std::getline(std::cin, userInput)) {
-            std::stringstream inputStream(userInput);
-            if(!(inputStream >> lowFreq)) {
-                std::cout << "Invalid Input!" << std::endl;
-                return;
-            }
-        } else {
-            std::cout << "Invalid input!" << std::endl;
-        }
-
-        uint32_t highFreq = 0;
-        std::cout << "Enter the High Frequency (1209 1336 1477 1633) : ";
-        if (std::getline(std::cin, userInput)) {
-            std::stringstream inputStream(userInput);
-            if(!(inputStream >> highFreq)) {
-                std::cout << "Invalid Input!" << std::endl;
-                return;
-            }
-        } else {
-            std::cout << "Invalid input!" << std::endl;
-        }
-
-        uint32_t duration = 0;
-        std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
-        if (std::getline(std::cin, userInput)) {
-            std::stringstream inputStream(userInput);
-            if(!(inputStream >> duration)) {
-                std::cout << "Invalid Input!" << std::endl;
-                return;
-            }
-        } else {
-            std::cout << "Invalid input!" << std::endl;
-        }
-
-        telux::audio::DtmfTone dtmfTone;
-        telux::common::Status lowFreqValid = lowFrequencyHelper(lowFreq, dtmfTone.lowFreq);
-        telux::common::Status highFreqValid = highFrequencyHelper(highFreq, dtmfTone.highFreq);
-        dtmfTone.direction = telux::audio::StreamDirection::RX;
-
-        if(lowFreqValid == telux::common::Status::SUCCESS &&
-                    highFreqValid == telux::common::Status::SUCCESS ) {
-            telux::common::Status status = audioVoiceStream_ ->playDtmfTone(dtmfTone, duration,
-                    gain,[&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+            mutex_.lock();
+            if(activeSession_) {
+                status = activeSession_->startDtmf(tone, duration, gain);
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Dtmf Tone Started on slotId : " << slotId_ << std::endl;
+                } else {
+                    std::cout << "Start Dtmf Tone Failed on slotId : " << slotId_ << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to start Dtmf Tone" << std::endl;
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
             }
-            });
-            if(status == telux::common::Status::SUCCESS){
-                std::cout << "Request to start Dtmf Sent" << std::endl;
-            } else {
-                std::cout << "Request to start Dtmf Failed" << std::endl;
-            }
-
-            if (p.get_future().get()) {
-                std::cout << "Dtmf Tone Started" << std::endl;
-            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
         }
-    } else{
-        std::cout << "Audio is not started yet" << std::endl;
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
-    std::promise<bool> p;
-    if(audioStarted_) {
-        telux::common::Status status = audioVoiceStream_ ->stopDtmfTone(
-                telux::audio::StreamDirection::RX,[&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->stopDtmf();
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Dtmf Tone Stopped on slotId : " << slotId_ << std::endl;
+                } else {
+                    std::cout << "Stop Dtmf Tone Failed on slotId_" << slotId_ << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to stop Dtmf" << std::endl;
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
             }
-            });
-        if(status == telux::common::Status::SUCCESS){
-            std::cout << "Request to stopDtmf Sent" << std::endl;
         } else {
-            std::cout << "Request to stopDtmf failed" << std::endl;
-        }
-        if (p.get_future().get()) {
-                std::cout << "Dtmf Tone Stopped" << std::endl;
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
         }
     } else {
-         std::cout << "Audio is not started yet" << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
 void VoiceMenu::registerListener(std::vector<std::string> userInput) {
-        std::promise<bool> p;
-        telux::common::Status status = audioVoiceStream_ ->registerListener(shared_from_this(),
-                                     [&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->registerListener(shared_from_this());
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Voice listener registered" << std::endl;
+                } else {
+                    std::cout << "Listener registration failed" << std::endl;
+                }
             } else {
-                p.set_value(false);
-                std::cout << "Failed to Register Listener" << std::endl;
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
             }
-            });
-        if(status == telux::common::Status::SUCCESS) {
-            std::cout << "Request to Register Listener sent" << std::endl;
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
         }
-        if (p.get_future().get()) {
-                std::cout << "Listener Registered Successfully" << std::endl;
-        }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    }
 }
 
 void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
-    telux::common::Status status = audioVoiceStream_ ->deRegisterListener(
-        shared_from_this());
-    if(status == telux::common::Status::SUCCESS){
-        std::cout << "Request to deregister Dtmf Sent" << std::endl;
+    if (ready_) {
+        if (setActiveSession(slotId_) == Status::SUCCESS) {
+            mutex_.lock();
+            if(activeSession_) {
+                auto status = activeSession_->deRegisterListener(shared_from_this());
+                mutex_.unlock();
+                if (status == Status::SUCCESS) {
+                    std::cout << "Voice listener deregistered" << std::endl;
+                } else {
+                    std::cout << "Listener deregistration failed" << std::endl;
+                }
+            } else {
+                std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+                mutex_.unlock();
+            }
+        } else {
+            std::cout << "No running voice session for slotId : " << slotId_
+                      << ", please create one" << std::endl;
+        }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
-telux::common::Status VoiceMenu::lowFrequencyHelper(uint32_t lowFreq,
-                             telux::audio::DtmfLowFreq &lowFrequency) {
-    switch(lowFreq) {
-        case 697:
-        lowFrequency = telux::audio::DtmfLowFreq::FREQ_697;
-        return telux::common::Status::SUCCESS;
-        case 770:
-        lowFrequency = telux::audio::DtmfLowFreq::FREQ_770;
-        return telux::common::Status::SUCCESS;
-        case 852:
-        lowFrequency = telux::audio::DtmfLowFreq::FREQ_852;
-        return telux::common::Status::SUCCESS;
-        case 941:
-        lowFrequency = telux::audio::DtmfLowFreq::FREQ_941;
-        return telux::common::Status::SUCCESS;
-        default:
-        std::cout << "unsupported Dtmf Frequency " << std::endl;
-        return telux::common::Status::FAILED;
+void VoiceMenu::changeSlotId() {
+    // User can switch slots using this method. It assumes two slots are supported.
+    std::cout << "Current Slot Id is " << slotId_ << std::endl;
+    if (slotId_ == 1) {
+        slotId_ = 2;
+    } else if (slotId_ == 2) {
+        slotId_ = 1;
     }
+    std::cout << "After switch Slot Id is Changed to " << slotId_ << std::endl;
+    setActiveSession(slotId_);
 }
 
-telux::common::Status VoiceMenu::highFrequencyHelper(uint32_t highFreq,
-                             telux::audio::DtmfHighFreq &highFrequency) {
-    switch(highFreq) {
-        case 1209:
-        highFrequency = telux::audio::DtmfHighFreq::FREQ_1209;
-        return telux::common::Status::SUCCESS;
-        case 1336:
-        highFrequency = telux::audio::DtmfHighFreq::FREQ_1336;
-        return telux::common::Status::SUCCESS;
-        case 1477:
-        highFrequency = telux::audio::DtmfHighFreq::FREQ_1477;
-        return telux::common::Status::SUCCESS;
-        case 1633:
-        highFrequency = telux::audio::DtmfHighFreq::FREQ_1633;
-        return telux::common::Status::SUCCESS;
-        default:
-        std::cout << "unsupported Frequency " << std::endl;
-        return telux::common::Status::FAILED;
+Status VoiceMenu::createActiveSession(int slotId) {
+    if (setActiveSession(slotId) != Status::SUCCESS) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        try {
+            voiceSessions_[slotId] = std::make_shared<VoiceSession>();
+            activeSession_ = voiceSessions_[slotId];
+        } catch (std::bad_alloc &e) {
+            std::cout << "Error: Create active session failed! NOMEMORY!" << std::endl;
+            return Status::NOMEMORY;
+        }
     }
+    return Status::SUCCESS;
+}
+
+void VoiceMenu::deleteActiveSession(int slotId) {
+    std::lock_guard<std::mutex> lk(mutex_);
+    voiceSessions_.erase(slotId);
+    activeSession_ = nullptr;
+    std::cout << "Voice session deleted on slotId : " << slotId_ << std::endl;
+}
+
+Status VoiceMenu::setActiveSession(int slotId) {
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (voiceSessions_.count(slotId) && (voiceSessions_[slotId])) {
+        activeSession_ = voiceSessions_[slotId];
+        return Status::SUCCESS;
+    } else {
+        activeSession_ = nullptr;
+    }
+    return Status::NOSUCH;
 }
 
 void VoiceMenu::onDtmfToneDetection(DtmfTone dtmfTone) {
-    std::cout<< "Dtmf Tone Detected !!" << std::endl;
+    std::cout << "Dtmf Tone Detected" << std::endl;
     std::cout << "Direction is " << static_cast<uint32_t>(dtmfTone.direction) << std::endl;
-    std::cout << "Low Frequency is " << static_cast<uint32_t>(dtmfTone.lowFreq)<< std::endl;
-    std::cout << "High Frequency is " <<  static_cast<uint32_t>(dtmfTone.highFreq)  << std::endl;
+    std::cout << "Low Frequency is " << static_cast<uint32_t>(dtmfTone.lowFreq) << std::endl;
+    std::cout << "High Frequency is " << static_cast<uint32_t>(dtmfTone.highFreq) << std::endl;
 }
-
-

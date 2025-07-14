@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Audio Client class provides functionality in SDK to create Audio Stream,
  * start/stop Audio on the created Stream and delete the Stream.
@@ -37,57 +43,44 @@
 #include <stdio.h>
 #include <dirent.h>
 
-#include <telux/audio/AudioFactory.hpp>
-
 #include "AudioClient.hpp"
 
-AudioClient::AudioClient() {
+AudioClient::AudioClient(std::shared_ptr<IAudioManager> audioManager) {
     sampleRate_ = 0;
     channelType_ = 0;
     filePath_ = "";
-    audioManager_ = nullptr;
+    audioManager_ = audioManager;
     stream_ = nullptr;
     audioVoiceStream_ = nullptr;
     audioPlayStream_ = nullptr;
     audioCaptureStream_ = nullptr;
+    audioLoopbackStream_ = nullptr;
+    audioToneStream_ = nullptr;
 }
 
 AudioClient::~AudioClient() {
 }
 
-void AudioClient::init() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
-    //  Get the AudioFactory and AudioManager instances.
-    auto &audioFactory = telux::audio::AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager();
-
-    //  Check if audio subsystem is ready
-    bool audioSubSystemStatus = audioManager_->isSubsystemReady();
-
-    //  If audio subsystem is not ready, wait for it to be ready
-    if(!audioSubSystemStatus) {
-        std::cout << "\nAudio subsystem is not ready, Please wait!!!..." << std::endl;
-        std::future<bool> f = audioManager_->onSubsystemReady();
-        // If we want to wait unconditionally for audio subsystem to be ready
-        audioSubSystemStatus = f.get();
-    }
-
-    //  Exit the application, if SDK is unable to initialize audio subsystems
-    if(audioSubSystemStatus) {
-        endTime = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsedTime = endTime - startTime;
-        std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
-    } else {
-        std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
-        return;
-    }
+void AudioClient::cleanup() {
+    std::lock_guard<std::mutex> lock(cleanupMtx_);
+    sampleRate_ = 0;
+    channelType_ = 0;
+    filePath_ = "";
+    stream_ = nullptr;
+    audioVoiceStream_ = nullptr;
+    audioPlayStream_ = nullptr;
+    audioCaptureStream_ = nullptr;
+    audioLoopbackStream_ = nullptr;
+    audioToneStream_ = nullptr;
 }
 
-void AudioClient::resolveStreamType(StreamType streamType) {
-    if(streamType == StreamType::VOICE_CALL){
-        stream_ = audioVoiceStream_;
+void AudioClient::resolveStreamType(StreamType streamType, int slotId) {
+    if (streamType == StreamType::VOICE_CALL) {
+        if (slotId == 1) {
+            stream_ = audioVoiceStream_;
+        } else if (slotId == 2) {
+            stream_ = audioVoiceStream2_;
+        }
     } else if( streamType == StreamType::PLAY) {
         stream_ = audioPlayStream_;
     } else if( streamType == StreamType::CAPTURE) {
@@ -101,19 +94,21 @@ void AudioClient::resolveStreamType(StreamType streamType) {
     }
 }
 
-void AudioClient::takeUserModemIdInput(int &modemId) {
+void AudioClient::takeUserSlotIdInput(int &slotId) {
     std::string userInput = "";
+    int input = INVALID_SLOT_ID;
     while(1) {
-        std::cout << "Enter Modem Id: ";
+        std::cout << "Enter Slot Id: ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> modemId) {
+            if(inputStream >> input) {
+                slotId = static_cast<int>(input);
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -127,10 +122,10 @@ void AudioClient::takeUserSampleRateInput(uint32_t &userSampleRate) {
             if(inputStream >> userSampleRate) {
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -153,18 +148,20 @@ void AudioClient::takeUserChannelInput(telux::audio::ChannelTypeMask &channelTyp
                     }
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
 
-void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices, StreamType &streamType) {
+void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices,
+    StreamType &streamType) {
+
     std::string userInput = "";
     int command = -1;
     int numDevices=0;
@@ -179,7 +176,7 @@ void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &dev
             if(inputStream >> numDevices){
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         }
     }
@@ -192,10 +189,10 @@ void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &dev
                 devices.emplace_back(static_cast<telux::audio::DeviceType>(command));
                 numDevices--;
             } else {
-                std::cout << "Invalid input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -220,13 +217,13 @@ void AudioClient::takeUserVoicePathInput(std::vector<telux::audio::Direction> &d
                     }
                     break;
                 } else {
-                    std::cout << "Invalid input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -240,10 +237,10 @@ void AudioClient::takeVolumeValueInput(float &vol) {
             if(inputStream >> vol) {
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -294,13 +291,13 @@ void AudioClient::takeAudioFormatInput(AudioFormat &audioFormat) {
                     }
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -308,7 +305,11 @@ void AudioClient::takeAudioFormatInput(AudioFormat &audioFormat) {
 void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
 {
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    takeUserModemIdInput(config.modemSubId);
+    // For Voice Call the slot Id is provided from Voice Menu. Voice Menu by default uses the
+    // DEFAULT_SLOT_ID, if user switches sub then corresponding slotId is used.
+    if (config.type != StreamType::VOICE_CALL) {
+        takeUserSlotIdInput(config.modemSubId);
+    }
     takeUserSampleRateInput(config.sampleRate);
     takeUserChannelInput(config.channelTypeMask);
     sampleRate_ = config.sampleRate;
@@ -352,10 +353,10 @@ void AudioClient::takeUserDirectionInput(StreamDirection &direction) {
                 if(command == 0 || command == 1) {
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         }
     }
@@ -367,8 +368,8 @@ void AudioClient::takeUserDirectionInput(StreamDirection &direction) {
     }
 }
 
-std::shared_ptr<IAudioStream> AudioClient::getStream(StreamType streamtype) {
-    resolveStreamType(streamtype);
+std::shared_ptr<IAudioStream> AudioClient::getStream(StreamType streamtype, int slotId) {
+    resolveStreamType(streamtype, slotId);
     return stream_;
 }
 
@@ -382,12 +383,15 @@ void AudioClient::getPlayConfig(std::string &filePath, AudioFormat &playFormat) 
     playFormat = playFormat_;
 }
 
-Status AudioClient::createStream(StreamType streamType) {
+Status AudioClient::createStream(StreamType streamType, int slotId) {
 
     std::promise<bool> p;
     StreamConfig streamConfig;
     // Initialising the Configuration of stream
     streamConfig.type = streamType;
+    if (streamType == StreamType::VOICE_CALL) {
+        streamConfig.modemSubId = slotId;
+    }
     takeUserCreateStreamInput(streamConfig);
     AmrwbpParams formatParams{};
     if (streamConfig.format == AudioFormat::AMRWB_PLUS) {
@@ -429,9 +433,16 @@ Status AudioClient::createStream(StreamType streamType) {
     if (p.get_future().get()) {
         std::cout<< "Audio Stream is Created" << std::endl;
         if(myAudioStream->getType() == StreamType::VOICE_CALL) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                        telux::audio::IAudioVoiceStream>(myAudioStream);
-            std::cout<< "Audio Voice Stream is Created" << std::endl;
+            if (streamConfig.modemSubId == 1) {
+                audioVoiceStream_ = std::dynamic_pointer_cast<
+                            telux::audio::IAudioVoiceStream>(myAudioStream);
+            }
+            if (streamConfig.modemSubId == 2) {
+                audioVoiceStream2_ = std::dynamic_pointer_cast<
+                            telux::audio::IAudioVoiceStream>(myAudioStream);
+            }
+            std::cout<< "Voice Stream is Created on slot id "<< streamConfig.modemSubId << std::endl;
+
         } else if(myAudioStream->getType() == StreamType::PLAY) {
             audioPlayStream_ = std::dynamic_pointer_cast<
                         telux::audio::IAudioPlayStream>(myAudioStream);
@@ -457,8 +468,8 @@ Status AudioClient::createStream(StreamType streamType) {
     return Status::SUCCESS;
 }
 
-Status AudioClient::deleteStream(StreamType streamType) {
-    resolveStreamType(streamType);
+Status AudioClient::deleteStream(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::common::Status deleteStreamStatus = audioManager_-> deleteStream(
     stream_, [&p,this](telux::common::ErrorCode error) {
@@ -473,10 +484,16 @@ Status AudioClient::deleteStream(StreamType streamType) {
         std::cout << "request to delete stream sent" << std::endl;
     } else {
         std::cout << "Request to delete stream failed"  << std::endl;
+        return Status::FAILED;
     }
     if (p.get_future().get()) {
         if(streamType == StreamType::VOICE_CALL) {
-            audioVoiceStream_= nullptr;
+            if (slotId == 1) {
+                audioVoiceStream_= nullptr;
+            }
+            if (slotId == 2) {
+                audioVoiceStream2_ = nullptr;
+            }
         } else if(streamType == StreamType::PLAY) {
             audioPlayStream_= nullptr;
         } else if(streamType == StreamType::CAPTURE) {
@@ -495,45 +512,53 @@ Status AudioClient::deleteStream(StreamType streamType) {
     return Status::SUCCESS;
 }
 
-void AudioClient::getStreamDevice(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getStreamDevice(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     std::vector<telux::audio::DeviceType> devices_;
+
+    cleanupMtx_.lock();
     if(stream_) {
         telux::common::Status status = stream_->getDevice(
             [&p, &devices_, this](std::vector<telux::audio::DeviceType> devices,
                      telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 devices_ = devices;
+                p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get stream device" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get device sent" << std::endl;
         } else {
             std::cout << "Request to get device failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
             for (auto deviceType : devices_) {
                 std::string deviceName;
-                std::cout << "Device Type"  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout << "Device type: "  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout.flush();
             }
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
-void AudioClient::setStreamDevice(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setStreamDevice(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
+    std::vector<telux::audio::DeviceType> devices;
+    takeUserDeviceInput(devices, streamType);
+
+    cleanupMtx_.lock();
     if(stream_) {
-        std::vector<telux::audio::DeviceType> devices;
-        takeUserDeviceInput(devices, streamType);
         telux::common::Status status = stream_->setDevice(devices,
            [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -543,25 +568,30 @@ void AudioClient::setStreamDevice(StreamType streamType) {
                 std::cout << "Failed to set stream device" << std::endl;
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set device sent" << std::endl;
         } else {
             std::cout << "Request to set device failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
              std::cout << "set stream device succeeded." << std::endl;
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
-void AudioClient::setVolume(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setVolume(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
+    telux::audio::StreamVolume streamVol;
+    takeUserVolumeInput(streamVol);
+
+    cleanupMtx_.lock();
     if(stream_) {
-        telux::audio::StreamVolume streamVol;
-        takeUserVolumeInput(streamVol);
         telux::common::Status status = stream_->setVolume(streamVol,
               [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -571,85 +601,96 @@ void AudioClient::setVolume(StreamType streamType) {
                 std::cout << "Failed to set stream volume" << std::endl;
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set volume sent" << std::endl;
         } else {
             std::cout << "Request to set volume failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::cout << "setStreamVolume() succeeded." << std::endl;
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
-void AudioClient::getVolume(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getVolume(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamVolume vol;
+    telux::audio::StreamDirection dir;
+    takeUserDirectionInput(dir);
+
+    cleanupMtx_.lock();
     if(stream_) {
-        telux::audio::StreamDirection dir;
-        takeUserDirectionInput(dir);
         telux::common::Status status = stream_->getVolume(
-           dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
+        dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 vol = volume;
+                p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get volume sent" << std::endl;
         } else {
             std::cout << "Request to get volume failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
             for (auto channelVolume : vol.volume) {
-                std::cout << "volume: "<< channelVolume.vol << std::endl;
+                std::cout << "Volume: "<< channelVolume.vol << std::endl;
+                std::cout.flush();
             }
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
+
 }
 
-void AudioClient::setMute(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setMute(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     StreamMute mute;
     std::promise<bool> p;
-    if(stream_) {
-        takeUserDirectionInput(mute.dir);
 
-        std::string userInput = "";
-        int muteStatus;
-        while(1) {
-            std::cout << " Enter 0 to Unmute and 1 to Mute" ;
-            if(std::getline(std::cin, userInput)) {
-                std::stringstream inputStream(userInput);
-                if(inputStream >> muteStatus) {
-                    if(muteStatus == 0 || muteStatus == 1) {
-                        break;
-                    } else {
-                        std::cout << "Invalid Input!" << std::endl;
-                    }
+    takeUserDirectionInput(mute.dir);
+
+    std::string userInput = "";
+    int muteStatus;
+    while(1) {
+        std::cout << " Enter 0 to Unmute and 1 to Mute" ;
+        if(std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(inputStream >> muteStatus) {
+                if(muteStatus == 0 || muteStatus == 1) {
+                    break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
+        } else {
+            std::cout << "Invalid Input" << std::endl;
         }
+    }
 
+    cleanupMtx_.lock();
+    if(stream_) {
         if(muteStatus == 0) {
             mute.enable = false;
         } else if (muteStatus == 1) {
             mute.enable = true;
         }
-
         telux::common::Status status = stream_->setMute(mute,
                [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -659,43 +700,53 @@ void AudioClient::setMute(StreamType streamType) {
                 std::cout << "Failed to set mute" << std::endl;
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set mute sent " << std::endl;
         } else {
             std::cout << "Request to set mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
-            std::cout << "set mute succeeded." << std::endl;
+            if (mute.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         }
-
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
-void AudioClient::getMute(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getMute(StreamType streamType, int slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamMute mute_;
+    telux::audio::StreamDirection dir;
+    std::string input;
+    takeUserDirectionInput(dir);
+
+    cleanupMtx_.lock();
     if (stream_) {
-        telux::audio::StreamDirection dir;
-        std::string input;
-        takeUserDirectionInput(dir);
         telux::common::Status status = stream_->getMute(
                dir,  [&p,&mute_,this](telux::audio::StreamMute mute,
                telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 mute_ = mute;
+                p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get mute" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get mute sent" << std::endl;
         } else {
             std::cout << "Request to get mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::string muteStatus;
@@ -704,9 +755,11 @@ void AudioClient::getMute(StreamType streamType) {
             } else {
                 muteStatus = "Unmuted";
             }
-            std::cout << "Mute Status: " << muteStatus << std::endl;
+            std::cout << "Mute status: " << muteStatus << std::endl;
+            std::cout.flush();
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }

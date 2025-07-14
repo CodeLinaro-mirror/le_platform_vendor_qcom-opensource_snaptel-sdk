@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOCONSOLEAPP_HPP
 #define AUDIOCONSOLEAPP_HPP
 
@@ -37,32 +43,41 @@
 using namespace telux::audio;
 using namespace telux::common;
 
-class AudioConsoleApp : public ConsoleApp {
+class AudioConsoleApp : public ConsoleApp,
+                        public telux::audio::IAudioListener,
+                        public std::enable_shared_from_this<AudioConsoleApp> {
 public :
     AudioConsoleApp(std::string appName, std::string cursor);
     ~AudioConsoleApp();
-
     void init();
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
 private:
+    void initConsole();
+    void cleanup();
+    void setSystemReady();
     void voiceMenu(std::vector<std::string> userInput);
     void playMenu(std::vector<std::string> userInput);
     void captureMenu(std::vector<std::string> userInput);
     void loopbackMenu(std::vector<std::string> userInput);
     void toneMenu(std::vector<std::string> userInput);
     void transCodeMenu(std::vector<std::string> userInput);
+    void getSupportedDevices(std::vector<std::string> userInput);
+    void getSupportedStreams(std::vector<std::string> userInput);
 
-    void cleanup();
+    std::string getStreamName(StreamType stream);
 
     // Audio Client is Created by the Audio Console app and it is passed to every Menu
     std::shared_ptr<AudioClient> audioClient_;
-	// Instance of all menu created are stored to maintain parallel running streams
+    // Instance of all menu created are stored to maintain parallel running streams
     std::shared_ptr<VoiceMenu> voiceMenu_;
     std::shared_ptr<PlayMenu> playMenu_;
     std::shared_ptr<CaptureMenu> captureMenu_;
     std::shared_ptr<LoopbackMenu> loopbackMenu_;
     std::shared_ptr<ToneMenu> toneMenu_;
     std::shared_ptr<TransCodeMenu> transCodeMenu_;
+    std::shared_ptr<IAudioManager> audioManager_;
+    std::atomic<bool> ready_;
 };
 
 #endif  // AUDIOCONSOLEAPP_HPP

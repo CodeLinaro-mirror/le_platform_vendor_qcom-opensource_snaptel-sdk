@@ -41,6 +41,7 @@ add_subdirectory(therm)
 add_subdirectory(power)
 add_subdirectory(platform)
 add_subdirectory(sec)
+add_subdirectory(satcom)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common

@@ -364,6 +364,24 @@
             "state:   RESET | START | STOP"
         ]
     },
+    "ntn": {
+        "stateChange" : [
+            "telsdk_event_injector -f ntn -e stateChange <state>",
+            "state:   integer, 0: DISABLED, 1: OUT_OF_SERVICE, 2: IN_SERVICE"
+        ],
+        "cellularCoverageAvailable" : [
+            "telsdk_event_injector -f ntn -e cellularCoverageAvailable <isAvailable>",
+            "isAvailable:   bool, 1 :cellular coverage is available, 0 :cellular coverage is not available"
+        ],
+        "locationFixRequest": [
+            "telsdk_event_injector -f ntn -e locationFixRequest <reqReason>",
+            "reqReason: valid reqReason are 0 - UNKOWN, 1 - NORMAL, 2 - VALIDITY_TIMER_EXPIRED"
+        ],
+        "incomingData": [
+            "telsdk_event_injector -f ntn -e incomingData <data>",
+            "data: valid data is a comma-separated list of byte values."
+        ]
+    },
     "fs_manager": {
         "efsBackup":[
             "telsdk_event_injector -f fs_manager -e efsBackup <eventName> <status>",

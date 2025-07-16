@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -63,6 +63,7 @@
 #include "sec/SecurityCCSServerImpl.hpp"
 #include "sec/SecurityWCSServerImpl.hpp"
 #include "sec/SecurityCALCServerImpl.hpp"
+#include "satcom/NtnServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -293,6 +294,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCALCServerImpl> securityCALCService =
         std::make_shared<SecurityCALCServerImpl>();
     builder.RegisterService(securityCALCService.get());
+
+    std::shared_ptr<NtnServerImpl> NtnService =
+        std::make_shared<NtnServerImpl>();
+    builder.RegisterService(NtnService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

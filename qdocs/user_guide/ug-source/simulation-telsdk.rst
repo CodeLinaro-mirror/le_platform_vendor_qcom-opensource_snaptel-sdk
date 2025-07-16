@@ -452,6 +452,7 @@ The details on how simulation of individual areas can be used and controlled are
 7. :ref:`sim-reference-sensor`
 8. :ref:`sim-reference-platform`
 9. :ref:`sim-reference-security`
+10. :ref:`sim-reference-satcom`
 
 .. _sim-reference-telephony:
 
@@ -2314,3 +2315,92 @@ Additional Notes
 """"""""""""""""
 
 1. If the host computer doesn't have the correct permissions, please execute "chmod 0666 /dev/hwrng" to set the correct permissions for the random number generator feature.
+
+.. _sim-reference-satcom:
+
+Satcom Simulation
+~~~~~~~~~~~~~~~~~~
+
+Overview of Satcom Simulation
+"""""""""""""""""""""""""""""""
+
+This page and the sub-pages provide information about usage of simulation for the Satcom
+sub-system that are part of the telux::satcom namespace of the Telematics SDK.
+
+.. _fig-satcom-sim-overview:
+.. figure:: ../../images/simulation_satcom_overview.png
+  :width: 500
+
+  Satcom Simulation Framework
+
+Managers Supported
+"""""""""""""""""""
+
+The following managers are currently available in the simulation:
+
+1. NtnManager
+
+Satcom APIs response handling
+"""""""""""""""""""""""""""""""
+
+A Satcom API response can be configured through a JSON file.
+
+Ntn manager has its own JSON configuration file present under ``simulation/json/api/satcom/``.
+
+If the client configures the API behavior to mimic an error scenario by setting the response error code
+to anything other than "SUCCESS", the Satcom server's response will be modified to simulate the erroneous behavior.
+
+Example 1:
+'''''''''''
+
+API command response for telux::satcom::INtnManager::enableNtn
+
+.. code-block::
+
+ "enableNtn": {
+        "error": "SUCCESS"
+ }
+
+
+Example 2:
+'''''''''''
+
+API command response for telux::satcom::INtnManager::getSignalStrength
+
+.. code-block::
+
+ "getSignalStrength": {
+        "error": "SUCCESS"
+ }
+
+Satcom event handling
+"""""""""""""""""""""""
+
+Ntn events
+''''''''''''
+
+The following Ntn events can be simulated by changing the Ntn state.
+
+1. telux::satcom::INtnListener::onNtnStateChange
+2. telux::satcom::INtnListener::onSignalStrengthChange
+3. telux::satcom::INtnListener::onCapabilitiesChange
+4. telux::satcom::INtnListener::onNtnBandUpdate
+
+The following Ntn events can be simulated by sending data.
+
+1. telux::satcom::INtnListener::onDataAck
+
+The following Ntn events can be simulated using the telsdk_event_injector.
+
+1. telux::satcom::INtnListener::onNtnStateChange
+2. telux::satcom::INtnListener::onCellularCoverageAvailable
+3. telux::satcom::INtnListener::onLocationFixRequest
+4. telux::satcom::INtnListener::onIncomingData
+
+Sample input:
+
+.. code-block::
+
+ telsdk_event_injector -f ntn -e stateChange <state>
+ telsdk_event_injector -f ntn -e stateChange 2
+

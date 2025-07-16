@@ -70,6 +70,7 @@
 
 #include <iostream>
 #include <memory>
+#include <unistd.h>
 
 extern "C" {
 #include <cxxabi.h>
@@ -266,12 +267,14 @@ int main(int argc, char **argv) {
         exit(sig);
     };
     SignalHandler::registerSignalHandler(sigset, cb);
+    pid_t pid = getpid();
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::string appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch) +"\n" +
-                          "Release name: " + sdkReleaseName;
+                          "Release name: " + sdkReleaseName +"\n" +
+                          "Process ID: " + std::to_string(pid);
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

@@ -42,6 +42,7 @@
 
 #include <iostream>
 #include <memory>
+#include <unistd.h>
 
 extern "C" {
 #include <cxxabi.h>
@@ -234,11 +235,12 @@ void setupSignal() {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-
+    pid_t pid = getpid();
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
-                          + std::to_string(sdkVersion.patch);
+                          + std::to_string(sdkVersion.patch)+ "\n"
+                          + "Process ID: " + std::to_string(pid);
     setupSignal();
     std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

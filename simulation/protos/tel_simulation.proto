@@ -180,6 +180,7 @@
          returns (RequestRFBandCapabilityReply) {}
      rpc GetHplmnSearchTime (GetHplmnSearchTimeRequest) returns (GetHplmnSearchTimeReply) {}
      rpc SetHplmnSearchTime (SetHplmnSearchTimeRequest) returns (SetHplmnSearchTimeReply) {}
+     rpc GetRrcState (GetRrcStateRequest) returns (GetRrcStateReply) {}
  }
 
  service NetworkSelectionService {
@@ -3242,6 +3243,58 @@ message SetHplmnSearchTimeRequest {
 
 message SetHplmnSearchTimeReply {
     commonStub.ErrorCode error = 1;
+}
+
+enum WcdmaRrcState {
+    WcdmaRrcState_IDLE = 0;
+    WcdmaRrcState_CELL_PCH = 1;
+    WcdmaRrcState_URA_PCH = 2;
+    WcdmaRrcState_CELL_FACH = 3;
+    WcdmaRrcState_CELL_DCH = 4;
+    WcdmaRrcState_UNKNOWN = -1;
+}
+
+enum LteRrcState {
+    LteRrcState_UNKNOWN = 0;
+    LteRrcState_IDLE_CAMPED_ANYCELL = 1;
+    LteRrcState_IDLE_CAMPED_NORMAL = 2;
+    LteRrcState_CONNECTING = 3;
+    LteRrcState_CONNECTED = 4;
+    LteRrcState_CLOSING = 5;
+    LteRrcState_INACTIVE = 6;
+    LteRrcState_IDLE_NOT_CAMP = 7;
+    LteRrcState_SUSPENDED = 8;
+    LteRrcState_IRAT_TO_LTE_STARTED = 9;
+}
+
+enum Nr5gRrcState {
+    Nr5gRrcState_IDLE_CAMPED = 0;
+    Nr5gRrcState_CONNECTED = 1;
+    Nr5gRrcState_INACTIVE_CAMPED = 2;
+    Nr5gRrcState_UNKNOWN = -1;
+}
+
+message RrcState {
+    WcdmaRrcState wcdma_rrc_state = 1;
+    LteRrcState lte_rrc_state = 2;
+    Nr5gRrcState nr5g_rrc_state = 3;
+}
+
+message GetRrcStateRequest {
+    int32 phone_id = 1;
+}
+
+message GetRrcStateReply {
+    RrcState rrc_state = 1;
+    commonStub.ErrorCode error = 2;
+    commonStub.Status status = 3;
+    int32 delay = 4;
+    bool is_callback = 5;
+}
+
+message RrcStateEvent {
+   int32 phone_id = 1;
+   RrcState rrc_state = 2;
 }
 
 enum ServiceState {

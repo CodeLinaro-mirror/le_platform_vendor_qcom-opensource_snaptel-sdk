@@ -284,6 +284,14 @@
             "rejectCause :          integer, valid rejectCause Refer for more details telux::tel::NetworkRejectInfo ",
             "mcc :                  string, valid mcc Refer for more details telux::tel::NetworkRejectInfo ",
             "mnc :                  string, valid mnc Refer for more details telux::tel::NetworkRejectInfo "
+        ],
+        "rrcStateUpdate":[
+            "telsdk_event_injector -f tel_serv -e rrcStateUpdate <slotId> <wcdmaRrcState> <lteRrcState> <nr5gRrcState>",
+            "slotId:          integer, valid slotIds are 1 & 2 only." ,
+            "wcdmaRrcState:   integer, refer telux::tel::WcdmaRrcState for more details",
+            "lteRrcState:     integer, refer telux::tel::LteRrcState for more details",
+            "nr5gRrcState:    integer, refer telux::tel::Nr5gRrcState for more details",
+            "example: telsdk_event_injector -f tel_serv -e \"rrcStateUpdate 1 -1 4 -1\""
         ]
     },
     "therm": {

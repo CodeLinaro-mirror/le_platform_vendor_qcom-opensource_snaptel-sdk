@@ -1,7 +1,8 @@
-/*↲
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.↲
- * SPDX-License-Identifier: BSD-3-Clause-Clear↲
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       ServingSystemDefines.hpp
  *
@@ -392,7 +393,55 @@ enum class NrRFBand {
    NR5G_BAND_259 = 259,     /**<  NR5G band 259 */
    NR5G_BAND_260 = 260,     /**<  NR5G band 260 */
    NR5G_BAND_261 = 261      /**<  NR5G band 261 */
-} ;
+};
+
+/**
+ * Defines radio resource control (RRC) states for WCDMA.
+ */
+enum class WcdmaRrcState {
+    UNKNOWN = -1, /**< Unknown or not initialized. */
+    IDLE,         /**< Idle mode, refer 3GPP TS 25.331 section 7 and annex B for more details. */
+    CELL_PCH,     /**< Cell paging channel mode,
+                       refer 3GPP TS 25.331 section 7 and annex B for more details. */
+    URA_PCH,      /**< UTRAN registration area(URA) paging channel mode,
+                       refer 3GPP TS 25.331 section 7 and annex B for more details. */
+    CELL_FACH,    /**< Cell forward access channel mode,
+                       refer 3GPP TS 25.331 section 7 and annex B for more details. */
+    CELL_DCH      /**< Cell dedicated channel mode,
+                       refer 3GPP TS 25.331 section 7 and annex B for more details. */
+};
+
+/**
+ * Defines radio resource control (RRC) states for LTE.
+ */
+enum class LteRrcState {
+    UNKNOWN,             /**< Unknown or not initialized.
+                              The UE has not established any LTE connection with the network. */
+    IDLE_CAMPED_ANYCELL, /**< The UE is in RRC Idle mode and is camped on any available LTE cell,
+                              possibly not the best or most suitable one. */
+    IDLE_CAMPED_NORMAL,  /**< The UE is in RRC Idle mode and is camped on a suitable LTE cell
+                              with normal service. */
+    CONNECTING,          /**< The UE is in the process of establishing an RRC connection
+                              with the network. */
+    CONNECTED,           /**< The UE has an active RRC connection with the eNodeB (base station). */
+    CLOSING,             /**< The RRC connection is being released. */
+    INACTIVE,            /**< The UE is in RRC Inactive mode. */
+    IDLE_NOT_CAMP,       /**< The UE is in Idle mode but not camped on any LTE cell. */
+    SUSPENDED,           /**< The RRC connection is suspended, possibly due to inter-RAT
+                             (Radio Access Technology) procedures or temporary loss of coverage. */
+    IRAT_TO_LTE_STARTED  /**< An Inter-RAT(IRAT) handover to LTE has started. */
+};
+
+/**
+ * Defines radio resource control (RRC) states for NR5G.
+ */
+enum class Nr5gRrcState {
+    UNKNOWN = -1,      /**< Unknown. The UE has not established any NR5G connection with the
+                            network. */
+    IDLE_CAMPED,       /**< The UE is in RRC Idle mode and is camped on a 5G cell. */
+    CONNECTED,         /**< The UE has an active RRC connection with the gNB (5G base station). */
+    INACTIVE_CAMPED    /**< The UE is in RRC Inactive mode and is camped on a 5G cell. */
+};
 
 /** @} */ /* end_addtogroup telematics_serving_system */
 }

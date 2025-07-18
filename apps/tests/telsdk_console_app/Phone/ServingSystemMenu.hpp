@@ -27,12 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #ifndef SERVINGSYSTEMMENU_HPP
 #define SERVINGSYSTEMMENU_HPP
@@ -79,6 +77,7 @@ public:
    void setRFBandPref(std::vector<std::string> userInput);
    void setHplmnSearchTime(std::vector<std::string> userInput);
    void getHplmnSearchTime(std::vector<std::string> userInput);
+   void requestRrcState(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

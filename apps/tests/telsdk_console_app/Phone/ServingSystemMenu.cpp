@@ -27,12 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include <chrono>
 #include <future>
@@ -210,9 +208,14 @@ bool ServingSystemMenu::init() {
              "19", "Get_HPLMN_Search_Time", {},
              std::bind(&ServingSystemMenu::getHplmnSearchTime, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> reqRrcStateCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "20", "Get_RRC_State", {},
+             std::bind(&ServingSystemMenu::requestRrcState, this,
+                std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "20", "Select_sim_slot", {},
+             "21", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
@@ -221,7 +224,7 @@ bool ServingSystemMenu::init() {
              getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
              getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
              setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand,
-             setHplmnSearchTimeCommand, getHplmnSearchTimeCommand};
+             setHplmnSearchTimeCommand, getHplmnSearchTimeCommand, reqRrcStateCommand};
 
        if (servingSystemMgrs_.size() > 1) {
           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -795,5 +798,20 @@ void ServingSystemMenu::setHplmnSearchTime(std::vector<std::string> userInput) {
       }
    } else {
       std::cout << "ERROR - ServingSystemManger is null \n";
+   }
+}
+
+void ServingSystemMenu::requestRrcState(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestRrcState(
+         RrcStateResponseCallback::rrcStateResponse);
+      if (ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nGet RRC state request sent successfully\n";
+      } else {
+         std::cout << "\nGet RRC state request failed, status: " << static_cast<int>(ret);
+      }
+   } else {
+      std::cout << "\nGet RRC state failed due to ServingSystem manager instance is null\n";
    }
 }

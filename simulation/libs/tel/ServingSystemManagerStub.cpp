@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -155,6 +155,7 @@ telux::common::Status ServingSystemManagerStub::registerListener(
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
             mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
             mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
+            mask.set(ServingSystemNotificationType::ARFCN_INFO);
         }
         // TODO: Update client mask for post SSR
         // Register for default notifications
@@ -219,6 +220,15 @@ telux::common::Status ServingSystemManagerStub::registerListener(
         /* In simulation, TEL_SERVING_SYSTEM_NETWORK_TIME is considered for
            ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
            ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence registration is not required. */
+        if (firstReg.test(ServingSystemNotificationType::ARFCN_INFO)) {
+            status = clientEventManager.registerListener(shared_from_this(),
+                { telux::tel::TEL_SERVING_SYSTEM_ARFCN_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                    (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, ":: Registering RRC state event failed");
+                return status;
+            }
+        }
     } while(0);
     return status;
 }
@@ -257,6 +267,7 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
             mask.set(ServingSystemNotificationType::NETWORK_REJ_INFO);
             mask.set(ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME);
             mask.set(ServingSystemNotificationType::NR5G_RRC_UTC_TIME);
+            mask.set(ServingSystemNotificationType::ARFCN_INFO);
         }
         // TODO: Update client mask for SSR
         // De-register optional indications
@@ -317,6 +328,15 @@ telux::common::Status ServingSystemManagerStub::deregisterListener(
            ServingSystemNotificationType::LTE_SIB16_NETWORK_TIME or
            ServingSystemNotificationType::NR5G_RRC_UTC_TIME, hence de-registration is not
            required. */
+        if (lastReg.test(ServingSystemNotificationType::ARFCN_INFO)) {
+            status = clientEventManager.deregisterListener(shared_from_this(),
+                        { telux::tel::TEL_SERVING_SYSTEM_ARFCN_INFO });
+            if ((status != telux::common::Status::SUCCESS) &&
+                (status != telux::common::Status::ALREADY)) {
+                LOG(ERROR, __FUNCTION__, " DeRegistering RRC state event failed");
+                return status;
+            }
+        }
     } while(0);
     return status;
 }
@@ -932,6 +952,78 @@ telux::common::ErrorCode
     return error;
 }
 
+NetworkMode ServingSystemManagerStub::updateNetworkMode(WcdmaRrcState wcdmaRrcState,
+    LteRrcState lteRrcState, Nr5gRrcState nr5gRrcState) {
+    NetworkMode rat = NetworkMode::UNKNOWN;
+    if ((lteRrcState != LteRrcState::UNKNOWN) && (nr5gRrcState != Nr5gRrcState::UNKNOWN)) {
+        rat = NetworkMode::NR5G_NSA;
+    } else if (nr5gRrcState != Nr5gRrcState::UNKNOWN) {
+        rat = NetworkMode::NR5G_SA;
+    } else if(lteRrcState != LteRrcState::UNKNOWN) {
+        rat = NetworkMode::LTE;
+    } else if (wcdmaRrcState != WcdmaRrcState::UNKNOWN) {
+        rat = NetworkMode::WCDMA;
+    } else {
+        rat = NetworkMode::UNKNOWN;
+    }
+    return rat;
+}
+
+telux::common::Status ServingSystemManagerStub::requestRrcState(RrcStateCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::GetRrcStateRequest request;
+    ::telStub::GetRrcStateReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    grpc::Status reqstatus = stub_->GetRrcState(&context, request, &response);
+
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::Status::FAILED;
+    }
+
+    RrcState rrcState;
+    WcdmaRrcState wcdmaRrcState = WcdmaRrcState::UNKNOWN;
+    LteRrcState lteRrcState = LteRrcState::UNKNOWN;
+    Nr5gRrcState nr5gRrcState = Nr5gRrcState::UNKNOWN;
+    wcdmaRrcState = static_cast<WcdmaRrcState>(response.mutable_rrc_state()->wcdma_rrc_state());
+    lteRrcState = static_cast<LteRrcState>(response.mutable_rrc_state()->lte_rrc_state());
+    nr5gRrcState = static_cast<Nr5gRrcState>(response.mutable_rrc_state()->nr5g_rrc_state());
+    if ((lteRrcState != LteRrcState::UNKNOWN) && (nr5gRrcState != Nr5gRrcState::UNKNOWN)) {
+        rrcState.rrcStateForNsa.lteRrcState = lteRrcState;
+        rrcState.rrcStateForNsa.nr5gRrcState = nr5gRrcState;
+    } else if (wcdmaRrcState != WcdmaRrcState::UNKNOWN) {
+        rrcState.wcdmaRrcState = wcdmaRrcState;
+    } else if (lteRrcState != LteRrcState::UNKNOWN) {
+        rrcState.lteRrcState = lteRrcState;
+    } else if (nr5gRrcState != Nr5gRrcState::UNKNOWN) {
+        rrcState.nr5gRrcStateSa = nr5gRrcState;
+    } else {
+        LOG(ERROR, __FUNCTION__, " Rrc state information is not available");
+    }
+    rrcState.mode = updateNetworkMode(wcdmaRrcState, lteRrcState, nr5gRrcState);
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
+    int cbDelay = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+    auto f = std::async(std::launch::async,
+        [this, cbDelay, rrcState, error, callback]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(rrcState, error);
+            }
+        }).share();
+    taskQ_->add(f);
+    }
+    return status;
+}
+
 void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     if (event.Is<::telStub::SystemSelectionPreferenceEvent>()) {
@@ -954,6 +1046,10 @@ void ServingSystemManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::RFBandInfoEvent rFBandInfoEvent;
         event.UnpackTo(&rFBandInfoEvent);
         handleRfBandInfoUpdateEvent(rFBandInfoEvent);
+    } else if (event.Is<::telStub::RrcStateEvent>()) {
+        ::telStub::RrcStateEvent rrcStateEvent;
+        event.UnpackTo(&rrcStateEvent);
+        handleRrcStateChange(rrcStateEvent);
     }
 }
 
@@ -1189,6 +1285,49 @@ void ServingSystemManagerStub::handleNetworkRejection(::telStub::NetworkRejectIn
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onNetworkRejection(rejectInfo);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void ServingSystemManagerStub::handleRrcStateChange(::telStub::RrcStateEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    if( phoneId_ != phoneId ) {
+        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+        return;
+    }
+    std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(
+            ServingSystemNotificationType::ARFCN_INFO, applisteners);
+
+        RrcState rrcState;
+        WcdmaRrcState wcdmaRrcState = WcdmaRrcState::UNKNOWN;
+        LteRrcState lteRrcState = LteRrcState::UNKNOWN;
+        Nr5gRrcState nr5gRrcState = Nr5gRrcState::UNKNOWN;
+        wcdmaRrcState = static_cast<WcdmaRrcState>(event.mutable_rrc_state()->wcdma_rrc_state());
+        lteRrcState = static_cast<LteRrcState>(event.mutable_rrc_state()->lte_rrc_state());
+        nr5gRrcState = static_cast<Nr5gRrcState>(event.mutable_rrc_state()->nr5g_rrc_state());
+        if ((lteRrcState != LteRrcState::UNKNOWN) && (nr5gRrcState != Nr5gRrcState::UNKNOWN)) {
+            rrcState.rrcStateForNsa.lteRrcState = lteRrcState;
+            rrcState.rrcStateForNsa.nr5gRrcState = nr5gRrcState;
+        } else if (wcdmaRrcState != WcdmaRrcState::UNKNOWN) {
+            rrcState.wcdmaRrcState = wcdmaRrcState;
+        } else if (lteRrcState != LteRrcState::UNKNOWN) {
+            rrcState.lteRrcState = lteRrcState;
+        } else if (nr5gRrcState != Nr5gRrcState::UNKNOWN) {
+            rrcState.nr5gRrcStateSa = nr5gRrcState;
+        } else {
+            LOG(ERROR, __FUNCTION__, " Rrc state information is not available");
+        }
+        rrcState.mode = updateNetworkMode(wcdmaRrcState, lteRrcState, nr5gRrcState);
+
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onRrcStateChanged(rrcState);
             }
         }
     } else {

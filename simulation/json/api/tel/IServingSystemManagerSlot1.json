@@ -76,6 +76,11 @@
         "setHplmnSearchTime" :
         {
             "error" : "SUCCESS"
+        },
+        "requestRrcState" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

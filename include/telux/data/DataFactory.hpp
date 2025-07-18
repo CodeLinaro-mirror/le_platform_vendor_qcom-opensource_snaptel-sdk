@@ -66,6 +66,7 @@
 #include <telux/data/DualDataManager.hpp>
 #include <telux/data/DataControlManager.hpp>
 #include <telux/data/net/NetworkSettingManager.hpp>
+#include <telux/data/IpaManager.hpp>
 #include <telux/data/net/IpsecManager.hpp>
 #include <telux/data/net/QoSManager.hpp>
 #include <telux/data/CellularDeviceManager.hpp>
@@ -353,6 +354,18 @@ class DataFactory {
      */
     virtual std::shared_ptr<telux::data::net::IEthernetManager> getEthernetManager(
         telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+
+    /**
+     * Get IPA Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              IPA Manager @ref telux::common::InitResponseCb.
+     *
+     * @returns instance of IIpaManager
+     *
+     */
+    virtual std::shared_ptr<IIpaManager> getIpaManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
     /**

@@ -83,6 +83,11 @@ grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext* context,
     if (!clientsCount_) {
         serverEvent_.deregisterListener(shared_from_this(), WCS_FILTER);
         isServiceInitialized_ = false;
+
+        // Empty all entries in WCS_DATABASE_FILE
+        Json::Value rootObj;
+        rootObj[ACCESS_POINTS] = Json::arrayValue;
+        JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
     }
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
@@ -149,7 +154,6 @@ grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext* cont
     ec = JsonParser::readFromJsonFile(rootObj, WCS_DATABASE_FILE);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " can't open ", WCS_DATABASE_FILE);
-        response->set_ec(commonStub::ErrorCode::FILE_NOT_FOUND);
         return grpc::Status::OK;
     }
 
@@ -173,7 +177,6 @@ grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
     const ::securityStub::IsTrustedUserResponse* request, ::commonStub::ErrorCodeMsg* response) {
 
     int entryIndex = 0;
-    telux::common::ErrorCode ec;
 
     Json::Value newAp;
     Json::Value rootObj;
@@ -181,13 +184,6 @@ grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
     if (!request->is_trusted()) {
         /* If user distrusted, bail out early, don't modify database */
         response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
-        return grpc::Status::OK;
-    }
-
-    ec = JsonParser::readFromJsonFile(rootObj, WCS_DATABASE_FILE);
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " can't open ", WCS_DATABASE_FILE);
-        response->set_ec(commonStub::ErrorCode::FILE_NOT_FOUND);
         return grpc::Status::OK;
     }
 
@@ -314,6 +310,11 @@ void SecurityWCSServerImpl::handleSSREvent(std::string eventParams) {
         newServiceState.set_service_status(commonStub::ServiceStatus::SERVICE_AVAILABLE);
     } else if (eventParams == "SERVICE_UNAVAILABLE" || eventParams == "SERVICE_FAILED") {
         newServiceState.set_service_status(commonStub::ServiceStatus::SERVICE_UNAVAILABLE);
+
+        // Empty all entries in WCS_DATABASE_FILE
+        Json::Value rootObj;
+        rootObj[ACCESS_POINTS] = Json::arrayValue;
+        JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
     } else {
         LOG(ERROR, __FUNCTION__, " invalid parameters: ", eventParams);
         return;

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <sstream>
@@ -14,7 +14,7 @@ DataProfile::DataProfile(int id, const std::string &name, const std::string &apn
                          const std::string &username, const std::string &password,
                          IpFamilyType ipFamilyType, TechPreference techPref,
                          AuthProtocolType authType, ApnTypes apnTypes,
-                         EmergencyCapability emergencyAllowed)
+                         EmergencyCapability emergencyAllowed, bool clatEnabled)
    : id_(id)
    , name_(name)
    , apn_(apn)
@@ -24,7 +24,8 @@ DataProfile::DataProfile(int id, const std::string &name, const std::string &apn
    , techPref_(techPref)
    , authType_(authType)
    , apnTypes_(apnTypes)
-   , emergencyAllowed_(emergencyAllowed) {
+   , emergencyAllowed_(emergencyAllowed)
+   , clatEnabled_(clatEnabled) {
 }
 
 int DataProfile::getId() {
@@ -66,13 +67,18 @@ EmergencyCapability DataProfile::getIsEmergencyAllowed() {
     return emergencyAllowed_;
 }
 
+bool DataProfile::isClatEnabled() {
+    return clatEnabled_;
+}
+
 std::string DataProfile::toString() {
   std::stringstream ss;
   ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
     << ", password: " << password_ << ", IP Family: " << static_cast<int>(ipFamilyType_)
     << ", Tech Pref: " << static_cast<int>(techPref_)
     << ", Auth Type: " << static_cast<int>(authType_) << ", Apn Type: " << apnTypes_.to_string()
-    << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_);
+    << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_)
+    << ", CLAT enabled: " << static_cast<int>(clatEnabled_);
     return ss.str();
 }
 }

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataProfileManagerStub.hpp"
@@ -212,6 +212,7 @@ telux::common::Status DataProfileManagerStub::createProfile(
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
+    request.set_clat_enabled(profileParams.clatEnabled);
 
     grpc::Status reqStatus = stub_->CreateProfile(&context, request, &response);
 
@@ -319,6 +320,7 @@ telux::common::Status DataProfileManagerStub::modifyProfile(uint8_t profileId,
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
+    request.set_clat_enabled(profileParams.clatEnabled);
 
     grpc::Status reqStatus = stub_->ModifyProfile(&context, request, &response);
 
@@ -398,9 +400,10 @@ telux::common::Status DataProfileManagerStub::requestProfile(uint8_t profileId,
         EmergencyCapability emergencyAllowed =
             static_cast<telux::data::EmergencyCapability>(
             response.profile().emergency_capability());
+        bool clatEnabled = response.profile().clat_enabled();
 
         queryProfile = std::make_shared<DataProfile>(profileId, name, apn, username,
-            password, ipFamily, techPref, authType, apnTypes, emergencyAllowed);
+            password, ipFamily, techPref, authType, apnTypes, emergencyAllowed, clatEnabled);
 
         LOG(DEBUG, __FUNCTION__, " requestProfile successful profileId:",
                 profileId);
@@ -464,10 +467,11 @@ telux::common::Status DataProfileManagerStub::requestProfileList(
             EmergencyCapability emergencyAllowed =
                 static_cast<telux::data::EmergencyCapability>(
                 response.mutable_profiles(idx)->emergency_capability());
+            bool clatEnabled = response.mutable_profiles(idx)->clat_enabled();
 
             auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn,
                 username, password, ipFamily, techPref, authType, apnTypes,
-                emergencyAllowed);
+                emergencyAllowed, clatEnabled);
             LOG(DEBUG, __FUNCTION__, " requestProfileList successful profileId:",
                 profileId);
             requestedProfiles.push_back(queryProfile);
@@ -511,6 +515,7 @@ telux::common::Status DataProfileManagerStub::queryProfile(const ProfileParams &
         set_ip_family_type((::dataStub::IpFamilyType::Type)profileParams.ipFamilyType);
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
+    request.set_clat_enabled(profileParams.clatEnabled);
 
     grpc::Status reqStatus = stub_->QueryProfile(&context, request, &response);
 
@@ -546,10 +551,11 @@ telux::common::Status DataProfileManagerStub::queryProfile(const ProfileParams &
             EmergencyCapability emergencyAllowed =
                 static_cast<telux::data::EmergencyCapability>(
                 response.mutable_profiles(idx)->emergency_capability());
+            bool clatEnabled = response.mutable_profiles(idx)->clat_enabled();
 
             auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn,
                 username, password, ipFamily, techPref, authType, apnTypes,
-                emergencyAllowed);
+                emergencyAllowed, clatEnabled);
             queriedProfiles.push_back(queryProfile);
         }
 

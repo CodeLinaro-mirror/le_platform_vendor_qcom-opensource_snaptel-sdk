@@ -104,8 +104,6 @@ Jun 2017   SVM      Created to support V2X API
       Network Selection Manager provides the interface to get and set network selection mode (Manual or Automatic), scan available networks and set and get preferred networks list.
       @defgroup telematics_serving_system Serving System
       Serving System Manager class provides the interface to request and set service domain preference and radio access technology mode preference for  searching and registering (CS/PS domain, RAT and operation mode)
-      @defgroup telematics_rsp Remote SIM Provisioning
-      This section contains APIs related to Remote SIM provisioning.
       @defgroup telematics_remote_sim Remote SIM
       This section contains APIs related to Remote SIM operations.
       @defgroup telematics_supp_services Supplementary Services

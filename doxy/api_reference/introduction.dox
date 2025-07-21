@@ -114,6 +114,7 @@ when       who     what, where, why
 11/02/22   FS      Added support Wlan Management support in Telematics SDK
 06/03/23   MH      Added notifications for thermal sub-system.
 10/13/23   FS      Added support for Diagnostics Services in Telematics SDK
+07/08/25   AP      Removed RSP documentation, which are trial and internal only
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

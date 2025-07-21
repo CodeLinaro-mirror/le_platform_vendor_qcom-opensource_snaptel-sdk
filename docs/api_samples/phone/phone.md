@@ -15,5 +15,3 @@ Telephony {#phone}
 * @subpage remote_sim_reference_apps
 * @subpage send_sms
 * @subpage listen_sms
-* @subpage remote_sim_provisioning
-* @subpage rsp_reference_apps

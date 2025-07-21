@@ -327,7 +327,6 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/power/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/remote_sim/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/config/ \
-                         $(TELUX_GIT_ROOT)/docs/api_samples/rsp/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/crypto/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/crypto_accelerator/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/cellular_connection_security/ \

@@ -501,7 +501,8 @@ void ServingSystemMenu::requestRFBandCapability(std::vector<std::string> userInp
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nRequest RF band capability sent successfully\n";
       } else {
-         std::cout << "\nRequest RF band capability failed \n";
+         std::cout << "\nRequest RF band capability failed, status: "
+             << static_cast<int>(ret) << std::endl;
       }
    }
 }
@@ -514,7 +515,8 @@ void ServingSystemMenu::requestRFBandPref(std::vector<std::string> userInput) {
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nRequest RF band preferences sent successfully\n";
       } else {
-         std::cout << "\nRequest RF band preferences failed \n";
+         std::cout << "\nRequest RF band preferences failed, status: "
+             << static_cast<int>(ret) << std::endl;
       }
    }
 }
@@ -703,10 +705,12 @@ void ServingSystemMenu::setRFBandPref(std::vector<std::string> userInput) {
           if(ret == telux::common::Status::SUCCESS) {
              std::cout << "\nSet RF band preferences sent successfully\n";
           } else {
-             std::cout << "\nSet RF band preferences failed \n";
+             std::cout << "\nSet RF band preferences failed, status: "
+                 << static_cast<int>(ret) << std::endl;
           }
       } else {
-        std::cout << "\nBuild RF band preferences failed \n";
+        std::cout << "\nBuild RF band preferences failed, error: "
+            << static_cast<int>(errCode) << std::endl;
       }
    }
 }
@@ -719,10 +723,11 @@ void ServingSystemMenu::requestLteSib16NetworkTimeInfo(std::vector<std::string> 
       if (ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet LTE SIB16 network time request sent successfully\n";
       } else {
-         std::cout << "\nGet LTE SIB16 network time request failed \n";
+         std::cout << "\nGet LTE SIB16 network time request failed, status: "
+             << static_cast<int>(ret) << std::endl;
       }
    } else {
-      std::cout << "\nGet LTE SIB16 network time request failed \n";
+      std::cout << "\nGet LTE SIB16 network time request failed, ServingSystem manager is null.\n";
    }
 }
 
@@ -734,9 +739,10 @@ void ServingSystemMenu::requestNr5gRrcUtcTimeInfo(std::vector<std::string> userI
       if (ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet NR5G RRC UTC time request sent successfully\n";
       } else {
-         std::cout << "\nGet NR5G RRC UTC time request failed \n";
+         std::cout << "\nGet NR5G RRC UTC time request failed, status: "
+             << static_cast<int>(ret) << std::endl;
       }
    } else {
-      std::cout << "\nGet NR5G RRC UTC time request failed \n";
+      std::cout << "\nGet NR5G RRC UTC time request failed, ServingSystem manager is null.\n";
    }
 }

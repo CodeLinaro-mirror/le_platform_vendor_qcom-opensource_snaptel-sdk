@@ -54,7 +54,6 @@ private:
     static std::shared_ptr<CANTrigger> canTrigger_;
     static void triggerEvent(CwFrame * pf, void* userData, int ifNo);
 
-    CANTrigger(std::shared_ptr<EventManager> eventManager);
     std::shared_ptr<EventManager> eventManager_;
 
     /** map to store can frame id along with respective expected TcuActivityState
@@ -73,6 +72,7 @@ public:
     static std::shared_ptr<CANTrigger> getInstance(std::shared_ptr<EventManager> eventManager);
     bool init();
 
+    CANTrigger(std::shared_ptr<EventManager> eventManager);
     ~CANTrigger();
 
     //EventListener

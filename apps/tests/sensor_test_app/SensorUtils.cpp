@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -253,5 +222,26 @@ std::string SensorUtils::sensorResultTypeToString(SensorResultType sensorResultT
         case SensorResultType::HISTORICAL : return "HISTORICAL";
         case SensorResultType::CURRENT    : return "CURRENT";
         default : return "UNKNOWN";
+    }
+}
+
+void SensorUtils::printMotionDetectionConfigLimits(MotionDetectionConfigLimits
+    &motionDetectionConfigLimits) {
+    std::cout << "MotionDetectionConfigLimits: " << std::endl;
+    std::cout << "Min threshold: " << motionDetectionConfigLimits.minThreshold << std::endl;
+    std::cout << "Max threshold: " << motionDetectionConfigLimits.maxThreshold << std::endl;
+    std::cout << "Min duration: " << motionDetectionConfigLimits.minDuration << std::endl;
+    std::cout << "Max duration: " << motionDetectionConfigLimits.maxDuration << std::endl;
+    std::cout << "Min samplingRate: " << motionDetectionConfigLimits.minSamplingRate << std::endl;
+    std::cout << "Max samplingRate: " << motionDetectionConfigLimits.maxSamplingRate << std::endl;
+}
+
+void SensorUtils::printMotionDetectionConfigs(std::vector<MotionDetectionConfig>
+    &motionDetectionConfigs) {
+    for(auto config: motionDetectionConfigs) {
+        std::cout << "MotionDetectionConfig for sensorId: " << config.sensorId << std::endl;
+        std::cout << "Enabled threshold: " << config.threshold << std::endl;
+        std::cout << "Enabled duration: " << config.duration << std::endl;
+        std::cout << "Enabled sampling rate: " << config.samplingRate << std::endl;
     }
 }

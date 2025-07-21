@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -113,7 +113,8 @@ class LocationConfiguratorServerImpl final : public locStub::LocationConfigurato
  private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool xtraEnabled_;
-    bool xtraConsent_ = true;
+    bool xtraConsent_;
+    bool xtraSet_;
     std::mutex mtx_;
     void apiJsonReader(std::string apiName, locStub::LocManagerCommandReply* response);
     void handleEvent(std::string token , std::string event);

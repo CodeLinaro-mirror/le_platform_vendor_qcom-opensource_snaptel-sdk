@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -149,6 +149,7 @@ enum ErrorCode {
    NO_EFFECT = 101;                      /**< Given request had to no effect */
    DEVICE_NOT_READY = 102;               /**< Device not ready */
    MISSING_ARGUMENTS = 103;              /**< Missing one or more arguments */
+   FILE_NOT_FOUND = 104;                 /**< Required configuration file is missing */
 
    PIN_PERM_BLOCKED = 201;               /**< PIN is permanently blocked. The SIM is unusable. */
    PIN_BLOCKED = 202;                    /**< PIN is blocked. Unblock operation must be issued. */
@@ -306,6 +307,7 @@ enum ErrorCode {
    REG_RESULT_ERR_VALID_FLAG_NOT_SET = 2017;            /**< A valid flag is not set */
    REG_RESULT_ERR_OUT_OF_PROFILES = 2018;               /**< Out of profiles */
    REG_RESULT_NO_EMERGENCY_PDN_SUPPORT = 2019;          /**< No emergency PDN support */
+   REG_RESULT_PROFILE_ALREADY_PRESENT = 2020;           /**< Profile already present */
 
    /*cv2x specific error codes*/
    V2X_ERR_EXCEED_MAX                     = 3000;       /**< Exceed max allowed number */
@@ -431,4 +433,8 @@ enum ErrorCode {
    MODULUS_ERR = 5071;               /**< Modulus error */
    DECODING_ERR = 5072;              /**< Decode error */
    INVALID_LENGTH = 5073;            /**< Invalid length of data */
+}
+
+message ErrorCodeMsg {
+    ErrorCode ec = 1;
 }

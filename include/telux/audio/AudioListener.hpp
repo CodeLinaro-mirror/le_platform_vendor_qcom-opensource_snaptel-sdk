@@ -73,7 +73,7 @@ class IVoiceListener : public telux::common::ISDKListener {
 /**
  *  Listener for events on a playback stream.
  */
-class IPlayListener : public telux::common::ISDKListener {
+class IPlayListener : virtual public telux::common::ISDKListener {
  public:
     /**
      * Called when the audio pipeline is ready to accept the next buffer to play
@@ -137,7 +137,7 @@ class ITranscodeListener : public telux::common::ISDKListener {
  * The AudioFactory and IAudioManager objects remains valid even after SSR and can be used
  * like they were used before SSR.
  */
-class IAudioListener : public telux::common::IServiceStatusListener {
+class IAudioListener : virtual public telux::common::IServiceStatusListener {
  public:
     /**
      * Destructor of IAudioListener.

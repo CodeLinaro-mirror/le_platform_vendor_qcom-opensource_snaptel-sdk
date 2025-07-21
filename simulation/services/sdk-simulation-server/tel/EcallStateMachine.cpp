@@ -60,9 +60,8 @@ bool CallConnect::onEvent(std::shared_ptr<telux::common::Event> event) {
         || event->id_ == static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_PSAP)) {
         std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-        (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
-        "CALL_ENDED", ecallStateMachine->getCallIndex());
-        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop");
+        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+            ecallStateMachine->getPhoneId());
         changeState(std::make_shared<PSAPCallback>(parent_));
     }
     return true;
@@ -81,14 +80,9 @@ void CallConnect::onEnter() {
     } else {
         (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
             "CALL_ALERTING", ecallStateMachine->getCallIndex());
-        if((config == "SUCCESS") || (config == "CALLDROP")) {
-                (ecallStateMachine->getCallservice())->onECallRedial(
-                    ecallStateMachine->getPhoneId(), false, telux::tel::ReasonType::CALL_CONNECTED);
-        } else {
-            LOG(ERROR, __FUNCTION__, " Invalid config");
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        (ecallStateMachine->getCallservice())->startTimer("T2Timer");
+        (ecallStateMachine->getCallservice())->startTimer("T2Timer",
+            ecallStateMachine->getPhoneId());
         changeState(std::make_shared<DecodeSendMSD>(parent_));
     }
 }
@@ -102,10 +96,12 @@ void CallConnect::onExit() {
         if(ecallStateMachine->isMsdTransmitted() == true) {
             if(!(ecallStateMachine->parseVectortoString("T5FAILED")) && (config != "CALLDROP")) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                (ecallStateMachine->getCallservice())->sendEvent("T5Timer", "start");
+                (ecallStateMachine->getCallservice())->sendEvent("T5Timer", "start",
+                    ecallStateMachine->getPhoneId());
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                (ecallStateMachine->getCallservice())->startTimer("T5Timer");
+                (ecallStateMachine->getCallservice())->startTimer("T5Timer",
+                    ecallStateMachine->getPhoneId());
             }
         }
     }
@@ -155,7 +151,8 @@ void ModemRedial::onEnter() {
         std::this_thread::sleep_for(std::chrono::milliseconds(timeGap[dialAttempts - 1]));
         if(dialAttempts < totalRedialAttempts) {
             if((mode == telux::tel::ECallMode::ECALL_ONLY) && (config == "CALLORIG")) {
-                (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "start");
+                (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "start",
+                    ecallStateMachine->getPhoneId());
             }
             (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
                 "CALL_DIALING", ecallStateMachine->getCallIndex());
@@ -165,7 +162,8 @@ void ModemRedial::onEnter() {
                     ecallStateMachine->getPhoneId(), true,
                     telux::tel::ReasonType::CALL_ORIG_FAILURE);
                 if(mode == telux::tel::ECallMode::ECALL_ONLY) {
-                    (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "stop");
+                    (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "stop",
+                        ecallStateMachine->getPhoneId());
                 }
             } else {
                 (ecallStateMachine->getCallservice())->onECallRedial(
@@ -186,7 +184,8 @@ void ModemRedial::onEnter() {
             (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
                 "CALL_ENDED", ecallStateMachine->getCallIndex());
             if(mode == telux::tel::ECallMode::ECALL_ONLY) {
-                (ecallStateMachine->getCallservice())->startTimer("T10Timer");
+                (ecallStateMachine->getCallservice())->startTimer("T10Timer",
+                    ecallStateMachine->getPhoneId());
             }
         }
     }
@@ -202,13 +201,15 @@ bool ModemRedial::onEvent(std::shared_ptr<telux::common::Event> event) {
         if(event->name_ == "T9Timer") {
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-            (ecallStateMachine->getCallservice())->expiryTimer("T9Timer");
+            (ecallStateMachine->getCallservice())->expiryTimer("T9Timer",
+                ecallStateMachine->getPhoneId());
         }
         if(event->name_ == "T10Timer") {
             LOG(DEBUG, "Received event T10 expiry timer");
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-            (ecallStateMachine->getCallservice())->expiryTimer("T10Timer");
+            (ecallStateMachine->getCallservice())->expiryTimer("T10Timer",
+                ecallStateMachine->getPhoneId());
         }
     }
     return true;
@@ -230,10 +231,11 @@ bool DecodeSendMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
         if(event->id_ == static_cast<int>(EcallStateMachine::EventID::ON_TIMER_EXPIRY)) {
             if(event->name_ == "T5Timer") {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                (ecallStateMachine->getCallservice())->expiryTimer("T5Timer");
+                (ecallStateMachine->getCallservice())->expiryTimer("T5Timer",
+                    ecallStateMachine->getPhoneId());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                    "MSD_TRANSMISSION_FAILURE");
+                    "MSD_TRANSMISSION_FAILURE", ecallStateMachine->getPhoneId());
                 if(config == "CALLDROP") {
                     changeState(std::make_shared<PSAPCallback>(parent_));
                 } else {
@@ -246,9 +248,12 @@ bool DecodeSendMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
         || event->id_ == static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_PSAP)) {
         std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-        (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
-        "CALL_ENDED", ecallStateMachine->getCallIndex());
-        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop");
+        if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+            (ecallStateMachine->getCallservice())->onECallRedial(
+            ecallStateMachine->getPhoneId(), false, telux::tel::ReasonType::CALL_CONNECTED);
+        }
+        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+            ecallStateMachine->getPhoneId());
         changeState(std::make_shared<PSAPCallback>(parent_));
     }
     return true;
@@ -264,15 +269,16 @@ void DecodeSendMSD::onEnter() {
                 static_cast<int>(EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP)) {
                 std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-                (ecallStateMachine->getCallservice())->msdTransmissionStatus("START_RECEIVED");
+                (ecallStateMachine->getCallservice())->msdTransmissionStatus("START_RECEIVED",
+                    ecallStateMachine->getPhoneId());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                    "MSD_TRANSMISSION_STARTED");
+                    "MSD_TRANSMISSION_STARTED", ecallStateMachine->getPhoneId());
                 changeState(std::make_shared<CRCCheckonMSD>(parent_));
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                    "MSD_TRANSMISSION_STARTED");
+                    "MSD_TRANSMISSION_STARTED", ecallStateMachine->getPhoneId());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 (ecallStateMachine->getCallservice())->changeCallState(
                     ecallStateMachine->getPhoneId(), "CALL_ACTIVE",
@@ -280,9 +286,11 @@ void DecodeSendMSD::onEnter() {
                 if((!(ecallStateMachine->parseVectortoString("T5FAILED")))
                     && (config == "SUCCESS")) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                    (ecallStateMachine->getCallservice())->msdTransmissionStatus("START_RECEIVED");
+                    (ecallStateMachine->getCallservice())->msdTransmissionStatus("START_RECEIVED",
+                        ecallStateMachine->getPhoneId());
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                    (ecallStateMachine->getCallservice())->sendEvent("T5Timer", "stop");
+                    (ecallStateMachine->getCallservice())->sendEvent("T5Timer", "stop",
+                        ecallStateMachine->getPhoneId());
                     changeState(std::make_shared<CRCCheckonMSD>(parent_));
                 }
             }
@@ -294,7 +302,7 @@ void DecodeSendMSD::onEnter() {
                     = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                     (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                        "MSD_TRANSMISSION_STARTED");
+                        "MSD_TRANSMISSION_STARTED", ecallStateMachine->getPhoneId());
                     changeState(std::make_shared<CRCCheckonMSD>(parent_));
                 }
             }
@@ -310,14 +318,14 @@ void DecodeSendMSD::onEnter() {
             if((ecallStateMachine->isCustomNumberEcall()) != true) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                    "OUTBAND_MSD_TRANSMISSION_STARTED");
+                    "OUTBAND_MSD_TRANSMISSION_STARTED", ecallStateMachine->getPhoneId());
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
             "CALL_ACTIVE", ecallStateMachine->getCallIndex());
             if(config == "CALLDROP") {
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus(
-                    "OUTBAND_MSD_TRANSMISSION_FAILURE");
+                    "OUTBAND_MSD_TRANSMISSION_FAILURE", ecallStateMachine->getPhoneId());
                 changeState(std::make_shared<PSAPCallback>(parent_));
             } else {
                 changeState(std::make_shared<DecodeMSD>(parent_));
@@ -356,10 +364,11 @@ bool CRCCheckonMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
             (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                ("LL_NACK_DUE_TO_T7_EXPIRY");
-            (ecallStateMachine->getCallservice())->expiryTimer("T7Timer");
+                ("LL_NACK_DUE_TO_T7_EXPIRY", ecallStateMachine->getPhoneId());
+            (ecallStateMachine->getCallservice())->expiryTimer("T7Timer",
+                ecallStateMachine->getPhoneId());
             (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                ("MSD_TRANSMISSION_FAILURE");
+                ("MSD_TRANSMISSION_FAILURE", ecallStateMachine->getPhoneId());
             changeState(std::make_shared<CallConversation>(parent_));
         }
     }
@@ -367,9 +376,12 @@ bool CRCCheckonMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
         || event->id_ == static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_PSAP)) {
         std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-        (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
-        "CALL_ENDED", ecallStateMachine->getCallIndex());
-        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop");
+        if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+            (ecallStateMachine->getCallservice())->onECallRedial(
+            ecallStateMachine->getPhoneId(), false, telux::tel::ReasonType::CALL_CONNECTED);
+        }
+        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+            ecallStateMachine->getPhoneId());
         changeState(std::make_shared<PSAPCallback>(parent_));
     }
     return true;
@@ -383,16 +395,19 @@ void CRCCheckonMSD::onEnter() {
             static_cast<int>(EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP)) {
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-            (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "start");
+            (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "start",
+                ecallStateMachine->getPhoneId());
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             changeState(std::make_shared<DecodeMSD>(parent_));
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "start");
+            (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "start",
+                ecallStateMachine->getPhoneId());
             changeState(std::make_shared<DecodeMSD>(parent_));
         }
     } else {
-        (ecallStateMachine->getCallservice())->startTimer("T7Timer");
+        (ecallStateMachine->getCallservice())->startTimer("T7Timer",
+            ecallStateMachine->getPhoneId());
     }
 }
 
@@ -402,9 +417,11 @@ void CRCCheckonMSD::onExit() {
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
     if(!(ecallStateMachine->parseVectortoString("T7FAILED"))) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "stop");
+        (ecallStateMachine->getCallservice())->sendEvent("T7Timer", "stop",
+            ecallStateMachine->getPhoneId());
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        (ecallStateMachine->getCallservice())->msdTransmissionStatus("LL_ACK_RECEIVED");
+        (ecallStateMachine->getCallservice())->msdTransmissionStatus("LL_ACK_RECEIVED",
+            ecallStateMachine->getPhoneId());
     }
 }
 
@@ -422,9 +439,10 @@ bool DecodeMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
             LOG(DEBUG, "Received event ", event->name_, " while in ", name_);
             if(event->id_ == static_cast<int>(EcallStateMachine::EventID::ON_TIMER_EXPIRY)) {
                 if(event->name_ == "T6Timer") {
-                    (ecallStateMachine->getCallservice())->expiryTimer("T6Timer");
+                    (ecallStateMachine->getCallservice())->expiryTimer("T6Timer",
+                        ecallStateMachine->getPhoneId());
                     (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                        ("MSD_TRANSMISSION_FAILURE");
+                        ("MSD_TRANSMISSION_FAILURE", ecallStateMachine->getPhoneId());
                     changeState(std::make_shared<CallConversation>(parent_));
                 }
             }
@@ -434,8 +452,10 @@ bool DecodeMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
         || event->id_ == static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_PSAP)) {
         std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-        (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
-            "CALL_ENDED", ecallStateMachine->getCallIndex());
+        if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+            (ecallStateMachine->getCallservice())->onECallRedial(
+            ecallStateMachine->getPhoneId(), false, telux::tel::ReasonType::CALL_CONNECTED);
+        }
         if(
             (((ecallStateMachine->isCustomNumberEcall()) == true) // Custom number ecall over CS
             && (!(ecallStateMachine->isNGeCall()))) ||
@@ -444,7 +464,8 @@ bool DecodeMSD::onEvent(std::shared_ptr<telux::common::Event> event) {
             (((ecallStateMachine->isCustomNumberEcall()) != true) // Regulatory CSecall
             && (!(ecallStateMachine->isNGeCall())))
         ) {
-            (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop");
+            (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+                ecallStateMachine->getPhoneId());
         }
         changeState(std::make_shared<PSAPCallback>(parent_));
     }
@@ -457,38 +478,41 @@ void DecodeMSD::onEnter() {
     if(!(ecallStateMachine->isNGeCall())) {     //CS eCall
         if(!(ecallStateMachine->parseVectortoString("T6FAILED"))) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            (ecallStateMachine->getCallservice())->sendEvent("T6Timer", "start");
+            (ecallStateMachine->getCallservice())->sendEvent("T6Timer", "start",
+                ecallStateMachine->getPhoneId());
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                ("MSD_TRANSMISSION_SUCCESS");
+                ("MSD_TRANSMISSION_SUCCESS", ecallStateMachine->getPhoneId());
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            (ecallStateMachine->getCallservice())->sendEvent("T6Timer", "stop");
+            (ecallStateMachine->getCallservice())->sendEvent("T6Timer", "stop",
+                ecallStateMachine->getPhoneId());
             if(ecallStateMachine->eventId_ ==
                 static_cast<int>(EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP)) {
                 ecallStateMachine->updateInProgress_ = false;
             } else {
                 if(ecallStateMachine->getUserConfiguredALACKParameter() == true) {
                     (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                    ("MSD_AL_ACK_CLEARDOWN");
+                    ("MSD_AL_ACK_CLEARDOWN", ecallStateMachine->getPhoneId());
                 }
             }
             changeState(std::make_shared<CallConversation>(parent_));
         } else {
             if((ecallStateMachine->isCustomNumberEcall()) != true) {
-                (ecallStateMachine->getCallservice())->startTimer("T6Timer");
+                (ecallStateMachine->getCallservice())->startTimer("T6Timer",
+                    ecallStateMachine->getPhoneId());
             }
         }
     } else { //NG eCall
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         (ecallStateMachine->getCallservice())->msdTransmissionStatus
-            ("OUTBAND_MSD_TRANSMISSION_SUCCESS");
+            ("OUTBAND_MSD_TRANSMISSION_SUCCESS", ecallStateMachine->getPhoneId());
         if(ecallStateMachine->eventId_ ==
             static_cast<int>(EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP)) {
             ecallStateMachine->updateInProgress_ = false;
         } else {
             if(ecallStateMachine->getUserConfiguredALACKParameter() == true) {
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                ("MSD_AL_ACK_CLEARDOWN");
+                ("MSD_AL_ACK_CLEARDOWN", ecallStateMachine->getPhoneId());
             }
         }
         changeState(std::make_shared<CallConversation>(parent_));
@@ -505,31 +529,37 @@ PSAPCallback::PSAPCallback(std::weak_ptr<BaseStateMachine> parent)
 }
 
 bool PSAPCallback::onEvent(std::shared_ptr<telux::common::Event> event) {
-
     LOG(DEBUG, "Received event ", event->name_, " while in ", name_, "with event Id", event->id_);
     std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-    if(event->id_ == static_cast<int>(EcallStateMachine::EventID::ON_TIMER_EXPIRY)) {
-        if((event->name_ == "T9Timer") &&
-            (ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
-            != telux::tel::ECallMode::ECALL_ONLY)){
-            (ecallStateMachine->getCallservice())->expiryTimer("T9Timer");
-                ecallStateMachine->stop();
-        }
-        if(event->name_ == "T10Timer") {
-            LOG(DEBUG, "Received event T10 expiry timer");
-            (ecallStateMachine->getCallservice())->expiryTimer("T10Timer");
-            if(ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
-                == telux::tel::ECallMode::ECALL_ONLY) {
-                ecallStateMachine->stop();
+    if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+        if(event->id_ == static_cast<int>(EcallStateMachine::EventID::ON_TIMER_EXPIRY)) {
+            if((event->name_ == "T9Timer") &&
+                (ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
+                != telux::tel::ECallMode::ECALL_ONLY)){
+                (ecallStateMachine->getCallservice())->expiryTimer("T9Timer",
+                    ecallStateMachine->getPhoneId());
+                    ecallStateMachine->stop();
+            }
+            if(event->name_ == "T10Timer") {
+                LOG(DEBUG, "Received event T10 expiry timer");
+                (ecallStateMachine->getCallservice())->expiryTimer("T10Timer",
+                    ecallStateMachine->getPhoneId());
+                if(ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
+                    == telux::tel::ECallMode::ECALL_ONLY) {
+                    ecallStateMachine->stop();
+                }
             }
         }
-    }
-    if(event->id_ == static_cast<int>(
-        EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST)) {
-        if(event->name_ == "T10Timer") {
-            LOG(DEBUG, "Received event T10 stop timer");
-            (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "stop");
+        if(event->id_ == static_cast<int>(
+            EcallStateMachine::EventID::ON_NETWORK_DEREGISTRATION_REQUEST) ||
+            event->id_ ==
+                static_cast<int>(EcallStateMachine::EventID::ON_OPERATING_MODE_AIRPLANE)) {
+            if(event->name_ == "T10Timer") {
+                LOG(DEBUG, "Received event T10 stop timer");
+                (ecallStateMachine->getCallservice())->sendEvent("T10Timer", "stop",
+                    ecallStateMachine->getPhoneId());
+            }
         }
     }
     return true;
@@ -552,12 +582,16 @@ telux::tel::ECallMode EcallStateMachine::getEcallOperatingMode(int phoneId) {
 void PSAPCallback::onEnter() {
     std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-    (ecallStateMachine->getCallservice())->startTimer("T9Timer");
     std::string config = ecallStateMachine->getECallRedialConfig();
-    if(config == "SUCCESS") {
-        if(ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
-            == telux::tel::ECallMode::ECALL_ONLY) {
-            (ecallStateMachine->getCallservice())->startTimer("T10Timer");
+    if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+        (ecallStateMachine->getCallservice())->startTimer("T9Timer",
+            ecallStateMachine->getPhoneId());
+        if(config == "SUCCESS") {
+            if(ecallStateMachine->getEcallOperatingMode(ecallStateMachine->getPhoneId())
+                == telux::tel::ECallMode::ECALL_ONLY) {
+                (ecallStateMachine->getCallservice())->startTimer("T10Timer",
+                    ecallStateMachine->getPhoneId());
+            }
         }
     }
     if(config == "CALLORIG") {
@@ -566,8 +600,9 @@ void PSAPCallback::onEnter() {
             true, telux::tel::ReasonType::CALL_ORIG_FAILURE);
     } else {
         // call drop
-        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop");
         if(config == "CALLDROP") {
+            (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+                ecallStateMachine->getPhoneId());
             (ecallStateMachine->getCallservice())->onECallRedial(ecallStateMachine->getPhoneId(),
                 true, telux::tel::ReasonType::CALL_DROP);
         }
@@ -575,9 +610,11 @@ void PSAPCallback::onEnter() {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     (ecallStateMachine->getCallservice())->changeCallState(ecallStateMachine->getPhoneId(),
         "CALL_ENDED", ecallStateMachine->getCallIndex());
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    if(config != "SUCCESS") {
-        changeState(std::make_shared<ModemRedial>(parent_));
+    if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if(config != "SUCCESS") {
+            changeState(std::make_shared<ModemRedial>(parent_));
+        }
     }
 }
 
@@ -596,16 +633,22 @@ bool CallConversation::onEvent(std::shared_ptr<telux::common::Event> event) {
         if(event->name_ == "T2Timer") {
             std::shared_ptr<EcallStateMachine> ecallStateMachine
                 = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
-            (ecallStateMachine->getCallservice())->expiryTimer("T2Timer");
-            (ecallStateMachine->getCallservice())->changeCallState
-            (ecallStateMachine->getPhoneId(), "CALL_ENDED",
-                ecallStateMachine->getCallIndex());
+            (ecallStateMachine->getCallservice())->expiryTimer("T2Timer",
+                ecallStateMachine->getPhoneId());
             changeState(std::make_shared<PSAPCallback>(parent_));
         }
     } else if (event->id_ == static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER)
         || event->id_ ==
         static_cast<int>(EcallStateMachine::EventID::HANGUP_REQUEST_FROM_PSAP)) {
-        changeState(std::make_shared<PSAPCallback>(parent_));
+            std::shared_ptr<EcallStateMachine> ecallStateMachine
+                = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
+            (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+                ecallStateMachine->getPhoneId());
+            if((ecallStateMachine->isEraGlonassSelfTestECall()) != true) {
+                (ecallStateMachine->getCallservice())->onECallRedial(
+                    ecallStateMachine->getPhoneId(), false, telux::tel::ReasonType::CALL_CONNECTED);
+            }
+            changeState(std::make_shared<PSAPCallback>(parent_));
     } else if(event->id_ ==
         static_cast<int>(EcallStateMachine::EventID::MSD_PULL_REQUEST_FROM_PSAP)) {
         std::shared_ptr<EcallStateMachine> ecallStateMachine
@@ -618,11 +661,11 @@ bool CallConversation::onEvent(std::shared_ptr<telux::common::Event> event) {
             ecallStateMachine->updateInProgress_ = true;
             if((ecallStateMachine->isCustomNumberEcall()) != true) {
                 (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                    ("OUTBAND_MSD_TRANSMISSION_STARTED");
+                    ("OUTBAND_MSD_TRANSMISSION_STARTED", ecallStateMachine->getPhoneId());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
             (ecallStateMachine->getCallservice())->msdTransmissionStatus
-                ("OUTBAND_MSD_TRANSMISSION_SUCCESS");
+                ("OUTBAND_MSD_TRANSMISSION_SUCCESS", ecallStateMachine->getPhoneId());
             ecallStateMachine->updateInProgress_ = false;
         }
     }
@@ -634,6 +677,8 @@ void CallConversation::onEnter() {
     std::shared_ptr<EcallStateMachine> ecallStateMachine
         = std::dynamic_pointer_cast<EcallStateMachine>(parent_.lock());
     if(ecallStateMachine->getUserConfiguredALACKParameter() == true) {
+        (ecallStateMachine->getCallservice())->sendEvent("T2Timer", "stop",
+            ecallStateMachine->getPhoneId());
         changeState(std::make_shared<PSAPCallback>(parent_));
     }
 }
@@ -650,7 +695,7 @@ std::shared_ptr<CallManagerServerImpl> EcallStateMachine::getCallservice() const
 EcallStateMachine::EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
     std::vector<std::string> result, bool isMsdTransmitted, bool isNGeCall,
     bool isALACKConfigEnabled, int phoneId, int callIndex, bool isCustomNumbereCall,
-    std::string eCallRedialConfig, bool updateInProgress)
+    std::string eCallRedialConfig, bool isEraGlonassSelfTestECall, bool updateInProgress)
    : BaseStateMachine("CallSubSystemStateMachine")
    , callservice_(callservice)
    , result_(result)
@@ -661,6 +706,7 @@ EcallStateMachine::EcallStateMachine(std::shared_ptr<CallManagerServerImpl> call
    , callIndex_(callIndex)
    , isCustomNumbereCall_(isCustomNumbereCall)
    , eCallRedialConfig_(eCallRedialConfig)
+   , isEraGlonassSelfTestECall_(isEraGlonassSelfTestECall)
    , updateInProgress_(updateInProgress) {
 }
 
@@ -700,6 +746,10 @@ std::string EcallStateMachine::getECallRedialConfig() {
 
 bool EcallStateMachine::getUserConfiguredALACKParameter() {
     return isALACKConfigEnabled_;
+}
+
+bool EcallStateMachine::isEraGlonassSelfTestECall() {
+    return isEraGlonassSelfTestECall_;
 }
 
 int EcallStateMachine::getConfiguredRedialAttempts(std::string config) {

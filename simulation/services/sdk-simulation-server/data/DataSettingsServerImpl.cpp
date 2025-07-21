@@ -1159,3 +1159,60 @@ bool DataSettingsServerImpl::isIpConfigSame(const telux::data::IpAddrInfo &newIp
     }
     return true;
 }
+
+grpc::Status DataSettingsServerImpl::SetLatencyConfig(ServerContext* context,
+    const dataStub::LatencyConfig* request, dataStub::DefaultReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "setLatencyConfig";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+
+        data.stateRootObj[subsystem]["getLatencyConfig"]["uplink"] = static_cast<int>(request->uplink());
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status DataSettingsServerImpl::GetLatencyConfig(ServerContext* context,
+    const google::protobuf::Empty* request, dataStub::LatencyConfig* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "getLatencyConfig";
+    JsonData data;
+
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        int uplink = data.stateRootObj[subsystem][method]["uplink"].asInt();
+        response->set_uplink(static_cast<dataStub::LatencyConfig_LatencyLevel>(uplink));
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+
+    return grpc::Status::OK;
+}
+
+

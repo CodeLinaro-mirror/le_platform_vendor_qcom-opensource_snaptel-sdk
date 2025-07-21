@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,6 +51,12 @@ grpc::Status LocationConfiguratorServerImpl::InitService(ServerContext* context,
         taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
     }
     response->set_delay(cbDelay);
+    xtraEnabled_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
+        {"ILocationConfigurator", "XtraEnablement", "enable"}));
+    xtraConsent_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
+        {"ILocationConfigurator", "XtraEnablement", "consent"}));
+    xtraSet_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
+        {"ILocationConfigurator", "XtraEnablement", "set"}));
     return grpc::Status::OK;
 }
 
@@ -139,8 +145,6 @@ void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::str
 
 void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     LOG(DEBUG, __FUNCTION__);
-    uint32_t enable = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "enable"}));
     uint32_t dataStatus;
     if(xtraConsent_) {
         dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
@@ -151,11 +155,11 @@ void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     }
     uint32_t validHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
         {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
-    LOG(DEBUG, __FUNCTION__,enable,dataStatus,validHours);
+    LOG(DEBUG, __FUNCTION__, xtraEnabled_, dataStatus, validHours);
     std::lock_guard<std::mutex> lck(mtx_);
     ::locStub::XtraStatusEvent xtraEvent;
     ::eventService::EventResponse anyResponse;
-    xtraEvent.set_enable(enable);
+    xtraEvent.set_enable(xtraEnabled_);
     xtraEvent.set_validity(validHours);
     xtraEvent.set_datastatus(dataStatus);
     xtraEvent.set_consent(xtraConsent_);
@@ -612,9 +616,17 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams (ServerContext*
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureXtraParams", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
-            std::to_string(static_cast<int>(request->enable())),
-                {"ILocationConfigurator", "XtraParams", "enable"});
+        if(xtraConsent_ == false) {
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+                std::to_string(static_cast<int>(false)),
+                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+            xtraEnabled_ = false;
+        } else {
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+                std::to_string(static_cast<int>(request->enable())),
+                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+            xtraEnabled_ = request->enable();
+        }
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_interval_minute())),
                 {"ILocationConfigurator", "XtraParams", "downloadIntervalMinute"});
@@ -648,12 +660,15 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams (ServerContext*
             std::to_string(static_cast<int>(request->diag_logging_enabled())),
                 {"ILocationConfigurator", "XtraParams", "diagLoggingEnabled"});
     }
-    if(xtraEnabled_!= request->enable()){
-    auto f = std::async(std::launch::async, [this](){
-        this->triggerXtraStatusEvent();
-    }).share();
-    taskQ_->add(f);
-    xtraEnabled_ = request->enable();
+    if(xtraSet_ != request->enable()) {
+        auto f = std::async(std::launch::async, [this](){
+            this->triggerXtraStatusEvent();
+        }).share();
+        taskQ_->add(f);
+        xtraSet_ = request->enable();
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(static_cast<int>(xtraSet_)),
+                {"ILocationConfigurator", "XtraEnablement", "set"});
     }
     return grpc::Status::OK;
 }
@@ -672,9 +687,7 @@ grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus (ServerContext* c
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
-    response->mutable_xtra_status()->set_feature_enabled(
-        std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-            {"ILocationConfigurator", "XtraParams", "enable"})));
+    response->mutable_xtra_status()->set_feature_enabled(xtraEnabled_);
     response->mutable_xtra_status()->set_xtra_valid_for_hours(
         std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
             {"ILocationConfigurator", "XtraParams", "xtraValidForHours"})));
@@ -714,11 +727,28 @@ grpc::Status LocationConfiguratorServerImpl::ProvideXtraConsent (ServerContext* 
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("provideConsentForXtra", response);
     bool consent = request->consent();
-    xtraConsent_ = consent;
-    if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
+    if(consent != xtraConsent_) {
+        if(consent == false) {
+            xtraEnabled_ = false;
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+                std::to_string(static_cast<int>(false)),
+                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+        } else {
+            if(xtraSet_) {
+                xtraEnabled_ = true;
+                CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+                    std::to_string(static_cast<int>(true)),
+                        {"ILocationConfigurator", "XtraEnablement", "enable"});
+            }
+        }
+        xtraConsent_ = consent;
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
-            std::to_string(consent),
-            {"ILocationConfigurator", "provideXtraConsent", "consent"});
+            std::to_string(static_cast<int>(consent)),
+            {"ILocationConfigurator", "XtraEnablement", "consent"});
+        auto f = std::async(std::launch::async, [this](){
+            this->triggerXtraStatusEvent();
+        }).share();
+        taskQ_->add(f);
     }
     return grpc::Status::OK;
 }

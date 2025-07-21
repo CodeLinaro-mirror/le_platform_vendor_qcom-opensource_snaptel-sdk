@@ -53,6 +53,15 @@ CardManagerStub::~CardManagerStub() {
 
 void CardManagerStub::cleanup() {
    LOG(DEBUG, __FUNCTION__);
+   ClientContext context;
+   ::telStub::CleanupRequest request;
+   ::google::protobuf::Empty response;
+   request.set_identifier(myPid_);
+   grpc::Status reqStatus = stub_->CleanUpService(&context, request, &response);
+   if (!reqStatus.ok()) {
+      LOG(ERROR, __FUNCTION__, " Failed to do cleanup service");
+   }
+
    for(const auto &card : cardMap_) {
       if(card.second != nullptr) {
          card.second->cleanup();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2023-2024, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -16,7 +16,7 @@
      rpc InitService(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc GetServiceStatus(google.protobuf.Empty) returns (commonStub.GetServiceStatusReply) {}
      rpc IsSubsystemReady(google.protobuf.Empty) returns (commonStub.IsSubsystemReadyReply) {}
-     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+     rpc CleanUpService(CleanupRequest) returns (google.protobuf.Empty) {}
      rpc GetCardState(GetCardStateRequest) returns (GetCardStateReply) {}
      rpc GetSupportedApps(GetSupportedAppsRequest) returns (GetSupportedAppsReply) {}
      rpc ReadEFLinearFixed(ReadEFLinearFixedRequest) returns (ReadEFLinearFixedReply) {}
@@ -130,7 +130,14 @@
          (ModifyOrRespondToModifyCallReply) {}
      rpc SendRtt(SendRttRequest) returns (SendRttReply) {}
      rpc updateCalls(UpdateCurrentCallsRequest) returns (google.protobuf.Empty) {}
+     rpc getInProgressCalls(GetInProgressCallsRequest) returns (GetInProgressCallsData) {}
      rpc ConfigureECallRedial(ConfigureECallRedialRequest) returns (ConfigureECallRedialResponse) {}
+     rpc getECallRedialConfig(google.protobuf.Empty) returns (GetECallRedialResponse) {}
+     rpc updateECallPostTestRegistration(UpdateECallPostTestRegistrationTimerRequest)
+        returns (UpdateECallPostTestRegistrationTimerResponse) {}
+     rpc getECallPostTestRegistrationTimer(GetECallPostTestRegistrationTimerRequest)
+        returns (GetECallPostTestRegistrationTimerResponse) {}
+     rpc restartECallHlapTimer(RestartECallHlapTimerRequest) returns (RestartECallHlapTimerResponse){}
  }
 
  service ImsServingSystem {
@@ -273,7 +280,7 @@ message GetCardStateRequest {
      int32 phone_id = 1;
  }
 
- message CallStateChangeEvent {
+ message GetInProgressCallsData {
     int32 phone_id = 1;
     repeated Call calls = 2;
 }
@@ -792,6 +799,10 @@ message  RequestLastRefreshEventResp {
     RefreshParams refreshs = 7;
 }
 
+message CleanupRequest {
+    uint32 identifier = 1;
+}
+
 message RefreshEvent {
     int32 phone_id = 1;
     RefreshStage stage =2;
@@ -1218,6 +1229,15 @@ enum RedialConfigType {
     REDIAL_CONFIG_CALL_ORIG = 1;  /**< Redial configuration for eCall origination failure */
 };
 
+enum EcallHlapTimerId {
+    ECALL_HLAP_TIMER_ID_UNKNOWN = 0;  /**< Unknown timer ID. */
+    ECALL_HLAP_TIMER_ID_T9 = 5;       /**< Timer ID for T9 timer for a regulatory eCall or test
+                                           eCall. Applicable for both the eCall operating modes
+                                           ( Normal and eCall only ). */
+    ECALL_HLAP_TIMER_ID_T10 = 6;      /**< Timer ID for T10 timer for a regulatory eCall or test
+                                           eCall. Applicable for eCall only operating mode. */
+};
+
  message ECallInfoEvent {
     int32 phone_id = 1;
     HlapTimerEvent action = 2;
@@ -1236,6 +1256,46 @@ enum RedialConfigType {
  }
 
  message ConfigureECallRedialResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+ message GetECallRedialResponse {
+    repeated int32 call_orig_time_gap = 1;
+    repeated int32 call_drop_time_gap = 2;
+    commonStub.ErrorCode error = 3;
+ }
+
+ message UpdateECallPostTestRegistrationTimerRequest {
+    int32 phone_id = 1;
+    int32 timer = 2;
+ }
+
+ message UpdateECallPostTestRegistrationTimerResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
+
+ message GetECallPostTestRegistrationTimerRequest {
+    int32 phone_id = 1;
+ }
+
+ message GetECallPostTestRegistrationTimerResponse {
+    int32 timer_duration = 1;
+    commonStub.ErrorCode error = 2;
+ }
+
+ message RestartECallHlapTimerRequest {
+    int32 phone_id = 1;
+    EcallHlapTimerId timer_id = 2;
+    int32 timer_duration = 3;
+ }
+
+ message RestartECallHlapTimerResponse {
     commonStub.Status status = 1;
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
@@ -1311,6 +1371,10 @@ message SendRttReply {
  }
 
 message UpdateCurrentCallsRequest {
+    int32 phone_id = 1;
+}
+
+message GetInProgressCallsRequest {
     int32 phone_id = 1;
 }
 

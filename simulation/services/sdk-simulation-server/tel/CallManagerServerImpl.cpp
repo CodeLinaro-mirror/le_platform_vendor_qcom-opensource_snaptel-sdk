@@ -149,7 +149,7 @@ grpc::Status CallManagerServerImpl::InitService(ServerContext* context,
 
         response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
         if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::vector<std::string> filters = {TEL_CALL_FILTER};
+            std::vector<std::string> filters = {TEL_CALL_FILTER, MODEM_FILTER};
             auto &serverEventManager = ServerEventManager::getInstance();
             serverEventManager.registerListener(shared_from_this(), filters);
         }
@@ -201,10 +201,11 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
         if(cbDelay == -1) {
             isCallback = false;
         }
-        if(addNewCallDetails<telStub::MakeCallRequest>(request)) {
+        int callIndex = addNewCallDetails<telStub::MakeCallRequest>(request);
+        if(callIndex != CALL_INDEX_INVALID) {
             auto f = std::async(std::launch::async,
-            [this]() {
-                handleCallMachine();
+            [this, phoneId, callIndex]() {
+                    handleCallMachine(phoneId, callIndex);
             }).share();
             taskQ_->add(f);
         }
@@ -223,20 +224,21 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
     return readStatus;
 }
 
-void CallManagerServerImpl::handleCallMachine() {
-    if(callInfo_.callDirection == CallDirection::OUTGOING) {
-        if(calls_.size() == 1) {
-            changeCallState(callInfo_.phoneId , "CALL_DIALING", callInfo_.index);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.index);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ACTIVE", callInfo_.index);
-        } else {
-            changeCallState(callInfo_.phoneId ,"CALL_DIALING", callInfo_.index);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            changeCallState(callInfo_.phoneId ,"CALL_ALERTING", callInfo_.index);
-            changeCallStateofActiveCalls(callInfo_);
-        }
+void CallManagerServerImpl::handleCallMachine(int phoneId, int callIndex) {
+    int size = -1;
+    {
+        std::lock_guard<std::mutex> lock(callManagerMutex_);
+        size = calls_.size();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    if(size == 1) {
+        changeCallState(phoneId , "CALL_DIALING", callIndex);
+        changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+        changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
+    } else {
+        changeCallState(phoneId ,"CALL_DIALING", callIndex);
+        changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+        changeCallStateofActiveCalls(phoneId, callIndex);
     }
 }
 
@@ -265,24 +267,28 @@ grpc::Status CallManagerServerImpl::Answer(ServerContext* context,
                 // Update RTT mode and peer capability of the call based on user input.
                 info->mode = mode;
                 info->peerRttCapability = mode;
-                changeCallState(info->phoneId ,"CALL_ACTIVE", info->index);
-            } else if(info->callState == CallState::CALL_WAITING){
-                changeCallStateofActiveCalls(*info);
+                changeCallState(info->phoneId, "CALL_ACTIVE", info->index);
+            } else if(info->callState == CallState::CALL_WAITING) {
+                changeCallStateofActiveCalls(info->phoneId, info->index);
             }
             response->set_status(static_cast<commonStub::Status>(status));
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
             response->set_delay(cbDelay);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+                callIndex);
         }
     }
     return readStatus;
 }
 
-void CallManagerServerImpl::changeCallStateofActiveCalls(CallInfo info) {
+void CallManagerServerImpl::changeCallStateofActiveCalls(int phoneId, int callIndex) {
     std::shared_ptr<CallInfo> newCall;
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId, " callIndex ", callIndex);
     for(auto callIterator = std::begin(calls_); callIterator != std::end(calls_);
         ++callIterator) {
-        if ((*callIterator)->index != info.index) {
+        if (((*callIterator)->index != callIndex) && ((*callIterator)->phoneId == phoneId)) {
             if((*callIterator)->callState == CallState::CALL_ACTIVE) {
                 changeCallState((*callIterator)->phoneId, "CALL_HOLD",
                 (*callIterator)->index);
@@ -339,6 +345,8 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
         input = "makeECallWithoutMsd";
     } else if(makeEcallApiType == CallApi::makeTpsECallOverCSWithoutMsd) {
         input = "makeTpsECallOverCSWithoutMsd";
+    } else if(makeEcallApiType == CallApi::makeSelfTestERAGLONASSECallWithRawMsd) {
+        input = "makeSelfTestERAGLONASSECallWithRawMsd";
     } else {
         input = "makeECallWithMsd";
     }
@@ -353,7 +361,8 @@ grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
         }
         // add ecall data to server cache if a new call.
         if(!eCallRedialIsOngoing_) {
-            if(addNewCallDetails<telStub::MakeECallRequest>(request)) {
+            int callIndex = addNewCallDetails<telStub::MakeECallRequest>(request);
+            if(callIndex != CALL_INDEX_INVALID) {
                 response->set_error(static_cast<commonStub::ErrorCode>(error));
                 telStub::Call call_;
                 call_.set_call_direction
@@ -719,7 +728,8 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", rttMode = ", static_cast<int>(call->mode),
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
         ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
-        ", callType = ", static_cast<int>(call->callType));
+        ", callType = ", static_cast<int>(call->callType),
+        ", isEraGlonassSelfTestECall = ", static_cast<bool>(call->isEraGlonassSelfTestECall));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -1041,6 +1051,9 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
             response->set_delay(cbDelay);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+                callIndex);
         }
     }
     return readStatus;
@@ -1071,6 +1084,9 @@ grpc::Status CallManagerServerImpl::Reject(ServerContext* context,
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
             response->set_delay(cbDelay);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+                callIndex);
         }
     }
     return readStatus;
@@ -1101,6 +1117,9 @@ grpc::Status CallManagerServerImpl::RejectWithSMS(ServerContext* context,
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
             response->set_delay(cbDelay);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+                callIndex);
         }
     }
     return readStatus;
@@ -1153,7 +1172,6 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
                     EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER, "", phoneId));
             }
             //Clear call cache in server
-           std::shared_ptr<CallInfo> call =
             findCallAndUpdateCallState(callIndex, CallState::CALL_ENDED, phoneId);
         } else {
             changeCallState(info->phoneId, "CALL_ENDED", info->index);
@@ -1161,7 +1179,6 @@ void CallManagerServerImpl::handleHangupRequest(std::string eventParams) {
     } else {
         LOG(ERROR, __FUNCTION__, " Matching call not found ");
         return;
-
     }
 }
 
@@ -1285,6 +1302,9 @@ grpc::Status CallManagerServerImpl::ModifyOrRespondToModifyCall(ServerContext* c
             response->set_iscallback(isCallback);
             response->set_error(static_cast<commonStub::ErrorCode>(error));
             response->set_delay(cbDelay);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+                callIndex);
         }
     }
     return readStatus;
@@ -1377,8 +1397,59 @@ void CallManagerServerImpl::onEventUpdate(std::string event) {
         handleModifyCallRequest(event);
     } else if(RTT_MESSAGE_REQUEST == token) {
         handleRttMessageRequest(event);
-    }else {
+    } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+    }
+}
+
+void CallManagerServerImpl::onServerEvent(google::protobuf::Any event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event.Is<::telStub::OperatingModeEvent>()) {
+        ::telStub::OperatingModeEvent operatingModeChangeEvent;
+        event.UnpackTo(&operatingModeChangeEvent);
+        handleOperatingModeChanged(operatingModeChangeEvent);
+        LOG(DEBUG, __FUNCTION__, "Received Operating Mode Change Event");
+    }
+}
+
+void CallManagerServerImpl::handleOperatingModeChanged(::telStub::OperatingModeEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    telux::tel::OperatingMode opMode =
+        static_cast<telux::tel::OperatingMode>(event.operating_mode());
+    if(opMode == telux::tel::OperatingMode::AIRPLANE) {
+        Json::Value rootObj;
+        std::string jsonObjFileName = "";
+        grpc::Status readStatus = readJson();
+        if(readStatus.ok()) {
+            if(ecallStateMachine_ != nullptr) {
+                // Since, operating mode event is device specific, T10 timer status is checked
+                // on both the slots as automotive device only supports one eCall at a time.
+                for(int i = SLOT_1; i <= SLOT_2; i++) {
+                    getJsonForSystemData(i, jsonObjFileName, rootObj);
+                    HlapTimerStatus T10Status = static_cast<HlapTimerStatus>(
+                        rootObj[CALL_MANAGER]["ecallHlapTimerStatus"]["T10Timer"].asInt());
+                    // Ensure T10 timer is active before stopping the timer
+                    // No event is sent for T9 timer because, T9 timer cannot be reset with
+                    // operating mode change.
+                    if(T10Status == HlapTimerStatus::ACTIVE) {
+                        ecallStateMachine_->onEvent(
+                        ecallStateMachine_->createTelEvent(
+                        EcallStateMachine::EventID::ON_OPERATING_MODE_AIRPLANE,
+                            "T10Timer", i));
+                        updateEcallHlapTimer(i, "T10Timer", HlapTimerStatus::INACTIVE);
+                        break;
+                    } else {
+                        // Ignore event information as HLAP timer is inactive.
+                    }
+                }
+            } else {
+                LOG(ERROR, __FUNCTION__, " ECall State machine is not initalised ");
+            }
+        } else {
+            LOG(ERROR, __FUNCTION__, " Read from JSON file failed ");
+        }
+    } else {
+        LOG(DEBUG, __FUNCTION__, " No handling required for other operating mode states ");
     }
 }
 
@@ -1470,6 +1541,9 @@ void CallManagerServerImpl::handleModifyCallRequest(std::string eventParams) {
             }).share();
             taskQ_->add(f);
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex: ",
+            callIndex);
     }
 }
 
@@ -1642,10 +1716,10 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
 
 void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
     std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
+    LOG(DEBUG, __FUNCTION__, " The Slot id is: ", token);
     int phoneId;
     if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+        LOG(INFO, __FUNCTION__, " The Slot id is not passed! Assuming default Slot Id");
         phoneId = 1;
     } else {
         try {
@@ -1655,7 +1729,7 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
                 return;
             }
         } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
             return;
         }
     }
@@ -1667,7 +1741,7 @@ void CallManagerServerImpl::handleMsdUpdateRequest(std::string eventParams) {
             taskQ_->add(f);
         }
     } else {
-        LOG(DEBUG, __FUNCTION__, "The state machine is not yet initialised ");
+        LOG(DEBUG, __FUNCTION__, " The state machine is not yet initialised ");
     }
 }
 
@@ -1716,7 +1790,7 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId, int
         std::vector<std::string> input = {"SUCCESS"};
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
             input, callInfo_.isMsdTransmitted, callInfo_.isTpseCallOverIms, false, phoneId,
-            callIndex, true, "SUCCESS", false);
+            callIndex, true, "SUCCESS", callInfo_.isEraGlonassSelfTestECall, false);
     } else {
         // Regulatory eCall
         std::vector<std::string> input = parseUserInput();
@@ -1724,10 +1798,9 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId, int
         bool isALACKConfigEnabled = getUserConfiguredALACKParameter();
         // Redial config from user is applicable only during regulatory eCalls.
         std::string eCallRedialConfig = getUserConfiguredECallRedialConfig();
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
             input, callInfo_.isMsdTransmitted, isNGeCall, isALACKConfigEnabled, phoneId, callIndex,
-            false, eCallRedialConfig, false);
+            false, eCallRedialConfig, callInfo_.isEraGlonassSelfTestECall, false);
     }
     if(!ecallStateMachine_) {
         return telux::common::Status::NOMEMORY;
@@ -1794,14 +1867,14 @@ std::string CallManagerServerImpl::getUserConfiguredECallRedialConfig() {
     if(readStatus.ok()) {
         getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
         std::string input =rootObj[CALL_MANAGER]["configureECallRedialFailure"].asString();
-        LOG(DEBUG, __FUNCTION__, " ECallRedial config is", input);
+        LOG(DEBUG, __FUNCTION__, " ECallRedial config is ", input);
         return input;
     } else {
         return "";
     }
 }
 
-void CallManagerServerImpl::updateEcallHlapTimer(std::string timer,
+void CallManagerServerImpl::updateEcallHlapTimer(int phoneId, std::string timer,
     HlapTimerStatus status) {
     LOG(DEBUG, __FUNCTION__," Timer ", timer, " Timer status ", static_cast<int>(status));
     Json::Value rootObj;
@@ -1811,61 +1884,82 @@ void CallManagerServerImpl::updateEcallHlapTimer(std::string timer,
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed!");
         return;
     }
-    getJsonForSystemData(callInfo_.phoneId, jsonObjApiResponseFileName, rootObj);
+    getJsonForSystemData(phoneId, jsonObjApiResponseFileName, rootObj);
     rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer] = static_cast<int>(status);
     JsonParser::writeToJsonFile(rootObj, jsonObjApiResponseFileName);
-    jsonObjSystemStateSlot_[callInfo_.phoneId] = rootObj;
+    jsonObjSystemStateSlot_[phoneId] = rootObj;
 }
 
-void CallManagerServerImpl::startTimer(std::string timer) {
-    LOG(DEBUG, __FUNCTION__,"Start timer ", timer);
-    updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
+void CallManagerServerImpl::startTimer(std::string timer, int phoneId) {
+    LOG(DEBUG, __FUNCTION__," Start timer ", timer);
+    // updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
     if((timer == "T2Timer") || (timer == "T5Timer") || (timer == "T6Timer")
         || (timer == "T7Timer") || (timer == "T9Timer") || (timer == "T10Timer")) {
-        startTimers(timer);
-        auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
+        startTimers(timer, phoneId);
+        auto f = std::async(std::launch::async, [this, phoneId, timer]() {
+            this->triggerECallInfoChangeEvent(phoneId, timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else {
-       LOG(ERROR, __FUNCTION__,"Invalid timer ", timer);
+       LOG(ERROR, __FUNCTION__," Invalid timer ", timer);
     }
 }
 
-void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision ) {
-    auto f = std::async(std::launch::async, [this, msdtransmision ]() {
+void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision, int phoneId ) {
+    auto f = std::async(std::launch::async, [this, phoneId, msdtransmision ]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerECallInfoChangeEvent(msdtransmision, HlapTimerEvent::UNCHANGED);
+            this->triggerECallInfoChangeEvent(phoneId, msdtransmision, HlapTimerEvent::UNCHANGED);
         }).share();
     taskQ_->add(f);
 }
 
-void CallManagerServerImpl::startTimers(std::string timer) {
+void CallManagerServerImpl::startTimers(std::string timer, int phoneId) {
     Json::Value rootObj;
     std::string jsonfilename = "";
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
-        updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
-        getJsonForSystemData(callInfo_.phoneId, jsonfilename, rootObj);
-        LOG(DEBUG, __FUNCTION__,"Timer is ", timer, " Phone id is ", callInfo_.phoneId);
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::ACTIVE);
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        LOG(DEBUG, __FUNCTION__, " Timer is ", timer, " Phone id is ", phoneId);
         int delay;
         if((timer == "T5Timer") || (timer == "T6Timer")) {
             delay = 5000; //timer expiry is set as per eCall specification to 5 secs
         } else {
             delay = rootObj[CALL_MANAGER]["eCallConfig"][timer].asInt();
         }
-        auto f = std::async(std::launch::async, [this, delay, timer]() {
-            LOG(DEBUG, __FUNCTION__,"Delay is", delay);
-            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            Json::Value obj;
-            std::string filename = "";
-            getJsonForSystemData(callInfo_.phoneId, filename, obj);
-            HlapTimerStatus status = static_cast<HlapTimerStatus>(
-                obj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
-            if(status == HlapTimerStatus::ACTIVE) {
-                LOG(DEBUG, __FUNCTION__," Timer is active", timer);
-                this->triggerTimerExpiry(timer, callInfo_.phoneId);
+        auto f = std::async(std::launch::async, [this, phoneId, delay, timer]() {
+            LOG(DEBUG, __FUNCTION__," Delay is ", delay);
+            std::unique_lock<std::mutex> lock(timerExpiryMtx_);
+            LOG(DEBUG, __FUNCTION__, " Lock");
+            auto start = std::chrono::steady_clock::now();
+            auto timeout = std::chrono::milliseconds(delay);
+            auto predicate = [&] {
+                if(stopTimerId_ == timer) {
+                    LOG(DEBUG, __FUNCTION__, timer, " is stopped ");
+                    return true;
+                }
+                if(std::chrono::steady_clock::now() - start >= timeout) {
+                    LOG(DEBUG, __FUNCTION__, timer , " is timeout ");
+                    auto f = std::async(std::launch::async, [this, phoneId, timer]() {
+                        Json::Value obj;
+                        std::string filename = "";
+                        getJsonForSystemData(phoneId, filename, obj);
+                        HlapTimerStatus status = static_cast<HlapTimerStatus>(
+                            obj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
+                        if(status == HlapTimerStatus::ACTIVE) {
+                            LOG(DEBUG, __FUNCTION__, timer, " is active");
+                            this->triggerTimerExpiry(timer, phoneId);
+                        }
+                    }).share();
+                    taskQ_->add(f);
+                    return true;
+                }
+                return false;
+            };
+            while (!hlapTimerResetCv_.wait_until(lock, start + timeout, predicate)) {
+                // Loop until the predicate returns true or timeout occurs
             }
+            LOG(DEBUG, __FUNCTION__, " UnLock");
         }).share();
         taskQ_->add(f);
         /* Reset T9 timer and T10 timer when a new eCall is triggered
@@ -1877,11 +1971,19 @@ void CallManagerServerImpl::startTimers(std::string timer) {
                 HlapTimerStatus status = static_cast<HlapTimerStatus>(
                     rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer[i]].asInt());
                 if(status == HlapTimerStatus::ACTIVE) {
-                    LOG(DEBUG, __FUNCTION__, "Timer", timer[i], "is active");
-                    updateEcallHlapTimer(timer[i], HlapTimerStatus::INACTIVE);
-                    auto f = std::async(std::launch::async, [this, timer, i, status]() {
+                    LOG(DEBUG, __FUNCTION__, " Timer ", timer[i], " is active ");
+                    updateEcallHlapTimer(phoneId, timer[i], HlapTimerStatus::INACTIVE);
+                    {
+                        std::lock_guard<std::mutex> lock(timerExpiryMtx_);
+                        LOG(DEBUG, __FUNCTION__, " Lock");
+                        stopTimerId_ = timer[i];
+                        LOG(DEBUG, __FUNCTION__, " stopTimerId_ ", timer[i]);
+                        hlapTimerResetCv_.notify_all();
+                        LOG(DEBUG, __FUNCTION__, " UnLock");
+                    }
+                    auto f = std::async(std::launch::async, [this, phoneId, timer, i, status]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                        this->triggerECallInfoChangeEvent(timer[i],
+                        this->triggerECallInfoChangeEvent(phoneId, timer[i],
                             HlapTimerEvent::STOPPED);
                     }).share();
                     taskQ_->add(f);
@@ -1895,7 +1997,7 @@ void CallManagerServerImpl::triggerTimerExpiry(std::string timer, int phoneId) {
     LOG(DEBUG, __FUNCTION__);
     if((timer == "T2Timer") || (timer == "T5Timer") || (timer == "T6Timer") || (timer == "T7Timer")
         || (timer == "T10Timer") || (timer == "T9Timer")) {
-        updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::INACTIVE);
         if(ecallStateMachine_) {
             ecallStateMachine_->onEvent(ecallStateMachine_->createTelEvent(
                 EcallStateMachine::EventID::ON_TIMER_EXPIRY, timer, phoneId));
@@ -1905,30 +2007,38 @@ void CallManagerServerImpl::triggerTimerExpiry(std::string timer, int phoneId) {
     }
 }
 
-void CallManagerServerImpl::expiryTimer(std::string timer) {
+void CallManagerServerImpl::expiryTimer(std::string timer, int phoneId) {
     LOG(DEBUG, __FUNCTION__,"timer is ", timer);
-    updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
-    auto f = std::async(std::launch::async, [this, timer]() {
-            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::EXPIRED);
+    updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::INACTIVE);
+    auto f = std::async(std::launch::async, [this, phoneId, timer]() {
+            this->triggerECallInfoChangeEvent(phoneId, timer, HlapTimerEvent::EXPIRED);
     }).share();
     taskQ_->add(f);
 }
 
-void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
-    LOG(DEBUG, __FUNCTION__, "Timer event for ", timer, "timer status is", status);
+void CallManagerServerImpl::sendEvent(std::string timer, std::string status, int phoneId ) {
+    LOG(DEBUG, __FUNCTION__, " Timer event for ", timer, " timer status is ", status);
     std::string value = timer + status;
     if(status == "start") {
-        updateEcallHlapTimer(timer, HlapTimerStatus::ACTIVE);
-        auto f = std::async(std::launch::async, [this, timer, status]() {
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::ACTIVE);
+        auto f = std::async(std::launch::async, [this, phoneId, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STARTED);
+            this->triggerECallInfoChangeEvent(phoneId, timer, HlapTimerEvent::STARTED);
         }).share();
         taskQ_->add(f);
     } else if (status == "stop" ) {
-        updateEcallHlapTimer(timer, HlapTimerStatus::INACTIVE);
-        auto f = std::async(std::launch::async, [this, timer, status]() {
+        {
+            std::lock_guard<std::mutex> lock(timerExpiryMtx_);
+            LOG(DEBUG, __FUNCTION__, " Lock");
+            stopTimerId_ = timer;
+            LOG(DEBUG, __FUNCTION__, " stopTimerId_ ", timer);
+            hlapTimerResetCv_.notify_all();
+            LOG(DEBUG, __FUNCTION__, " UnLock");
+        }
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::INACTIVE);
+        auto f = std::async(std::launch::async, [this, phoneId, timer, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerECallInfoChangeEvent(timer, HlapTimerEvent::STOPPED);
+            this->triggerECallInfoChangeEvent(phoneId, timer, HlapTimerEvent::STOPPED);
         }).share();
         taskQ_->add(f);
     } else {
@@ -1936,15 +2046,14 @@ void CallManagerServerImpl::sendEvent(std::string timer, std::string status ) {
     }
 }
 
-void CallManagerServerImpl::triggerECallInfoChangeEvent(std::string timer,
+void CallManagerServerImpl::triggerECallInfoChangeEvent(int phoneId, std::string timer,
     HlapTimerEvent action ) {
-    int slotId = callInfo_.phoneId;
-    LOG(DEBUG, __FUNCTION__, " slotId: ", slotId);
+    LOG(DEBUG, __FUNCTION__, " phoneId: ", phoneId);
     ::telStub::ECallInfoEvent eCallInfoEvent;
     ::eventService::EventResponse anyResponse;
     eCallInfoEvent.set_timer(timer);
     eCallInfoEvent.set_action(static_cast<telStub::HlapTimerEvent>(action));
-    eCallInfoEvent.set_phone_id(slotId);
+    eCallInfoEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(eCallInfoEvent);
     //posting the event to EventService event queue
@@ -1952,21 +2061,26 @@ void CallManagerServerImpl::triggerECallInfoChangeEvent(std::string timer,
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId,
-    std::shared_ptr<CallInfo> call) {
-    int callIndex = call->index;
-    triggerCallInfoChange(phoneId);
-    if(call->callState == CallState::CALL_ENDED ) {
-        //Clear call cache in server
-        auto f = std::async(std::launch::async, [this, callIndex, phoneId]() {
-         std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-            bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
-            if(isCallRemoved) {
-                // Event to update the call cache for clients.
-                triggerCallListAfterCallEnd(phoneId);
-            }
-        }).share();
-        taskQ_->add(f);
+void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId, int callIndex) {
+    std::shared_ptr<CallInfo> call = findMatchingCall(phoneId, callIndex);
+    if(call != nullptr) {
+        if(call->callState == CallState::CALL_ENDED ) {
+            //Clear call cache in server
+            auto f = std::async(std::launch::async, [this, phoneId, callIndex]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
+                if(isCallRemoved) {
+                    // Event to update the call cache for clients.
+                    triggerCallListAfterCallEnd(phoneId);
+                }
+            }).share();
+            taskQ_->add(f);
+        } else {
+            triggerCallInfoChange(call->phoneId);
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex ",
+            callIndex);
     }
 }
 
@@ -2077,6 +2191,187 @@ grpc::Status CallManagerServerImpl::ConfigureECallRedial(ServerContext* context,
     return readStatus;
 }
 
+grpc::Status CallManagerServerImpl::getECallRedialConfig(ServerContext* context,
+    const google::protobuf::Empty* request,
+    telStub::GetECallRedialResponse* response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    std::vector<int> callDropTimeGap;
+    std::vector<int> callOrigTimeGap;
+    int cbDelay;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForSystemData(SLOT_1, jsonfilename, rootObj);
+        getJsonForApiResponseSlot(SLOT_1, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, "getECallRedialConfig", status,
+            error, cbDelay );
+        std::string callOrigTimeGapInString = rootObj["ICallManager"]["eCallRedialTimeGap"]\
+            ["callOrigFailure"].asString();
+        std::string callDropTimeGapInString = rootObj["ICallManager"]["eCallRedialTimeGap"]\
+            ["callDrop"].asString();
+        callOrigTimeGap = CommonUtils::convertStringToVector(callOrigTimeGapInString);
+        callDropTimeGap = CommonUtils::convertStringToVector(callDropTimeGapInString);
+    }
+    // Create response
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    for(auto &it : callOrigTimeGap) {
+        response->add_call_orig_time_gap(it);
+    }
+    for(auto &it : callDropTimeGap) {
+        response->add_call_drop_time_gap(it);
+    }
+    return readStatus;
+}
+
+grpc::Status CallManagerServerImpl::updateECallPostTestRegistration(ServerContext* context,
+    const telStub::UpdateECallPostTestRegistrationTimerRequest* request,
+    telStub::UpdateECallPostTestRegistrationTimerResponse* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    int cbDelay;
+    bool isCallback = true;
+    int phoneId = request->phone_id();
+    int timerDuration = request->timer();
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER,
+            "updateECallPostTestRegistrationTimer", status, error, cbDelay );
+        rootObj[CALL_MANAGER]["eCallPostTestRegistrationTimer"]["timer"] = timerDuration;
+        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+            jsonObjSystemStateSlot_[phoneId] = rootObj;
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_delay(cbDelay);
+    }
+    return readStatus;
+}
+
+grpc::Status CallManagerServerImpl::getECallPostTestRegistrationTimer(ServerContext* context,
+    const telStub::GetECallPostTestRegistrationTimerRequest* request,
+    telStub::GetECallPostTestRegistrationTimerResponse* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    int phoneId = request->phone_id();
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER,
+            "getECallPostTestRegistrationTimer", status, error, cbDelay );
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_timer_duration(
+            rootObj[CALL_MANAGER]["eCallPostTestRegistrationTimer"]["timer"].asInt());
+    }
+    return readStatus;
+}
+
+ grpc::Status CallManagerServerImpl::restartECallHlapTimer(ServerContext* context,
+    const telStub::RestartECallHlapTimerRequest* request,
+    telStub::RestartECallHlapTimerResponse* response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    bool isCallback = true;
+    Json::Value rootObj;
+    std::string jsonObjFileName = "";
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string timer = "";
+    int phoneId = request->phone_id();
+    bool allowRestartOfTimer = false;
+    telStub::EcallHlapTimerId timerId = request->timer_id();
+    int timerDuration = request->timer_duration();
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER,
+            "restartECallHlapTimer", status, error, cbDelay );
+        if(cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_delay(cbDelay);
+        getJsonForSystemData(phoneId, jsonObjFileName, rootObj);
+        if(timerId == telStub::EcallHlapTimerId::ECALL_HLAP_TIMER_ID_T9) {
+            timer = "T9Timer";
+            allowRestartOfTimer = true;
+        } else if(timerId == telStub::EcallHlapTimerId::ECALL_HLAP_TIMER_ID_T10) {
+            timer = "T10Timer";
+            telux::tel::ECallMode eCallOperatingMode = getEcallOperatingMode(phoneId);
+            if(eCallOperatingMode == telux::tel::ECallMode::ECALL_ONLY) {
+                allowRestartOfTimer = true;
+            }
+        } else {
+            LOG(ERROR, __FUNCTION__," Invalid timer ", static_cast<int>(timerId));
+            return grpc::Status::CANCELLED;
+        }
+        HlapTimerStatus hlapTimerStatus = static_cast<HlapTimerStatus>(
+            rootObj[CALL_MANAGER]["ecallHlapTimerStatus"][timer].asInt());
+        // Restart T9 only when it's INACTIVE
+        // Restart T10 only when it's INACTIVE and Operating mode is ECALL_ONLY.
+        LOG(DEBUG, __FUNCTION__," HLAP timer status ", static_cast<int>(hlapTimerStatus),
+            " for ", timer);
+        if((hlapTimerStatus == HlapTimerStatus::INACTIVE) && (allowRestartOfTimer)) {
+            response->set_error(static_cast<commonStub::ErrorCode>(error));
+            auto f = std::async(std::launch::async, [this, phoneId, timer, timerDuration]() {
+                this->restartTimer(phoneId, timer, timerDuration);
+            }).share();
+            taskQ_->add(f);
+        } else {
+            response->set_error(commonStub::ErrorCode::MODEM_ERR);
+        }
+    }
+    return readStatus;
+}
+
+void CallManagerServerImpl::restartTimer(int phoneId, std::string timer, int timerDuration) {
+    LOG(DEBUG, __FUNCTION__," Restart ", timer);
+    auto f = std::async(std::launch::async, [this, phoneId, timer, timerDuration]() {
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::ACTIVE);
+        this->triggerECallInfoChangeEvent(phoneId, timer, HlapTimerEvent::RESUMED);
+        std::this_thread::sleep_for(std::chrono::seconds(timerDuration));
+        this->expiryTimer(timer, phoneId);
+        updateEcallHlapTimer(phoneId, timer, HlapTimerStatus::INACTIVE);
+    }).share();
+    taskQ_->add(f);
+}
+
+telux::tel::ECallMode CallManagerServerImpl::getEcallOperatingMode(int phoneId) {
+    JsonData data;
+    std::string apiJsonPath = (phoneId == SLOT_ID_1) ? "api/tel/IPhoneManagerSlot1.json" :
+                              "api/tel/IPhoneManagerSlot2.json";
+    std::string stateJsonPath = (phoneId == SLOT_ID_1) ?
+                               "system-state/tel/IPhoneManagerStateSlot1.json" :
+                               "system-state/tel/IPhoneManagerStateSlot2.json";
+    std::string method = "requestECallOperatingMode";
+    std::string subsystem = "IPhoneManager";
+    CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    int ecallMode = data.stateRootObj[subsystem]["eCallOperatingMode"]["ecallMode"].asInt();
+    return static_cast<telux::tel::ECallMode>(ecallMode);
+}
+
 std::vector<std::shared_ptr<CallInfo>>
     CallManagerServerImpl::fetchSlotIdCalls(int phoneId) {
     std::vector<std::shared_ptr<CallInfo>> calls;
@@ -2098,37 +2393,21 @@ grpc::Status CallManagerServerImpl::updateCalls(ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status CallManagerServerImpl::getInProgressCalls(ServerContext* context,
+    const telStub::GetInProgressCallsRequest* request,
+    telStub::GetInProgressCallsData* response) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = request->phone_id();
+    fillCallInformation(phoneId, response);
+    response->set_phone_id(phoneId);
+    return grpc::Status::OK;
+}
+
 void CallManagerServerImpl::triggerCallInfoChange(int phoneId) {
     LOG(DEBUG, __FUNCTION__, "PhoneId ", phoneId);
-    ::telStub::CallStateChangeEvent callStateChangeEvent;
+    ::telStub::GetInProgressCallsData callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
-    std::vector<std::shared_ptr<CallInfo>> calls = fetchSlotIdCalls(phoneId);
-    for(auto &it : calls) {
-        telStub::Call *result = callStateChangeEvent.add_calls();
-        result->set_call_state(static_cast<telStub::CallState>(it->callState));
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallState is ", static_cast<int>(it->callState));
-        result->set_call_index(it->index);
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"CallIndex is ", static_cast<int>(it->index));
-        result->set_call_direction
-        (static_cast<telStub::CallDirection_Direction>(it->callDirection));
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"Calldirection is ",
-        static_cast<int>(it->callDirection));
-        result->set_remote_party_number(it->remotePartyNumber);
-        LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
-        static_cast<std::string>(it->remotePartyNumber));
-        result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
-        result->set_sip_error_code(it->sipErrorCode);
-        result->set_is_multi_party_call(it->isMultiPartyCall);
-        result->set_is_mpty(it->isMpty);
-        LOG(DEBUG, __FUNCTION__," Rtt mode: ", static_cast<int>(it->mode),
-            " Local capability: ", static_cast<int>(it->localRttCapability),
-            " Peer capability: ", static_cast<int>(it->peerRttCapability),
-            " Call type: ", static_cast<int>(it->callType));
-        result->set_mode(static_cast<telStub::RttMode>(it->mode));
-        result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
-        result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
-        result->set_call_type(static_cast<telStub::CallType>(it->callType));
-    }
+    fillCallInformation(phoneId, &callStateChangeEvent);
     callStateChangeEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
@@ -2137,14 +2416,47 @@ void CallManagerServerImpl::triggerCallInfoChange(int phoneId) {
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, int index, int phoneId) {
-    LOG(DEBUG, __FUNCTION__);
-    std::shared_ptr<CallInfo> call = findCallAndUpdateRttMode(index, mode, phoneId);
-    triggerCallInfoChangeEvent(phoneId, call);
+void CallManagerServerImpl::fillCallInformation(int phoneId,
+    ::telStub::GetInProgressCallsData* callInfo) {
+    std::vector<std::shared_ptr<CallInfo>> calls = fetchSlotIdCalls(phoneId);
+    for(auto &it : calls) {
+        telStub::Call *result = callInfo->add_calls();
+        result->set_call_state(static_cast<telStub::CallState>(it->callState));
+        result->set_call_direction
+        (static_cast<telStub::CallDirection_Direction>(it->callDirection));
+        result->set_remote_party_number(it->remotePartyNumber);
+        result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        result->set_sip_error_code(it->sipErrorCode);
+        result->set_is_multi_party_call(it->isMultiPartyCall);
+        result->set_is_mpty(it->isMpty);
+        result->set_call_index(it->index);
+        result->set_mode(static_cast<telStub::RttMode>(it->mode));
+        result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
+        result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
+        result->set_call_type(static_cast<telStub::CallType>(it->callType));
+        LOG(DEBUG, __FUNCTION__,
+            " CallState: ", static_cast<int>(it->callState),
+            " CallIndex: ", static_cast<int>(it->index),
+            " Calldirection: ", static_cast<int>(it->callDirection),
+            " RemotePartyNumber: ", static_cast<std::string>(it->remotePartyNumber),
+            " Rtt mode: ", static_cast<int>(it->mode),
+            " Local capability: ", static_cast<int>(it->localRttCapability),
+            " Peer capability: ", static_cast<int>(it->peerRttCapability),
+            " Call type: ", static_cast<int>(it->callType));
+    }
 }
 
-void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
-    int index) {
+void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, int index, int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    bool isFound = findCallAndUpdateRttMode(index, mode, phoneId);
+    if(isFound) {
+        triggerCallInfoChangeEvent(phoneId, index);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Call not found");
+    }
+}
+
+void CallManagerServerImpl::changeCallState(int phoneId, std::string action, int index) {
     LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId);
     CallState state = Helper::getCallState(action);
     if((eCallRedialIsOngoing_) && (state == CallState::CALL_DIALING)) {
@@ -2158,23 +2470,30 @@ void CallManagerServerImpl::changeCallState(int phoneId, std::string action,
             }
             if(callEndOperationCompleted_) {
                 calls_.emplace_back(redialECallCache_);
-                LOG(DEBUG, __FUNCTION__, " Redial eCall cache is added to call list" );
+                LOG(DEBUG, __FUNCTION__, " Redial eCall cache is added to call list " );
             }
             callEndOperationCompleted_ = false;
         }
-        std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
-        triggerCallInfoChangeEvent(phoneId, call);
+        bool isFound = findCallAndUpdateCallState(index, state, phoneId);
+        if(isFound) {
+            triggerCallInfoChangeEvent(phoneId, index);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found ");
+        }
     } else {
-        LOG(DEBUG, __FUNCTION__, " Ecall is not redialing or call state is not dialing" );
-        std::shared_ptr<CallInfo> call = findCallAndUpdateCallState(index, state, phoneId);
-        triggerCallInfoChangeEvent(phoneId, call);
+        LOG(DEBUG, __FUNCTION__, " Ecall is not redialing or call state is not dialing " );
+        bool isFound = findCallAndUpdateCallState(index, state, phoneId);
+        if(isFound) {
+            triggerCallInfoChangeEvent(phoneId, index);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Call not found ");
+        }
     }
-
 }
 
 void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
     LOG(DEBUG, __FUNCTION__, " PhoneId ", phoneId);
-    ::telStub::CallStateChangeEvent callStateChangeEvent;
+    ::telStub::GetInProgressCallsData callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
     std::vector<std::shared_ptr<CallInfo>> calls = calls_;
     for(auto &it : calls) {
@@ -2208,10 +2527,10 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
     }
 }
 
-std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
+bool CallManagerServerImpl::findCallAndUpdateCallState(
     int index, CallState action, int phoneId) {
     LOG(DEBUG, __FUNCTION__," callIndex ", index, " callState is ", static_cast<int>(action),
-    "phoneId ", phoneId );
+        " phoneId ", phoneId );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
@@ -2222,13 +2541,14 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateCallState(
     if (iter != std::end(calls_)) {
         LOG(DEBUG, __FUNCTION__, " found matched call");
         (*iter)->callState = action;
-        return *iter;
+        return true;
     } else {
-        return nullptr;
+        LOG(ERROR, __FUNCTION__, " Call not found ");
+        return false;
     }
 }
 
-std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateRttMode(
+bool CallManagerServerImpl::findCallAndUpdateRttMode(
     int index, RttMode mode, int phoneId) {
     LOG(DEBUG, __FUNCTION__," Call Index ", index, " Rtt mode ", static_cast<int>(mode) );
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
@@ -2242,9 +2562,10 @@ std::shared_ptr<CallInfo> CallManagerServerImpl::findCallAndUpdateRttMode(
         LOG(DEBUG, __FUNCTION__, " found matched call");
         (*iter)->mode = mode;
         (*iter)->peerRttCapability = mode;
-        return *iter;
+        return true;
     } else {
-        return nullptr;
+        LOG(ERROR, __FUNCTION__, " call not found");
+        return false;
     }
 }
 

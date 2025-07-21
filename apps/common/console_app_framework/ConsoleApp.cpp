@@ -37,9 +37,11 @@
 #include <iomanip>
 #include <iterator>
 #include <sstream>
-
+#include <unistd.h>
 #include "ConsoleApp.hpp"
 #include "ConsoleAppCommand.hpp"
+
+#define MAX_INPUT_BUFFER_SIZE 1024
 
 const std::string MENU_DIVIDER = "------------------------------------------------";
 
@@ -67,7 +69,7 @@ void ConsoleApp::displayMenu() {
  * Display Cursor to Read User Input
  */
 void ConsoleApp::displayCursor() {
-   std::cout << cursor_;
+   std::cout << cursor_ << std::flush;
 }
 
 /**
@@ -85,23 +87,28 @@ void ConsoleApp::displayBanner() {
  */
 std::vector<std::string> ConsoleApp::readCommand() {
    ConsoleApp::displayCursor();
-   // input string
-   std::string command;
 
-   std::getline(std::cin, command);
-   if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
-      std::cin.clear();
-      std::cin.ignore();
-      std::cout << "\ncin has entered bad state" << std::endl;
+   // Buffer to store input
+   char buffer[MAX_INPUT_BUFFER_SIZE];
+   std::string command;
+   ssize_t bytesRead;
+
+   // Blocking read call
+   bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
+   if (bytesRead > 0) {
+      buffer[bytesRead] = '\0';
+      command += buffer;
+   } else {
+      std::cerr << "\nError reading input" << std::endl;
       command = "quit";
    }
 
-   // separate input string based on whitespace
+   // Separate input string based on whitespace
    std::istringstream iss(command);
 
-   // iterate on a stream and store collection of substring into vector of strings
+   // Iterate on a stream and store collection of substring into vector of strings
    std::vector<std::string> userInput(std::istream_iterator<std::string>{iss},
-                                      std::istream_iterator<std::string>());
+                                       std::istream_iterator<std::string>());
    return userInput;
 }
 

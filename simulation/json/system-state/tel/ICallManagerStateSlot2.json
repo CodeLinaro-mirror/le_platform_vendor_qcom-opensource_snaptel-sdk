@@ -30,6 +30,10 @@
         "ecbm" :
         {
             "ecbMode" : 0
+        },
+        "eCallPostTestRegistrationTimer" :
+        {
+            "timer" : 2
         }
     }
 }

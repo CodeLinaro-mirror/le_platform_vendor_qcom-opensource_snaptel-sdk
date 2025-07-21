@@ -92,6 +92,9 @@ public:
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 
+    telux::common::ErrorCode setLatencyConfig(const LatencyConfig &latencyConfig) override;
+    telux::common::ErrorCode getLatencyConfig(LatencyConfig& latencyConfig) override;
+
 private:
     std::mutex mtx_;
     std::mutex initMtx_;

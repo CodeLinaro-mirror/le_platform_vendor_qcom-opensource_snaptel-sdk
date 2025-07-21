@@ -549,11 +549,6 @@ using ServiceDomainPreferenceCallback
    = std::function<void(ServiceDomainPreference preference, telux::common::ErrorCode error)>;
 
 /**
- * @brief Serving System Manager class provides the API to request and set
- *        service domain preference and RAT preference.
- */
-
-/**
  * This function is called with the response to requestNetworkTime API.
  *
  * The callback can be invoked from multiple different threads.
@@ -659,6 +654,9 @@ public:
     *                           mode preference.
     *
     * @returns Status of setRatPreference i.e. success or suitable error code.
+    *
+    * @note The platform supports only PS RATs. Please ensure the correct RAT preference is set
+    * accordingly.
     */
    virtual telux::common::Status setRatPreference(RatPreference ratPref,
                                                   common::ResponseCallback callback = nullptr)
@@ -692,6 +690,9 @@ public:
     *
     * @returns Status of setServiceDomainPreference i.e. success or suitable
     *          error code.
+    *
+    * @note The platform supports only PS RATs. Ensure that the service domain preference is
+    * correctly set for PS RATs.
     */
    virtual telux::common::Status setServiceDomainPreference(ServiceDomainPreference serviceDomain,
                                                             common::ResponseCallback callback

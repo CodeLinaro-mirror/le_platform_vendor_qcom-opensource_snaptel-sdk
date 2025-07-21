@@ -28,9 +28,9 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -46,6 +46,8 @@
 
 #include <telux/power/TcuActivityManager.hpp>
 #include <telux/power/TcuActivityDefines.hpp>
+
+#include <telux/power/WakeupManager.hpp>
 
 namespace telux {
 namespace power {
@@ -79,6 +81,16 @@ class PowerFactory {
      */
     virtual std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
         ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) = 0;
+
+    /**
+     * Gets the IWakeupManager instance.
+     *
+     * @param[in] callback Optional, receives result of the IWakeupManager initialization
+     *
+     * @returns IWakeupManager instance
+     */
+    virtual std::shared_ptr<IWakeupManager> getWakeupManager(
+        telux::common::InitResponseCb callback = nullptr) = 0;
 
     /**
      * Gets the ITcuActivityManager instance.

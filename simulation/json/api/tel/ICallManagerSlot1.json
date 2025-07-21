@@ -57,6 +57,11 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "makeSelfTestERAGLONASSECallWithRawMsd" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
         "updateECallMsd" :
         {
             "status" : "SUCCESS",
@@ -166,6 +171,24 @@
             "error" : "SUCCESS"
         },
         "configureECallRedial" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "getECallRedialConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getECallPostTestRegistrationTimer" :
+        {
+           "error" : "SUCCESS"
+        },
+        "updateECallPostTestRegistrationTimer" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "restartECallHlapTimer" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"

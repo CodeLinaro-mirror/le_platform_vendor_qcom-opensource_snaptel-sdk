@@ -194,6 +194,8 @@ service DataFilterManager {
         (stream RegisterOnWwanConnectivityConfigChangeReply) {}
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
+    rpc SetLatencyConfig(LatencyConfig) returns (DefaultReply) {}
+    rpc GetLatencyConfig(google.protobuf.Empty) returns (LatencyConfig) {}
   }
 
   service SocksManager {
@@ -256,6 +258,16 @@ message LinkStateEnum {
         DOWN = 2;
     }
     LinkState link_state = 1;
+}
+
+message LatencyConfig {
+    enum LatencyLevel {
+        INVALID = 0;
+        NORMAL = 1;
+        LOW = 2;
+    }
+    LatencyLevel uplink = 1;
+    commonStub.ErrorCode error = 2;
 }
 
 message GetDualDataUsageRecommendationReply {

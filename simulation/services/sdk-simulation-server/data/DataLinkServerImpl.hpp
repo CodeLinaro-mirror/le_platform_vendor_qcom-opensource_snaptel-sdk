@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -39,6 +39,10 @@ public:
     grpc::Status SetEthDataLinkState(ServerContext* context,
             const dataStub::SetEthDatalinkStateRequest *request,
             dataStub::SetEthDatalinkStateReply* response) override;
+
+    grpc::Status GetEthDataLinkState(ServerContext* context,
+    const google::protobuf::Empty *request,
+    dataStub::GetEthDataLinkStateReply* response) override;
 
     grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
             commonStub::GetServiceStatusReply* response) override;

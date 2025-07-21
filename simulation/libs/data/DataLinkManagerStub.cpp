@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -253,8 +253,44 @@ telux::common::ErrorCode DataLinkManagerStub::setEthDataLinkState(telux::data::L
     return error;
 }
 
+telux::common::ErrorCode DataLinkManagerStub::getEthDataLinkState(
+        telux::data::LinkState &ethLinkState) {
+    LOG(DEBUG, __FUNCTION__);
+
+    ::google::protobuf::Empty request;
+    ::dataStub::GetEthDataLinkStateReply response;
+    ClientContext context;
+    ethLinkState = telux::data::LinkState::UNKNOWN;
+    grpc::Status reqStatus = stub_->GetEthDataLinkState(&context, request, &response);
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, ", errorcode: ", static_cast<int>(reqStatus.error_code()));
+            LOG(ERROR, __FUNCTION__, " getEthDataLinkState request failed");
+            return telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        switch (response.eth_datalink_state().link_state()) {
+            case ::dataStub::LinkStateEnum_LinkState_UP:
+                ethLinkState = telux::data::LinkState::UP;
+                break;
+            case ::dataStub::LinkStateEnum_LinkState_DOWN:
+                ethLinkState = telux::data::LinkState::DOWN;
+                break;
+            default:
+                ethLinkState = telux::data::LinkState::UNKNOWN;
+                break;
+        }
+    }
+
+    return error;
+}
+
+
 telux::common::Status DataLinkManagerStub::getEthCapability(telux::data::EthCapability
-        &ethCapability) 
+        &ethCapability)
 {
     LOG(DEBUG, __FUNCTION__);
 
@@ -262,7 +298,7 @@ telux::common::Status DataLinkManagerStub::getEthCapability(telux::data::EthCapa
 }
 
 telux::common::Status DataLinkManagerStub::setPeerEthCapability(telux::data::EthCapability
-        ethCapability) 
+        ethCapability)
 {
     LOG(DEBUG, __FUNCTION__);
 

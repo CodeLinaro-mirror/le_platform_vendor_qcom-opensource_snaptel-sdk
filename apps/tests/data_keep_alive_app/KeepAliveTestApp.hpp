@@ -90,6 +90,7 @@ public:
     void registerForUpdates();
     void deregisterForUpdates();
     void consoleInit(bool isServer);
+    void cleanup();
 
     std::shared_ptr<telux::data::IKeepAliveManager> keepAliveMgr_;
 private:

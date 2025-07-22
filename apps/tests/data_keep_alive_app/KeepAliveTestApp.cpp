@@ -412,9 +412,23 @@ KeepAliveTestApp::KeepAliveTestApp()
     {
 }
 
+void KeepAliveTestApp::cleanup() {
+    //cleanup server/client thread
+    std::cout << APP_NAME << " Cleanup server/client" << std::endl;
+    stopTCPClient({});
+    stopTCPServer({});
+
+    std::cout << APP_NAME << " deregisterForUpdates" << std::endl;
+    deregisterForUpdates();
+
+    std::cout << APP_NAME << " keepAliveMgr_ = nullptr" << std::endl;
+    keepAliveMgr_ = nullptr;
+
+    std::cout << APP_NAME << " cleanup completed" << std::endl;
+}
+
 KeepAliveTestApp::~KeepAliveTestApp() {
-    server_ = nullptr;
-    client_ = nullptr;
+    cleanup();
 }
 
 /**
@@ -439,21 +453,8 @@ int main(int argc, char ** argv) {
         // or maybe just set a flag, and let the main thread to decide
         // when to exit.
         if(myKeepAliveTestApp) {
-            //cleanup server/client thread
-            std::cout << APP_NAME << " Cleanup server/client" << std::endl;
-            myKeepAliveTestApp->stopTCPClient({});
-            myKeepAliveTestApp->stopTCPServer({});
-
-            std::cout << APP_NAME << " deregisterForUpdates" << std::endl;
-            myKeepAliveTestApp->deregisterForUpdates();
-
-            std::cout << APP_NAME << " keepAliveMgr_ = nullptr" << std::endl;
-            myKeepAliveTestApp->keepAliveMgr_ = nullptr;
-
             std::cout << APP_NAME << " myKeepAliveTestApp = nullptr " << std::endl;
             myKeepAliveTestApp = nullptr;
-
-            std::cout << APP_NAME << " exit " << std::endl;
         }
 
         void *array[10];
@@ -502,5 +503,6 @@ int main(int argc, char ** argv) {
     myKeepAliveTestApp->consoleInit(isServer);
     myKeepAliveTestApp->mainLoop();
     std::cout << "Exiting application..." << std::endl;
+    myKeepAliveTestApp = nullptr;
     return 0;
 }

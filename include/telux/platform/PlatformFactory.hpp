@@ -109,6 +109,8 @@ class PlatformFactory {
      *
      * @param [in] callback   Optional callback to get the initialization status of
      *                        antenna manager @ref telux::common::InitResponseCb
+     * @note This API may return nullptr on platforms such as SA510M, where the feature
+     * is not supported.
      *
      * @returns IAntennaManager instance or nullptr if antenna management is not
      * supported.

@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #include <telux/wlan/WlanFactory.hpp>
 #include <telux/wlan/ApInterfaceManager.hpp>
@@ -68,6 +69,7 @@ class WlanApInterfaceManagerMenu : public ConsoleApp ,
     void getConnectedDevices(std::vector<std::string> userInput);
     void getStatus(std::vector<std::string> userInput);
     void manageApService(std::vector<std::string> userInput);
+    void setConfig_V1(std::vector<std::string> userInput);
 
     void onApBandChanged(telux::wlan::BandType radio) override;
     void onApDeviceStatusChanged(telux::wlan::ApDeviceConnectionEvent event,

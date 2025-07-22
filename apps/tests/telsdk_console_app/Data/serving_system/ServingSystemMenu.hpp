@@ -103,6 +103,7 @@ public:
     void requestRoamingStatus(std::vector<std::string> inputCommand);
     void requestNrIconType(std::vector<std::string> inputCommand);
     void makeDormant(std::vector<std::string> inputCommand);
+    void requestBearerTechType(std::vector<std::string> inputCommand);
 
     ~DataServingSystemMenu();
 private:

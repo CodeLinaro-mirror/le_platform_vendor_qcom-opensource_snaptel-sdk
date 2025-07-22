@@ -179,6 +179,24 @@ struct DataCallParams {
 };
 
 /**
+ * TSN call context
+ */
+struct TsnCallContext{
+    TsnCapabilityMask tsnPmicCapMask;  /**<     Tsn pmic capability bit mask. */
+    std::string tsnMacAddr;            /**<     Tsn mac address. */
+};
+
+/**
+ * ETH PDU call related parameters
+ */
+struct EthCallParams {
+    int profileId;     /** Profile identifier corresponding to which eth pdu call will be
+                           bring up. */
+    TsnCallContext context;  /* optional. If user want to enable ETH PDU call with TSN,
+                                then use this parameter to set TSN context*/
+};
+
+/**
  * This function is called with the response to startDataCall / stopDataCall API.
  *
  * The callback can be invoked from multiple different threads.
@@ -489,6 +507,63 @@ class IDataConnectionManager {
      *                 change and could break backwards compatibility.
      */
     virtual telux::common::Status stopDataCall(const DataCallParams &dataCallParams,
+        DataCallResponseCb callback = nullptr) = 0;
+
+    /**
+     * Starts a eth pdu call corresponding to eth profile identifier.
+     *
+     * This will bring up eth call connection based on specified profile identifier.
+     * If TSN is enabled with @ref telux::data::enableEthPdu, this API can be used to
+     * set TSN call context. This is an asynchronous API.
+     * If telux::common::Status::SUCCESS is returned, client provided callback will be invoked at
+     * later time with error code and DataCall object associated with requested call.
+     * Clients might receive additional notification for the final data call status. For details
+     * see @ref telux::data::DataCallResponseCb.
+     *
+     * On platforms with access control enabled, the caller needs to have the TELUX_DATA_CALL_OPS
+     * permission to successfully invoke this API.
+     *
+     * @note       Need to create eth profile before bring up ETH PDU call. Then call this API with
+     *             eth 3gpp profile Id.
+     *
+     * @param [in] ethCallParams      Eth call parameters to be specified
+     *                                @ref telux::data::EthCallParams
+     *
+     * @param [out] callback          Optional callback to get the start eth call response.
+     *
+     * @returns Immediate status of startEthCall() request sent i.e. success or suitable
+     *          status code.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to
+     *                 change and could break backwards compatibility.
+     */
+    virtual telux::common::Status startEthCall(const EthCallParams &ethCallParams,
+        DataCallResponseCb callback = nullptr) = 0;
+
+    /**
+     * Tear down data call connection based on specified profile identifier
+     *
+     * This will tear down eth call connection based on specified profile identifier.
+     * If telux::common::Status::SUCCESS is returned, client provided callback will be invoked at
+     * later time with error code and DataCall object associated with requested call.
+     * Clients might receive additional notification for the final data call status. For details
+     * see @ref telux::data::DataCallResponseCb.
+     *
+     * On platforms with access control enabled, the caller needs to have the TELUX_DATA_CALL_OPS
+     * permission to successfully invoke this API.
+     *
+     * @param [in] ethCallParams     Eth call parameters to be specified
+     *                                @ref telux::data::EthCallParams
+     *
+     * @param [out] callback          Optional callback to get the stop eth call response.
+     *
+     * @returns Immediate status of stopEthCall() request sent i.e. success or suitable
+     *          status code.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to
+     *                 change and could break backwards compatibility.
+     */
+    virtual telux::common::Status stopEthCall(const EthCallParams &ethCallParams,
         DataCallResponseCb callback = nullptr) = 0;
 
     /**

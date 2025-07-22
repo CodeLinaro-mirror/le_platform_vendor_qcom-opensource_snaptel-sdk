@@ -109,7 +109,38 @@ bool DataSettingsMenu::init() {
             std::make_pair("Get_IP_Config",
             std::bind(&DataSettingsMenu::getIpConfig, this, std::placeholders::_1)),
             std::make_pair("Set_IP_Config",
-            std::bind(&DataSettingsMenu::setIpConfig, this, std::placeholders::_1))
+            std::bind(&DataSettingsMenu::setIpConfig, this, std::placeholders::_1)),
+
+            std::make_pair("setPrefixDelegationConfig",
+            std::bind(&DataSettingsMenu::setPrefixDelegationConfig, this, std::placeholders::_1)),
+            std::make_pair("requestPrefixDelegationConfig",
+            std::bind(&DataSettingsMenu::requestPrefixDelegationConfig, this, std::placeholders::_1)),
+            std::make_pair("configureCoExChannelAvoidance",
+            std::bind(&DataSettingsMenu::configureCoExChannelAvoidance, this, std::placeholders::_1)),
+            std::make_pair("setIPv6ExtRouterMode",
+            std::bind(&DataSettingsMenu::setIPv6ExtRouterMode, this, std::placeholders::_1)),
+            
+            std::make_pair("requestIPv6ExtRouterMode",
+            std::bind(&DataSettingsMenu::requestIPv6ExtRouterMode, this, std::placeholders::_1)),
+            std::make_pair("enableEthPdu",
+            std::bind(&DataSettingsMenu::enableEthPdu, this, std::placeholders::_1)),
+            std::make_pair("disableEthPdu",
+            std::bind(&DataSettingsMenu::disableEthPdu, this, std::placeholders::_1)),
+            std::make_pair("setAutoConnect",
+            std::bind(&DataSettingsMenu::setAutoConnect, this, std::placeholders::_1)),
+            std::make_pair("requestAutoConnect",
+            std::bind(&DataSettingsMenu::requestAutoConnect, this, std::placeholders::_1)),
+
+            std::make_pair("set_LAN_Config",
+            std::bind(&DataSettingsMenu::setLANConfig, this, std::placeholders::_1)),
+            std::make_pair("request_LAN_Config",
+            std::bind(&DataSettingsMenu::requestLANConfig, this, std::placeholders::_1)),
+            std::make_pair("request_Network_Configuration",
+            std::bind(&DataSettingsMenu::requestNetworkConfiguration, this, std::placeholders::_1)),
+            std::make_pair("set_Dhcpv6_DNS_Config",
+            std::bind(&DataSettingsMenu::setDhcpv6DNSConfig, this, std::placeholders::_1)),
+            std::make_pair("request_Dhcpv6_DNS_Config",
+            std::bind(&DataSettingsMenu::requestDhcpv6DNSConfig, this, std::placeholders::_1))
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -992,7 +1023,8 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
     Utils::printStatus(retStat);
 }
 
-void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {
+void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId,
+    bool isConnectivityAllowed) {
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " ** WWAN Connectivity Config has changed ** \n";
     std::cout << "WWAN Connectivity Config on SlotId: " << static_cast<int>(slotId) << " is: ";
@@ -1035,4 +1067,666 @@ void DataSettingsMenu::isDeviceDataUsageMonitoringEnabled(std::vector<std::strin
     bool enable = dataSettingsManagerMap_[oprType]->isDeviceDataUsageMonitoringEnabled();
     std::cout << "RESPONSE: isDeviceDataUsageMonitoringEnabled "
         << ", Device data usage monitoring is " << (enable ? "enabled" : "disabled") << std::endl;
+}
+
+void DataSettingsMenu::configureCoExChannelAvoidance(std::vector<std::string> inputCommand) {
+    std::cout << "Configure CoExChannel Avoidance" << std::endl;
+    telux::common::Status retStat;
+    telux::data::CoExChannelAvoidanceConfig coExChannelAvoidanceConfig {};
+    coExChannelAvoidanceConfig.enable = false;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int coExChannelAvoidanceConfigFlag;
+    std::cout<<"Please input CoEX Channel Avoidance State (1-Enable/0-Disable):";
+    std::cin >> coExChannelAvoidanceConfigFlag;
+    Utils::validateInput(coExChannelAvoidanceConfigFlag, {0, 1});
+    if (coExChannelAvoidanceConfigFlag) {
+        coExChannelAvoidanceConfig.enable = true;
+    }
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "configureCoExChannelAvoidance Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            std::cout<<"Setting CoEX Channel Avoidance state is successful"<<std::endl;
+        } else {
+            std::cout<<"Setting CoEX Channel Avoidance state failed"<<std::endl;
+        }
+    };
+    retStat = dataSettingsManagerMap_[opType]->configureCoExChannelAvoidance(coExChannelAvoidanceConfig,
+                                                                             respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setPrefixDelegationConfig(std::vector<std::string> inputCommand) {
+    std::cout << "Set Prefix Delegation Config" << std::endl;
+    telux::common::Status retStat;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int enablePrefixDelegationFlag;
+    bool enablePrefixDelegation = false;
+    std::cout << "Enable(1)/Disable(0) Prefix Delegation mode: ";
+    std::cin >> enablePrefixDelegationFlag;
+    Utils::validateInput(enablePrefixDelegationFlag, {0, 1});
+    if (enablePrefixDelegationFlag) {
+        enablePrefixDelegation = true;
+    }
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "setPrefixDelegationConfig Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS){
+            std::cout<<"\nMobile AP Prefix Delegation Config has been set "<<std::endl;
+        } else if (error == telux::common::ErrorCode::DEVICE_IN_USE) {
+            std::cout<<"\nIPv6 WAN call is connected, config saved "
+                     <<" and will take affect after v6 call is restarted." << std::endl;
+        } else {
+            std::cout<<"\nFailed to Set Prefix Delegation Config "<< std::endl;
+        }
+    };
+    retStat = dataSettingsManagerMap_[opType]->setPrefixDelegationConfig(enablePrefixDelegation, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestPrefixDelegationConfig(std::vector<std::string> inputCommand) {
+    std::cout << "Request Prefix Delegation Config" << std::endl;
+    telux::common::Status retStat;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    auto respCb = [](bool isPrefixDelegationEnabled, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestPrefixDelegationConfig Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ?
+                       " is successful " : "failed : ")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            if(isPrefixDelegationEnabled){
+                std::cout << "\n Prefix Delegation is enabled. \n";
+            }
+            else {
+                std::cout << "\n Prefix Delegation is disabled. \n";
+            }
+        } else {
+              std::cout << "\n Failed to Get Prefix Delegation mode. Error \n";
+        }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestPrefixDelegationConfig(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setIPv6ExtRouterMode(std::vector<std::string> inputCommand) {
+    std::cout << "Set IPv6 ExtRouter Mode" << std::endl;
+    telux::common::Status retStat;
+    telux::data::V6ExtRouterModeConfig v6ExtRouterModeConfig {};
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int v6ExtRouterModeConfigFlag;
+    v6ExtRouterModeConfig.enable = false;
+    std::cout << "IPv6 External Router Mode: (1: Enable/0: Disable)";
+    std::cin >> v6ExtRouterModeConfigFlag;
+    Utils::validateInput(v6ExtRouterModeConfigFlag, {0, 1});
+    if (v6ExtRouterModeConfigFlag) {
+        v6ExtRouterModeConfig.enable = true;
+    }
+
+    auto respCb = [v6ExtRouterModeConfig](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "setIPv6ExtRouterMode Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS){
+            if(v6ExtRouterModeConfig.enable) {
+                std::cout<<"\nSuccessfully enabled IPv6 External Router Mode"<<std::endl;
+            } else {
+                std::cout<<"\nSuccessfully disabled IPv6 External Router Mode"<<std::endl;
+            }
+        } else {
+            if(v6ExtRouterModeConfig.enable) {
+                std::cout<<"\nError in enabling IPv6 External Router Mode"<<std::endl;
+            } else {
+                std::cout<<"\nError in disabling IPv6 External Router Mode"<<std::endl;
+            }
+        }
+    };
+    retStat = dataSettingsManagerMap_[opType]->setIPv6ExtRouterMode(v6ExtRouterModeConfig, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestIPv6ExtRouterMode(std::vector<std::string> inputCommand) {
+    std::cout << "Request IPv6Ext Router Mode" << std::endl;
+    telux::common::Status retStat;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    auto respCb = [](const telux::data::V6ExtRouterModeConfig config, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                << "requestIPv6ExtRouterMode Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS){
+            std::cout<<"\nIPv6 External Router Mode is ";
+            config.enable ? (std::cout<<"enabled"<< std::endl) : (std::cout<<"disabled"<<std::endl);
+        } else { 
+            std::cout<<"\nError in getting IPv6 External Router Mode"<< std::endl;
+        }
+    };
+    retStat = dataSettingsManagerMap_[opType]->requestIPv6ExtRouterMode(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::enableEthPdu(std::vector<std::string> inputCommand) {
+    std::cout << "Enable Eth Pdu" << std::endl;
+    telux::common::ErrorCode error;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int ifIndex;
+    std::cout << "Enter IFace Index Like for eth0 or eth1 -> 0/1: ";
+    std::cin >> ifIndex;
+    Utils::validateInput(ifIndex);
+
+    int isTsnFlag;
+    bool isTSN = false;
+    std::cout << "Enable tsn in eth pdu mode - Enable(1)/Disable(0) : ";
+    std::cin >> isTsnFlag;
+    Utils::validateInput(isTsnFlag, {0, 1});
+    if (isTsnFlag) {
+        isTSN = true;
+    }
+
+    error = dataSettingsManagerMap_[opType]->enableEthPdu(ifIndex, isTSN);
+    std::cout << std::endl << std::endl;
+    std::cout << "enableEthPdu Response"
+              << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(error)
+              << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void DataSettingsMenu::disableEthPdu(std::vector<std::string> inputCommand) {
+    std::cout << "Disable Eth Pdu" << std::endl;
+    telux::common::ErrorCode error;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    error = dataSettingsManagerMap_[opType]->disableEthPdu();
+    std::cout << std::endl << std::endl;
+    std::cout << "disableEthPdu Response"
+              << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(error)
+              << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void DataSettingsMenu::setAutoConnect(std::vector<std::string> inputCommand) {
+    std::cout << "Set AutoConnect" << std::endl;
+    telux::data::AutoConnectSettings  autoConnectSettings {};
+    telux::common::Status retStat;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    autoConnectSettings.profile.slotId = static_cast<SlotId>(slotId);
+
+    int profileId;
+    std::cout << "Enter Profile Id : ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+    autoConnectSettings.profile.profileId = profileId;
+
+    int enableAutoconnectFlag;
+    autoConnectSettings.config.enable = false;
+    std::cout << "Please input Autoconnect Mode Flag (1-Enable/0-Disable): ";
+    std::cin >> enableAutoconnectFlag;
+    Utils::validateInput(enableAutoconnectFlag, {0, 1});
+    if (enableAutoconnectFlag) {
+        autoConnectSettings.config.enable = true;
+    }
+
+    int persistentFlag;
+    autoConnectSettings.config.persistent = false;
+    std::cout << "Please input Persistent Flag (1-Enable/0-Disable): ";
+    std::cin >> persistentFlag;
+    Utils::validateInput(persistentFlag, {0, 1});
+    if (persistentFlag) {
+        autoConnectSettings.config.persistent = true;
+    }
+
+    retStat = dataSettingsManagerMap_[opType]->setAutoConnect(autoConnectSettings);
+    std::cout << std::endl << std::endl;
+    std::cout << "setAutoConnect Response"
+              << (telux::common::Status::SUCCESS == retStat ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retStat) << std::endl;
+    if (retStat == telux::common::Status::SUCCESS) {
+        std::cout << " setAutoConnect succeeds" << std::endl;
+    } else {
+        std::cout << " setAutoConnect failed" << std::endl;
+    }
+}
+
+void DataSettingsMenu::requestAutoConnect(std::vector<std::string> inputCommand) {
+    std::cout << "Request AutoConnect" << std::endl;
+    telux::data::AutoConnectProfile  autoConnectProfile {};
+    bool enableAutoconnect;
+    telux::common::Status retStat;
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    retStat = dataSettingsManagerMap_[opType]->requestAutoConnect(autoConnectProfile, enableAutoconnect);
+    std::cout << std::endl << std::endl;
+    std::cout << "requestAutoConnect Response"
+              << (telux::common::Status::SUCCESS == retStat ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retStat) << std::endl;
+
+    if (retStat == telux::common::Status::SUCCESS) {
+        std::cout << "requestAutoConnect succeeds" << std::endl;
+        std::cout <<"Slot ID: "<< autoConnectProfile.slotId << std::endl;
+        std::cout <<"Profile ID: "<< autoConnectProfile.profileId << std::endl;
+        std::cout <<"Enable Connect: "<< enableAutoconnect << std::endl;
+    } else {
+        std::cout << "requestAutoConnect failed" << std::endl;
+    }
+}
+
+void DataSettingsMenu::setLANConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    telux::data::LanConfig lanConfig {};
+    telux::data::IpFamilyType ipFamilyType {};
+
+    std::cout << "Set LAN Config\n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int ipFamilyTypeVal;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+    std::cin >> ipFamilyTypeVal;
+    Utils::validateInput(ipFamilyTypeVal, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+           static_cast<int>(telux::data::IpFamilyType::IPV6),
+           static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
+
+    char delimiter = '\n';
+    std::string gwIPAddr;
+    std::cout << "Please input Gateway IP address : ";
+    std::getline(std::cin, gwIPAddr, delimiter);
+
+    uint32_t netmask;  //ToDo: Please make it a string as done in StaInterfaceManager.hpp.
+    std::cout << "Please input AP subnet  : ";
+    std::cin >> netmask;
+    Utils::validateInput(netmask);
+
+    std::cout << "Please input Enable/Disable DHCP(1-Enable/0-Disable): ";
+    int enableDhcp ;
+    std::cin >> enableDhcp;
+    Utils::validateInput(enableDhcp, {0,1});
+    lanConfig.lanV4Config.enableDhcp = static_cast<uint8_t>(enableDhcp);
+
+    if(enableDhcp == 1) {
+        std::cout << " Please input DHCP Configuration : ";
+
+        std::string dhcpStartIP;
+        std::cout << " Please input starting DHCPD address : ";
+        std::getline(std::cin, dhcpStartIP, delimiter);
+
+        std::string dhcpEndIP;
+        std::cout << "Please input ending DHCPD address  : ";
+        std::getline(std::cin, dhcpEndIP, delimiter);
+
+        int leaseTime;
+        std::cout << "Please input DHCP lease time in Seconds: ";
+        std::cout << "Minimum DHCP lease time in 120 Seconds: ";
+        std::cin >> leaseTime;
+        Utils::validateInput(leaseTime);
+
+        lanConfig.lanV4Config.dhcpConfig.dhcpStartIP = dhcpStartIP;
+        lanConfig.lanV4Config.dhcpConfig.dhcpEndIP = dhcpEndIP;
+        lanConfig.lanV4Config.dhcpConfig.leaseTime = leaseTime;
+    }
+
+    lanConfig.lanV4Config.gwIp = gwIPAddr;
+    lanConfig.lanV4Config.netmask = netmask;
+
+    std::string addr;
+    std::cout << "Please input V6 address  : ";
+    std::getline(std::cin, addr, delimiter);
+
+    int prefixLen;
+    std::cout << "Please input prefixLen: ";
+    std::cin >> prefixLen;
+    Utils::validateInput(prefixLen);
+
+    lanConfig.lanV6Config.addr = addr;
+    lanConfig.lanV6Config.prefixLen = prefixLen;
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setLANConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << " LAN Config Set Successfully " << std::endl;
+            } else if(error == telux::common::ErrorCode::INVALID_ARG){
+                std::cout <<"\nSSID1 (AP Mode) DHCP Address Range provided"
+                          <<"is invalid, Minimum range is 7 "
+                          << std::endl;
+                std::cout << "\nSetting AP DHCP address to default values which"
+                          << " are derived from AP Gateway Addr \n "
+                          << std::endl;
+            } else {
+                std::cout<<"LAN Config set fails"<<std::endl;
+            }
+    };
+
+    ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyTypeVal);
+
+    retStat = dataSettingsManagerMap_[opType]->setLANConfig(ipFamilyType, lanConfig, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestLANConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    telux::data::IpFamilyType ipFamilyType {};
+
+    std::cout << "Request LAN Config\n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int ipFamilyTypeVal;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+    std::cin >> ipFamilyTypeVal;
+    Utils::validateInput(ipFamilyTypeVal, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
+
+    // Callback
+    auto respCb = [](const telux::data::LanConfig &lanConfig, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestLANConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << " requestLANConfig succeeds " << std::endl;
+                std::cout << " For IPV4: " << std::endl;
+                std::cout << "   Gateway IP : " << lanConfig.lanV4Config.gwIp <<  std::endl;
+                std::cout << "   Netmask : " << lanConfig.lanV4Config.netmask << std::endl;
+                std::cout << "   DHCP Enabled : " << lanConfig.lanV4Config.enableDhcp << std::endl;
+                if(lanConfig.lanV4Config.enableDhcp) {
+                   std::cout << "   DHCP Start IP : " << lanConfig.lanV4Config.dhcpConfig.dhcpStartIP
+                             << std::endl;
+                   std::cout << "   DHCP End IP : " << lanConfig.lanV4Config.dhcpConfig.dhcpEndIP
+                             << std::endl;
+                   std::cout << "   DHCP Lease Time (seconds) : " 
+                             << lanConfig.lanV4Config.dhcpConfig.leaseTime << std::endl;
+                }
+                std::cout << " For IPV6: " << std::endl;
+                std::cout << "   AP Configuration : " << lanConfig.lanV6Config.addr << std::endl;
+                std::cout << "   Gateway IP : " << lanConfig.lanV6Config.prefixLen <<  std::endl;
+            } else {
+                std::cout<<"Get LAN Config failed"<<std::endl;
+            }
+    };
+
+    ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyTypeVal);
+
+    retStat = dataSettingsManagerMap_[opType]->requestLANConfig(ipFamilyType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestNetworkConfiguration(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    telux::data::IpFamilyType ipFamilyType {};
+
+    std::cout << "Request Network Configuration\n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int ipFamilyTypeVal;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+    std::cin >> ipFamilyTypeVal;
+    Utils::validateInput(ipFamilyTypeVal, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
+
+    // Callback
+    auto respCb = [](const telux::data::NwParams &nwParams, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestNetworkConfiguration Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout<<"\nrequestNetworkConfiguration Succeeds : " <<std::endl;
+                std::cout<<"Interface IP address :" << nwParams.ipAddrInfo.ifAddress << std::endl;
+                std::cout<<"Subnet ifMask mask :" << nwParams.ipAddrInfo.ifMask << std::endl;
+                std::cout<<"Gateway IP address :" << nwParams.ipAddrInfo.gwAddress << std::endl;
+                std::cout<<"Subnet gwMask mask :" << nwParams.ipAddrInfo.gwMask << std::endl;
+                std::cout<<"Primary DNS address :" << nwParams.ipAddrInfo.primaryDnsAddress << std::endl;
+                std::cout<<"Secondary DNS address :" << nwParams.ipAddrInfo.secondaryDnsAddress << std::endl;
+
+                std::cout<<"ETH PDU :"<< std::endl;
+                std::cout<<" Interface IP address :" << nwParams.ethConf.vlanStart << std::endl;
+                std::cout<<" Subnet ifMask mask :" << nwParams.ethConf.vlanEnd << std::endl;
+            } else {
+                std::cout<<"\nrequestNetworkConfiguration fails\n"<<std::endl;
+            }
+    };
+
+    ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyTypeVal);
+    retStat = dataSettingsManagerMap_[opType]->requestNetworkConfiguration(ipFamilyType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setDhcpv6DNSConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    telux::data::DhcpConfigState dhcpConfigState {};
+
+    std::cout << "set Dhcpv6 DNS  Config\n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int dhcpConfigStateVal;
+    std::cout << "Enter the state to set DHCPv6 DNS : "
+              << static_cast<int>(telux::data::DhcpConfigState::ENABLE) <<" - ENABLE, "
+              << static_cast<int>(telux::data::DhcpConfigState::DISABLE) <<" - DISABLE, "
+              << static_cast<int>(telux::data::DhcpConfigState::RESTART) << "- RESTART : " << std::endl;
+    std::cin >> dhcpConfigStateVal;
+    Utils::validateInput(dhcpConfigStateVal, {
+           static_cast<int>(telux::data::DhcpConfigState::ENABLE),
+           static_cast<int>(telux::data::DhcpConfigState::DISABLE),
+           static_cast<int>(telux::data::DhcpConfigState::RESTART)});
+
+    dhcpConfigState = static_cast<telux::data::DhcpConfigState>(dhcpConfigStateVal);
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setDhcpv6DNSConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout<<"\n setDhcpv6DNSConfig Succeeds : " << std::endl;
+            std::cout<<"Set DHCPv6 DNS proxy successfully"<< std::endl;
+        } else if (error == telux::common::ErrorCode::NO_EFFECT) {
+            std::cout<<"\n DHCPv6 DNS proxy is already set\n"<< std::endl;
+        } else {
+            std::cout<<"\n requestNetworkConfiguration fails\n"<< std::endl;
+        }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->setDhcpv6DNSConfig(dhcpConfigState, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestDhcpv6DNSConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "request Dhcpv6 DNS Config\n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    // Callback
+    auto respCb = [](const telux::data::DhcpConfigState &dhcpConfigState,
+        telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestDhcpv6DNSConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << " requestDhcpv6DNSConfig succeeds " << std::endl;
+                std::cout<< "DHCPv6 DNS proxy is "<< ((dhcpConfigState == telux::data::DhcpConfigState::ENABLE) \ 
+                         ?("enabled"):("disabled")) << std::endl;
+            } else {
+                std::cout<<"requestDhcpv6DNSConfig failed"<<std::endl;
+            }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestDhcpv6DNSConfig(respCb);
+    Utils::printStatus(retStat);
 }

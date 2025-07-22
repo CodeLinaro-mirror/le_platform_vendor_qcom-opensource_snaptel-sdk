@@ -91,6 +91,55 @@ struct IpptConfig {
 };
 
 /**
+ * Config for IPv6 External Router Mode
+ */
+struct V6ExtRouterModeConfig{
+    bool enable;      /**< Enable or disable external router mode >*/
+    bool delegateAll; /**< Delegate all prefixes for router chaining, currently not supported >*/
+};
+
+/**
+ * Data structure for adding LAN configuration.
+ */
+struct LANv4Config {
+    std::string gwIp;          /**<   IP address of the gateway. */
+    DhcpConfig dhcpConfig;     /**<   DHCP configuration. Used only when DHCP is enabled. */
+    uint32_t netmask;          /**<   Subnet mask (0-32). */
+    uint8_t enableDhcp;        /**<   Whether to enable DHCP; boolean value (0 or 1). */
+};
+
+struct LANv6Config {
+    std::string  addr;         /**<   IPv6 address in standard notation. */
+    uint8_t  prefixLen;        /**<   IPv6 prefix length (0-128). */
+};
+
+struct LanConfig {
+    LANv4Config lanV4Config;
+    LANv6Config lanV6Config;
+};
+
+/** Data type for ETH PDU configuration. */
+struct EthNetworkConfig
+{
+    uint16_t vlanStart;       /**< Starting VLAN ID for ETH PDU configuration. */
+    uint16_t vlanEnd;         /**< Ending VLAN ID for ETH PDU configuration. */
+};
+
+/** Data type for network configuration. */
+struct NwParams
+{
+    IpAddrInfo ipAddrInfo;      /**< IPv4/IPv6 addr configuration. */
+    EthNetworkConfig ethConf;  /**< Eth PDU configuration. */
+};
+
+/**
+ * Config for coex channel avoidance
+ */
+struct CoExChannelAvoidanceConfig{
+    bool enable;     /**< Enable or disable coex channel avoidance >*/
+};
+
+/**
  * This function is called with the response to requestBackhaulPreference API.
  *
  * The callback can be invoked from multiple different threads.
@@ -158,6 +207,63 @@ using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId
  */
 using RequestCurrentDdsResponseCb = std::function<void(DdsInfo currentState,
     telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to @ref requestPrefixDelegationConfig.
+ * Returned enable will be the prefix delegation mode.
+*
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] enable         Prefix delegation mode that has been set
+ * @param [in] error          Return code for whether the operation succeeded or failed
+ *
+ */
+using RequestPrefixDelegationConfigResponseCb =
+    std::function<void(bool enable, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to @ref requestIPv6ExtRouterMode API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] config        Ipv6 external router config @ref V6ExtRouterModeConfig
+ * @param [in] error         Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestIPv6ExtRouterModeResponseCb = std::function<void(
+    const V6ExtRouterModeConfig config, telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref getLANConfig API.
+ *
+ *  @param [in] LanConfig      LAN Config info
+ *  @param [in] error          Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestLANConfigCb = std::function<void(const LanConfig &lanConfig,
+    telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref getNetworkConfiguration API.
+ *
+ *  @param [in] NwParams       union to get v4/v6 NW configuration
+ *  @param [in] error          Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestNetworkConfigurationCb = std::function<void(const NwParams &nwParams,
+    telux::common::ErrorCode error)>;
+
+/**
+ *  This function is called in response to @ref requestDhcpv6DNSConfig API.
+ *
+ *  @param [in] DhcpConfigState   IPv6 DHCP DNS Config State
+ *  @param [in] error             Return code for whether the operation succeeded or failed.
+ *
+ */
+using RequestDhcpv6DNSConfigurationCb = std::function<void(const DhcpConfigState
+    &dhcpConfigState, telux::common::ErrorCode error)>;
 
 /**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
@@ -274,6 +380,21 @@ public:
         RequestBandInterferenceConfigResponseCb callback) = 0;
 
     /**
+     * Enable/Disable the CoEX channel avoidance to reduce co-channel interference
+     * between WLAN <-> WWAN channels.
+     *
+     * @ref setBandInterferenceConfig API is used to turn off the 5G band entirely,
+     * while COEX channel avoidance only avoids specific channels.
+     *
+     * @param [in] config         config for coex channel avoidance, including enable/disable.
+     * @param [in] callback       callback to get response for configureCoExChannelAvoidance.
+     *
+     * @returns Status of configureCoExChannelAvoidance i.e., success or applicable status code
+     */
+    virtual telux::common::Status configureCoExChannelAvoidance(CoExChannelAvoidanceConfig config,
+          telux::common::ResponseCallback callback) = 0;
+
+    /**
      * Allow/Disallow WWAN connectivity.
      * Controls whether system should allow/disallow WWAN connectivity to cellular network.
      * Default setting is allow WWAN connectivity to cellular network.
@@ -340,6 +461,9 @@ public:
      *
      * @returns Status of setMacSecState, i.e., success or suitable status code.
      *
+     * @deprecated Use enableMacsec or disableMacsec API under
+     * data::net::IEthernetManager.
+     *
      */
     virtual telux::common::Status setMacSecState(bool enable,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -351,7 +475,7 @@ public:
      *
      * @returns Status of requestMacSecState, i.e., success or suitable status code.
      *
-     *
+     * @deprecated Use requestMacsecConfig API under data::net::IEthernetManager.
      */
     virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;
 
@@ -392,6 +516,105 @@ public:
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Set prefix delegation config, enable or disable.
+     * Prefix delegation feature and external router mode can be enabled simultaneously,
+     * based on if prefix is available from network side, MDM will operate under
+     * Off-the-shelf Prefix Delegation mode or perfix sharing mode.
+     * If enable prefix delegation mode only, MDM will operate under legacy prefix delegation
+     * mode.
+     *
+     * @param [in] enable        Prefix delegation config to set, enable or disable
+     * @param [in] callback      Optional callback to set the prefix delegation config response
+     *
+     * @returns immediate status of the setPrefixDelegationConfig() request sent, i.e., success or
+     *          the suitable status code. The client receives asynchronous notifications
+     *          indicating the ipv6 data call tear-down.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setPrefixDelegationConfig(bool enable,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request prefix delegation config, enable or disable (the config set by user)
+     *
+     * @param [in] callback     callback to get the prefix delegation config response
+     *
+     * @returns immediate status of the requestPrefixDelegationConfig() request sent, i.e.,
+     *          success or the suitable status code. The client receives asynchronous
+     *          notifications indicating the ipv6 data call tear-down.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestPrefixDelegationConfig(
+        RequestPrefixDelegationConfigResponseCb callback) = 0;
+
+    /**
+     * Set IPV6 External router config @ref telux::data::V6ExtRouterModeConfig
+     * If enable IPV6 External router mode only, MDM will operate under prefix sharing
+     * mode.
+     *
+     * @param [in] config       Ipv6 external router config
+                                @ref telux::data::V6ExtRouterModeConfig
+     * @param [in] callback     callback to get the prefix delegation status response
+     *
+     * @returns immediate status of the setIPv6ExtRouterMode() request sent, i.e., success or
+     *          the suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setIPv6ExtRouterMode(V6ExtRouterModeConfig config,
+        telux::common::ResponseCallback callback) = 0;
+
+    /**
+     * Request IPV6 External router config @ref telux::data::V6ExtRouterModeConfig
+     *
+     * @param [in] callback     callback to get the IPV6 External router config response
+     *
+     * @returns immediate status of the requestIPv6ExtRouterMode() request sent, i.e., success or
+     *          the suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestIPv6ExtRouterMode(
+            RequestIPv6ExtRouterModeResponseCb callback) = 0;
+
+    /**
+     * Enable ETH PDU feature on etherent interface with/without TSN(Time Sensitive Network).
+     *
+     * This API is used to enable ETH PDU feature. Enable ETH PDU, then can
+     * call @ref telux::data::startEthCall to start ETH PDU call.
+     *
+     * On platforms with access control enabled, the caller needs to have the TELUX_DATA_CALL_OPS
+     * permission to successfully invoke this API.
+     *
+     * @param [in] ifIndex       Enable ETH PDU on which interface, like eth0 or eth1
+     * @param [in] isTSN         Enable or disable TSN mode
+     *
+     * @returns The immediate error code of the enableEthPdu() request sent, i.e., success or the
+     *          suitable error code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode enableEthPdu(int ifIndex, bool isTSN) = 0;
+
+    /**
+     * Disable ETH PDU feature.
+     *
+     * @returns The immediate error code of the disableEthPdu() request sent, i.e., success or
+     *          the suitable error code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode disableEthPdu( ) = 0;
 
     /**
      * Allows the client to set the IP passthrough configuration for a specific profile and vlan ID.
@@ -559,6 +782,89 @@ public:
      */
     virtual telux::common::Status requestAutoConnect(
         const AutoConnectProfile &profile, bool &enable) = 0;
+
+    /**
+     * Set the LAN Config information.
+     * This is persistent across object and reboot lifetimes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
+     *
+     * @param [in] ipFamilyType   IPType v4/v6
+     * @param [in] lanConfig      LanConfig info to set the LAN configuration
+     * @param [in] callback       optional callback to set the LAN Configuration
+     *
+     * @returns Status of setLANConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setLANConfig(IpFamilyType ipFamilyType, LanConfig lanConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+     /**
+     * Request the current LAN Config information.
+     *
+     * @param [in] ipFamilyType   IPType v4/v6
+     * @param [in] callback       Asynchronous callback to get the response for requestLANConfig
+     *
+     * @returns Status of requestLANConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+
+     */
+    virtual telux::common::Status requestLANConfig(IpFamilyType ipFamilyType,
+        RequestLANConfigCb callback) = 0;
+
+    /**
+    * Request the current IPv4/IPv6/ETH PDU Network Config information.
+    *
+    * @param [in] ipFamilyType                    IPType v4/v6
+    * @param [in] requestNetworkConfigurationCb   Asynchronous callback to get the response
+    *                                             for requestNetworkConfiguration
+    *
+    * @returns Status of requestNetworkConfiguration i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+    virtual telux::common::Status requestNetworkConfiguration(const IpFamilyType ipFamilyType,
+        RequestNetworkConfigurationCb requestNetworkConfigurationCb) = 0;
+
+    /**
+     * Set the IPv6 DHCP DNS Config information.
+     * This is persistent across object and reboot lifetimes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
+     *
+     * @param [in] DhcpConfigState  DhcpConfigState info to set the IPv6 DHCP DNS Config
+     * @param [in] callback         optional callback to set the IPv6 DHCP DNS Configuration
+     *
+     * @returns Status of setDhcpv6DNSConfig, i.e., success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setDhcpv6DNSConfig(const DhcpConfigState dhcpConfigState,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+    * Request the current IPv6 DHCP DNS config information.
+    *
+    * @param [in] callback   Asynchronous callback to get the response
+    *                        for requestDhcpv6DNSConfig.
+    *
+    * @returns Status of requestDhcpv6DNSConfig i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+    virtual telux::common::Status requestDhcpv6DNSConfig(
+        RequestDhcpv6DNSConfigurationCb callback) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

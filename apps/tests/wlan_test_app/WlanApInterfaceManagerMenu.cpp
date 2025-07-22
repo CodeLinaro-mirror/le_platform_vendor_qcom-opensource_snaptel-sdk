@@ -108,9 +108,13 @@ void WlanApInterfaceManagerMenu::showMenu() {
             "manage_service", {},
             std::bind(&WlanApInterfaceManagerMenu::manageApService,
             this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setConfig_V1
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_config_V1", {}, std::bind(&WlanApInterfaceManagerMenu::setConfig_V1, this,
+            std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
             setConfig, setSecurityConfig, setSsid, setVisibility, configureElementInfo, setPassPhrase,
-            getConfig, getStatus, getConnectedDevices, manageApService};
+            getConfig, getStatus, getConnectedDevices, manageApService, setConfig_V1};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -598,5 +602,54 @@ void WlanApInterfaceManagerMenu::populateApElementInfo(
         std::cout << std::endl;
         ElementInfoConfig.assocRespElements = inStr;
     }
+}
+void WlanApInterfaceManagerMenu::setConfig_V1(std::vector<std::string> userInput) {
+
+    std::cout << "Set AP Configuration \n";
+    std::vector<telux::wlan::ApConfig> configList;
+    telux::wlan::ApConfig config;
+
+    int apId = 1;
+    std::cout << "Enter Wlan Ap Id (1-21): ";
+    std::cin >> apId;
+    Utils::validateInput(apId);
+    std::cout << std::endl;
+    config.id = WlanUtils::convertIntToWlanId(apId);
+
+    int venue = 0;
+    std::cout << "Enter Venue Type: ";
+    std::cin >> venue;
+    std::cout << std::endl;
+    config.venue.type = venue;
+    venue = 0;
+    std::cout << "Enter Venue Group: ";
+    std::cin >> venue;
+    std::cout << std::endl;
+    config.venue.group = venue;
+
+    int userResp = 0;
+    std::cout << "Ap configured for 2.4/5/6 GHz band -> (0/1/2): ";
+    std::cin >> userResp;
+    WlanUtils::validateInput(userResp, {0, 1, 2});
+    std::cout << std::endl;
+    telux::wlan::ApNetConfig apNetConfig = {};
+    if(userResp == 0) {
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_2GHZ;
+    } else if (userResp == 1) {
+        std::cout << "Ap configured for 5 GHz band" << std::endl;
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_5GHZ;
+    }  else  {
+        std::cout << "Ap configured for 6 GHz band" << std::endl;
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_6GHZ;
+    }
+    populateApConfigNet(apNetConfig);
+    config.network.push_back(apNetConfig);
+
+    configList.push_back(config);
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setConfig(configList);
+    std::cout << "\nSetting AP Configuration Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 

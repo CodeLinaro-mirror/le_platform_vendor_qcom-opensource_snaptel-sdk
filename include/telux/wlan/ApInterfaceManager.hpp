@@ -57,6 +57,11 @@ class IApListener;
 /** @addtogroup telematics_wlan_ap
  * @{ */
 
+/**
+ * Invalid AP ID
+ * If used when managing hostapd service, this Id value will
+ * represent all AP.
+ */
 #define INVALID_AP_ID    0
 
 /**
@@ -208,6 +213,43 @@ struct DeviceInfo {
     std::string  ipv4Address;             /**< IPv4 Address of Wi-Fi device                      */
     std::vector<std::string> ipv6Address; /**< List of IPv6 Addresses of Wi-Fi device            */
     std::string  macAddress;              /**< MAC Address of Wi-Fi device                       */
+};
+
+/**
+ * Band block information.
+ * Need to align with hardware configuration
+ * otherwise server will return false
+ */
+enum class BandBlock {
+    INVALID, /**< Band Segregation NOT enabled */
+    LOW,     /**< Band frequency low. More details refer to IEEE 802.11 radio frequency bands */
+    HIGH,    /**< Band frequency high. More details refer to IEEE 802.11 radio frequency bands */
+};
+
+/**
+ * Multi-link Band Information
+ */
+struct MLBandInfo {
+    BandType   band;     /**< Band information */
+    BandBlock  block;    /**< Band segregation info */
+};
+
+/**
+ * ML AP config
+ */
+struct MLApConfig{
+    Id apId;                           /**< ML ap type identifier */
+    std::vector<MLBandInfo> bandInfo;  /**< List of Band information */
+    ApInterworking   interworking;     /**< AP network access (internet/local) */
+};
+
+/**
+ * ML Activate Hostapd Config
+ */
+struct MLActivateHostapdConfig
+{
+  Id apId;           /**< Indicates hostapd.conf associated with the mld_ap_type to be activated. */
+  ServiceOperation opr;/**< Indicates the action to be performed such as start, stop and restart. */
 };
 
 /** @addtogroup telematics_wlan_ap
@@ -383,6 +425,61 @@ class IApInterfaceManager {
      *
      */
     virtual telux::common::ErrorCode manageApService(Id apId, ServiceOperation opr) = 0;
+
+    /**
+     * Set the Multi-Link Operation AP config.
+     * Multi-Link Operation (MLO) is a key feature of Wi-Fi 7 that significantly
+     * enhances wireless connectivity.
+     * MLO allows devices to simultaneously send and receive data across multiple frequency bands.
+     * For 5G, it's possible to config band block high or low via @ref telux::wlan::MLBandInfo.
+     * Currenly only support MLO AP service not station.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] mldApList     List for mld Ap config, @ref telux::wlan::MLApConfig
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to
+     *                 change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setMLApConfig(const std::vector<MLApConfig>& mldApList) = 0;
+
+    /**
+     * Get the Multi-Link AP config.
+     * Currenly only support MLO AP service not station.
+     *
+     * @param [out] mldApList     Reference of list for mld Ap config
+     *                            @ref telux::wlan::MLApConfig
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to
+     *                 change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getMLApConfig(std::vector<MLApConfig>& mldApList) = 0;
+
+    /**
+     * Execute an operation on hostapd service for MLD AP config. Provides ability for client to
+     * either stop/start or restart hostapd service for selected access point. Restarting hostapd
+     * service is required for any changes made to hostapd.conf file and changes made by
+     * @ref telux::wlan::IApInterfaceManager::setMLApConfig to take effect.
+     * Multi-Link Operation (MLO) is a key feature of Wi-Fi 7 that significantly
+     * enhances wireless connectivity.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config          ML activate hostapd config
+     *                             @ref telux::wlan::MLActivateHostapdConfig
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to
+     *                 change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode manageMLApService(const MLActivateHostapdConfig& config) = 0;
 
     /**
      * Register a listener for specific events in Access Point Manager

@@ -119,9 +119,13 @@ bool DataServingSystemMenu::init() {
         std::shared_ptr<ConsoleAppCommand> makeDormant =
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "make_dormant", {},
             std::bind(&DataServingSystemMenu::makeDormant, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestBearerTechType =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "request_bearer_tech_type", {},
+            std::bind(&DataServingSystemMenu::requestBearerTechType, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getDrbStatus,
-            requestServiceStatus, requestRoamingStatus, requestNrIconType, makeDormant};
+            requestServiceStatus, requestRoamingStatus, requestNrIconType, makeDormant,
+            requestBearerTechType};
         addCommands(commandsList);
     }
 
@@ -354,5 +358,41 @@ void DataServingSystemMenu::makeDormant(std::vector<std::string> inputCommand) {
     telux::common::Status status =
         dataServingSystemManagers_[static_cast<SlotId>(slotId)]->makeDormant(respCb);
     Utils::printStatus(status);
+}
+
+void DataServingSystemMenu::requestBearerTechType(std::vector<std::string> inputCommand) {
+    std::cout << "Request Bearer Tech Type\n";
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    if (dataServingSystemManagers_.find(static_cast<SlotId>(slotId)) ==
+        dataServingSystemManagers_.end()) {
+        std::cout << "Serving System Manager on SlotId: " << slotId << " is not ready" << std::endl;
+        return;
+    }
+
+    // Callback
+    auto respCb = [slotId](telux::data::DataBearerTechnology dataBearerTechType,
+                           telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestBearerTechType Response on slotid " << static_cast<int>(slotId);
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << " is successful" << std::endl;
+            std::cout<< " Bearer Tech Type : " << DataUtils::bearerTechToString(dataBearerTechType) << std::endl;
+        }
+        else {
+            std::cout << " failed"
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    };
+
+    telux::common::Status retStat =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestBearerTechType(respCb);
+    Utils::printStatus(retStat);
 }
 

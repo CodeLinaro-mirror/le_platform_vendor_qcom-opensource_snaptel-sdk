@@ -85,6 +85,22 @@ class DataSettingsMenu : public ConsoleApp ,
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 
+    void configureCoExChannelAvoidance(std::vector<std::string> inputCommand);
+    void setPrefixDelegationConfig(std::vector<std::string> inputCommand);
+    void requestPrefixDelegationConfig(std::vector<std::string> inputCommand);
+    void setIPv6ExtRouterMode(std::vector<std::string> inputCommand);
+    void requestIPv6ExtRouterMode(std::vector<std::string> inputCommand);
+    void enableEthPdu(std::vector<std::string> inputCommand);
+    void disableEthPdu(std::vector<std::string> inputCommand);
+    void setAutoConnect(std::vector<std::string> inputCommand);
+    void requestAutoConnect(std::vector<std::string> inputCommand);
+
+    void setLANConfig(std::vector<std::string> inputCommand);
+    void requestLANConfig(std::vector<std::string> inputCommand);
+    void requestNetworkConfiguration(std::vector<std::string> inputCommand);
+    void setDhcpv6DNSConfig(std::vector<std::string> inputCommand);
+    void requestDhcpv6DNSConfig(std::vector<std::string> inputCommand);
+
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 

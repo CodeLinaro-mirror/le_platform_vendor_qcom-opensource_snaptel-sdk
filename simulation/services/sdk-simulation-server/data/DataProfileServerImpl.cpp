@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <set>
@@ -116,8 +116,8 @@ grpc::Status DataProfileServerImpl::CreateProfile(ServerContext* context,
             dataStub::EmergencyCapability::UNSPECIFIED) {
             emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
         }
-        newProfile["emergencyAllowed"] =
-            ((int)emergencyAllowed);
+        newProfile["emergencyAllowed"] = ((int)emergencyAllowed);
+        newProfile["clatEnabled"] = request->clat_enabled();
         data.stateRootObj[subsystem]["requestProfileList"]
             ["profiles"][currentProfileCount] = newProfile;
 
@@ -255,8 +255,8 @@ grpc::Status DataProfileServerImpl::ModifyProfile(ServerContext* context,
                 dataStub::EmergencyCapability::UNSPECIFIED) {
                     emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
             }
-            updatedProfile["emergencyAllowed"] =
-                ((int)emergencyAllowed);
+            updatedProfile["emergencyAllowed"] = ((int)emergencyAllowed);
+            updatedProfile["clatEnabled"] = request->clat_enabled();
 
             Json::Value newRoot;
             for (auto idx = 0; idx < currentProfileCount; idx++) {
@@ -360,6 +360,7 @@ grpc::Status DataProfileServerImpl::RequestProfileById(ServerContext* context,
             response->mutable_profile()->set_emergency_capability(
                 (dataStub::EmergencyCapability)
                 requestedProfile["emergencyAllowed"].asInt());
+            response->mutable_profile()->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
         } else {
             LOG(DEBUG, __FUNCTION__, " profile not found ");
             error = telux::common::ErrorCode::EXTENDED_INTERNAL;
@@ -422,6 +423,7 @@ grpc::Status DataProfileServerImpl::RequestProfileList(ServerContext* context,
             *profile->mutable_auth_type() = authType;
             profile->set_emergency_capability((dataStub::EmergencyCapability)
                 requestedProfile["emergencyAllowed"].asInt());
+            profile->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
         }
     }
 
@@ -466,6 +468,7 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
         request->auth_type().auth_type());
     dataStub::EmergencyCapability emergencyAllowed =
         request->emergency_capability();
+    bool clatEnabled = request->clat_enabled();
 
     if (data.status == telux::common::Status::SUCCESS) {
         int currentProfileCount =
@@ -520,6 +523,9 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
             if ((requestedProfile["emergencyAllowed"].asInt() != emergencyAllowed)) {
                 continue;
             }
+            if ((requestedProfile["clatEnabled"].asBool() != clatEnabled)) {
+                continue;
+            }
             dataStub::Profile *profile = response->add_profiles();
 
             profile->set_profile_id(requestedProfile["profileId"].asInt());
@@ -542,6 +548,7 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext* context,
             profile->set_emergency_capability((dataStub::EmergencyCapability)
                 requestedProfile["emergencyAllowed"].asInt());
             *profile->mutable_auth_type() = authType;
+            profile->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
         }
     }
 

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 syntax = "proto3";
@@ -658,6 +658,7 @@ message CreateProfileRequest {
     IpFamilyType ip_family_type = 8;
     int32 slot_id = 9;
     EmergencyCapability emergency_capability = 10;
+    bool clat_enabled = 11;
 }
 
 message CreateProfileReply {
@@ -695,6 +696,7 @@ message ModifyProfileRequest {
     AuthProtocolType auth_type = 9;
     IpFamilyType ip_family_type = 10;
     EmergencyCapability emergency_capability = 11;
+    bool clat_enabled = 12;
 }
 
 message QueryProfileRequest {
@@ -708,6 +710,7 @@ message QueryProfileRequest {
     AuthProtocolType auth_type = 8;
     IpFamilyType ip_family_type = 9;
     EmergencyCapability emergency_capability = 10;
+    bool clat_enabled = 11;
 }
 
 message Profile {
@@ -721,6 +724,7 @@ message Profile {
     TechPreference tech_preference = 8;
     AuthProtocolType auth_type = 9;
     EmergencyCapability emergency_capability = 10;
+    bool clat_enabled = 11;
 }
 
 message RequestProfileByIdReply {

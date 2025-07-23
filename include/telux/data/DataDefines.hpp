@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -214,6 +215,7 @@ struct ProfileParams {
     EmergencyCapability emergencyAllowed =
       telux::data::EmergencyCapability::UNSPECIFIED;         /**< Emergency services are allowed if
                                                                this field is set to ALLOWED*/
+    bool clatEnabled = false;                                /**< Enable or disable CLAT */
 };
 
 /**

@@ -9,38 +9,41 @@ This sample app demonstrates how to get thermal zones and cooling devices.
    auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
    ~~~~~~
 
-### 2. Prepare initialization callback
+### 2. Get Thermal manager instance and Prepare initialization callback
 
    ~~~~~~{.cpp}
-   std::promise<telux::common::ServiceStatus> p;
-   auto initCb = [&p](telux::common::ServiceStatus status) {
-      std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
-      p.set_value(status);
-   };
+    std::promise<telux::common::ServiceStatus> prom;
+    auto initCb = [&p](telux::common::ServiceStatus status) {
+        prom.set_value(status);
+    };
+
+    thermalMgr = thermalFactory.getThermalManager(initCb);
+    if (thermalMgr == NULL) {
+        std::cout << " Failed to get manager instance" << std::endl;
+        return;
+    }
    ~~~~~~
 
-### 3. Get thermal shutdown manager instance
+### 3. Wait for the initialization callback and check the service status
 
    ~~~~~~{.cpp}
-   std::shared_ptr<telux::therm::IThermalManager> thermalMgr
-      = thermalFactory.getThermalManager(initCb);
-   if (!thermalMgr) {
-      std::cout << "Thermal manager is nullptr" << std::endl;
-      return -1;
-   }
+    // Check if thermal subsystem is ready
+    // If thermal subsystem is not ready, wait for it to be ready
+    telux::common::ServiceStatus subSystemStatus = thermalMgr->getServiceStatus();
+    if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << " Thermal management subsystem is not ready, Please wait"
+            << std::endl;
+        subSystemStatus = prom.get_future().get();
+    }
+
+    // Exit the application, if SDK is unable to initialize thermal subsystems
+    if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << " ERROR - Unable to initialize subSystem" << std::endl;
+        return;
+    }
    ~~~~~~
 
-### 4. Wait for the initialization callback and check the service status
-
-   ~~~~~~{.cpp}
-   telux::common::ServiceStatus serviceStatus = p.get_future().get();
-   if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-      std::cout << "Thermal manager initialization failed" << std::endl;
-      return -2;
-   }
-   ~~~~~~
-
-### 5. Send get thermal zones request using thermal manager object
+### 4. Send get thermal zones request using thermal manager object
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<telux::therm::IThermalZone>> zoneInfo
@@ -57,7 +60,7 @@ This sample app demonstrates how to get thermal zones and cooling devices.
    }
    ~~~~~~
 
-### 6. Send get cooling devices request using thermal manager instance
+### 5. Send get cooling devices request using thermal manager instance
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice

@@ -76,6 +76,7 @@
 #include "ipsec/IpsecMenu.hpp"
 #include "stats/StatsMenu.hpp"
 #include "backhaul/BackhaulMenu.hpp"
+#include "ipa/IpaMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -119,6 +120,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void ipsecMenu(std::vector<std::string> inputCommand);
     void statsMenu(std::vector<std::string> inputCommand);
     void backhaulMenu(std::vector<std::string> inputCommand);
+    void ipaMenu(std::vector<std::string> inputCommand);
 
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
@@ -142,5 +144,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<IpsecMenu> ipsecMenu_;
     std::shared_ptr<StatsMenu> statsMenu_;
     std::shared_ptr<BackhaulMenu> backhaulMenu_;
+    std::shared_ptr<IpaMenu> ipaMenu_;
 };
 #endif

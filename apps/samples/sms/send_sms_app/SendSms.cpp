@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -101,11 +106,13 @@ int main(int argc, char *argv[]) {
     auto smsSentCb = std::make_shared<SmsCallback>();
     auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
 
-    // [4] Send an SMS using ISmsManager by passing the text and receiver number
-    // along with required callback
+    // [4] Send an SMS using ISmsManager by passing the text, receiver number
+    // and deliveryReportNeeded along with required callback
     std::string configFile;
     std::string receiverAddress;
+    bool deliveryReportNeeded = true;
     std::string message;
+    std::string smscAddr;
     std::shared_ptr<ConfigParser> configParser;
 
     // [4.1] User can send an SMS by taking receiver's phone number and text message
@@ -121,6 +128,7 @@ int main(int argc, char *argv[]) {
 
     receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
     message = configParser->getValue(std::string("MESSAGE"));
+    smscAddr = configParser->getValue(std::string("SMSC_NUMBER"));
 
     // [4.2] If default config file is also not found then will take default
     // receiver's phone number and text message which is defined in the sample application.
@@ -129,7 +137,7 @@ int main(int argc, char *argv[]) {
      message = DEFAULT_MESSAGE;
      std::cout << "Using default receiverAddress:" << std::endl;
     }
-    smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
+    smsManager->sendSms(message, receiverAddress, deliveryReportNeeded, smsSentCb, smscAddr);
 
    // [5] Receive responses for sendSms request
 

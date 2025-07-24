@@ -28,56 +28,36 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
-
+#include <iomanip>
 #include "MySmsListener.hpp"
 #include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
+
+std::string SmsStorageCallback::pduToHexString(telux::tel::PduBuffer pdu) {
+    std::ostringstream oss;
+    for (uint8_t byte : pdu) {
+        oss << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+            << static_cast<int>(byte);
+    }
+    return oss.str();
+}
+
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
    std::cout << std::endl << std::endl;
    std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg->getMessagePartInfo();
+   std::string pduString = SmsStorageCallback::pduToHexString(smsMsg->getRawPdu());
    if (partInfo) {
       PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId << " from: "
             << smsMsg->getSender() <<  " to: " << smsMsg->getReceiver()
-            << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
+            << "\n Message: " << smsMsg->getText() << "\n PDU: " << pduString
             << " \n RefNumber:" << static_cast <int>(partInfo->refNumber) << " NumberOfSegments:"
             << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
             << static_cast <int>(partInfo->segmentNumber)
@@ -85,7 +65,7 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
    } else {
       PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId << " from: "
             << smsMsg->getSender() <<  " to: " << smsMsg->getReceiver()
-            << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
+            << "\n Message: " << smsMsg->getText() << "\n PDU: " << pduString
             << std::endl;
    }
 
@@ -114,10 +94,11 @@ void MySmsListener::onIncomingSms(int phoneId,
       text = text + smsMsg.getText();
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
       if (partInfo) {
+         std::string pduString = SmsStorageCallback::pduToHexString(smsMsg.getRawPdu());
          std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
                 << "\n SMS Part on phone ID " << phoneId << " from: "
                 << smsMsg.getSender() <<  " to: " << smsMsg.getReceiver()
-                << "\n Message Part: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+                << "\n Message Part: " << smsMsg.getText() << "\n PDU: " << pduString
                 << "\n RefNumber:" << static_cast <int>(partInfo->refNumber)
                 << " NumberOfSegments:"
                 << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
@@ -254,15 +235,16 @@ void SmsStorageCallback::readMsgResponse(telux::tel::SmsMessage smsMsg,
    if (error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << " Read message sent successfully " << "\n";
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
+      std::string pduString = pduToHexString(smsMsg.getRawPdu());
       if (partInfo) {
          PRINT_CB << " Multi Part Message " << std::endl;
-         PRINT_CB << " Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+         PRINT_CB << " Message: " << smsMsg.getText() << "\n PDU: " << pduString
                << " \n RefNumber:" << static_cast <int>(partInfo->refNumber) << " NumberOfSegments:"
                << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
                << static_cast <int>(partInfo->segmentNumber)
                << std::endl;
       } else {
-         PRINT_CB << "\n Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+         PRINT_CB << "\n Message: " << smsMsg.getText() << "\n PDU: " << pduString
                << std::endl;
       }
    } else {

@@ -32,9 +32,15 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include "SMSTrigger.hpp"
 #include <telux/common/Log.hpp>
 #include <future>
+#include <iomanip>
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -100,11 +106,12 @@ void SMSTrigger::onIncomingSms(int phoneId,
       text = text + smsMsg.getText();
 
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
+      std::string pduString = pduToHexString(smsMsg.getRawPdu());
       if (partInfo) {
          std::string tmpLog = " mSegment: " + std::to_string(partInfo->segmentNumber) +
             "\n SMS Part on phone ID " + std::to_string(phoneId) + " from: " + smsMsg.getSender() +
             " to: " + smsMsg.getReceiver() + "\n Message Part: " + smsMsg.getText() + "\n PDU: " +
-            smsMsg.getPdu() + "\n RefNumber:" + std::to_string(partInfo->refNumber) +
+            pduString + "\n RefNumber:" + std::to_string(partInfo->refNumber) +
             " NumberOfSegments:" + std::to_string(partInfo->numberOfSegments) + " SegmentNumber: " +
             std::to_string(partInfo->segmentNumber);
          LOG(DEBUG, __FUNCTION__, tmpLog);
@@ -174,4 +181,14 @@ bool SMSTrigger::loadConfig() {
    triggerText_.insert({triggerTxtShutdown, TcuActivityState::SHUTDOWN});
 
    return true;
+}
+
+
+std::string SMSTrigger::pduToHexString(telux::tel::PduBuffer pdu) {
+    std::ostringstream oss;
+    for (uint8_t byte : pdu) {
+        oss << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+            << static_cast<int>(byte);
+    }
+    return oss.str();
 }

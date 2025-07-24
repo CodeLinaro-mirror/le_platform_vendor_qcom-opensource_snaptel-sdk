@@ -26,40 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -151,7 +121,7 @@ Example:
 7. The application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.
 8. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
 9. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
-10. CallManager sends ecall msd transmission status to the application by using onECallMsdTransmissionStatus API.
+10. CallManager sends ecall msd transmission status to the application by using onECallMsdTransmissionStatus API with arguement telux::tel::ECallMsdTransmissionStatus.
 11. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
 12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
 13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
@@ -187,11 +157,11 @@ Private eCall:
 5. The application dials a TPS emergency call over IMS(i.e normal VOLTE call) by using makeECall API, optionally specifying header and callback to get asynchronous response.
 6. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
 7. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
-8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
+8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API with arguement telux::tel::ECallMsdTransmissionStatus.
 9. CallManager sends MSD update request recieved from network to the application by using OnMsdUpdateRequest API.
 10. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
 11. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
-12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.
+12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API with arguement telux::tel::ECallMsdTransmissionStatus for MSD sent at step 10.
 13. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
 14. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
 15. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
@@ -222,29 +192,29 @@ Private eCall:
 9. Optionally, the response for signal strength request is received by the application.
 10. Application receives a notification when there is a change in signal strength.
 
-@subsection answer_reject_rejectWithSMS Answer, Reject, RejectWithSMS call flow
+@subsection answer_reject, Answer Reject call flow
 
-@anchor fig_answer_reject_reject_with_sms
+@anchor fig_answer_reject
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.6]{answer_reject_reject_with_sms_call_flow.png}
+  \includegraphics[scale=0.6]{answer_reject_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Answer, Reject, RejectWithSMS call flow}
-  \label{fig_answer_reject_reject_with_sms}
+  \caption{Answer, Reject call flow}
+  \label{fig_answer_reject}
 \end{figure}
 @endlatexonly
 
-@html_image{answer_reject_reject_with_sms_call_flow.png,Answer Reject RejectWithSMS call flow,80,80,Answer Reject RejectWithSMS call flow}
+@html_image{answer_reject_call_flow.png,Answer Reject call flow,80,80,Answer Reject call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to register listener.
 3. The application registers a listener with CallManager to listen incoming call notifications.
 4. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
 5. The application receives onIncomingCall notification when there is an incoming call.
-6. The application performs answer/reject/rejectWithSMS operation using ICall.
-7. The application receives the status like SUCCESS, FAILED etc  based on execution of answer/reject/rejectWithSMS.
-8. Optionally, the application gets asynchronous response for answer/reject/rejectWithSMS using CommandResponseCallback.
+6. The application performs answer/reject operation using ICall.
+7. The application receives the status like SUCCESS, FAILED etc  based on execution of answer/reject.
+8. Optionally, the application gets asynchronous response for answer/reject using CommandResponseCallback.
 9. The CallManager sends call info change i.e CALL_ACTIVE or CALL_ENDED to the application by using onCallInfoChange callback function.
 
 @subsection hold_call Hold call flow
@@ -333,7 +303,7 @@ Private eCall:
 6. The application receives the status i.e. either SUCCESS or INVALIDPARAM based on successful registration of the listener.
 7. The application gets SmsManager object corresponding to specific phone identifier.
 8. PhoneFactory returns the SmsManager object to application in order to perform operations like send SMS and get SMSC address.
-9. The application sends SMS to the receiver address and optionally gets asynchronous response using CommandResponseCallback.
+9. The application sends SMS to the receiver address by optionally mentioning delivery reported needed flag and SMSC address and gets asynchronous response using CommandResponseCallback.
 10. Application receives the status i.e. either SUCCESS or FAILED based on execution of sendSms API in SmsManager.
 11. Optionally, the response for send SMS is received by the application.
 12. Application gets notified for incoming SMS.

@@ -32,12 +32,18 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef SMSTRIGGER_HPP
 #define SMSTRIGGER_HPP
 
 #include <memory>
 #include <string>
 #include <vector>
+#include <sstream>
 #include "telux/tel/SmsManager.hpp"
 
 #include "../../Event.hpp"
@@ -58,6 +64,7 @@ private:
     bool loadConfig();
     void triggerEvent(TcuActivityState event);
     TcuActivityState validateTrigger(std::string text);
+    std::string pduToHexString(telux::tel::PduBuffer pdu);
 
 public:
     SMSTrigger(std::shared_ptr<EventManager> eventManager);

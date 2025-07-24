@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <chrono>
@@ -58,7 +63,7 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::lock_guard<std::mutex> locationLock(locationLock_);
    // if smsManager is not empty then send an SMS and remove location listener.
    if(smsManager_ && requestReceived_) {
-      smsManager_->sendSms(locMsg, senderNumber_, smsCb);
+      smsManager_->sendSms(locMsg, senderNumber_, false, smsCb);
       requestReceived_ = false;
    }
 }

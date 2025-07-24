@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYECALLLISTENER_HPP
 #define MYECALLLISTENER_HPP
 
@@ -39,7 +44,6 @@
 class MyECallListener : public telux::tel::ICallListener {
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-   void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
    void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
    void onEmergencyNetworkScanFail(int phoneId) override;

@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -112,17 +117,6 @@ std::string MyECallListener::callStateToString(telux::tel::CallState cs) {
       default:
          std::cout << "Unexpected CallState = " << (int)cs << std::endl;
          return std::string("unknown");
-   }
-}
-
-void MyECallListener::onECallMsdTransmissionStatus(int phoneId,
-                                                   telux::common::ErrorCode errorCode) {
-   if(errorCode == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "onECallMsdTransmissionStatus is Success" << std::endl;
-   } else {
-      PRINT_NOTIFICATION
-         << "onECallMsdTransmissionStatus failed with error code: " << static_cast<int>(errorCode)
-         << ":" << Utils::getErrorCodeAsString(errorCode) << std::endl;
    }
 }
 

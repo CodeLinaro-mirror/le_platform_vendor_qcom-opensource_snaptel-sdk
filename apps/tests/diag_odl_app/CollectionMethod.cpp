@@ -127,3 +127,21 @@ void CollectionMethod::getServiceStatus() {
             std::cout << "Service status : unknown" << std::endl;
     }
 }
+
+/*
+ * Drain logs from peripheral's local buffer to Apps buffer.
+ */
+void CollectionMethod::drainBuffer() {
+    telux::platform::diag::Peripherals peripherals{};
+    telux::common::ErrorCode ec{};
+
+    usrInput.takePeripheralsForDraining(peripherals);
+
+    ec = diagMgr_->drainPeripheralBuffers(peripherals);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Can't drain, err " << static_cast<int>(ec) << std::endl;
+        return;
+    }
+
+    std::cout << "Peripherals drained" << std::endl;
+}

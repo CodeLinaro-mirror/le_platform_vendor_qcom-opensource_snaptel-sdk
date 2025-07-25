@@ -20,8 +20,6 @@ class FileMethod : public CollectionMethod,
     ~FileMethod();
 
     void showFileMenu();
-
- private:
 };
 
 #endif // FILEMETHOD_HPP

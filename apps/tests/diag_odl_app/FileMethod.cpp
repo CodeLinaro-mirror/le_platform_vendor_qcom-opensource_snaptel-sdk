@@ -49,8 +49,12 @@ void FileMethod::showFileMenu() {
         ConsoleAppCommand>(ConsoleAppCommand("5", "Get service status", {},
         std::bind(&FileMethod::getServiceStatus, this)));
 
+    std::shared_ptr<ConsoleAppCommand> drainBuffer = std::make_shared<
+        ConsoleAppCommand>(ConsoleAppCommand("6", "Drain peripheral's buffer", {},
+        std::bind(&FileMethod::drainBuffer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> fileCmds = {setConfig,
-        getConfig, startCollection, stopCollection, getSrvStatus};
+        getConfig, startCollection, stopCollection, getSrvStatus, drainBuffer};
 
     ConsoleApp::addCommands(fileCmds);
     ConsoleApp::displayMenu();

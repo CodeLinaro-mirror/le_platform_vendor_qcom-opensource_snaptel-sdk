@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -105,10 +106,14 @@ enum class DiagLogMode {
     STREAMING = 0,
 
     /**
-     * Logs are provided every time peripheral's local buffer is full.
+     * In threshold log collection mode, user specifies 2 thresholds -
+     * high watermark and low watermark.
+     * Refer to @ref BufferedModeConfig::highWaterMark and @ref BufferedModeConfig::lowWaterMark.
      *
      * Logs are flushed to the client when high-watermark is reached, and flushing
-     * continues until low-watermark is reached where buffering start again.
+     * continues until low-watermark is reached where buffering starts again.
+     *
+     * Client can explicitly drain the buffer using @ref IDiagLogManager::drainPeripheralBuffer.
      *
      * Whenever a peripheral wants to pass logs to the client, it raises an interrupt
      * to the application processor. Therefore, for streaming mode, there are frequent
@@ -134,7 +139,6 @@ enum class DiagLogMode {
      * Similar to the THRESHOLD mode, this can also be used to save power.
      *
      * Applicable for only peripherals with its own buffer such as Modem DSP.
-     * Supported only for LogMethod::CALLBACK.
      */
     CIRCULAR_BUFFER
 };
@@ -183,6 +187,7 @@ enum PeripheralType {
     /**
      * Application processor (Apps). On platforms with hypervisor, includes
      * all virtual machines (host and guest).
+     * The APPS logs can be collected ONLY via @ref DiagLogMode::STREAMING mode.
      */
     DIAG_PERIPHERAL_INTEGRATED_AP = (1 << 0),
 
@@ -301,7 +306,8 @@ struct FileMethodConfig {
 };
 
 /**
- * Defines low and high water marks for threshold and circular buffer modes.
+ * Defines low and high water marks for @ref DiagLogMode::THRESHOLD
+ * For file log collection only default watermarks are used.
  */
 struct BufferedModeConfig {
     /**
@@ -310,8 +316,6 @@ struct BufferedModeConfig {
      *
      * Default value is DEFAULT_HIGH_WATER_MARK.
      * Valid range is MIN_WATER_MARK <= highWaterMark <= MAX_WATER_MARK.
-     *
-     * For file method, DEFAULT_HIGH_WATER_MARK is used always.
      */
      uint8_t highWaterMark;
 
@@ -321,14 +325,24 @@ struct BufferedModeConfig {
      *
      * Default value is DEFAULT_LOW_WATER_MARK.
      * Valid range is MIN_WATER_MARK <= lowWaterMark <= MAX_WATER_MARK.
-     *
-     * For file method, DEFAULT_LOW_WATER_MARK is used always.
      */
     uint8_t lowWaterMark;
 };
 
 /**
  * Specifies configuration for the diagnostics log collection process.
+ * Please refer to the below table while setting up the configuration-
+ *
+ * | Log Mode        | File Log Method | Callback Log Method | Is Draining Supported? | Are Watermarks applicable? | APPS log collection | Q6 log collection |
+ * |---------------- |-----------------|---------------------|------------------------|----------------------------|---------------------|-------------------|
+ * | Streaming       | 1               | 1                   | 0                      | 0                          | 1                   | 1                 |
+ * | Threshold       | 1               | 1                   | 1                      | 1                          | 0                   | 1                 |
+ * | CircularBuffer  | 1               | 1                   | 1                      | 0                          | 0                   | 1                 |
+ *
+ * Legends -
+ * 1: Supported
+ * 0: Not supported
+ *
  */
 struct DiagConfig {
     /**
@@ -531,10 +545,17 @@ class IDiagLogManager {
     virtual DiagConfig getConfig() = 0;
 
     /**
-     * Drains logs from the peripheral's local buffer to the diag buffer on the host processor.
-     * The draining continues until the low watermark threshold is reached.
      *
-     * Applicable only for the circular buffering mode.
+     * Draining the buffer refers to clearing of the peripheral's local buffer.
+     *
+     * This is applicable for @ref DiagLogMode::THRESHOLD and @ref DiagLogMode::CIRCULAR_BUFFER
+     *
+     * In the case of Threshold log collection, logs are drained until the
+     * @ref BufferedModeConfig::lowWaterMark is reached.
+     *
+     * In the case of Circular buffer log collection, logs are drained until the buffer is empty.
+     *
+     * This is currently applicable only for @ref PeripheralType::DIAG_PERIPHERAL_MODEM_DSP
      *
      * On platforms with access control enabled, caller needs to have TELUX_DIAG_OPS permission
      * to invoke this API successfully.

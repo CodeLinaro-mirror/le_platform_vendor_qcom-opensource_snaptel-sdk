@@ -88,7 +88,7 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuStat
         << machineName << std::endl;
     SensorUtils::printTcuActivityState(tcuState);
 
-    if (tcuState == TcuActivityState::SUSPEND) {
+    if ((tcuState == TcuActivityState::SUSPEND) || (tcuState == TcuActivityState::SHUTDOWN)) {
         // enable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
             enableFeature(*it);
@@ -96,9 +96,9 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuStat
         Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
             tcuState);
         if (ackStatus == Status::SUCCESS) {
-            std::cout << " Sent SUSPEND acknowledgement" << std::endl;
+            std::cout << " Sent acknowledgement" << std::endl;
         } else {
-            std::cout << " Failed to send SUSPEND acknowledgement !" << std::endl;
+            std::cout << " Failed to send acknowledgement !" << std::endl;
         }
     } else if (tcuState == TcuActivityState::RESUME) {
         // disable MLC feature

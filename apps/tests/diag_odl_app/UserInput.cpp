@@ -20,7 +20,7 @@ void UserInput::takeConfiguration(telux::platform::diag::DiagConfig &cfg) {
     if (cfg.method == telux::platform::diag::LogMethod::FILE) {
         getFileSize(cfg);
     } else {
-        if (cfg.modeType != telux::platform::diag::DiagLogMode::STREAMING) {
+        if (cfg.modeType == telux::platform::diag::DiagLogMode::THRESHOLD) {
             getWaterMark(cfg);
         }
     }
@@ -127,12 +127,8 @@ void UserInput::getSourceInfo(telux::platform::diag::DiagConfig &cfg) {
 void UserInput::getMode(telux::platform::diag::DiagConfig &cfg) {
     uint32_t choice = 0;
 
-    if (cfg.method == telux::platform::diag::LogMethod::FILE) {
-        getChoiceNumberFromUsr("Enter mode (1-streaming, 2-threshold): ", 1, 2, choice);
-    } else {
-        getChoiceNumberFromUsr(
+    getChoiceNumberFromUsr(
             "Enter mode (1-streaming, 2-threshold, 3-circular buffer): ", 1, 3, choice);
-    }
 
     switch (choice) {
         case 1:

@@ -28,39 +28,8 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -85,7 +54,7 @@
 #define DEFAULT_ECNR_MODE 0
 
 AudioClient::AudioClient()
-    : audioMgr_(nullptr) {
+    : audioMgr_(nullptr), ready_(false) {
 }
 
 AudioClient::~AudioClient() {
@@ -106,37 +75,45 @@ Status AudioClient::init() {
     // Get the AudioFactory and AudioManager instances.
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
-    audioMgr_ = audioFactory.getAudioManager();
 
-    //  Check if audio subsystem is ready
-    if (audioMgr_) {
-        ready_ = audioMgr_->isSubsystemReady();
-    } else {
-        std::cout << "Invalid Audio Manager" << std::endl;
+    audioMgr_ = audioFactory.getAudioManager([&prom](ServiceStatus status) {
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if (!audioMgr_) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
         return Status::FAILED;
     }
+
+    //  Check if audio subsystem is ready
     //  If audio subsystem is not ready, wait for it to be ready
-    if (!ready_) {
+    ServiceStatus managerStatus = audioMgr_->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
-        std::future<bool> f = audioMgr_->onSubsystemReady();
-        // If we want to wait unconditionally for audio subsystem to be ready
-        ready_ = f.get();
+        managerStatus = prom.get_future().get();
     }
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
-    if (ready_) {
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;
         setActiveSession(DEFAULT_SLOT_ID);
         loadConfFileData();
+        ready_ = true;
     } else {
         std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return Status::FAILED;
     }
+
     return Status::SUCCESS;
 #else
     return Status::FAILED;

@@ -2165,6 +2165,7 @@ The following managers are currently available in the simulation:
 2. ICellularSecurityManager
 3. IWiFiSecurityManager
 4. ICAControlManager
+5. ICryptoManager
 
 Security APIs Response handling
 """""""""""""""""""""""""""""""
@@ -2308,3 +2309,7 @@ Additional Notes
 """"""""""""""""
 
 1. If the host computer doesn't have the correct permissions, please execute "chmod 0666 /dev/hwrng" to set the correct permissions for the random number generator feature.
+2. In the simulation environment, ICryptoManager does not perform actual cryptographic operations. Instead, it returns predefined (canned) responses based solely on the API call made.
+   Input parameters are not evaluated or used in determining the response. All responses are retrieved from a JSON configuration file located under ``simulation/json/system-state/sec/``.
+   This approach allows consistent simulation behavior for testing and integration without implementing real cryptographic logic.
+

@@ -63,6 +63,7 @@
 #include "sec/SecurityCCSServerImpl.hpp"
 #include "sec/SecurityWCSServerImpl.hpp"
 #include "sec/SecurityCALCServerImpl.hpp"
+#include "sec/SecurityCryptoServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -293,6 +294,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCALCServerImpl> securityCALCService =
         std::make_shared<SecurityCALCServerImpl>();
     builder.RegisterService(securityCALCService.get());
+
+    std::shared_ptr<SecurityCryptoServerImpl> securityCryptoService =
+        std::make_shared<SecurityCryptoServerImpl>();
+    builder.RegisterService(securityCryptoService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

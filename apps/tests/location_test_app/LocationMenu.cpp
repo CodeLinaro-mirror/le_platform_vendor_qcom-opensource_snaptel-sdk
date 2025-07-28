@@ -156,7 +156,6 @@ telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILo
             return telux::common::Status::FAILED;
         }
         locConfigListener_ = std::make_shared<MyLocationConfigListener>();
-        locationInjector_ = std::make_shared<MyLocationInjector>();
     } else {
        std::cout<< "Location configurator is already initialized" << std::endl;
     }
@@ -342,19 +341,6 @@ int LocationMenu::init() {
       ConsoleAppCommand("41", "inject Location data", {},
                         std::bind(&LocationMenu::injectLocationData, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> registerLocationInjector =
-        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("42", "Register Location Injector",
-            {}, std::bind(&LocationMenu::registerLocationInjector, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> deregisterLocationInjector =
-        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("43", "Deregister Location Injector",
-            {}, std::bind(&LocationMenu::deregisterLocationInjector, this, std::placeholders::_1)));
-
-    std::shared_ptr<ConsoleAppCommand> locationInjectLocInjCommand =
-        std::make_shared<ConsoleAppCommand>(
-            ConsoleAppCommand("44", "inject Location data via Location Injector", {},
-                std::bind(&LocationMenu::injectLocationDataLocInj, this, std::placeholders::_1)));
-
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
         = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -368,8 +354,7 @@ int LocationMenu::init() {
         requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
         configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
-        locationInjectCommand, registerLocationInjector, deregisterLocationInjector,
-        locationInjectLocInjCommand};
+        locationInjectCommand};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1937,101 +1922,6 @@ void LocationMenu::autoInjectLocationData() {
         }
         uint32_t rateOfInjection = locConfigListener_->getLocInjectionRate();
         while (locConfigListener_->getLocationInjectionFlag()) {
-            telux::common::Status status = locationConfigurator_->injectLocationData(info);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;
-            } else {
-                std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(rateOfInjection));
-        }
-    }};
-    reportThread.detach();
-    return;
-}
-
-void LocationMenu::registerLocationInjector(std::vector<std::string> userInput) {
-   if (locationConfigurator_) {
-       telux::common::Status status = telux::common::Status::FAILED;
-       status = locationConfigurator_->registerLocationInjector(locationInjector_);
-       if (status ==  telux::common::Status::SUCCESS) {
-           std::cout << "Registered injector successfully " << std::endl;
-        } else {
-           std::cout << "Registered injector Failed with Status: " << static_cast<int>(status)
-               << std::endl;
-        }
-   }
-}
-
-void LocationMenu::deregisterLocationInjector(std::vector<std::string> userInput) {
-    if (locationConfigurator_) {
-        telux::common::Status status = telux::common::Status::FAILED;
-        status = locationConfigurator_->deregisterLocationInjector(locationInjector_);
-        if (status ==  telux::common::Status::SUCCESS) {
-            std::cout << "deRegistered injector successfully " << std::endl;
-        } else {
-            std::cout << "deRegistered injector Failed with Status: " << static_cast<int>(status)
-                << std::endl;
-        }
-    }
-}
-
-void LocationMenu::injectLocationDataLocInj(std::vector<std::string> userInput) {
-    if(locationConfigurator_) {
-        uint32_t option;
-        std::cout << "Press 1 for auto-inject reports at reported rate : " << std::endl;
-        std::cout << "Press 0 for manually injecting reports at your desired rate : "<< std::endl;
-        std::cin >> option;
-        Utils::validateInput(option);
-       if (option) {
-           autoInjectLocationDataLocInj();
-       } else {
-           manualInjectLocationDataLocInj();
-       }
-       return;
-    }
-}
-
-void LocationMenu::manualInjectLocationDataLocInj() {
-    uint32_t rateOfInjection;
-    std::cout << "Enter Rate of injection : ";
-    std::cin >> rateOfInjection;
-    Utils::validateInput(rateOfInjection);
-
-    uint32_t numOfReports;
-    std::cout << "Enter Number of reports to be injected : ";
-    std::cin >> numOfReports;
-    Utils::validateInput(numOfReports);
-
-    telux::loc::ExternalLocationInfo info{};
-    populateExternalLocationData(info);
-
-    std::thread reportThread = std::thread{[=] {
-        for (uint32_t i = 0; i < numOfReports; i++) {
-            telux::common::Status status = locationConfigurator_->injectLocationData(info);
-            if (status == telux::common::Status::SUCCESS) {
-                std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;
-            } else {
-                std::cout << __FUNCTION__ << " Command Failed" << std::endl;
-            }
-                std::this_thread::sleep_for(std::chrono::milliseconds(rateOfInjection));
-            }
-        } };
-    reportThread.detach();
-    return;
-}
-
-void LocationMenu::autoInjectLocationDataLocInj() {
-    telux::loc::ExternalLocationInfo info{};
-    populateExternalLocationData(info);
-
-    std::thread reportThread = std::thread{[=] {
-        while (!(locationInjector_->getLocationInjectionFlag())) {
-            std::cout << "The onStartInjection API is not received! " << std::endl;
-            locationInjector_->waitForInjectionNotification();
-        }
-        uint32_t rateOfInjection = locationInjector_->getLocInjectionRate();
-        while (locationInjector_->getLocationInjectionFlag()) {
             telux::common::Status status = locationConfigurator_->injectLocationData(info);
             if (status == telux::common::Status::SUCCESS) {
                 std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;

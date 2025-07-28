@@ -1506,33 +1506,6 @@ void MyLocationConfigListener::waitForInjectionNotification() {
     return;
 }
 
-void MyLocationInjector::onStartInjection(const uint32_t timeInMilliSeconds) {
-    std::cout << std::endl;
-    PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
-    std::cout << "<<< onStartInjection\n" << std::endl;
-    std::cout << "Maximum rate of injection is: (in milliseconds) "
-        << timeInMilliSeconds << std::endl;
-    std::unique_lock<std::mutex> lock(mutex_);
-    enableLocationInjection_ = true;
-    LocationInjectionRate_ = timeInMilliSeconds;
-    cv_.notify_all();
-}
-
-void MyLocationInjector::onStopInjection() {
-   std::cout << std::endl;
-   PRINT_NOTIFICATION << "\n********* Location report inject Information ********" << std::endl;
-   std::cout << "<<< onStopInjection\n" << std::endl;
-   std::unique_lock<std::mutex> lock(mutex_);
-   enableLocationInjection_ = false;
-   cv_.notify_all();
-}
-
-void MyLocationInjector::waitForInjectionNotification() {
-    std::unique_lock<std::mutex> lock(mutex_);
-    cv_.wait(lock);
-    return;
-}
-
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
    isDetailedReportFlagEnabled_ = enable;
 }
@@ -1582,16 +1555,6 @@ bool MyLocationConfigListener::getLocationInjectionFlag() {
 }
 
 uint32_t MyLocationConfigListener::getLocInjectionRate() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return LocationInjectionRate_;
-}
-
-bool MyLocationInjector::getLocationInjectionFlag() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return enableLocationInjection_;
-}
-
-uint32_t MyLocationInjector::getLocInjectionRate() {
     std::lock_guard<std::mutex> lock(mutex_);
     return LocationInjectionRate_;
 }

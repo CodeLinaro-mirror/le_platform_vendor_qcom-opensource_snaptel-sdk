@@ -122,11 +122,6 @@ public:
    void injectLocationData(std::vector<std::string> userInput);
    void manualInjectLocationData();
    void autoInjectLocationData();
-   void registerLocationInjector(std::vector<std::string> userInput);
-   void deregisterLocationInjector(std::vector<std::string> userInput);
-   void injectLocationDataLocInj(std::vector<std::string> userInput);
-   void manualInjectLocationDataLocInj();
-   void autoInjectLocationDataLocInj();
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>
@@ -138,7 +133,6 @@ private:
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<MyLocationListener> posListener_;
    std::shared_ptr<MyLocationConfigListener> locConfigListener_;
-   std::shared_ptr<MyLocationInjector> locationInjector_;
    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
    std::shared_ptr<ILocationConfigurator> locationConfigurator_ = nullptr;
    std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;

@@ -133,20 +133,4 @@ class MyLocationConfigListener : public telux::loc::ILocationConfigListener {
     std::condition_variable cv_;
 };
 
-class MyLocationInjector : public telux::loc::ILocationInjectionListener {
-  public:
-    void onStartInjection(const uint32_t timeInMilliSeconds) override;
-    void onStopInjection() override;
-    bool getLocationInjectionFlag();
-    uint32_t getLocInjectionRate();
-    void waitForInjectionNotification();
-
-    ~MyLocationInjector() {}
-  private:
-    bool enableLocationInjection_ = false;
-    uint32_t LocationInjectionRate_ = 0;
-    std::mutex mutex_;
-    std::condition_variable cv_;
-};
-
 #endif  // MYLOCATIONLISTENER_HPP

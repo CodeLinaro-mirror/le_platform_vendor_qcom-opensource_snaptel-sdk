@@ -26,11 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,6 +50,15 @@
 #include <unistd.h>
 #include <vector>
 #include <telux/common/CommonDefines.hpp>
+#include <cstring>
+#include <cstdlib>
+
+extern "C" {
+    #include <sys/capability.h>
+    #include <sys/prctl.h>
+    #include <pwd.h>
+    #include <cerrno>
+}
 
 #define SEC_TO_NANOS 1000000000
 #define SEC_TO_MICROS 1000000
@@ -134,6 +142,12 @@ public:
    static size_t removeDuplicateGroups(std::vector<std::string> & grps);
 
    static int setSupplementaryGroups(std::vector<std::string> grps);
+
+   /**
+    * This function transitions from root to a non-root user if a valid user name is provided via
+    * environment variable "TELUX_USERNAME" and if a valid list of capabilities are passed.
+    */
+   static telux::common::ErrorCode transitionToNonRootUser(std::unordered_set<int8_t>& newUserCaps);
 
    /*Change to specified non-root user, keep specified capabilities for the new user,
     *this need setuid and setcap selinux policy support

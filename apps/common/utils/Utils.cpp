@@ -26,11 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -39,12 +38,6 @@
  *
  * @brief      This class performs error code to string conversion.
  */
-
-extern "C" {
-#include <sys/capability.h>
-#include <sys/prctl.h>
-#include <pwd.h>
-}
 
 #include <cstring>
 #include <iostream>
@@ -408,6 +401,24 @@ int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
     return ret;
 }
 
+telux::common::ErrorCode Utils::transitionToNonRootUser(std::unordered_set<int8_t>& newUserCaps) {
+    char *newUser = nullptr;
+    if ((newUser = std::getenv("TELUX_USER")) && (getuid() == 0)) {
+        auto rc = Utils::changeUser(newUser, newUserCaps);
+        if(rc != telux::common::ErrorCode::SUCCESS) {
+            std::cerr << "Failed to switch to user: " << newUser << " - " <<
+                Utils::getErrorCodeAsString(rc) << std::endl;
+        }
+        return rc;
+    } else {
+        /**
+         * User may have launched application as root only (i.e, env variable is empty) or may have
+         * launched the application in a non-root shell (eg: adb shell).
+         */
+        return telux::common::ErrorCode::SUCCESS;
+    }
+}
+
 telux::common::ErrorCode Utils::changeUser(std::string userName,
     std::unordered_set<int8_t>& caps) {
     if (userName.empty()) {
@@ -418,40 +429,45 @@ telux::common::ErrorCode Utils::changeUser(std::string userName,
     if ((p = getpwnam(userName.c_str())) == NULL) {
         return telux::common::ErrorCode::MISSING_RESOURCE;
     }
+    setgid(p->pw_gid);
 
-    /*Allow retain capabilities in its permitted set when switches to non root user*/
-    prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
-
-    /*Switch to specified user*/
-    if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) == -1) {
-        return telux::common::ErrorCode::NOT_SUPPORTED;
-    }
-
-    if (caps.empty()) {
-        return telux::common::ErrorCode::SUCCESS;
-    }
-    /*Retain necessary capabilities for the new user*/
-    struct __user_cap_header_struct header = {0};
-    /* V3 supported since Linux 2.6.26 */
-    header.version = _LINUX_CAPABILITY_VERSION_3;
-
-    struct __user_cap_data_struct capSet[CAP_TO_INDEX(CAP_LAST_CAP) + 1] = {0};
-    bool hasValidCaps = false;
-    for (auto& cap : caps) {
-        if (cap_valid(cap)) {
-            hasValidCaps = true;
-            capSet[CAP_TO_INDEX(cap)].effective |= CAP_TO_MASK(cap);
-            capSet[CAP_TO_INDEX(cap)].permitted |= CAP_TO_MASK(cap);
+    /**
+     * Set caps while transitioning to non-root.
+     * Transition to non-root without any caps removes all prm, eff and inhcaps by default.
+     */
+    if (!caps.empty()) {
+        /*Allow retain capabilities in its permitted set when switches to non root user*/
+        prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+        /*Switch to specified user*/
+        if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) == -1) {
+            return telux::common::ErrorCode::NOT_SUPPORTED;
         }
-    }
-
-    if (hasValidCaps) {
-        if (capset(&header, &capSet[0]) == -1) {
+        /*Retain necessary capabilities for the new user*/
+        struct __user_cap_header_struct header = {0};
+        /* V3 supported since Linux 2.6.26 */
+        header.version = _LINUX_CAPABILITY_VERSION_3;
+        struct __user_cap_data_struct capSet[CAP_TO_INDEX(CAP_LAST_CAP) + 1] = {0};
+        bool hasValidCaps = false;
+        for (auto &cap : caps) {
+            if (cap_valid(cap)) {
+                hasValidCaps = true;
+                capSet[CAP_TO_INDEX(cap)].effective |= CAP_TO_MASK(cap);
+                capSet[CAP_TO_INDEX(cap)].permitted |= CAP_TO_MASK(cap);
+            }
+        }
+        if (!hasValidCaps) {
+            return telux::common::ErrorCode::NO_SUCH_ELEMENT;
+        }
+        if (capset(&header, capSet) == -1) {
             return telux::common::ErrorCode::NO_PERMISSION;
         }
     } else {
-        return telux::common::ErrorCode::NO_SUCH_ELEMENT;
+        /*Switch to specified user*/
+        if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) == -1) {
+            return telux::common::ErrorCode::NOT_SUPPORTED;
+        }
     }
+
     return telux::common::ErrorCode::SUCCESS;
 }
 

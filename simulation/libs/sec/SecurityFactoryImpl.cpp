@@ -43,6 +43,31 @@ std::shared_ptr<ICryptoManager> SecurityFactoryImpl::getCryptoManager(
     telux::common::ErrorCode &ec) {
 
     std::shared_ptr<CryptoManagerImpl> cryptMgr;
+
+    std::lock_guard<std::mutex> lock(secFactoryGuard_);
+
+    cryptMgr = cryptMgr_.lock();
+    if (cryptMgr) {
+        ec = telux::common::ErrorCode::SUCCESS;
+        return cryptMgr;
+    }
+
+    try {
+        cryptMgr = std::make_shared<CryptoManagerImpl>();
+    } catch (const std::exception &e) {
+        ec = telux::common::ErrorCode::NO_MEMORY;
+        LOG(ERROR, __FUNCTION__, " can't create CryptoManagerImpl");
+        return nullptr;
+    }
+
+    ec = cryptMgr->init();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        return nullptr;
+    }
+
+    /* Save reference locally */
+    cryptMgr_ = cryptMgr;
+
     return cryptMgr;
 }
 

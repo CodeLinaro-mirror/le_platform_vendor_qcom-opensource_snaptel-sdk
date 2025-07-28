@@ -64,6 +64,7 @@
 #include "sec/SecurityWCSServerImpl.hpp"
 #include "sec/SecurityCALCServerImpl.hpp"
 #include "satcom/NtnServerImpl.hpp"
+#include "sec/SecurityCryptoServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -298,6 +299,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<NtnServerImpl> NtnService =
         std::make_shared<NtnServerImpl>();
     builder.RegisterService(NtnService.get());
+
+    std::shared_ptr<SecurityCryptoServerImpl> securityCryptoService =
+        std::make_shared<SecurityCryptoServerImpl>();
+    builder.RegisterService(securityCryptoService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

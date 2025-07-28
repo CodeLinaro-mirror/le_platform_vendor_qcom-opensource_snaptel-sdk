@@ -29,7 +29,6 @@ class CallbackMethod : public CollectionMethod,
 
  private:
     std::shared_ptr<LogsReceiver> logsReceiver_;
-    void drainPeripheralBuffer();
 };
 
 #endif // CALLBACKMETHOD_HPP

@@ -42,24 +42,6 @@ CallbackMethod::~CallbackMethod() {
 }
 
 /*
- * Drain logs from peripheral's local buffer to Apps buffer.
- */
-void CallbackMethod::drainPeripheralBuffer() {
-    telux::platform::diag::Peripherals peripherals{};
-    telux::common::ErrorCode ec{};
-
-    usrInput.takePeripheralsForDraining(peripherals);
-
-    ec = diagMgr_->drainPeripheralBuffers(peripherals);
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "Can't drain, err " << static_cast<int>(ec) << std::endl;
-        return;
-    }
-
-    std::cout << "Peripherals drained" << std::endl;
-}
-
-/*
  * Setup callback method relevant resources.
  */
 int CallbackMethod::initCallbackMethod() {
@@ -105,7 +87,7 @@ void CallbackMethod::showCallbackMenu() {
 
     std::shared_ptr<ConsoleAppCommand> drainBuffer = std::make_shared<
         ConsoleAppCommand>(ConsoleAppCommand("5", "Drain peripheral's buffer", {},
-        std::bind(&CallbackMethod::drainPeripheralBuffer, this)));
+        std::bind(&CallbackMethod::drainBuffer, this)));
 
     std::shared_ptr<ConsoleAppCommand> getSrvStatus = std::make_shared<
         ConsoleAppCommand>(ConsoleAppCommand("6", "Get service status", {},

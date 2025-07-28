@@ -27,6 +27,7 @@ class CollectionMethod : public ConsoleApp {
     void startCollection();
     void stopCollection();
     void getServiceStatus();
+    void drainBuffer();
 };
 
 #endif // COLLECTIONMETHOD_HPP

@@ -1,7 +1,7 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -96,6 +96,12 @@ int main(int argc, char **argv) {
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Wlan Test App: Adding supplementary groups failed!" << std::endl;
+    }
+    std::unordered_set<int8_t> newUserCaps {};
+    auto retVal = Utils::transitionToNonRootUser(newUserCaps);
+    if (retVal != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "User transition failed! " << std::endl;
+        // continue even if switch to non-root user fails.
     }
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Wlan Test App v" + std::to_string(sdkVersion.major) + "."

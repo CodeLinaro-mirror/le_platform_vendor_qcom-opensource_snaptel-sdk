@@ -378,6 +378,12 @@ int main(int argc, char **argv) {
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
+    std::unordered_set<int8_t> newUserCaps {};
+    auto retVal = Utils::transitionToNonRootUser(newUserCaps);
+    if (retVal != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "User transition failed! " << std::endl;
+        // continue even if switch to non-root user fails.
+    }
     thermalTestApp_ = std::make_shared<ThermalTestApp>(APP_NAME, "Therm> ");
     signal(SIGINT, signalHandler);
     // initialize commands and display

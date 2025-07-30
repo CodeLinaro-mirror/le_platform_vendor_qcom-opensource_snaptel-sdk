@@ -62,6 +62,17 @@ service SecurityCryptoManagerService {
     rpc DecryptData (DecryptDataRequest) returns (DecryptDataResponse) {}
 }
 
+/* Crypto Accelerator Manager service */
+service CryptoAcceleratorManagerService {
+    rpc Init (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc DeInit (google.protobuf.Empty) returns (commonStub.ErrorCodeMsg) {}
+    rpc EccVerifyDigest (EccVerificationRequest) returns (EccVerificationResponse) {}
+    rpc EcqvPointMultiplyAndAdd (EcqvRequest) returns (EcqvResponse) {}
+    rpc EccPostDigestForVerification (EccVerificationRequest) returns (EccPostVerificationResponse) {}
+    rpc EcqvPostDataForMultiplyAndAdd (EcqvRequest) returns (EcqvPostResponse) {}
+    rpc GetAsyncResults (GetAsyncResultsRequest) returns (GetAsyncResultsResponse) {}
+}
+
 /* Random number generator messages */
 message RNGSource {
     enum Source {
@@ -276,4 +287,99 @@ message DecryptDataRequest {
 message DecryptDataResponse {
     bytes decrypted_text = 1;
     commonStub.ErrorCode error_code = 2;
+}
+
+/* Crypto Accelerator Manager messages */
+message EccVerificationRequest {
+    bytes digest = 1;
+    bytes public_key_x = 2;
+    bytes public_key_y = 3;
+    bytes signature_r = 4;
+    bytes signature_s = 5;
+    EccCurve curve = 6;
+    uint32 uniqueId = 7;
+    RequestPriority priority = 8;
+    Mode mode = 9;
+}
+
+message EcqvRequest {
+    bytes multiplicand_point_x = 1;
+    bytes multiplicand_point_y = 2;
+    bytes addend_point_x = 3;
+    bytes addend_point_y = 4;
+    bytes scalar = 5;
+    EccCurve curve = 6;
+    uint32 uniqueId = 7;
+    RequestPriority priority = 8;
+    Mode mode = 9;
+}
+
+message EccVerificationResponse {
+    bytes resultData = 1;
+    commonStub.ErrorCode error_code = 2;
+}
+
+message EccPostVerificationResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error_code = 2;
+    int32 delay = 3;
+    bytes resultData = 4;
+}
+
+message EcqvResponse {
+    bytes resultData = 1;
+    commonStub.ErrorCode error_code = 2;
+}
+
+message EcqvPostResponse {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error_code = 2;
+    int32 delay = 3;
+    bytes resultData = 4;
+}
+
+message GetAsyncResultsRequest {
+    uint32 numResultsToRead = 1;
+    int32 timeout = 2;
+}
+
+message GetAsyncResultsResponse {
+    repeated OperationResult results = 1;
+    uint32 numResultsRead = 2;
+    commonStub.ErrorCode error_code = 3;
+}
+
+message CryptoAccServiceStatus {
+    commonStub.ServiceStatus service_status = 1;
+}
+
+message OperationResult {
+    uint32 id = 1;
+    OperationType operationType = 2;
+    commonStub.ErrorCode error_code = 3;
+    bytes data = 4;
+}
+
+enum EccCurve {
+    CURVE_SM2 = 0;
+    CURVE_NISTP256 = 1;
+    CURVE_NISTP384 = 2;
+    CURVE_BRAINPOOLP256R1 = 3;
+    CURVE_BRAINPOOLP384R1 = 4;
+}
+
+enum RequestPriority {
+    REQ_PRIORITY_HIGH = 0;
+    REQ_PRIORITY_NORMAL = 1;
+}
+
+enum Mode {
+    MODE_SYNC = 0;
+    MODE_ASYNC_POLL = 1;
+    MODE_ASYNC_LISTENER = 2;
+}
+
+enum OperationType {
+    OP_TYPE_VERIFY = 0;
+    OP_TYPE_CALCULATE = 1;
 }

@@ -28,6 +28,7 @@
  */
 
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -1738,9 +1739,9 @@ IFirewallManager is used to access all Firewall APIs.
 5. On success, application calls IVlanManager::createVlan with assigned id, interface, and acceleration type.
 6. Application receives synchronous Status which indicates if the IVlanManager::createVlan request was sent successfully.
 7. Application is notified of the Status of the IVlanManager::createVlan request (either SUCCESS or FAILED) via the application-supplied callback.
-8. Application calls IVlanManager::bindWithProfile with Vlan id and profile id.
-9. Application receives synchronous Status which indicates if the IVlanManager::bindWithProfile request was sent successfully.
-7. Application is notified of the Status of the IVlanManager::bindWithProfile request (either SUCCESS or FAILED) via the application-supplied callback.
+8. Application calls IVlanManager::bindToBackhaul with Vlan id and profile id.
+9. Application receives synchronous Status which indicates if the IVlanManager::bindToBackhaul request was sent successfully.
+7. Application is notified of the Status of the IVlanManager::bindToBackhaul request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_vlan_lan2lan_eap LAN-LAN VLAN Configuration from EAP usecase call flow
 
@@ -1851,9 +1852,9 @@ IFirewallManager is used to access all Firewall APIs.
 15. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
 16. Vlan manager returns synchronous response to application (success/fail).
 17. Vlan manager calls application provided callback in step 15 with createVlan results.
-18. Application calls IVlanManager::bindWithProfile with profile id to bind with.
+18. Application calls IVlanManager::bindToBackhaul with profile id to bind with.
 19. Vlan manager returns synchronous response to application (success/fail).
-20. Vlan manager calls application provided callback in step 18 with bindWithProfile results.
+20. Vlan manager calls application provided callback in step 18 with bindToBackhaul results.
 If DMZ is needed:
   21. Application requests data factory for firewall manager object.
   22. Data factory returns shared pointer to firewall manager to application.
@@ -1862,7 +1863,7 @@ If DMZ is needed:
     24.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
          provided in step 21.
     24.2 Firewall manager calls application callback with initialization result (success/failure).
-  25. Application calls firewall manager enableDmz with profile id and local address to be enable Dmz on.
+  25. Application calls firewall manager enableDmz with DmzConfig.
   26. Firewall manager returns synchronous response to application (success/fail).
   27. Firewall manager calls application provided callback in step 25 with enableDmz results.
 28. Application requests data factory for data connection manager object.
@@ -1904,9 +1905,9 @@ If DMZ is needed:
 8. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
 9. Vlan manager returns synchronous response to application (success/fail).
 10. Vlan manager calls application provided callback in step 8 with createVlan results.
-11. Application calls IVlanManager::bindWithProfile with profile id to bind with.
+11. Application calls IVlanManager::bindToBackhaul with profile id to bind with.
 12. Vlan manager returns synchronous response to application (success/fail).
-13. Vlan manager calls application provided callback in step 11 with bindWithProfile results.
+13. Vlan manager calls application provided callback in step 11 with bindToBackhaul results.
 If DMZ is needed:
   14. Application requests data factory for firewall manager object.
   15. Data factory returns shared pointer to firewall manager to application.
@@ -1915,7 +1916,7 @@ If DMZ is needed:
     17.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
          provided in step 14.
     17.2 Firewall manager calls application callback with initialization result (success/failure).
-  18. Application calls firewall manager enableDmz with profile id and local address to be enable Dmz on.
+  18. Application calls firewall manager enableDmz with DmzConfig.
   19. Firewall manager returns synchronous response to application (success/fail).
   20. Firewall manager calls application provided callback in step 25 with enableDmz results.
 21. Application requests data factory for data connection manager object.
@@ -1952,7 +1953,7 @@ If DMZ is needed:
   4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
   4.2 Nat manager calls application callback with initialization result (success/failure).
-5. On success, application calls nat manager addStaticNatEntry with profileId, private IP address port, private port, global port and IP Protocol.
+5. On success, application calls nat manager addStaticNatEntry with backhaul information, private IP address port, private port, global port and IP Protocol.
 6. Application receives synchronous Status which indicates if the nat manager addStaticNatEntry request was sent successfully.
 7. Application is notified of the result of the nat manager addStaticNatEntry request (either SUCCESS or FAILED) via the application-supplied callback.
 
@@ -1979,9 +1980,9 @@ If DMZ is needed:
 4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
     provided in step 1.
 4.2 Firewall manager calls application callback with initialization result (success/failure).
-5. On success, application calls firewall manager setFirewall with enable/disable and allow/drop packets.
-6. Application receives synchronous Status which indicates if the firewall manager setFirewall request was sent successfully.
-7. Application is notified of the Status of the firewall manager setFirewall request (either SUCCESS or FAILED) via the application-supplied callback.
+5. On success, application calls firewall manager setFirewallConfig with enable/disable and allow/drop packets.
+6. Application receives synchronous Status which indicates if the firewall manager setFirewallConfig request was sent successfully.
+7. Application is notified of the Status of the firewall manager setFirewallConfig request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_add_firewall_entry_callflow Add Firewall Entry in data Firewall manager call flow
 
@@ -2011,7 +2012,7 @@ If DMZ is needed:
 7. Using Firewall Entry object, application calls IFirewallEntry::getIProtocolFilter to get protocol filter object
 8. Application receives IpFilter object.
 9. Application populates FirewallEntry and IpFilter objects.
-10. Application calls IFirewallManager::addFirewallEntry with profileId and FirewallEntry to add firewall entry
+10. Application calls IFirewallManager::addFirewallEntry with FirewallEntryInfo to add firewall entry
 11. Application receives synchronous Status which indicates if addFirewallEntry was sent successfully
 12. Application is notified of the Status of the IFirewallManager::addFirewallEntry request (either SUCCESS or FAILED) via the application-supplied callback.
 
@@ -2039,7 +2040,7 @@ If DMZ is needed:
   4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
       provided in step 1.
   4.2 Firewall manager calls application callback with initialization result (success/failure).
-5. On success, application calls firewall manager enableDmz with profileId and IP Address.
+5. On success, application calls firewall manager enableDmz with DmzConfig.
 6. Application receives synchronous Status which indicates if the firewall manager enableDmz request was sent successfully.
 7. Application is notified of the Status of the firewall manager enableDmz request (either SUCCESS or FAILED) via the application-supplied callback.
 

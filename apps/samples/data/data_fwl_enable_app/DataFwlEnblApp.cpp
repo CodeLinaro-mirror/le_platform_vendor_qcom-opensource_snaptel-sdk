@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -98,17 +104,29 @@ int main(int argc, char *argv[]) {
       auto respCb = [&](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
-                   << "setFirewall Response"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed");
+                  << "setFirewallConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed");
          promise.set_value(1);
       };
 
       // [5] Configure firewall
-      std::future<int> future = promise.get_future();
-      dataFwMgr->setFirewall(profileId, fwEnable, allowPackets, respCb, slotId);
+      struct telux::data::net::FirewallConfig config;
+      config.bhInfo.slotId = slotId;
+      config.bhInfo.profileId = profileId;
+      config.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+      config.enable = fwEnable;
+      config.allowPackets = allowPackets;
 
-      // [6] Wait for callback - this is optional
-      int tmp = future.get();
+      std::future<int> future = promise.get_future();
+      telux::common::Status status = dataFwMgr->setFirewallConfig(config, respCb);
+
+      if (status == telux::common::Status::SUCCESS) {
+         // [6] Wait for callback - this is optional
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to configure firewall *** " << std::endl;
+      }
+
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";

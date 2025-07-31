@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -104,10 +110,14 @@ int main(int argc, char *argv[]) {
 
       std::future<int> future = promise.get_future();
       // [5] enable Socks
-      dataSocksMgr->enableSocks(enable, respCb);
+      telux::common::Status status = dataSocksMgr->enableSocks(enable, respCb);
 
       // [6] Wait for enable Socks callback - this is optional
-      int tmp = future.get();
+      if (status == telux::common::Status::SUCCESS) {
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to enableSocks *** " << std::endl;
+      }
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";

@@ -56,14 +56,27 @@ by calling step 2. If NatManager initialization succeed, proceed to step 4.
    };
    ~~~~~~
 
-### 5. Create Snat entry based on profile id, local ip, local port, global port, and protocol
+### 5. Create Snat entry based on backhaul information, local ip, local port, global port, and protocol
 
    ~~~~~~{.cpp}
+   struct telux::data::net::NatSetting natSetting;
+   natSetting.bhInfo.slotId = slotId;
+   natSetting.bhInfo.profileId = profileId;
+   natSetting.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+   struct telux::data::net::NatConfig natConfig;
    natConfig.addr = ipAddr;
    natConfig.port = (uint16_t)localIpPort;
    natConfig.globalPort = (uint16_t)globalIpPort;
    natConfig.proto = (uint8_t)proto;
-   dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
+   natSetting.config = natConfig;
+   telux::common::Status addStaticNatEntryStatus =
+      dataSnatMgr->addStaticNatEntry(natSetting, respCb);
+
+   if (addStaticNatEntryStatus == telux::common::Status::SUCCESS) {
+      int tmp = future.get();
+   } else {
+      std::cout << " *** ERROR - Unable to addStaticNatEntry *** " << std::endl;
+   }
    ~~~~~~
 
 Now, response callback will be called for the addStaticNatEntry response.

@@ -64,4 +64,4 @@ by calling step 2. If SocksManager initialization succeed, proceed to step 4.
     dataSocksMgr->enableSocks(enable, respCb);
    ~~~~~~
 
-Now, response callback will be called for the setFirewall response.
+Now, response callback will be called for the enableSocks response.

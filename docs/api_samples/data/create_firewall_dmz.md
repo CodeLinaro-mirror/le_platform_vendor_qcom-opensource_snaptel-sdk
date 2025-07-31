@@ -55,10 +55,15 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4.
    };
    ~~~~~~
 
-### 5. Create DMZ based on profile id and local ip address
+### 5. Create DMZ based on DmzConfig
 
    ~~~~~~{.cpp}
-   dataFwMgr->enableDmz(profileId,ipAddr, respCb);
+   DmzConfig config;
+   config.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+   config.bhInfo.slotId = slotId;
+   config.bhInfo.profileId = profileId;
+   config.ipAddr = ipAddr;
+   dataFwMgr->enableDmz(config, respCb);
    ~~~~~~
 
 Now, response callback will be called for the addDmz response.

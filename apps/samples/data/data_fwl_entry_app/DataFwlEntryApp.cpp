@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -196,14 +202,30 @@ int main(int argc, char *argv[]) {
                   << "addFirewallEntry Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error) << std::endl;
-                  promise.set_value(1);
+         promise.set_value(1);
       };
 
       std::future<int> future = promise.get_future();
-      dataFwMgr->addFirewallEntry(profileId, fwEntry, respCb, slotId);
 
-      // [9] Wait for callback - this is optional
-      int tmp = future.get();
+      // Create a FirewallEntryInfo instance
+      telux::data::net::FirewallEntryInfo entry;
+      entry.fwEntry = fwEntry; // Assuming fwEntry is a shared pointer to IFirewallEntry
+      telux::data::BackhaulInfo bhInfo;
+      bhInfo.slotId = slotId;
+      bhInfo.profileId = profileId;
+      bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+      entry.bhInfo = bhInfo;
+
+      telux::common::Status addFirewallEntryStatus =
+         dataFwMgr->addFirewallEntry(entry, respCb);
+
+      if (addFirewallEntryStatus == telux::common::Status::SUCCESS) {
+         // [9] Wait for callback - this is optional
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to addFirewallEntry *** " << std::endl;
+      }
+
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";

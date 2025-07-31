@@ -50,7 +50,7 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4.
    auto respCb = [](telux::common::ErrorCode error) {
       std::cout << std::endl << std::endl;
       std::cout << "CALLBACK: "
-                  << "setFirewall Response"
+                  << "setFirewallConfig Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed");
    };
    ~~~~~~
@@ -58,7 +58,15 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4.
 ### 5. set firewall mode based on profileId, enable/disable and allow/drop packets
 
    ~~~~~~{.cpp}
-   dataFwMgr->setFirewall(profileId,fwEnable, allowPackets, respCb);
+   struct telux::data::net::FirewallConfig config;
+   config.bhInfo.slotId = slotId;
+   config.bhInfo.profileId = profileId;
+   config.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+   config.enable = fwEnable;
+   config.allowPackets = allowPackets;
+
+   std::future<int> future = promise.get_future();
+   dataFwMgr->setFirewallConfig(config, respCb);
    ~~~~~~
 
-Now, response callback will be called for the setFirewall response.
+Now, response callback will be called for the setFirewallConfig response.

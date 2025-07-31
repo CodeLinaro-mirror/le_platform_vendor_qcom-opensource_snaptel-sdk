@@ -70,22 +70,27 @@ by calling step 2. If VlanManager initialization succeed, proceed to step 4.
 
 Now, response callback will be called for the createVlan response.
 
-### 6. Implement callback for bindWithprofile reponse
+### 6. Implement callback for bindToBackhaul reponse
 
    ~~~~~~{.cpp}
    auto respCbBind = [](telux::common::ErrorCode error) {
-      std::cout << std::endl << std::endl;
-      std::cout << "CALLBACK: "
-                  << "bindWithProfile Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error) << std::endl;
+   std::cout << std::endl << std::endl;
+   std::cout << "CALLBACK: "
+             << "bindToBackhaul Response"
+             << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+             << ". ErrorCode: " << static_cast<int>(error) << std::endl;
    };
    ~~~~~~
 
 ### 7. Bind created Vlan with user provided profile id
 
    ~~~~~~{.cpp}
-   dataVlanMgr->bindWithProfile(profileId, vlanId, respCbBind);
+   telux::data::net::VlanBindConfig bindConfig;
+   bindConfig.vlanId = vlanId;
+   bindConfig.bhInfo.slotId = slotId;
+   bindConfig.bhInfo.profileId = profileId;
+   bindConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+   dataVlanMgr->bindToBackhaul(bindConfig, respCbBind);
    ~~~~~~
 
-Now, response callback will be called for the bindWithProfile response.
+Now, response callback will be called for the bindToBackhaul response.

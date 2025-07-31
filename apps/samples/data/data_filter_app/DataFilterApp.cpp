@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -68,6 +38,8 @@
 #include <cstdlib>
 
 #include <telux/data/DataFactory.hpp>
+
+//Based on the value standardized by IANA
 #define PROTO_TCP 6
 #define PROTO_UDP 17
 /**
@@ -140,25 +112,27 @@ private:
 int main(int argc, char *argv[]) {
    // [1] Get the DataFactory
    auto &dataFactory = telux::data::DataFactory::getInstance();
-   // [1.1] Get data connection manager object
-   auto dataConnMgr = dataFactory.getDataConnectionManager();
-   // [1.2] Get data filter manager object
-   auto dataFilterMgr = dataFactory.getDataFilterManager();
 
    // [2] Check if data connection subsystem is ready
-   bool dataConnectionSubSystemStatus = dataConnMgr->isSubsystemReady();
+   SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+   bool dataConnectionSubSystemStatus = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::function<void(telux::common::ServiceStatus)> initCb =
+   [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      dataConnectionSubSystemStatus = true;
+      initCv.notify_all();
+   };
 
-   // [2.1] If data connection subsystem is not ready, wait for it to be ready
-   if(!dataConnectionSubSystemStatus) {
-      std::cout << "DATA connection subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = dataConnMgr->onSubsystemReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      dataConnectionSubSystemStatus = f.get();
+   auto dataConnMgr = dataFactory.getDataConnectionManager(slotId, initCb);
+   {
+      std::unique_lock<std::mutex> lck(mtx);
+      initCv.wait(lck, [&]{return dataConnectionSubSystemStatus;});
    }
 
    // [2.2] Exit the application, if SDK is unable to initialize data subsystems
-   if(dataConnectionSubSystemStatus) {
+   if(dataConnMgr->getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       std::cout << " *** DATA connection subsystem is Ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize data subsystem *** " << std::endl;
@@ -166,19 +140,21 @@ int main(int argc, char *argv[]) {
    }
 
    // [3] Check if data filter subsystem is ready
-   bool dataFilterSubSystemStatus = dataFilterMgr->isReady();
+   bool dataFilterSubSystemStatus = false;
+   initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      dataFilterSubSystemStatus = true;
+      initCv.notify_all();
+   };
 
-   // [3.1] If data filter subsystem is not ready, wait for it to be ready
-   if(!dataFilterSubSystemStatus) {
-      std::cout << "DATA filter subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = dataFilterMgr->onReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      dataFilterSubSystemStatus = f.get();
+   auto dataFilterMgr = dataFactory.getDataFilterManager(slotId, initCb);
+   {
+      std::unique_lock<std::mutex> lck(mtx);
+      initCv.wait(lck, [&]{return dataFilterSubSystemStatus;});
    }
 
    // [3.2] Exit the application, if SDK is unable to initialize data subsystems
-   if(dataFilterSubSystemStatus) {
+   if(dataFilterMgr->getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       std::cout << " *** DATA filter subsystem is Ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize data subsystem *** " << std::endl;
@@ -200,12 +176,45 @@ int main(int argc, char *argv[]) {
    if(argc == 4) {
       int profileId = std::atoi(argv[1]);
       telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
-      dataConnMgr->startDataCall(profileId, ipFamilyType, responseCallback);
+
+      std::promise<bool> dataCallConnectedPromise;
+      auto dataCallConnectedFuture = dataCallConnectedPromise.get_future();
+      auto responseCallback = [&dataCallConnectedPromise](
+         const std::shared_ptr<telux::data::IDataCall> &dataCall,
+         telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS &&
+               dataCall->getDataCallStatus() == telux::data::DataCallStatus::NET_CONNECTED) {
+               dataCallConnectedPromise.set_value(true);
+            } else {
+               dataCallConnectedPromise.set_value(false);
+               std::cout << "*** ERROR - Data call failed to connect ***" << std::endl;
+            }
+      };
+
+      telux::common::Status startDataCallStatus =
+         dataConnMgr->startDataCall(profileId, ipFamilyType, responseCallback);
+
+      if (startDataCallStatus == telux::common::Status::SUCCESS) {
+         if (dataCallConnectedFuture.wait_for(std::chrono::seconds(5)) ==
+            std::future_status::timeout) {
+               std::cout << "*** ERROR - Data call connection timed out ***" << std::endl;
+               return 1;
+         }
+
+         bool isConnected = dataCallConnectedFuture.get();
+         if (!isConnected) {
+            std::cout << "*** ERROR - Data call failed to connect ***" << std::endl;
+            return 1;
+         }
+      } else {
+         std::cout << "*** ERROR - start data call request failed ***" << std::endl;
+         return 1;
+      }
 
       telux::data::DataRestrictMode enableMode;
       enableMode.filterAutoExit = telux::data::DataRestrictModeType::DISABLE;
       enableMode.filterMode = telux::data::DataRestrictModeType::ENABLE;
-      dataFilterMgr->setDataRestrictMode(enableMode, filterResponseCallback, profileId, ipFamilyType);
+      dataFilterMgr->setDataRestrictMode(enableMode, filterResponseCallback);
 
       std::string ipAddr = std::string(argv[2]);
       int port = std::atoi(argv[3]);
@@ -225,8 +234,7 @@ int main(int argc, char *argv[]) {
       auto udpRestrictFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter);
       udpRestrictFilter->setUdpInfo(udpInfo_);
 
-      dataFilterMgr->addDataRestrictFilter(dataFilter, filterResponseCallback,
-                                           profileId, ipFamilyType);
+      dataFilterMgr->addDataRestrictFilter(dataFilter, filterResponseCallback);
 
    } else {
       std::cout << "\n Invalid argument!!! \n\n";

@@ -130,15 +130,31 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4
 ### 8. Instantiate add firewall entry callback instance - this is optional
 
    ~~~~~~{.cpp}
+   // Create a FirewallEntryInfo instance
+   telux::data::net::FirewallEntryInfo entry;
+   entry.fwEntry = fwEntry; // Assuming fwEntry is a shared pointer to IFirewallEntry
+   entry.bhInfo = bhInfo; // Assuming bhInfo is a BackhaulInfo instance
+
+   // Instantiate add firewall entry callback instance - this is optional
    auto respCb = [](telux::common::ErrorCode error) {
-      std::cout << std::endl << std::endl;
-      std::cout << "CALLBACK: "
-               << "addFirewallEntry Response"
-               << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-               << ". ErrorCode: " << static_cast<int>(error) << std::endl;
-               promise.set_value(1);
+       std::cout << std::endl << std::endl;
+       std::cout << "CALLBACK: "
+                << "addFirewallEntry Response"
+                << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                << ". ErrorCode: " << static_cast<int>(error) << std::endl;
+       promise.set_value(1);
    };
 
    std::future<int> future = promise.get_future();
-   dataFwMgr->addFirewallEntry(profileId, fwEntry, respCb);
+   telux::common::Status status = dataFwMgr->addFirewallEntry(entry, respCb);
+   ~~~~~~
+
+### 9. Wait for callback - this is optional
+
+   ~~~~~~{.cpp}
+   if (status == telux::common::Status::SUCCESS) {
+      int tmp = future.get();
+   } else {
+      std::cout << " *** ERROR - Unable to addFirewallEntry *** " << std::endl;
+   }
    ~~~~~~

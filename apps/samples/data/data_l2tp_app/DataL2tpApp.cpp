@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -119,10 +125,14 @@ int main(int argc, char *argv[]) {
 
       std::future<int> future = promise.get_future();
       // [5] Set L2TP Configuration
-      dataL2tpMgr->setConfig(enable, enableMss, enableMtu, setConfigCb, mtuSize);
+      telux::common::Status status = dataL2tpMgr->setConfig(enable, enableMss, enableMtu, setConfigCb, mtuSize);
 
-      // [6] Wait for setConfig callback - this is optional
-      int ret = future.get();
+      if (status == telux::common::Status::SUCCESS) {
+         // [6] Wait for callback - this is optional
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to set config *** " << std::endl;
+      }
 
       // [7] Configure L2TP Tunnel
       if (setConfigPass) {
@@ -161,10 +171,14 @@ int main(int argc, char *argv[]) {
 
          // [9] addTunnel to L2TP
          std::future<int> future = promise.get_future();
-         dataL2tpMgr->addTunnel(l2tpTunnelConfig, addTunnelCb);
+         telux::common::Status status = dataL2tpMgr->addTunnel(l2tpTunnelConfig, addTunnelCb);
 
          // [10] Wait for addTunnel callback - this is optional
-         ret = future.get();
+         if (status == telux::common::Status::SUCCESS) {
+            int ret = future.get();
+         } else {
+            std::cout << " *** ERROR - Unable to addTunnel *** " << std::endl;
+         }
       }
       else {
          std::cout << "L2TP Set Configuration failed ..." << std::endl;

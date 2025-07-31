@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -98,10 +104,20 @@ int main(int argc, char *argv[]) {
 
       // [5] Add DMZ entry
       std::future<int> future = promise.get_future();
-      dataFwMgr->enableDmz(profileId, ipAddr, respCb, slotId);
+      telux::data::net::DmzConfig config;
+      config.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+      config.bhInfo.slotId = slotId;
+      config.bhInfo.profileId = profileId;
+      config.ipAddr = ipAddr;
+      telux::common::Status status = dataFwMgr->enableDmz(config, respCb);
 
-      // [6] Wait for callback - this is optional
-      int tmp = future.get();
+      if (status == telux::common::Status::SUCCESS) {
+         // [6] Wait for callback - this is optional
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to enableDmz *** " << std::endl;
+      }
+
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";

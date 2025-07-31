@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -112,26 +118,41 @@ int main(int argc, char *argv[]) {
       config.vlanId = vlanId;
       config.isAccelerated = isAccelerated;
       std::future<int> future = promise.get_future();
-      dataVlanMgr->createVlan(config, respCbCreate);
+      telux::common::Status status = dataVlanMgr->createVlan(config, respCbCreate);
 
       // [6] Wait for create vlan callback - this is optional
-      int tmp = future.get();
+      if (status == telux::common::Status::SUCCESS) {
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to createVlan *** " << std::endl;
+      }
+
       promise = std::promise<int>();
 
-      // [7] Instantiate bind vlan to profile id callback instance - this is optional
+      // [7] Instantiate bind vlan to backhaul callback instance - this is optional
       auto respCbBind = [](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
-                   << "bindWithProfile Response"
-                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                   << ". ErrorCode: " << static_cast<int>(error) << std::endl;
+                  << "bindToBackhaul Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error) << std::endl;
          promise.set_value(1);
       };
 
-      // [8] Bind newly created vlan with modem profile
+      // [8] Bind newly created vlan with modem backhaul
+      telux::data::net::VlanBindConfig bindConfig;
+      bindConfig.vlanId = vlanId;
+      bindConfig.bhInfo.slotId = slotId;
+      bindConfig.bhInfo.profileId = profileId;
+      bindConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+
       future = promise.get_future();
-      dataVlanMgr->bindWithProfile(profileId, vlanId, respCbBind, slotId);
-      tmp = future.get();
+      status = dataVlanMgr->bindToBackhaul(bindConfig, respCbBind);
+      if (status == telux::common::Status::SUCCESS) {
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to bindToBackhaul *** " << std::endl;
+      }
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";
@@ -148,7 +169,7 @@ int main(int argc, char *argv[]) {
       std::cout << "\n\t                                   and slot 1 profile 1 no acceleration \n";
    }
 
-   // [7] Cleaning up and exit the application
+   // [9] Cleaning up and exit the application
    std::cout << "\n\nPress ENTER to exit!!! \n\n";
    std::cin.ignore();
 

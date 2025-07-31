@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -102,16 +108,26 @@ int main(int argc, char *argv[]) {
       };
 
       // [5] Create Static NAT entry
+      struct telux::data::net::NatSetting natSetting;
+      natSetting.bhInfo.slotId = slotId;
+      natSetting.bhInfo.profileId = profileId;
+      natSetting.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
       struct telux::data::net::NatConfig natConfig;
       natConfig.addr = ipAddr;
       natConfig.port = (uint16_t)localIpPort;
       natConfig.globalPort = (uint16_t)globalIpPort;
       natConfig.proto = (uint8_t)proto;
+      natSetting.config = natConfig;
       std::future<int> future = promise.get_future();
-      dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
+      telux::common::Status addStaticNatEntryStatus =
+         dataSnatMgr->addStaticNatEntry(natSetting, respCb);
 
-      // [6] Wait for callback - this is optional
-      int tmp = future.get();
+      if (addStaticNatEntryStatus == telux::common::Status::SUCCESS) {
+         // [6] Wait for callback - this is optional
+         int tmp = future.get();
+      } else {
+         std::cout << " *** ERROR - Unable to addStaticNatEntry *** " << std::endl;
+      }
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";

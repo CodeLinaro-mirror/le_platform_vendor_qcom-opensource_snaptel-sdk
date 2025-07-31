@@ -1,44 +1,49 @@
-Turn radio on or off {#set_radio_power}
+Request and set operating mode {#request_set_operating_mode}
 =======================================
 
-This sample application demonstrates how to turn modem radio on or off.
+This sample application demonstrates how to request and set Operating mode of device
 
-### 1. Get the PhoneFactory and PhoneManager instances
-
-   ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 2. Check if telephony subsystem is ready
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   ~~~~~~
-
-### 2.1 If telephony subsystem is not ready, wait for it to be ready
-
-   If subsystem is not ready, wait unconditionally.
-
-   ~~~~~~{.cpp}
-   if (!subSystemsStatus) {
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Phone Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Phone Manager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Instantiate Phone
+### 2. Get the PhoneFactory and PhoneManager instance
 
    ~~~~~~{.cpp}
-   auto phone = phoneManager->getPhone();
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager(initResponseCb);
+   if(phoneManager == NULL) {
+      std::cout << " Failed to get Phone Manager instance" << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 4. Implement IPhoneListener interface to receive service state change notifications
+### 3. Wait for Phone Manager subsystem to be ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Phone Manager subsystem << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 4. Implement IPhoneListener interface to receive operating mode change notifications
 
    ~~~~~~{.cpp}
    class MyPhoneListener : public telux::tel::IPhoneListener {
    public:
-       void onRadioStateChanged(int phoneId, telux::tel::RadioState radiostate) {
+       void onOperatingModeChanged(OperatingMode mode) {
        }
       ~MyPhoneListener() {
       }
@@ -57,37 +62,40 @@ This sample application demonstrates how to turn modem radio on or off.
    phoneManager->registerListener(myPhoneListener);
    ~~~~~~
 
-### 6. Implement ICommandResponseCallback to receive the status of setRadioPower API call
+### 6. Implement IOperatingModeCallback interface and instantiate MyOperatingModeCallback
 
    ~~~~~~{.cpp}
-   class MyPhoneCommandResponseCallback : public ICommandResponseCallback {
+   std::promise<bool> callbackPromise;
+   telux::tel::OperatingMode operatingMode;
+   class MyOperatingModeCallback : public telux::tel::IOperatingModeCallback {
    public:
-      MyPhoneCommandResponseCallback() {
+      void operatingModeResponse(OperatingMode mode, telux::common::ErrorCode error) {
+        if(error == ErrorCode::SUCCESS) {
+            std::cout << "requestOperatingMode response successful" << std::endl;
+            std::cout << "Operating Mode: " << mode << std::endl;
+            operatingMode = static_cast<telux::tel::OperatingMode>(mode);
+        } else {
+            std::cout << "requestOperatingMode is failed, errorCode: " << static_cast<int>(error) << std::endl;
+        }
       }
-      void commandResponse(ErrorCode error) override;
+      callbackPromise.set_value(true);
    };
+
+   auto myOperatingModeCallback = std::make_shared<MyOperatingModeCallback>();
+
+   void setOperatingModeResponse(telux::common::ErrorCode error) {
+        std::cout << "Set Operating Mode is :, errorCode: " << static_cast<int>(error)
+            << std::endl;
+   }
    ~~~~~~
 
-### 7. Instantiate MyPhoneCommandResponseCallback
+
+### 7. Request the operating mode of device and set the operating mode to ONLINE, if the operating mode is OFFLINE to perform any operations on the phone
 
    ~~~~~~{.cpp}
-   auto myPhoneCommandCb = std::make_shared<MyPhoneCommandResponseCallback>();
-   ~~~~~~
-
-### 8. Set the radio power ON/OFF
-
-   ~~~~~~{.cpp}
-   phone->setRadioPower(true, myPhoneCommandCb);
-   ~~~~~~
-
-### 9. Command response callback is invoked with error code indicating SUCCESS or FAILURE of the operation
-
-   ~~~~~~{.cpp}
-   MyPhoneCommandResponseCallback::commandResponse(ErrorCode error) {
-      if(error == ErrorCode::SUCCESS) {
-         std::cout << "Set Radio Power On request is successful ";
-      } else {
-         std::cout << "Set Radio Power On request failed with error " << static_cast<int>(error);
-      }
+   phoneManager->requestOperatingMode(myOperatingModeCallback);
+   if ((callbackPromise.get_future().get()) &&
+       (telux::tel::operatingMode == telux::tel::OperatingMode::OFFLINE )) {
+        phoneManager->setOperatingMode(telux::tel::OperatingMode::ONLINE, &setOperatingModeResponse);
    }
    ~~~~~~

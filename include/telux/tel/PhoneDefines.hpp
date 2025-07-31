@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file      PhoneDefines.hpp
  * @brief     PhoneDefines contains enumerations and variables used for
@@ -319,7 +324,7 @@ enum class RadioState {
 /**
  * Defines the service states
  *
- * @deprecated Use requestVoiceServiceState() API or  to know the status of phone
+ * @deprecated Use requestVoiceServiceState() API to know the status of phone
  */
 enum class ServiceState {
    EMERGENCY_ONLY, /**< Only emergency calls allowed */

@@ -63,15 +63,16 @@ and others. if subsystems were not ready, wait for unconditionally.
    std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
    ~~~~~~
 
-### 5. Send an SMS using ISmsManager by passing the text and receiver number along with required callback
+### 5. Send an SMS using ISmsManager by passing the text, receiver number, deliveryReportNeeded and smsc address along with required callback
 
    ~~~~~~{.cpp}
    if(smsManager) {
       std::string receiverAddress("+18989531755");
       std::string message("TEST message");
+      bool deliveryReportNeeded = true;
 
-      smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
+      smsManager->sendSms(message, receiverAddress, deliveryReportNeeded, smsSentCb, smscAddress);
    }
    ~~~~~~
 
-Now, we will receive resonses in callbacks defined at step 3 (smsSentCb, smsDeliveryCb).
+Now, we will receive resonses in callbacks defined at step 3 (smsSentCb).

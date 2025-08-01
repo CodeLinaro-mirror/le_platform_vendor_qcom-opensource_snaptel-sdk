@@ -490,6 +490,12 @@
                 "ssid:       Network interface name of the AP.",
                 "bssid:      MAC address of the AP"
             ]
+        },
+        "cryptoAcc": {
+            "ssr" : [
+                "telsdk_event_injector -f cryptoAcc -e ssr <serviceStatus>",
+                "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+            ]
         }
     }
 }

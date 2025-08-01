@@ -2173,6 +2173,7 @@ The following managers are currently available in the simulation:
 3. IWiFiSecurityManager
 4. ICAControlManager
 5. ICryptoManager
+6. ICryptoAcceleratorManager
 
 Security APIs Response handling
 """""""""""""""""""""""""""""""
@@ -2312,6 +2313,18 @@ By default platform supported capacity is reported. This can be altered as shown
 
 Example: ``telsdk_event_injector -f calc -e capacity sm2 4000 nist256 4000 nist384 2200 bp256 4000 bp384 1500``
 
+ICryptoAcceleratorManager events
+'''''''''''''''''''''''''''''''
+**MVM SSR**
+
+.. code-block::
+
+  telsdk_event_injector -f cryptoAcc -e ssr <status>
+
+- **status:** should be SERVICE_AVAILABLE or SERVICE_UNAVAILABLE.
+
+Example: ``telsdk_event_injector -f cryptoAcc -e ssr SERVICE_UNAVAILABLE``
+
 Additional Notes
 """"""""""""""""
 
@@ -2319,6 +2332,10 @@ Additional Notes
 2. In the simulation environment, ICryptoManager does not perform actual cryptographic operations. Instead, it returns predefined (canned) responses based solely on the API call made.
    Input parameters are not evaluated or used in determining the response. All responses are retrieved from a JSON configuration file located under ``simulation/json/system-state/sec/``.
    This approach allows consistent simulation behavior for testing and integration without implementing real cryptographic logic.
+3. In the simulation environment, the ICryptoManager interface is designed to mimic cryptographic operations without performing actual computations. For ECC signature verification,
+   the system does not perform actual cryptographic checks. It simply returns the 'r' component of the signature provided as input. For ECQV calculation, the simulation returns predefined
+   outputs based on input values matched against a configurable JSON file. Users can modify this file to test different scenarios.
+   All responses are retrieved from a JSON configuration file located under ``simulation/json/system-state/sec/``.
 
 .. _sim-reference-satcom:
 

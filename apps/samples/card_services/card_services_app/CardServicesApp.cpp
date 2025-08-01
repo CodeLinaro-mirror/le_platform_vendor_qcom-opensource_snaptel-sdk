@@ -27,10 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -51,6 +49,8 @@
 #include <telux/tel/CardManager.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/CommonDefines.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #define DEFAULT_TIMEOUT_IN_SECONDS 5
 
@@ -75,13 +75,13 @@ enum class CardEvent {
 
 // condition variable to wait for an card services like open logical channel, close logical channel,
 // transmit APDU
-std::condition_variable eventCV;
+boost::condition_variable eventCV;
 
 // variable to store the expected card event
 CardEvent cardEventExpected;
 
 // Protects expected card events to avoid access from different threads
-std::mutex eventMutex;
+boost::mutex eventMutex;
 
 // Error code received as part of notification
 ErrorCode errorCode;
@@ -99,7 +99,7 @@ public:
 void MyOpenLogicalChannelCallback::onChannelResponse(int channel, IccResult result,
                                                      ErrorCode error) {
    std::cout << "onChannelResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    errorCode = error;
    openChannel = channel;
    std::cout << "onChannelResponse: " << result.toString() << std::endl;
@@ -118,7 +118,7 @@ public:
 
 void MyCloseLogicalChannelCallback::commandResponse(ErrorCode error) {
    std::cout << "commandResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    errorCode = error;
    if(cardEventExpected == CardEvent::CLOSE_LOGICAL_CHANNEL) {
       std::cout << "Card Event CLOSE_LOGICAL_CHANNEL found with code :" << int(error) << std::endl;
@@ -135,7 +135,7 @@ public:
 
 void MyTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
    std::cout << "onResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    errorCode = error;
    std::cout << "onResponse:  " << result.toString() << std::endl;
    if(cardEventExpected == CardEvent::TRANSMIT_APDU_CHANNEL) {
@@ -147,19 +147,18 @@ void MyTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode erro
 // We are making a synchronized card requests. So added wait logic using
 // std::condition_variable
 bool waitForCardEvent(CardEvent cardEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS) {
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    cardEventExpected = cardEvent;
    auto cvStatus =
        eventCV.wait_for(
            lock,
-           std::chrono::steady_clock::duration(
-               std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS)));
-   if(cvStatus == std::cv_status::timeout) {
+           boost::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS));
+   if(cvStatus == boost::cv_status::timeout) {
       std::cout << "Event: " << (int)cardEvent << "not found with in " << DEFAULT_TIMEOUT_IN_SECONDS
                 << "second(s)";
    }
    cardEventExpected = (CardEvent)0;  // reset message id to avoid further notifications
-   if(cvStatus != std::cv_status::timeout) {
+   if(cvStatus != boost::cv_status::timeout) {
       if(cardEvent == CardEvent::OPEN_LOGICAL_CHANNEL
          || cardEvent == CardEvent::CLOSE_LOGICAL_CHANNEL
          || cardEvent == CardEvent::TRANSMIT_APDU_CHANNEL) {

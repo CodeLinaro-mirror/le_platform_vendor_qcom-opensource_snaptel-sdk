@@ -62,12 +62,17 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #ifndef CAPTUREMENU_HPP
 #define CAPTUREMENU_HPP
 
 #include "ConsoleApp.hpp"
 #include "AudioClient.hpp"
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 class CaptureMenu : public ConsoleApp {
 public:
@@ -97,8 +102,8 @@ private:
     std::shared_ptr<AudioClient> audioClient_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
     std::string filePath_;
-    std::mutex mutex_;
-    std::condition_variable cv_;
+    boost::mutex mutex_;
+    boost::condition_variable cv_;
     uint32_t bufferRecordedTillNow_;
     FILE * file_;
     std::vector<std::thread> runningThreads_;

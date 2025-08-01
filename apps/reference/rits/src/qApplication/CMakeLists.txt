@@ -19,7 +19,7 @@ endif()
 
 add_library(qapplication ${LIBQAPPLICATION_SOURCES})
 
-target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc v2xcodec ${LIBAERO} rt pthread)
+target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc v2xcodec ${LIBAERO} rt pthread boost_thread boost_chrono boost_system)
 
 install(TARGETS qapplication
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

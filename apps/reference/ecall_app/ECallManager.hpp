@@ -64,7 +64,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #ifndef ECALLMANAGER_HPP
 #define ECALLMANAGER_HPP
 
@@ -76,6 +79,8 @@
 #include "ThermClient.hpp"
 #include "MsdProvider.hpp"
 #include "ConfigParser.hpp"
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
 
 class ECallManager : public LocationListener,
                      public CallStatusListener,
@@ -306,7 +311,7 @@ private:
     uint32_t locUpdateIntervalMs_;
     std::mutex mutex_;
     bool locFixReceived_;
-    std::condition_variable locUpdateCV_;
+    boost::condition_variable locUpdateCV_;
     /** Variables to store audio settings for eCall voice conversation */
     DeviceType audioDevice_;
     uint32_t voiceSampleRate_;

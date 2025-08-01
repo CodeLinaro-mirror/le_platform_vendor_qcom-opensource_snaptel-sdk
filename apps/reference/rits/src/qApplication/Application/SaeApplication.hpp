@@ -62,7 +62,10 @@
  *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
  /**
   * @file: SaeApplication.hpp
   *
@@ -74,6 +77,9 @@
 #include <condition_variable>
 #include <chrono>
 #include <atomic>
+#define BOOST_THREAD_PROVIDES_FUTURE
+#include <boost/thread.hpp>
+#include <boost/thread/future.hpp>
 
 class SaeApplication : public ApplicationBase {
 public:
@@ -125,11 +131,11 @@ public:
 private:
     uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     std::atomic<bool>  GlobalIpSessionActive{false};
-    std::chrono::milliseconds wraInterval;
+    boost::chrono::milliseconds wraInterval;
     std::thread wraThread;
-    std::mutex wraMutex;
-    std::condition_variable wraCv;
-    std::chrono::time_point<std::chrono::high_resolution_clock> now;
+    boost::mutex wraMutex;
+    boost::condition_variable wraCv;
+    boost::chrono::time_point<boost::chrono::high_resolution_clock> now;
     void wraThreadFunc(int routerLifetime);
     bool initialized = false;   // used to initialize temp id
     unsigned int msgCount = 0;      // Ranges from 1 - 127 in cyclic fashion.

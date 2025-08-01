@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -49,7 +48,8 @@
 #include <telux/tel/CardDefines.hpp>
 #include <telux/tel/SapCardManager.hpp>
 #include <telux/tel/PhoneFactory.hpp>
-
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
 #define DEFAULT_TIMEOUT_IN_SECONDS 5
 
 // Sample SAP APDU to open Master File
@@ -74,13 +74,13 @@ enum SapEvent {
 
 // condition variable to wait for an sap events like open connection, close connection,
 // request ATR and transmit APDU
-std::condition_variable eventCV;
+boost::condition_variable eventCV;
 
 // variable to store the expected sap event
 SapEvent eventExpected;
 
 // Protects expected sap events to avoid access from different threads
-std::mutex eventMutex;
+boost::mutex eventMutex;
 
 // Error code received as part of notification
 ErrorCode sapErrorCode;
@@ -94,7 +94,7 @@ public:
 
 void MySapCommandResponseCallback::commandResponse(ErrorCode error) {
    std::cout << "commandResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    sapErrorCode = error;
    if(eventExpected == (int)SapEvent::OPEN_SAP_CONNECTION) {
       std::cout << "Sap Event OPEN_SAP_CONNECTION found with code :" << int(error) << std::endl;
@@ -114,7 +114,7 @@ public:
 
 void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode error) {
    std::cout << "atrResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    sapErrorCode = error;
    std::cout << "\tATR.data:";
    if(eventExpected == (int)SapEvent::SAP_GET_ATR) {
@@ -135,7 +135,7 @@ public:
 
 void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
    std::cout << "transmitApduResponse, error: " << (int)error << std::endl;
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    sapErrorCode = error;
    std::cout << "transmitApduResponse " << result.toString() << std::endl;
    if(eventExpected == (int)SapEvent::SAP_TRANSMIT_APDU) {
@@ -147,19 +147,18 @@ void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode e
 
 // We are making a synchronized SAP requests. So added wait logic using std::condition_variable
 bool waitForSapEvent(SapEvent sapEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS) {
-   std::unique_lock<std::mutex> lock(eventMutex);
+   boost::unique_lock<boost::mutex> lock(eventMutex);
    eventExpected = sapEvent;
    auto cvStatus =
        eventCV.wait_for(
            lock,
-           std::chrono::steady_clock::duration(
-               std::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS)));
-   if(cvStatus == std::cv_status::timeout) {
+           boost::chrono::seconds(DEFAULT_TIMEOUT_IN_SECONDS));
+   if(cvStatus == boost::cv_status::timeout) {
       std::cout << "Event: " << (int)sapEvent << "not found with in " << DEFAULT_TIMEOUT_IN_SECONDS
                 << "second(s)";
    }
    eventExpected = (SapEvent)0;  // reset message id to avoid further notifications
-   if(cvStatus != std::cv_status::timeout) {
+   if(cvStatus != boost::cv_status::timeout) {
       if(sapEvent == SapEvent::OPEN_SAP_CONNECTION || sapEvent == SapEvent::CLOSE_SAP_CONNECTION
          || sapEvent == SapEvent::SAP_GET_ATR || sapEvent == SapEvent::SAP_TRANSMIT_APDU) {
 

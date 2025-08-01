@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file LocationTable.hpp
  * @brief implementation of location table class, header.
@@ -38,7 +43,7 @@
 #include <mutex>
 #include "GeoNetRouter.hpp"
 #include "gn_internal.h"
-
+#include <boost/thread/thread.hpp>
 #define MAX_DPL_LEN     20
 namespace gn {
     /**
@@ -141,8 +146,8 @@ namespace gn {
 
     private:
         void RefreshTask(void);
-        std::mutex TableMutex_;
-        std::condition_variable Cv_;
+        boost::mutex TableMutex_;
+        boost::condition_variable Cv_;
         //std::promise<int> RefreshTaskResult_;
         std::thread RefreshThread;
         std::map<uint8_t *, std::shared_ptr<LocTableEntry>, AddrCompare> TableEntries_;

@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TRANSCODEMENU_HPP
@@ -42,6 +41,8 @@
 #include "ConsoleApp.hpp"
 #include "AudioClient.hpp"
 #include <telux/audio/AudioManager.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 class TransCodeMenu : public ConsoleApp,
                       public telux::audio::ITranscodeListener,
@@ -75,14 +76,14 @@ private:
     std::shared_ptr<IAudioManager> audioManager_;
     FILE * readFile_;
     FILE * writeFile_;
-    std::mutex readFileM_;
-    std::mutex writeFileM_;
-    std::mutex writeM_;
-    std::mutex readM_;
-    std::mutex CreateTranscoderMutex_;
-    std::condition_variable cv_;
-    std::condition_variable cvRead_;
-    std::condition_variable cvWrite_;
+    boost::mutex readFileM_;
+    boost::mutex writeFileM_;
+    boost::mutex writeM_;
+    boost::mutex readM_;
+    boost::mutex CreateTranscoderMutex_;
+    boost::condition_variable cv_;
+    boost::condition_variable cvRead_;
+    boost::condition_variable cvWrite_;
     std::string readFilePath_, writeFilePath_;
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> writeStatus_;

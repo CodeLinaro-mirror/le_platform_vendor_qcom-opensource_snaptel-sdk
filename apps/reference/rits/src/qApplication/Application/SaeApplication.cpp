@@ -102,7 +102,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
 
     MsgType = msgType;
 
-    wraInterval = std::chrono::milliseconds::zero();
+    wraInterval = boost::chrono::milliseconds::zero();
     //init messages for sending.
     if (isTxSim) {
         initMsg(txSimMsg);
@@ -129,7 +129,7 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
     if (not configuration.isValid) {
         return;
     }
-    wraInterval = std::chrono::milliseconds::zero();
+    wraInterval = boost::chrono::milliseconds::zero();
     MsgType = msgType;
     //init messages for sending.
     if (isTxSim) {
@@ -156,7 +156,7 @@ SaeApplication::~SaeApplication() {
     // notify the wraThread to exit
     exit_ = true;
     {
-        std::unique_lock<std::mutex> lk(wraMutex);
+        boost::unique_lock<boost::mutex> lk(wraMutex);
         wraCv.notify_all();
     }
 
@@ -1226,12 +1226,12 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     };
 
     if (GlobalIpSessionActive == true) {
-        if (wraInterval == std::chrono::milliseconds::zero()) {
+        if (wraInterval == boost::chrono::milliseconds::zero()) {
             //received the second WRA message, need to determine the period of the WRA,
             //so that if within expected internal we didn't receive next WRA, we deem the
             //OBU went out of range of the associated RSU.
-            auto diff = std::chrono::high_resolution_clock::now() - now;
-            wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
+            auto diff = boost::chrono::high_resolution_clock::now() - now;
+            wraInterval = boost::chrono::duration_cast<boost::chrono::milliseconds>(diff);
             if (appVerbosity > 3)
                 cout << "wraInterval=" << wraInterval.count() << endl;
         }
@@ -1251,7 +1251,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
             ret = -1;
         } else {
             //Received first valid WRA.
-            now = std::chrono::high_resolution_clock::now();
+            now = boost::chrono::high_resolution_clock::now();
             memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
             IpPrefix.prefixLen = wra->ipPrefixLength;
             if (appVerbosity > 3)
@@ -1290,29 +1290,29 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
 #endif
 void SaeApplication::wraThreadFunc(int routerLifetime)
 {
-    std::unique_lock<std::mutex> lk(wraMutex);
-    std::cv_status status;
+    boost::unique_lock<boost::mutex> lk(wraMutex);
+    boost::cv_status status;
 
     lk.unlock();
     while (not exit_) {
         lk.lock();
-        if (wraInterval == std::chrono::milliseconds::zero()) {
+        if (wraInterval == boost::chrono::milliseconds::zero()) {
             // we didn't receive 2nd WRA yet, no idea about the WRA interval.
             // Use routerlifetime as wait time.
-            std::chrono::milliseconds wt(routerLifetime*1000);
+            boost::chrono::milliseconds wt(routerLifetime*1000);
             status =
                 wraCv.wait_for(
                     lk,
-                    std::chrono::steady_clock::duration(wt));
+                    boost::chrono::steady_clock::duration(wt));
         } else {
             //if no WRA within 3*interval, deem it as out of range of RSU
             status =
                 wraCv.wait_for(
                     lk,
-                    std::chrono::steady_clock::duration(3*wraInterval));
+                    boost::chrono::steady_clock::duration(3*wraInterval));
         }
         lk.unlock();
-        if (status == std::cv_status::timeout) {
+        if (status == boost::cv_status::timeout) {
             radioReceives[0].onWraTimedout();
             GlobalIpSessionActive = false;
             if (appVerbosity > 3)

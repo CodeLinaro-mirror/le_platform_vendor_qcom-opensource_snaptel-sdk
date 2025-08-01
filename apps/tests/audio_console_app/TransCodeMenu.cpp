@@ -26,12 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -79,7 +77,7 @@ void TransCodeMenu::init() {
 }
 
 void TransCodeMenu::cleanup() {
-    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+    boost::lock_guard<boost::mutex> cLock(CreateTranscoderMutex_);
     ready_ = false;
     writeStatus_ = false;
     readStatus_ = false;
@@ -201,7 +199,7 @@ void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> bu
         // We are seeking back so that left over buffer can be resent again.
         long offset = -1 * (static_cast<long>((buffer->getDataSize() - bytes)));
         {
-            std::lock_guard<std::mutex> lock(writeFileM_);
+            boost::lock_guard<boost::mutex> lock(writeFileM_);
             if (writeFile_) {
                 fseek(writeFile_, offset, SEEK_CUR);
             } else {
@@ -238,7 +236,7 @@ void TransCodeMenu::write() {
         return;
     }
 
-    std::unique_lock<std::mutex> lock(writeM_);
+    boost::unique_lock<boost::mutex> lock(writeM_);
     for(int i = 0; i < TOTAL_WRITE_BUFFERS; i++) {
         audioBuffer = transcoder_->getWriteBuffer();
         if (audioBuffer != nullptr) {
@@ -298,7 +296,7 @@ void TransCodeMenu::write() {
         }
     }
     writeStatus_ = false;
-    std::lock_guard<std::mutex> lock1(writeFileM_);
+    boost::lock_guard<boost::mutex> lock1(writeFileM_);
     fclose(writeFile_);
     writeFile_ = nullptr;
 }
@@ -311,7 +309,7 @@ void TransCodeMenu::read() {
         readBuffers_.pop();
     }
 
-    std::unique_lock<std::mutex> lock(readM_);
+    boost::unique_lock<boost::mutex> lock(readM_);
     for (int i = 0; i < TOTAL_READ_BUFFERS; i++) {
         audioBuffer = transcoder_->getReadBuffer();
         if (audioBuffer != nullptr) {
@@ -376,11 +374,10 @@ void TransCodeMenu::read() {
     waitTime = waitTime+ GAURD_FOR_WAITING;
     while (readBuffers_.size() != TOTAL_READ_BUFFERS && ready_) {
         cvRead_.wait_for(lock,
-                         std::chrono::steady_clock::duration(
-                             std::chrono::milliseconds(waitTime)));
+                         boost::chrono::milliseconds(waitTime));
     }
 
-    std::lock_guard<std::mutex> lock1(readFileM_);
+    boost::lock_guard<boost::mutex> lock1(readFileM_);
     fflush(readFile_);
     fclose(readFile_);
     readFile_ = nullptr;
@@ -403,7 +400,7 @@ void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
     } else {
         uint32_t size = buffer->getDataSize();
         {
-            std::lock_guard<std::mutex> lock(readFileM_);
+            boost::lock_guard<boost::mutex> lock(readFileM_);
             if (readFile_) {
                 bytesWrittenToFile = fwrite(buffer->getRawBuffer(), 1, size, readFile_);
             } else {
@@ -429,7 +426,7 @@ void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
 }
 
 void TransCodeMenu::startTranscoding(std::vector<std::string> userInput) {
-    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+    boost::lock_guard<boost::mutex> cLock(CreateTranscoderMutex_);
 
     if (transcoder_) {
         std::cout << "Transcoding in progress" << std::endl;
@@ -455,7 +452,7 @@ void TransCodeMenu::startTranscoding(std::vector<std::string> userInput) {
 void TransCodeMenu::tearDown(std::vector<std::string> userInput) {
     std::promise<bool> p;
 
-    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+    boost::lock_guard<boost::mutex> cLock(CreateTranscoderMutex_);
     if (transcoder_) {
         writeStatus_ = false;
         readStatus_ = false;

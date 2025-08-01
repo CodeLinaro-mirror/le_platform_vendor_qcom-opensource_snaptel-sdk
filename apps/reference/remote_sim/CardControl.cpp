@@ -27,12 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /**
  * @file    CardControl.cpp
  * @brief   This file contains the implementation for Card Control functions.
@@ -427,12 +425,11 @@ Status CardControl::openSapConn()
     }
 
     int timeoutSec = ASYNC_RESPONSE_TIMEOUT_SEC;
-    openConnPromise_ = std::promise<bool>();
+    openConnPromise_ = boost::promise<bool>();
     auto openConnFuture = openConnPromise_.get_future();
 
     if (openConnFuture.wait_for(
-            std::chrono::steady_clock::duration(
-                std::chrono::seconds(timeoutSec))) != std::future_status::ready) {
+            boost::chrono::seconds(timeoutSec)) != boost::future_status::ready) {
         LOGE("SIM connection did not open within %d seconds!\n", timeoutSec);
         return Status::FAILED;
     }
@@ -461,12 +458,11 @@ Status CardControl::requestPowerOn()
     }
 
     int timeoutSec = ASYNC_RESPONSE_TIMEOUT_SEC;
-    powerOnPromise_ = std::promise<bool>();
+    powerOnPromise_ = boost::promise<bool>();
     auto powerOnFuture = powerOnPromise_.get_future();
 
     if (powerOnFuture.wait_for(
-            std::chrono::steady_clock::duration(
-                std::chrono::seconds(timeoutSec))) != std::future_status::ready) {
+            boost::chrono::seconds(timeoutSec)) != boost::future_status::ready) {
         LOGE("SIM didn't power on within %d seconds!\n", timeoutSec);
         return Status::FAILED;
     }

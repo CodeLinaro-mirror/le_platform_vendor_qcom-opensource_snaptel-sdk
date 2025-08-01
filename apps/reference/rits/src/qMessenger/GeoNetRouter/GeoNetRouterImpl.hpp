@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file GeoNetRouterImpl.hpp
  * @brief implementation of GeoNetwork router, header.
@@ -42,7 +47,7 @@
 #include "GeoNetRouter.hpp"
 #include "GeoNetUtils.hpp"
 #include "LocationTable.hpp"
-
+#include <boost/thread/thread.hpp>
 // bitmask to identify which queue/s to flush.
 #define LS_Q            (1)
 #define UC_Q            (1 << 2)
@@ -78,8 +83,8 @@ public:
     int To;
     int Counter;
     int Ts;
-    std::mutex EMutex;
-    std::condition_variable Ecv;
+    boost::mutex EMutex;
+    boost::condition_variable Ecv;
     std::promise<int> AsyncResult;
     uint8_t *Buffer;
     size_t BufLen;
@@ -200,8 +205,8 @@ private:
     std::thread LocationServiceThread_;
 
     // member variables for CBF (contention based forwarding) implementation.
-    std::mutex CBFmutex_;
-    std::condition_variable CBFcv_;
+    boost::mutex CBFmutex_;
+    boost::condition_variable CBFcv_;
     std::priority_queue<std::shared_ptr<Qelement>, std::vector<std::shared_ptr<Qelement>>, CompareTo> CBFqueue_;
     std::atomic<bool> CBFstop_;
     std::promise<int>CBFresult_;

@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -88,6 +58,8 @@
 #include "../../../../common/utils/Utils.hpp"
 #include "../../../../common/utils/SignalHandler.hpp"
 #include <telux/common/Version.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 using std::thread;
 using std::string;
@@ -109,8 +81,8 @@ string csvFileName;
 sem_t cnt_sem;
 auto rxsuccess = 0;
 auto rxfail = 0;
-std::mutex gTerminateMtx;
-std::condition_variable gTerminateCv;
+boost::mutex gTerminateMtx;
+boost::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
@@ -128,7 +100,7 @@ void signalHandler(int signum) {
         fprintf(stderr, "Attempting to close all flows and subscriptions\n");
         application->closeAllRadio();
     }
-    std::unique_lock<std::mutex> lk(gTerminateMtx);
+    boost::unique_lock<boost::mutex> lk(gTerminateMtx);
     stopThread = true;
     gTerminateCv.notify_all();
 }
@@ -363,11 +335,10 @@ void onSrcL2AddrUpdate(uint32_t addr) {
                     break;
                 }
                 cerr << "Try to update V2X-IP rmnet addr later!" << endl;
-                std::unique_lock<std::mutex> lck(gTerminateMtx);
+                boost::unique_lock<boost::mutex> lck(gTerminateMtx);
                 if (gTerminateCv.wait_for(
                         lck,
-                        std::chrono::steady_clock::duration(
-                            std::chrono::milliseconds(IP_ADDR_RETRY_INTERVAL_MS)),
+                        boost::chrono::milliseconds(IP_ADDR_RETRY_INTERVAL_MS),
                         []{return stopThread == true;})) {
                     if (application->configuration.driverVerbosity > 3) {
                         cout << "Abort updating cached IP addr due to exiting" << endl;

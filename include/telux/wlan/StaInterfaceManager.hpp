@@ -199,8 +199,6 @@ class IStaInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode enableHotspot2(Id staId, bool enable) = 0;
 

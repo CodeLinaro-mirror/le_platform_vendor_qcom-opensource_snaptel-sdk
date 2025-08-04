@@ -2332,7 +2332,7 @@ Additional Notes
 2. In the simulation environment, ICryptoManager does not perform actual cryptographic operations. Instead, it returns predefined (canned) responses based solely on the API call made.
    Input parameters are not evaluated or used in determining the response. All responses are retrieved from a JSON configuration file located under ``simulation/json/system-state/sec/``.
    This approach allows consistent simulation behavior for testing and integration without implementing real cryptographic logic.
-3. In the simulation environment, the ICryptoManager interface is designed to mimic cryptographic operations without performing actual computations. For ECC signature verification,
+3. In the simulation environment, the ICryptoAccelerationManager interface is designed to mimic cryptographic operations without performing actual computations. For ECC signature verification,
    the system does not perform actual cryptographic checks. It simply returns the 'r' component of the signature provided as input. For ECQV calculation, the simulation returns predefined
    outputs based on input values matched against a configurable JSON file. Users can modify this file to test different scenarios.
    All responses are retrieved from a JSON configuration file located under ``simulation/json/system-state/sec/``.

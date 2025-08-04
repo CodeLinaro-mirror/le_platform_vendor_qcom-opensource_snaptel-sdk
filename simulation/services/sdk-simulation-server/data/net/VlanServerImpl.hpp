@@ -7,6 +7,7 @@
 #define VLAN_MANAGER_SERVER_HPP
 
 #include <telux/data/net/VlanManager.hpp>
+#include <telux/data/DataDefines.hpp>
 
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
@@ -90,11 +91,15 @@ private:
             if (config[idx]["vlanId"].asInt() != request->vlan_id()) {
                 continue;
             }
-            if (config[idx]["slotId"].asInt() != request->slot_id()) {
-                continue;
+            if (request->backhaul_type() == static_cast<dataStub::BackhaulPreference>
+                (telux::data::BackhaulType::WWAN) &&
+                config[idx]["slotId"].asInt() != request->slot_id()) {
+                    continue;
             }
-            if (config[idx]["profileId"].asInt() != request->profile_id()) {
-                continue;
+            if (request->backhaul_type() == static_cast<dataStub::BackhaulPreference>
+                (telux::data::BackhaulType::WWAN) &&
+                config[idx]["profileId"].asInt() != request->profile_id()) {
+                    continue;
             }
             isFound = true;
             break;

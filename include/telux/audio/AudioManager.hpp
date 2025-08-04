@@ -772,7 +772,8 @@ class IAudioLoopbackStream : virtual public IAudioStream {
  public:
   /**
     * Starts looping back the audio between the source and sink devices associated with this
-    * stream.
+    * stream. Supported source and sink devices for loopback are @ref DeviceType::DEVICE_TYPE_MIC
+    * and @ref DeviceType::DEVICE_TYPE_SPEAKER only.
     *
     * @param [in] callback  Invoked to confirm if the loopback has started
     *
@@ -783,7 +784,7 @@ class IAudioLoopbackStream : virtual public IAudioStream {
         telux::common::ResponseCallback callback = nullptr) = 0;
 
   /**
-    * Starts looping back the audio between the source and sink devices associated with this
+    * Stops looping back the audio between the source and sink devices associated with this
     * stream.
     *
     * @param [in] callback  Optional, invoked to confirm if the loopback has stopped

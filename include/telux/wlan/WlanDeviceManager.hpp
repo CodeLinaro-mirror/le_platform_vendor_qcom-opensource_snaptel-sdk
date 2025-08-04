@@ -183,8 +183,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode setActiveCountry(std::string country) = 0;
     /**
@@ -198,8 +196,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode getRegulatoryParams(RegulatoryParams& regulatoryParams) = 0;
 
@@ -231,8 +227,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode setTxPower(uint32_t txPowerMw) = 0;
 
@@ -257,8 +251,6 @@ class IWlanDeviceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode getTxPower(uint32_t& txPowerMw) = 0;
 

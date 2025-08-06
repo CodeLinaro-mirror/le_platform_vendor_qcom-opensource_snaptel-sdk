@@ -9,6 +9,11 @@
             "backhaulType": "ETH",
             "snatEntries" : [
             ]
+        },
+        {
+            "backhaulType": "WLAN",
+            "snatEntries" : [
+            ]
         }
     ]
 }

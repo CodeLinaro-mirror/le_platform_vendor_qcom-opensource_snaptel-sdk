@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "NatManagerStub.hpp"
@@ -224,7 +224,11 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
         request.mutable_static_nat_entry()->set_backhaul_type(
                 ::dataStub::BackhaulPreference::PREF_ETH);
         request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+            ::dataStub::BackhaulPreference::PREF_WLAN);
     } else {
+        LOG(ERROR, __FUNCTION__, "unsupported backhaul:");
         return telux::common::Status::NOTSUPPORTED;
     }
 
@@ -339,6 +343,9 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
         request.mutable_static_nat_entry()->set_backhaul_type(
                 ::dataStub::BackhaulPreference::PREF_ETH);
         request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+        request.mutable_static_nat_entry()->set_backhaul_type(
+                ::dataStub::BackhaulPreference::PREF_WLAN);
     } else {
         return telux::common::Status::NOTSUPPORTED;
     }
@@ -456,6 +463,8 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(const BackhaulInfo
     } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
         request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_ETH);
         request.set_vlan_id(bhInfo.vlanId);
+    } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+        request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_WLAN);
     } else {
         return telux::common::Status::NOTSUPPORTED;
     }

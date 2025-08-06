@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef NAT_MANAGER_SERVER_HPP
@@ -14,6 +14,7 @@
 
 #define WWAN_BH_IDX 0
 #define ETH_BH_IDX 1
+#define WLAN_BH_IDX 2
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -62,6 +63,8 @@ private:
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
             backhaul = ETH_BH_IDX;
             vlan_id = request->static_nat_entry().vlan_id();
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
+            backhaul = WLAN_BH_IDX;
         }
 
         int currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
@@ -88,7 +91,6 @@ private:
                     continue;
                 }
             }
-
             if (currentEntry["addr"].asString() != addr) {
                 continue;
             }

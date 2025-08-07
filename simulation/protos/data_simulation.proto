@@ -220,6 +220,13 @@ service DataFilterManager {
     rpc GetDualDataCapability(google.protobuf.Empty) returns (GetDualDataCapabilityReply) {}
     rpc GetDualDataUsageRecommendation(google.protobuf.Empty) returns
         (GetDualDataUsageRecommendationReply) {}
+    rpc ConfigureDdsSwitchRecommendation(ConfigureDdsSwitchRecommendationRequest) returns
+        (ConfigureDdsSwitchRecommendationReply) {}
+    rpc GetDdsSwitchRecommendation(google.protobuf.Empty) returns
+        (GetDdsSwitchRecommendationReply) {}
+    rpc RequestCurrentDdsSwitch(CurrentDdsSwitchRequest) returns
+        (CurrentDdsSwitchResponse) {}
+    rpc SetDdsSwitch(SetDdsSwitchRequest) returns (DefaultReply) {}
   }
 
   service DataControlManager {
@@ -1475,4 +1482,70 @@ message DeviceDataUsageResetEvent {
 
 message ResetDeviceDataUsageStatsEvent {
     string mac_address = 1;
+}
+
+message ConfigureDdsSwitchRecommendationRequest {
+    bool enable_temporary_recommendations = 1;
+    bool enable_permanent_recommendations = 2;
+    string temporary_recommendation_type = 3;
+}
+
+message ConfigureDdsSwitchRecommendationReply {
+    commonStub.ErrorCode error = 1;
+}
+
+
+message GetDdsSwitchRecommendationReply {
+    DdsSwitchRecommendation dds_switch_recommendation = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message DdsSwitchRecommendation {
+    DdsInfo recommended_dds_info = 1;
+    RecommendationDetails recommendation_details = 2;
+}
+
+message DdsInfo {
+    enum DdsType {
+    PERMANENT = 0;
+    TEMPORARY = 1;
+    UNKNOWN = 2;
+    }
+    int32 slot_id = 1;
+    DdsType dds_type = 2;
+}
+
+enum TemporaryRecommendationCauseCodes {
+    TEMP_CAUSE_CODE_UNKNOWN = 0;
+    TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE = 1;            // 1 << 0
+    TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL = 2;       // 1 << 1
+    TEMP_CAUSE_CODE_TX_SHARING = 4;                 // 1 << 2
+    TEMP_CAUSE_CODE_CALL_STATUS_CHANGED = 16;       // 1 << 4
+    TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS = 32;        // 1 << 5
+    TEMP_CAUSE_CODE_TEMP_REC_DISABLED = 64;         // 1 << 6
+    TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL = 256; // 1 << 8
+    TEMP_CAUSE_CODE_DATA_OFF = 512;                 // 1 << 9
+    TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING = 1024; // 1 << 10
+    TEMP_CAUSE_CODE_DDS_SIM_REMOVED = 2048;         // 1 << 11
+}
+
+enum PermanentRecommendationCauseCodes {
+    PERM_CAUSE_CODE_UNKNOWN = 0;
+    PERM_CAUSE_CODE_TEMP_CLEAN_UP = 1;              // 1 << 0
+    PERM_CAUSE_CODE_DATA_SETTING_OFF = 2;           // 1 << 1
+    PERM_CAUSE_CODE_PS_INVALID = 4;                 // 1 << 2
+    PERM_CAUSE_CODE_INTERNET_NOT_AVAIL = 16;        // 1 << 4
+}
+
+
+message RecommendationDetails {
+    enum TemporaryRecommendationType {
+    UNKNOWN = 0;
+    REVOKE = 1;
+    LOW = 2;
+    HIGH = 3;
+    }
+    TemporaryRecommendationType temp_type = 1;
+    uint64 temp_cause = 2;
+    uint64 perm_cause = 3;
 }

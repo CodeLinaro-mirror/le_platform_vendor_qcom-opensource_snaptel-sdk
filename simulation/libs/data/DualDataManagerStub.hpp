@@ -53,6 +53,8 @@ public:
     telux::common::ErrorCode getDdsSwitchRecommendation(
         DdsSwitchRecommendation &ddsSwitchRecommendation) override;
 
+    void handleDdsSwitchRecommendationEvent(::dataStub::DdsSwitchRecommendation &event);
+    void onDdsChange(DdsInfo currentState);
     void onEventUpdate(google::protobuf::Any event) override;
     void handleCapabilityChangeEvent(::dataStub::DualDataCapabilityEvent capabilityEvent);
     void handleRecommendationChangeEvent(
@@ -61,6 +63,7 @@ public:
 private:
     std::mutex mtx_;
     std::mutex initMtx_;
+    telux::data::OperationType oprType_;
 
     telux::common::ServiceStatus subSystemStatus_;
     std::unique_ptr<::dataStub::DualDataManager::Stub> stub_;
@@ -72,6 +75,8 @@ private:
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
     void onServiceStatusChange(telux::common::ServiceStatus status);
+    void invokeCallback(telux::common::ResponseCallback callback,
+        telux::common::ErrorCode error, int cbDelay );
 };
 
 } // end of namespace data

@@ -9,6 +9,7 @@ set(DATA_STUB_SOURCES
     DataProfileStub.cpp
     DataProfileManagerStub.cpp
     DataCallStub.cpp
+    ClientManagerStub.cpp
     DataEventListener.cpp
     DataConnectionManagerStub.cpp
     ServingSystemManagerStub.cpp

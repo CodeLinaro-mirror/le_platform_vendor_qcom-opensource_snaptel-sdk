@@ -4,7 +4,7 @@
  */
 
 #include <telux/common/DeviceConfig.hpp>
-
+#include <thread>
 #include "DataLinkServerImpl.hpp"
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
@@ -312,6 +312,96 @@ grpc::Status DataLinkServerImpl::GetEthDataLinkState(ServerContext* context,
     LOG(DEBUG,__FUNCTION__,"linkState: ",linkState);
     response->mutable_eth_datalink_state()->set_link_state(linkState);
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status DataLinkServerImpl::GetEthCapability(ServerContext* context,
+    const ::google::protobuf::Empty* request,
+    dataStub::GetEthCapabilityReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string subsystem = "IDataLinkManager";
+    std::string method = "getEthCapability";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(DATA_LINK_MANAGER_API_JSON, DATA_LINK_MANAGER_STATE_JSON,
+            subsystem, method, data);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " JSON read failed");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    const Json::Value &ethModesJson = data.stateRootObj[subsystem]["eth0Config"]["ethModes"];
+    for (const auto &modeStr : ethModesJson) {
+        std::string mode = modeStr.asString();
+        if (mode == "USXGMII_10G") {
+            response->mutable_capability()->add_eth_modes(dataStub::EthModeEnum::EthModeEnum_USXGMII_10G);
+        } else if (mode == "USXGMII_5G") {
+            response->mutable_capability()->add_eth_modes(dataStub::EthModeEnum::EthModeEnum_USXGMII_5G);
+        } else if (mode == "SGMII_1G") {
+            response->mutable_capability()->add_eth_modes(dataStub::EthModeEnum::EthModeEnum_SGMII_1G);
+        } else {
+            LOG(WARNING, __FUNCTION__, " Unknown eth mode: ", mode);
+        }
+    }
+     std::string statusStr = data.apiRootObj[subsystem][method]["status"].asString();
+    if (statusStr == "SUCCESS") {
+        response->set_status(commonStub::Status::SUCCESS);
+    } else {
+        response->set_status(commonStub::Status::FAILED);
+    }
+
+    LOG(DEBUG, __FUNCTION__, " ethernet capability: ", ethModesJson.toStyledString());
+
+    return grpc::Status::OK;
+}
+
+grpc::Status DataLinkServerImpl::SetLocalEthOperatingMode(
+    ServerContext* context,
+    const dataStub::SetLocalEthOperatingModeRequest* request,
+    dataStub::SetLocalEthOperatingModeReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+
+    int mode = request->eth_mode();
+    std::string modeStr;
+
+    switch (mode) {
+        case 0: modeStr = "USXGMII_10G"; break;
+        case 1: modeStr = "USXGMII_5G"; break;
+        case 2: modeStr = "USXGMII_2_5G"; break;
+        case 3: modeStr = "USXGMII_1G"; break;
+        case 4: modeStr = "USXGMII_100M"; break;
+        case 5: modeStr = "USXGMII_10M"; break;
+        case 6: modeStr = "SGMII_2_5G"; break;
+        case 7: modeStr = "SGMII_1G"; break;
+        case 8: modeStr = "SGMII_100M"; break;
+        default: modeStr = "UNKNOWN"; break;
+    }
+
+    std::cout << " *** Set local Eth operating mode request sent\n";
+    std::cout << " Simulating mode change to: " << modeStr << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    JsonData data;
+    telux::common::ErrorCode error = CommonUtils::readJsonData(
+        DATA_LINK_MANAGER_API_JSON, DATA_LINK_MANAGER_STATE_JSON,
+        "IDataLinkManager", "setLocalEthOperatingMode", data);
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj["IDataLinkManager"]["eth0Config"]["ethOperatingMode"] = modeStr;
+        JsonParser::writeToJsonFile(data.stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
+    }
+    else {
+        LOG(WARNING, __FUNCTION__, " Failed to read/write JSON state");
+    }
+
+
+    std::cout << "NOTIFICATION:  ** DataLinkManager onEthModeChangeTransactionStatus **\n";
+    std::cout << " " << modeStr << " ,status :" << mode << " COMPLETED\n";
+    std::cout << " *** Set local Eth operating mode request completed\n";
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_COMPLETED);
 
     return grpc::Status::OK;
 }

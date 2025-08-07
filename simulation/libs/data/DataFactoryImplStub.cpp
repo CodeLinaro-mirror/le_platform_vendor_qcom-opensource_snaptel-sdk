@@ -15,6 +15,7 @@
 #include "DataControlManagerStub.hpp"
 #include "KeepAliveManagerStub.hpp"
 #include "DataLinkManagerStub.hpp"
+#include "ClientManagerStub.hpp"
 #include "net/SocksManagerStub.hpp"
 #include "net/NatManagerStub.hpp"
 #include "net/VlanManagerStub.hpp"
@@ -539,7 +540,24 @@ std::shared_ptr<telux::data::net::IL2tpManager> DataFactoryImplStub::getL2tpMana
 
 std::shared_ptr<telux::data::IClientManager> DataFactoryImplStub::getClientManager(
     telux::common::InitResponseCb clientCallback) {
-    return nullptr;
+     std::function<std::shared_ptr<telux::data::IClientManager>(
+        telux::common::InitResponseCb)> createAndInit
+        = [](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::data::IClientManager> {
+            std::shared_ptr<telux::data::ClientManagerStub> manager
+                = std::make_shared<telux::data::ClientManagerStub>();
+            if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+                return nullptr;
+            }
+            return manager;
+    };
+    auto type = std::string("Client manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ",
+            &clientCallbacks_);
+    auto manager
+        = getManager<telux::data::IClientManager>(type,
+            clientManager_, clientCallbacks_, clientCallback, createAndInit);
+    return manager;
 }
 
 std::shared_ptr<telux::data::IDataSettingsManager> DataFactoryImplStub::getDataSettingsManager(

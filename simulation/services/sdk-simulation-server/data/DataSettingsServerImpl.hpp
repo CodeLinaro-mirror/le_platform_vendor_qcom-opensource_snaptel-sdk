@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11,6 +11,7 @@
 #include "data/DataConnectionServerImpl.hpp"
 #include "libs/common/AsyncTaskQueue.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
+#include "event/ServerEventManager.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -18,7 +19,9 @@ using grpc::ServerContext;
 using grpc::Status;
 
 class DataSettingsServerImpl final:
-    public dataStub::DataSettingsManager::Service {
+    public dataStub::DataSettingsManager::Service,
+    public IServerEventListener,
+    public std::enable_shared_from_this<DataSettingsServerImpl> {
 public:
     DataSettingsServerImpl(
         std::shared_ptr<DataConnectionServerImpl> dcmServerImpl);
@@ -93,6 +96,9 @@ public:
     grpc::Status SetIpPassThroughNatConfig(ServerContext* context,
             const dataStub::setIpptNatConfigRequest* request,
             dataStub::setIpptNatConfigReply* response) override;
+
+    void onEventUpdate(::eventService::UnsolicitedEvent message);
+
 private:
 
     struct IpConfigStruct {
@@ -135,6 +141,8 @@ private:
             const telux::data::IpAddrInfo &currentIpConfig);
 
     telux::common::ErrorCode validateV4IpAddr(const telux::data::IpAddrInfo &ipAddr);
+    void onEventUpdate(std::string event);
+    void handleDeviceDataUsageMonitoringUpdate(std::string event);
 };
 
 #endif //DATA_SETTINGS_SERVER_HPP

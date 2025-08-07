@@ -38,6 +38,9 @@
         ],
         "getIpPassThroughNatConfig" : {
                 "natEnable": 1
+        },
+        "isDeviceDataUsageMonitoringEnabled" : {
+            "enabled" : true
         }
     }
 }

@@ -120,6 +120,7 @@ class DataFactoryImplStub : public DataFactory,
     std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::INatManager>>
         natManagerMap_;
     std::weak_ptr<telux::data::net::IL2tpManager> l2tpManager_;
+    std::weak_ptr<telux::data::IClientManager> clientManager_;
     std::weak_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IFirewallManager>>
         firewallManagerMap_;
@@ -139,6 +140,7 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> socksCallbacks_;
     std::vector<telux::common::InitResponseCb> natCallbacks_;
     std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
+    std::vector<telux::common::InitResponseCb> clientCallbacks_;
     std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
     std::vector<telux::common::InitResponseCb> firewallCallbacks_;
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;

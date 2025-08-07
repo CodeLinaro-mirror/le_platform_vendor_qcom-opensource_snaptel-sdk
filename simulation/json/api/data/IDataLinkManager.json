@@ -7,6 +7,12 @@
             "error": "SUCCESS"
         },
         "getEthDataLinkState": {
+             "error": "SUCCESS"
+        },
+        "getEthCapability": {
+            "status": "SUCCESS"
+        },
+        "setLocalEthOperatingMode":{
             "error": "SUCCESS"
         }
     }

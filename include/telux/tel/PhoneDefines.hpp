@@ -97,6 +97,19 @@ enum class CallState {
 };
 
 /**
+ * Defines network mode
+ */
+enum class NetworkMode {
+   UNKNOWN = -1,  /**< Unknown; information is not available */
+   GSM,           /**< GSM mode */
+   UMTS,          /**< UMTS mode */
+   LTE,           /**< LTE mode */
+   NR5G,          /**< NR5G NSA and SA mode */
+   NR5G_NSA,      /**< NR5G NSA mode */
+   NR5G_SA,       /**< NR5G SA mode */
+};
+
+/**
  * Reason for the recently terminated call (either normally ended or failed)
  */
 enum class CallEndCause {

@@ -48,6 +48,7 @@ public:
    std::string getCallStateString(telux::tel::CallState cs);
    std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
    std::string getCurrentTime();
+   std::string getNetworkModeString(telux::tel::NetworkMode mode);
 
    ~MyCallListener() {
    }

@@ -63,6 +63,7 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
    PRINT_NOTIFICATION << " Call State: " << getCallStateString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << (int)call->getCallDirection()
+                      << ", Network Mode: " << getNetworkModeString(call->getNetworkMode())
                       << ", Phone Number: " << call->getRemotePartyNumber()
                       << ", Slot Id: " << call->getPhoneId() << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
@@ -104,6 +105,21 @@ std::string MyCallListener::getCallStateString(telux::tel::CallState cs) {
          return std::string("Call ended");
       default:
          std::cout << "Unexpected CallState = " << (int)cs << std::endl;
+         return std::string("unknown");
+   }
+}
+
+std::string MyCallListener::getNetworkModeString(telux::tel::NetworkMode mode) {
+   switch(mode) {
+      case telux::tel::NetworkMode::GSM:
+         return std::string("GSM mode");
+      case telux::tel::NetworkMode::UMTS:
+         return std::string("UMTS mode");
+      case telux::tel::NetworkMode::LTE:
+         return std::string("LTE mode");
+      case telux::tel::NetworkMode::NR5G:
+         return std::string("NR5G mode");
+      default:
          return std::string("unknown");
    }
 }

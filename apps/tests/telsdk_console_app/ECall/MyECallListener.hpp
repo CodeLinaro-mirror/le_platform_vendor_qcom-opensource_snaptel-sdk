@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYECALLLISTENER_HPP
 #define MYECALLLISTENER_HPP
 
@@ -55,6 +61,8 @@ class MyECallListener : public telux::tel::ICallListener {
    std::string callStateToString(telux::tel::CallState cs);
 
    std::string callDirectionToString(telux::tel::CallDirection cd);
+
+   std::string networkModeToString(telux::tel::NetworkMode mode);
    /**
     * Get the call end cause in string format from call end cause code
     */

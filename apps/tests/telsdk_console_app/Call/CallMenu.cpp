@@ -63,6 +63,12 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Call Menu class provides dialer functionality of the SDK
  * it has menu options for dial, answer, hangup, reject, conference and swap calls
@@ -850,6 +856,9 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                       ->getCallStateString((*callIterator)->getCallState())
                 << " Call Index: " << (int)(*callIterator)->getCallIndex()
                 << " Call Direction: " << (int)(*callIterator)->getCallDirection()
+                << " Network Mode: "
+                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                      ->getNetworkModeString((*callIterator)->getNetworkMode())
                 << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
                 << " SlotId: " << (*callIterator)->getPhoneId()
                 << " isMpty: " << (*callIterator)->isMultiPartyCall() << std::endl;

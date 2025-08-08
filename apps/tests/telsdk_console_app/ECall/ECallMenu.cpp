@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iomanip>
@@ -680,7 +680,8 @@ std::string ECallMenu::getCallDescription(std::shared_ptr<telux::tel::ICall> cal
    callDesc += "Call Index: " + std::to_string(call->getCallIndex()) + ", ";
    callDesc += "Phone Number: " + call->getRemotePartyNumber() + ", Call State: ";
    callDesc += std::to_string(static_cast<int>(call->getCallState())) + ", Call Type: "
-               + std::to_string(static_cast<int>(call->getCallDirection()));
+            + std::to_string(static_cast<int>(call->getCallDirection())) + ", Network Mode: "
+            + std::to_string(static_cast<int>(call->getNetworkMode()));
    return callDesc;
 }
 

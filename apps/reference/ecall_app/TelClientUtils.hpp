@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -53,6 +52,10 @@ public:
      * Get the call direction in string format
      */
     static std::string callDirectionToString(CallDirection cd);
+    /*
+     * Get the network mode in string format
+     */
+    static std::string networkModeToString(NetworkMode mode);
     /**
      * Get the call end cause in string format from call end cause code
      */

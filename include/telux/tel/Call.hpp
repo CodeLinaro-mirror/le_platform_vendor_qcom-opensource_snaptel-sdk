@@ -420,6 +420,21 @@ public:
     */
    virtual telux::tel::RedialState getRedialState() = 0;
 
+   /**
+    * Retrieves the current network mode of the ongoing call, such as GSM
+    * @ref telux::tel::NetworkMode::GSM, LTE @ref telux::tel::NetworkMode::LTE,
+    * or other supported RAT.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns NetworkMode - enumeration representing network mode @ref telux::tel::NetworkMode
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual NetworkMode getNetworkMode() = 0;
+
    virtual ~ICall() {
    }
 };

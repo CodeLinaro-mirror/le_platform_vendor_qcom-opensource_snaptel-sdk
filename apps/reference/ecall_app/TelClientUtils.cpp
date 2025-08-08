@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -57,6 +56,21 @@ std::string TelClientUtils::callDirectionToString(telux::tel::CallDirection cd) 
             return std::string("None");
         default:
             std::cout << CLIENT_NAME << "Unexpected call direction = " << (int)cd << std::endl;
+            return std::string("unknown");
+    }
+}
+
+std::string TelClientUtils::networkModeToString(telux::tel::NetworkMode mode) {
+    switch(mode) {
+        case telux::tel::NetworkMode::GSM:
+            return std::string("GSM mode");
+        case telux::tel::NetworkMode::UMTS:
+            return std::string("UMTS mode");
+        case telux::tel::NetworkMode::LTE:
+            return std::string("LTE mode");
+        case telux::tel::NetworkMode::NR5G:
+            return std::string("NR5G mode");
+        default:
             return std::string("unknown");
     }
 }

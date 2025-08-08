@@ -26,8 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -76,6 +78,17 @@ enum class CallState {
    CALL_WAITING,   /**< waiting call*/
    CALL_ALERTING,  /**< alerting call, MO Call only */
    CALL_ENDED,     /**<  call ended / disconnected */
+};
+
+/**
+ * Defines network mode
+ */
+enum class NetworkMode {
+   UNKNOWN = -1,  /**< Unknown; information is not available */
+   GSM,           /**< GSM mode */
+   UMTS,          /**< UMTS mode */
+   LTE,           /**< LTE mode */
+   NR5G,          /**< NR5G NSA and SA mode */
 };
 
 /**

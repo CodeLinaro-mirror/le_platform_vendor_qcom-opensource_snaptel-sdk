@@ -197,11 +197,17 @@ void TelClient::onIncomingCall(std::shared_ptr<ICall> call) {
 
 // Callback invoked when a call status changes
 void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
+    if (call == nullptr) {
+        std::cout << CLIENT_NAME << "call ptr is null\n";
+        return;
+    }
     std::cout << CLIENT_NAME << "\n CallInfoChange: "
                       << " Call State: " << TelClientUtils::callStateToString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " <<
                                     TelClientUtils::callDirectionToString(call->getCallDirection())
+                      << ", Network Mode: " <<
+                                    TelClientUtils::networkModeToString(call->getNetworkMode())
                       << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     //During the redial(by modem or app) scenario to setup audio session
     if(call->getCallState() == telux::tel::CallState::CALL_DIALING) {
@@ -622,6 +628,8 @@ telux::common::Status TelClient::getCurrentCalls() {
                       << TelClientUtils::callStateToString((*callIterator)->getCallState())
                   << ", Call Direction: "
                       << TelClientUtils::callDirectionToString((*callIterator)->getCallDirection())
+                  << ", Network Mode: "
+                      << TelClientUtils::networkModeToString((*callIterator)->getNetworkMode())
                   << ", Phone Number: " << (*callIterator)->getRemotePartyNumber() << std::endl;
     }
     return telux::common::Status::SUCCESS;

@@ -285,9 +285,6 @@ public:
     * Get the SIP error code for the termination of the IMS call.
     * Refer RFC3261 Section 21 for error description.
     *
-    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to successfully invoke this API.
-    *
     * @returns integer representing SIP error code.
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
@@ -313,6 +310,17 @@ public:
     */
    virtual bool isMultiPartyCall() = 0;
 
+   /**
+    * Retrieves the current network mode of the ongoing call, such as GSM
+    * @ref telux::tel::NetworkMode::GSM, LTE @ref telux::tel::NetworkMode::LTE,
+    * or other supported RAT.
+    *
+    * @returns NetworkMode - enumeration representing network mode @ref telux::tel::NetworkMode
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual NetworkMode getNetworkMode() = 0;
 
    virtual ~ICall() {
    }

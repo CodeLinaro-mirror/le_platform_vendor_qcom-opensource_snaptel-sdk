@@ -28,6 +28,12 @@
  */
 
 /**
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/**
  * @file       DataFilterManager.hpp
  *
  * @brief      It manages Data Restrict Filters. When the filters are enabled, only the data packets
@@ -226,7 +232,7 @@ public:
      * @returns SlotId
      *
      */
-    virtual int getSlotId() = 0;
+    virtual SlotId getSlotId() = 0;
 
     /**
      * Destructor of IDataFilterManager

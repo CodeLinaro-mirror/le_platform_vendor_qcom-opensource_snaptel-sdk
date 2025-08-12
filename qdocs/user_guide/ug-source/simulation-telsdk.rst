@@ -453,6 +453,7 @@ The details on how simulation of individual areas can be used and controlled are
 8. :ref:`sim-reference-platform`
 9. :ref:`sim-reference-security`
 10. :ref:`sim-reference-satcom`
+11. :ref:`sim-reference-wlan`
 
 .. _sim-reference-telephony:
 
@@ -2425,3 +2426,202 @@ Sample input:
  telsdk_event_injector -f ntn -e stateChange <state>
  telsdk_event_injector -f ntn -e stateChange 2
 
+.. _sim-reference-wlan:
+
+WLAN Simulation
+~~~~~~~~~~~~~~~~~~
+
+Overview of WLAN Simulation
+"""""""""""""""""""""""""""""""
+
+This page and the sub-pages provide information about usage of simulation for the WLAN
+sub-system that are part of the telux::wlan namespace of the Telematics SDK.
+
+.. _fig-wlan-sim-overview:
+.. figure:: ../../images/simulation_wlan_overview.png
+  :width: 500
+
+  WLAN Simulation Framework
+
+Managers Supported
+"""""""""""""""""""
+
+The following managers are currently available in the simulation:
+
+1. ApInterfaceManager
+2. StaInterfaceManager
+3. WlanDeviceManager
+
+WLAN APIs Response Handling
+"""""""""""""""""""""""""""""""
+
+A WLAN API response can be configured through a JSON file.
+
+Each manager has its own JSON configuration file present under ``simulation/json/api/wlan/``.
+
+If the client configures the API behavior to mimic an error scenario by setting the response error code
+to anything other than "SUCCESS", the WLAN server's response will be modified to simulate the erroneous behavior.
+
+Example 1:
+'''''''''''
+
+API command response for telux::wlan::IApInterfaceManager::setConfig
+
+.. code-block::
+
+ "setConfig": {
+        "error": "SUCCESS"
+ }
+
+Example 2:
+'''''''''''
+
+API command response for telux::wlan::IStaInterfaceManager::setIpConfig
+
+.. code-block::
+
+ "setIpConfig": {
+        "error": "SUCCESS"
+ }
+
+ WLAN Network Interface Configuration
+""""""""""""""""""""""""""""""""""""
+
+To simulate WLAN operations, the framework requires physical interfaces provided by the host or docker environment to be configured. Each AP and STA interface will be mapped to a configured physical interface.
+
+To configure which interfaces should be used, in ``tel.conf`` update the following configurations:
+
+.. code-block:: conf
+  sim.wlan.ap_interface_names = eth0, eth1
+  sim.wlan.sta_interface_names = wlan0
+
+Here, the first AP (PRIMARY) will be mapped to `eth0` and the second AP (SECONDARY) will be mapped to `eth1`. The first STA (PRIMARY) will be mapped to `wlan0`. If the client attempts to bring up more AP or STA interfaces than configured, fallback generic names like "wlan_apX" or "wlan_staX" will be used, and their IP/MAC addresses will be simulated as placeholders.
+
+If a host/docker is limited in the number of interfaces it has, one could use the following commands to add virtual interfaces.
+
+If the host machine does not have multiple interfaces available:
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Considering the host machine has only `eth0` interface available, the client can add virtual interfaces using the command ``ip link add link eth0 name eth0_ap0 type macvlan mode bridge`` and then ``ip link set eth0_ap0 up``. Repeat for other required interfaces.
+
+Now, a user can update ``sim.wlan.ap_interfaces = eth0_ap0, eth0_ap1`` and ``sim.wlan.sta_interfaces = eth0_sta0`` in ``/etc/telux/tel.conf``.
+
+This allows multiple virtual interfaces to be derived from a single physical interface for simulation purposes.
+
+
+IPv6 support inside docker container
+'''''''''''''''''''''''''''''''''''''
+
+Docker does not have IPv6 support by default. Users of the simulation can follow the steps below to enable IPv6 inside docker container.
+
+.. code-block::
+  $ vi /etc/docker/daemon.json
+
+  "ipv6": true,
+  "fixed-cidr-v6": "<SUBNET>",
+  "dns": [<dnsAddress1>,<dnsAddress2>,<dnsAddress3>,<dnsAddress4>],
+  "experimental": true,
+  "ip6tables": true,
+
+  $ systemctl restart docker
+
+Once above settings are done in daemon.json, we can enable IPv6 support with the following options, while starting the docker container.
+
+``--cap-add=NET_ADMIN --sysctl net.ipv6.conf.all.disable_ipv6=0``
+
+
+WLAN Event Handling
+"""""""""""""""""""""""
+
+ApInterfaceManager events
+'''''''''''''''''''''''''
+
+The following ApInterfaceManager events can be simulated by changing the AP configuration.
+
+1. telux::wlan::IApListener::onApConfigChanged
+
+The following ApInterfaceManager events can be simulated using the ``telsdk_event_injector``.
+
+1. telux::wlan::IApListener::onApDeviceStatusChanged
+2. telux::wlan::IApListener::onApBandChanged
+
+**Sample input for onApDeviceStatusChanged:**
+
+.. code-block::
+
+
+
+Parameters for ``onApDeviceStatusChanged``:
+
+- **apId**: integer, 1 - PRIMARY, 2 - SECONDARY, 3 - TERTIARY, 4 - QUATERNARY
+- **event**: integer, 0: AP_DEV_CONNECTED, 1: AP_DEV_DISCONNECTED, 2: IPV4_UPDATED, 3: IPV6_UPDATED
+- **name**: string, User friendly string that identifies Wi-Fi device
+- **ipv4Address**: string, IPv4 Address of Wi-Fi device
+- **macAddress**: string, MAC Address of Wi-Fi device
+- **ipv6Addresses**: string, comma-separated list of IPv6 Addresses of Wi-Fi device (e.g., '::1,fe80::1')
+
+**Sample input for onApBandChanged:**
+
+.. code-block::
+
+ telsdk_event_injector -f wlan_ap -e onApBandChanged <radio>
+
+Parameters for ``onApBandChanged``:
+
+- **radio**: integer, 0: BAND_TYPE_UNKNOWN, 1: BAND_5GHZ, 2: BAND_2GHZ, 3: BAND_6GHZ
+
+StaInterfaceManager events
+'''''''''''''''''''''''''
+
+The following StaInterfaceManager event is triggered as a consequence of invoking startScan request.
+
+1. telux::wlan::IStaListener::onScanResultUpdated
+
+The following StaInterfaceManager events can be simulated using the ``telsdk_event_injector``.
+
+1. telux::wlan::IStaListener::onStationStatusChanged
+2. telux::wlan::IStaListener::onStationBandChanged
+
+**Sample input for onStationStatusChanged:**
+
+.. code-block::
+
+ telsdk_event_injector -f wlan_sta -e onStaStatusChanged <id> <ifStatus> <connStatus>
+
+Parameters for ``onStationStatusChanged``:
+
+- **id**: integer, 1 - PRIMARY, 2 - SECONDARY, 3 - TERTIARY, 4 - QUATERNARY
+- **ifStatus**: integer, 0: STA_IF_STATUS_UNKNOWN, 1: CONNECTING, 2: STA_IF_CONNECTED, 3: STA_IF_DISCONNECTED, 4: ASSOCIATION_FAILED, 5: IP_ASSIGNMENT_FAILED
+- **connStatus**: integer, 0: STA_CONN_STATUS_UNKNOWN, 1: SUCCESS, 2: INCORRECT_PSK, 3: AP_NOT_FOUND
+
+**Sample input for onStationBandChanged:**
+
+.. code-block::
+
+ telsdk_event_injector -f wlan_sta -e onStationBandChanged <radio>
+
+Parameters for ``onStationBandChanged``:
+
+- **radio**: integer, 0: BAND_TYPE_UNKNOWN, 1: BAND_5GHZ, 2: BAND_2GHZ, 3: BAND_6GHZ
+
+WlanDeviceManager events
+'''''''''''''''''''''''''
+
+The following WlanDeviceManager events can be simulated by changing the WLAN device configuration.
+
+1. telux::wlan::IWlanListener::onEnableChanged
+
+The following WlanDeviceManager events can be simulated using the ``telsdk_event_injector``.
+
+1. telux::wlan::IWlanListener::onTempCrossed
+
+**Sample input for onWlanTempCrossed:**
+
+.. code-block::
+
+ telsdk_event_injector -f wlan_dev -e onWlanTempCrossed <temperature> <perfState>
+
+Parameters for ``onWlanTempCrossed``:
+
+- **temperature**: valid integer
+- **perfState**: integer, 0 - UNKNOWN, 1 - FULL, 2 - REDUCED, 3 - SHUTDOWN

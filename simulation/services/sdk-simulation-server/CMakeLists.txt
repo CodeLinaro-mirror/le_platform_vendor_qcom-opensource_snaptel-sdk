@@ -42,6 +42,7 @@ add_subdirectory(power)
 add_subdirectory(platform)
 add_subdirectory(sec)
 add_subdirectory(satcom)
+add_subdirectory(wlan)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common

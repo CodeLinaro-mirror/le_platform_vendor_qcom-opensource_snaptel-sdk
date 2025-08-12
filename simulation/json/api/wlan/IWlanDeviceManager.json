@@ -1,0 +1,34 @@
+{
+  "IWlanDeviceManager": {
+    "IsSubsystemReady": "SERVICE_AVAILABLE",
+    "IsSubsystemReadyDelay": 100,
+    "DefaultCallbackDelay": 100,
+    "getServiceStatus": {
+      "error": "SUCCESS"
+    },
+    "enable": {
+      "error": "SUCCESS"
+    },
+    "setMode": {
+      "error": "SUCCESS"
+    },
+    "getConfig": {
+      "error": "SUCCESS"
+    },
+    "getStatus": {
+      "error": "SUCCESS"
+    },
+    "setActiveCountry": {
+      "error": "SUCCESS"
+    },
+    "getRegulatoryParams": {
+      "error": "SUCCESS"
+    },
+    "setTxPower": {
+      "error": "SUCCESS"
+    },
+    "getTxPower": {
+      "error": "SUCCESS"
+    }
+  }
+}

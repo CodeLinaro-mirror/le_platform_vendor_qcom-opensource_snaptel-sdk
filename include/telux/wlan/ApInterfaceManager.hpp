@@ -205,6 +205,9 @@ class IApInterfaceManager {
     /**
      * Set Wlan Security Configuration: Used to change security settings of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId             AP identifier to set security for. @ref telux::wlan::Id
      * @param [in] apSecurity       AP security settings. @ref telux::wlan::ApSecurity
 
@@ -219,6 +222,9 @@ class IApInterfaceManager {
     /**
      * Set Access Point SSID: Used to change SSID of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId                AP identifier to set SSID for. @ref telux::wlan::Id
      * @param [in] ssid                new SSID to be set
      *
@@ -231,6 +237,9 @@ class IApInterfaceManager {
 
     /**
      * Set Access Point visibility: Used to change SSID broadcast of selected network.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] apId           AP identifier to set SSID visibility for. @ref telux::wlan::Id
      * @param [in] isVisible      Visibility to be set
@@ -253,6 +262,9 @@ class IApInterfaceManager {
      * @ref telux::wlan::ApElementInfoConfig comply with applicable constraints and
      * interdependencies as defined in the IEEE 802.11 standard.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId            AP identifier to enable element info on. @ref telux::wlan::Id
      * @param [in] config          Element Info configurations.
      *
@@ -268,6 +280,9 @@ class IApInterfaceManager {
 
     /**
      * Set Passphrase for Access Point: Used to change passphrase of selected network.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] apId            AP identifier to set passphrase for. @ref telux::wlan::Id
      * @param [in] passPhrase      new passPhrase string
@@ -311,9 +326,10 @@ class IApInterfaceManager {
      virtual telux::common::ErrorCode getStatus(std::vector<ApStatus>& status) = 0;
 
     /**
-     * Request Connected Devices to all enabled access points.
-     * Each entry in returned list will contain information about a device such as access point
-     * it is connected to and IP and MAC address as defined in @ref telux::wlan::DeviceInfo
+     * Requests the list of connected devices across all enabled access points.
+     * Each entry in the returned list provides details about a device, including the access point
+     * it is connected to, as well as its IP and MAC addresses, as defined in
+     * @ref telux::wlan::DeviceInfo.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_DEVICES
      * permission to invoke this API successfully.

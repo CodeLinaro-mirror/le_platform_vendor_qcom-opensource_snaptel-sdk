@@ -196,7 +196,7 @@ class IApInterfaceManager {
      * @param [in] config       AP configuration parameters @ref telux::wlan::ApConfig
      *
      * @returns  operation error code (if any). @ref telux::common::ErrorCode
-     *           telux::common::Status::NOTALLOWED is returned if AP to be configured was not
+     *           telux::common::ErrorCode::INVALID_ARG is returned if AP to be configured was not
      *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
      */
      virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;

@@ -1554,7 +1554,7 @@ Call flow to remove and disable software bridge
 13. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
 
 Call flow to enable ip passthrough in peer nad
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/data_enable_ip_pass_through_call_flow.png
 
@@ -1579,7 +1579,7 @@ Call flow to enable ip passthrough in peer nad
     the ETH backhaul that allows main unit to access data call running in NAD-2.
 
 Call flow to set data stall parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/data_set_data_stall_parameters_call_flow.png
 
@@ -1594,7 +1594,7 @@ Call flow to set data stall parameters
 5. On success, the application sets data stall parameters for a specific slot ID.
 
 Call flow to set Ethernet data link state
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/set_eth_datalink_state.png
 
@@ -1607,7 +1607,7 @@ Call flow to set Ethernet data link state
 7. The change in Ethernet data link state (DOWN) is notified to the application.
 
 Call flow to update ETH mode as result of thermal mitigation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/data_eth_thermal_mitigation_ack.png
 
@@ -1667,7 +1667,7 @@ On boot-up, ETH will be available as expected e.g., 10G USXGMII.
 22. Upon successful completion of this mode change transaction, all registered listeners are informed about the ETH mode transition status.
 
 Call flow Create traffic class and add QoS filter
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: /../images/data_create_traffic_class_and_add_qos_filter.png
 
@@ -1704,6 +1704,22 @@ Call flow to Delete QoS filter, Delete traffic class, Delete all QoS config
 7. If the parameters are set correctly, the application will get the traffic class configuration object.
 8. The application calls the QoS manager API to delete a traffic class and provides the traffic class configuration object from the above step.
 9. To delete the traffic class and all QoS filters in one shot, the delete all QoS Configurations API can be called.
+
+Start TCP keep alive offload to modem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/data_start_tcp_keep_alive.png
+
+1. Application initiates the process by requesting the Keep Alive Manager instance from ``DataFactory`` using ``getKeepAliveManager(slotId, clientCallback)``. ``DataFactory`` responds with an instance of ``IKeepAliveManager``.
+2. If ``IKeepAliveManager`` is not null, the application should wait for initialization to complete, i.e., ``clientCallback`` should be called with service status as ``AVAILABLE``.
+3. Once ready, the application registers a listener using ``registerListener(IKeepAliveListener)``. Precondition Checks, the application ensures that; The data call has started. The TCP socket connection (required for offloading keep-alive to the modem) is established.
+4. If operating in Monitor Mode, TCP session info (e.g., sequence numbers) is not needed. The application calls ``enableTCPMonitor()`` with input parameters.
+5. The application receives ``monitorHandle`` and ``ErrorCode``. If successful At least one packet must be exchanged between the TCP client and server after calling ``enableTCPMonitor()`` for the modem to learn the TCP session parameters. The modem must learn these parameters before ``startTCPKeepAliveOffload()`` is called with ``monitorHandle``. For example, consider an application on a UE that uses MQTT over TCP to communicate with the cloud. After entering Monitor Mode, the client can either send a dummy PUBLISH message or resend a previous PUBLISH with the same topic. This ensures the modem receives a TCP packet after Monitor Mode is initiated. The application waits sufficiently for the sample packet to be acknowledged (e.g., ``tcpi_unacked`` becomes 0).
+6. The application starts the keep-alive offload using ``startTCPKeepAliveOffload()`` with ``monitorHandle`` and ``interval``. The keep-alive interval is expected to be ≥ 60,000 milliseconds.
+7. The modem returns ``tcpKAOffloadHandle`` and ``ErrorCode``.
+8. If operating in Default Mode, TCP session info (e.g., sequence numbers) is required. The application calls ``startTCPKeepAliveOffload()`` with ``tcpKaParams``, ``tcpSessionParams``, and ``interval``. The keep-alive interval is expected to be ≥ 60,000 milliseconds.
+9. The modem returns ``tcpKAOffloadHandle`` and ``ErrorCode``. Once offload is started, TCP keep-alive messages are sent by the modem at the configured interval. This continues even if the device enters suspend mode.
+10. Any TCP packet transfer over the same session results in failure or stopping of the keep-alive offload. The application is notified via ``onKeepAliveStatusChange(NETWORK_ERR, tcpKAOffloadHandle)`` from ``IKeepAliveListener``.
 
 C-V2X
 -----

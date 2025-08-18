@@ -138,6 +138,11 @@ public:
      * any packets after the TCP session parameters are collected from the TCP/IP stack.
      * When the TCP keep-alive is offloaded to the modem, it does not support any TCP options in
      * the header, i.e., the keep-alive is sent without any options set.
+     * Before calling the @ref startTCPKeepAliveOffload API, there should be no in-flight packets
+     * i.e., all TCP packets between the server and client must be acknowledged.
+     * The TCP client or server shall not send or acknowledge any packets after
+     * the @ref startTCPKeepAliveOffload API is called, or else the keep-alive offload to the modem
+     * will stop.
      *
      * On platforms with access control enabled, the caller needs to have the
      * TELUX_DATA_KA_OFFLOAD_OPS permission to successfully invoke this API.
@@ -165,9 +170,14 @@ public:
      * This variant of startTCPKeepAliveOffload API does not require TCP session parameters.
      *
      * This API is to be used with the @ref enableTCPMonitor API. The modem learns
-     * the TCP session parameters by monitorng the TCP connection. At least one TCP packet needs
+     * the TCP session parameters by monitoring the TCP connection. At least one TCP packet needs
      * to be exchanged between the TCP server and the client after @ref enableTCPMonitor is
      * called and before this variant of the @ref startTCPKeepAliveOffload API is called.
+     * Before calling the @ref startTCPKeepAliveOffload API, there should be no in-flight packets
+     * i.e., all TCP packets between the server and client must be acknowledged.
+     * The TCP client or server shall not send or acknowledge any packets after
+     * the @ref startTCPKeepAliveOffload API is called, or else the keep-alive offload to the modem
+     * will stop.
      *
      * When the TCP keep-alive is offloaded to the modem, it does not support any TCP options in
      * the header, i.e., the keep-alive is sent without any options set.

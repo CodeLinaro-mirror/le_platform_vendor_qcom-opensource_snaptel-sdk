@@ -4,7 +4,7 @@
 
 .. _simulation-data:
 
-Data 
+Data
 ============
 
 .. toctree::
@@ -32,6 +32,7 @@ Data
    set_data_stall_params
    set_eth_datalink_state
    create_traffic_class_and_add_qos_filter
+   start_tcp_keep_alive_offload
 
 
 ..
@@ -54,3 +55,5 @@ Data
    * :ref:`get-roaming-status-and-indication`
    * :ref:`on-demand-pdn-connectivity`
    * :ref:`create_traffic_class_and_add_qos_filter`
+   * :ref:`start-tcp-keep-alive-offload`
+

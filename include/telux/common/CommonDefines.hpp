@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       CommonDefines.hpp
  * @brief      Contains enumerations and variables used across telephony, location, data subsystems.
@@ -360,6 +366,152 @@ enum class ErrorCode {
    SUBSYSTEM_UNAVAILABLE = 5000, /**< Underlying service currently unavailable */
    OPERATION_TIMEOUT = 5001,     /**< Timeout error */
    ROLLBACK_FAILED = 5002,       /**< Rollback to initial state failed */
+
+   /*Audio specific error codes*/
+   OPERATION_NOT_PERMITTED = 6001,              /**< Operation not permitted.*/
+   NO_SUCH_FILE_OR_DIRECTORY = 6002,            /**< No such file or directory.*/
+   NO_SUCH_PROCESS = 6003,                      /**< No such process.*/
+   INTERRUPTED_SYSTEM_CALL = 6004,              /**< Interrupted system call.*/
+   INPUT_OUTPUT_ERROR = 6005,                   /**< Input/output error.*/
+   NO_SUCH_DEVICE_OR_ADDRESS = 6006,            /**< No such device or address.*/
+   ARGUMENT_LIST_TOO_LONG = 6007,               /**< Argument list too long.*/
+   EXEC_FORMAT_ERROR = 6008,                    /**< Exec format error. */
+   BAD_FILE_NUMBER = 6009,                      /**< Bad file number. */
+   NO_CHILD_PROCESSES = 6010,                   /**< No child processes.*/
+   RESOURCE_TEMPORARILY_UNAVAILABLE = 6011,     /**< Resource temporarily unavailable.*/
+   CANNOT_ALLOCATE_MEMORY = 6012,               /**< Cannot allocate memory.*/
+   PERMISSION_DENIED = 6013,                    /**< Permission denied. */
+   BAD_ADDRESS = 6014,                          /**< Bad address.*/
+   BLOCK_DEVICE_REQUIRED = 6015,                /**< Block device required.*/
+   DEVICE_OR_RESOURCE_BUSY = 6016,              /**< Device or resource busy.*/
+   FILE_EXISTS = 6017,                          /**< File exists.*/
+   INVALID_CROSS_DEVICE_LINK = 6018,            /**< Invalid cross-device link.*/
+   NO_SUCH_DEVICE = 6019,                       /**< No such device. */
+   NOT_A_DIRECTORY = 6020,                      /**< Not a directory.*/
+   IS_A_DIRECTORY = 6021,                       /**< Is a directory.*/
+   INVALID_ARGUMENT = 6022,                     /**< Invalid argument.*/
+   TOO_MANY_OPEN_FILES_IN_SYSTEM = 6023,        /**< Too many open files in system.*/
+   TOO_MANY_OPEN_FILES = 6024,                  /**< Too many open files.*/
+   NOT_A_TTY = 6025,                            /**< Not a teletypewriter.*/
+   TEXT_FILE_BUSY = 6026,                       /**< Text file busy.*/
+   FILE_TOO_LARGE = 6027,                       /**< File too large.*/
+   NO_SPACE_LEFT_ON_DEVICE = 6028,              /**< No space left on device.*/
+   ILLEGAL_SEEK = 6029,                         /**< Illegal seek.*/
+   READ_ONLY_FILE_SYSTEM = 6030,                /**< Read-only file system.*/
+   TOO_MANY_LINKS = 6031,                       /**< Too many links.*/
+   BROKEN_PIPE = 6032,                          /**< Broken pipe.*/
+   MATH_ARGUMENT_OUT_OF_DOMAIN = 6033,          /**< Math argument out of domain of func.*/
+   MATH_RESULT_NOT_REPRESENTABLE = 6034,        /**< Math result not representable.*/
+   RESOURCE_DEADLOCK_WOULD_OCCUR = 6035,        /**< Resource deadlock would occur.*/
+   FILE_NAME_TOO_LONG = 6036,                   /**< File name too long.*/
+   NO_LOCK_AVAIL = 6037,                        /**< No lock available.*/
+   FUNCTION_NOT_IMPLEMENTED = 6038,             /**< Function not implemented.*/
+   DIRECTORY_NOT_EMPTY = 6039,                  /**< Directory not empty.*/
+   TOO_MANY_LEVELS_OF_SYMBOLIC_LINKS = 6040,    /**< Too many levels of symbolic links.*/
+   NO_MESSAGE_OF_DESIRED_TYPE = 6042,           /**< No message of desired type.*/
+   IDENTIFIER_REMOVED = 6043,                   /**< Identifier removed.*/
+   CHANNEL_NUMBER_OUT_OF_RANGE = 6044,          /**< Channel number out of range.*/
+   LEVEL_2_NOT_SYNCHRONIZED = 6045,             /**< Level 2 not synchronized.*/
+   LEVEL_3_HALTED = 6046,                       /**< Level 3 halted.*/
+   LEVEL_3_RESET = 6047,                        /**< Level 3 reset.*/
+   LINK_NUMBER_OUT_OF_RANGE = 6048,             /**< Link number out of range.*/
+   PROTOCOL_DRIVER_NOT_ATTACHED = 6049,         /**< Protocol driver not attached.*/
+   NO_CSI_STRUCTURE_AVAILABLE = 6050,           /**< No CSI structure available.*/
+   LEVEL_2_HALTED = 6051,                       /**< Level 2 halted.*/
+   INVALID_EXCHANGE = 6052,                     /**< Invalid exchange.*/
+   INVALID_REQUEST_DESCRIPTOR = 6053,           /**< Invalid request descriptor.*/
+   EXCHANGE_FULL = 6054,                        /**< Exchange full.*/
+   NO_ANODE = 6055,                             /**< No anode.*/
+   INVALID_REQUEST_CODE = 6056,                 /**< Invalid request code.*/
+   INVALID_SLOT = 6057,                         /**< Invalid slot.*/
+   BAD_FONT_FILE_FORMAT = 6059,                 /**< Bad font file format.*/
+   DEVICE_NOT_A_STREAM = 6060,                  /**< Device not a stream. */
+   NO_DATA_AVAILABLE = 6061,                    /**< No data available. */
+   TIMER_EXPIRED = 6062,                        /**< Timer expired. */
+   OUT_OF_STREAMS_RESOURCES = 6063,             /**< Out of streams resources. */
+   MACHINE_IS_NOT_ON_THE_NETWORK = 6064,        /**< Machine is not on the network.*/
+   PACKAGE_NOT_INSTALLED = 6065,                /**< Package not installed.*/
+   OBJECT_IS_REMOTE = 6066,                     /**< Object is remote.*/
+   LINK_HAS_BEEN_SEVERED = 6067,                /**< Link has been severed.*/
+   ADVERTISE_ERROR = 6068,                      /**< Advertise error.*/
+   SRM_MOUNT_ERROR = 6069,                      /**< Srmount error.*/
+   COMMUNICATION_ERROR_ON_SEND = 6070,          /**< Communication error on send.*/
+   PROTOCOL_ERROR = 6071,                       /**< Protocol error.*/
+   MULTIHOP_ATTEMPTED = 6072,                   /**< Multihop attempted.*/
+   RFS_SPECIFIC_ERROR = 6073,                   /**< RFS specific error.*/
+   BAD_MESSAGE = 6074,                          /**< Bad message.*/
+   VALUE_TOO_LARGE_FOR_DEFINED_DATA_TYPE = 6075, /**< Value too large for defined data
+                                                      type.*/
+   NAME_NOT_UNIQUE_ON_NETWORK = 6076,           /**< Name not unique on network.*/
+   FILE_DESCRIPTOR_IN_BAD_STATE = 6077,         /**< File descriptor in bad state.*/
+   REMOTE_ADDRESS_CHANGED = 6078,               /**< Remote address changed.*/
+   CANNOT_ACCESS_A_NEEDED_SHARED_LIBRARY = 6079, /**< Cannot access a needed shared
+                                                      library.*/
+   ACCESSING_A_CORRUPTED_SHARED_LIBRARY = 6080,  /**< Accessing a corrupted shared
+                                                      library.*/
+   LIB_SECTION_CORRUPTED = 6081,                /**< .lib section in a.out corrupted.*/
+   TOO_MANY_SHARED_LIBRARIES = 6082,            /**< Too many shared libraries.*/
+   CANNOT_EXEC_A_SHARED_LIBRARY_DIRECTLY = 6083, /**< Cannot exec a shared library
+                                                      directly.*/
+   ILLEGAL_BYTE_SEQUENCE = 6084,                /**< Illegal byte sequence.*/
+   INTERRUPTED_SYSTEM_CALL_RESTART = 6085,      /**< Interrupted system call should be
+                                                     restarted.*/
+   STREAMS_PIPE_ERROR = 6086,                   /**< Streams pipe error.*/
+   TOO_MANY_USERS = 6087,                       /**< Too many users.*/
+   SOCKET_OPERATION_ON_NON_SOCKET = 6088,       /**< Socket operation on non-socket.*/
+   DESTINATION_ADDRESS_REQUIRED = 6089,         /**< Destination address required.*/
+   MESSAGE_TOO_LONG = 6090,                     /**< Message too long.*/
+   PROTOCOL_WRONG_TYPE_FOR_SOCKET = 6091,       /**< Protocol wrong type for socket.*/
+   PROTOCOL_NOT_AVAILABLE = 6092,               /**< Protocol not available.*/
+   PROTOCOL_NOT_SUPPORTED = 6093,               /**< Protocol not supported.*/
+   SOCKET_TYPE_NOT_SUPPORTED = 6094,            /**< Socket type not supported.*/
+   OPERATION_NOT_SUPPORTED = 6095,              /**< Operation not supported
+                                                     (on socket).*/
+   PROTOCOL_FAMILY_NOT_SUPPORTED = 6096,        /**< Protocol family not supported.*/
+   ADDRESS_FAMILY_NOT_SUPPORTED = 6097,         /**< Address family not supported by
+                                                     protocol.*/
+   ADDRESS_ALREADY_IN_USE = 6098,               /**< Address already in use.*/
+   CANNOT_ASSIGN_REQUESTED_ADDRESS = 6099,      /**< Cannot assign requested
+                                                     address.*/
+   NETWORK_IS_DOWN = 6100,                      /**< Network is down.*/
+   NETWORK_IS_UNREACHABLE = 6101,               /**< Network is unreachable.*/
+   NETWORK_DROPPED_CONNECTION_ON_RESET = 6102,  /**< Network dropped connection on
+                                                     reset.*/
+   SOFTWARE_CAUSED_CONNECTION_ABORT = 6103,     /**< Software caused connection
+                                                     abort.*/
+   CONNECTION_RESET_BY_PEER = 6104,             /**< Connection reset by peer.*/
+   NO_BUFFER_SPACE_AVAILABLE = 6105,            /**< No buffer space available.*/
+   SOCKET_IS_ALREADY_CONNECTED = 6106,          /**< Socket is already connected.*/
+   SOCKET_IS_NOT_CONNECTED = 6107,              /**< Socket is not connected.*/
+   CANNOT_SEND_AFTER_TRANSPORT_ENDPOINT_SHUTDOWN = 6108, /**< Cannot send after transport
+                                                              endpoint shutdown.*/
+   TOO_MANY_REFERENCES_CANNOT_SPLICE = 6109,    /**< Too many references: cannot
+                                                     splice.*/
+   CONNECTION_TIMED_OUT = 6110,                 /**< Connection timed out.*/
+   CONNECTION_REFUSED = 6111,                   /**< Connection refused.*/
+   HOST_IS_DOWN = 6112,                         /**< Host is down.*/
+   NO_ROUTE_TO_HOST = 6113,                     /**< No route to host.*/
+   OPERATION_ALREADY_IN_PROGRESS = 6114,        /**< Operation already in progress.*/
+   OPERATION_NOW_IN_PROGRESS = 6115,            /**< Operation now in progress.*/
+   STALE_FILE_HANDLE = 6116,                    /**< Stale file handle.*/
+   STRUCTURE_NEEDS_CLEANING = 6117,             /**< Structure needs cleaning.*/
+   NOT_A_XENIX_NAMED_TYPE_FILE = 6118,          /**< Not a XENIX named type file.*/
+   NO_XENIX_SEMAPHORES_AVAILABLE = 6119,        /**< No XENIX semaphores available.*/
+   IS_A_NAMED_TYPE_FILE = 6120,                 /**< Is a named type file.*/
+   REMOTE_IO_ERROR = 6121,                      /**< Remote I/O error.*/
+   DISK_QUOTA_EXCEEDED = 6122,                  /**< Disk quota exceeded.*/
+   NO_MEDIUM_FOUND = 6123,                      /**< No medium found.*/
+   WRONG_MEDIUM_TYPE = 6124,                    /**< Wrong medium type.*/
+   OPERATION_CANCELED = 6125,                   /**< Operation canceled.*/
+   REQUIRED_KEY_NOT_AVAILABLE = 6126,           /**< Required key not available.*/
+   KEY_HAS_EXPIRED = 6127,                      /**< Key has expired.*/
+   KEY_HAS_BEEN_REVOKED = 6128,                 /**< Key has been revoked.*/
+   KEY_WAS_REJECTED_BY_SERVICE = 6129,          /**< Key was rejected by service.*/
+   OWNER_DIED = 6130,                           /**< Owner died.*/
+   STATE_NOT_RECOVERABLE = 6131,                /**< State not recoverable.*/
+   OPERATION_NOT_POSSIBLE_DUE_TO_RFKILL = 6132, /**< Operation not possible due to
+                                                     RF-kill.*/
+   MEMORY_PAGE_HAS_HARDWARE_ERROR = 6133,       /**< Memory page has hardware error.*/
 };
 
 /**

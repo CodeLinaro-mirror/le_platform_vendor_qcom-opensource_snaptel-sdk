@@ -151,6 +151,10 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "15", "Network_Setting_Menu",
             {}, std::bind(&DataMenu::networkSettingMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> ipaMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "16", "Ipa_Menu",
+            {}, std::bind(&DataMenu::ipaMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> tetherMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
@@ -182,7 +186,8 @@ void DataMenu::init() {
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
         dataSettingsMenuCommand, clientManagerMenuCommand, dualDataManagementMenuCommand,
         dataControlMenuCommand, networkSettingMenuCommand, tetherMenuCommand,
-        ethernetMenuCommand, ipsecMenuCommand, statsMenuCommand, backhaulMenuCommand};
+        ethernetMenuCommand, ipsecMenuCommand, statsMenuCommand, backhaulMenuCommand, ipaMenuCommand};
+
     addCommands(commandsList);
 
     if (DataMenu::initializeSDK()) {
@@ -392,6 +397,16 @@ void DataMenu::backhaulMenu(std::vector<std::string> userInput) {
         backhaulMenu_->mainLoop();
     }
     backhaulMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::ipaMenu(std::vector<std::string> userInput) {
+    ipaMenu_ =
+        make_shared<IpaMenu>("Ipa Control Menu", "ipa> ");
+    if(ipaMenu_->init()) {
+        ipaMenu_->mainLoop();
+    }
+    ipaMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 

@@ -1,0 +1,23 @@
+{
+    "ITetherManager": {
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400,
+        "GetServiceStatus" : {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "StartBTTether" : {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "StopBTTether": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "RequestBTTetherStatus": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        }
+    }
+}

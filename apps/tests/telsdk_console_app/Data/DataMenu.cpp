@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -67,8 +73,14 @@ bool DataMenu::initializeSDK() {
         "data_profile> ");
     bool dpmSubSystemStatus = dataProfileMenu_->init();
 
+    // Instantiate Data Link Manager
+    dataLinkMenu_ = std::make_shared<DataLinkMenu>("Data Link Manager Menu",
+        "data_link> ");
+    bool dlmSubSystemStatus = dataLinkMenu_->init();
+
+
     // Check if the SDK is able to initialize data subsystems
-    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
+    if ((dcmSubSystemStatus) && (dpmSubSystemStatus) && (dlmSubSystemStatus)) {
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
@@ -118,9 +130,14 @@ void DataMenu::init() {
             "9", "Data_Profile_Management_Menu",
             {}, std::bind(&DataMenu::dataProfileMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> dataLinkMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "10", "Data_Link_Menu",
+            {}, std::bind(&DataMenu::dataLinkMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
-        socksMenuCommand, l2tpMenuCommand, dataProfileManagerMenuCommand};
+        socksMenuCommand, l2tpMenuCommand, dataProfileManagerMenuCommand, dataLinkMenuCommand};
 
     addCommands(commandsList);
 
@@ -223,6 +240,17 @@ void DataMenu::socksMenu(std::vector<std::string> userInput) {
     }
     if(socksMenu_->init()) {
         socksMenu_->mainLoop();
+    }
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::dataLinkMenu(std::vector<std::string> userInput) {
+    if(dataLinkMenu_) {
+        dataLinkMenu_->displayMenu();
+        dataLinkMenu_->mainLoop();
+    }
+    else {
+        std::cout << "Error Creating Data Link Manager" << std::endl;
     }
     ConsoleApp::displayMenu();
 }

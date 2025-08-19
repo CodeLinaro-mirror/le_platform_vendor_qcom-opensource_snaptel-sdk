@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       DataFactory.hpp
  *
@@ -47,6 +53,7 @@
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/IpFilter.hpp>
+#include <telux/data/DataLinkManager.hpp>
 
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
@@ -211,6 +218,19 @@ class DataFactory {
      */
     std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager();
 
+    /**
+     * Get DataLink Manager
+     *
+     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     *
+     * @returns instance of IDataLinkManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::IDataLinkManager> getDataLinkManager(
+        telux::data::OperationType oprType);
+
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -226,6 +246,8 @@ class DataFactory {
         socksManagerMap_;
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::IDataLinkManager>>
+        dataLinkManagerMap_;
 
     DataFactory();
     ~DataFactory();

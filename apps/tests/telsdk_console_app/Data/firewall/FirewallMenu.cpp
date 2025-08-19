@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -517,7 +523,7 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
-    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+    telux::data::IpProtocol proto = DataUtils::getProtocol(protoStr);
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";

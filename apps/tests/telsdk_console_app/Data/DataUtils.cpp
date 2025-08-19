@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -204,7 +210,7 @@ std::string DataUtils::protocolToString(telux::data::IpProtocol proto) {
    }
 }
 
-telux::data::IpProtocol DataUtils::getProtcol(std::string protoStr) {
+telux::data::IpProtocol DataUtils::getProtocol(std::string protoStr) {
     std::string protoStrToCompare = protoStr;
     std::transform(protoStrToCompare.begin(), protoStrToCompare.end(), protoStrToCompare.begin(),
         [](unsigned char ch) { return std::tolower(ch); });
@@ -232,4 +238,43 @@ telux::data::IpProtocol DataUtils::getProtcol(std::string protoStr) {
         std::cout << "Error: invalid protocol \n ";
     }
     return prot;
+}
+
+std::string DataUtils::interfaceToString(telux::data::InterfaceType interface) {
+   std::string ifName = "UNKNOWN";
+   switch(interface) {
+      case telux::data::InterfaceType::WLAN:
+         ifName = "WLAN";
+         break;
+      case telux::data::InterfaceType::ETH:
+         ifName = "ETH";
+         break;
+      case telux::data::InterfaceType::ECM:
+         ifName = "ECM";
+         break;
+      case telux::data::InterfaceType::RNDIS:
+         ifName = "RNDIS";
+         break;
+      case telux::data::InterfaceType::MHI:
+         ifName = "MHI";
+         break;
+      default:
+         break;
+   }
+   return ifName;
+}
+
+std::string DataUtils::linkStatusToString(telux::data::LinkStatus status) {
+   std::string linkStatus = "UNKNOWN";
+   switch(status) {
+      case telux::data::LinkStatus::UP:
+         linkStatus = "UP";
+         break;
+      case telux::data::LinkStatus::DOWN:
+         linkStatus = "DOWN";
+         break;
+      default:
+         break;
+   }
+   return linkStatus;
 }

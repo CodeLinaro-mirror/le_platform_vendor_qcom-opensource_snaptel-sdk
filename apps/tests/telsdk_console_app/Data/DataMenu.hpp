@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Data Connection Manager Sample Application using Telematics SDK
  * This is used to demonstrate data connection manager APIs like start/stop data
@@ -61,6 +67,7 @@
 #include "vlan/VlanMenu.hpp"
 #include "socks/SocksMenu.hpp"
 #include "data_filter/DataFilterMenu.hpp"
+#include "data_link/DataLinkMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -93,6 +100,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void socksMenu(std::vector<std::string> inputCommand);
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
+    void dataLinkMenu(std::vector<std::string> inputCommand);
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
 
@@ -104,5 +112,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<FirewallMenu> firewallMenu_;
     std::shared_ptr<VlanMenu> vlanMenu_;
     std::shared_ptr<SocksMenu> socksMenu_;
+    std::shared_ptr<DataLinkMenu> dataLinkMenu_;
 };
 #endif

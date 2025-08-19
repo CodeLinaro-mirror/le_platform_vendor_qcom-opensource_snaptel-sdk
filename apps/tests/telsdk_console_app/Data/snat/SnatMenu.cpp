@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -142,7 +148,7 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+    telux::data::IpProtocol proto = DataUtils::getProtocol(protoStr);
     struct NatConfig natConfig;
     natConfig.addr = privIpAddr;
     natConfig.port = (uint16_t)privPort;
@@ -200,7 +206,7 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+    telux::data::IpProtocol proto = DataUtils::getProtocol(protoStr);
     struct NatConfig natConfig;
     natConfig.addr = privIpAddr;
     natConfig.port = (uint16_t)privPort;

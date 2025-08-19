@@ -27,11 +27,18 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DATAUTILS_HPP
 #define DATAUTILS_HPP
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
+#include <telux/data/DataLinkManager.hpp>
 
 class DataUtils {
 public:
@@ -43,7 +50,9 @@ public:
    static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
    static std::string operationTypeToString(telux::data::OperationType oprType);
    static std::string protocolToString(telux::data::IpProtocol proto);
-   static telux::data::IpProtocol getProtcol(std::string protoStr);
+   static telux::data::IpProtocol getProtocol(std::string protoStr);
+   static std::string interfaceToString(telux::data::InterfaceType interface);
+   static std::string linkStatusToString(telux::data::LinkStatus status);
 };
 
 #endif  // DATAUTILS_HPP

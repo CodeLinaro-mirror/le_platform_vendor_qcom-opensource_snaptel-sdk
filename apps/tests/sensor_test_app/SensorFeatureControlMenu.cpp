@@ -297,8 +297,22 @@ void SensorFeatureControlMenu::enableSensorFeatureFifo(std::vector<std::string> 
 #ifdef TELSDK_FEATURE_POWER_ENABLED
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    enabledFeaturesFifo_.emplace(name);
-    std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
+
+    std::vector<SensorFeature> features;
+    telux::common::Status status = sensorFeatureManager_->getAvailableFeatures(features);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "getAvailableFeatures failed" << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    for (SensorFeature f : features) {
+        if(f.name == name) {
+            enabledFeaturesFifo_.emplace(name);
+            std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
+            return;
+        }
+    }
+    std::cout << "Enable sensor feature fifo request failed for " << name << std::endl;
 #else
     std::cout
         << "Enabling sensor feature on suspend not possible since power feature is not enabled";
@@ -372,7 +386,7 @@ void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userI
 void SensorFeatureControlMenu::enableFeature(std::string name) {
     telux::common::Status status = sensorFeatureManager_->enableFeature(name);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "enableFeature failed: " << std::endl;
+        std::cout << "enableFeature failed: " << name << std::endl;
         Utils::printStatus(status);
         return;
     }

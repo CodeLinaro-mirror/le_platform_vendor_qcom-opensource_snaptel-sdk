@@ -840,17 +840,20 @@ public:
     *                            @ref telux::tel::RedialConfigType
     * @param [in] timeGap        Indicates time gap between successive redial attempts in
     *                            milliseconds.
-    *                            @note Redial attempts can range from 1 to 10 for eCall origination
-    *                            failures. For eCall drops occurring before the receipt of the MSD
-    *                            transmission status, the number of attempts ranges between 1
-    *                            and 2. The application is expected to determine an appropriate
-    *                            value for time gap based on the tables below, which specifies the
-    *                            range required between successive redial attempts for CS eCall
-    *                            only or both NG eCall and CS eCall configuration. The time gap
-    *                            values are in milliseconds.
+    *
+    *                            @note Platform supports CS eCall only configuration and no support
+    *                            for NG eCall:
+    *
+    *                            Redial attempts for eCall origination failures can be configured
+    *                            to range from 1 to 10 attempts. In cases where the eCall drops
+    *                            before the receipt of the MSD transmission status, the number of
+    *                            redial attempts should be limited to 1 or 2. The application is
+    *                            expected to determine an appropriate time gap between successive
+    *                            redial attempts based on the tables provided below. Below tables
+    *                            specify the required time gap ranges (in milliseconds).
     * ---------------------------------------------------------------------------------------------
-    * Refer below table when platform supports CS eCall only configuration
-    * ECALL ORIGINATION FAILURE-( @ref telux::tel::RedialConfigType::CALL_ORIG )
+    * ECall redial configuration:
+    * ECALL ORIGINATION FAILURE ( @ref telux::tel::RedialConfigType::CALL_ORIG )
     * ---------------------------------------------------------------------------------------------
     * @details
     * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
@@ -863,8 +866,7 @@ public:
     * | 5 attempts and       | 180000                           | 300000                          |
     * | subsequent attempts  |                                  |                                 |
     * ---------------------------------------------------------------------------------------------
-    * Refer below table when platform supports CS eCall only configuration
-    * ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
+    * ECall redial configuration: ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
     * ---------------------------------------------------------------------------------------------
     * @details
     * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
@@ -873,22 +875,22 @@ public:
     * | 1                    | 5000                             | 60000                           |
     * | 2                    | 60000                            | 180000                          |
     * ---------------------------------------------------------------------------------------------
-    * Refer below table when platform supports both NG eCall and CS eCall configuration
-    * ECALL ORIGINATION FAILURE-( @ref telux::tel::RedialConfigType::CALL_ORIG )
+    *                            @note Platform supports both NG eCall and CS eCall configuration:
+    *
+    *                            Application input configurations for call origination failures
+    *                            will not be applied in the case of eCall origination failures.
+    *                            This behavior is governed by the scan times required for
+    *                            domain selection by the modem, regardless of whether NG eCall or
+    *                            CS eCall is available based on network coverage. To ensure timely
+    *                            redial attempts for eCall drops occurring before MSD status
+    *                            receipt, the application must be configured to complete retries
+    *                            within 2 minutes. It is expected that the application will
+    *                            determine an appropriate time gap between successive redial
+    *                            attempts using the table below.
+    *                            This table outlines the required time gap ranges
+    *                            (in milliseconds).
     * ---------------------------------------------------------------------------------------------
-    * @details
-    * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|
-    * |----------------------|----------------------------------|---------------------------------|
-    * | Initial call attempt | NA                               | NA                              |
-    * | 1                    | 5000                             | 30000                           |
-    * | 2                    | 30000                            | 60000                           |
-    * | 3                    | 30000                            | 60000                           |
-    * | 4                    | 30000                            | 60000                           |
-    * | 5 attempts and       | 30000                            | 60000                           |
-    * | subsequent attempts  |                                  |                                 |
-    * ---------------------------------------------------------------------------------------------
-    * Refer below table when platform supports both NG eCall and CS eCall configuration
-    * ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
+    * ECall redial configuration: ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
     * ---------------------------------------------------------------------------------------------
     * @details
     * | Call attempt         |Minimum duration between attempts |Maximum duration between attempts|

@@ -191,6 +191,10 @@ class IWlanDeviceManager {
     /**
      * Request Regulatory Parameters
      *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
+     *
      * @param [out] regulatoryParams    Current Regulatory Settings @ref RegulatoryParams.
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
@@ -202,11 +206,22 @@ class IWlanDeviceManager {
 
     /**
      * Set Transmit Power
-     * Immediately changes WLAN transmit power. The setting will not be persistent across power
-     * cycles. To restore default power associated with country set by
-     * telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or wpa_supplicant daemons
-     * need to be restarted via telux::wlan::IApInterfaceManager::manageApService or
-     * telux::wlan::IStaInterfaceManager::manageStaService
+     *
+     * Immediately changes WLAN transmit power for the current session. This setting is not
+     * persistent across power cycles or service restarts.
+     *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
+     *
+     * This requirement exists because the underlying driver or firmware applies transmit
+     * power settings only when the interface is fully initialized and actively handling traffic.
+     *
+     * To restore the default transmit power as defined by the regulatory domain associated with
+     * the active country set by telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd
+     * or wpa_supplicant daemons need to be restarted via
+     * @ref telux::wlan::IApInterfaceManager::manageApService or
+     * @ref telux::wlan::IStaInterfaceManager::manageStaService.
      *
      * @param [in] txPower              Transmit Power to be set in mutiple of 100 milliwatts.
      *                                  For instance, if txPower equals 15, transmit power will be
@@ -223,6 +238,13 @@ class IWlanDeviceManager {
     virtual telux::common::ErrorCode setTxPower(uint32_t txPowerMw) = 0;
     /**
      * Request Transmit Power
+     *
+     * This API can only be successfully invoked when at least one WLAN interface is in operational
+     * state. Specifically, when at least one of the configured access point is active, or the
+     * configured station interface is connected to an external access point.
+     *
+     * This restriction exists because the driver or firmware provides transmit power information
+     * only when an interface is fully initialized and actively transmitting or receiving data.
      *
      * @param [out] txPowerMw           Current Transmit Power in mutiple of 100 milliwatts.
      *

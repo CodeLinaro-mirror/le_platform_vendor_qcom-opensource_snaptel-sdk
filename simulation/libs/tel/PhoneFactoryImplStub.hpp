@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -27,6 +27,7 @@
 #include "ServingSystemManagerStub.hpp"
 #include "NetworkSelectionManagerStub.hpp"
 #include "SuppServicesManagerStub.hpp"
+#include "ApSimProfileManagerStub.hpp"
 
 namespace telux {
 namespace tel {
@@ -114,6 +115,9 @@ class PhoneFactoryImplStub : public PhoneFactory {
     std::recursive_mutex mutex_;
     common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
+    std::shared_ptr<IApSimProfileManager> apSimProfileManager_;
+    telux::common::ServiceStatus apSimProfileMgrInitStatus_;
+    std::vector<telux::common::InitResponseCb> apSimProfileMgrCallbacks_;
     void onCallMgrInitResponse(telux::common::ServiceStatus status);
     void onCardManagerResponse(telux::common::ServiceStatus status);
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
@@ -126,6 +130,7 @@ class PhoneFactoryImplStub : public PhoneFactory {
     void onNetworkSelectionMgrInitResponse(int slotId, telux::common::ServiceStatus status);
     void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
     void onSuppSvcInitResponse(SlotId slotId, telux::common::ServiceStatus status);
+    void onApSimProfileManagerResponse(telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

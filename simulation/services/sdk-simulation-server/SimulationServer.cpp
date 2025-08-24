@@ -30,6 +30,7 @@
 #include "tel/ImsSettingsManagerServerImpl.hpp"
 #include "tel/ServingManagerServerImpl.hpp"
 #include "tel/NetworkSelectionManagerServerImpl.hpp"
+#include "tel/ApSimProfileManagerServerImpl.hpp"
 #include "data/ClientManagerServerImpl.hpp"
 #include "data/DataConnectionServerImpl.hpp"
 #include "data/DataProfileServerImpl.hpp"
@@ -258,6 +259,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<NetworkSelectionManagerServerImpl> NetworkSelectionSystemService =
         std::make_shared<NetworkSelectionManagerServerImpl>();
     builder.RegisterService(NetworkSelectionSystemService.get());
+
+    std::shared_ptr<ApSimProfileManagerServerImpl> apSimProfileService =
+        std::make_shared<ApSimProfileManagerServerImpl>();
+    builder.RegisterService(apSimProfileService.get());
 
     std::shared_ptr<SensorClientServerImpl> sensorClientService =
         std::make_shared<SensorClientServerImpl>();

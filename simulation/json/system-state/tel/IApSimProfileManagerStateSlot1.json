@@ -1,0 +1,19 @@
+{
+    "IApSimProfileManager" :
+    {
+        "apduExchangeResult" : 0,
+        "_comment_apduExchangeResult" : "Refer telux::tel::ApduExchangeResult for more details",
+        "ProfileListResponse" :
+        {
+            "referenceId" : 0,
+            "_comment_referenceId" : "Reference Id for modem initiated request",
+            "profileIccids" : "89010020000011293999 89010020000011294999 89010020000011295999",
+            "_comment_profileIccIds" : "IccId list for profiles"
+        },
+        "ProfileOperationResponse" :
+        {
+            "referenceId" : 0,
+            "_comment_referenceId" : "Reference Id for modem initiated request"
+        }
+    }
+}

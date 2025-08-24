@@ -1,36 +1,36 @@
 /*
-* Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted (subject to the limitations in the
-* disclaimer below) provided that the following conditions are met:
-*
-*     * Redistributions of source code must retain the above copyright
-*       notice, this list of conditions and the following disclaimer.
-*
-*     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following
-*       disclaimer in the documentation and/or other materials provided
-*       with the distribution.
-*
-*     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
-*       contributors may be used to endorse or promote products derived
-*       from this software without specific prior written permission.
-*
-* NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-* GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-* HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-* GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-* IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-* IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "CardManagerServerImpl.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
@@ -41,6 +41,8 @@
 #define JSON_PATH2 "system-state/tel/ICardManagerStateSlot2.json"
 #define JSON_PATH3 "api/tel/ICardManagerSlot1.json"
 #define JSON_PATH4 "api/tel/ICardManagerSlot2.json"
+#define AP_SIM_PROFILE_JSON_STATE_PATH1 "system-state/tel/IApSimProfileManagerStateSlot1.json"
+#define AP_SIM_PROFILE_JSON_STATE_PATH2 "system-state/tel/IApSimProfileManagerStateSlot2.json"
 
 #define CARD_EVENT "cardInfoChanged"
 #define SIM_REFRESH_EVENT "simRefresh"
@@ -48,6 +50,8 @@
 #define SLOT_2 2
 #define REFRESH_USER_ALLOW_TIMEOUT_MS (1000*10)
 #define REFRESH_USER_COMPLETE_TIMEOUT_MS (1000*120)
+#define TEL_AP_SIM_PROFILE_MANAGER "IApSimProfileManager"
+static const std::string ISD_R_AID = "A0000005591010FFFFFFFF8900000100";
 
 #define GETVALUE_VIA_STR(str,value) \
 do { \
@@ -146,18 +150,18 @@ bool CardManagerServerImpl::isCallbackNeeded(Json::Value rootObj, std::string ap
 
 bool CardManagerServerImpl::findAppId(Json::Value rootObj, const char* appid, int& index) {
     int sizeofADF = rootObj["ICardManager"]["EFs"]["ADF"].size();
-    LOG(DEBUG, __FUNCTION__,"Size of ADF is", sizeofADF);
+    LOG(DEBUG, __FUNCTION__," Size of ADF is", sizeofADF);
     bool foundAppId = false;
     for (index =0 ; index < sizeofADF ; index++) {
         const char* tmp = (rootObj["ICardManager"]["EFs"]["ADF"]\
             [index]["AppId"].asString()).c_str();
         std::string val = rootObj["ICardManager"]["EFs"]["ADF"]\
             [index]["AppId"].asString();
-        LOG(DEBUG, __FUNCTION__,"appid is orignal from json  ", val);
+        LOG(DEBUG, __FUNCTION__," appid is orignal from json  ", val);
         if(strcmp(tmp, appid) == 0) {
             foundAppId = true;
             std::string t = rootObj["ICardManager"]["EFs"]["ADF"][index]["AppId"].asString();
-            LOG(DEBUG, __FUNCTION__,"appid is ", t);
+            LOG(DEBUG, __FUNCTION__," appid is ", t);
             break;
         }
     }
@@ -316,7 +320,7 @@ grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext* context,
             if(foundAppId) {
                 int size = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                     ["LinearFixedEFFiles"].size();
-                LOG(DEBUG, __FUNCTION__,"LinearFixedEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," LinearFixedEFfiles size ", size);
                 tmp = findmatchingrecordADF<telStub::ReadEFLinearFixedReply*>(rootObj, response,
                     size, index, recordNum, fileId, i);
                 if(tmp == commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
@@ -346,7 +350,7 @@ grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext* context,
                                 [i+recordNum]["data"].asString();
                     result.data = CommonUtils::convertStringToVector(input);
                 } else {
-                    LOG(DEBUG, __FUNCTION__, "Valid AppId not found");
+                    LOG(DEBUG, __FUNCTION__, " Valid AppId not found");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             }
@@ -409,7 +413,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
         }
         int s = data.size();
         for (int i = 0; i < s; i++) {
-            LOG(DEBUG, __FUNCTION__,"data recieved from request", static_cast<int>(data.at(i)));
+            LOG(DEBUG, __FUNCTION__," data recieved from request", static_cast<int>(data.at(i)));
         }
         std::string str1 = "";
         int i = 0;
@@ -421,27 +425,27 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
             if(foundAppId) {
                 int size = rootObj["ICardManager"]["EFs"]["ADF"]\
                     [index]["LinearFixedEFFiles"].size();
-                LOG(DEBUG, __FUNCTION__,"LinearFixedEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," LinearFixedEFfiles size ", size);
                 tmp = findmatchingrecordADF<telStub::WriteEFLinearFixedReply*>(rootObj,
                     response, size, index, recordsize, fileId, i);
                 if(tmp == commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
                     str1 = CommonUtils::convertVectorToString(data, false);
-                    LOG(DEBUG, __FUNCTION__,"String value is", str1);
+                    LOG(DEBUG, __FUNCTION__," String value is", str1);
                     rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"][i+recordsize]\
                         ["data"] = str1;
-                    LOG(DEBUG, __FUNCTION__,"String is data  ", str1);
+                    LOG(DEBUG, __FUNCTION__," String is data  ", str1);
                     str1 = CommonUtils::convertVectorToString(data, true);
-                    LOG(DEBUG, __FUNCTION__,"String is payload ", str1);
+                    LOG(DEBUG, __FUNCTION__," String is payload ", str1);
                     rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"][i+recordsize]\
                         ["payload"] = str1;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[slotId] = rootObj;
                     result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"]\
                         [i+recordsize]["sw1"].asInt();
-                    LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                    LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                     result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"]\
                         [i+recordsize]["sw2"].asInt();
-                    LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                    LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                 } else {
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
@@ -453,7 +457,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                     str1 = CommonUtils::convertVectorToString(data, false);
                     rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"][i+recordsize]\
                         ["data"] = str1;
-                    LOG(DEBUG, __FUNCTION__,"String is  ", str1);
+                    LOG(DEBUG, __FUNCTION__," String is  ", str1);
                     str1 = CommonUtils::convertVectorToString(data, true);
                     rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"][i+recordsize]\
                         ["payload"] = str1;
@@ -464,7 +468,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                     result.sw2 = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"]\
                         [i+recordsize]["sw2"].asInt();
                 } else {
-                    LOG(DEBUG, __FUNCTION__, "Valid AppId not found");
+                    LOG(DEBUG, __FUNCTION__, " Valid AppId not found");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             }
@@ -474,7 +478,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
         bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
         response->set_iscallback(iscallback);
         response->set_error(static_cast<commonStub::ErrorCode>(error));
-        LOG(DEBUG, __FUNCTION__, "STatus is", static_cast<int>(status));
+        LOG(DEBUG, __FUNCTION__, " Status is", static_cast<int>(status));
         response->set_status(static_cast<commonStub::Status>(status));
 
         telStub::IccResult requestedRecord;
@@ -529,25 +533,25 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                 int i = 0;
                 int size = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                     ["LinearFixedEFFiles"].size();
-                LOG(DEBUG, __FUNCTION__,"LinearFixedEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," LinearFixedEFfiles size ", size);
                 while (i < size ) {
                     uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                         ["LinearFixedEFFiles"][i]["fileId"].asInt();
                     if (tmpfileId == fileId) {
                         int num = rootObj["ICardManager"]["EFs"]["ADF"]\
                             [index]["LinearFixedEFFiles"][i]["numberOfRecords"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"NumberOfRecords ", num);
+                        LOG(DEBUG, __FUNCTION__," NumberOfRecords ", num);
                         for(int j = 1; j <= num ; j++) {
                             telux::tel::IccResult result;
                             result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["LinearFixedEFFiles"][i+j]["sw1"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                            LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                             result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["LinearFixedEFFiles"][i+j]["sw2"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                            LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                             result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["LinearFixedEFFiles"][i+j]["payload"].asString();
-                            LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
+                            LOG(DEBUG, __FUNCTION__," payload ", result.payload);
                             std::string input = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["LinearFixedEFFiles"][i+j]["data"].asString();
                             result.data = CommonUtils::convertStringToVector(input);
@@ -555,15 +559,15 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                         }
                         break;
                     } else {
-                        LOG(DEBUG, __FUNCTION__,"FileId not found ", i );
+                        LOG(DEBUG, __FUNCTION__," FileId not found ", i );
                         int num = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i]["numberOfRecords"].asInt();
                         i = i + num + 1;
-                        LOG(DEBUG, __FUNCTION__,"Incremented value is ", i );
+                        LOG(DEBUG, __FUNCTION__," Incremented value is ", i );
                     }
                 }
                 if(i == size) {
-                    LOG(DEBUG, __FUNCTION__,"Valid record not found ", i );
+                    LOG(DEBUG, __FUNCTION__," Valid record not found ", i );
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             } else {
@@ -574,7 +578,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                 if (tmp == commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
                     int num = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"][i]\
                         ["numberOfRecords"].asInt();
-                    LOG(DEBUG, __FUNCTION__,"NumberOfRecords ", num);
+                    LOG(DEBUG, __FUNCTION__," NumberOfRecords ", num);
                     for(int j = 1; j <= num ; j++) {
                         telux::tel::IccResult result;
                         result.sw1 = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"]\
@@ -589,7 +593,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
                         records.emplace_back(result);
                     }
                 } else {
-                    LOG(DEBUG, __FUNCTION__,"Valid fileId not found ");
+                    LOG(DEBUG, __FUNCTION__," Valid fileId not found ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             }
@@ -650,7 +654,7 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
             error, cbDelay );
 
         int sizeofADF = rootObj["ICardManager"]["EFs"]["ADF"].size();
-        LOG(DEBUG, __FUNCTION__,"Size of ADF is", sizeofADF);
+        LOG(DEBUG, __FUNCTION__," Size of ADF is", sizeofADF);
         int index;
         if(status == telux::common::Status::SUCCESS) {
             bool foundAppId = findAppId(rootObj, appid, index);
@@ -658,7 +662,7 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
                 int i = 0;
                 int size = rootObj["ICardManager"]["EFs"]["ADF"]\
                     [index]["TransparentEFFiles"].size();
-                LOG(DEBUG, __FUNCTION__,"TransparentEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," TransparentEFfiles size ", size);
                 while (i < size ) {
                     uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                         ["TransparentEFFiles"][i]["fileId"].asInt();
@@ -666,32 +670,32 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
                         if (recordsize >= 0)  {
                             result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["TransparentEFFiles"][i]["sw1"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                            LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                             result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["TransparentEFFiles"][i]["sw2"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                            LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                             result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["TransparentEFFiles"][i]["payload"].asString();
-                            LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
+                            LOG(DEBUG, __FUNCTION__," payload ", result.payload);
                             std::string input = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                                 ["TransparentEFFiles"][i]["data"].asString();
                             result.data = CommonUtils::convertStringToVector(input);
                             break;
                         } else {
-                            LOG(DEBUG, __FUNCTION__,"Request failed ");
+                            LOG(DEBUG, __FUNCTION__," Request failed ");
                             error = telux::common::ErrorCode::GENERIC_FAILURE;
                         }
                     }
                     i++;
                 }
                 if (i == size) {
-                    LOG(DEBUG, __FUNCTION__,"FileId not found ");
+                    LOG(DEBUG, __FUNCTION__," FileId not found ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             } else {
                 int i = 0;
                 int size = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"].size();
-                LOG(DEBUG, __FUNCTION__,"TransparentEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," TransparentEFfiles size ", size);
                 while (i < size ) {
                     uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"]\
                         [i]["fileId"].asInt();
@@ -699,26 +703,26 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
                         if (recordsize >= 0)  {
                             result.sw1 = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"]\
                                 [i]["sw1"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                            LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                             result.sw2 = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"]\
                                 [i]["sw2"].asInt();
-                            LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                            LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                             result.payload = rootObj["ICardManager"]["EFs"]\
                                 ["DFTransparentEFRecords"][i]["payload"].asString();
-                            LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
+                            LOG(DEBUG, __FUNCTION__," payload ", result.payload);
                             std::string input = rootObj["ICardManager"]["EFs"]\
                                 ["DFTransparentEFRecords"][i]["data"].asString();
                             result.data = CommonUtils::convertStringToVector(input);
                             break;
                         } else {
-                            LOG(DEBUG, __FUNCTION__,"Request failed ");
+                            LOG(DEBUG, __FUNCTION__," Request failed ");
                             error = telux::common::ErrorCode::GENERIC_FAILURE;
                         }
                     }
                     i++;
                 }
                 if (i == size) {
-                    LOG(DEBUG, __FUNCTION__,"FileId not found ");
+                    LOG(DEBUG, __FUNCTION__," FileId not found ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             }
@@ -785,24 +789,24 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
         int i = 0;
 
         int sizeofADF = rootObj["ICardManager"]["EFs"]["ADF"].size();
-        LOG(DEBUG, __FUNCTION__,"Size of ADF is", sizeofADF);
+        LOG(DEBUG, __FUNCTION__," Size of ADF is", sizeofADF);
         int index;
         if(status == telux::common::Status::SUCCESS) {
             bool foundAppId = findAppId(rootObj, appid, index);
             if(foundAppId) {
                 int size = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                     ["TransparentEFFiles"].size();
-                LOG(DEBUG, __FUNCTION__,"TransparentEFfiles size ", size );
-                LOG(DEBUG, __FUNCTION__,"TransparentEFfiles index ", index );
+                LOG(DEBUG, __FUNCTION__," TransparentEFfiles size ", size );
+                LOG(DEBUG, __FUNCTION__," TransparentEFfiles index ", index );
                 while (i < size ) {
                     uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                         ["TransparentEFFiles"][i]["fileId"].asInt();
-                    LOG(DEBUG, __FUNCTION__,"FileId is  ", tmpfileId);
+                    LOG(DEBUG, __FUNCTION__," FileId is  ", tmpfileId);
                     if (tmpfileId == fileId) {
                         str1 = CommonUtils::convertVectorToString(data, false);
                         rootObj["ICardManager"]["EFs"]["ADF"][index]["TransparentEFFiles"][i]\
                             ["data"] = str1;
-                        LOG(DEBUG, __FUNCTION__,"String is  ", str1);
+                        LOG(DEBUG, __FUNCTION__," String is  ", str1);
                         str1 = CommonUtils::convertVectorToString(data, true);
                         rootObj["ICardManager"]["EFs"]["ADF"][index]["TransparentEFFiles"][i]\
                             ["payload"] = str1;
@@ -810,29 +814,29 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
                         jsonObjSystemStateSlot_[slotId] = rootObj;
                         result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["TransparentEFFiles"][i]["sw1"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                        LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                         result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["TransparentEFFiles"][i]["sw2"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                        LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                         break;
                     }
                     i++;
                 }
                 if (i == size) {
-                    LOG(DEBUG, __FUNCTION__,"FileId not found ");
+                    LOG(DEBUG, __FUNCTION__," FileId not found ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             } else {
                 int i = 0;
                 int size = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"].size();
-                LOG(DEBUG, __FUNCTION__,"TransparentEFfiles size ", size);
+                LOG(DEBUG, __FUNCTION__," TransparentEFfiles size ", size);
                 while (i < size ) {
                     uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"]\
                         [i]["fileId"].asInt();
                     if (tmpfileId == fileId) {
                         str1 = CommonUtils::convertVectorToString(data, false);
                         rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"][i]["data"] = str1;
-                        LOG(DEBUG, __FUNCTION__,"String is  ", str1);
+                        LOG(DEBUG, __FUNCTION__," String is  ", str1);
                         str1 = CommonUtils::convertVectorToString(data, true);
                         rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"][i]["payload"]
                             = str1;
@@ -840,19 +844,19 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
                         jsonObjSystemStateSlot_[slotId] = rootObj;
                         result.sw1 = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"][i]\
                             ["sw1"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                        LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                         result.sw2 = rootObj["ICardManager"]["EFs"]["DFTransparentEFRecords"][i]\
                             ["sw2"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                        LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                         break;
                     } else {
-                        LOG(DEBUG, __FUNCTION__,"Request failed ");
+                        LOG(DEBUG, __FUNCTION__," Request failed ");
                         error = telux::common::ErrorCode::GENERIC_FAILURE;
                     }
                     i++;
                 }
                 if (i == size) {
-                    LOG(DEBUG, __FUNCTION__,"FileId not found ");
+                    LOG(DEBUG, __FUNCTION__," FileId not found ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             }
@@ -914,7 +918,7 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
             error, cbDelay );
 
         int sizeofADF = rootObj["ICardManager"]["EFs"]["ADF"].size();
-        LOG(DEBUG, __FUNCTION__,"Size of ADF is", sizeofADF);
+        LOG(DEBUG, __FUNCTION__," Size of ADF is ", sizeofADF);
 
         if(status == telux::common::Status::SUCCESS) {
             bool foundAppId = findAppId(rootObj, appid, index);
@@ -927,13 +931,13 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
                         std::vector<int> tmp = CommonUtils::convertStringToVector(data);
                         result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i]["sw1"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                        LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                         result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i]["sw2"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                        LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                         result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i]["payload"].asString();
-                        LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
+                        LOG(DEBUG, __FUNCTION__," payload ", result.payload);
                     } else {
                         error = telux::common::ErrorCode::GENERIC_FAILURE;
                     }
@@ -942,13 +946,13 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
                     if(tmp == commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
                         result.sw1 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i+1]["sw1"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
+                        LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
                         result.sw2 = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i+1]["sw2"].asInt();
-                        LOG(DEBUG, __FUNCTION__,"sw2 ", result.sw2);
+                        LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
                         result.payload = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i+1]["payload"].asString();
-                        LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
+                        LOG(DEBUG, __FUNCTION__," payload ", result.payload);
                         std::string input = rootObj["ICardManager"]["EFs"]["ADF"][index]\
                             ["LinearFixedEFFiles"][i+1]["data"].asString();
                         result.data = CommonUtils::convertStringToVector(input);
@@ -956,11 +960,11 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
                         error = telux::common::ErrorCode::GENERIC_FAILURE;
                     }
                 } else {
-                    LOG(DEBUG, __FUNCTION__,"Unknown EFType ");
+                    LOG(DEBUG, __FUNCTION__," Unknown EFType ");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__, "Valid AppId not found");
+                LOG(DEBUG, __FUNCTION__, " Valid AppId not found");
                 error = telux::common::ErrorCode::GENERIC_FAILURE;
             }
         }
@@ -1008,7 +1012,7 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
 commonStub::ErrorCode CardManagerServerImpl::getTransparentFileAttributes(Json::Value rootObj,
     int& i, uint16_t fileId, telux::tel::FileAttributes& attributes, int& index) {
     int size = rootObj["ICardManager"]["EFs"]["ADF"][index]["TransparentEFFiles"].size();
-    LOG(DEBUG, __FUNCTION__,"TransparentEFfiles size ", size);
+    LOG(DEBUG, __FUNCTION__," TransparentEFfiles size ", size);
     commonStub::ErrorCode error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
     while (i < size ) {
         uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]\
@@ -1021,12 +1025,12 @@ commonStub::ErrorCode CardManagerServerImpl::getTransparentFileAttributes(Json::
             attributes.fileSize = attributes.recordSize;
             break;
         } else {
-            LOG(DEBUG, __FUNCTION__,"FileId not found ");
+            LOG(DEBUG, __FUNCTION__," FileId not found ");
             i++;
         }
     }
     if(i == size) {
-        LOG(DEBUG, __FUNCTION__,"FileId not found ", i );
+        LOG(DEBUG, __FUNCTION__," FileId not found ", i );
         error = commonStub::ErrorCode::GENERIC_FAILURE;
     }
 return error;
@@ -1035,7 +1039,7 @@ return error;
 commonStub::ErrorCode CardManagerServerImpl::getLinearfixedFileAttributes(Json::Value rootObj,
     int& i, uint16_t fileId, telux::tel::FileAttributes& attributes, int& index ) {
     int size = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"].size();
-    LOG(DEBUG, __FUNCTION__,"LinearFixedEFfiles size ", size);
+    LOG(DEBUG, __FUNCTION__," LinearFixedEFfiles size ", size);
     commonStub::ErrorCode error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
     while (i < size ) {
         uint16_t tmpfileId = rootObj["ICardManager"]["EFs"]["ADF"][index]\
@@ -1051,15 +1055,15 @@ commonStub::ErrorCode CardManagerServerImpl::getLinearfixedFileAttributes(Json::
             error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
             break;
         } else {
-            LOG(DEBUG, __FUNCTION__,"FileId not found ", i );
+            LOG(DEBUG, __FUNCTION__," FileId not found ", i );
             int num = rootObj["ICardManager"]["EFs"]["ADF"][index]["LinearFixedEFFiles"]\
                 [i]["numberOfRecords"].asInt();
             i = i + num + 1;
-            LOG(DEBUG, __FUNCTION__,"Incremented value is ", i );
+            LOG(DEBUG, __FUNCTION__," Incremented value is ", i );
         }
     }
     if(i == size) {
-        LOG(DEBUG, __FUNCTION__,"FileId not found ", i );
+        LOG(DEBUG, __FUNCTION__," FileId not found ", i );
         error = commonStub::ErrorCode::GENERIC_FAILURE;
     }
     return error;
@@ -1071,6 +1075,8 @@ grpc::Status CardManagerServerImpl::OpenLogicalChannel(ServerContext* context,
 
     LOG(DEBUG, __FUNCTION__);
     int phoneid = request->phone_id();
+    string appId = request->app_id();
+    isApSimProfileRequest_ = (appId == ISD_R_AID);
     std::string jsonfilename = "";
     Json::Value rootObj;
     std::string jsonObjApiResponseFileName = "";
@@ -1091,28 +1097,28 @@ grpc::Status CardManagerServerImpl::OpenLogicalChannel(ServerContext* context,
         if(status == telux::common::Status::SUCCESS) {
             bool isChannelOpen = rootObj["ICardManager"]["openLogicalChannel"]["isOpen"].asBool();
             if (isChannelOpen) {
-                LOG(DEBUG, __FUNCTION__, "already open");
+                LOG(DEBUG, __FUNCTION__, " already open");
                 error = telux::common::ErrorCode::GENERIC_FAILURE;
             } else {
                 rootObj["ICardManager"]["openLogicalChannel"]["isOpen"] = true;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneid] = rootObj;
-                result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
+                result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
                     ["onChannelResponseSw1"].asInt();
-                LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
-                result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
+                LOG(DEBUG, __FUNCTION__," sw1 ", result.sw1);
+                result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
                     ["onChannelResponseSw2"].asInt();
-                LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw2);
-                result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
+                LOG(DEBUG, __FUNCTION__," sw2 ", result.sw2);
+                result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
                     ["onChannelResponsePayload"].asString();
-                LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
-                std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
+                LOG(DEBUG, __FUNCTION__," payload ", result.payload);
+                std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
                     ["onChannelResponseData"].asString();
                 std::vector<int> data = CommonUtils::convertStringToVector(tmp);
                 result.data = data;
                 channelId = rootObj["ICardManager"]["openLogicalChannel"]\
                     ["onChannelResponseChannel"].asInt();
-                LOG(DEBUG, __FUNCTION__,"channelId ", channelId);
+                LOG(DEBUG, __FUNCTION__," channelId ", channelId);
             }
         }
         //Create response
@@ -1165,11 +1171,11 @@ grpc::Status CardManagerServerImpl::CloseLogicalChannel(ServerContext* context,
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                 } else {
-                    LOG(DEBUG, __FUNCTION__, "already closed");
+                    LOG(DEBUG, __FUNCTION__, " already closed");
                     error = telux::common::ErrorCode::GENERIC_FAILURE;
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__, "Invalid channel");
+                LOG(DEBUG, __FUNCTION__, " Invalid channel");
                 error = telux::common::ErrorCode::GENERIC_FAILURE;
             }
         }
@@ -1208,31 +1214,103 @@ grpc::Status CardManagerServerImpl::TransmitAPDU(ServerContext* context,
             (jsonObjApiResponse,"ICardManager", "transmitApduLogicalChannel", status,
             error, cbDelay );
 
-        if(status == telux::common::Status::SUCCESS) {
-            str1 = CommonUtils::convertVectorToString(data, false);
-            rootObj["ICardManager"]["transmitApduLogicalChannel"]["onChannelResponseData"] = str1;
-            LOG(DEBUG, __FUNCTION__,"String is  ", str1);
-            JsonParser::writeToJsonFile(rootObj, jsonfilename);
-            jsonObjSystemStateSlot_[phoneId] = rootObj;
-            str1 = CommonUtils::convertVectorToString(data, true);
-            rootObj["ICardManager"]["transmitApduLogicalChannel"]["onChannelResponsePayload"]
-                = str1;
-            JsonParser::writeToJsonFile(rootObj, jsonfilename);
-            jsonObjSystemStateSlot_[phoneId] = rootObj;
+        if (status == telux::common::Status::SUCCESS) {
+            LOG(DEBUG, __FUNCTION__," isApSimProfileRequest_ : ", isApSimProfileRequest_);
+            if (!isApSimProfileRequest_) {
+                str1 = CommonUtils::convertVectorToString(data, false);
+                rootObj["ICardManager"]["transmitApduLogicalChannel"][0]["onChannelResponseData"]
+                    = str1;
+                LOG(DEBUG, __FUNCTION__," String is  ", str1);
+                JsonParser::writeToJsonFile(rootObj, jsonfilename);
+                jsonObjSystemStateSlot_[phoneId] = rootObj;
+                str1 = CommonUtils::convertVectorToString(data, true);
+                rootObj["ICardManager"]["transmitApduLogicalChannel"][0]["onChannelResponsePayload"]
+                    = str1;
+                JsonParser::writeToJsonFile(rootObj, jsonfilename);
+                jsonObjSystemStateSlot_[phoneId] = rootObj;
 
-            result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
-                ["onChannelResponseSw1"].asInt();
-            result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
-                ["onChannelResponseSw2"].asInt();
-            result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
-                ["onChannelResponsePayload"].asString();
-            std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
-                ["onChannelResponseData"].asString();
-            result.data = CommonUtils::convertStringToVector(tmp);
+                result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
+                    ["onChannelResponseSw1"].asInt();
+                result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
+                    ["onChannelResponseSw2"].asInt();
+                result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
+                    ["onChannelResponsePayload"].asString();
+                std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][0]\
+                    ["onChannelResponseData"].asString();
+                result.data = CommonUtils::convertStringToVector(tmp);
+            } else {
+                str1 = CommonUtils::convertVectorToString(data, false);
+                LOG(DEBUG, __FUNCTION__," String is  ", str1);
+                // GetAllProfiles
+                if (startsWith(str1, "191 45") || str1.empty()) {
+                    result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                        ["onChannelResponseSw1"].asInt();
+                    result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                        ["onChannelResponseSw2"].asInt();
+                     LOG(DEBUG, __FUNCTION__,"  sw1: ", result.sw1, " sw2: ", result.sw2);
+                    if (result.sw1 == 97) {
+                        result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponsePayload"].asString();
+                        std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponseData"].asString();
+                        result.data = CommonUtils::convertStringToVector(tmp);
+                        rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponseSw1"] = 144;
+                        rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponseSw2"] = 0;
+                        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+                        jsonObjSystemStateSlot_[phoneId] = rootObj;
+                    } else if (result.sw1 == 144 || result.sw2 == 0) {
+                        result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][2]\
+                            ["onChannelResponsePayload"].asString();
+                        std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][2]\
+                            ["onChannelResponseData"].asString();
+                        result.data = CommonUtils::convertStringToVector(tmp);
+                        rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponseSw1"] = 97;
+                        rootObj["ICardManager"]["transmitApduLogicalChannel"][1]\
+                            ["onChannelResponseSw2"] = 56;
+                        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+                        jsonObjSystemStateSlot_[phoneId] = rootObj;
+                   } else {
+                       // nothing
+                       LOG(DEBUG, __FUNCTION__, " operation is not supported");
+                   }
+                } else if (startsWith(str1, "191 49")) { // enable profile
+                   LOG(DEBUG, __FUNCTION__," enableProfile");
+                   result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"][3]\
+                       ["onChannelResponseSw1"].asInt();
+                   result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"][3]\
+                       ["onChannelResponseSw2"].asInt();
+                   result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][3]\
+                       ["onChannelResponsePayload"].asString();
+                   std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][3]\
+                       ["onChannelResponseData"].asString();
+                   result.data = CommonUtils::convertStringToVector(tmp);
+                } else if (startsWith(str1, "191 50")) { // disable profile
+                    LOG(DEBUG, __FUNCTION__," disableProfile");
+                    result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"][4]\
+                       ["onChannelResponseSw1"].asInt();
+                    result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"][4]\
+                       ["onChannelResponseSw2"].asInt();
+                    result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"][4]\
+                       ["onChannelResponsePayload"].asString();
+                    std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"][4]\
+                       ["onChannelResponseData"].asString();
+                    result.data = CommonUtils::convertStringToVector(tmp);
+                } else {
+                    // Default handling for unrecognized commands
+                    LOG(ERROR, __FUNCTION__, " Unrecognized APDU command");
+                    result.sw1 = 109;
+                    result.sw2 = 0; // SW1=6D, SW2=00 means "Command not supported"
+                    result.payload = "";
+                    result.data.clear();
+                    error = telux::common::ErrorCode::REQUEST_NOT_SUPPORTED;
+                }
+            }
         }
 
         //Create response
-
         telStub::IccResult requestedRecord;
         response->set_error(static_cast<commonStub::ErrorCode>(error));
         response->set_status(static_cast<commonStub::Status>(status));
@@ -1246,6 +1324,8 @@ grpc::Status CardManagerServerImpl::TransmitAPDU(ServerContext* context,
             requestedRecord.add_data(it);
         }
         *response->mutable_result() = requestedRecord;
+        // update apdu exchange status based on the sw1 and sw2
+        updateApduResultToJson(phoneId, result.sw1, result.sw2);
     }
     return readStatus;
 
@@ -1346,7 +1426,7 @@ grpc::Status CardManagerServerImpl::TransmitBasicAPDU(ServerContext* context,
         if(status == telux::common::Status::SUCCESS) {
             str1 = CommonUtils::convertVectorToString(data, false);
             rootObj["ICardManager"]["transmitApduBasicChannel"]["onChannelResponseData"] = str1;
-            LOG(DEBUG, __FUNCTION__,"String is  ", str1);
+            LOG(DEBUG, __FUNCTION__," String is  ", str1);
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
 
@@ -1436,14 +1516,14 @@ grpc::Status CardManagerServerImpl::updateSimStatus(ServerContext* context,
             telStub::CardApp *apps = response->add_card_apps();
             telStub::AppType apptype = static_cast<telStub::AppType>(rootObj["ICardManager"]\
                 ["getApplications"][i]["appType"].asInt());
-            LOG(DEBUG, __FUNCTION__,"apptype is  ", static_cast<int>(apptype));
+            LOG(DEBUG, __FUNCTION__," apptype is  ", static_cast<int>(apptype));
             apps->set_app_type(apptype);
             telStub::AppState appstate = static_cast<telStub::AppState>(rootObj["ICardManager"]\
                 ["getApplications"][i]["appState"].asInt());
-            LOG(DEBUG, __FUNCTION__,"appstate is  ", static_cast<int>(appstate));
+            LOG(DEBUG, __FUNCTION__," appstate is  ", static_cast<int>(appstate));
             apps->set_app_state(appstate);
             std::string appid = rootObj["ICardManager"]["getApplications"][i]["appId"].asString();
-            LOG(DEBUG, __FUNCTION__,"appid is  ", appid);
+            LOG(DEBUG, __FUNCTION__," appid is  ", appid);
             apps->set_app_id(appid);
         }
     }
@@ -1491,7 +1571,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                         ["retryCountPin1"].asInt();
                     LOG(DEBUG, __FUNCTION__, "retrycount is ", retrycount);
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                         //Update the app state to puk for app
                         int size = rootObj["ICardManager"]["getApplications"].size();
@@ -1506,14 +1586,14 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                                 IsCardInfoChanged = true;
                                 break;
                             } else {
-                                LOG(DEBUG, __FUNCTION__,"No matching appId found");
+                                LOG(DEBUG, __FUNCTION__," No matching appId found");
                                 error = telux::common::ErrorCode::INVALID_ARG;
                             }
                         }
                     } else {
                         if(retrycount >= -1) {
                             retrycount--;
-                            LOG(DEBUG, __FUNCTION__, "retrycount is ", retrycount);
+                            LOG(DEBUG, __FUNCTION__, " retrycount is ", retrycount);
                             error = telux::common::ErrorCode::PASSWORD_INCORRECT;
 
                             rootObj["ICardManager"]["changeCardPassword"]\
@@ -1538,7 +1618,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                         ["retryCountPin2"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                     } else {
                         if(retrycount >= -1) {
@@ -1552,7 +1632,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                     }
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__,"Not Supported LockType");
+                LOG(DEBUG, __FUNCTION__," Not Supported LockType");
                 error = telux::common::ErrorCode::REQUEST_NOT_SUPPORTED;
             }
         }
@@ -1607,7 +1687,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                         ["retryCountPin1"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                         //Update the app state to puk for app
                         int size = rootObj["ICardManager"]["getApplications"].size();
@@ -1622,7 +1702,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                                 IsCardInfoChanged = true;
                                 break;
                             } else {
-                                LOG(DEBUG, __FUNCTION__,"No matching appId found");
+                                LOG(DEBUG, __FUNCTION__," No matching appId found");
                                 error = telux::common::ErrorCode::INVALID_ARG;
                             }
                         }
@@ -1649,7 +1729,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                         ["retryCountPin2"].asInt();
                     if (retrycount < 0) {
-                    LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                    LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
                     } else {
                         if(retrycount >= -1) {
@@ -1663,7 +1743,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                     }
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__,"Not Supported LockType");
+                LOG(DEBUG, __FUNCTION__," Not Supported LockType");
                 error = telux::common::ErrorCode::INVALID_ARG;
             }
         }
@@ -1741,7 +1821,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["unlockCardByPuk"]\
                         ["retryCountPin1"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                     }
                     else {
@@ -1771,7 +1851,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["unlockCardByPuk"]\
                         ["retryCountPin2"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                     }
                     else {
@@ -1786,7 +1866,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                     }
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__,"Not Supported LockType");
+                LOG(DEBUG, __FUNCTION__," Not Supported LockType");
                 error = telux::common::ErrorCode::REQUEST_NOT_SUPPORTED;
             }
         }
@@ -1842,7 +1922,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                         ["retryCountPin1"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                         //Update the app state to puk for app
                         int size = rootObj["ICardManager"]["getApplications"].size();
@@ -1857,7 +1937,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                                 IsCardInfoChanged = true;
                                 break;
                             } else {
-                                LOG(DEBUG, __FUNCTION__,"No matching appId found");
+                                LOG(DEBUG, __FUNCTION__," No matching appId found");
                                 error = telux::common::ErrorCode::INVALID_ARG;
                             }
                         }
@@ -1888,7 +1968,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                     retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                         ["retryCountPin2"].asInt();
                     if (retrycount < 0) {
-                        LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
+                        LOG(DEBUG, __FUNCTION__," Sim Card is blocked");
                         error = telux::common::ErrorCode::PIN_BLOCKED;
                     } else {
                         if(retrycount >= -1) {
@@ -1902,7 +1982,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                     }
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__,"Not Supported LockType");
+                LOG(DEBUG, __FUNCTION__," Not Supported LockType");
                 error = telux::common::ErrorCode::REQUEST_NOT_SUPPORTED;
             }
         }
@@ -2046,25 +2126,25 @@ commonStub::ErrorCode CardManagerServerImpl::findmatchingrecordDF (Json::Value r
         if (tmpfileId == fileId) {
             int num = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"][i]\
                 ["numberOfRecords"].asInt();
-            LOG(DEBUG, __FUNCTION__,"NumberOfRecords ", num);
+            LOG(DEBUG, __FUNCTION__," NumberOfRecords ", num);
             if(recordNum <= num ) {
                 error = commonStub::ErrorCode::ERROR_CODE_SUCCESS;
                 break;
             } else {
                 error = commonStub::ErrorCode::GENERIC_FAILURE;
-                LOG(DEBUG, __FUNCTION__, "Invalid Record");
+                LOG(DEBUG, __FUNCTION__, " Invalid Record");
                 break;
             }
         } else {
-            LOG(DEBUG, __FUNCTION__,"FileId not found ", i );
+            LOG(DEBUG, __FUNCTION__," FileId not found ", i );
             int num = rootObj["ICardManager"]["EFs"]["DFLinearFixedEFRecords"][i]\
                 ["numberOfRecords"].asInt();
             i = i + num + 1;
-            LOG(DEBUG, __FUNCTION__,"Incremented value is ", i );
+            LOG(DEBUG, __FUNCTION__," Incremented value is ", i );
         }
     }
     if(i == size) {
-        LOG(DEBUG, __FUNCTION__,"Valid record not found ", i );
+        LOG(DEBUG, __FUNCTION__," Valid record not found ", i );
         error = commonStub::ErrorCode::GENERIC_FAILURE;
     }
     return error;
@@ -2087,7 +2167,7 @@ grpc::Status CardManagerServerImpl::IsNtnProfileActive(ServerContext* context,
 }
 
 void CardManagerServerImpl::onEventUpdate(std::string event) {
-    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    LOG(DEBUG, __FUNCTION__," String is ", event );
     bool triggerNotification = false;
     ::eventService::EventResponse notification;
     std::string evt = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
@@ -2096,7 +2176,7 @@ void CardManagerServerImpl::onEventUpdate(std::string event) {
     } else if (SIM_REFRESH_EVENT == evt) {
         triggerNotification = handleSimRefreshInjector(event, notification);
     } else {
-        LOG(ERROR, __FUNCTION__, "The event flag is not set!");
+        LOG(ERROR, __FUNCTION__, " The event flag is not set!");
         return;
     }
     if (triggerNotification) {
@@ -2115,19 +2195,19 @@ void CardManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent messa
 bool CardManagerServerImpl::handleCardInfoChanged(std::string eventParams,
     ::eventService::EventResponse& notification) {
     std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
+    LOG(DEBUG, __FUNCTION__, " The Slot id is: ", token);
     int slotId;
     std::string jsonfilename = "";
     std::string apiname = "setCardPower";
     Json::Value rootObj;
     if(token == "") {
-        LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
+        LOG(INFO, __FUNCTION__, " The Slot id is not passed! Assuming default Slot Id");
         slotId = 1;
     } else {
         try {
             slotId = std::stoi(token);
         } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
             return false;
         }
     }
@@ -2137,18 +2217,18 @@ bool CardManagerServerImpl::handleCardInfoChanged(std::string eventParams,
             return false;
         }
     }
-    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
+    LOG(DEBUG, __FUNCTION__, " The leftover string is: ", eventParams);
     // Fetch card power
     int input;
     token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if(token == "") {
-        LOG(INFO, __FUNCTION__, "Card power input not passed, assuming power ON");
+        LOG(INFO, __FUNCTION__, " Card power input not passed, assuming power ON");
         input = true;
     } else {
         try {
             input = std::stoi(token);
         } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
             return false;
         }
     }
@@ -2157,19 +2237,19 @@ bool CardManagerServerImpl::handleCardInfoChanged(std::string eventParams,
     token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if (token == "") {
         LOG(INFO, __FUNCTION__,
-            "isNtnProfileActive not passed, assuming ntn profile is not active");
+            " isNtnProfileActive not passed, assuming ntn profile is not active");
         isNtnProfileActive = false;
     } else {
         try {
             isNtnProfileActive = std::stoi(token);
         } catch(exception const & ex) {
-            LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+            LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
         }
     }
     LOG(DEBUG, __FUNCTION__, " isNtnProfileActive : ", isNtnProfileActive);
     getJsonForSystemData(slotId, jsonfilename, rootObj);
     bool cardpower = static_cast<bool>(input);
-    LOG(DEBUG, __FUNCTION__, "The fetched card power state id is: ", cardpower);
+    LOG(DEBUG, __FUNCTION__, " The fetched card power state id is: ", cardpower);
     bool currentstate = rootObj["ICardManager"]["setCardPower"]["cardPowerState"].asBool();
     if (currentstate != cardpower) {
         rootObj["ICardManager"]["setCardPower"]["cardPowerState"] = cardpower;
@@ -2187,7 +2267,7 @@ bool CardManagerServerImpl::handleCardInfoChanged(std::string eventParams,
             jsonObjSystemStateSlot_[slotId] = rootObj;
         }
     } else {
-         LOG(DEBUG, __FUNCTION__, "No change in card state ");
+         LOG(DEBUG, __FUNCTION__, " No change in card state ");
          return false;
     }
     // write ntn profile active status
@@ -2794,3 +2874,28 @@ void CardManagerServerImpl::getClientInfoFromRpc(const T* rpcMsg, ClientSimRefre
         static_cast<uint32_t>(client.sessionAid.sessionType),
         ", aid ", client.sessionAid.aid);
 }
+
+void CardManagerServerImpl::updateApduResultToJson(int phoneId, uint32_t sw1, uint32_t sw2) {
+    Json::Value rootObj;
+    std::string stateJsonPath = "";
+    std::string jsonfilename = (phoneId == SLOT_1)
+        ? AP_SIM_PROFILE_JSON_STATE_PATH1 : AP_SIM_PROFILE_JSON_STATE_PATH2;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Unable to read json file ");
+        return;
+    }
+    if (sw1 == 144 && sw2 == 0) {
+        rootObj[TEL_AP_SIM_PROFILE_MANAGER]["apduExchangeResult"] = true;
+    } else {
+        rootObj[TEL_AP_SIM_PROFILE_MANAGER]["apduExchangeResult"] = false;
+    }
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+}
+
+
+bool CardManagerServerImpl::startsWith(const std::string& str, const std::string& prefix) {
+    return str.size() >= prefix.size() &&
+           str.compare(0, prefix.size(), prefix) == 0;
+}
+

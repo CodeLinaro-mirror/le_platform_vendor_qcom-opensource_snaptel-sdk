@@ -1,0 +1,16 @@
+{
+    "IApSimProfileManager" :
+    {
+        "DefaultCallbackDelay" : 400,
+        "sendRetrieveProfileListResponse" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "sendProfileOperationResponse" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        }
+    }
+}

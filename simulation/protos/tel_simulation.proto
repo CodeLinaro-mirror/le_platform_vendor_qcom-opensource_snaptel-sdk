@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  syntax = "proto3";
@@ -226,6 +226,18 @@
     rpc SetOirPref (SetOirPrefRequest) returns (SetOirPrefReply) {}
     rpc RequestOirPref (RequestOirPrefRequest) returns (RequestOirPrefReply) {}
 
+ }
+
+ service ApSimProfileService {
+    rpc InitService (commonStub.GetServiceStatusRequest)
+        returns (commonStub.GetServiceStatusReply) {}
+    rpc GetServiceStatus(commonStub.GetServiceStatusRequest)
+         returns (commonStub.GetServiceStatusReply) {}
+    rpc CleanUpService (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc SendRetrieveProfileListResponse(ProfileListResponseRequest) returns
+       (ProfileListResponseReply) {}
+    rpc SendProfileOperationResponse(ProfileOperationResponseRequest) returns
+       (ProfileOperationResponseReply) {}
  }
 
  /*******************************************************************
@@ -3769,6 +3781,8 @@ message RequestOirPrefReply {
     bool is_callback = 7;
 }
 
+// --- Supp Services end ---
+
 message SetLteDubiousCellRequest {
     uint32 slot_id = 1;
 }
@@ -3785,4 +3799,49 @@ message SetNrDubiousCellReply {
      commonStub.ErrorCode error = 1;
 }
 
-// --- Supp Services end ---
+// --- ApSimProfile Service start ---
+enum ApduExchangeStatus {
+  SUCCESS = 0;
+  FAILURE = 1;
+}
+
+message ProfileListRequestEvent {
+    int32 slot_id = 1;
+    int32 reference_id = 2;
+}
+
+message ProfileListResponseRequest {
+    int32 slot_id = 1;
+    int32 reference_id = 2;
+    ApduExchangeStatus result = 3;
+    repeated string profile_iccid = 4;
+}
+
+message ProfileListResponseReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool is_callback = 4;
+}
+
+message ProfileOperationRequestEvent {
+    int32 slot_id = 1;
+    int32 reference_id = 2;
+    string iccid = 3;
+    bool is_enable = 4;
+}
+
+message ProfileOperationResponseRequest {
+    int32 slot_id = 1;
+    int32 reference_id = 2;
+    ApduExchangeStatus result = 3;
+}
+
+message ProfileOperationResponseReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool is_callback = 4;
+}
+
+// --- ApSimProfile Service end ---

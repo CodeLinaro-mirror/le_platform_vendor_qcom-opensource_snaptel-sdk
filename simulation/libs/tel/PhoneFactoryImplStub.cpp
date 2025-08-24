@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "PhoneFactoryImplStub.hpp"
@@ -1165,7 +1165,80 @@ std::shared_ptr<ISuppServicesManager> PhoneFactoryImplStub::getSuppServicesManag
 
 std::shared_ptr<IApSimProfileManager> PhoneFactoryImplStub::getApSimProfileManager(
     telux::common::InitResponseCb callback) {
-    return nullptr;
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (apSimProfileManager_ == nullptr) {
+        std::shared_ptr<ApSimProfileManagerStub> apSimProfileManager = nullptr;
+        try {
+            apSimProfileManager = std::make_shared<ApSimProfileManagerStub>();
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
+        auto initCb = [this](telux::common::ServiceStatus status) {
+            LOG(DEBUG, __FUNCTION__, " ApSimProfileManager initialization callback");
+            this->onApSimProfileManagerResponse(status);
+        };
+        auto status = apSimProfileManager->init(initCb);
+        if(status != telux::common::Status::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to initialize apSimProfileManager");
+            apSimProfileManager_ = nullptr;
+            return nullptr;
+        }
+        if (callback) {
+            apSimProfileMgrCallbacks_.push_back(callback);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+        }
+        apSimProfileManager_ = apSimProfileManager;
+    } else if (apSimProfileMgrInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        LOG(DEBUG, __FUNCTION__, " ApSimProfile manager is not yet initialized");
+        if (callback) {
+           apSimProfileMgrCallbacks_.push_back(callback);
+        } else {
+           LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+        }
+    } else if (callback) {
+        LOG(DEBUG, __FUNCTION__, " ApSimProfile manager is initialized, invoking app callback");
+        std::thread appCallback(callback, apSimProfileMgrInitStatus_);
+        appCallback.detach();
+    } else {
+        LOG(ERROR, __FUNCTION__, " ApSimProfile manager is initialized, app Callback is NULL");
+    }
+    return apSimProfileManager_;
+}
+
+void PhoneFactoryImplStub::onApSimProfileManagerResponse(telux::common::ServiceStatus status) {
+    std::vector<telux::common::InitResponseCb> apSimProfileMgrCallbacks;
+    LOG(INFO, __FUNCTION__, " ApSimProfile Manager initialization status: " ,
+        static_cast<int>(status));
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        apSimProfileMgrInitStatus_ = status;
+        bool reportServiceStatus = false;
+        switch(status) {
+           case telux::common::ServiceStatus::SERVICE_FAILED:
+              apSimProfileManager_ = NULL;
+              reportServiceStatus = true;
+              break;
+           case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+              reportServiceStatus = true;
+              break;
+           default:
+              break;
+       }
+       if (!reportServiceStatus) {
+           return;
+       }
+       apSimProfileMgrCallbacks = apSimProfileMgrCallbacks_;
+       apSimProfileMgrCallbacks_.clear();
+    }
+    for (auto &callback : apSimProfileMgrCallbacks) {
+        if (callback) {
+           callback(status);
+        } else {
+           LOG(INFO, __FUNCTION__, " Callback is NULL");
+        }
+    }
 }
 
 }  // namespace tel

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ */
 
 /**
  * @file       CardManagerServerImpl.hpp
@@ -198,6 +198,7 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     std::condition_variable cv_;
     std::mutex mutex_;
     bool exit_ = false;
+    bool isApSimProfileRequest_ = false;
 
     grpc::Status readJson();
     bool isCallbackNeeded(Json::Value rootObj, std::string apiname);
@@ -233,6 +234,8 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     int findMatchedClients(::telStub::RefreshEvent event, const std::vector<ClientSimRefreshPref>& entry);
     template <typename T>
     void getClientInfoFromRpc(const T* rpcMsg, ClientSimRefreshPref& client);
+    void updateApduResultToJson(int phoneId, uint32_t sw1, uint32_t sw2);
+    bool startsWith(const std::string& str, const std::string& prefix);
 };
 
 #endif // CARD_MANAGER_SERVER_HPP

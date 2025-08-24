@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -72,6 +72,7 @@ const std::string  TEL_SIM_PROFILE_FILTER = "tel_sim";
 const std::string  TEL_SMS_FILTER = "tel_sms";
 const std::string  TEL_SUBSCRIPTION_FILTER = "tel_sub";
 const std::string  TEL_SUPP_SERVICES_FILTER = "tel_supp";
+const std::string  TEL_AP_SIM_PROFILE_FILTER = "tel_apsimprofile";
 
 /* string received for SSR events. */
 const std::string SSR_UP_EVENT = "ssr_up";

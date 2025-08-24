@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -311,16 +311,33 @@ telux::common::Status SubscriptionManagerStub::addNewOrUpdateSubscription(int sl
     std::lock_guard<std::mutex> lock(subscriptionManagerMutex_);
     telux::common::Status status =
         fetchSubscription(slotId, &carrierName, &iccId, &mcc, &mnc, &number, &imsi, &gid1, &gid2);
-    if(status == telux::common::Status::SUCCESS) {
-        if (subscriptionMap_.find(slotId) != subscriptionMap_.end()) {
-            std::shared_ptr<SubscriptionStub> iSub = subscriptionMap_[slotId];
-            iSub->updateSubscription(slotId, carrierName, iccId, mcc, mnc, number, imsi, gid1, gid2);
-            notifySubscriptionListener(subscriptionMap_[slotId]);
+    if (status == telux::common::Status::SUCCESS) {
+        if (!iccId.empty()) {
+            if (subscriptionMap_.find(slotId) != subscriptionMap_.end()) {
+                LOG(DEBUG, __FUNCTION__, " updating existing subscription");
+                std::shared_ptr<SubscriptionStub> iSub = subscriptionMap_[slotId];
+                iSub->updateSubscription(slotId, carrierName, iccId, mcc, mnc, number, imsi,
+                    gid1, gid2);
+            } else {
+                LOG(DEBUG, __FUNCTION__, " creating new subscription");
+                std::shared_ptr<SubscriptionStub> iSub = std::make_shared<SubscriptionStub>(
+                     slotId, carrierName, iccId, mcc, mnc, number, imsi, gid1, gid2);
+                subscriptionMap_[slotId] = iSub;
+            }
         } else {
-            std::shared_ptr<SubscriptionStub> iSub = subscriptionMap_[slotId];
-            iSub = std::make_shared<SubscriptionStub>(
-            slotId, carrierName, iccId, mcc, mnc, number, imsi, gid1, gid2);
-            subscriptionMap_[slotId] = iSub;
+            // If profile is disabled, iccid will be empty.
+            auto it = subscriptionMap_.find(slotId);
+            if (it != subscriptionMap_.end()) {
+                subscriptionMap_.erase(it);
+                LOG(DEBUG, __FUNCTION__, " removed slot id ", slotId, " from map.");
+            }
+            int mapSize = subscriptionMap_.size();
+            if (listenerMgr_) {
+                notifyNumberOfSubscriptions(mapSize);
+                notifySubscriptionListener(nullptr);
+            } else {
+                LOG(DEBUG, __FUNCTION__, " listenerMgr_ is null");
+            }
         }
     }
     return status;
@@ -350,9 +367,9 @@ telux::common::Status SubscriptionManagerStub::fetchSubscription(int slotId,
     *gid1  = static_cast<std::string>(response.gid_1());
     *gid2  = static_cast<std::string>(response.gid_2());
 
-    LOG(DEBUG, __FUNCTION__, " Carrier name is ",carrierName
-    ," Phone number is ",number, " iccid is ", iccId , " mcc is ",
-    mcc , " mnc is ",mnc , " imsi is ",imsi, " gid1 is ",gid1 , " gid2 is ",gid2);
+    LOG(DEBUG, __FUNCTION__, " Carrier name is ",*carrierName
+        ," Phone number is ",*number, " iccid is ", *iccId , " mcc is ", *mcc
+        , " mnc is ",*mnc , " imsi is ",*imsi, " gid1 is ",*gid1 , " gid2 is ",*gid2);
 
     return telux::common::Status::SUCCESS;
 }

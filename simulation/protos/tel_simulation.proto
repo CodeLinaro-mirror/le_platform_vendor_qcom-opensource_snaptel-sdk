@@ -905,6 +905,8 @@ message RefreshEvent {
      int32 smsresponsecb_callbackDelay = 4;
      string sentcallback_msgrefs = 5;
      repeated Deliverycallback records = 6;
+     int32 smsresponsecb_rejectgwCode = 7;
+     int32 smsresponsecb_rejectimsCode = 8;
  }
 
  message PduBuffer {
@@ -923,6 +925,8 @@ message RefreshEvent {
      int32 smsresponsecb_callbackDelay = 4;
      string sentcallback_msgrefs = 5;
      repeated Deliverycallback records = 6;
+     int32 smsresponsecb_rejectgwCode = 7;
+     int32 smsresponsecb_rejectimsCode = 8;
  }
 
  message SmsTagType {

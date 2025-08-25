@@ -175,6 +175,47 @@ struct MessagePartInfo {
 };
 
 /**
+ * @brief Specifies the SMS relay protocol (RP) cause for a failed SMS in GSM and UMTS networks.
+ */
+enum class RpCause {
+    UNKNOWN = -1,                                /**< Unknown RP cause code */
+    UNASSIGNED_NUMBER = 0x01,                    /**< The destination number is not assigned */
+    OPERATOR_DETERMINED_BARRING = 0x08,          /**< The operator has barred the call */
+    CALL_BARRED = 0x0A,                          /**< The call is barred by the network */
+    RESERVED = 0x0B,                             /**< Reserved for future use */
+    SMS_TRANSFER_REJECTED = 0x15,                /**< The SMS transfer has been rejected */
+    MEMORY_CAP_EXCEEDED = 0x16,                  /**< The memory capacity has been exceeded */
+    DESTINATION_OUT_OF_ORDER = 0x1B,             /**< The destination is out of order */
+    UNIDENTIFIED_SUBSCRIBER = 0x1C,              /**< The subscriber is unidentified */
+    FACILITY_REJECTED = 0x1D,                    /**< The facility has been rejected */
+    UNKNOWN_SUBSCRIBER = 0x1E,                   /**< The subscriber is unknown */
+    NETWORK_OUT_OF_ORDER = 0x26,                 /**< The network is out of order */
+    TEMPORARY_FAILURE = 0x29,                    /**< A temporary failure has occurred */
+    CONGESTION = 0x2A,                           /**< The network is congested */
+    RESOURCES_UNAVAILABLE_ACK = 0x2F,            /**< The required resources are unavailable */
+    REQUESTED_FACILITY_NOT_SUBSCRIBED = 0x32,    /**< The requested facility is not subscribed */
+    REQUESTED_FACILITY_NOT_IMPLEMENTED = 0x45,   /**< The requested facility is not implemented */
+    INVALID_SMS_TRANSFER_REFERENCE_VALUE = 0x51, /**< The SMS transfer reference value is invalid */
+    SEMANTICALLY_INCORRECT_MESSAGE = 0x5F,       /**< The message is semantically incorrect */
+    INVALID_MANDATORY_INFO = 0x60,               /**< The mandatory information is invalid */
+    MESSAGE_TYPE_NOT_IMPLEMENTED = 0x61,         /**< The message type is not implemented */
+    MESSAGE_NOT_COMPATABLE_WITH_SMS = 0x62,      /**< The message is not compatible with SMS */
+    INFO_ELEMENT_NOT_IMPLEMENTED = 0x63,         /**< The information element is not implemented */
+    PROTOCOL_ERROR = 0x6F,                       /**< A protocol error has occurred */
+    INTERWORKING = 0x7F,                         /**< An interworking error has occurred */
+};
+
+/**
+ * @brief Specify failure cause information used for MO SMS sending failure.
+ */
+struct SmsFailureCause {
+    RpCause gwCause = RpCause::UNKNOWN; /**< Indicates the GW RP cause according to
+                                            3GPP TS 24.011 Section 8.2.5.4 */
+    int imsCause = -1;                  /**< Indicates the IMS SIP cause according to
+                                            3GPP TS 29.292 Section 5.3.8 */
+};
+
+/**
  * @brief Data structure represents an incoming SMS. This is applicable for single part message
  *       or part of the multipart message.
  */
@@ -296,6 +337,36 @@ using SmsResponseCb = std::function<void(std::vector<int> msgRefs,
    telux::common::ErrorCode errorCode)>;
 
 /**
+ * This function is called in response to sending a single part or multi-part SMS. This response
+ * callback is invoked  when a single part message is sent or when all the parts of a multi-part
+ * message is sent. This function is called in response to telux::tel::ISmsManager::sendSms and
+ * telux::tel::ISmsManager::sendRawSms APIs.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] msgRefs        This parameter represent the unique message reference number(s)
+ *                            corresponding to single/multi-part message that we successfully sent.
+ *                            When part of a message is delivered, the notification API i.e
+ *                            @ref telux::tel::ISmsListener::onDeliveryReport will be invoked
+ *                            with the message reference number corresponding to that part.
+ * @param [in] errorCode      If sending any part of a multi-part message fails or a single part
+ *                            message fails this API will return an @ref telux:common::ErrorCode
+ *                            corresponding to the failure.
+ * @param [in] info           @ref telux::tel::SmsFailureCause
+ *
+ * @note If sending an SMS fails, this API returns a cause value corresponding to the failure
+ *       type - either GW SMS or IMS SMS - based on the enumeration defined in
+ *       @ref telux::tel::SmsFailureCause. The default return value is
+ *       telux::tel::RpCause::UNKNOWN for GW SMS or -1 for IMS SMS, indicating no failure occurred.
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using SmsResponseCbEx = std::function<void(std::vector<int> msgRefs,
+   telux::common::ErrorCode errorCode, SmsFailureCause info)>;
+
+/**
  * This function can be invoked in response to getting a list of message information for the
  * messages saved in SIM storage. To get message detail at a specific index on storage,
  * @ref telux::tel::ISmsManager::readMessage API should be invoked. The callback can be
@@ -388,7 +459,7 @@ public:
     *
     */
    virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
-      bool deliveryReportNeeded, SmsResponseCb sentCallback = nullptr,
+      bool deliveryReportNeeded, SmsResponseCbEx sentCallback = nullptr,
       std::string smscAddr = "") = 0;
 
    /**
@@ -410,7 +481,7 @@ public:
     *
     */
    virtual telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
-      SmsResponseCb sentCallback = nullptr) = 0;
+      SmsResponseCbEx sentCallback = nullptr) = 0;
 
    /**
     * Request for Short Messaging Service Center (SMSC) Address.Purpose of SMSC is to store,
@@ -624,6 +695,61 @@ public:
               std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
       = 0;
 
+   /**
+    * Send single or multipart SMS to the destination address. When registered on IMS the SMS will
+    * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted to
+    * send the message over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not
+    * support National language shift tables. The SMS is sent directly not stored on storage.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
+    * to invoke this API successfully.
+    *
+    * @param [in] message                 Message text to be send.
+    * @param [in] receiverAddress         Receiver or destination address
+    * @param [in] deliveryReportNeeded    Delivery status received in the listener API
+    *                                     @ref telux::tel::ISmsListener if deliveryReportNeeded is
+    *                                     true. Provided recipient responds to SMSC before the
+    *                                     validity period expires. If deliveryReportNeeded is false
+    *                                     delivery report will not be received.
+    * @param [in] sentCallback            Optional callback pointer to get the sent response for
+    *                                     single part or multi-part SMS.
+    * @param [in] smscAddr                SMS is sent to SMSC address. If SMSC address is empty then
+    *                                     pre-configured SMSC address is used.
+    *
+    * @returns Status of sendSms i.e. success or suitable error code.
+    *
+    * @deprecated Use API ISmsManager::sendSms(const std::string &message,
+    *     const std::string &receiverAddress, bool deliveryReportNeeded = true,
+    *     SmsResponseCbEx sentCallback = nullptr, std::string smscAddr = "")
+    *
+    */
+   virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
+      bool deliveryReportNeeded, SmsResponseCb sentCallback = nullptr,
+      std::string smscAddr = "") = 0;
+
+   /**
+    * Send an SMS that is provided as a raw encoded PDU(s). When registered on IMS the SMS will
+    * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted to
+    * send the message over CS. If the SMS is a multi-part message, the API expects multiple PDU
+    * to be passed to it. The SMS is sent directly not stored on storage.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
+    * to invoke this API successfully.
+    *
+    * @param [in] rawPdus             Each element in the vector represents a part of a multipart
+    *                                 message. For single part message the vector will have single
+    *                                 element.
+    * @param [in] sentCallback        Optional callback to get the sent response for single part or
+    *                                 multi-part SMS.
+    *
+    * @returns Status of sendRawSms i.e. success or suitable error code.
+    *
+    * @deprecated Use API ISmsManager::sendRawSms(const std::vector<PduBuffer> rawPdus,
+    *     SmsResponseCbEx sentCallback = nullptr)
+    */
+   virtual telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
+      SmsResponseCb sentCallback = nullptr) = 0;
+
    virtual ~ISmsManager(){};
 };
 
@@ -707,6 +833,25 @@ public:
     *
     */
    virtual void onMemoryFull(int phoneId, StorageType type) {
+   }
+
+   /**
+    * This function will be invoked when the mobile originated (MO) SMS fails and the library will
+    * internally attempts to resend the SMS if an error is detected. If the callback is returned
+    * with an error, the application may initiate another SMS send attempt.
+    *
+    * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_OPS
+    * permission to invoke this API successfully.
+    *
+    * @param [in] phoneId             Unique identifier per SIM slot. Phone on which the message is
+    *                                 received.
+    * @param [in] isOverIms           Send SMS over IMS or not
+    * @param [in] cause               SMS failure cause code
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onOutgoingSmsFailure(int phoneId, bool isOverIms, SmsFailureCause cause) {
    }
 
    virtual ~ISmsListener() {

@@ -53,7 +53,8 @@
             {
                 "smsResponseCbErrorCode" : "SUCCESS",
                 "smsResponseCbDelay" : 9000,
-                "smsResponseCbMsgRefs" : "1 2"
+                "smsResponseCbMsgRefs" : "1 2",
+                "smsResponseCbRejectCode" : -1
             },
             {
                 "onDeliveryReportErrorCode" : "SUCCESS",
@@ -74,7 +75,8 @@
             {
                 "smsResponseCbErrorCode" : "SUCCESS",
                 "smsResponseCbDelay" : 9000,
-                "smsResponseCbMsgRefs" : "1 2"
+                "smsResponseCbMsgRefs" : "1 2",
+                "smsResponseCbRejectCode" : -1
             },
             {
                 "onDeliveryReportErrorCode" : "SUCCESS",

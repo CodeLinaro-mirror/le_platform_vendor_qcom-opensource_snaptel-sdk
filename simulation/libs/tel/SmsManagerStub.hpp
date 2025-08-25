@@ -78,6 +78,9 @@ public:
     telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
       SmsResponseCb sentCallback = nullptr) override;
 
+    telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
+      SmsResponseCbEx sentCallback = nullptr) override;
+
     telux::common::Status requestSmscAddress(std::shared_ptr<ISmscAddressCallback> callback
         = nullptr) override;
 
@@ -110,6 +113,10 @@ public:
       bool deliveryReportNeeded = true, SmsResponseCb sentCallback = nullptr,
       std::string smscAddr = "") override;
 
+    telux::common::Status sendSms(std::string message, std::string receiverAddress,
+      bool deliveryReportNeeded = true, SmsResponseCbEx sentCallback = nullptr,
+      std::string smscAddr = "") override;
+
     ~SmsManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any);
@@ -127,6 +134,8 @@ private:
     void initSync();
     void invokeCallback(int cbDelay, ErrorCode error, std::vector<int> msgRefs,
          SmsResponseCb sentCallback = nullptr);
+    void invokeCallbackExt(int cbDelay, ErrorCode error, std::vector<int> msgRefs,
+         SmsFailureCause info, SmsResponseCbEx sentCallback);
     void invokeDeliveryReportListener(std::string receiverAddress, int noofdeliveryreport,
          std::vector<int> refs, telux::common::ErrorCode error, int deliveryCallbackDelay);
     void invokeDeliveryReportListener(std::string receiverAddress,

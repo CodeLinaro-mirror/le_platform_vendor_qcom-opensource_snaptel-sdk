@@ -78,13 +78,15 @@ public:
    void onDeliveryReport(int phoneId, int msgRef, std::string receiverAddress,
       telux::common::ErrorCode error) override;
    void onMemoryFull(int phoneId, telux::tel::StorageType type) override;
+   void onOutgoingSmsFailure(int phoneId, bool isOverIms,
+      telux::tel::SmsFailureCause info) override;
 };
 
 class MySmsCommandCallback : public telux::common::ICommandResponseCallback {
 public:
    void commandResponse(telux::common::ErrorCode error) override;
    static void sendSmsResponse(std::vector<int> msgRefs,
-      telux::common::ErrorCode errorCode);
+      telux::common::ErrorCode errorCode, telux::tel::SmsFailureCause info);
 };
 
 class MySmscAddressCallback : public telux::tel::ISmscAddressCallback {

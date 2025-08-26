@@ -62,7 +62,10 @@
  *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file bsm_utils.c
  * @purpose some BSM utilities.
@@ -84,8 +87,8 @@ static char *brake_str2[] = {"Unavailable", "Off", "On", "Engaged"};
 const char* get_wall_time(char* result)
 {
     time_t now;
-    struct tm * time_info;
-    char *token;
+    struct tm * time_info = NULL;
+    char *token = NULL;
 
     if (!result) {
         return NULL;
@@ -93,6 +96,9 @@ const char* get_wall_time(char* result)
 
     time(&now);
     time_info = localtime(&now);
+    if (NULL == time_info) {
+        return NULL;
+    }
     g_strlcpy(result, asctime(time_info), 100);
     /*If it is end with  \n character, find and remove it*/
     token = strchr(result, '\n');
@@ -416,7 +422,6 @@ double bsmCompute2dDistance(double hvLat, double hvLon, double rvLat, double rvL
     double meridRad = (numer / denom);
     double distance = meridRad *
         ( acos(sin(rLat1) * sin(rLat2) + cos(rLat1) * cos(rLat2) * cos(rLon1 - rLon2)) ); // cos-1
-    return distance;
     return distance;
 }
 

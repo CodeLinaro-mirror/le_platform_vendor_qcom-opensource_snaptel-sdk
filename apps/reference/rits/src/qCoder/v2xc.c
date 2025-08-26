@@ -26,6 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file v2xc.c v2x ASN.1 command line decoder
  */
@@ -63,7 +67,7 @@ int main(int argc, char **argv)
     FILE *fpi = NULL;
     size_t buf_len = MAX_BUF_LEN;
     int pkt_type = PKT_TYPE_UNKNOWN;
-    msg_contents mc;
+    msg_contents mc = {0};
 
     abuf_alloc(&mc.abuf, MAX_BUF_LEN, 200);
 

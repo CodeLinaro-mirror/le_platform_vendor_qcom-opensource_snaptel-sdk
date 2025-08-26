@@ -123,13 +123,18 @@ std::string getCurrentTimestamp()
 {
     using std::chrono::system_clock;
     auto currentTime = std::chrono::system_clock::now();
-    char buffer[MAX_TIMESTAMP_BUFFER_SIZE];
+    char buffer[MAX_TIMESTAMP_BUFFER_SIZE] = {0};
     auto sinceEpoch = currentTime.time_since_epoch().count() / 1000000;
     auto millis = sinceEpoch % 1000;
     std::time_t tt = system_clock::to_time_t ( currentTime );
     auto timeinfo = localtime (&tt);
-    int ret = strftime (buffer,80,"%F-%H:%M:%S.",timeinfo);
-    snprintf(&buffer[ret], MAX_TIMESTAMP_BUFFER_SIZE, "%03d", (int)millis);
+    if (timeinfo) {
+        int ret = strftime(buffer, MAX_TIMESTAMP_BUFFER_SIZE, "%F-%H:%M:%S.",timeinfo);
+        if (0 == ret) {
+            return "";
+        }
+        snprintf(&buffer[ret], MAX_TIMESTAMP_BUFFER_SIZE - ret, "%03d", (int)millis);
+    }
     return std::string(buffer);
 }
 

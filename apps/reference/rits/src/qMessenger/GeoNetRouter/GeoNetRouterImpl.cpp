@@ -61,7 +61,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file GeoNetRouterImpl.cpp
  * @brief implementation of GeoNetwork router.
@@ -489,7 +492,7 @@ namespace gn {
         // Go through the Location table, find all neighbors and calculate the
         // distances between neighbor and destination, pick the shortest
         // distance.
-        int shortest_dis;
+        int shortest_dis = 0;
         std::shared_ptr<LocTableEntry> LocTe_next = LocTable_.FindShortestLocTe(Latitude, Longitude,
                 shortest_dis);
 
@@ -652,7 +655,7 @@ namespace gn {
         PacketType PktType;
         GeoAreaType AreaType;
         gn_epv_t Epv;
-        int x, y, f, RetValue;
+        int x = 0, y = 0, f = 0, RetValue = 0;
 
         const gn_gbc_gac_hdr_t *h = reinterpret_cast<const gn_gbc_gac_hdr_t *>(Buffer);
 
@@ -848,7 +851,7 @@ namespace gn {
     }
 
     int GeoNetRouterImpl::ReceiveGBCGAC(uint8_t *Buffer, size_t BufLen, GnData_t &data) {
-        int x, y, f;
+        int x = 0, y = 0, f = 0;
         gn_epv_t Epv;
         GeoAreaType AreaType;
         bool exec_dpd = false;

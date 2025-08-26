@@ -156,18 +156,18 @@ int AerolinkSecurity::setLeapSeconds(uint32_t leapSeconds){
 
 /* Function to print out running signing stats */
 void printSignStats(std::thread::id thrId){
-    time_t t;
-    struct tm *info;
-    gettimeofday(&currTime, NULL);
-    t = currTime.tv_sec;
-    info = localtime(&t);
-    if(signSuccess % 10 == 0 && signSuccess > 0){
-        std::stringstream ss;
-        ss << thrId;
-        int tid = (int)std::stoul(ss.str());
-        fprintf(stdout, "ThreadID: 0x%08x; ", tid);
-        fprintf(stdout, " %s : SignSuccess: %d; SignFail: %d\n",
+    if (signSuccess % 10 == 0 && signSuccess > 0) {
+        gettimeofday(&currTime, NULL);
+        time_t t = currTime.tv_sec;
+        struct tm *info = localtime(&t);
+        if (info) {
+            std::stringstream ss;
+            ss << thrId;
+            int tid = (int)std::stoul(ss.str());
+            fprintf(stdout, "ThreadID: 0x%08x; ", tid);
+            fprintf(stdout, " %s : SignSuccess: %d; SignFail: %d\n",
                     asctime (info), signSuccess, signFail);
+        }
     }
 }
 
@@ -704,6 +704,7 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
                 if(secVerbosity > 7){
                     fprintf(stderr,"Unable to create smp for this thread\n");
                 }
+                sem_post(&smpListSem);
                 return false;
             }
             sem_init(verifThrSemPtr, 0, 1);

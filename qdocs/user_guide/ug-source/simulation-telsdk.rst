@@ -1648,6 +1648,7 @@ The following managers are currently available in the simulation:
 12. DualDataManager
 13. DataControlManager
 14. DataLinkManager
+15. QoSManager
 
 
 Data APIs Response handling

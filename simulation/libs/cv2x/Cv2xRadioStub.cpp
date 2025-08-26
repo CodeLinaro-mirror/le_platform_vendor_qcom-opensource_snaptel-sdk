@@ -2113,7 +2113,7 @@ Cv2xRadioCapabilities Cv2xRadioSimulation::getCapabilities() const {
     if (caps_) {
         return *caps_;
     }
-    Cv2xRadioCapabilities dummyCap;
+    Cv2xRadioCapabilities dummyCap{};
     return dummyCap;
 }
 

@@ -1135,3 +1135,14 @@ bool DataConnectionServerImpl::isAnyDataCallActive(SlotId slotId) {
 
     return callActive;
 }
+
+grpc::Status DataConnectionServerImpl::IsAnyDataCallActive(ServerContext *context,
+    const google::protobuf::Empty *request, ::dataStub::IsAnyDataCallActiveReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    if ((dataCallsSlot1_.size() > 0) || (dataCallsSlot2_.size() > 0)) {
+        response->set_isanydatacallactive(true);
+    } else {
+        response->set_isanydatacallactive(false);
+    }
+    return grpc::Status::OK;
+}

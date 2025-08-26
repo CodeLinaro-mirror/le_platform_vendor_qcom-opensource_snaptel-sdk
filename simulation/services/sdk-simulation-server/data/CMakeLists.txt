@@ -16,6 +16,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/net/FirewallServerImpl.cpp
     data/net/BridgeServerImpl.cpp
     data/net/VlanServerImpl.cpp
+    data/net/QoSServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

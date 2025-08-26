@@ -1,0 +1,31 @@
+{
+    "IQoSManager": {
+        "IsSubsystemReady": "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay": 400,
+        "DefaultCallbackDelay" : 400,
+        "createTrafficClass": {
+            "error": "SUCCESS"
+        },
+        "getAllTrafficClasses": {
+            "error": "SUCCESS"
+        },
+        "deleteTrafficClass": {
+            "error": "SUCCESS"
+        },
+        "addQoSFilter": {
+            "error": "SUCCESS"
+        },
+        "getQosFilter": {
+            "error": "SUCCESS"
+        },
+        "getQosFilters": {
+            "error": "SUCCESS"
+        },
+        "deleteQosFilter": {
+            "error": "SUCCESS"
+        },
+        "deleteAllQosConfigs": {
+            "error": "SUCCESS"
+        }
+    }
+}

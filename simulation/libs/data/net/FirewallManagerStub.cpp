@@ -306,8 +306,7 @@ telux::common::Status FirewallManagerStub::addFirewallEntryRequest(
         request.set_backhaul_type(
             static_cast<::dataStub::BackhaulPreference>(entry.bhInfo.backhaul));
         request.set_is_hw_accelerated(isHwAccelerated);
-        request.mutable_fw_direction()->set_fw_direction(
-            static_cast<::dataStub::Direction::Fw_Direction>(entry.fwEntry->getDirection()));
+        request.set_fw_direction(static_cast<::dataStub::Direction>(entry.fwEntry->getDirection()));
         request.set_protocol(
             DataUtilsStub::protocolToString(entry.fwEntry->getIProtocolFilter()->getIpProtocol()));
 
@@ -448,9 +447,8 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(
             FirewallEntryInfo fwEntryInfo;
             fwEntryInfo.bhInfo = bhInfo;
 
-            telux::data::Direction fw_direction
-                = (telux::data::Direction)entry.fw_direction().fw_direction();
-            std::string protocol = entry.protocol();
+            telux::data::Direction fw_direction = (telux::data::Direction)entry.fw_direction();
+            std::string protocol                = entry.protocol();
             telux::data::IpFamilyType ip_family_type
                 = ((telux::data::IpFamilyType)entry.ip_family_type().ip_family_type());
             auto fwEntry = DataFactoryImplStub::getInstance().getNewFirewallEntry(

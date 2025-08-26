@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /*
@@ -393,7 +393,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
                 << "\n gwAddress: " << it.gwAddress
                 << "\n ifMask: " << it.ifMask
                 << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << std::endl;
+                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                << "\n mtuValue: " << it.mtu << std::endl;
         }
 
         std::cout << " IP family type: " <<

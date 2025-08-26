@@ -303,10 +303,12 @@ message StartDataCallEvent {
     string gwv4_address = 6;
     string v4dns_primary_address = 7;
     string v4dns_secondary_address = 8;
-    string ipv6_address = 9;
-    string gwv6_address = 10;
-    string v6dns_primary_address = 11;
-    string v6dns_secondary_address = 12;
+    int32 v4mtu_value = 9;
+    string ipv6_address = 10;
+    string gwv6_address = 11;
+    string v6dns_primary_address = 12;
+    string v6dns_secondary_address = 13;
+    int32 v6mtu_value = 14;
 }
 
 message CachedDataCalls {

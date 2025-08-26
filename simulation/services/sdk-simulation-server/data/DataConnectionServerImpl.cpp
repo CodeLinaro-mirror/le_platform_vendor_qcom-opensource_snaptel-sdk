@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <ifaddrs.h>
@@ -8,6 +8,9 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <thread>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "DataConnectionServerImpl.hpp"
 #include "SimulationServer.hpp"
@@ -345,7 +348,7 @@ void DataConnectionServerImpl::getInactiveInterfaces() {
 
 bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
     std::string &ipAddress, std::string &gatewayAddress,
-    std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress) {
+    std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue) {
     LOG(DEBUG, __FUNCTION__);
     bool ifaceFound = false;
     struct ifaddrs *ifaceAddresses;
@@ -401,7 +404,25 @@ bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
                         }
                     }
                 }
-                ifaceFound = true;
+
+                // fetching MTU
+                int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+                if (fd >= 0) {
+                    struct ifreq ifr;
+                    memset(&ifr, 0, sizeof(ifr));
+                    ifName.copy(ifr.ifr_name, ifName.length());
+                    ifr.ifr_name[ifName.length()] = '\0';
+
+                    if (ioctl(fd, SIOCGIFMTU, &ifr) != -1) {
+                        mtuValue = ifr.ifr_mtu;
+                        ifaceFound = true;
+                    } else {
+                        LOG(DEBUG, __FUNCTION__, " failed to get MTU");
+                    }
+                    close(fd);
+                } else {
+                    LOG(DEBUG, __FUNCTION__, " socket error");
+                }
             }
         }
     }
@@ -411,7 +432,7 @@ bool DataConnectionServerImpl::getIpv4Address(const std::string &ifaceName,
 
 bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
     std::string &ipAddress, std::string &gatewayAddress,
-    std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress) {
+    std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue) {
     LOG(DEBUG, __FUNCTION__);
     bool ifaceFound = false;
     struct ifaddrs *ifaceAddresses;
@@ -425,10 +446,16 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
     for (ifaddr = ifaceAddresses; ifaddr != NULL; ifaddr=ifaddr->ifa_next) {
         if ((ifaddr->ifa_addr != NULL) &&
         (ifaddr->ifa_addr->sa_family == AF_INET6)) {
-            std::string ifName(ifaddr->ifa_name);
+            std::string currentIfName(ifaddr->ifa_name);
             //if type is v6 & iface name matches with user provided name
-            if (ifaceName == ifName) {
+            if (ifaceName == currentIfName) {
                 LOG(DEBUG, __FUNCTION__, " found interface:", ifaceName);
+
+                ipAddress.clear();
+                gatewayAddress.clear();
+                dnsPrimaryAddress.clear();
+                dnsSecondaryAddress.clear();
+                mtuValue = 0;
 
                 //fetching ip address
                 struct sockaddr_in6* ipAddr =
@@ -437,29 +464,57 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
                 //if it is link local address not global unicast
                 //address then we skip
                 if (IN6_IS_ADDR_LINKLOCAL(&ipAddr->sin6_addr)) {
-                    if (ifaddr->ifa_next != NULL) {
-                        ifaddr = ifaddr->ifa_next;
-                    }
                     continue;
                 }
                 char ipAddrStr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &ipAddr->sin6_addr,
-                    ipAddrStr, INET6_ADDRSTRLEN);
+                if (inet_ntop(AF_INET6, &ipAddr->sin6_addr, ipAddrStr,
+                    INET6_ADDRSTRLEN) == NULL) {
+                    LOG(DEBUG, __FUNCTION__,
+                        " Failed to convert IPv6 address: %s", strerror(errno));
+                    continue;
+                }
                 ipAddress = ipAddrStr;
 
                 //fetching gw address
-                char gwAddrStr[INET6_ADDRSTRLEN];
+                char gwAddrStr[INET6_ADDRSTRLEN] = {0};
                 std::string command =
                     "ip -6 route | grep 'default[ \t]' | awk '{print $3}'";
                 FILE* fp = popen(command.c_str(), "r");
 
-                if(fgets(gwAddrStr, INET6_ADDRSTRLEN, fp) != NULL) {
-                    gatewayAddress = gwAddrStr;
-                    if(gatewayAddress.back() == '\n') {
-                        gatewayAddress.pop_back();
+                if (fp) {
+                    if(fgets(gwAddrStr, INET6_ADDRSTRLEN, fp) != NULL) {
+                        gatewayAddress = gwAddrStr;
+                        if(gatewayAddress.back() == '\n') {
+                            gatewayAddress.pop_back();
+                        }
+                    } else {
+                        LOG(DEBUG, __FUNCTION__,
+                            " Failed to read gateway address from popen command.");
                     }
+                    pclose(fp);
+                } else {
+                    LOG(DEBUG, __FUNCTION__,
+                        " popen failed for gateway command: %s", strerror(errno));
                 }
-                pclose(fp);
+
+                // fetching MTU
+                int fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_IP);
+                if (fd >= 0) {
+                    struct ifreq ifr;
+                    memset(&ifr, 0, sizeof(ifr));
+                    ifaceName.copy(ifr.ifr_name, ifaceName.length());
+                    ifr.ifr_name[ifaceName.length()] = '\0';
+
+                    if (ioctl(fd, SIOCGIFMTU, &ifr) != -1) {
+                        mtuValue = ifr.ifr_mtu;
+                        LOG(DEBUG, __FUNCTION__, " MTU:", mtuValue);
+                    } else {
+                        LOG(DEBUG, __FUNCTION__, " failed to get MTU");
+                    }
+                    close(fd);
+                } else {
+                    LOG(DEBUG, __FUNCTION__, " socket error");
+                }
 
                 //fetching dns address
                 std::ifstream ifs("/etc/resolv.conf");
@@ -476,18 +531,21 @@ bool DataConnectionServerImpl::getIpv6Address(const std::string &ifaceName,
                             //so taking the <dns_address> into addrStr.
                             std::string addrStr = line.substr(11);
                             if (DataUtilsStub::isValidIpv6Address(addrStr)) {
-                                if (dnsPrimaryAddress.size() == 0) {
+                                if (dnsPrimaryAddress.empty()) {
                                     dnsPrimaryAddress = addrStr;
-                                } else if (dnsSecondaryAddress.size() == 0) {
+                                } else if (dnsSecondaryAddress.empty()) {
                                     dnsSecondaryAddress = addrStr;
-                                    continue;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-
-                ifaceFound = true;
+                if (!ipAddress.empty()) {
+                    ifaceFound = true;
+                    freeifaddrs(ifaceAddresses);
+                    return ifaceFound;
+                }
             }
         }
     }
@@ -544,7 +602,7 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6)) {
             getIpv4Address(call->ifaceName, call->v4IpAddress, call->v4GwAddress,
-                call->v4dnsPrimaryAddress, call->v4dnsSecondaryAddress);
+                call->v4dnsPrimaryAddress, call->v4dnsSecondaryAddress, call->v4MtuValue);
     }
 
     //getting IpFamily V6 details
@@ -553,7 +611,7 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
         ipFamilyType ==
         DataUtilsStub::convertIpFamilyEnumToString(::dataStub::IpFamilyType::IPV4V6)) {
             getIpv6Address(call->ifaceName, call->v6IpAddress, call->v6GwAddress,
-                call->v6dnsPrimaryAddress, call->v6dnsSecondaryAddress);
+                call->v6dnsPrimaryAddress, call->v6dnsSecondaryAddress, call->v6MtuValue);
     }
 
     bool ipv4Supported = (call->v4IpAddress.length() == 0)? false : true;
@@ -570,10 +628,12 @@ void DataConnectionServerImpl::triggerStartDataCallEvent(int profileId, int slot
     startDataCallEvent.set_gwv4_address(call->v4GwAddress);
     startDataCallEvent.set_v4dns_primary_address(call->v4dnsPrimaryAddress);
     startDataCallEvent.set_v4dns_secondary_address(call->v4dnsSecondaryAddress);
+    startDataCallEvent.set_v4mtu_value(call->v4MtuValue);
     startDataCallEvent.set_ipv6_address(call->v6IpAddress);
     startDataCallEvent.set_gwv6_address(call->v6GwAddress);
     startDataCallEvent.set_v6dns_primary_address(call->v6dnsPrimaryAddress);
     startDataCallEvent.set_v6dns_secondary_address(call->v6dnsSecondaryAddress);
+    startDataCallEvent.set_v6mtu_value(call->v6MtuValue);
 
     anyResponse.set_filter("data_connection");
     anyResponse.mutable_any()->PackFrom(startDataCallEvent);
@@ -935,10 +995,12 @@ grpc::Status DataConnectionServerImpl::requestConnectedDataCallLists(ServerConte
         call->set_gwv4_address(callObj->v4GwAddress);
         call->set_v4dns_primary_address(callObj->v4dnsPrimaryAddress);
         call->set_v4dns_secondary_address(callObj->v4dnsSecondaryAddress);
+        call->set_v4mtu_value(callObj->v4MtuValue);
         call->set_ipv6_address(callObj->v6IpAddress);
         call->set_gwv6_address(callObj->v6GwAddress);
         call->set_v6dns_primary_address(callObj->v6dnsPrimaryAddress);
         call->set_v6dns_secondary_address(callObj->v6dnsSecondaryAddress);
+        call->set_v6mtu_value(callObj->v6MtuValue);
     }
 
     return grpc::Status::OK;

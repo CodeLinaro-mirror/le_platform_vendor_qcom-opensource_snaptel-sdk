@@ -362,7 +362,8 @@ Example use cases as per different data paths in system:
             for(auto &it : ipAddrList) {
                 std::cout << "\n ifAddress: " << it.ifAddress
                         << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                        << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
+                        << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                        << "\n mtuValue: " << it.mtu << '\n';
             }
             std::cout << "IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
             std::cout << "TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';

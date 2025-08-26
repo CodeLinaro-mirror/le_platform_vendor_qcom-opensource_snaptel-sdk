@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <grpcpp/grpcpp.h>
@@ -504,6 +504,8 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
     std::string v6dnsPrimaryAddress = startEvent.v6dns_primary_address();
     std::string v6dnsSecondaryAddress = startEvent.v6dns_secondary_address();
     std::list<telux::data::IpAddrInfo> ipAddrList;
+    int v4mtuValue = startEvent.v4mtu_value();
+    int v6mtuValue = startEvent.v6mtu_value();
 
     if (slotId != slotId_)
         return;
@@ -549,6 +551,7 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
         ipv4Addr.gwAddress = gwv4Address;
         ipv4Addr.primaryDnsAddress = v4dnsPrimaryAddress;
         ipv4Addr.secondaryDnsAddress = v4dnsSecondaryAddress;
+        ipv4Addr.mtu = v4mtuValue;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
         if (ipFamilyType == IpFamilyType::IPV4 || ipFamilyType == IpFamilyType::IPV4V6) {
@@ -577,6 +580,7 @@ void DataConnectionManagerStub::handleStartDataCallEvent(
         ipv6Addr.gwAddress = gwv6Address;
         ipv6Addr.primaryDnsAddress = v6dnsPrimaryAddress;
         ipv6Addr.secondaryDnsAddress = v6dnsSecondaryAddress;
+        ipv6Addr.mtu = v6mtuValue;
         ipAddrList.clear();
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_NOTIFICATION_DELAY));
         if (ipFamilyType == IpFamilyType::IPV6 || ipFamilyType == IpFamilyType::IPV4V6) {

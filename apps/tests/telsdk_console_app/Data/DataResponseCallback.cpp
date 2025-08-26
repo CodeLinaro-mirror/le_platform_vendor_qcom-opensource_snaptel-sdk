@@ -221,7 +221,8 @@ void MyDataCallResponseCallback::dataCallListResponseCb(
             struct in_addr ifMaskAddr, gwMaskAddr;
             std::cout << "\n ifAddress: " << it.ifAddress << "\n gwAddress: " << it.gwAddress
                       << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress;
+                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                      << "\n mtuValue: " << it.mtu;
 
             if (it.ifMask) {
                 ifMaskAddr.s_addr= it.ifMask;

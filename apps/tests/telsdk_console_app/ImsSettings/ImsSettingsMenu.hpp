@@ -43,7 +43,7 @@ public:
     /**
      * Initialize commands and SDK
      */
-    void init();
+    bool init();
 
     ImsSettingsMenu(std::string appName, std::string cursor);
     ~ImsSettingsMenu();

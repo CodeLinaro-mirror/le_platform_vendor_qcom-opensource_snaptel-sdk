@@ -46,7 +46,7 @@ public:
     /**
      * Initialize commands and SDK
      */
-    void init();
+    bool init();
 
     ImsServingSystemMenu(std::string appName, std::string cursor);
     ~ImsServingSystemMenu();

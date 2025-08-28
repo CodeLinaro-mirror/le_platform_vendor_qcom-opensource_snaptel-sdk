@@ -191,15 +191,17 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
 
 void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
     ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
-    imsSettingsMenu.init();
-    imsSettingsMenu.mainLoop();
+    if(imsSettingsMenu.init()) {
+        imsSettingsMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) {
     ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
-    imsaMenu.init();
-    imsaMenu.mainLoop();
+    if(imsaMenu.init()) {
+        imsaMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 }
 

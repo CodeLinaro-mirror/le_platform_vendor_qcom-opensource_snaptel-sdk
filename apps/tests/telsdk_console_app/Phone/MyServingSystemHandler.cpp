@@ -27,39 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -315,6 +285,111 @@ std::string MyServingSystemHelper::getCallBarringType(telux::tel::CallsAllowedIn
 
 std::string MyServingSystemHelper::getRadioTechnology(telux::tel::RadioTechnology radioTech) {
     return MyPhoneHelper::radioTechToString(radioTech);
+}
+
+std::string MyServingSystemHelper::wcdmaRrcStateToString(telux::tel::WcdmaRrcState rrcState) {
+    std::string state = "";
+    switch (rrcState) {
+        case telux::tel::WcdmaRrcState::IDLE:
+            state = "Idle mode";
+            break;
+        case telux::tel::WcdmaRrcState::CELL_PCH:
+            state = "Cell paging channel mode";
+            break;
+        case telux::tel::WcdmaRrcState::URA_PCH:
+            state = "UTRAN registration area(URA) paging channel mode";
+            break;
+        case telux::tel::WcdmaRrcState::CELL_FACH:
+            state = "Cell forward access channel mode";
+            break;
+        case telux::tel::WcdmaRrcState::CELL_DCH:
+            state = "Cell dedicated channel mode";
+            break;
+        default:
+            state = "Unknown";
+            break;
+    }
+    return state;
+}
+
+std::string MyServingSystemHelper::lteRrcStateToString(telux::tel::LteRrcState rrcState) {
+    std::string state = "";
+    switch (rrcState) {
+        case telux::tel::LteRrcState::IDLE_CAMPED_ANYCELL:
+            state = "Idle, camped on any cell";
+            break;
+        case telux::tel::LteRrcState::IDLE_CAMPED_NORMAL:
+            state = "Idle, camped on normal service";
+            break;
+        case telux::tel::LteRrcState::CONNECTING:
+            state = "Connecting";
+            break;
+        case telux::tel::LteRrcState::CONNECTED:
+            state = "Connected";
+            break;
+        case telux::tel::LteRrcState::CLOSING:
+            state = "Releasing";
+            break;
+        case telux::tel::LteRrcState::INACTIVE:
+            state = "Inactive";
+            break;
+        case telux::tel::LteRrcState::IDLE_NOT_CAMP:
+            state = "Idle, not camped";
+            break;
+        case telux::tel::LteRrcState::SUSPENDED:
+            state = "Suspended";
+            break;
+        case telux::tel::LteRrcState::IRAT_TO_LTE_STARTED:
+            state = "Inter-RAT(IRAT) handover to LTE has started";
+            break;
+        case telux::tel::LteRrcState::UNKNOWN:
+        default:
+            state = "Unknown";
+            break;
+    }
+    return state;
+}
+
+std::string MyServingSystemHelper::nr5gRrcStateToString(telux::tel::Nr5gRrcState rrcState) {
+    std::string state = "";
+    switch (rrcState) {
+        case telux::tel::Nr5gRrcState::IDLE_CAMPED:
+            state = "Idle, camped";
+            break;
+        case telux::tel::Nr5gRrcState::CONNECTED:
+            state = "Connected";
+            break;
+        case telux::tel::Nr5gRrcState::INACTIVE_CAMPED:
+            state = "Inactive, camped";
+            break;
+        case telux::tel::Nr5gRrcState::UNKNOWN:
+        default:
+            state = "Unknown";
+            break;
+    }
+    return state;
+}
+
+std::string MyServingSystemHelper::rrcRatToString(telux::tel::NetworkMode rrcRat) {
+    std::string rat = "";
+    switch(rrcRat) {
+        case telux::tel::NetworkMode::WCDMA:
+            rat = "WCDMA";
+            break;
+        case telux::tel::NetworkMode::LTE:
+            rat = "LTE";
+            break;
+        case telux::tel::NetworkMode::NR5G_SA:
+            rat = "NR5G_SA";
+            break;
+        case telux::tel::NetworkMode::NR5G_NSA:
+            rat = "NR5G_NSA";
+            break;
+        default:
+            rat = "Unknown";
+            break;
+    }
+    return rat;
 }
 
 void MyServiceDomainPrefResponseCallback::serviceDomainPrefResponse(
@@ -790,6 +865,48 @@ void MyServingSystemListener::onRFBandPreferenceChanged
     (std::shared_ptr<telux::tel::IRFBandList> prefList) {
    PRINT_NOTIFICATION << " RF Band Preference is changed. \n RF Band Preference: \n";
    MyServingSystemHelper::logRFBandList(prefList, true);
+}
+
+void MyServingSystemHelper::printRrcStateInfo(telux::tel::RrcState rrcState) {
+    std::cout << " RRC RAT: " << MyServingSystemHelper::rrcRatToString(rrcState.mode);
+    std::cout << ", and State: ";
+    switch (rrcState.mode) {
+        case telux::tel::NetworkMode::WCDMA:
+            std::cout << MyServingSystemHelper::wcdmaRrcStateToString(rrcState.wcdmaRrcState);
+            break;
+        case telux::tel::NetworkMode::LTE:
+            std::cout << MyServingSystemHelper::lteRrcStateToString(rrcState.lteRrcState);
+            break;
+        case telux::tel::NetworkMode::NR5G_SA:
+            std::cout << MyServingSystemHelper::nr5gRrcStateToString(rrcState.nr5gRrcStateSa);
+            break;
+        case telux::tel::NetworkMode::NR5G_NSA:
+            std::cout << "LTE: "
+                << MyServingSystemHelper::lteRrcStateToString(rrcState.rrcStateForNsa.lteRrcState)
+                << ", NR5G: " <<
+                MyServingSystemHelper::nr5gRrcStateToString(rrcState.rrcStateForNsa.nr5gRrcState);
+            break;
+        default:
+            std::cout << "RRC information is not available";
+            break;
+    }
+    std::cout << std::endl;
+}
+
+void RrcStateResponseCallback::rrcStateResponse(telux::tel::RrcState rrcState,
+      telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "\n RRC state request is successful.\n";
+        MyServingSystemHelper::printRrcStateInfo(rrcState);
+    } else {
+        PRINT_CB << "\n RRC state request is failed, ErrorCode: " << static_cast<int>(error)
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+void MyServingSystemListener::onRrcStateChanged(telux::tel::RrcState rrcState) {
+    PRINT_NOTIFICATION << "\n RRC state changed.\n";
+    MyServingSystemHelper::printRrcStateInfo(rrcState);
 }
 
 // Notify ServingSystemManager subsystem status

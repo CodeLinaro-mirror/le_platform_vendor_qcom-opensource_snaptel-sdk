@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ServingManagerServerImpl.hpp"
@@ -21,6 +21,7 @@
 #define NETWORK_TIME "networkTimeUpdate"
 #define RF_BAND_INFO "rFBandInfoUpdate"
 #define NETWORK_REJECTION "networkRejectionUpdate"
+#define RRC_STATE "rrcStateUpdate"
 #define SLOT_1 1
 #define SLOT_2 2
 
@@ -865,6 +866,46 @@ grpc::Status ServingManagerServerImpl::GetHplmnSearchTime(ServerContext* context
     return grpc::Status::OK;
 }
 
+grpc::Status ServingManagerServerImpl::GetRrcState(ServerContext* context,
+    const ::telStub::GetRrcStateRequest* request, telStub::GetRrcStateReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem = MANAGER;
+    std::string method = "requestRrcState";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS) {
+        int wcdmaRrcState = data.stateRootObj[MANAGER]["RrcState"]["wcdmaRrcState"].asInt();
+        int lteRrcState = data.stateRootObj[MANAGER]["RrcState"]["lteRrcState"].asInt();
+        int nr5gRrcState = data.stateRootObj[MANAGER]["RrcState"]["nr5gRrcState"].asInt();
+        response->mutable_rrc_state()->set_wcdma_rrc_state(
+            static_cast<telStub::WcdmaRrcState>(wcdmaRrcState));
+        response->mutable_rrc_state()->set_lte_rrc_state(
+            static_cast<telStub::LteRrcState>(lteRrcState));
+        response->mutable_rrc_state()->set_nr5g_rrc_state(
+            static_cast<telStub::Nr5gRrcState>(nr5gRrcState));
+    }
+
+    // Create response
+    if(data.cbDelay != -1) {
+        response->set_is_callback(true);
+    } else {
+        response->set_is_callback(false);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    return grpc::Status::OK;
+}
+
 void ServingManagerServerImpl::triggerChangeEvent(::eventService::EventResponse anyResponse) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -874,9 +915,9 @@ void ServingManagerServerImpl::triggerChangeEvent(::eventService::EventResponse 
 }
 
 void ServingManagerServerImpl::onEventUpdate(std::string event) {
-    LOG(DEBUG, __FUNCTION__,"String is ", event );
+    LOG(DEBUG, __FUNCTION__," String is ", event );
     std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__,"Token is ", token );
+    LOG(DEBUG, __FUNCTION__," Token is ", token );
     if ( SYSTEM_SELECTION_PREFERENCE == token) {
         handleSystemSelectionPreferenceChanged(event);
     } else if( SYSTEM_INFO == token) {
@@ -887,6 +928,8 @@ void ServingManagerServerImpl::onEventUpdate(std::string event) {
         handleRfBandInfoUpdateEvent(event);
     } else if( NETWORK_REJECTION == token) {
         handleNetworkRejectionUpdateEvent(event);
+     } else if(RRC_STATE == token) {
+        handleRrcStateEvent(event);
     } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
@@ -1589,6 +1632,100 @@ void ServingManagerServerImpl::handleNetworkTimeUpdateEvent(std::string eventPar
         LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
     }
 }
+
+void ServingManagerServerImpl::handleRrcStateEvent(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int slotId;
+    std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+    try {
+        if (token == "") {
+            LOG(INFO, __FUNCTION__, " The Slot id is not passed! Assuming default Slot Id");
+            slotId = 1;
+        } else {
+            slotId = std::stoi(token);
+        }
+        if ((slotId == SLOT_2) && (!(telux::common::DeviceConfig::isMultiSimSupported()))) {
+            LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, " The Slot id is: ", slotId ,
+            " leftover string is: ", eventParams);
+
+         // Fetch wcdma rrc state
+        int wcdmaRS;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " wcdma rrc state not passed");
+            wcdmaRS = 0;
+        } else {
+            wcdmaRS = std::stoi(token);
+        }
+        LOG(DEBUG, __FUNCTION__, " wcdma rrc state: ", wcdmaRS);
+        if (wcdmaRS < (static_cast<int>(telStub::WcdmaRrcState::WcdmaRrcState_UNKNOWN)) ||
+            wcdmaRS > (static_cast<int>(telStub::WcdmaRrcState::WcdmaRrcState_CELL_DCH))) {
+            LOG(ERROR, " invalid wcdma rrc state");
+            return;
+        }
+        // Fetch lte rrc sttae
+        int lteRS;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " lte rrc state not passed");
+            lteRS = 0;
+        } else {
+            lteRS = std::stoi(token);
+        }
+        LOG(DEBUG, __FUNCTION__, " lte rrc state: ", lteRS);
+        if (lteRS < (static_cast<int>(telStub::LteRrcState::LteRrcState_UNKNOWN)) ||
+            lteRS > (static_cast<int>(telStub::LteRrcState::LteRrcState_IRAT_TO_LTE_STARTED))) {
+            LOG(ERROR, " invalid lte rrc state");
+            return;
+        }
+        // Fetch nr5g rrc state
+        int nr5gRS;
+        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if(token == "") {
+            LOG(INFO, __FUNCTION__, " nr5g rrc state not passed");
+            nr5gRS = 0;
+        } else {
+            nr5gRS = std::stoi(token);
+        }
+        LOG(DEBUG, __FUNCTION__, " nr5g rrc state: ", nr5gRS);
+        if (nr5gRS < (static_cast<int>(telStub::Nr5gRrcState::Nr5gRrcState_UNKNOWN)) ||
+            nr5gRS > (static_cast<int>(telStub::Nr5gRrcState::Nr5gRrcState_INACTIVE_CAMPED))) {
+            LOG(ERROR, " invalid nr5g rrc state");
+            return;
+        }
+        std::string stateJsonPath = (slotId == SLOT_1 ) ?
+            "tel/IServingSystemManagerStateSlot1" : "tel/IServingSystemManagerStateSlot2";
+
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, wcdmaRS,
+            {"IServingSystemManager", "RrcState", "wcdmaRrcState"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, lteRS,
+            {"IServingSystemManager", "RrcState", "lteRrcState"});
+        CommonUtils::writeSystemDataValue<int>(stateJsonPath, nr5gRS,
+            {"IServingSystemManager", "RrcState", "nr5gRrcState"});
+
+        ::telStub::RrcStateEvent rrcStateEvent;
+        ::eventService::EventResponse anyResponse;
+        rrcStateEvent.set_phone_id(slotId);
+        rrcStateEvent.mutable_rrc_state()->set_wcdma_rrc_state(
+            static_cast<telStub::WcdmaRrcState>(wcdmaRS));
+        rrcStateEvent.mutable_rrc_state()->set_lte_rrc_state(
+            static_cast<telStub::LteRrcState>(lteRS));
+        rrcStateEvent.mutable_rrc_state()->set_nr5g_rrc_state(
+            static_cast<telStub::Nr5gRrcState>(nr5gRS));
+        anyResponse.set_filter(telux::tel::TEL_SERVING_SYSTEM_ARFCN_INFO);
+        anyResponse.mutable_any()->PackFrom(rrcStateEvent);
+        auto f = std::async(std::launch::async, [this, anyResponse]() {
+                 this->triggerChangeEvent(anyResponse);
+            }).share();
+        taskQ_->add(f);
+    } catch(exception const & ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+    }
+}
+
 void ServingManagerServerImpl::onServerEvent(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     if (event.Is<::telStub::OperatingModeEvent>()) {

@@ -26,49 +26,22 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
  * @file       ServingSystemManager.hpp
  *
  * @brief      Serving System Manager class provides the interface to request and set
- *             service domain preference and radio access technology mode preference for
- *             searching and registering (CS/PS domain, RAT and operation mode).
+ *             service domain preference, radio access technology mode preference for
+ *             searching and registering (CS/PS domain, RAT and operation mode), network
+ *             time(including SIB16 and SIB9), RF band info, RF band preferences and
+ *             capability, ENDC and DCNR information, network rejection information,
+ *             LTE CS capability, SMS capability over network, call barring information,
+ *             HPLMN time and radio resource control(RRC) state.
  */
 
 #ifndef TELUX_TEL_SERVINGSYSTEMMANAGER_HPP
@@ -231,8 +204,12 @@ enum ServingSystemNotificationType {
    LTE_SIB16_NETWORK_TIME, /* Represents @ref
                               telux::tel::IServingSystemListener::onNetworkTimeChanged takes an
                               input parameter of LTE for telux::tel::RadioTechnology */
-   NR5G_RRC_UTC_TIME /* Represents @ref telux::tel::IServingSystemListener::onNetworkTimeChanged
-                        takes an input parameter of NR5G for telux::tel::RadioTechnology */
+   NR5G_RRC_UTC_TIME, /* Represents @ref telux::tel::IServingSystemListener::onNetworkTimeChanged
+                         takes an input parameter of NR5G for telux::tel::RadioTechnology */
+   ARFCN_INFO         /* Represents the Absolute Radio Frequency Channel Number (ARFCN)
+                         information corresponding to the currently active RAT(s), currently, only
+                         RRC state information is utilized @ref
+                         telux::tel::IServingSystemListener::onRrcStateChanged */
 };
 
 /**
@@ -313,6 +290,24 @@ enum class NrType {
    NSA = 0,    /**<  NSA type of NR5G only. */
    SA,         /**<  SA type of NR5G only. */
    COMBINED    /**<  NSA and SA type of NR5G */
+};
+
+/**
+ * Defines the radio resource control (RRC) state for WCDMA, LTE, NR5G SA and NSA RATs.
+ * In NSA mode, both LTE and NR5G states are displayed. For GSM RAT, RRC state information
+ * is not supported.
+ */
+struct RrcState {
+    NetworkMode mode;                  /**< Network mode for RRC state. */
+    union {
+        WcdmaRrcState wcdmaRrcState;   /**< WCDMA RRC state, @ref telux::tel::WcdmaRrcState. */
+        LteRrcState lteRrcState;       /**< LTE RRC state, @ref telux::tel::LteRrcState. */
+        Nr5gRrcState nr5gRrcStateSa;   /**< NR5G RRC state, @ref telux::tel::Nr5gRrcState. */
+        struct {
+            LteRrcState lteRrcState;   /**< LTE RRC state, @ref telux::tel::LteRrcState. */
+            Nr5gRrcState nr5gRrcState; /**< NR5G RRC state, @ref telux::tel::Nr5gRrcState. */
+        } rrcStateForNsa;
+    };
 };
 
 /**
@@ -540,11 +535,6 @@ using ServiceDomainPreferenceCallback
    = std::function<void(ServiceDomainPreference preference, telux::common::ErrorCode error)>;
 
 /**
- * @brief Serving System Manager class provides the API to request and set
- *        service domain preference and RAT preference.
- */
-
-/**
  * This function is called with the response to requestNetworkTime API.
  *
  * The callback can be invoked from multiple different threads.
@@ -557,6 +547,7 @@ using ServiceDomainPreferenceCallback
  */
 using NetworkTimeResponseCallback
    = std::function<void(NetworkTimeInfo info, telux::common::ErrorCode error)>;
+
 /**
  * This function is called with the response to requestRFBandInfo API.
  *
@@ -604,6 +595,22 @@ using RFBandPrefCallback
 using RFBandCapabilityCallback
    = std::function<void(std::shared_ptr<IRFBandList> capabilityList,
        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to the requestRrcState API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] rrcState     @ref telux::tel::RrcState
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using RrcStateCallback
+   = std::function<void(telux::tel::RrcState rrcState, telux::common::ErrorCode error)>;
 
 class IServingSystemManager {
 public:
@@ -959,6 +966,24 @@ public:
    virtual telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) = 0;
 
    /**
+    * Request radio resource control(RRC) state for WCDMA, LTE and NR5G RATs.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to successfully invoke this API.
+    *
+    * @param [in] callback    Callback function to retrieve the response of get
+    *                         RRC state request.
+    *
+    * @returns Status of requestRrcState i.e. success or suitable error code
+    * @ref telux::common::Status
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestRrcState(RrcStateCallback callback)
+       = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -1216,6 +1241,23 @@ public:
     *             could break backwards compatibility.
     */
    virtual void onRFBandPreferenceChanged(std::shared_ptr<IRFBandList> prefList) {
+   }
+
+   /**
+    * This function is called whenever radio resource control (RRC) state changes.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::ARFCN_INFO bit in the bitmask.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
+    * @param [in] rrcState    @ref telux::tel::RrcState instance
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onRrcStateChanged(telux::tel::RrcState rrcState) {
    }
 
    /**

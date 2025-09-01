@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -89,6 +89,7 @@ public:
     telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback) override;
     telux::common::ErrorCode setHplmnSearchTime(uint32_t time) override;
     telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) override;
+    telux::common::Status requestRrcState(RrcStateCallback callback) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
@@ -117,6 +118,9 @@ private:
     void handleNetworkTimeChange(::telStub::NetworkTimeInfoEvent event);
     void handleNetworkRejection(::telStub::NetworkRejectInfoEvent event);
     void handleRfBandInfoUpdateEvent(::telStub::RFBandInfoEvent event);
+    void handleRrcStateChange(::telStub::RrcStateEvent event);
+    NetworkMode updateNetworkMode(WcdmaRrcState wcdmaRrcState, LteRrcState lteRrcState,
+        Nr5gRrcState nr5gRrcState);
 };
 
 } // end of namespace tel

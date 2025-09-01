@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -83,6 +83,9 @@ public:
     grpc::Status GetHplmnSearchTime(ServerContext* context,
         const ::telStub::GetHplmnSearchTimeRequest* request,
         telStub::GetHplmnSearchTimeReply* response) override;
+    grpc::Status GetRrcState(ServerContext* context,
+        const ::telStub::GetRrcStateRequest* request,
+        telStub::GetRrcStateReply* response) override;
     grpc::Status CleanUpService(ServerContext* context,
         const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
@@ -103,6 +106,7 @@ private:
         std::vector<int> saBandPrefs);
     std::vector<int> readBandPreferenceFromEvent(std::string eventParams);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    void handleRrcStateEvent(std::string eventParams);
 
 };
 

@@ -109,6 +109,15 @@
             "_comment_nrBands" : "Refer telux::tel::NrRFBand for more details"
         },
         "HplmnSearchTime": 60,
-        "_comment_HplmnSearchTime" : "Indicates HPLMN search timer value in minutes. "
+        "_comment_HplmnSearchTime" : "Indicates HPLMN search timer value in minutes. ",
+        "RrcState" :
+        {
+            "wcdmaRrcState" : -1,
+            "_comment_wcdmaRrcState" : "Refer telux::tel::WcdmaRrcState for more details",
+            "lteRrcState" : 0,
+            "_comment_lteRrcState" : "Refer telux::tel::LteRrcState for more details",
+            "nr5gRrcState" : -1,
+            "_comment_nr5gRrcState" : "Refer telux::tel::Nr5gRrcState for more details"
+        }
     }
 }

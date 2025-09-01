@@ -216,7 +216,7 @@ telux::common::Status SmsManagerStub::sendSms(const std::string &message,
     return status;
 }
 
-telux::common::Status SmsManagerStub::sendSms(std::string message, std::string receiverAddress,
+telux::common::Status SmsManagerStub::sendSmsEx(std::string message, std::string receiverAddress,
     bool deliveryReportNeeded, SmsResponseCbEx sentCallback, std::string smscAddr) {
     LOG(DEBUG, __FUNCTION__);
     if (message.empty() || receiverAddress.empty()) {
@@ -403,7 +403,7 @@ void SmsManagerStub::invokeDeliveryReportListener(std::string receiverAddress,
         }
 }
 
-telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> rawPdus,
+telux::common::Status SmsManagerStub::sendRawSmsEx(const std::vector<PduBuffer> rawPdus,
     SmsResponseCbEx sentCallback) {
     LOG(DEBUG, __FUNCTION__);
     if (rawPdus.empty()) {

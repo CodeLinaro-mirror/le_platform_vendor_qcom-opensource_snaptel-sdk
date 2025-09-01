@@ -78,7 +78,7 @@ public:
     telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
       SmsResponseCb sentCallback = nullptr) override;
 
-    telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
+    telux::common::Status sendRawSmsEx(const std::vector<PduBuffer> rawPdus,
       SmsResponseCbEx sentCallback = nullptr) override;
 
     telux::common::Status requestSmscAddress(std::shared_ptr<ISmscAddressCallback> callback
@@ -113,7 +113,7 @@ public:
       bool deliveryReportNeeded = true, SmsResponseCb sentCallback = nullptr,
       std::string smscAddr = "") override;
 
-    telux::common::Status sendSms(std::string message, std::string receiverAddress,
+    telux::common::Status sendSmsEx(std::string message, std::string receiverAddress,
       bool deliveryReportNeeded = true, SmsResponseCbEx sentCallback = nullptr,
       std::string smscAddr = "") override;
 

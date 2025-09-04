@@ -31,6 +31,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <iomanip>
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -53,7 +54,7 @@
 #include "ConfigParser.hpp"
 #include "DgnssMenu.hpp"
 
-#define RESP_BUFFER_SIZE    1032
+#define RESP_BUFFER_SIZE    2048
 #define SOCKET_READ_TO    5
 #define RETRY_COUNT    5
 #define ACK_STRING "ICY 200 OK\r\n"
@@ -61,7 +62,9 @@
 uint8_t truncBuffer[RESP_BUFFER_SIZE];
 bool append = false;
 int appendOffset = 0;
+int appendSize = 0;
 int nmeaGGAInterval = 0;
+static int count = 0;
 std::chrono::time_point<std::chrono::system_clock> lastNmeaSentTime;
 
 using namespace telux::common;
@@ -69,7 +72,6 @@ using namespace telux::common;
 void NmeaInfoListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {
     std::string s("GNGGA");
     if (nmea.find(s, 0) != std::string::npos) {
-        std::cout << " Nmea String : " << nmea << std::endl;
         std::lock_guard<std::mutex> lk(m_);
         lastNmeaGGA_.assign(nmea);
     }
@@ -237,7 +239,6 @@ int DgnssMenu::sendGGAString(void) {
 int DgnssMenu::processRtcmFromServer(void) {
    int i, length;
    uint8_t buffer[RESP_BUFFER_SIZE];
-   static int msg_type;
    int ret;
 
    memset(buffer, 0, sizeof(buffer));
@@ -261,47 +262,61 @@ int DgnssMenu::processRtcmFromServer(void) {
        std::cout << "processRtcmFromServer: recv failed " << ret << std::endl;
        stop_ = true;
        return ret;
+   } else if (ret == 0) {
+       std::cout << "processRtcmFromServer: server closed connection" << std::endl;
+       return ret;
    }
+   std::cout << "count: " << count << " read ret: " << ret << std::endl;
    if (append) {
-       int totalSize = appendOffset + ret;
-       memcpy(truncBuffer + appendOffset, buffer, ret);
-       std::cout << "Injecting msg_type=" << msg_type << " length=" << totalSize << std::endl;
-       if (telux::common::Status::SUCCESS !=
-                   dgnssManager_->injectCorrectionData(truncBuffer, totalSize)) {
-           return -1;
-       }
+       int totalSize = appendOffset + appendSize;
+       memcpy(truncBuffer + appendOffset, buffer, appendSize);
        append = false;
        appendOffset = 0;
-    } else {
-       for (i = 0; i < (ret - 4);) {
-           if ((buffer[i] == 0xD3) && ((buffer[i+1] & 0xFC) == 0x00)) {
-               //Found RTCM preamble.
-               length = buffer[i + 2];
-               length |= (buffer[i + 1] & 0x03) << 8;
-               msg_type = buffer[i + 3] << 4;
-               msg_type |= buffer[i + 4] >> 4;
+       if (status_ != DgnssStatus::MESSAGE_PARSE_ERROR) {
+           std::cout << "append Injecting msg_type=" << msg_type_ << " length=" << totalSize << std::endl;
+           if (telux::common::Status::SUCCESS !=
+                   dgnssManager_->injectCorrectionData(truncBuffer, totalSize)) {
+               std::cout << "Injection failure" << std::endl;
+               return -1;
+           }
+       }
+   } else {
+       appendSize = 0;
+   }
+   for (i = appendSize; i < (ret - 4);) {
+       if ((buffer[i] == 0xD3) && ((buffer[i+1] & 0xFC) == 0x00)) {
+            //Found RTCM preamble.
+           length = buffer[i + 2];
+           length |= (buffer[i + 1] & 0x03) << 8;
+           msg_type_ = buffer[i + 3] << 4;
+           msg_type_ |= buffer[i + 4] >> 4;
 
-               if (ret < length + i + 6) {
-                   //didn't read the whole packet, portion will be available for next recv call
-                   //save current packet to truncBuffer and append it to next recv'd bytes.
-                   memset(truncBuffer, 0, sizeof(truncBuffer));
-                   memcpy(truncBuffer, buffer + i, ret - i);
-                   append = true;
-                   appendOffset = ret - i;
-                   i += appendOffset;
-               } else {
-                   std::cout << "Injecting msg_type=" << msg_type << " length=" << length+6 << std::endl;
+           if (ret < length + i + 6) {
+               //didn't read the whole packet, portion will be available for next recv call
+               //save current packet to truncBuffer and append it to next recv'd bytes.
+               memset(truncBuffer, 0, sizeof(truncBuffer));
+               memcpy(truncBuffer, buffer + i, ret - i);
+               append = true;
+               appendOffset = ret - i;
+               appendSize = length - (ret - i) + 6;
+               i += appendOffset;
+               std::cout << "appendOffset=" << appendOffset << " i = " << i << std::endl;
+           } else {
+               if (status_ != DgnssStatus::MESSAGE_PARSE_ERROR) {
+                   std::cout << "Injecting msg_type=" << msg_type_ << " length=" << length+6 << std::endl;
                    if (telux::common::Status::SUCCESS !=
                            dgnssManager_->injectCorrectionData(buffer + i, length + 6)) {
+                       std::cout << "Injection failure" << std::endl;
                        return -1;
                    }
                    i += length + 6;
                }
-           } else {
-               i += 1;
            }
+       } else {
+           i += 1;
        }
    }
+
    return ret;
 }
 
@@ -339,6 +354,7 @@ int DgnssMenu::processRtcmFromFile(void) {
 }
 /* This funciton is invoked asynchronously in a seperate thread */
 void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
+   status_ = status;
    switch(status) {
        case DgnssStatus::DATA_SOURCE_NOT_SUPPORTED:
          std::cout << "RTCM data soure is not supported" << std::endl;
@@ -354,7 +370,7 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
          break;
        case DgnssStatus::MESSAGE_PARSE_ERROR:
          std::cout << "RTCM message parsing error" << std::endl;
-         dgnssManager_->releaseSource();
+         //dgnssManager_->releaseSource();
          break;
        case DgnssStatus::DATA_SOURCE_NOT_USABLE:
          std::cout << "RTCM data source is not usable" << std::endl;
@@ -366,6 +382,9 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
          //       telux::common::Status::SUCCESS) {
          //   std::cout << "Failed to create RTCM source" << std::endl;
          //}
+         break;
+       case DgnssStatus::DATA_SOURCE_USABLE:
+         std::cout << "RTCM Data source usable" << std::endl;
          break;
       default:
          std::cout << "Unknown RTCM status" << std::endl;
@@ -483,10 +502,12 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
 
           memset(&response, 0 , sizeof(response));
           con_request = "GET /" + config.getValue("mountPoint") +
-              " HTTP/1.1\r\n" + "User-Agent: NTRIP GNR/1.0.0 (Win32)\r\n" +
+              " HTTP/1.1\r\n" +
+              "Host: " + config.getValue("hostName")  + "\r\n" +
+              "User-Agent: NTRIP GNR/1.0.0 (Win32)\r\n" +
               "Authorization: Basic " +
               config.getValue("userNamePwdInBase64Format") +
-              "\r\nConnection: close\r\n";
+              "\r\nConnection: close\r\n\r\n";
 
           ret = send(ntcSocketFd_, con_request.c_str(), con_request.size(), 0);
           std::cout << "Sending request: " << con_request << std::endl;
@@ -494,9 +515,6 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
               std::cout << "send failed: " << ret << std::endl;
               close(ntcSocketFd_);
               return;
-          }
-          if (nmeaGGAInterval) {
-              ret = sendGGAString();
           }
 
           // set for nonblocking socket
@@ -523,14 +541,20 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
           } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
               // register status listener
               dgnssManager_->registerListener(shared_from_this());
+              if (nmeaGGAInterval) {
+                  ret = sendGGAString();
+              }
 
+              count = 0;
               // Please refer to injectFromFile() for alternative use case sample.
               while (ret && reconnect_ == false) {
                   ret = processRtcmFromServer();
+                  count++;
               }
               if (reconnect_ == true) {
                   close(ntcSocketFd_);
                   reconnect_ = false;
+                  std::cout << "continue to reconnect" << std::endl;
                   continue;
               }
           } else {

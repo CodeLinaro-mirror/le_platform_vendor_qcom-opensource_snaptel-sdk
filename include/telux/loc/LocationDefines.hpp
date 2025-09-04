@@ -121,6 +121,8 @@ enum class DgnssDataFormat{
  * Defines status reported by cdfw for RTCM injection.
  */
 enum class DgnssStatus{
+  /** Init status */
+  DGNSS_STATUS_UNKNOWN               = 0,
   /** Dgnss subsystem doesn't support the data source */
   DATA_SOURCE_NOT_SUPPORTED          = 1,
   /** Dgnss subsystem doesn't support the data format */

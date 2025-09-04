@@ -27,8 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -101,7 +101,11 @@ void ThermalTestApp::getThermalZones(std::vector<std::string> userInput) {
         if (zoneInfo.size() > 0) {
             printThermalZoneHeader();
             for (size_t index = 0; index < zoneInfo.size(); index++) {
-                ThermalHelper::printThermalZoneInfo(zoneInfo[index]);
+                if (zoneInfo[index]) {
+                    ThermalHelper::printThermalZoneInfo(zoneInfo[index]);
+                } else {
+                    std::cout << "No thermal zone found at index: " << index << std::endl;
+                }
             }
         }
     }
@@ -115,6 +119,12 @@ void ThermalTestApp::getThermalZoneById(std::vector<std::string> userInput) {
             std::cout << "ERROR Invalid input " << std::endl;
             std::cin.clear();
             std::cin.ignore();
+            return;
+        }
+
+        if (thermalZoneId < 0) {
+            std::cout << "Invalid thermal zone ID: " << thermalZoneId << std::endl;
+            return;
         }
 
         std::cout << "Thermal zone Id: " << thermalZoneId << std::endl;
@@ -124,6 +134,8 @@ void ThermalTestApp::getThermalZoneById(std::vector<std::string> userInput) {
             printThermalZoneHeader();
             ThermalHelper::printThermalZoneInfo(tzInfo);
             ThermalHelper::printBindingInfo(tzInfo);
+        } else {
+            std::cout << "No thermal zone found for Id: " << thermalZoneId << std::endl;
         }
     }
 }
@@ -148,7 +160,11 @@ void ThermalTestApp::getCoolingDevices(std::vector<std::string> userInput) {
         if (coolingDevice.size() > 0) {
             printCoolingDeviceHeader();
             for (size_t index = 0; index < coolingDevice.size(); index++) {
-                ThermalHelper::printCoolingDevInfo(coolingDevice[index]);
+                if (coolingDevice[index]) {
+                    ThermalHelper::printCoolingDevInfo(coolingDevice[index]);
+                } else {
+                    std::cout << "No cooling devices found at index: " << index << std::endl;
+                }
             }
         } else {
             std::cout << "No cooling devices found!" << std::endl;
@@ -164,20 +180,22 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
             std::cout << "ERROR Invalid input " << std::endl;
             std::cin.clear();
             std::cin.ignore();
+            return;
         }
 
-        if (coolingDevId >= 0) {
-            std::cout << "Cooling device Id: " << coolingDevId << std::endl;
-            std::shared_ptr<telux::therm::ICoolingDevice> cdev
-                = thermalManager_->getCoolingDevice(coolingDevId);
-            if (cdev != nullptr) {
-                printCoolingDeviceHeader();
-                ThermalHelper::printCoolingDevInfo(cdev);
-            } else {
-                std::cout << "Cooling device not found!" << std::endl;
-            }
+        if (coolingDevId < 0) {
+            std::cout << "Invalid cooling device ID: " << coolingDevId << std::endl;
+            return;
+        }
+
+        std::cout << "Cooling device Id: " << coolingDevId << std::endl;
+        std::shared_ptr<telux::therm::ICoolingDevice> cdev
+            = thermalManager_->getCoolingDevice(coolingDevId);
+        if (cdev != nullptr) {
+            printCoolingDeviceHeader();
+            ThermalHelper::printCoolingDevInfo(cdev);
         } else {
-            std::cout << " Invalid input: " << coolingDevId << std::endl;
+            std::cout << "No cooling device found for Id: " << coolingDevId << std::endl;
         }
     }
 }
@@ -185,7 +203,7 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

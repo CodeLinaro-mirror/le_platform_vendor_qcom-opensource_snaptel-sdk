@@ -681,14 +681,16 @@ void SmsManagerStub::invokeResponseCallback(int cbDelay, telux::common::ErrorCod
 }
 
 telux::common::Status SmsManagerStub::requestSmsMessageList(SmsTagType type,
-    RequestSmsInfoListCb callback) {
+    RequestSmsInfoListCb callback, StorageType storageType) {
     LOG(DEBUG, __FUNCTION__);
     ::telStub::RequestSmsMessageListRequest request;
     ::telStub::RequestSmsMessageListReply response;
     ClientContext context;
     ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(type);
+    ::telStub::StorageType_Type storagetype = static_cast<::telStub::StorageType_Type>(storageType);
     request.set_phone_id(phoneId_);
     request.set_tag_type(tag);
+    request.set_storage_type(storagetype);
     std::vector<SmsMetaInfo> infos;
 
     grpc::Status reqstatus = stub_->RequestSmsMessageList(&context, request, &response);
@@ -731,13 +733,16 @@ void SmsManagerStub::invokeRequestSmsInfoListCb(std::vector<SmsMetaInfo> infos,
 }
 
 telux::common::Status SmsManagerStub::readMessage(uint32_t messageIndex,
-    ReadSmsMessageCb callback) {
+    ReadSmsMessageCb callback, StorageType storageType) {
     LOG(DEBUG, __FUNCTION__);
     ::telStub::ReadMessageRequest request;
     ::telStub::ReadMessageReply response;
     ClientContext context;
+    ::telStub::StorageType_Type storagetype =
+        static_cast<::telStub::StorageType_Type>(storageType);
     request.set_phone_id(phoneId_);
     request.set_msg_index(messageIndex);
+    request.set_storage_type(storagetype);
 
     grpc::Status reqstatus = stub_->ReadMessage(&context, request, &response);
     if (!reqstatus.ok()) {
@@ -805,16 +810,19 @@ telux::common::Status SmsManagerStub::deleteMessage(DeleteInfo info,
     telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__, " PhoneId: ", phoneId_, " MessageIndex: ", info.msgIndex,
         " Delete Type: ", static_cast<int>(info.delType), " SMS Tag Type: ",
-        static_cast<int>(info.tagType));
+        static_cast<int>(info.tagType), "Storage Type: ", static_cast<int>(info.storageType));
     ::telStub::DeleteMessageRequest request;
     ::telStub::DeleteMessageRequestReply response;
     ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(info.tagType);
     ::telStub::DelType_DeleteType deltype =  static_cast<::telStub::DelType_DeleteType>(info.delType);
+    ::telStub::StorageType_Type storagetype =
+        static_cast<::telStub::StorageType_Type>(info.storageType);
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_msg_index(info.msgIndex);
     request.set_tag_type(tag);
     request.set_del_type(deltype);
+    request.set_storage_type(storagetype);
 
     grpc::Status reqstatus = stub_->DeleteMessage(&context, request, &response);
     if (!reqstatus.ok()) {
@@ -911,7 +919,7 @@ telux::common::Status SmsManagerStub::setPreferredStorage(StorageType storageTyp
 }
 
 telux::common::Status SmsManagerStub::setTag(uint32_t msgIndex, SmsTagType tagType,
-    telux::common::ResponseCallback callback) {
+    telux::common::ResponseCallback callback, StorageType storageType) {
     LOG(DEBUG, __FUNCTION__, " PhoneId : ", phoneId_);
     if(telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
@@ -920,10 +928,12 @@ telux::common::Status SmsManagerStub::setTag(uint32_t msgIndex, SmsTagType tagTy
     ::telStub::SetTagRequest request;
     ::telStub::SetTagReply response;
     ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(tagType);
+    ::telStub::StorageType_Type storagetype = static_cast<::telStub::StorageType_Type>(storageType);
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_msg_index(msgIndex);
     request.set_tag_type(tag);
+    request.set_storage_type(storagetype);
 
     grpc::Status reqstatus = stub_->SetTag(&context, request, &response);
     if (!reqstatus.ok()) {
@@ -944,13 +954,16 @@ telux::common::Status SmsManagerStub::setTag(uint32_t msgIndex, SmsTagType tagTy
     return status;
 }
 
-telux::common::Status SmsManagerStub::requestStorageDetails(RequestStorageDetailsCb callback) {
+telux::common::Status SmsManagerStub::requestStorageDetails(RequestStorageDetailsCb callback,
+    StorageType storageType) {
 
     LOG(DEBUG, __FUNCTION__);
     ::telStub::RequestStorageDetailsRequest request;
     ::telStub::RequestStorageDetailsReply response;
     ClientContext context;
+    ::telStub::StorageType_Type storagetype = static_cast<::telStub::StorageType_Type>(storageType);
     request.set_phone_id(phoneId_);
+    request.set_storage_type(storagetype);
 
     grpc::Status reqstatus = stub_->RequestStorageDetails(&context, request, &response);
     if (!reqstatus.ok()) {
@@ -1160,9 +1173,10 @@ void SmsManagerStub::isMemoryFull(int phoneId) {
     grpc::Status reqstatus = stub_->IsMemoryFull(&context, request, &response);
 
     bool isMemoryFull = response.ismemoryfull();
+    telStub::StorageType::Type type = response.storage_type();
 
     if(isMemoryFull) {
-        invokeMemoryFulllisteners(phoneId, telux::tel::StorageType::SIM);
+        invokeMemoryFulllisteners(phoneId, static_cast<telux::tel::StorageType>(type));
     }
 }
 

@@ -941,6 +941,7 @@ message RefreshEvent {
  message RequestSmsMessageListRequest {
     int32 phone_id = 1;
     SmsTagType.TagType tag_type = 2;
+    StorageType.Type storage_type = 3;
  }
 
  message SmsMetaInfo {
@@ -960,6 +961,7 @@ message RefreshEvent {
  message ReadMessageRequest {
     int32 phone_id = 1;
     uint32 msg_index = 2;
+    StorageType.Type storage_type = 3;
  }
 
  message ReadMessageReply {
@@ -976,6 +978,7 @@ message RefreshEvent {
 
  message IsMemoryFullReply {
     bool ismemoryfull = 1;
+    StorageType.Type storage_type = 2;
  }
 
  message DelType {
@@ -992,6 +995,7 @@ message RefreshEvent {
     DelType.DeleteType del_type = 2;
     SmsTagType.TagType tag_type = 3;
     uint32 msg_index = 4;
+    StorageType.Type storage_type = 5;
  }
  message DeleteMessageRequestReply {
     commonStub.ErrorCode error = 1;
@@ -1005,6 +1009,7 @@ message RefreshEvent {
        NONE = 0;
        UNKNOWN = -1;
        SIM = 1;
+       NV = 2;
     }
  }
 
@@ -1035,6 +1040,7 @@ message RefreshEvent {
     int32 phone_id = 1;
     uint32 msg_index = 2;
     SmsTagType.TagType tag_type = 3;
+    StorageType.Type storage_type = 4;
  }
  message SetTagReply {
     commonStub.ErrorCode error = 1;
@@ -1045,6 +1051,7 @@ message RefreshEvent {
 
  message RequestStorageDetailsRequest {
     int32 phone_id = 1;
+    StorageType.Type storage_type = 2;
  }
 
  message RequestStorageDetailsReply {

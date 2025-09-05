@@ -88,9 +88,10 @@ public:
         telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status requestSmsMessageList(SmsTagType type,
-      RequestSmsInfoListCb callback) override;
+      RequestSmsInfoListCb callback, StorageType storageType = StorageType::SIM) override;
 
-    telux::common::Status readMessage(uint32_t messageIndex, ReadSmsMessageCb callback) override;
+    telux::common::Status readMessage(uint32_t messageIndex, ReadSmsMessageCb callback,
+        StorageType storageType = StorageType::SIM) override;
 
     telux::common::Status deleteMessage(DeleteInfo info,
         telux::common::ResponseCallback callback = nullptr) override;
@@ -101,9 +102,11 @@ public:
         telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status setTag(uint32_t msgIndex, SmsTagType tagType,
-        telux::common::ResponseCallback callback = nullptr)override;
+        telux::common::ResponseCallback callback = nullptr,
+        StorageType storageType = StorageType::SIM) override;
 
-    telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback) override;
+    telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback,
+        StorageType storageType = StorageType::SIM) override;
 
     int getPhoneId() override;
 

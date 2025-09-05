@@ -91,7 +91,8 @@
         ],
         "requestStorageDetails" :
         {
-            "requestStorageDetailsCbMaxCount" : 10,
+            "requestSimStorageDetailsCbMaxCount" : 10,
+            "requestNvStorageDetailsCbMaxCount" : 10,
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },

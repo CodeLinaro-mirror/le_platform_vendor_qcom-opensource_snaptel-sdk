@@ -234,6 +234,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
             << TelClientUtils::callEndCauseToString(call->getCallEndCause())
             << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
             << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << ((call->getDetailedCauseCode() > 0) ? " and detailed cause code: " : "")
+            << ((call->getDetailedCauseCode() > 0) ? std::to_string(call->getDetailedCauseCode()) : "")
             << std::endl;
         if (eCall_ != nullptr) {
             if (eCall_->getCallIndex() == call->getCallIndex()

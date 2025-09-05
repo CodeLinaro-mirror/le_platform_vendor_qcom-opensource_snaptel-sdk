@@ -299,6 +299,17 @@ public:
    virtual int getSipErrorCode() = 0;
 
    /**
+    * Retrieve the underlying low level cause for the call termination. This API is intended
+    * for debugging purposes.
+    *
+    * @returns integer representing low level call end cause.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual int getDetailedCauseCode() = 0;
+
+   /**
     * Get id of the phone object which represents the network/SIM on which
     * the call is in progress.
     *

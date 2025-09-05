@@ -18,6 +18,10 @@
         "_comment_configureCallEndCause" : "Refer telux::tel::CallEndCause for cause codes",
         "configureAecsCallStatus" : "SUCCESS",
         "_comment_configureAecsCallStatus" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP, CALLFAIL",
+        "callEndCause" : 16,
+        "_comment_callEndCause" : "Valid Inputs refer to telux::tel::CallEndCause",
+        "rawCauseCode" : 25,
+        "_comment_rawCauseCode" : "Valid Inputs refer to QMI definitions",
         "makeCall" :
         {
             "status" : "SUCCESS",

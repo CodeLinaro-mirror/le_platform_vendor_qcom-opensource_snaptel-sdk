@@ -457,10 +457,12 @@ public:
     * @param [in] smscAddr                SMS is sent to SMSC address. If SMSC address is empty then
     *                                     pre-configured SMSC address is used.
     *
-    * @returns Status of sendSms i.e. success or suitable error code.
+    * @returns Status of sendSmsEx i.e. success or suitable error code.
     *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
     */
-   virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
+   virtual telux::common::Status sendSmsEx(std::string message, std::string receiverAddress,
       bool deliveryReportNeeded, SmsResponseCbEx sentCallback = nullptr,
       std::string smscAddr = "") = 0;
 
@@ -479,10 +481,12 @@ public:
     * @param [in] sentCallback        Optional callback to get the sent response for single part or
     *                                 multi-part SMS.
     *
-    * @returns Status of sendRawSms i.e. success or suitable error code.
+    * @returns Status of sendRawSmsEx i.e. success or suitable error code.
     *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
     */
-   virtual telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
+   virtual telux::common::Status sendRawSmsEx(const std::vector<PduBuffer> rawPdus,
       SmsResponseCbEx sentCallback = nullptr) = 0;
 
    /**
@@ -739,7 +743,7 @@ public:
     *
     * @returns Status of sendSms i.e. success or suitable error code.
     *
-    * @deprecated Use API ISmsManager::sendSms(const std::string &message,
+    * @deprecated Use API ISmsManager::sendSmsEx(const std::string &message,
     *     const std::string &receiverAddress, bool deliveryReportNeeded = true,
     *     SmsResponseCbEx sentCallback = nullptr, std::string smscAddr = "")
     *
@@ -765,7 +769,7 @@ public:
     *
     * @returns Status of sendRawSms i.e. success or suitable error code.
     *
-    * @deprecated Use API ISmsManager::sendRawSms(const std::vector<PduBuffer> rawPdus,
+    * @deprecated Use API ISmsManager::sendRawSmsEx(const std::vector<PduBuffer> rawPdus,
     *     SmsResponseCbEx sentCallback = nullptr)
     */
    virtual telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,

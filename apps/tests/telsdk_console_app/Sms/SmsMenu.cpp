@@ -267,7 +267,7 @@ void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
    std::cout << "Enter SMSC number: ";
    std::getline(std::cin, smscAddress, delimiter);
 
-   status = smsManager->sendSms(message, receiverAddress, isDeliveryReportNeeded,
+   status = smsManager->sendSmsEx(message, receiverAddress, isDeliveryReportNeeded,
       MySmsCommandCallback::sendSmsResponse, smscAddress);
 
    if(status == telux::common::Status::SUCCESS) {
@@ -309,7 +309,7 @@ void SmsMenu::sendRawSms(std::vector<std::string> userInput) {
       return;
    }
 
-   telux::common::Status status = smsManager->sendRawSms(rawPdus,
+   telux::common::Status status = smsManager->sendRawSmsEx(rawPdus,
       MySmsCommandCallback::sendSmsResponse);
 
    if(status == telux::common::Status::SUCCESS) {

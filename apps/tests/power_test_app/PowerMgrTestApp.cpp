@@ -79,7 +79,7 @@ static void printTcuActivityState(TcuActivityState state, std::string machineNam
 
 static void printHelp() {
 std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-t> <-T> <-h>" << std::endl;
+    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-t> <-T> <-w> <-h>" << std::endl;
     std::cout << "Operations: " << std::endl;
     std::cout << "   -l : listen to TCU-activity state updates (as SLAVE)" << std::endl;
     std::cout << "   -s : send SUSPEND command (as MASTER)" << std::endl;
@@ -109,6 +109,7 @@ std::cout << "-----------------------------------------------" << std::endl;
                  "        e.g. telux_power_test_app -T qcom,mdm" << std::endl <<
                  "             telux_power_test_app -T qcom,televm" << std::endl;
     std::cout << "   -c : open interactive console (as MASTER)" << std::endl;
+    std::cout << "   -w : register for wakeup indications" << std::endl;
     std::cout << "   -h : print the help menu" << std::endl;
 }
 
@@ -657,7 +658,12 @@ int main(int argc, char ** argv) {
     if (rc == -1){
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
-
+    std::unordered_set<int8_t> newUserCaps {};
+    auto retVal = Utils::transitionToNonRootUser(newUserCaps);
+    if (retVal != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "User transition failed! " << std::endl;
+        // continue even if switch to non-root user fails.
+    }
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "-l") {
             listenerEnabled = true;

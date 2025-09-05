@@ -1,6 +1,8 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <cstdio>
@@ -271,26 +273,26 @@ void WiFiConnectionSecurityApp::init() {
         });
 
     if (!wifiConSecMgr_) {
-        std::cout << "failed to get IWiFiSecurityManager" << std::endl;
+        std::cout << "Failed to get IWiFiSecurityManager " << std::endl;
         return;
     }
 
     // Wait for the subsystem to be available.
     serviceStatus = prom.get_future().get();
-
     //  Exit the application, if SDK is unable to initialize security subsystems.
     if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "security service is ready" << std::endl;
+        std::cout << "Security Subsystems ready" << std::endl;
     } else {
-        std::cout << "can't initialize IWiFiSecurityManager, status: " <<
-            static_cast<int>(serviceStatus) << std::endl;
+        std::cout << "Unable to initialize security subsystem, err: " << static_cast<int>(
+            serviceStatus) << std::endl;
         return;
     }
 
-    // Register for security service status events
+    // Register for service status events
     auto ec = wifiConSecMgr_->registerListener(shared_from_this());
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "can't register listener, err: " << static_cast<int>(ec) << std::endl;
+        std::cout << "Security listener registeration failed, err: " << static_cast<int>(
+            ec) << std::endl;
     }
 
     initConsole();
@@ -298,10 +300,10 @@ void WiFiConnectionSecurityApp::init() {
 
 void WiFiConnectionSecurityApp::onServiceStatusChange(telux::common::ServiceStatus status) {
     if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-        std::cout << "security service : unavailable" << std::endl;
+        std::cout << "Security service UNAVAILABLE" << std::endl;
     }
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "security service : available" << std::endl;
+        std::cout << "Security service AVAILABLE" << std::endl;
     }
 }
 
@@ -354,7 +356,12 @@ int main(int argc, char **argv) {
     if (rc < 0) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-
+    std::unordered_set<int8_t> newUserCaps {};
+    auto retVal = Utils::transitionToNonRootUser(newUserCaps);
+    if (retVal != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "User transition failed! " << std::endl;
+        // continue even if switch to non-root user fails.
+    }
     wcsApp->init();
 
     return wcsApp->mainLoop();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -41,6 +41,7 @@ public:
     void onEventUpdate(google::protobuf::Any event) override;
 
     telux::common::ErrorCode setEthDataLinkState(telux::data::LinkState linkState) override;
+    telux::common::ErrorCode getEthDataLinkState(telux::data::LinkState &ethLinkState) override;
     telux::common::Status getEthCapability(telux::data::EthCapability &ethCapability) override;
     telux::common::Status setPeerEthCapability(telux::data::EthCapability ethCapability) override;
     telux::common::Status setLocalEthOperatingMode(telux::data::EthModeType ethModeType,

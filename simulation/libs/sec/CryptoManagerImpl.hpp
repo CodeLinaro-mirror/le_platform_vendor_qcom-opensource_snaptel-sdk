@@ -13,6 +13,9 @@
 #include "CryptoParamImpl.hpp"
 #include "internal-temp.h"
 
+#include "protos/proto-src/security_simulation.grpc.pb.h"
+#include <grpcpp/grpcpp.h>
+
 namespace telux {
 namespace sec {
 
@@ -66,24 +69,9 @@ class CryptoManagerImpl : public ICryptoManager {
     CryptoManagerImpl &operator=(const CryptoManagerImpl &) = delete;
 
  private:
+    static std::unique_ptr<securityStub::SecurityCryptoManagerService::Stub> stub_;
+
     telux::common::ErrorCode deinit();
-
-    void addPurpose(
-        std::shared_ptr<CryptoParamImpl> cryptoParamImpl, std::vector<keymaster_key_param_t> &kp);
-
-    void addDigest(
-        std::shared_ptr<CryptoParamImpl> cryptoParamImpl, std::vector<keymaster_key_param_t> &kp);
-
-    void addBlockMode(
-        std::shared_ptr<CryptoParamImpl> cryptoParamImpl, std::vector<keymaster_key_param_t> &kp);
-
-    void addPadding(
-        std::shared_ptr<CryptoParamImpl> cryptoParamImpl, std::vector<keymaster_key_param_t> &kp);
-
-    void addCurve(
-        std::shared_ptr<CryptoParamImpl> cryptoParamImpl, std::vector<keymaster_key_param_t> &kp);
-
-    int32_t getKeyFmt(telux::sec::KeyFormat keyFmt, keymaster_key_format_t *fmt);
 };
 
 }  // End of namespace sec

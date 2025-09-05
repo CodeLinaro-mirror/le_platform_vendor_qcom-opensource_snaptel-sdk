@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -219,13 +190,19 @@ class IApInterfaceManager {
      * Configurations will take effect after hostapd service is restarted by calling
      * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
+     * @details The primary access point, identified by @ref telux::wlan::Id::PRIMARY, has specific
+     * configuration restrictions. It can only be configured with the following attributes:
+     * @ref telux::wlan::ApType::PRIVATE and @ref telux::wlan::ApInterworking::FULL_ACCESS.
+     * In contrast, all other access points are expected to be configured with
+     * @ref telux::wlan::ApType::GUEST.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
      * @param [in] config       AP configuration parameters @ref telux::wlan::ApConfig
      *
      * @returns  operation error code (if any). @ref telux::common::ErrorCode
-     *           telux::common::Status::NOTALLOWED is returned if AP to be configured was not
+     *           telux::common::ErrorCode::INVALID_ARG is returned if AP to be configured was not
      *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
      */
      virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;
@@ -233,45 +210,57 @@ class IApInterfaceManager {
     /**
      * Set Wlan Security Configuration: Used to change security settings of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId             AP identifier to set security for. @ref telux::wlan::Id
      * @param [in] apSecurity       AP security settings. @ref telux::wlan::ApSecurity
-
      * @returns operation error code (if any). @ref telux::common::ErrorCode
-
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode setSecurityConfig(Id apId, ApSecurity apSecurity) = 0;
 
     /**
      * Set Access Point SSID: Used to change SSID of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId                AP identifier to set SSID for. @ref telux::wlan::Id
      * @param [in] ssid                new SSID to be set
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setSsid(Id apId, std::string ssid) = 0;
 
     /**
      * Set Access Point visibility: Used to change SSID broadcast of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId           AP identifier to set SSID visibility for. @ref telux::wlan::Id
      * @param [in] isVisible      Visibility to be set
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setVisibility(Id apId, bool isVisible) = 0;
 
     /**
      * Configure Element Info: Used to change element info configurations of selected network.
+     *
+     * A successful response from this API indicates only that the input configuration has been
+     * stored.  It does not validate the correctness or compliance of the provided values with
+     * IEEE 802.11 specifications.
+     *
+     * The caller is responsible for ensuring that the values provided in
+     * @ref telux::wlan::ApElementInfoConfig comply with applicable constraints and
+     * interdependencies as defined in the IEEE 802.11 standard.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] apId            AP identifier to enable element info on. @ref telux::wlan::Id
      * @param [in] config          Element Info configurations.
@@ -281,26 +270,31 @@ class IApInterfaceManager {
 	 *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setElementInfoConfig(Id apId, ApElementInfoConfig config) = 0;
 
     /**
      * Set Passphrase for Access Point: Used to change passphrase of selected network.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] apId            AP identifier to set passphrase for. @ref telux::wlan::Id
      * @param [in] passPhrase      new passPhrase string
      *
      * @returns Immediate status of setPassPhrase() request i.e. success or suitable status.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setPassPhrase(Id apId, std::string passPhrase) = 0;
 
     /**
      * Request Access Point Configurations
+     *
+     * If @ref telux::wlan::IApInterfaceManager::setConfig was previously used to update the
+     * access point configuration, it is required to wait for the
+     * @ref telux::wlan::IApListener::onApConfigChanged notification before calling
+     * getConfig(). This ensures that the configuration changes have been fully applied
+     * and synchronized internally.
      *
      * @param [in] config         Vector of AP configurations @ref telux::wlan::ApConfig as set by
      *                            @ref telux::wlan::IApInterfaceManager::setConfig
@@ -321,9 +315,10 @@ class IApInterfaceManager {
      virtual telux::common::ErrorCode getStatus(std::vector<ApStatus>& status) = 0;
 
     /**
-     * Request Connected Devices to all enabled access points.
-     * Each entry in returned list will contain information about a device such as access point
-     * it is connected to and IP and MAC address as defined in @ref telux::wlan::DeviceInfo
+     * Requests the list of connected devices across all enabled access points.
+     * Each entry in the returned list provides details about a device, including the access point
+     * it is connected to, as well as its IP and MAC addresses, as defined in
+     * @ref telux::wlan::DeviceInfo.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_DEVICES
      * permission to invoke this API successfully.
@@ -344,12 +339,11 @@ class IApInterfaceManager {
      * access point.
      * Access points selected to execute operation on, will temporarily go out of service when this
      * API is called.
-     * This API should be called only when access point is configured through
+     * This API should be called only when access point is configured using
+     * @ref telux::wlan::IWlanDeviceManager::setMode.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
-     *
-     * @ref telux::wlan::IDeviceManager::setMode
      *
      * @param [in] apId          AP identifier to execute operation on. @ref telux::wlan::Id
      * @param [in] opr           Operation to be performed on hostapd

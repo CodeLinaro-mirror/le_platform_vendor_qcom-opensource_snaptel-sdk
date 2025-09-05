@@ -5,6 +5,9 @@
         "DefaultCallbackDelay" : 400,
         "setEthDataLinkState": {
             "error": "SUCCESS"
+        },
+        "getEthDataLinkState": {
+            "error": "SUCCESS"
         }
     }
 }

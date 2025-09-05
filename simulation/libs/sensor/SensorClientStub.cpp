@@ -26,9 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -285,7 +285,7 @@ telux::common::Status SensorClientStub::deactivate(){
     LOG(DEBUG, sensorLogPrefix_, "Request to deactivate");
     if(!sensorSessionActive_) {
         LOG(DEBUG, sensorLogPrefix_, " Sensor session already inactive");
-        return telux::common::Status::NOTALLOWED;
+        return telux::common::Status::SUCCESS;
     }
     std::vector<std::string> filters = {"SENSOR_REPORTS"};
     auto &sensorReportListener = telux::common::SensorReportListener::getInstance();

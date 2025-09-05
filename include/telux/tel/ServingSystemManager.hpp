@@ -773,6 +773,8 @@ public:
    /**
     * Retrieves the NR5G RRC(SIB9) UTC time from the UE.
     *
+    * @note This API is not supported for SA510M.
+    *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
     * permission to successfully invoke this API.
     *
@@ -1060,6 +1062,8 @@ public:
    /**
     * This function is called whenever LTE(SIB16) or NR5G RRC(SIB9) UTC time information is
     * changed.
+    *
+    * @note This API is not supported for NR5G RRC time in SA510M.
     *
     * To receive this notification, client needs to register a listener using @ref
     * telux::tel::IServingSystemManager::registerListener API by setting the @ref

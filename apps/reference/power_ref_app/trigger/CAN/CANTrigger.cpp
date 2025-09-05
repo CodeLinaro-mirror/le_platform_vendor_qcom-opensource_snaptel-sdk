@@ -148,7 +148,7 @@ void CANTrigger::triggerEvent(CwFrame * pf, void* userData, int ifNo) {
 std::shared_ptr<CANTrigger> CANTrigger::getInstance(std::shared_ptr<EventManager> eventManager) {
     LOG(DEBUG, __FUNCTION__);
     if (!canTrigger_ && eventManager) {
-        CANTrigger::canTrigger_ = *(new std::shared_ptr<CANTrigger>(new CANTrigger(eventManager)));
+        CANTrigger::canTrigger_ = std::make_shared<CANTrigger>(eventManager);
     }
 
     if (!CANTrigger::canTrigger_) {

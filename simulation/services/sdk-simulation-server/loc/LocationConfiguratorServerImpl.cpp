@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -9,9 +9,9 @@
  *
  */
 
+#include <telux/loc/LocationDefines.hpp>
 #include "LocationConfiguratorServerImpl.hpp"
 #include "libs/common/SimulationConfigParser.hpp"
-
 #include "libs/common/Logger.hpp"
 #include "libs/common/JsonParser.hpp"
 #include "libs/common/CommonUtils.hpp"
@@ -173,7 +173,7 @@ void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
 void LocationConfiguratorServerImpl::triggerGnssConstellationUpdateEvent() {
     LOG(DEBUG, __FUNCTION__);
     std::string enabledMask = CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
-        "0x1FFFFF", {"ILocationConfigurator","GnssSignalType"});
+        "0x1FFFFFF", {"ILocationConfigurator","GnssSignalType"});
     std::lock_guard<std::mutex> lck(mtx_);
     ::locStub::GnssUpdateEvent GnssEvent;
     ::eventService::EventResponse anyResponse;
@@ -434,12 +434,44 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerConte
         locStub::LocManagerCommandReply* response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureSecondaryBand", response);
+    std::bitset<25> disabledSignal;
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         std::string secBandSet = "";
         for(int ind = 0; ind < request->constellation_set_size(); ind++) {
             int id = static_cast<int>(request->constellation_set(ind));
             secBandSet += std::to_string(id);
             secBandSet += ", ";
+            switch (request->constellation_set(ind)) {
+            case ::locStub::GnssConstellationType::GPS:
+                disabledSignal |= telux::loc::GPS_L2;
+                disabledSignal |= telux::loc::GPS_L5;
+                break;
+            case ::locStub::GnssConstellationType::GALILEO:
+                disabledSignal |= telux::loc::GALILEO_E5A;
+                disabledSignal |= telux::loc::GALILIEO_E5B;
+                break;
+            case ::locStub::GnssConstellationType::GLONASS:
+                disabledSignal |= telux::loc::GLONASS_G2;
+                break;
+            case ::locStub::GnssConstellationType::BDS:
+                disabledSignal |= telux::loc::BEIDOU_B2I;
+                disabledSignal |= telux::loc::BEIDOU_B2AI;
+                disabledSignal |= telux::loc::BEIDOU_B2AQ;
+                disabledSignal |= telux::loc::BEIDOU_B2BQ;
+                disabledSignal |= telux::loc::BEIDOU_B2BI;
+                break;
+            case ::locStub::GnssConstellationType::QZSS:
+                disabledSignal |= telux::loc::QZSS_L2;
+                disabledSignal |= telux::loc::QZSS_L5;
+                break;
+            case ::locStub::GnssConstellationType::NAVIC:
+                disabledSignal |= telux::loc::NAVIC_L5;
+                break;
+            case ::locStub::GnssConstellationType::SBAS:
+            case ::locStub::GnssConstellationType::COMPASS:
+            default:
+                break;
+            }
         }
         if(!secBandSet.empty()) {
             secBandSet.pop_back();
@@ -447,6 +479,20 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerConte
         }
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", secBandSet,
             {"ILocationConfigurator", "SecondaryBand", "Set"});
+        unsigned long val = disabledSignal.flip().to_ulong();
+        std::stringstream ss;
+        ss << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << val;
+        std::string enabledMask = "0X" + ss.str();
+        std::string currentEnabledMask = CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
+            "0x1FFFFFF", {"ILocationConfigurator","GnssSignalType"});
+        if (enabledMask != currentEnabledMask) {
+            CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", enabledMask,
+                {"ILocationConfigurator", "GnssSignalType"});
+            auto f = std::async(std::launch::async, [this](){
+                this->triggerGnssConstellationUpdateEvent();
+            }).share();
+            taskQ_->add(f);
+        }
     }
     return grpc::Status::OK;
 }

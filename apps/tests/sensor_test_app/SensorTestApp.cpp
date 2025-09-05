@@ -228,7 +228,7 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
                 exit(0);
             }
         }
-        c = getopt_long(argc, argv, "nq:a:g:h", long_options, &option_index);
+        c = getopt_long(argc, argv, "nq:a:g:rh", long_options, &option_index);
     } while (c != -1);
     if (commandlineArgs_.verboseNotification) {
         std::cout << "Enabling verbose notification" << std::endl;
@@ -364,6 +364,12 @@ int main(int argc, char **argv) {
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
+    std::unordered_set<int8_t> newUserCaps {};
+    auto retVal = Utils::transitionToNonRootUser(newUserCaps);
+    if (retVal != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "User transition failed! " << std::endl;
+        // continue even if switch to non-root user fails.
     }
     sensorTestApp->parseArgs(argc, argv);
     if(!sensorTestApp->sensorList_.empty()) {

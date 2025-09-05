@@ -5,6 +5,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     sec/SecurityCCSServerImpl.cpp
     sec/SecurityWCSServerImpl.cpp
     sec/SecurityCALCServerImpl.cpp
+    sec/SecurityCryptoServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

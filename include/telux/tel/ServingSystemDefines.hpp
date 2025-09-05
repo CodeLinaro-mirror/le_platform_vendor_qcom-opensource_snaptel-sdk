@@ -255,6 +255,7 @@ enum class WcdmaRFBand {
 
 /**
  * Defines LTE RF Bands.
+ * The specific RF bands that are supported is platform dependent.
  */
 enum class LteRFBand {
    E_UTRA_BAND_INVALID = -1,  /**<  Invalid LTE band */
@@ -310,6 +311,7 @@ enum class LteRFBand {
    E_UTRA_BAND_68 = 68,       /**<  E-UTRA operating band 68 */
    E_UTRA_BAND_70 = 70,       /**<  E-UTRA operating band 70 */
    E_UTRA_BAND_71 = 71,       /**<  E-UTRA operating band 71 */
+   E_UTRA_BAND_72 = 72,       /**<  E-UTRA operating band 72 */
    E_UTRA_BAND_85 = 85,       /**<  E-UTRA operating band 85 */
    E_UTRA_BAND_106 = 106,     /**<  E-UTRA operating band 106 */
    E_UTRA_BAND_125 = 125,     /**<  E-UTRA operating band 125 */
@@ -324,6 +326,7 @@ enum class LteRFBand {
 
 /**
  * Defines NR RF Bands, which are available for both SA and NSA modes.
+ * The specific RF bands that are supported is platform dependent.
  */
 enum class NrRFBand {
    NR5G_BAND_INVALID = -1,  /**<  Invalid NR5G band */
@@ -343,6 +346,7 @@ enum class NrRFBand {
    NR5G_BAND_28 = 28,       /**<  NR5G band 28 */
    NR5G_BAND_29 = 29,       /**<  NR5G band 29 */
    NR5G_BAND_30 = 30,       /**<  NR5G band 30 */
+   NR5G_BAND_31 = 31,       /**<  NR5G band 31 */
    NR5G_BAND_34 = 34,       /**<  NR5G band 34 */
    NR5G_BAND_38 = 38,       /**<  NR5G band 38 */
    NR5G_BAND_39 = 39,       /**<  NR5G band 39 */
@@ -360,6 +364,7 @@ enum class NrRFBand {
    NR5G_BAND_68 = 68,       /**<  NR5G band 68 */
    NR5G_BAND_70 = 70,       /**<  NR5G band 70 */
    NR5G_BAND_71 = 71,       /**<  NR5G band 71 */
+   NR5G_BAND_72 = 72,       /**<  NR5G band 72 */
    NR5G_BAND_74 = 74,       /**<  NR5G band 74 */
    NR5G_BAND_75 = 75,       /**<  NR5G band 75 */
    NR5G_BAND_76 = 76,       /**<  NR5G band 76 */
@@ -383,6 +388,8 @@ enum class NrRFBand {
    NR5G_BAND_97 = 97,       /**<  NR5G band 97 */
    NR5G_BAND_98 = 98,       /**<  NR5G band 98 */
    NR5G_BAND_99 = 99,       /**<  NR5G band 99 */
+   NR5G_BAND_100 = 100,     /**<  NR5G band 100 */
+   NR5G_BAND_101 = 101,     /**<  NR5G band 101 */
    NR5G_BAND_102 = 102,     /**<  NR5G band 102 */
    NR5G_BAND_104 = 104,     /**<  NR5G band 104 */
    NR5G_BAND_105 = 105,     /**<  NR5G band 105 */

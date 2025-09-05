@@ -70,6 +70,7 @@ using GetActiveAntCb
 
 /**
  * @brief   IAntennaManager provides an interface to set and get the active antenna's configuration.
+ * @note    On certain platforms, such as the SA510M, the APIs are not supported.
  */
 class IAntennaManager {
  public:

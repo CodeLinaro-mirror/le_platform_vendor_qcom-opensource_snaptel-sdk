@@ -309,6 +309,11 @@ CallEndCause CallStub::getCallEndCause() { return callInfo_.callEndCause; }
 int CallStub::getSipErrorCode() { return callInfo_.sipErrorCode; }
 
 /**
+ * Get the raw cause code of call termination.
+ */
+int CallStub::getDetailedCauseCode() { return callInfo_.rawCauseCode; }
+
+/**
  * Get the call type - incoming, outgoing etc
  */
 CallDirection CallStub::getCallDirection() { return callInfo_.callDirection; }
@@ -433,8 +438,10 @@ void CallStub::logCallDetails() {
       ", rttMode = ", static_cast<int>(callInfo_.mode),
       ", localRttCapability = ", static_cast<int>(callInfo_.localRttCapability),
       ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
-      ", callType = ", static_cast<int>(callInfo_.callType);
-      ", networkMode = ", static_cast<int>(callInfo_.networkMode));
+      ", callType = ", static_cast<int>(callInfo_.callType),
+      ", networkMode = ", static_cast<int>(callInfo_.networkMode),
+      ", callEndCause = ", static_cast<int>(callInfo_.callEndCause),
+      ", rawCauseCode = ", callInfo_.rawCauseCode);
 }
 
 /**
@@ -453,6 +460,8 @@ CallStub::updateCallInfo(std::shared_ptr<CallStub> &callInfo) {
   callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
   callInfo_.callType = callInfo->getCallType();
   callInfo_.networkMode = callInfo->getNetworkMode();
+  callInfo_.callEndCause = callInfo->getCallEndCause();
+  callInfo_.rawCauseCode = callInfo->getDetailedCauseCode();
   LOG(DEBUG, "Updated call details");
   logCallDetails();
   return telux::common::Status::SUCCESS;

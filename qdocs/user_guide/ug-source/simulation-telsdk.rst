@@ -598,7 +598,15 @@ Details of parameters that can be configured in the Simulation framework.
 
 - "configureECallRedialFailure" : To configure redial failures for regulatory ECall.
 
-  Supported Values: SUCCESS, CALLORIG, CALLDROP.
+  Supported Values: SUCCESS, CALLORIG, CALLDROP
+
+- "callEndCause" : To configure call end reason for call.
+
+  Supported Values: refer to telux::tel::CallEndCause.
+
+- "rawCauseCode" : To configure raw cause code for call.
+
+  Supported Values: refer to QMI definitions.
 
 - "callMode" : To configure network mode for call.
 

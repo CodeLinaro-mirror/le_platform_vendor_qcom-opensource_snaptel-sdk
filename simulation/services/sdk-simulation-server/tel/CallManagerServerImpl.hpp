@@ -73,6 +73,7 @@ struct CallInfo {
   std::string remotePartyNumber = "";
   telux::tel::CallEndCause callEndCause = telux::tel::CallEndCause::NORMAL;
   int sipErrorCode = 0;
+  int rawCauseCode = 0;
   int phoneId;
   bool isRegulatoryeCall = false;
   bool isMultiPartyCall = false;
@@ -293,6 +294,8 @@ private:
   int getCallIndexOfActiveCall(int phoneId);
   // Find the lowest unfilled index in the call list.
   int setCallIndexForNewCall();
+  void setCallEndReasons(int phoneId, telux::tel::CallEndCause &callEndCause,
+                         int &rawCauseCode);
   bool getUserConfiguredALACKParameter();
   void restartTimer(int phoneId, std::string timer, int timerDuration);
   telux::tel::ECallMode getEcallOperatingMode(int phoneId);
@@ -306,6 +309,8 @@ private:
     callInfo.callDirection = CallDirection::OUTGOING;
     callInfo.callState = CallState::CALL_IDLE;
     callInfo.isMultiPartyCall = true;
+    setCallEndReasons(callInfo.phoneId, callInfo.callEndCause,
+                      callInfo.rawCauseCode);
     CallApi makeCallApiType = static_cast<CallApi>(request->api());
     if ((makeCallApiType == CallApi::makeECallWithMsd) ||
         (makeCallApiType == CallApi::makeECallWithRawMsd) ||

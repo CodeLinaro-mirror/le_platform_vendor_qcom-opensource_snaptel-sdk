@@ -320,6 +320,13 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                 << ((call->getSipErrorCode() > 0)
                         ? std::to_string(call->getSipErrorCode())
                         : "")
+                << ((call->getDetailedCauseCode() > 0)
+                        ? " and detailed cause code: "
+                        : "")
+                << ((call->getDetailedCauseCode() > 0)
+                        ? std::to_string(call->getDetailedCauseCode())
+                        : "")
+
                 << std::endl;
       if (callListener_) {
         callListener_->onCallDisconnect();

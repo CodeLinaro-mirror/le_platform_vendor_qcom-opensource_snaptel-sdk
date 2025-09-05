@@ -1379,6 +1379,7 @@ message Call {
   CallType call_type = 11;
   int32 sip_error_code = 12;
   NetworkMode network_mode = 13;
+  int32 raw_cause_code = 14;
 }
 
 message MakeECallRequest {

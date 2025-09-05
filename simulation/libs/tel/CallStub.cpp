@@ -272,6 +272,13 @@ int CallStub::getSipErrorCode() {
 }
 
 /**
+ * Get the raw cause code of call termination.
+ */
+int CallStub::getDetailedCauseCode() {
+    return callInfo_.rawCauseCode;
+}
+
+/**
  * Get the call type - incoming, outgoing etc
  */
 CallDirection CallStub::getCallDirection() {
@@ -405,7 +412,9 @@ void CallStub::logCallDetails() {
         ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
         ", callType = ", static_cast<int>(callInfo_.callType),
         ", callReason = ", callInfo_.callReason,
-        ", networkMode = ", static_cast<int>(callInfo_.networkMode));
+        ", networkMode = ", static_cast<int>(callInfo_.networkMode),
+        ", callEndCause = ", static_cast<int>(callInfo_.callEndCause),
+        ", rawCauseCode = ", callInfo_.rawCauseCode);
 }
 
 /**
@@ -424,6 +433,8 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.callType           = callInfo->getCallType();
     callInfo_.callReason         = callInfo->getCallReason();
     callInfo_.networkMode        = callInfo->getNetworkMode();
+    callInfo_.callEndCause       = callInfo->getCallEndCause();
+    callInfo_.rawCauseCode       = callInfo->getDetailedCauseCode();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;

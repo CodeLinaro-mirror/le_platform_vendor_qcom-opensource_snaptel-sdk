@@ -602,6 +602,14 @@ Details of parameters that can be configured in the Simulation framework.
 
   Supported Values: NR5G, LTE, UMTS, GSM.
 
+- "callEndCause" : To configure call end reason for call.
+
+  Supported Values: refer to telux::tel::CallEndCause.
+
+- "rawCauseCode" : To configure raw cause code for call.
+
+  Supported Values: refer to QMI definitions.
+
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
 Retrieve eCall MSD payload or encoded optional additional data content

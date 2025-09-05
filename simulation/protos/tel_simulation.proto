@@ -1355,6 +1355,7 @@ enum EcallHlapTimerId {
      int32 sip_error_code = 12;
      string call_reason = 13;
      NetworkMode network_mode = 14;
+     int32 raw_cause_code = 15;
  }
 
  message MakeECallRequest {

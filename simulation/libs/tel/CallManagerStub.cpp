@@ -511,6 +511,7 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
         callInfo.callEndCause
             = static_cast<telux::tel::CallEndCause>(event.calls(i).call_end_cause());
         callInfo.sipErrorCode     = event.calls(i).sip_error_code();
+        callInfo.rawCauseCode     = event.calls(i).raw_cause_code();
         callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();
         callInfo.isMpty           = event.calls(i).is_mpty();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__, "isMpty is ", callInfo.isMpty);
@@ -528,6 +529,7 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             " RemotePartyNumber: ", callInfo.remotePartyNumber,
             " callEndCause: ", static_cast<int>(callInfo.callEndCause),
             " sipErrorCode: ", static_cast<int>(callInfo.sipErrorCode),
+            " rawCauseCode: ", callInfo.rawCauseCode,
             " isMultiPartyCall: ", callInfo.isMultiPartyCall, " isMpty: ", callInfo.isMpty,
             " Rtt mode: ", static_cast<int>(callInfo.mode),
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),

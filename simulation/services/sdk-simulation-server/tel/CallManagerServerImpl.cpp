@@ -291,6 +291,23 @@ int CallManagerServerImpl::setCallIndexForNewCall() {
     return index;
 }
 
+void CallManagerServerImpl::setCallEndReasons(
+    int phoneId, telux::tel::CallEndCause &callEndCause, int &rawCauseCode) {
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
+        callEndCause
+            = static_cast<telux::tel::CallEndCause>(rootObj[CALL_MANAGER]["callEndCause"].asInt());
+        rawCauseCode = rootObj[CALL_MANAGER]["rawCauseCode"].asInt();
+        LOG(DEBUG, __FUNCTION__, " CallConfig callEndCause is ", static_cast<int>(callEndCause),
+            " ,rawCauseCode is ", rawCauseCode);
+    } else {
+        LOG(ERROR, __FUNCTION__, " CallConfig read failed ");
+    }
+}
+
 grpc::Status CallManagerServerImpl::MakeECall(ServerContext *context,
     const telStub::MakeECallRequest *request, telStub::MakeECallReply *response) {
     telux::common::ErrorCode error;
@@ -2360,6 +2377,7 @@ void CallManagerServerImpl::fillCallInformation(
         result->set_remote_party_number(it->remotePartyNumber);
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
+        result->set_raw_cause_code(it->rawCauseCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         result->set_call_index(it->index);
@@ -2432,7 +2450,11 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
         LOG(DEBUG, "CallMgr - ", __FUNCTION__, "remotePartyNumber is ",
             static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__, "callEndCause is ",
+            static_cast<int>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
+        result->set_raw_cause_code(it->rawCauseCode);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__, "rawCauseCode is ", it->rawCauseCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         result->set_call_reason("");

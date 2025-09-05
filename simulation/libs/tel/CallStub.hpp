@@ -39,6 +39,7 @@ struct CallInfo {
     CallState callState           = CallState::CALL_IDLE;
     CallEndCause callEndCause     = CallEndCause::NORMAL;
     int sipErrorCode              = 0;
+    int rawCauseCode              = 0;
     bool isMultiPartyCall         = false;
     bool isMpty                   = false;
     RttMode mode                  = RttMode::DISABLED;  // RTT mode of the call
@@ -89,6 +90,7 @@ class CallStub : public ICall {
     int getCallIndex();
     CallEndCause getCallEndCause();
     int getSipErrorCode();
+    int getDetailedCauseCode();
     CallDirection getCallDirection();
     std::string getRemotePartyNumber();
     std::string getCallReason();

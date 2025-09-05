@@ -138,8 +138,8 @@ void AecsCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call)
 }
 
 bool AecsCallListener::isAecsCallFailReason(telux::tel::CallEndCause endCause) {
-    return (/*TODO(endCause != telux::tel::CallEndCause::RADIO_OFF) &&
-        (endCause != telux::tel::CallEndCause::CLIENT_END) && */
+    return ((endCause != telux::tel::CallEndCause::RADIO_OFF) &&
+        (endCause != telux::tel::CallEndCause::CLIENT_END) &&
         (endCause != telux::tel::CallEndCause::NORMAL) &&
         (endCause != telux::tel::CallEndCause::ERROR_UNSPECIFIED));
 }

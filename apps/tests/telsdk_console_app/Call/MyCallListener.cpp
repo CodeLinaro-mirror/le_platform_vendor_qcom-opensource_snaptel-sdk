@@ -90,6 +90,9 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
           << getCallEndCauseString(call->getCallEndCause())
           << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
           << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+          << ((call->getDetailedCauseCode() > 0) ? " and detailed cause code: " : "")
+          << ((call->getDetailedCauseCode() > 0) ?
+             std::to_string(call->getDetailedCauseCode()) : "")
           << std::endl;
    }
 }
@@ -325,6 +328,472 @@ std::string MyCallListener::getCallEndCauseString(telux::tel::CallEndCause callE
          return std::string("Emergency permanent failure");
       case telux::tel::CallEndCause::HO_NOT_FEASIBLE:
          return std::string("Hand over not feasible");
+      case telux::tel::CallEndCause::CLIENT_END:
+        return std::string("Client End");
+      case telux::tel::CallEndCause::INCOM_REJ:
+        return std::string("Incom Rej");
+      case telux::tel::CallEndCause::NO_GATEWAY_SRV:
+        return std::string("No Gateway Srv");
+      case telux::tel::CallEndCause::NO_FULL_SRV:
+        return std::string("No Full Srv");
+      case telux::tel::CallEndCause::CDMA_MAX_ACCESS_PROBE:
+        return std::string("Cdma Max Access Probe");
+      case telux::tel::CallEndCause::CDMA_PSIST_N:
+        return std::string("Cdma Psist N");
+      case telux::tel::CallEndCause::USSD_BUSY:
+        return std::string("USSD Busy");
+      case telux::tel::CallEndCause::REJECTED_BY_USER:
+        return std::string("Rejected By User");
+      case telux::tel::CallEndCause::NORMAL_CALL_CLEARING:
+        return std::string("Normal Call Clearing");
+      case telux::tel::CallEndCause::NORMAL_CALL_RINGBACK_TIMEOUT:
+        return std::string("Normal Call Ringback Timeout");
+      case telux::tel::CallEndCause::UIM_NOT_PRESENT:
+        return std::string("Uim Not Present");
+      case telux::tel::CallEndCause::INCOMPATIBLE:
+        return std::string("Incompatible");
+      case telux::tel::CallEndCause::ALREADY_IN_TC:
+        return std::string("Already In Tc");
+      case telux::tel::CallEndCause::USER_CALL_ORIG_DURING_GPS:
+        return std::string("User Call Orig During Gps");
+      case telux::tel::CallEndCause::USER_CALL_ORIG_DURING_SMS:
+        return std::string("User Call Orig During Sms");
+      case telux::tel::CallEndCause::USER_CALL_ORIG_DURING_DATA:
+        return std::string("User Call Orig During Data");
+      case telux::tel::CallEndCause::TRM_REQ_FAIL:
+        return std::string("Trm Req Fail");
+      case telux::tel::CallEndCause::CALL_CANNOT_BE_IDENTIFIED:
+        return std::string("Call Cannot Be Identified");
+      case telux::tel::CallEndCause::INCORRECT_SEMANTICS_IN_MESSAGE:
+        return std::string("Incorrect Semantics In Message");
+      case telux::tel::CallEndCause::MANDATORY_INFORMATION_INVALID:
+        return std::string("Mandatory Information Invalid");
+      case telux::tel::CallEndCause::WRONG_STATE:
+        return std::string("Wrong State");
+      case telux::tel::CallEndCause::INVALID_USER_DATA:
+        return std::string("Invalid User Data");
+      case telux::tel::CallEndCause::CNM_MM_REL_PENDING:
+        return std::string("Cnm Mm Rel Pending");
+      case telux::tel::CallEndCause::ACCESS_STRATUM_REJ_LOW_LEVEL_FAIL:
+        return std::string("Access Stratum Rej Low Level Fail");
+      case telux::tel::CallEndCause::ACCESS_STRATUM_REJ_LOW_LEVEL_FAIL_REDIAL_NOT_ALLOWED:
+        return std::string("Access Stratum Rej Low Level Fail Redial Not Allowed");
+      case telux::tel::CallEndCause::ACCESS_STRATUM_REJ_LOW_LEVEL_IMMED_RETRY:
+        return std::string("Access Stratum Rej Low Level Immed Retry");
+      case telux::tel::CallEndCause::ACCESS_STRATUM_REJ_ABORT_RADIO_UNAVAILABLE:
+        return std::string("Access Stratum Rej Abort Radio Unavailable");
+      case telux::tel::CallEndCause::CCS_NOT_SUPPORTED_BY_BS:
+        return std::string("Ccs Not Supported By Bs");
+      case telux::tel::CallEndCause::REJECTED_BY_BS:
+        return std::string("Rejected By Bs");
+      case telux::tel::CallEndCause::ACC_FAIL_REJ_ORD:
+        return std::string("Acc Fail Rej Ord");
+      case telux::tel::CallEndCause::ACC_FAIL_RETRY_ORD:
+        return std::string("Acc Fail Retry Ord");
+      case telux::tel::CallEndCause::UNKNOWN_SUBSCRIBER:
+        return std::string("Unknown Subscriber");
+      case telux::tel::CallEndCause::ILLEGAL_SUBSCRIBER:
+        return std::string("Illegal Subscriber");
+      case telux::tel::CallEndCause::BEARER_SERVICE_NOT_PROVISIONED:
+        return std::string("Bearer Service Not Provisioned");
+      case telux::tel::CallEndCause::TELE_SERVICE_NOT_PROVISIONED:
+        return std::string("Tele Service Not Provisioned");
+      case telux::tel::CallEndCause::ILLEGAL_EQUIPMENT:
+        return std::string("Illegal Equipment");
+      case telux::tel::CallEndCause::ILLEGAL_SS_OPERATION:
+        return std::string("Illegal Ss Operation");
+      case telux::tel::CallEndCause::SS_ERROR_STATUS:
+        return std::string("Ss Error Status");
+      case telux::tel::CallEndCause::SS_NOT_AVAILABLE:
+        return std::string("Ss Not Available");
+      case telux::tel::CallEndCause::SS_SUBSCRIPTION_VIOLATION:
+        return std::string("Ss Subscription Violation");
+      case telux::tel::CallEndCause::SS_INCOMPATIBILITY:
+        return std::string("Ss Incompatibility");
+      case telux::tel::CallEndCause::FACILITY_NOT_SUPPORTED:
+        return std::string("Facility Not Supported");
+      case telux::tel::CallEndCause::ABSENT_SUBSCRIBER:
+        return std::string("Absent Subscriber");
+      case telux::tel::CallEndCause::SHORT_TERM_DENIAL:
+        return std::string("Short Term Denial");
+      case telux::tel::CallEndCause::LONG_TERM_DENIAL:
+        return std::string("Long Term Denial");
+      case telux::tel::CallEndCause::SYSTEM_FAILURE:
+        return std::string("System Failure");
+      case telux::tel::CallEndCause::IMSI_UNKNOWN_IN_HLR:
+        return std::string("Imsi Unknown In Hlr");
+      case telux::tel::CallEndCause::ILLEGAL_MS:
+        return std::string("Illegal Ms");
+      case telux::tel::CallEndCause::ILLEGAL_ME:
+        return std::string("Illegal Me");
+      case telux::tel::CallEndCause::PLMN_NOT_ALLOWED:
+        return std::string("Plmn Not Allowed");
+      case telux::tel::CallEndCause::LOCATION_AREA_NOT_ALLOWED:
+        return std::string("Location Area Not Allowed");
+      case telux::tel::CallEndCause::ROAMING_NOT_ALLOWED_IN_THIS_LOCATION_AREA:
+        return std::string("Roaming Not Allowed In This Location Area");
+      case telux::tel::CallEndCause::NO_SUITABLE_CELLS_IN_LOCATION_AREA:
+        return std::string("No Suitable Cells In Location Area");
+      case telux::tel::CallEndCause::NETWORK_FAILURE:
+        return std::string("Network Failure");
+      case telux::tel::CallEndCause::MAC_FAILURE:
+        return std::string("Mac Failure");
+      case telux::tel::CallEndCause::SYNCH_FAILURE:
+        return std::string("Synch Failure");
+      case telux::tel::CallEndCause::GSM_AUTHENTICATION_UNACCEPTABLE:
+        return std::string("Gsm Authentication Unacceptable");
+      case telux::tel::CallEndCause::SERVICE_NOT_SUBSCRIBED:
+        return std::string("Service Not Subscribed");
+      case telux::tel::CallEndCause::ABORT_MSG_RECEIVED:
+        return std::string("Abort Msg Received");
+      case telux::tel::CallEndCause::SERVICE_OPTION_NOT_SUPPORTED:
+        return std::string("Service Option Not Supported");
+      case telux::tel::CallEndCause::AS_REJ_LRRC_CONN_EST_FAILURE_CONN_REJECT:
+        return std::string("As Rej Lrrc Conn Est Failure Conn Reject");
+      case telux::tel::CallEndCause::EMM_REJ_SERVICE_REQ_FAILURE_LTE_NW_REJECT:
+        return std::string("Emm Rej Service Req Failure Lte Nw Reject");
+      case telux::tel::CallEndCause::EMM_REJ_SERVICE_REQ_FAILURE_CS_DOMAIN_NOT_AVAILABLE:
+        return std::string("Emm Rej Service Req Failure Cs Domain Not Available");
+      case telux::tel::CallEndCause::EMM_REJ:
+        return std::string("Emm Rej");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_FROM_BS:
+        return std::string("Network Resp Timeout From Bs");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T42:
+        return std::string("Network Resp Timeout T42");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T40:
+        return std::string("Network Resp Timeout T40");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T50:
+        return std::string("Network Resp Timeout T50");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T51:
+        return std::string("Network Resp Timeout T51");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_BAD_FL:
+        return std::string("Network Resp Timeout Bad Fl");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T41:
+        return std::string("Network Resp Timeout T41");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T3230:
+        return std::string("Network Resp Timeout T3230");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T303:
+        return std::string("Network Resp Timeout T303");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_MT_CSFB:
+        return std::string("Network Resp Timeout Mt Csfb");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T3417_EXT:
+        return std::string("Network Resp Timeout T3417 Ext");
+      case telux::tel::CallEndCause::NETWORK_RESP_TIMEOUT_T3417:
+        return std::string("Network Resp Timeout T3417");
+      case telux::tel::CallEndCause::RADIO_ACCESS_FAILURE_REJ_RR_RANDOM:
+        return std::string("Radio Access Failure Rej Rr Random");
+      case telux::tel::CallEndCause::RADIO_ACCESS_ESR_FAILURE:
+        return std::string("Radio Access Esr Failure");
+      case telux::tel::CallEndCause::RADIO_ACCESS_CS_ACQ_FAILURE:
+        return std::string("Radio Access Cs Acq Failure");
+      case telux::tel::CallEndCause::ACCESS_BARRED:
+        return std::string("Access Barred");
+      case telux::tel::CallEndCause::SSAC_REJECT:
+        return std::string("Ssac Reject");
+      case telux::tel::CallEndCause::RADIO_RELEASE_NORMAL_REJ_RR_REL:
+        return std::string("Radio Release Normal Rej Rr Rel");
+      case telux::tel::CallEndCause::RADIO_RELEASE_NORMAL_REJ_RRC_REL:
+        return std::string("Radio Release Normal Rej Rrc Rel");
+      case telux::tel::CallEndCause::RADIO_RELEASE_NORMAL_OOS_DURING_CRE:
+        return std::string("Radio Release Normal Oos During Cre");
+      case telux::tel::CallEndCause::RADIO_RELEASE_ABNORMAL_CLOSE_SESSION_IND:
+        return std::string("Radio Release Abnormal Close Session Ind");
+      case telux::tel::CallEndCause::RADIO_RELEASE_ABNORMAL_OPEN_SESSION_FAILURE:
+        return std::string("Radio Release Abnormal Open Session Failure");
+      case telux::tel::CallEndCause::RADIO_RELEASE_ABNORMAL_CRE_FAILURE:
+        return std::string("Radio Release Abnormal Cre Failure");
+      case telux::tel::CallEndCause::RADIO_RELEASE_ABNORMAL_SIB_READ_ERROR:
+        return std::string("Radio Release Abnormal Sib Read Error");
+      case telux::tel::CallEndCause::RADIO_RELEASE_ABNORMAL_ABORTED_IRAT_SUCCESS:
+        return std::string("Radio Release Abnormal Aborted Irat Success");
+      case telux::tel::CallEndCause::RADIO_UPLINK_FAILURE_TXN:
+        return std::string("Radio Uplink Failure Txn");
+      case telux::tel::CallEndCause::RADIO_UPLINK_FAILURE_HO:
+        return std::string("Radio Uplink Failure Ho");
+      case telux::tel::CallEndCause::RADIO_UPLINK_FAILURE_CTRL_NOT_CONN:
+        return std::string("Radio Uplink Failure Ctrl Not Conn");
+      case telux::tel::CallEndCause::RADIO_LINK_FAILURE_UL_DATA_CNF:
+        return std::string("Radio Link Failure Ul Data Cnf");
+      case telux::tel::CallEndCause::RADIO_LINK_FAILURE_EST_FAILURE:
+        return std::string("Radio Link Failure Est Failure");
+      case telux::tel::CallEndCause::RADIO_LINK_FAILURE_CONN_REL_RLF:
+        return std::string("Radio Link Failure Conn Rel Rlf");
+      case telux::tel::CallEndCause::RADIO_LINK_FAILURE_REJ:
+        return std::string("Radio Link Failure Rej");
+      case telux::tel::CallEndCause::RADIO_LINK_FAILURE_DURING_CC_DISCONNECT:
+        return std::string("Radio Link Failure During Cc Disconnect");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_REJ:
+        return std::string("Radio Setup Failure Rej");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_ABORTED:
+        return std::string("Radio Setup Failure Aborted");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_CELL_RESEL:
+        return std::string("Radio Setup Failure Cell Resel");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_CONFIG_FAILURE:
+        return std::string("Radio Setup Failure Config Failure");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_TIMER_EXPIRED:
+        return std::string("Radio Setup Failure Timer Expired");
+      case telux::tel::CallEndCause::RADIO_SETUP_FAILURE_SI_FAILURE:
+        return std::string("Radio Setup Failure Si Failure");
+      case telux::tel::CallEndCause::NETWORK_DETACH_WITH_OUT_REATTACH:
+        return std::string("Network Detach With Out Reattach");
+      case telux::tel::CallEndCause::PDN_DISCONNECTED:
+        return std::string("Pdn Disconnected");
+      case telux::tel::CallEndCause::CSFB_FAILURE_CALL_REL_NW_REL_ODR:
+         return std::string("1xcsfb failure call rel nw rel odr");
+      case telux::tel::CallEndCause::CSFB_FAILURE_CALL_REL_REG_REJ:
+         return std::string("1xcsfb failure call rel reg rej");
+      case telux::tel::CallEndCause::CSFB_FAILURE_RETRY_EXHAUST:
+         return std::string("1xcsfb failure retry exhaust");
+      case telux::tel::CallEndCause::CSFB_FAILURE_USER_CALL_END:
+         return std::string("1xcsfb failure user call end");
+      case telux::tel::CallEndCause::CSFB_FAILURE_SRCH_TT_FAIL:
+         return std::string("1xcsfb failure srch tt fail");
+      case telux::tel::CallEndCause::CSFB_FAILURE_TCH_INIT_FAIL:
+         return std::string("1xcsfb failure tch init fail");
+      case telux::tel::CallEndCause::CSFB_FAIL_ACQ_FAIL:
+         return std::string("1xcsfb fail acq fail");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_INTERCEPT_ORDER:
+         return std::string("1xcsfb fail call rel intercept order");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_NORMAL:
+         return std::string("1xcsfb fail call rel normal");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_OTASP_SPC_ERR:
+         return std::string("1xcsfb fail call rel otasp spc err");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_REL_ORDER:
+         return std::string("1xcsfb fail call rel rel order");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_REORDER:
+         return std::string("1xcsfb fail call rel reorder");
+      case telux::tel::CallEndCause::CSFB_FAIL_CALL_REL_SO_REJ:
+         return std::string("1xcsfb fail call rel so rej");
+      case telux::tel::CallEndCause::CSFB_HARD_FAILURE:
+         return std::string("1xcsfb hard failure");
+      case telux::tel::CallEndCause::CSFB_HO_FAILURE:
+         return std::string("1xcsfb ho failure");
+      case telux::tel::CallEndCause::CSFB_MSG_IGNORE:
+         return std::string("1xcsfb msg ignore");
+      case telux::tel::CallEndCause::CSFB_MSG_INVAILD:
+         return std::string("1xcsfb msg invaild");
+      case telux::tel::CallEndCause::CSFB_SOFT_FAILURE:
+         return std::string("1xcsfb soft failure");
+      case telux::tel::CallEndCause::ACCESS_BLOCK:
+         return std::string("Access block");
+      case telux::tel::CallEndCause::ACC_IN_PROG:
+         return std::string("Acc in prog");
+      case telux::tel::CallEndCause::ACTIVATION:
+         return std::string("Activation");
+      case telux::tel::CallEndCause::ADDRESS_INCOMPLETE:
+         return std::string("Address incomplete");
+      case telux::tel::CallEndCause::ALERT_STOP:
+         return std::string("Alert stop");
+      case telux::tel::CallEndCause::ALTERNATE_EMERGENCY_CALL:
+         return std::string("Alternate emergency call");
+      case telux::tel::CallEndCause::ALTERNATE_SERVICE:
+         return std::string("Alternate service");
+      case telux::tel::CallEndCause::AMBIGUOUS:
+         return std::string("Ambiguous");
+      case telux::tel::CallEndCause::AS_REJ_LRRC_CONN_EST_FAILURE_NOT_CAMPED:
+         return std::string("As rej lrrc conn est failure not camped");
+      case telux::tel::CallEndCause::AS_REJ_LRRC_CONN_EST_SUCCESS:
+         return std::string("As rej lrrc conn est success");
+      case telux::tel::CallEndCause::BAD_EXTENSION:
+         return std::string("Bad extension");
+      case telux::tel::CallEndCause::BAD_GATEWAY:
+         return std::string("Bad gateway");
+      case telux::tel::CallEndCause::BAD_REQ_WAIT_INVITE:
+         return std::string("Bad req wait invite");
+      case telux::tel::CallEndCause::BAD_REQ_WAIT_REINVITE:
+         return std::string("Bad req wait reinvite");
+      case telux::tel::CallEndCause::BUSY_EVERYWHERE:
+         return std::string("Busy everywhere");
+      case telux::tel::CallEndCause::CALL_COMPLETED_ELSEWHERE:
+         return std::string("Call completed elsewhere");
+      case telux::tel::CallEndCause::CALL_DEFLECTED:
+         return std::string("Call deflected");
+      case telux::tel::CallEndCause::CALL_OR_TRANS_DOES_NOT_EXIST:
+         return std::string("Call or trans does not exist");
+      case telux::tel::CallEndCause::CALL_PULLED:
+         return std::string("Call pulled");
+      case telux::tel::CallEndCause::CALL_PULL_OUT_OF_SYNC:
+         return std::string("Call pull out of sync");
+      case telux::tel::CallEndCause::CCBS_NOT_POSSIBLE:
+         return std::string("Ccbs not possible");
+      case telux::tel::CallEndCause::CCBS_POSSIBLE:
+         return std::string("Ccbs possible");
+      case telux::tel::CallEndCause::CLIR_NOT_SUBSCRIBED:
+         return std::string("Clir not subscribed");
+      case telux::tel::CallEndCause::CODEC_ERROR:
+         return std::string("Codec error");
+      case telux::tel::CallEndCause::CSFB_NOT_FEASIBLE_IN_ROAM_CS_NW:
+         return std::string("Csfb not feasible in roam cs nw");
+      case telux::tel::CallEndCause::CS_HARD_FAILURE:
+         return std::string("Cs hard failure");
+      case telux::tel::CallEndCause::CUG_CALL_FAILURE_UNSPECIFIED:
+         return std::string("Cug call failure unspecified");
+      case telux::tel::CallEndCause::CUG_INDEX_INCOMPATIBLE:
+         return std::string("Cug index incompatible");
+      case telux::tel::CallEndCause::DATA_CONNECTION_LOST:
+         return std::string("Data connection lost");
+      case telux::tel::CallEndCause::DATA_MISSING:
+         return std::string("Data missing");
+      case telux::tel::CallEndCause::DEAD_BATTERY:
+         return std::string("Dead battery");
+      case telux::tel::CallEndCause::DEFLECTION_TO_SERVED_SUBSCRIBER:
+         return std::string("Deflection to served subscriber");
+      case telux::tel::CallEndCause::DOES_NOT_EXIST_ANYWHERE:
+         return std::string("Does not exist anywhere");
+      case telux::tel::CallEndCause::DRVCC_END_CALL:
+         return std::string("Drvcc end call");
+      case telux::tel::CallEndCause::DRVCC_IN_PROG:
+         return std::string("Drvcc in prog");
+      case telux::tel::CallEndCause::EXTENSION_REQUIRED:
+         return std::string("Extension required");
+      case telux::tel::CallEndCause::FALLBACK_TO_CS:
+         return std::string("Fallback to cs");
+      case telux::tel::CallEndCause::GONE:
+         return std::string("Gone");
+      case telux::tel::CallEndCause::INCOMING_REJ_CAUSE_1X_COLLISION:
+         return std::string("Incoming rej cause 1x collision");
+      case telux::tel::CallEndCause::INCOMING_REJ_CAUSE_CALL_ONGOING_CB_ENABLED:
+         return std::string("Incoming rej cause call ongoing cb enabled");
+      case telux::tel::CallEndCause::INCOMING_REJ_CAUSE_CALL_ONGOING_CW_DISABLED:
+         return std::string("Incoming rej cause call ongoing cw disabled");
+      case telux::tel::CallEndCause::INCOMING_REJ_CAUSE_CALL_ON_OTHER_SUB:
+         return std::string("Incoming rej cause call on other sub");
+      case telux::tel::CallEndCause::INCOM_REJ_CAUSE_UI_NOT_READY:
+         return std::string("Incom rej cause ui not ready");
+      case telux::tel::CallEndCause::INTERVAL_TOO_BRIEF:
+         return std::string("Interval too brief");
+      case telux::tel::CallEndCause::INVALID_DEFLECTED_TO_NUMBER:
+         return std::string("Invalid deflected to number");
+      case telux::tel::CallEndCause::INVALID_REMOTE_URI:
+         return std::string("Invalid remote uri");
+      case telux::tel::CallEndCause::IS707B_MAX_ACC:
+         return std::string("Is707b max acc");
+      case telux::tel::CallEndCause::LOOP_DETECTED:
+         return std::string("Loop detected");
+      case telux::tel::CallEndCause::MC_ABORT:
+         return std::string("Mc abort");
+      case telux::tel::CallEndCause::MERGED_TO_CONFERENCE:
+         return std::string("Merged to conference");
+      case telux::tel::CallEndCause::MESSAGE_TOO_LARGE:
+         return std::string("Message too large");
+      case telux::tel::CallEndCause::METHOD_NOT_ALLOWED:
+         return std::string("Method not allowed");
+      case telux::tel::CallEndCause::MOVED_PERMANENTLY:
+         return std::string("Moved permanently");
+      case telux::tel::CallEndCause::MOVED_TEMPORARILY:
+         return std::string("Moved temporarily");
+      case telux::tel::CallEndCause::MPTY_PARTICIPANTS_EXCEEDED:
+         return std::string("Mpty participants exceeded");
+      case telux::tel::CallEndCause::MULTIPLE_CHOICES:
+         return std::string("Multiple choices");
+      case telux::tel::CallEndCause::NEGATIVE_PWD_CHECK:
+         return std::string("Negative pwd check");
+      case telux::tel::CallEndCause::NETWORK_NO_RESP_HOLD_FAIL:
+         return std::string("Network no resp hold fail");
+      case telux::tel::CallEndCause::NETWORK_NO_RESP_TIME_OUT:
+         return std::string("Network no resp time out");
+      case telux::tel::CallEndCause::NOT_ACCEPTABLE:
+         return std::string("Not acceptable");
+      case telux::tel::CallEndCause::NOT_ACCEPTABLE_GLOBAL:
+         return std::string("Not acceptable global");
+      case telux::tel::CallEndCause::NOT_ACCEPTABLE_HERE:
+         return std::string("Not acceptable here");
+      case telux::tel::CallEndCause::NOT_IMPLEMENTED:
+         return std::string("Not implemented");
+      case telux::tel::CallEndCause::NO_CDMA_SRV:
+         return std::string("No cdma srv");
+      case telux::tel::CallEndCause::NO_CELL_AVAILABLE:
+         return std::string("No cell available");
+      case telux::tel::CallEndCause::NO_CUG_SELECTION:
+         return std::string("No cug selection");
+      case telux::tel::CallEndCause::NO_NETWORK_RESP:
+         return std::string("No network resp");
+      case telux::tel::CallEndCause::NO_RESOURCES:
+         return std::string("No resources");
+      case telux::tel::CallEndCause::NUM_OF_PWD_ATTEMPTS_VIOLATION:
+         return std::string("Num of pwd attempts violation");
+      case telux::tel::CallEndCause::OTASP_SPC_ERR:
+         return std::string("Otasp spc err");
+      case telux::tel::CallEndCause::OUTGOING_CALLS_BARRED_WITHIN_CUG:
+         return std::string("Outgoing calls barred within cug");
+      case telux::tel::CallEndCause::PAYMENT_REQUIRED:
+         return std::string("Payment required");
+      case telux::tel::CallEndCause::POSITION_METHOD_FAILURE:
+         return std::string("Position method failure");
+      case telux::tel::CallEndCause::PRECONDITION_FAILURE:
+         return std::string("Precondition failure");
+      case telux::tel::CallEndCause::PROXY_AUTHENTICATION_REQUIRED:
+         return std::string("Proxy authentication required");
+      case telux::tel::CallEndCause::PWD_REGISTRATION_FAILURE:
+         return std::string("Pwd registration failure");
+      case telux::tel::CallEndCause::REDIR_OR_HANDOFF:
+         return std::string("Redir or handoff");
+      case telux::tel::CallEndCause::REG_RESTORATION:
+         return std::string("Reg restoration");
+      case telux::tel::CallEndCause::REMOTE_UNSUPP_MEDIA_TYPE:
+         return std::string("Remote unsupp media type");
+      case telux::tel::CallEndCause::REQUEST_ENTITY_TOO_LARGE:
+         return std::string("Request entity too large");
+      case telux::tel::CallEndCause::REQUEST_PENDING:
+         return std::string("Request pending");
+      case telux::tel::CallEndCause::REQUEST_TERMINATED:
+         return std::string("Request terminated");
+      case telux::tel::CallEndCause::REQUEST_URI_TOO_LARGE:
+         return std::string("Request uri too large");
+      case telux::tel::CallEndCause::RESOURCES_NOT_AVAILABLE:
+         return std::string("Resources not available");
+      case telux::tel::CallEndCause::RRC_CONN_REL_NO_MT_SETUP:
+         return std::string("Rrc conn rel no mt setup");
+      case telux::tel::CallEndCause::RTP_FAILURE:
+         return std::string("Rtp failure");
+      case telux::tel::CallEndCause::RTP_RTCP_TIMEOUT:
+         return std::string("Rtp rtcp timeout");
+      case telux::tel::CallEndCause::SERVER_INTERNAL_ERROR:
+         return std::string("Server internal error");
+      case telux::tel::CallEndCause::SERVER_TIME_OUT:
+         return std::string("Server time out");
+      case telux::tel::CallEndCause::SERVER_UNAVAILABLE:
+         return std::string("Server unavailable");
+      case telux::tel::CallEndCause::SESS_DESCR_NOT_ACCEPTABLE:
+         return std::string("Sess descr not acceptable");
+      case telux::tel::CallEndCause::SIP_403_FORBIDDEN:
+         return std::string("Sip 403 forbidden");
+      case telux::tel::CallEndCause::SIP_503_SERVER_UNAVAILABLE:
+         return std::string("Sip 503 server unavailable");
+      case telux::tel::CallEndCause::SPECIAL_SERVICE_CODE:
+         return std::string("Special service code");
+      case telux::tel::CallEndCause::SRVCC_END_CALL:
+         return std::string("Srvcc end call");
+      case telux::tel::CallEndCause::SRV_INIT_FAIL:
+         return std::string("Srv init fail");
+      case telux::tel::CallEndCause::TOO_MANY_HOPS:
+         return std::string("Too many hops");
+      case telux::tel::CallEndCause::UNAUTHORIZED:
+         return std::string("Unauthorized");
+      case telux::tel::CallEndCause::UNDECIPHERABLE:
+         return std::string("Undecipherable");
+      case telux::tel::CallEndCause::UNEXPECTED_DATA_VALUE:
+         return std::string("Unexpected data value");
+      case telux::tel::CallEndCause::UNKNOWN_ALPHABET:
+         return std::string("Unknown alphabet");
+      case telux::tel::CallEndCause::UNKNOWN_CUG_INDEX:
+         return std::string("Unknown cug index");
+      case telux::tel::CallEndCause::UNSUPPORTED_SDP:
+         return std::string("Unsupported sdp");
+      case telux::tel::CallEndCause::UNSUPPORTED_URI_SCHEME:
+         return std::string("Unsupported uri scheme");
+      case telux::tel::CallEndCause::UNWANTED_CALL:
+         return std::string("Unwanted call");
+      case telux::tel::CallEndCause::UPGRADE_DOWNGRADE_CANCELLED:
+         return std::string("Upgrade downgrade cancelled");
+      case telux::tel::CallEndCause::UPGRADE_DOWNGRADE_FAILED:
+         return std::string("Upgrade downgrade failed");
+      case telux::tel::CallEndCause::UPGRADE_DOWNGRADE_REJ:
+         return std::string("Upgrade downgrade rej");
+      case telux::tel::CallEndCause::USE_PROXY:
+         return std::string("Use proxy");
+      case telux::tel::CallEndCause::VERSION_NOT_SUPPORTED:
+         return std::string("Version not supported");
       case telux::tel::CallEndCause::LOW_BATTERY:
          return std::string("Low battery");
       case telux::tel::CallEndCause::BLACKLISTED_CALL_ID:

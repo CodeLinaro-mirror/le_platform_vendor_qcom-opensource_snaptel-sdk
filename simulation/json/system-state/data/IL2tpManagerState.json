@@ -9,12 +9,6 @@
             ]
         },
         "sessionToBackhaulBindings" : [
-            {
-                "locId" : 1,
-                "backhaul" : "WWAN",
-                "slotId" : 1,
-                "profileId" : 1
-            }
         ]
     }
 }

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -491,7 +491,7 @@ grpc::Status L2tpServerImpl::BindSessionToBackhaul(ServerContext* context,
         //since currently Qcmap only supports binding with WWAN
         std::string backhaul = DataUtilsStub::convertEnumToBackhaulPrefString(
             static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
-        if (backhaul != "WWAN") {
+        if ((backhaul != "WWAN") && (backhaul != "ETH")) {
             LOG(DEBUG, __FUNCTION__, backhaul, " not supported currently");
             data.error = telux::common::ErrorCode::NOT_SUPPORTED;
         }
@@ -515,6 +515,7 @@ grpc::Status L2tpServerImpl::BindSessionToBackhaul(ServerContext* context,
                 static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
             newbinding["slotId"] = request->slot_id();
             newbinding["profileId"] = request->profile_id();
+            newbinding["vlanId"] = request->vlan_id();
             bindings[currentCount] = newbinding;
 
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
@@ -551,7 +552,7 @@ grpc::Status L2tpServerImpl::UnBindSessionToBackhaul(ServerContext* context,
         //since currently Qcmap only supports binding with WWAN
         std::string backhaul = DataUtilsStub::convertEnumToBackhaulPrefString(
             static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
-        if (backhaul != "WWAN") {
+        if ((backhaul != "WWAN") && (backhaul != "ETH")) {
             LOG(DEBUG, __FUNCTION__, backhaul, " not supported currently");
             data.error = telux::common::ErrorCode::NOT_SUPPORTED;
         }
@@ -617,7 +618,7 @@ grpc::Status L2tpServerImpl::QueryBindSessionToBackhaul(ServerContext* context,
         data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     } else {
         //since currently Qcmap only supports binding with WWAN
-        if (reqBackhaul != "WWAN") {
+        if ((reqBackhaul != "WWAN") && (reqBackhaul != "ETH")) {
             LOG(DEBUG, __FUNCTION__, reqBackhaul, " not supported currently");
             data.error = telux::common::ErrorCode::NOT_SUPPORTED;
         }
@@ -641,6 +642,7 @@ grpc::Status L2tpServerImpl::QueryBindSessionToBackhaul(ServerContext* context,
                     DataUtilsStub::convertBackhaulPrefStringToEnum(currBackhaul));
                 config->set_slot_id(requestedBinding["slotId"].asInt());
                 config->set_profile_id(requestedBinding["profileId"].asInt());
+                config->set_vlan_id(requestedBinding["vlanId"].asInt());
             }
         }
     }
@@ -682,10 +684,19 @@ bool L2tpServerImpl::bindingExists(const Json::Value& bindings,
             DataUtilsStub::convertEnumToBackhaulPrefString(request->backhaul_type())) {
             continue;
         }
-        if (bindings[idx]["slotId"].asInt() != request->slot_id()) {
+        if(request->backhaul_type() == static_cast<dataStub::BackhaulPreference>
+                (telux::data::BackhaulType::WWAN) &&
+                bindings[idx]["profileId"].asInt() != request->profile_id()){
             continue;
         }
-        if (bindings[idx]["profileId"].asInt() != request->profile_id()) {
+        if(request->backhaul_type() == static_cast<dataStub::BackhaulPreference>
+                (telux::data::BackhaulType::WWAN) &&
+                bindings[idx]["slotId"].asInt() != request->slot_id()) {
+            continue;
+        }
+        if(request->backhaul_type() == static_cast<dataStub::BackhaulPreference>
+                (telux::data::BackhaulType::ETH) &&
+                bindings[idx]["vlanId"].asInt() != request->vlan_id()) {
             continue;
         }
         isFound = true;

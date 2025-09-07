@@ -905,6 +905,7 @@ message SessionConfigRequest {
     BackhaulPreference backhaul_type = 2;
     int32 slot_id = 3;
     int32 profile_id = 4;
+    int32 vlan_id = 5;
 }
 
 message QueryBindSessionRequest {

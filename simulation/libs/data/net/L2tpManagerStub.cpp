@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/CommonDefines.hpp>
@@ -466,6 +466,7 @@ telux::common::Status L2tpManagerStub::bindSessionToBackhaul(
         sessionBindConfig.bhInfo.backhaul));
     request.set_slot_id(sessionBindConfig.bhInfo.slotId);
     request.set_profile_id(sessionBindConfig.bhInfo.profileId);
+    request.set_vlan_id(sessionBindConfig.bhInfo.vlanId);
 
     grpc::Status reqStatus = stub_->BindSessionToBackhaul(&context, request, &response);
 
@@ -513,6 +514,7 @@ telux::common::Status L2tpManagerStub::unbindSessionFromBackhaul(
         sessionBindConfig.bhInfo.backhaul));
     request.set_slot_id(sessionBindConfig.bhInfo.slotId);
     request.set_profile_id(sessionBindConfig.bhInfo.profileId);
+    request.set_vlan_id(sessionBindConfig.bhInfo.vlanId);
 
     grpc::Status reqStatus = stub_->UnBindSessionToBackhaul(&context, request, &response);
 
@@ -583,6 +585,7 @@ telux::common::Status L2tpManagerStub::querySessionToBackhaulBindings(
                 config.bhInfo.slotId =
                     static_cast<SlotId>(binding.slot_id());
                 config.bhInfo.profileId = binding.profile_id();
+                config.bhInfo.vlanId = binding.vlan_id();
                 bindings.push_back(config);
             }
             auto f1 = std::async(std::launch::async,

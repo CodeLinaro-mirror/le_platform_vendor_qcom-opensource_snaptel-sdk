@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.9)
 
 project (telematics-apps)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor ")
 # provides install directory variables CMAKE_INSTALL_<dir>
 include(GNUInstallDirs)
 # pkg-config module

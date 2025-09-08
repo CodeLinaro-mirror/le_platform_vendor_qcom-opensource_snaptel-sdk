@@ -27,11 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
+*/
  /**
   * @file: SecurityService.hpp
   *
@@ -121,7 +120,7 @@ public:
         SecurityCtxName_(ctxName),
         countryCode_(countryCode) {
         }
-    ~SecurityService(){
+    virtual ~SecurityService(){
     }
 
     virtual int ExtractMsg(const SecurityOpt opt,

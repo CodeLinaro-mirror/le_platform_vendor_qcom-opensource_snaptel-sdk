@@ -1,8 +1,7 @@
 /*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
+*/
 /**
  * @file       DataSettingsManager.hpp
  *
@@ -484,6 +483,11 @@ public:
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IDataSettingsListener> listener) = 0;
+
+    /**
+     * Destructor for IDataSettingsManager
+     */
+    virtual ~IDataSettingsManager(){};
 };
 
 /**

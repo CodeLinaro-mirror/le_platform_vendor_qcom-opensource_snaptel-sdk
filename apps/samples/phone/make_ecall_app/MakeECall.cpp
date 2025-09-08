@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -45,6 +46,9 @@
  *
  * Usage:
  * # ./make_ecall_app
+ * # ./make_ecall_app default_sdn_uri
+ * # ./make_ecall_app custom_sdn_uri
+ * # ./make_ecall_app dialing_number <number>
  */
 
 #include <errno.h>
@@ -64,9 +68,11 @@
 class ECaller : public telux::tel::IMakeCallCallback,
                 public std::enable_shared_from_this<ECaller> {
  public:
-    int init() {
+    int init(int argc, char *argv[]) {
         telux::common::ServiceStatus serviceStatus;
         std::promise<telux::common::ServiceStatus> p{};
+
+        parseTestECallConfig(argc, argv);
 
         /* Step - 1 */
         auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
@@ -162,14 +168,15 @@ class ECaller : public telux::tel::IMakeCallCallback,
         }
 
         /* Step - 4 */
-        status = callMgr_->makeECall(phoneId,
-            eCallMsdData, emergencyCategory, eCallVariant, shared_from_this());
+        status = callMgr_->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant,
+            shared_from_this(), testECallConfig_);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Can't call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         std::cout << "Call initiated" << std::endl;
+        printTestConfig();
         return 0;
     }
 
@@ -205,8 +212,64 @@ class ECaller : public telux::tel::IMakeCallCallback,
     }
 
  private:
+    void parseTestECallConfig(int argc, char *argv[]) {
+        testECallConfig_ = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
+
+        if (argc <= 1) {
+            return;
+        }
+
+        std::string configType = argv[1];
+
+        if (configType == "default" || configType == "default_sdn_uri") {
+            testECallConfig_.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+        } else if (configType == "custom" || configType == "custom_sdn_uri") {
+            // User need to configure SDN or SDN URI in the EFS file
+            // Create efsprofiles folder inside root(/) folder of EFS explorer in PCAT
+            // and copy overrideconfig file to efsprofiles folder.
+            testECallConfig_.type = telux::tel::TestECallConfigType::CUSTOM_SDN_URI;
+        } else if (configType == "dialing" || configType == "dialing_number") {
+            testECallConfig_.type = telux::tel::TestECallConfigType::DIALING_NUMBER;
+            if (argc > 2) {
+                testECallConfig_.dialNumber = argv[2];
+            } else {
+                std::cout << "Missing dialing number for dialing_number config. "
+                          << "Using empty dial number." << std::endl;
+            }
+        } else {
+            std::cout << "Unknown test config type '" << configType << "'. Using DEFAULT_SDN_URI."
+                      << std::endl;
+            testECallConfig_.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+        }
+    }
+
+    void printTestConfig() const {
+        std::cout << "TestECallConfig type: ";
+        switch (testECallConfig_.type) {
+            case telux::tel::TestECallConfigType::DEFAULT_SDN_URI:
+                std::cout << "DEFAULT_SDN_URI";
+                break;
+            case telux::tel::TestECallConfigType::CUSTOM_SDN_URI:
+                std::cout << "CUSTOM_SDN_URI";
+                break;
+            case telux::tel::TestECallConfigType::DIALING_NUMBER:
+                std::cout << "DIALING_NUMBER";
+                break;
+            default:
+                std::cout << "UNKNOWN";
+                break;
+        }
+        if (!testECallConfig_.dialNumber.empty()) {
+            std::cout << ", dialNumber=" << testECallConfig_.dialNumber;
+        }
+        std::cout << std::endl;
+    }
+
+ private:
     std::shared_ptr<telux::tel::ICall> dialedCall_;
     std::shared_ptr<telux::tel::ICallManager> callMgr_;
+    telux::tel::TestECallConfig testECallConfig_{
+        telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
 };
 
 int main(int argc, char *argv[]) {
@@ -221,7 +284,7 @@ int main(int argc, char *argv[]) {
         return -ENOMEM;
     }
 
-    ret = app->init();
+    ret = app->init(argc, argv);
     if (ret < 0) {
         return ret;
     }

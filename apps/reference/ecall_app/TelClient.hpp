@@ -108,6 +108,7 @@ class TelClient : public ICallListener,
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] dialDuration Dial duration for automotive emergency ERA-GLONASS eCall
      * @param [in] autoAnswerDuration Auto answer duration for incoming PSAP callback.
+     * @param [in] config       Custom test NG eCall configuration
      * @param [in] callListener pointer to CallStatusListener to notify call status changes
      *
      * @returns Status of startECall i.e success or suitable status code.
@@ -115,7 +116,8 @@ class TelClient : public ICallListener,
      */
     telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
         ECallCategory category, ECallVariant variant, bool transmitMsd, int dialDuration,
-        int autoAnswerDuration, std::shared_ptr<CallStatusListener> callListener);
+        int autoAnswerDuration, TestECallConfig config,
+        std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function starts a self test ERA-GLONASS eCall to specified number.
@@ -409,7 +411,8 @@ class TelClient : public ICallListener,
     void onServiceStatusChange(ServiceStatus status) override;
     void setEraGlonassEnabled(bool isEnabled);
     bool isEraGlonassEnabled();
-    void getCacheData(int &dialDuration, int &autoAnswerDuration );
+    void getCacheData(int &dialDuration, int &autoAnswerDuration,
+        telux::tel::TestECallConfig &ngTestECallConfig);
 
     // clean up objects and remove listener upon ecall menu exit
     void cleanup();
@@ -546,6 +549,9 @@ class TelClient : public ICallListener,
     bool clearECall_;
     /** Represents whether auto answer timer is expired for ERA-GLONASS eCall. */
     bool isAutoAnswerDurationTimeOut_;
+    /** TestECallConfig for custom test NG eCall. */
+    telux::tel::TestECallConfig ngTestECallConfig_
+                        = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
     std::condition_variable dialDurationCv_;
     std::condition_variable autoAnswerCv_;
     std::mutex dialDurationMtx_;

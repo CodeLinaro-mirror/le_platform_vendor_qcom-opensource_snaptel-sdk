@@ -64,12 +64,13 @@ class ECallManager : public LocationListener,
      * @param [in] msdPdu       MSD PDU that will be transmitted at call connect. If this is empty,
      *                          either the MSD as per configuration file or the default MSD will
      *                          be used.
+     * @param [in] config       Custom test NG eCall configuration.
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(
-        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
-        std::vector<uint8_t> msdPdu);
+    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant,
+        bool transmitMsd, std::vector<uint8_t> msdPdu,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""});
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number

@@ -62,6 +62,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       Call.hpp
@@ -380,6 +384,20 @@ public:
     *          could break backward compatibility.
     */
    virtual int getSipErrorCode() = 0;
+
+   /**
+    * Retrieves a string indicating the reason for an incoming PS call, limited to 64 UTF-16
+    * characters. For more details, refer to RFC9796 Section 6.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns A string representing the reason for the incoming PS call.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
+    */
+   virtual std::string getCallReason() = 0;
 
    /**
     * Get id of the phone object which represents the network/SIM on which

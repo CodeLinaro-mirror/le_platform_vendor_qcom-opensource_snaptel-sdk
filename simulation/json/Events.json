@@ -149,10 +149,12 @@
             "slotId:       valid slotIds are 1 & 2 only."
         ],
         "incomingCall":[
-            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber> <rttMode>",
+            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber> <rttMode> <callReason>",
             "slotId:           valid slotIds are 1 & 2 only.",
             "phonenumber:      valid phonenumber ",
-            "rttMode:          valid rttMode are 0 - DISABLED and 1 - FULL only"
+            "rttMode:          valid rttMode are 0 - DISABLED and 1 - FULL only",
+            "callReason:       valid call reason string(64 UTF-16 characters), this is only for PS based incoming call",
+            "example: telsdk_event_injector -f tel_call -e incomingCall 1 6666 0 \"For your ear only.\""
         ],
         "hangupCall":[
             "telsdk_event_injector -f tel_call -e hangupCall <slotId> <callId>",

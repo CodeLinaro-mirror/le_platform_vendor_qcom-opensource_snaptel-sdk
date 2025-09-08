@@ -84,6 +84,7 @@ struct CallInfo {
    RttMode peerRttCapability  = RttMode::DISABLED;
    CallType callType  = CallType::UNKNOWN;
    bool isEraGlonassSelfTestECall = false;
+   std::string callReason = "";
 };
 
 

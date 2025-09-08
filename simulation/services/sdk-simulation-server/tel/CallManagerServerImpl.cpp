@@ -43,6 +43,7 @@
 #define INCOMING_CALL_EVENT "incomingCall"
 #define MODIFY_CALL_REQUEST "modifyCallRequest"
 #define RTT_MESSAGE_REQUEST "rttMessageRequest"
+#define CALL_REASON_MAX_SIZE 64
 
 #define REST_TIMERS_ON_CALL_SETUP 2
 #define JSON_PATH1 "system-state/tel/ICallManagerStateSlot1.json"
@@ -1616,6 +1617,7 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     int phoneId;
     std::string dialNumber;
     RttMode mode;
+    std::string callReason = "";
     /* Fetch the slotId */
     std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
     if(token == "") {
@@ -1664,6 +1666,19 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
     }
     LOG(DEBUG, __FUNCTION__, "The fetched rttMode is: ", static_cast<int>(mode));
 
+    /* Fetch the call reason */
+    LOG(DEBUG, __FUNCTION__, "The leftover string is: ", eventParams);
+    if(token == "") {
+        LOG(INFO, __FUNCTION__, "CS based MT call");
+    } else {
+        callReason = eventParams;
+    }
+    LOG(DEBUG, __FUNCTION__, "The fetched call reason is: ", callReason);
+    if (callReason.size() > CALL_REASON_MAX_SIZE) {
+        LOG(ERROR, __FUNCTION__,
+            " Check the call reason string, it exceeded MAX size(64 characters)");
+        return;
+    }
     //Update call cache for new MT Voice call
     CallInfo callInfo;
     callInfo.phoneId = phoneId;
@@ -1694,11 +1709,14 @@ void CallManagerServerImpl::handleIncomingCallRequest(std::string eventParams) {
         TelUtil::readVoiceRadioTechnologyFromJsonFile(callInfo.phoneId, rat)) {
         if (std::find(psRatList.begin(), psRatList.end(), rat) != psRatList.end()) {
             callInfo.callType = CallType::VOICE_IP_CALL;
+            callInfo.callReason = callReason;
         } else {
             callInfo.callType = CallType::VOICE_CALL;
+            callInfo.callReason = "";
         }
     } else {
         callInfo.callType = CallType::VOICE_CALL;
+        callInfo.callReason = "";
     }
 
     callInfo_ = callInfo;
@@ -2440,15 +2458,21 @@ void CallManagerServerImpl::fillCallInformation(int phoneId,
         result->set_local_rtt_capability(static_cast<telStub::RttMode>(it->localRttCapability));
         result->set_peer_rtt_capability(static_cast<telStub::RttMode>(it->peerRttCapability));
         result->set_call_type(static_cast<telStub::CallType>(it->callType));
+        if (static_cast<telStub::CallState>(it->callState) == telStub::CallState::CALL_INCOMING) {
+            result->set_call_reason(it->callReason);
+        } else {
+            result->set_call_reason("");
+        }
         LOG(DEBUG, __FUNCTION__,
             " CallState: ", static_cast<int>(it->callState),
             " CallIndex: ", static_cast<int>(it->index),
             " Calldirection: ", static_cast<int>(it->callDirection),
-            " RemotePartyNumber: ", static_cast<std::string>(it->remotePartyNumber),
+            " RemotePartyNumber: ", it->remotePartyNumber,
             " Rtt mode: ", static_cast<int>(it->mode),
             " Local capability: ", static_cast<int>(it->localRttCapability),
             " Peer capability: ", static_cast<int>(it->peerRttCapability),
-            " Call type: ", static_cast<int>(it->callType));
+            " Call type: ", static_cast<int>(it->callType),
+            " Call Reason: ", it->callReason);
     }
 }
 
@@ -2519,6 +2543,7 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
         result->set_sip_error_code(it->sipErrorCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
+        result->set_call_reason("");
     }
     callStateChangeEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);

@@ -1341,6 +1341,7 @@ enum EcallHlapTimerId {
      RttMode peer_rtt_capability = 10;
      CallType call_type = 11;
      int32 sip_error_code = 12;
+     string call_reason = 13;
  }
 
  message MakeECallRequest {

@@ -159,6 +159,11 @@ class ECallApp : public ConsoleApp {
         std::vector<uint32_t> validValues);
 
     /**
+     * Function to get test eCall configuration from the user-interface
+     */
+    int getEcallTestConfig(telux::tel::TestECallConfig &config);
+
+    /**
      * Utility function to get user input for MSD PDU
      */
     std::vector<uint8_t> getMsdPduInput();

@@ -28,11 +28,30 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ * This application demonstrates how to make an ecall. The steps are as follows:
+ *
+ * 1. Get a PhoneFactory instance.
+ * 2. Get a ICallManager instance from the PhoneFactory.
+ * 3. Wait for the call manager service to become available.
+ * 4. Trigger an ecall.
+ * 5. Receive status of the ecall in callback.
+ * 6. Wait while the call is in progress.
+ * 7. Finally, when the use case is over, hangup the call.
+ *
+ * Usage:
+ * # ./make_ecall_app
+ * # ./make_ecall_app default_sdn_uri
+ * # ./make_ecall_app custom_sdn_uri
+ * # ./make_ecall_app dialing_number <number>
+ */
+
+#include <errno.h>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -121,8 +140,7 @@ public:
 /**
  * Main routine
  */
-int main(int, char **) {
-
+int main(int argc, char *argv[]) {
    // ### 1. Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
    std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
@@ -142,6 +160,36 @@ int main(int, char **) {
       return 1;
    }
 
+   telux::tel::TestECallConfig testECallConfig{
+        telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
+
+    std::string configType;
+    if (argc > 1 && argv[1] != nullptr) {
+        configType = argv[1];
+    } else {
+        configType = "default_sdn_uri";  // sensible default
+    }
+
+    if (configType == "default" || configType == "default_sdn_uri") {
+        testECallConfig.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+    } else if (configType == "custom" || configType == "custom_sdn_uri") {
+        // User need to configure SDN or SDN URI in the EFS file
+        // Create efsprofiles folder inside root(/) folder of EFS explorer in PCAT
+        // and copy overrideconfig file to efsprofiles folder.
+        testECallConfig.type = telux::tel::TestECallConfigType::CUSTOM_SDN_URI;
+    } else if (configType == "dialing" || configType == "dialing_number") {
+        testECallConfig.type = telux::tel::TestECallConfigType::DIALING_NUMBER;
+        if (argc > 2) {
+            testECallConfig.dialNumber = argv[2];
+        } else {
+            std::cout << "Missing dialing number for dialing_number config. "
+                << "Using empty dial number." << std::endl;
+        }
+   } else {
+        std::cout << "Unknown test config type '" << configType << "'. Using DEFAULT_SDN_URI."
+             << std::endl;
+        testECallConfig.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+   }
    // ### 3. Instantiate dial callback instance - this is optional
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
 
@@ -211,9 +259,29 @@ int main(int, char **) {
 
    // ### 5. Send an eCall request
    auto makeCallStatus
-      = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
+      = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb,
+      testECallConfig);
    std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
 
+   std::cout << "TestECallConfig type: ";
+   switch (testECallConfig.type) {
+       case telux::tel::TestECallConfigType::DEFAULT_SDN_URI:
+          std::cout << "DEFAULT_SDN_URI";
+          break;
+       case telux::tel::TestECallConfigType::CUSTOM_SDN_URI:
+           std::cout << "CUSTOM_SDN_URI";
+           break;
+       case telux::tel::TestECallConfigType::DIALING_NUMBER:
+           std::cout << "DIALING_NUMBER";
+            break;
+       default:
+           std::cout << "UNKNOWN";
+           break;
+   }
+   if (!testECallConfig.dialNumber.empty()) {
+       std::cout << ", dialNumber=" << testECallConfig.dialNumber;
+   }
+   std::cout << std::endl;
    // ### 6. Wait for the call state to become active and hang-up the call after conversation
    std::this_thread::sleep_for(std::chrono::seconds(10));
    if(dialedCall) {

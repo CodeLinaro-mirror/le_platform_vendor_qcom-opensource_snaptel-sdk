@@ -530,18 +530,20 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
         callInfo.callType =
             static_cast<telux::tel::CallType>(event.calls(i).call_type());
-            LOG(DEBUG, __FUNCTION__," CallState: ", static_cast<int>(callInfo.callState),
+        callInfo.callReason = static_cast<std::string>(event.calls(i).call_reason());
+        LOG(DEBUG, __FUNCTION__," CallState: ", static_cast<int>(callInfo.callState),
             " CallIndex: ", static_cast<int>(callInfo.index),
             " Calldirection: ", static_cast<int>(callInfo.callDirection),
-            " RemotePartyNumber: ", static_cast<std::string>(callInfo.remotePartyNumber),
+            " RemotePartyNumber: ", callInfo.remotePartyNumber,
             " callEndCause: ", static_cast<int>(callInfo.callEndCause),
-            " sipErrorCode: ", callInfo.sipErrorCode,
+            " sipErrorCode: ", static_cast<int>(callInfo.sipErrorCode),
             " isMultiPartyCall: ", callInfo.isMultiPartyCall,
             " isMpty: ", callInfo.isMpty,
             " Rtt mode: ", static_cast<int>(callInfo.mode),
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
             " Peer Rtt capability: ", static_cast<int>(callInfo.peerRttCapability),
-            " Call Type: ", static_cast<int>(callInfo.callType)
+            " Call Type: ", static_cast<int>(callInfo.callType),
+            " Call Reason: ", callInfo.callReason
         );
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         {
@@ -680,6 +682,7 @@ void CallManagerStub::notifyAndRemoveDroppedCalls() {
         for (auto droppedCall = std::begin(droppedCalls_); droppedCall != std::end(droppedCalls_);
              droppedCall++) {
             (*droppedCall)->setCallState(CallState::CALL_ENDED);
+            (*droppedCall)->setCallReason("");
             // Move dropped calls into a local list for notifying listeners
             callsToBeNotified.emplace_back(std::move(*droppedCall));
             droppedCalls_.erase(droppedCall--);

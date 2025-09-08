@@ -82,7 +82,8 @@ TelClient::TelClient()
    , willECallRedial_(false)
    , disconnectECallInNextAttempt_(false)
    , clearECall_(false)
-   , isAutoAnswerDurationTimeOut_(false) {
+   , isAutoAnswerDurationTimeOut_(false)
+   , ngTestECallConfig_({telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) {
 }
 
 TelClient::~TelClient() {
@@ -154,9 +155,11 @@ bool TelClient::isEraGlonassEnabled() {
 
 // Fills the dial duration and auto answer user data required for new eCall triggered during
 // network scan failure.
-void TelClient::getCacheData(int &dialDuration, int &autoAnswerDuration) {
+void TelClient::getCacheData(
+    int &dialDuration, int &autoAnswerDuration, telux::tel::TestECallConfig &ngTestECallConfig) {
     dialDuration       = dialDuration_;
     autoAnswerDuration = autoAnswerDuration_;
+    ngTestECallConfig  = ngTestECallConfig_;
 }
 
 // Set the ERAGLONASS mode
@@ -638,7 +641,8 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
     ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
-    int dialDuration, int autoAnswerDuration, std::shared_ptr<CallStatusListener> callListener) {
+    int dialDuration, int autoAnswerDuration, TestECallConfig config,
+    std::shared_ptr<CallStatusListener> callListener) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
                   << std::endl;
@@ -651,16 +655,18 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     if (transmitMsd) {
         if (msdPdu.empty()) {
             status = callMgr_->makeECall(
-                phoneId, msdData, (int)category, (int)variant, shared_from_this());
+                phoneId, msdData, (int)category, (int)variant, shared_from_this(), config);
         } else {
             status = callMgr_->makeECall(phoneId, msdPdu, (int)category, (int)variant,
                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
-                    std::placeholders::_2));
+                    std::placeholders::_2),
+                config);
         }
     } else {
         status = callMgr_->makeECall(phoneId, (int)category, (int)variant,
             std::bind(
-                &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
+                &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2),
+            config);
     }
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make an ECall is sent successfully" << std::endl;
@@ -686,6 +692,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
             dialDuration_                 = dialDuration;
             autoAnswerDuration_           = autoAnswerDuration;
         }
+        ngTestECallConfig_ = config;
     } else {
         std::cout << CLIENT_NAME << "Request to make an ECall failed!" << std::endl;
         setECallProgressState(false);

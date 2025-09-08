@@ -64,6 +64,9 @@
 #define CALL_ORIG 1
 #define T9 5
 #define T10 6
+#define ECALL_TEST_CONFIG_DEFAULT 1
+#define ECALL_TEST_CONFIG_CUSTOM 2
+#define ECALL_TEST_CONFIG_DIALING_NUMBER 3
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -195,6 +198,7 @@ void ECallApp::makeECall() {
     }
     // Get the emergency category from user
     telux::tel::ECallCategory emergencyCategory;
+    telux::tel::TestECallConfig testConfig = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
     if (-1 == getEcallCategory(emergencyCategory)) {
         return;
     }
@@ -226,6 +230,19 @@ void ECallApp::makeECall() {
         std::cout << "Invalid Emergency Call Variant" << std::endl;
         return;
     }
+    if (eCallVariant == telux::tel::ECallVariant::ECALL_TEST) {
+        std::string ngEcall;
+        std::cout << "Triggering Custom Test NG ECall (y/n): ";
+        std::getline(std::cin, ngEcall, delimiter);
+        if (ngEcall == "y") {
+            // Get the test eCall config from user
+            if (-1 == getEcallTestConfig(testConfig)) {
+                return;
+            }
+        } else {
+            std::cout << "Proceed with NG or CS test eCall" << std::endl;
+        }
+    }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
     std::vector<uint8_t> msdPdu;
@@ -237,8 +254,8 @@ void ECallApp::makeECall() {
     int phoneId = getPhoneId();
 
     std::cout << "eCall Triggered" << std::endl;
-    auto ret
-        = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd, msdPdu);
+    auto ret = eCallMgr_->triggerECall(
+        phoneId, emergencyCategory, eCallVariant, transmitMsd, msdPdu, testConfig);
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
@@ -904,7 +921,6 @@ int ECallApp::getEcallCategory(telux::tel::ECallCategory &emergencyCategory) {
         }
     } else {
         std::cout << "No input, proceeding with default category: automatic" << std::endl;
-        ;
         opt = ECALL_CATEGORY_AUTO;
     }
     if (opt == ECALL_CATEGORY_AUTO) {  // Automatically triggered eCall.
@@ -1014,6 +1030,49 @@ std::vector<uint8_t> ECallApp::getMsdPduInput() {
         msdPdu = Utils::convertHexToBytes(temp);
     }
     return msdPdu;
+}
+
+/**
+ * Function to get test eCall configuration from the user-interface
+ */
+int ECallApp::getEcallTestConfig(telux::tel::TestECallConfig &config) {
+    char delimiter = '\n';
+    std::string temp;
+    std::string number = "";
+    int opt            = -1;
+    // Get test eCall config
+    std::cout << "Select config for custom test NG eCall:\n"
+              << "1) Default SDN URI \n"
+              << "2) Custom SDN URI \n"
+              << "3) Dialing number" << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if (!temp.empty()) {
+        try {
+            opt = std::stoi(temp);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+        }
+    } else {
+        std::cout << "No input, proceeding with default config: Default SDN URI" << std::endl;
+        opt = ECALL_TEST_CONFIG_DEFAULT;
+    }
+    if (opt == ECALL_TEST_CONFIG_DEFAULT) {  // default SDN URI.
+        config.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+    } else if (opt == ECALL_TEST_CONFIG_CUSTOM) {  // custom SDN URI.
+        config.type = telux::tel::TestECallConfigType::CUSTOM_SDN_URI;
+    } else if (opt == ECALL_TEST_CONFIG_DIALING_NUMBER) {
+        config.type = telux::tel::TestECallConfigType::DIALING_NUMBER;
+        std::cout << "Enter dialing number for custom test NG eCall: ";
+        std::getline(std::cin, number, delimiter);
+        if (number.empty()) {
+            std::cout << "No input received for dialing number " << std::endl;
+        }
+        config.dialNumber = number;
+    } else {
+        std::cout << "Invalid custom test NG eCall config" << std::endl;
+        return -1;
+    }
+    return 0;
 }
 
 // Main function that displays the interactive console for eCall related operations

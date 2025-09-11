@@ -413,7 +413,7 @@ void SmsMenu::sendRequestMessageList(std::vector<std::string> userInput) {
    char delimiter = '\n';
    std::string tagType;
    std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
-   std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+   std::cout << "\nChoose type: ";
    std::getline(std::cin, tagType, delimiter);
    int smsTagType = -1;
    std::string storageType;
@@ -487,7 +487,7 @@ void SmsMenu::deleteMessage(std::vector<std::string> userInput) {
       if (deleteType == DELETE_ALL_MESSAGE_TAG) {
          std::string tagType;
          std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
-         std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+         std::cout << "\nChoose type: ";
          std::getline(std::cin, tagType, delimiter);
          smsTagType = stoi(tagType);
       } else if (deleteType == DELETE_AT_INDEX) {
@@ -560,7 +560,7 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
    uint32_t msgIndex = DEFAULT_INDEX;
    std::string tagType;
    std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
-   std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+   std::cout << "\nChoose type: ";
    std::getline(std::cin, tagType, delimiter);
    int smsTagType = -1;
    std::string storageType;

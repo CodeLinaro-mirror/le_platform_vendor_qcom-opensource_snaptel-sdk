@@ -11,5 +11,5 @@ install (TARGETS remote-sim-daemon RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 # sap-card-provider
 add_executable(sap-card-provider SapCardProvider.cpp RemoteSimUtils.cpp SimConnection.cpp
                                  CardControl.cpp)
-target_link_libraries(sap-card-provider telux_tel telux_common)
+target_link_libraries(sap-card-provider telux_tel telux_common pthread boost_thread boost_chrono boost_system)
 install (TARGETS sap-card-provider RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

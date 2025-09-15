@@ -27,10 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
  * @file LocationTable.cpp
@@ -112,7 +110,7 @@ namespace gn {
 
     void LocationTable::RefreshTaskStop(void) {
         // Purge the table
-        std::unique_lock<std::mutex> lk(TableMutex_);
+        boost::unique_lock<boost::mutex> lk(TableMutex_);
         TableEntries_.erase(TableEntries_.begin(), TableEntries_.end());
         lk.unlock();
         Cv_.notify_one();
@@ -123,7 +121,7 @@ namespace gn {
     }
     const std::shared_ptr<LocTableEntry> LocationTable::Find(const uint8_t *mid) {
         uint32_t tsnow = gn::GeoNetUtils::GetTimestampSinceEpoch();
-        std::lock_guard<std::mutex> lock(TableMutex_);
+        boost::lock_guard<boost::mutex> lock(TableMutex_);
 
         auto it = TableEntries_.find(const_cast<uint8_t *>(mid));
 
@@ -148,7 +146,7 @@ namespace gn {
     const std::shared_ptr<LocTableEntry> LocationTable::Update(const gn_lpv_t &so_pv) {
         std::shared_ptr<LocTableEntry> entry = Find(so_pv.gn_addr);
 
-        std::lock_guard<std::mutex> lock(TableMutex_);
+        boost::lock_guard<boost::mutex> lock(TableMutex_);
 
         if (entry != nullptr) {
             //Update LocT PV, clause C.2
@@ -177,7 +175,7 @@ namespace gn {
      */
     const std::shared_ptr<LocTableEntry> LocationTable::Update(gn_spv_t &de_pv) {
         std::shared_ptr<LocTableEntry> entry = Find(de_pv.gn_addr);
-        std::lock_guard<std::mutex> lock(TableMutex_);
+        boost::lock_guard<boost::mutex> lock(TableMutex_);
 
         if (entry == nullptr) {
             entry = std::make_shared<LocTableEntry>(de_pv);
@@ -207,7 +205,7 @@ namespace gn {
 
     const std::shared_ptr<LocTableEntry> LocationTable::FindShortestLocTe(
             int32_t target_lat, int32_t target_long, int &shortest_dis ) {
-        std::lock_guard<std::mutex> lock(TableMutex_);
+        boost::lock_guard<boost::mutex> lock(TableMutex_);
         shortest_dis = INT_MAX;
         std::shared_ptr<LocTableEntry> LocTe = nullptr;
         for (auto i : TableEntries_) {
@@ -226,15 +224,15 @@ namespace gn {
         return LocTe;
     }
     void LocationTable::Remove(const uint8_t *mid) {
-        std::lock_guard<std::mutex> lock(TableMutex_);
+        boost::lock_guard<boost::mutex> lock(TableMutex_);
         auto it = TableEntries_.find(const_cast<uint8_t *>(mid));
         if (it != TableEntries_.end()) {
             TableEntries_.erase(it->first);
         }
     }
     void LocationTable::RefreshTask(void) {
-        std::unique_lock<std::mutex> lk(TableMutex_);
-        std::chrono::milliseconds TimerValue(10000);    //referesh every 10 seconds
+        boost::unique_lock<boost::mutex> lk(TableMutex_);
+        boost::chrono::milliseconds TimerValue(10000);    //referesh every 10 seconds
         do {
             for (auto i : TableEntries_) {
                 auto e = i.second;
@@ -245,7 +243,7 @@ namespace gn {
                 }
             }
             //wait_until will unlock the TableMutex_
-            auto now = std::chrono::steady_clock::now();
+            auto now = boost::chrono::steady_clock::now();
             auto status = Cv_.wait_until(lk, now + TimerValue);
             if (status == std::cv_status::timeout)
                 continue;

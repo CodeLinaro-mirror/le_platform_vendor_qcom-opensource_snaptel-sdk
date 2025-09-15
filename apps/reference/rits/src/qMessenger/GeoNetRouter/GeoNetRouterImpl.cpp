@@ -369,7 +369,7 @@ namespace gn {
     }
 
     void GeoNetRouterImpl::CBFEnqueue(const uint8_t *Buffer, size_t BufLen, int To) {
-        std::lock_guard<std::mutex> lk(CBFmutex_);
+        boost::lock_guard<boost::mutex> lk(CBFmutex_);
         CBFqueue_.push(std::make_shared<Qelement>(const_cast<uint8_t *>(Buffer), BufLen, df_txcb, To));
         CBFcv_.notify_one();
     }
@@ -380,8 +380,8 @@ namespace gn {
     void GeoNetRouterImpl::LocationServiceSync(const uint8_t *Addr) {
         int count = 0;
         GnData_t data;
-        std::cv_status status;
-        std::chrono::milliseconds TimerValue(Config_.itsGnLocationServiceRetransmitTimer);
+        boost::cv_status status;
+        boost::chrono::milliseconds TimerValue(Config_.itsGnLocationServiceRetransmitTimer);
 
         // Create a packet queue element to prepare for retransmit.
         size_t BufLen = sizeof(gn_lsreq_hdr_t) + 1; // account for 1 byte cv2x family ID
@@ -395,7 +395,7 @@ namespace gn {
         InitLSRequest(e->Buffer + 1, sizeof(gn_lsreq_hdr_t), data, Addr);
         *(e->Buffer) = 0x03;
 
-        std::unique_lock<std::mutex> lk(e->EMutex);
+        boost::unique_lock<boost::mutex> lk(e->EMutex);
 
         // Insert into map to track the progress, TODO: Lock for LsMap_
         LsMap_.insert(std::pair<uint8_t *, std::shared_ptr<Qelement>>(const_cast<uint8_t *>(Addr), e));
@@ -406,12 +406,12 @@ namespace gn {
             if (df_txcb != nullptr) {
                 df_txcb((char *)e->Buffer, (uint16_t)BufLen);
             }
-            auto now = std::chrono::steady_clock::now();
+            auto now = boost::chrono::steady_clock::now();
             status = e->Ecv.wait_until(lk, now + TimerValue);
         } while ((count < Config_.itsGnLocationServiceMaxRetrans) ||
-                (status != std::cv_status::timeout));
+                (status != boost::cv_status::timeout));
 
-        if (status == std::cv_status::timeout) {
+        if (status == boost::cv_status::timeout) {
             // We didn't receive reply, purge the LS packet queue.
             FlushQueue(LS_Q, Addr, true);
             LocTable_.Remove(Addr);
@@ -430,17 +430,17 @@ namespace gn {
      * CBF timer task
      */
     void GeoNetRouterImpl::CBFTimerTask(void) {
-        std::unique_lock<std::mutex> lk(CBFmutex_);
+        boost::unique_lock<boost::mutex> lk(CBFmutex_);
 
         // if the CBF queue is not empty, set the timer interval to 1
         // millisecond. Otherwise, set it to 1 second.
-        std::chrono::milliseconds TimerValueBusy(1);
-        std::chrono::milliseconds TimerValueIdle(1000);
+        boost::chrono::milliseconds TimerValueBusy(1);
+        boost::chrono::milliseconds TimerValueIdle(1000);
 
         do {
 
             int TsNow = GeoNetUtils::GetTimestampSinceEpoch();
-            std::cv_status status;
+            boost::cv_status status;
             while(!CBFqueue_.empty()) {
                 auto e = CBFqueue_.top();
                 if ((TsNow - e->Ts) >= e->To) {
@@ -450,13 +450,13 @@ namespace gn {
 
             }
             //wait_until will unlock the CBFmutex_
-            auto now = std::chrono::steady_clock::now();
+            auto now = boost::chrono::steady_clock::now();
             if (!CBFqueue_.empty())
                 status = CBFcv_.wait_until(lk, now + TimerValueBusy);
             else
                 status = CBFcv_.wait_until(lk, now + TimerValueIdle);
 
-            if (status == std::cv_status::timeout)
+            if (status == boost::cv_status::timeout)
                 continue;
             else if (CBFstop_ == false)
                 continue;

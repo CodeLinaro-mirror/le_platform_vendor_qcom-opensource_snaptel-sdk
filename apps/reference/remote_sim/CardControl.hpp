@@ -26,7 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file    CardControl.hpp
  * @brief   This file contains declarations for the CardControl class, as well
@@ -37,7 +40,9 @@
 
 #ifndef CARDCONTROL_HPP
 #define CARDCONTROL_HPP
-
+#define BOOST_THREAD_PROVIDES_FUTURE
+#include <boost/thread.hpp>
+#include <boost/thread/future.hpp>
 #include <unordered_map>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -137,8 +142,8 @@ private:
     bool cardPresent_ = false;
     bool cardConnected_ = false;
     std::unordered_map<uint8_t, std::shared_ptr<ApduResponseCallback>> apduRespCbMap_;
-    std::promise<bool> openConnPromise_;
-    std::promise<bool> powerOnPromise_;
+    boost::promise<bool> openConnPromise_;
+    boost::promise<bool> powerOnPromise_;
     std::shared_ptr<OpenConnectionCallback> openConnCb_;
     std::shared_ptr<CloseConnectionCallback> closeConnCb_;
     std::shared_ptr<PowerOnCallback> powerOnCb_;

@@ -29,6 +29,9 @@ std::string WlanUtils::getWlanDeviceName(telux::wlan::HwDeviceType device) {
       case telux::wlan::HwDeviceType::QCA6595:
          retStr = "QCA6595";
          break;
+      case telux::wlan::HwDeviceType::QCA6797:
+         retStr = "QCA6797";
+         break;
       default:
          retStr = "CUSTOM";
          break;

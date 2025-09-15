@@ -45,6 +45,7 @@ enum class HwDeviceType {
     QCA6574   = 1,                  /**<  Wlan device is QCA6574   */
     QCA6696   = 2,                  /**<  Wlan device is QCA6696   */
     QCA6595   = 3,                  /**<  Wlan device is QCA6595   */
+    QCA6797   = 4,                  /**<  Wlan device is QCA6797   */
 };
 
 /**

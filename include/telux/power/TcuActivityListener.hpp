@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/**
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -122,6 +121,28 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      *                         @ref MachineEvent::UNAVAILABLE if the machine is unregistered
      */
     virtual void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) {}
+
+    /**
+     * This API is invoked for all clients (both master and slave) when the power management
+     * subsystem restarts or state changes. Considering a scenario in which the system was in the
+     * suspended state and the power management subsystem restarts, this API will broadcast the
+     * unsolicited transition of the @ref telux::power::TcuActivityState across all the
+     * registered clients. With this approach, the power manager and the clients -
+     * master and slaves will be aware of the system state when the service restarts
+     * or when the state changes.
+     * When the subsystem service status is other than
+     * @ref telux::common::ServiceStatus::SERVICE_AVAILABLE, the tcu state of the machine for which
+     * the client has registered will be @ref telux::power::TcuActivityState::UNKNOWN
+     *
+     * @param [in] status - @ref telux::common::ServiceStatus
+     *
+     * @param[in] machName - The machine for which the client has registered.
+     *
+     * @param[in] currState - Current TCU State of the machine for which the client has registered.
+     *
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status,
+        std::string machName, TcuActivityState currState) {}
 
     /**
      * Called only for the master client, provides consolidated responses from the slave clients.

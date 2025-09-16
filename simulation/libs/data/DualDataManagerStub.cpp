@@ -18,7 +18,7 @@ using grpc::Status;
 namespace telux {
 namespace data {
 
-DualDataManagerStub::DualDataManagerStub() {
+DualDataManagerStub::DualDataManagerStub(){
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
     listenerMgr_ = std::make_shared<telux::common::ListenerManager<IDualDataListener>>();
@@ -203,6 +203,54 @@ void DualDataManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::dataStub::DualDataUsageRecommendationEvent recommendationEvent;
         event.UnpackTo(&recommendationEvent);
         this->handleRecommendationChangeEvent(recommendationEvent);
+    } else if (event.Is<::dataStub::DdsSwitchRecommendation>()) {
+        ::dataStub::DdsSwitchRecommendation ddsSwitchRecommendation;
+        event.UnpackTo(&ddsSwitchRecommendation);
+        this->handleDdsSwitchRecommendationEvent(ddsSwitchRecommendation);
+    }
+}
+
+void DualDataManagerStub::handleDdsSwitchRecommendationEvent(
+    ::dataStub::DdsSwitchRecommendation &event)
+{
+    LOG(DEBUG, __FUNCTION__);
+    telux::data::DdsSwitchRecommendation ddsSwitchRecommendation;
+    ddsSwitchRecommendation.recommendedDdsInfo.slotId =
+        static_cast<SlotId>(event.recommended_dds_info().slot_id());
+    ddsSwitchRecommendation.recommendedDdsInfo.type =
+        static_cast<telux::data::DdsType>(event.recommended_dds_info().dds_type());
+    ddsSwitchRecommendation.recommendationDetails.tempType =
+        static_cast<telux::data::TemporaryRecommendationType>(event.
+            recommendation_details().temp_type());
+
+    // Check if temp_cause is not empty
+    uint64_t tempCause = event.recommendation_details().temp_cause();
+    ddsSwitchRecommendation.recommendationDetails.tempCause =
+        static_cast<telux::data::TemporaryRecommendationCauseCodes>(tempCause);
+    LOG(DEBUG, __FUNCTION__, "Temp cause: ",
+        static_cast<int>(ddsSwitchRecommendation.recommendationDetails.tempCause));
+
+    // Check if perm_cause is not empty
+    uint64_t permCause = event.recommendation_details().perm_cause();
+    ddsSwitchRecommendation.recommendationDetails.permCause =
+        static_cast<telux::data::PermanentRecommendationCauseCodes>(permCause);
+    LOG(DEBUG, __FUNCTION__, "Perm cause: ",
+        static_cast<int>(ddsSwitchRecommendation.recommendationDetails.permCause));
+
+    if (listenerMgr_)
+    {
+        std::vector<std::weak_ptr<IDualDataListener>> listeners;
+        listenerMgr_->getAvailableListeners(listeners);
+        LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners.size());
+        for (auto &wp : listeners)
+        {
+            if (auto sp = wp.lock())
+            {
+                LOG(DEBUG,
+                    "DualData Manager: invoking onDdsSwitchRecommendation");
+                sp->onDdsSwitchRecommendation(ddsSwitchRecommendation);
+            }
+        }
     }
 }
 
@@ -251,27 +299,209 @@ void DualDataManagerStub::handleRecommendationChangeEvent(
     }
 }
 
-telux::common::Status DualDataManagerStub::requestDdsSwitch(DdsInfo request,
-    telux::common::ResponseCallback callback) {
-    LOG(DEBUG, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
-}
-
-telux::common::Status DualDataManagerStub::requestCurrentDds(RequestCurrentDdsRespCb callback) {
-    LOG(DEBUG, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
-}
-
 telux::common::ErrorCode DualDataManagerStub::configureDdsSwitchRecommendation(
-    const DdsSwitchRecommendationConfig recommendationConfig) {
+    const telux::data::DdsSwitchRecommendationConfig recommendationConfig) {
+
     LOG(DEBUG, __FUNCTION__);
-    return telux::common::ErrorCode::NOT_SUPPORTED;
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " DualData manager not ready");
+        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+    }
+
+    ::dataStub::ConfigureDdsSwitchRecommendationRequest request;
+    ::dataStub::ConfigureDdsSwitchRecommendationReply response;
+    grpc::ClientContext context;
+
+    request.set_enable_temporary_recommendations(
+        recommendationConfig.enableTemporaryRecommendations);
+    request.set_enable_permanent_recommendations(
+        recommendationConfig.enablePermanentRecommendations);
+
+    grpc::Status reqStatus = stub_->ConfigureDdsSwitchRecommendation(&context, request, &response);
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS && !reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " configureDdsSwitchRecommendation request failed");
+        error = telux::common::ErrorCode::INTERNAL_ERROR;
+    }
+
+    return error;
 }
 
 telux::common::ErrorCode DualDataManagerStub::getDdsSwitchRecommendation(
     DdsSwitchRecommendation &ddsSwitchRecommendation) {
     LOG(DEBUG, __FUNCTION__);
-    return telux::common::ErrorCode::NOT_SUPPORTED;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " DualData manager not ready");
+        return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+    }
+    ::google::protobuf::Empty request;
+    ::dataStub::GetDdsSwitchRecommendationReply response;
+    grpc::ClientContext context;
+    grpc::Status reqStatus = stub_->GetDdsSwitchRecommendation(&context, request, &response);
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " getDdsSwitchRecommendation request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        } else {
+            const auto &info = response.dds_switch_recommendation();
+            ddsSwitchRecommendation.recommendedDdsInfo.slotId =
+                static_cast<SlotId>(info.recommended_dds_info().slot_id());
+            ddsSwitchRecommendation.recommendedDdsInfo.type =
+                static_cast<telux::data::DdsType>(info.recommended_dds_info().dds_type());
+
+            if (ddsSwitchRecommendation.recommendedDdsInfo.type ==
+                    telux::data::DdsType::TEMPORARY) {
+                ddsSwitchRecommendation.recommendationDetails.tempType =
+                    static_cast<telux::data::TemporaryRecommendationType>(
+                        info.recommendation_details().temp_type());
+                uint64_t tempCause = info.recommendation_details().temp_cause();
+                ddsSwitchRecommendation.recommendationDetails.tempCause =
+                    static_cast<telux::data::TemporaryRecommendationCauseCodes>(tempCause);
+                LOG(DEBUG, __FUNCTION__, "Temp type: ",
+                    static_cast<int>(ddsSwitchRecommendation.recommendationDetails.tempType),
+                    ", Temp cause: ", static_cast<int>(
+                        ddsSwitchRecommendation.recommendationDetails.tempCause));
+            } else if (ddsSwitchRecommendation.recommendedDdsInfo.type ==
+                telux::data::DdsType::PERMANENT) {
+                uint64_t permCause = info.recommendation_details().perm_cause();
+                ddsSwitchRecommendation.recommendationDetails.permCause =
+                    static_cast<telux::data::PermanentRecommendationCauseCodes>(permCause);
+                LOG(DEBUG, __FUNCTION__, "Perm cause: ",
+                    static_cast<int>(ddsSwitchRecommendation.recommendationDetails.permCause));
+            } else {
+                LOG(DEBUG, __FUNCTION__,"Unknown recommendation details for DDS type: ",
+                    static_cast<int>(ddsSwitchRecommendation.recommendedDdsInfo.type));
+            }
+        }
+    }
+    return error;
+}
+
+void DualDataManagerStub::invokeCallback(telux::common::ResponseCallback callback,
+    telux::common::ErrorCode error, int cbDelay ) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    auto f = std::async(std::launch::async,
+        [this, error , callback]() {
+            callback(error);
+        }).share();
+    taskQ_->add(f);
+}
+
+telux::common::Status DualDataManagerStub::requestDdsSwitch(
+    DdsInfo info, telux::common::ResponseCallback callback) {
+    LOG(INFO, __FUNCTION__);
+
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " DualData manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    ::dataStub::SetDdsSwitchRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+    request.set_slot_id(info.slotId);
+    request.set_switch_type(static_cast<int>(info.type));
+    request.set_operation_type(::dataStub::OperationType(oprType_));
+    grpc::Status reqStatus = stub_->SetDdsSwitch(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(response.error());
+    status = static_cast<telux::common::Status>(response.status());
+    delay = static_cast<int>(response.delay());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " DdsSwitch request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            auto f1 = std::async(std::launch::async,
+                [this, error, callback, delay]() {
+                    this->invokeCallback(callback, error, delay);
+                }).share();
+            taskQ_->add(f1);
+        }
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            this->onDdsChange(info);
+        }
+    }
+
+    return status;
+}
+
+telux::common::Status DualDataManagerStub::requestCurrentDds(
+    RequestCurrentDdsRespCb callback) {
+    LOG(INFO, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " DualData manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
+    telux::common::Status status = telux::common::Status::SUCCESS;
+    int delay;
+
+    ::dataStub::CurrentDdsSwitchRequest request;
+    ::dataStub::CurrentDdsSwitchResponse response;
+    ClientContext context;
+
+    request.set_operation_type(::dataStub::OperationType(oprType_));
+    grpc::Status reqStatus = stub_->RequestCurrentDdsSwitch(&context, request, &response);
+
+    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    status = static_cast<telux::common::Status>(response.reply().status());
+    delay = static_cast<int>(response.reply().delay());
+
+    DdsInfo ddsResponse;
+    ddsResponse.slotId = static_cast<SlotId>(response.slot_id());
+    ddsResponse.type = static_cast<DdsType>(response.current_switch());
+
+    if (status == telux::common::Status::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " Request DDS failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+
+        if (callback && (delay != SKIP_CALLBACK)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            auto f = std::async(std::launch::async,
+                [this, error, ddsResponse, callback]() {
+                   callback(ddsResponse, error);
+                }).share();
+            taskQ_->add(f);
+        }
+    }
+
+    return status;
+}
+
+void DualDataManagerStub::onDdsChange(DdsInfo currentState) {
+    LOG(DEBUG, __FUNCTION__);
+
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<IDualDataListener>> listeners;
+        listenerMgr_->getAvailableListeners(listeners);
+        LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners.size());
+        for (auto &wp : listeners) {
+            if (auto sp = wp.lock()) {
+                LOG(DEBUG,
+                    "DualData Manager: invoking onDdsChange");
+                sp->onDdsChange(currentState);
+            }
+        }
+    }
 }
 
 } // end of namespace data

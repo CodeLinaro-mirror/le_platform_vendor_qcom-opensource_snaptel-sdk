@@ -8,6 +8,20 @@
         },
         "getDualDataUsageRecommendation": {
             "error": "SUCCESS"
+        },
+        "requestDdsSwitch": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestCurrentDds": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureDdsSwitchRecommendation": {
+            "error": "SUCCESS"
+        },
+        "getDdsSwitchRecommendation": {
+            "error": "SUCCESS"
         }
     }
 }

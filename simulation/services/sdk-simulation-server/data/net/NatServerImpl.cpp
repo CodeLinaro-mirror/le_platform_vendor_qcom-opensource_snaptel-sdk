@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -91,10 +91,13 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
 
         int entryIdx = -1, currentEntryCount = 0, backhaul = 0;
         auto bh_info = request->static_nat_entry().backhaul_type();
+
         if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
             backhaul = WWAN_BH_IDX;
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
             backhaul = ETH_BH_IDX;
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
+            backhaul = WLAN_BH_IDX;
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
@@ -102,6 +105,7 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
 
         Json::Value newSnatEntry;
         if (!entryExists) {
+            LOG(DEBUG,__FUNCTION__,"bh_info::",bh_info);
             if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
                 newSnatEntry["profileId"] = request->static_nat_entry().profile_id();
                 newSnatEntry["slotId"] = request->static_nat_entry().slot_id();
@@ -172,6 +176,8 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
             backhaul = WWAN_BH_IDX;
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
             backhaul = ETH_BH_IDX;
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
+            backhaul = WLAN_BH_IDX;
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
@@ -237,6 +243,8 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
             backhaul = ETH_BH_IDX;
             vlan_id = request->vlan_id();
+        } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
+            backhaul = WLAN_BH_IDX;
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
@@ -256,6 +264,8 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
                 if (requestedNatEntry["vlanId"] == vlan_id) {
                     matched = true;
                 }
+            } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
+                    matched = true;
             }
 
             if (matched) {

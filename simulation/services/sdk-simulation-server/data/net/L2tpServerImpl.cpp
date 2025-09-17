@@ -251,15 +251,20 @@ grpc::Status L2tpServerImpl::AddTunnel(ServerContext* context,
                     newTunnel["peerIpv4GwAddr"] =
                         request->l2tp_tunnel_config().peer_ipv4_gw_addr();
                 } else if (ipFamily ==  "IPV6") {
-                    newTunnel["peerIpv6Addr"] =
-                        request->l2tp_tunnel_config().peer_ipv6_addr();
-                    newTunnel["peerIpv6GwAddr"] =
-                        request->l2tp_tunnel_config().peer_ipv6_gw_addr();
+                    if(protocol == "UDP"){
+                        newTunnel["peerIpv6Addr"] =
+                            request->l2tp_tunnel_config().peer_ipv6_addr();
+                        newTunnel["peerIpv6GwAddr"] =
+                            request->l2tp_tunnel_config().peer_ipv6_gw_addr();
+                    }
+                    else {
+                        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+                        break;
+                    }
                 }
 
                 newTunnel["locIface"] = request->l2tp_tunnel_config().loc_iface();
                 newTunnel["ipType"] = ipFamily;
-
                 int sessionIdx = 0;
                 for (auto& session: request->l2tp_tunnel_config().session_config()) {
                     //adding sessionconfig
@@ -272,7 +277,6 @@ grpc::Status L2tpServerImpl::AddTunnel(ServerContext* context,
 
                 data.stateRootObj[subsystem]["l2tpConfig"]["tunnelConfigs"][currentCount]
                     = newTunnel;
-
                 JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
             }
         } while (0);

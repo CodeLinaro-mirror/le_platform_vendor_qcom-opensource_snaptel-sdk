@@ -43,7 +43,7 @@ ExecStartPre=+/bin/chmod 660 /var/run/chrony.sock
 ExecStart=/usr/bin/chrony-sock -s
 Restart=on-failure
 SuccessExitStatus=SIGKILL
-SupplementaryGroups=system diag radio dlt logd
+SupplementaryGroups=system radio logd
 CapabilityBoundingSet=CAP_SYS_TIME
 AmbientCapabilities=CAP_SYS_TIME
 

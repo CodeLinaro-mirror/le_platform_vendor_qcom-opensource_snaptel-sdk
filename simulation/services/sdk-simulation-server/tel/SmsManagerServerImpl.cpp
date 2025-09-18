@@ -1028,18 +1028,20 @@ void SmsManagerServerImpl::handleMemoryFullEvent(std::string eventParams) {
         input = "UNKNOWN";
     }
 
-    ::telStub::memoryFullEvent memoryFullEvent;
-    ::eventService::EventResponse anyResponse;
-
     telux::tel::StorageType type = Helper::getstorageType(input);
-    memoryFullEvent.set_phone_id(slotId);
-    memoryFullEvent.set_storage_type(static_cast<telStub::StorageType::Type>(type));
-    anyResponse.set_filter("tel_sms");
-    anyResponse.mutable_any()->PackFrom(memoryFullEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
-    eventImpl.updateEventQueue(anyResponse);
-
+    if (type != telux::tel::StorageType::NONE) {
+        ::telStub::memoryFullEvent memoryFullEvent;
+        ::eventService::EventResponse anyResponse;
+        memoryFullEvent.set_phone_id(slotId);
+        memoryFullEvent.set_storage_type(static_cast<telStub::StorageType::Type>(type));
+        anyResponse.set_filter("tel_sms");
+        anyResponse.mutable_any()->PackFrom(memoryFullEvent);
+        //posting the event to EventService event queue
+        auto& eventImpl = EventService::getInstance();
+        eventImpl.updateEventQueue(anyResponse);
+    } else {
+        LOG(ERROR, __FUNCTION__, " Storage type is incorrect ");
+    }
 }
 
 int SmsManagerServerImpl::getNewSmsIndex(int phoneId, std::string storageName) {
@@ -1382,7 +1384,7 @@ grpc::Status SmsManagerServerImpl::IsMemoryFull(ServerContext *context,
         [maxCountName].asInt();
 
     uint32_t availableCount = maxCount - size;
-    if(availableCount == 0) {
+    if(availableCount == 0 && type != telux::tel::StorageType::NONE) {
         isMemoryFull = true;
     }
     //Create response

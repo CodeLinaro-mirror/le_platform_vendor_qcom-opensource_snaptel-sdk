@@ -1,0 +1,8 @@
+{
+    "ITetherManager": {
+        "BTTether" : {
+            "Status": "DOWN",
+            "Mode": "LAN"
+        }
+    }
+}

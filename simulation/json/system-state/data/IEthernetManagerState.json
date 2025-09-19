@@ -1,0 +1,42 @@
+{
+    "IEthernetManager": {
+        "getEthernetNicConfig": {
+            "eth_config": {
+                "interface_name": "eth0",
+                "mac_address": "00:1A:2B:3C:4D:5E",
+                "ip_address": "192.168.1.100",
+                "subnet_mask": "255.255.255.0",
+                "gateway_address": "192.168.1.1",
+                "dns_primary_address": "8.8.8.8",
+                "dns_secondary_address": "8.8.4.4"
+            }
+        },
+        "ActivateLAN": {
+            "is_active": true
+        },
+        "RegisterListener": {
+            "listeners": {
+                "1": "SERVICE_AVAILABLE",
+                "2": "SERVICE_AVAILABLE"
+            }
+        },
+        "GetOperationType": {
+            "operation_type": "LOCAL"
+        },
+        "StartEthernetConnection": {
+            "is_connected": true
+        },
+        "StopEthernetConnection": {
+            "is_connected": false
+        },
+        "RequestEthernetConnectionStatus": {
+            "connection_status": "CONNECTED"
+        },
+        "SetEthernetBackhaulPreference": {
+            "backhaul_preference": "PREF_ETH"
+        },
+        "GetEthernetBackhaulPreference": {
+            "backhaul_preference": "PREF_ETH"
+        }
+    }
+}

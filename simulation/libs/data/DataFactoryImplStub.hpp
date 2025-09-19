@@ -1,6 +1,6 @@
  /*
-  *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
-  *  SPDX-License-Identifier: BSD-3-Clause-Clear
+  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  * SPDX-License-Identifier: BSD-3-Clause-Clear
   */
 
 /**
@@ -83,6 +83,11 @@ class DataFactoryImplStub : public DataFactory,
 
     virtual std::shared_ptr<telux::data::IDataControlManager> getDataControlManager(
         telux::common::InitResponseCb clientCallback = nullptr) override;
+
+    virtual std::shared_ptr<telux::data::IEthernetManager> getEthernetManager(
+        telux::data::OperationType oprType,
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
  private:
     DataFactoryImplStub();
     ~DataFactoryImplStub();
@@ -116,6 +121,7 @@ class DataFactoryImplStub : public DataFactory,
         vlanManagerMap_;
     std::weak_ptr<telux::data::IDualDataManager> dualDataManager_;
     std::weak_ptr<telux::data::IDataControlManager> dataControlManager_;
+    std::weak_ptr<telux::data::IEthernetManager> ethernetManager_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
@@ -130,6 +136,10 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> dualDataCallbacks_;
     std::vector<telux::common::InitResponseCb> dataControlCallbacks_;
+    std::vector<telux::common::InitResponseCb> ethernetCallbacks_;
+    
+
+
 };
 
 }  // namespace data

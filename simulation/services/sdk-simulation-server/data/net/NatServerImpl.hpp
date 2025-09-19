@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear*
  */
 
 #ifndef NAT_MANAGER_SERVER_HPP
@@ -41,6 +41,26 @@ public:
     grpc::Status RequestStaticNatEntries(ServerContext* context,
         const dataStub::RequestStaticNatEntriesRequest* request,
         dataStub::RequestStaticNatEntriesReply* response) override;
+
+    grpc::Status RequestNatConfig(ServerContext* context,
+        const google::protobuf::Empty* request,
+        dataStub::RequestNatConfigReply* response) override;
+
+    grpc::Status RequestNatTimeoutValue(ServerContext* context,
+        const dataStub::NatTimeoutRequest* request,
+        dataStub::RequestNatTimeoutValueReply* response) override;
+
+    grpc::Status EnableNatConfig(ServerContext* context,
+        const dataStub::EnableNatConfigRequest* request,
+        dataStub::DefaultReply* response) override;
+
+    grpc::Status SetNatTimeout(ServerContext* context,
+        const dataStub::SetNatTimeoutRequest* request,
+        dataStub::DefaultReply* response) override;
+
+    grpc::Status SetNatType(ServerContext* context,
+        const dataStub::SetNatTypeRequest* request,
+        dataStub::DefaultReply* response) override;
 
 private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;

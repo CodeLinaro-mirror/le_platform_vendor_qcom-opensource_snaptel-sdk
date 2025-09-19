@@ -14,6 +14,29 @@
         "requestStaticNatEntries": {
             "error": "SUCCESS",
             "status": "SUCCESS"
+        },
+        "requestNatConfig": {
+            "error": "SUCCESS",
+            "status": "SUCCESS",
+            "nat_type": "FULL_CONE",
+            "is_nat_enabled": true
+        },
+        "requestNatTimeoutValue": {
+            "error": "SUCCESS",
+            "status": "SUCCESS",
+            "timeout_value": 30
+        },
+        "enableNatConfig": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "setNatTimeout": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "setNatType": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

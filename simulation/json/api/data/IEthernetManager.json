@@ -1,0 +1,63 @@
+{
+    "IEthernetManager": {
+        "InitService": "SERVICE_AVAILABLE",
+        "InitServiceDelay": 400,
+        "GetServiceStatus": "SERVICE_AVAILABLE",
+        "GetServiceStatusDelay": 400,
+        "DefaultCallbackDelay": 400,
+        "setEthernetNicConfig": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "getEthernetNicConfig": {
+            "error": "SUCCESS",
+            "status": "SUCCESS",
+            "eth_config": {
+                "interface_name": "eth0",
+                "mac_address": "00:1A:2B:3C:4D:5E",
+                "ip_address": "192.168.1.100",
+                "subnet_mask": "255.255.255.0",
+                "gateway_address": "192.168.1.1",
+                "dns_primary_address": "8.8.8.8",
+                "dns_secondary_address": "8.8.4.4"
+            }
+        },
+        "ActivateLAN": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "RegisterListener": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "DeregisterListener": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "GetOperationType": {
+            "operation_type": "DATA_LOCAL"
+        },
+        "StartEthernetConnection": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "StopEthernetConnection": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "RequestEthernetConnectionStatus": {
+            "error": "SUCCESS",
+            "status": "SUCCESS",
+            "connection_status": "CONNECTED"
+        },
+        "SetEthernetBackhaulPreference": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "GetEthernetBackhaulPreference": {
+            "error": "SUCCESS",
+            "status": "SUCCESS",
+            "backhaul_preference": "PREF_ETH"
+        }
+    }
+}

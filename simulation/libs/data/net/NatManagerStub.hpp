@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef NAT_MANAGER_STUB_HPP
@@ -20,7 +20,7 @@ namespace net {
 class NatManagerStub : public INatManager,
                        public INatListener {
 public:
-    NatManagerStub (telux::data::OperationType oprType);
+    NatManagerStub(telux::data::OperationType oprType);
     ~NatManagerStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -32,7 +32,7 @@ public:
     telux::common::Status registerListener(std::weak_ptr<INatListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<INatListener> listener) override;
 
-    void onServiceStatusChange(ServiceStatus status);
+    void onServiceStatusChange(telux::common::ServiceStatus status);
 
     telux::data::OperationType getOperationType() override;
 
@@ -55,6 +55,16 @@ public:
 
     telux::common::Status requestStaticNatEntries(const BackhaulInfo &bhInfo, StaticNatEntriesCb
             snatEntriesCb) override;
+
+    telux::common::Status requestNatConfig(RequestNatConfigStatusCb requestNatConfigCb) override;
+    telux::common::Status requestNatTimeoutValue(NatTimeout timeoutType,
+        RequestNatTimeoutValueCb requestNatTimeoutValueCb) override;
+    telux::common::Status enableNatConfig(bool enable,
+        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setNatTimeout(NatTimeout timeoutType,
+        uint32_t timeoutValue, telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setNatType(NatType natType,
+        telux::common::ResponseCallback callback = nullptr) override;
 
 private:
     std::mutex mtx_;

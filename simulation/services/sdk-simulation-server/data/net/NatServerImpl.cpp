@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -272,6 +272,150 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
     response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
     response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->mutable_reply()->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::RequestNatConfig(ServerContext* context,
+    const google::protobuf::Empty* request,
+    dataStub::RequestNatConfigReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "requestNatConfig";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        response->mutable_reply()->set_nat_type(data.stateRootObj[subsystem]["natConfig"]["nat_type"].asString());
+        response->set_is_nat_enabled(data.stateRootObj[subsystem]["natConfig"]["is_nat_enabled"].asBool());
+    }
+
+    response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
+    response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->mutable_reply()->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::RequestNatTimeoutValue(ServerContext* context,
+    const dataStub::NatTimeoutRequest* request,
+    dataStub::RequestNatTimeoutValueReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "requestNatTimeoutValue";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        response->set_timeout_value(data.stateRootObj[subsystem]["natTimeout"]["timeout_value"].asInt());
+    }
+
+    response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
+    response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->mutable_reply()->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::EnableNatConfig(ServerContext* context,
+    const dataStub::EnableNatConfigRequest* request,
+    dataStub::DefaultReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "enableNatConfig";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj[subsystem]["natConfig"]["is_nat_enabled"] = request->enable();
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::SetNatTimeout(ServerContext* context,
+    const dataStub::SetNatTimeoutRequest* request,
+    dataStub::DefaultReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "setNatTimeout";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj[subsystem]["natTimeout"]["timeout_value"] = request->timeout_value();
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NatServerImpl::SetNatType(ServerContext* context,
+    const dataStub::SetNatTypeRequest* request,
+    dataStub::DefaultReply* response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
+    std::string subsystem = "INatManager";
+    std::string method = "setNatType";
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.status == telux::common::Status::SUCCESS &&
+        data.error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj[subsystem]["natConfig"]["nat_type"] = request->nat_type();
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
 
     return grpc::Status::OK;
 }

@@ -34,7 +34,8 @@ address to a VLAN in NAD-1.
                 << "\n gwAddress: " << it.gwAddress
                 << "\n ifMask: " << it.ifMask
                 << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << std::endl;
+                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                << "\n mtuValue: " << it.mtu << std::endl;
         }
 
         std::cout << " IP family type: " <<

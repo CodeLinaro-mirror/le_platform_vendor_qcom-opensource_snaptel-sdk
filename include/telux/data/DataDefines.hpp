@@ -255,6 +255,7 @@ struct IpAddrInfo {
     unsigned int gwMask = 0;         /**< Subnet mask.          */
     std::string primaryDnsAddress;   /**< Primary DNS address.  */
     std::string secondaryDnsAddress; /**< Secondary DNS address.*/
+    uint16_t mtu = 0;                /**< MTU value.            */
 };
 
 /**

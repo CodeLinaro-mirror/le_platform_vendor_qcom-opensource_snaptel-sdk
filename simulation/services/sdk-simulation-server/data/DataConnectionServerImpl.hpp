@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_CONNECTION_SERVER_HPP
@@ -55,10 +55,12 @@ struct DataCallParams {
     std::string v4GwAddress;
     std::string v4dnsPrimaryAddress;
     std::string v4dnsSecondaryAddress;
+    uint16_t v4MtuValue;
     std::string v6IpAddress;
     std::string v6GwAddress;
     std::string v6dnsPrimaryAddress;
     std::string v6dnsSecondaryAddress;
+    uint16_t v6MtuValue;
     std::set<int> ownersId;
 };
 
@@ -130,10 +132,10 @@ public:
 private:
     bool getIpv4Address(const std::string &ifaceName,
         std::string &ipAddress, std::string &gatewayAddress,
-        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress);
+        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue);
     bool getIpv6Address(const std::string &ifaceName,
         std::string &ipAddress, std::string &gatewayAddress,
-        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress);
+        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue);
 
     void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
         unsigned int client_id, std::string ifaceName = "");

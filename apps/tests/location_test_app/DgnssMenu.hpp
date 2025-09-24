@@ -92,8 +92,10 @@ private:
    std::shared_ptr<NmeaInfoListener> nmeaInfoListener_ = nullptr;
    int ntcSocketFd_ = -1;
    int dgnssSourceFd_ = -1;
+   int msg_type_ = 0;
    bool stop_ = false;
    bool reconnect_ = false;
+   DgnssStatus status_ = DgnssStatus::DGNSS_STATUS_UNKNOWN;
    DgnssSourceType dgnssSourceType_;
 
 

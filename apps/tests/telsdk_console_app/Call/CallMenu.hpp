@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Call Menu class provides dialer functionality of the SDK
  * it has menu options for dial, answer, hangup, reject, conference and swap calls
@@ -51,6 +57,7 @@ private:
    void rejectWithSms(std::vector<std::string> userInput);
    void hangupDialingOrAlerting(std::vector<std::string> userInput);
    void hangupWithCallIndex(std::vector<std::string> userInput);
+   void hangupForegroundResumeBackground(std::vector<std::string> userInput);
    void holdCall(std::vector<std::string> userInput);
    void conference(std::vector<std::string> userInput);
    void swap(std::vector<std::string> userInput);

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -39,6 +45,7 @@ extern "C" {
 #include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
@@ -280,4 +287,14 @@ void MyCallCommandCallback::commandResponse(telux::common::ErrorCode error) {
    }
    PRINT_NOTIFICATION << commandName_ << " operation - ErrorCode " << (int)error
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void MyHangupCallback::hangupFgResumeBgResponse(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << " Hangup foreground resume background request executed successfully \n";
+    } else {
+        PRINT_CB << " Hangup foreground resume background request failed with error: "
+                 << Utils::getErrorCodeAsString(error) << "\n";
+   }
 }

@@ -174,7 +174,8 @@ void ECallApp::makeECall() {
     }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
-    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+    std::vector<uint8_t> msdPdu;
+    if (telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd, msdPdu)) {
         return;
     }
 
@@ -182,8 +183,9 @@ void ECallApp::makeECall() {
     int phoneId = getPhoneId();
 
     std::cout << "eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd);
-    if(ret != telux::common::Status::SUCCESS) {
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd,
+        msdPdu);
+    if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
         std::cout << "ECall request is successful" << std::endl;
@@ -206,7 +208,8 @@ void ECallApp::makeCustomNumberECall() {
     }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
-    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+    std::vector<uint8_t> msdPdu;
+    if (telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd, msdPdu)) {
         return;
     }
     // Get phone number from user
@@ -222,8 +225,8 @@ void ECallApp::makeCustomNumberECall() {
     int phoneId = getPhoneId();
 
     std::cout << "Custom number eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber, transmitMsd);
-    if(ret != telux::common::Status::SUCCESS) {
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber, transmitMsd, msdPdu);
+    if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
         std::cout << "ECall request is successful" << std::endl;
@@ -586,7 +589,8 @@ int ECallApp::getEcallCategory(telux::tel::ECallCategory &emergencyCategory) {
 /**
  * Function to configure MSD transmission at call connect
  */
-telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
+telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd,
+    std::vector<uint8_t> &msdPdu) {
     char delimiter = '\n';
     std::string temp;
     int opt = -1;
@@ -612,6 +616,10 @@ telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
     } else {
         std::cout << "Invalid MSD transmission configuration" << std::endl;
         return telux::common::Status::FAILED;
+    }
+    if(transmitMsd) {
+        // Request for MSD PDU. If provided, use it for MSD transmission at call connect.
+        msdPdu = getMsdPduInput();
     }
     return telux::common::Status::SUCCESS;
 }
@@ -656,6 +664,23 @@ telux::common::Status ECallApp::getIntegerInput(uint32_t &value, std::string pro
 void signalHandler(int sig) {
     ECallApp::getInstance().cleanup();
     exit(1);
+}
+
+/**
+ * Utility function to get user input for MSD PDU
+ */
+std::vector<uint8_t> ECallApp::getMsdPduInput() {
+    char delimiter = '\n';
+    std::vector<uint8_t> msdPdu;
+    std::string temp = "";
+    std::cout << "Enter MSD PDU in hexadecimal format (optional): ";
+    std::getline(std::cin, temp, delimiter);
+    if (temp.empty()) {
+        std::cout << "No input received for MSD PDU, proceeding with default MSD " << std::endl;
+    } else {
+        msdPdu = Utils::convertHexToBytes(temp);
+    }
+    return msdPdu;
 }
 
 void setupSignalHandler() {

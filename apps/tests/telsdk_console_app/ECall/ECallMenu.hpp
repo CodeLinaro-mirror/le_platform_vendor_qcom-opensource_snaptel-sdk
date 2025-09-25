@@ -149,11 +149,6 @@ private:
    void removeCallListener(std::shared_ptr<telux::tel::ICallListener> listener);
 
    /**
-    * Convert the hexadecimal string to bytes
-    */
-   std::vector<uint8_t> convertHexToBytes(std::string msdData);
-
-   /**
     * This method is useful to trim the spaces in options and converting them into LOWERCASE
     */
    std::string toLowerCase(std::string inputOption);

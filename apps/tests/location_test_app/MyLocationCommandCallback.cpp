@@ -67,7 +67,7 @@
 #include <iomanip>
 
 #include "MyLocationCommandCallback.hpp"
-#include "../telsdk_console_app/Utils.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 

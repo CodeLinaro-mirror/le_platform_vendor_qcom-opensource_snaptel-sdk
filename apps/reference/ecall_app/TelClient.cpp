@@ -40,6 +40,7 @@
  *          It manages the telephony subsystem using Telematics-SDK APIs.
  */
 
+#include <iomanip>
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -405,6 +406,17 @@ void TelClient::hlapTimerStatusResponse(telux::common::ErrorCode error, int phon
     std::cout << CLIENT_NAME << infoStr << std::endl;
 }
 
+// Callback which provides response for restart of HLAP timer
+void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
+    }
+}
+
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
                                 ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -664,4 +676,42 @@ telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
         TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
     }
     return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to restart eCall HLAP timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->restartECallHlapTimer(phoneId, id, duration,
+        std::bind(&TelClient::restartHlapTimerResponse, this, std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
+    std::vector<uint8_t> &msdPdu) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get encoded eCall"
+            << " MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    auto errCode = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
+    std::vector<uint8_t> msdPayload = msdPdu;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get encoded eCall MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    } else {
+        std::stringstream ss;
+        for (auto i : msdPdu) {
+            ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (int)i;
+        }
+        TelClientUtils::printECallMsdPayload(ss.str());
+    }
+    return telux::common::ErrorCode::SUCCESS;
 }

@@ -507,9 +507,6 @@ public:
     * Bulletin TB 040. Client needs to pass this vector of bytes to the data field of the
     * ECallOptionalPdu. @ref telux::tel::ECallOptionalPdu::data
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-    * permission to invoke this API successfully.
-    *
     * @param [in] optionalEuroNcapData   ECall optional additional data as per Euro NCAP
     *                                    Technical Bulletin TB 040.
                                          @ref telux::tel::ECallOptionalEuroNcapData
@@ -524,6 +521,58 @@ public:
     virtual telux::common::Status encodeEuroNcapOptionalAdditionalData(
         telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData,
         std::vector<uint8_t> &data) = 0;
+
+   /**
+    * Gets encoded bytes of eCall MSD according to EN 15722:2015 (MSD version 2) and
+    * EN 15722:2020 (MSD version 3).
+    *
+    * @param [in] eCallMsdData   eCall MSD data. @ref telux::tel::ECallMsdData
+    * @param [out] data          Encoded bytes of eCall MSD.
+    *
+    * @returns error code for encodeECallMsd i.e. success or suitable error code.
+    * Below are possible error codes.
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ErrorCode encodeECallMsd(telux::tel::ECallMsdData eCallMsdData,
+       std::vector<uint8_t> &data) = 0;
+
+   /**
+    * Restart T9 and T10 eCall High Level Application Protocol (HLAP) timers with residual timer
+    * duration. Application is expected to maintain residual timer information and resume the
+    * timers during events like modem reset or transition of device operating mode from low power
+    * mode to online.
+    *
+    * Notes:
+    * 1. Application must restart timer according to eCall operating mode of device.
+    *    T10 eCall HLAP timer must be restarted only when eCall operating mode is
+    *    @ref telux::tel::ECallMode::ECALL_ONLY.
+    * 2. Application must validate the residual timer value before calling the API to prevent
+    *    invalid data being processed.
+    * 3. T9 eCall HLAP timer cannot be restarted after transition of device operating mode from
+    *    low power mode to online.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to invoke this API successfully.
+    *
+    * @param [in] timerId - Represents the timer which is required to be restarted by
+    *                       application. @ref telux::tel::EcallHlapTimerId.
+    * @param [in] duration - Remaining time duration in seconds for the timer to run.
+    * @param [in] callback - Callback function to get the response of the restartECallHlapTimer
+    *                        request.
+    *
+    * @returns Status of restartECallHlapTimer i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
+        int duration, common::ResponseCallback callback = nullptr ) = 0;
 
    /**
     * Add a listener to listen for incoming call, call info change and eCall MSD

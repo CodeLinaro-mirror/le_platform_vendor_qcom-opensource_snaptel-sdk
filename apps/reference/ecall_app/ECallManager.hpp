@@ -146,6 +146,27 @@ public:
      */
     telux::common::Status getEncodedOptionalAdditionalDataContent();
 
+    /**
+     * Gets encoded eCall MSD payload.
+     *
+     * @returns Error code for getECallMsdPayload i.e success or suitable
+     * status code.
+     *
+     */
+    telux::common::ErrorCode getECallMsdPayload();
+
+   /**
+    * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
+    *
+    * @param [in] phoneId     Represents phone corresponding to which eCall operation is performed
+    * @param [in] id          Timer ID
+    * @param [in] duration    Time gap between two successive redial attempts
+    *
+    * @returns Status for restartECallHlapTimer i.e success or suitable status code.
+    *
+    */
+   telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;

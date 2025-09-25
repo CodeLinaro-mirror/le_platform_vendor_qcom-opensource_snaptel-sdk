@@ -185,7 +185,6 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
             return telux::common::Status::FAILED;
         }
     }
-    phoneId_ = phoneId;
     setup(phoneId);
     auto status = telClient_->answer(phoneId_, shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
@@ -292,11 +291,41 @@ telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
+    int duration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->restartECallHlapTimer(phoneId, id, duration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME
+            << "Failed to send request to restart eCall HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode ECallManager::getECallMsdPayload() {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    std::vector<uint8_t> msdPdu = {};
+    auto errCode = telClient_->getECallMsdPayload(msdData_, msdPdu);
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get eCall MSD payload" << std::endl;
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return telux::common::ErrorCode::SUCCESS;
+}
+
 /**
  * Function to enable necessary functionalities in various subsystems(location, audio, etc.),
  * that are required for an eCall
  */
 void ECallManager::setup(int phoneId) {
+    phoneId_ = phoneId;
     // Start voice session
     if(!audioClient_) {
         std::cout << CLIENT_NAME << "Invalid Audio Client, cannot establish voice conversation"

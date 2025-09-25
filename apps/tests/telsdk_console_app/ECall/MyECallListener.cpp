@@ -528,6 +528,13 @@ std::string MyECallListener::getCurrentTime() {
    return std::string(currTime);
 }
 
+void MyECallListener::onEmergencyNetworkScanFail(int phoneId) {
+    std::cout << "\n";
+    PRINT_NOTIFICATION << "onEmergencyNetworkScanFail called \n"
+                       << "Network scan completed and no service reported on slotId: " << phoneId
+                       << std::endl;
+}
+
 void MyECallListener::onEcbmChange(telux::tel::EcbMode mode) {
    std::cout << "\n";
    if (static_cast<int>(mode)) {

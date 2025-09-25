@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELCLIENT_HPP
@@ -68,9 +38,30 @@
 
 #include <telux/tel/CallManager.hpp>
 #include <telux/tel/EcallManager.hpp>
+#include <telux/tel/MultiSimManager.hpp>
 
 using namespace telux::common;
 using namespace telux::tel;
+
+/**
+ * Data structure to cache all the information when an ecall is initiated, when an emergency
+ * network scan fail indication is reported, when high capability switch is required.
+ */
+struct ECallInfo {
+   bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
+   ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
+                                   required to construct an MSD */
+   bool isCustomNumber;       /**< Set to true if client is dialing*/
+   std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
+   ECallCategory category;    /**< ECall Category ie., automatic or normal */
+   ECallVariant variant;      /**< ECall Variant ie., test or emergency or voice call */
+   bool eCallNWScanFailed;   /**< Set to true if the emergency network scan fail indication is
+                                   reported */
+   bool triggerHighCapSwitch; /**< Set to true if high capability switch is required */
+   ECallMsdTransmissionStatus msdTransmissionStatus;
+                              /**< MSD transmission status */
+
+};
 
 /** Listener class that provides eCall call status updates */
 class CallStatusListener {
@@ -79,6 +70,12 @@ public:
      * This function is called when the eCall is disconnected/ends
      */
     virtual void onCallDisconnect() {
+    }
+
+    /** This function is called when the eCall connection is in progress i.e, during redial from
+     * application or modem
+     */
+    virtual void onCallConnect(int phoneId) {
     }
 
     /**
@@ -161,12 +158,20 @@ public:
     /**
      * This function is used to hangup an ongoing call
      *
-     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     * @param [in] phoneId    Represents phone corresponding to which the operation is performed
+     * @param [in] callIndex  Represents the call on which the operation is performed
      *
      * @returns Status of hangup i.e success or suitable status code.
      *
      */
-    telux::common::Status hangup(int phoneId);
+    telux::common::Status hangup(int phoneId, int callIndex);
+
+    /**
+     * This function dumps the list of calls in progress
+     *
+     * @returns Status of getCurrentCalls i.e success or suitable status code.
+     */
+    telux::common::Status getCurrentCalls();
 
     /**
      * This function requests status of various eCall HLAP timers
@@ -217,6 +222,14 @@ public:
      */
     bool isECallInProgress();
 
+    /**
+     * This function provides the direction of the eCall in progress.
+     *
+     * @returns Call direction. CallDirection::NONE if no eCall is in progress.
+     *
+     */
+    telux::tel::CallDirection getECallDirection();
+
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
@@ -238,7 +251,9 @@ private:
     class AnswerCommandCallback : public telux::common::ICommandResponseCallback {
     public:
         void commandResponse(telux::common::ErrorCode error) override;
-        std::shared_ptr<TelClient> eCallTelClient_;
+        AnswerCommandCallback(std::weak_ptr<TelClient> telClient);
+    private:
+        std::weak_ptr<TelClient> eCallTelClient_;
     };
     std::shared_ptr<AnswerCommandCallback> answerCommandCallback_;
 
@@ -267,6 +282,46 @@ private:
     bool eCallInprogress_;
     std::mutex mutex_;
     std::shared_ptr<CallStatusListener> callListener_;
+
+    //Map to hold the ongoing eCall Info w.r.t phoneId
+    std::map<int, ECallInfo> eCallDataMap_;
+
+    class EcallScanFailHandler :  public ICallListener,
+                                  public std::enable_shared_from_this<EcallScanFailHandler> {
+    public:
+        telux::common::Status init();
+       /**
+        * This function is called whenever there is a scan failure after one round of network scan
+        * during origination of emergency call or at any time during the emergency call.
+        *
+        * During origination of an ecall or in between an ongoing ecall, if the UE is in an area of
+        * no/poor coverage and loses service, the modem will perform network scan and try toi
+        * register on any available network.
+        * If the scan completes successfully and the device finds a suitable cell, the ecall will be
+        * placed and the call state changes to the active state.
+        * If the network scan fails then this function will be invoked after one round of network
+        * scan.
+        *
+        * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
+        *
+        */
+        void onEmergencyNetworkScanFail(int phoneId) override;
+        EcallScanFailHandler(std::weak_ptr<TelClient> telClient);
+        ~EcallScanFailHandler();
+    private:
+        telux::common::Status setHighCapability(int phoneId);
+        telux::common::Status requestHighCapability();
+
+        void setHighCapabilityResponse(telux::common::ErrorCode error);
+        void requestHighCapabilityResponse(int slotId, telux::common::ErrorCode error);
+
+        void onCallInfoChange(std::shared_ptr<ICall> call);
+        /** Member variable to hold MultiSimManager object */
+        std::shared_ptr<telux::tel::IMultiSimManager> multiSimMgr_ = nullptr;
+        std::weak_ptr<TelClient> eCallTelClient_;
+    };
+
+    std::shared_ptr<EcallScanFailHandler> eCallScanFailHdlrInstance_;
 };
 
 #endif  // TELCLIENT_HPP

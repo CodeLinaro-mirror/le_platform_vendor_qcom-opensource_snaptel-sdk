@@ -74,6 +74,15 @@
 #include <telux/tel/PhoneFactory.hpp>
 
 #include "CallMenu.hpp"
+#include <telux/common/DeviceConfig.hpp>
+
+#define MIN_SIM_SLOT_COUNT 1
+#define MAX_SIM_SLOT_COUNT 2
+
+//Minimum number of calls required to perform conference or swap
+#define MIN_PROGRESS_CALLS 2
+//Specific to DSDA, incase of two simultaneous incoming calls in accept,reject scenario
+#define NO_OF_SIMULTANEOUS_INCOMING_CALL 2
 
 CallMenu::CallMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -233,48 +242,97 @@ void CallMenu::dial(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    const std::string phoneNumber = userInput[1];
    int phoneId = DEFAULT_PHONE_ID;
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
 
-   if (phoneIds_.size() > 1) {
-       std::string slotSelection;
-       char delimiter = '\n';
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
 
-       std::cout << "Enter the desired Phone ID / SIM slot: ";
-       std::getline(std::cin, slotSelection, delimiter);
-
-       if (!slotSelection.empty()) {
-          try {
-             phoneId = std::stoi(slotSelection);
-             if (phoneId > 2) {
-                std::cout << "Invalid slot entered, using default slot" << std::endl;
-                phoneId = DEFAULT_SLOT_ID;
-             }
-          } catch (const std::exception &e) {
-             std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
-                << slotSelection << std::endl;
-             return;
-          }
-       } else {
-          std::cout << "Empty input, enter the correct slot" << std::endl;
-       }
+         if (!slotSelection.empty()) {
+            try {
+               phoneId = std::stoi(slotSelection);
+               if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                  std::cout << "ERROR: Invalid slot entered" << std::endl;
+                  return;
+               }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
    }
    telux::common::Status makeCallStatus
       = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
    std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
-                                                                  : "MakeCall failed")
-             << '\n';
+                                                                  : "MakeCall failed") << '\n';
 }
 
 void CallMenu::acceptCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   // Fetch the list of in progress calls from CallManager and accept the incoming/waiting call.
-   for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
-       ++callIterator) {
-      if(((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
-         ||((*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING)) {
-         spCall = *callIterator;
-         break;
+    if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         // Fetch the list of in progress calls from CallManager and count the
+         // number of incoming calls.
+         int incomingCalls = 0;
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
+               ++incomingCalls;
+         }
+         //Incase of two simultaneous incoming calls, user to select the slotId on
+         // which to accept the call
+         if(incomingCalls >= NO_OF_SIMULTANEOUS_INCOMING_CALL) {
+            std::string slotSelection;
+            char delimiter = '\n';
+            int phoneId = DEFAULT_PHONE_ID;
+
+            std::cout << "Enter the desired Phone ID / SIM slot: ";
+            std::getline(std::cin, slotSelection, delimiter);
+
+            if (!slotSelection.empty()) {
+               try {
+                  phoneId = std::stoi(slotSelection);
+                  if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                     std::cout << "ERROR: Invalid slot entered" << std::endl;
+                     return;
+                  }
+               } catch (const std::exception &e) {
+                  std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                     << slotSelection << std::endl;
+                  return;
+               }
+            } else {
+               std::cout << "Empty input, enter the correct slot" << std::endl;
+               return;
+            }
+            for(auto callIterator = std::begin(inProgressCalls);
+                callIterator != std::end(inProgressCalls); ++callIterator) {
+               if((*callIterator)->getPhoneId() == phoneId
+                  && (*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+                     spCall = *callIterator;
+                     break;
+               }
+            }
+         }
+      }
+   }
+   if(nullptr == spCall) {
+      // Fetch the list of in progress calls from CallManager and accept the incoming call.
+      for(auto callIterator = std::begin(inProgressCalls);
+          callIterator != std::end(inProgressCalls); ++callIterator) {
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+            spCall = *callIterator;
+            break;
+         }
       }
    }
    if(spCall) {
@@ -286,15 +344,64 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
 
 void CallMenu::rejectCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-   // Fetch the list of in progress calls from CallManager and reject the incoming/waiting call.
+   // Fetch the list of in progress calls from CallManager and reject the incoming call.
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
-       ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
-         || (*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING) {
-         spCall = *callIterator;
-         break;
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         // Fetch the list of in progress calls from CallManager and count the
+         // number of incoming calls.
+         int incomingCalls = 0;
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
+               ++incomingCalls;
+         }
+         //Incase of two simultaneous incoming calls, user to select the slotId on
+         // which to reject the call
+         if(incomingCalls >= NO_OF_SIMULTANEOUS_INCOMING_CALL) {
+            std::string slotSelection;
+            char delimiter = '\n';
+            int phoneId = DEFAULT_PHONE_ID;
+
+            std::cout << "Enter the desired Phone ID / SIM slot: ";
+            std::getline(std::cin, slotSelection, delimiter);
+
+            if (!slotSelection.empty()) {
+               try {
+                  phoneId = std::stoi(slotSelection);
+                  if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                     std::cout << "ERROR: Invalid slot entered" << std::endl;
+                     return;
+                  }
+               } catch (const std::exception &e) {
+                  std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                     << slotSelection << std::endl;
+                  return;
+               }
+            } else {
+               std::cout << "Empty input, enter the correct slot" << std::endl;
+               return;
+            }
+            for(auto callIterator = std::begin(inProgressCalls);
+                callIterator != std::end(inProgressCalls); ++callIterator) {
+               if((*callIterator)->getPhoneId() == phoneId
+                  && (*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+                     spCall = *callIterator;
+                     break;
+               }
+            }
+         }
+      }
+   }
+   if(nullptr == spCall) {
+      // Fetch the list of in progress calls from CallManager and accept the incoming call.
+      for(auto callIterator = std::begin(inProgressCalls);
+          callIterator != std::end(inProgressCalls); ++callIterator) {
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+            spCall = *callIterator;
+            break;
+         }
       }
    }
    if(spCall) {
@@ -306,16 +413,64 @@ void CallMenu::rejectCall(std::vector<std::string> userInput) {
 
 void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-   // Fetch the list of in progress calls from CallManager and reject the incoming/waiting call with
-   // sms.
+   // Fetch the list of in progress calls from CallManager and reject the incoming call.
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
-       ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
-         ||(*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING) {
-         spCall = *callIterator;
-         break;
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         // Fetch the list of in progress calls from CallManager and count the
+         // number of incoming calls.
+         int incomingCalls = 0;
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
+               ++incomingCalls;
+         }
+         //Incase of two simultaneous incoming calls, user to select the slotId on
+         // which to reject the call with sms
+         if(incomingCalls >= NO_OF_SIMULTANEOUS_INCOMING_CALL) {
+            std::string slotSelection;
+            char delimiter = '\n';
+            int phoneId = DEFAULT_PHONE_ID;
+
+            std::cout << "Enter the desired Phone ID / SIM slot: ";
+            std::getline(std::cin, slotSelection, delimiter);
+
+            if (!slotSelection.empty()) {
+               try {
+                  phoneId = std::stoi(slotSelection);
+                  if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                     std::cout << "ERROR: Invalid slot entered" << std::endl;
+                     return;
+                  }
+               } catch (const std::exception &e) {
+                  std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                     << slotSelection << std::endl;
+                  return;
+               }
+            } else {
+               std::cout << "Empty input, enter the correct slot" << std::endl;
+               return;
+            }
+            for(auto callIterator = std::begin(inProgressCalls);
+                callIterator != std::end(inProgressCalls); ++callIterator) {
+               if((*callIterator)->getPhoneId() == phoneId
+                  && (*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+                     spCall = *callIterator;
+                     break;
+               }
+            }
+         }
+      }
+   }
+   if(nullptr == spCall) {
+      // Fetch the list of in progress calls from CallManager and accept the incoming call.
+      for(auto callIterator = std::begin(inProgressCalls);
+          callIterator != std::end(inProgressCalls); ++callIterator) {
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+            spCall = *callIterator;
+            break;
+         }
       }
    }
    if(spCall) {
@@ -332,11 +487,40 @@ void CallMenu::hangupDialingOrAlerting(std::vector<std::string> userInput) {
    // in Dialing or Alerting state
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() != telux::tel::CallState::CALL_ENDED) {
-         noOfExistingCalls++;
-         spCall = *callIterator;
+      if((*callIterator)->getCallState() != telux::tel::CallState::CALL_ENDED
+         && (*callIterator)->getPhoneId() == phoneId) {
+            noOfExistingCalls++;
+            spCall = *callIterator;
       }
    }
    if(noOfExistingCalls > 1) {
@@ -364,9 +548,38 @@ void CallMenu::hangupWithCallIndex(std::vector<std::string> userInput) {
    // in Dialing or Alerting state
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+    int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallIndex() == callIndex) {
+      if((*callIterator)->getCallIndex() == callIndex
+         && (*callIterator)->getPhoneId() == phoneId) {
          spCall = *callIterator;
          break;
       }
@@ -374,7 +587,7 @@ void CallMenu::hangupWithCallIndex(std::vector<std::string> userInput) {
    if(spCall) {
       spCall->hangup(myHangupCb_);
    } else {
-      std::cout << "No call found with given index" << std::endl;
+      std::cout << "No call found with given index/slot" << std::endl;
    }
 }
 
@@ -382,11 +595,40 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
-         spCall = *callIterator;
-         break;
+      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
+         && (*callIterator)->getPhoneId() == phoneId) {
+            spCall = *callIterator;
+            break;
       }
    }
    if(spCall) {
@@ -399,21 +641,52 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
 void CallMenu::conference(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   if(inProgressCalls.size() < 2) {
-      std::cout << "getInProgressCalls does not have 2 calls" << std::endl;
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   } else {
+      if(inProgressCalls.size() < MIN_PROGRESS_CALLS) {
+         std::cout << "getInProgressCalls does not have 2 calls" << std::endl;
+         return;
+      }
    }
    // Iterate through the call list find the call that is active and the first call that is
    // on hold then conference both the calls
    std::shared_ptr<telux::tel::ICall> spCall1, spCall2;
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
-         spCall1 = *callIterator;
-         continue;
-      }
-
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
-         spCall2 = *callIterator;
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
+            spCall1 = *callIterator;
+            continue;
+         }
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
+            spCall2 = *callIterator;
+         }
       }
       if(spCall1 != nullptr && spCall2 != nullptr) {
          break;
@@ -429,21 +702,53 @@ void CallMenu::conference(std::vector<std::string> userInput) {
 void CallMenu::swap(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   if(inProgressCalls.size() < 2) {
-      std::cout << "call list does not have 2 calls" << std::endl;
-   }
    // Iterate through the call list find the call that is active and the first call that is
    // on hold
    // Swap the answer and on-hold calls
    std::shared_ptr<telux::tel::ICall> spCall1, spCall2;
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   } else {
+      if(inProgressCalls.size() < MIN_PROGRESS_CALLS) {
+         std::cout << "getInProgressCalls does not have 2 calls" << std::endl;
+         return;
+      }
+   }
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
-         spCall1 = *callIterator;
-         continue;
-      }
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
-         spCall2 = *callIterator;
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
+            spCall1 = *callIterator;
+            continue;
+         }
+         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
+            spCall2 = *callIterator;
+         }
       }
       if(spCall1 != nullptr && spCall2 != nullptr) {
          break;
@@ -469,7 +774,8 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                       ->getCallStateString((*callIterator)->getCallState())
                 << " Call Index: " << (int)(*callIterator)->getCallIndex()
                 << " Call Direction: " << (int)(*callIterator)->getCallDirection()
-                << " Phone Number: " << (*callIterator)->getRemotePartyNumber() << std::endl;
+                << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
+                << " SlotId: " << (*callIterator)->getPhoneId() << std::endl;
    }
 }
 
@@ -477,13 +783,42 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    // Iterate through the call list in the application and resume the
    // call which is on hold
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
-         spCall = *callIterator;
-         break;
+      if ((*callIterator)->getPhoneId() == phoneId
+         && (*callIterator)->getCallState() == telux::tel::CallState::CALL_ON_HOLD) {
+            spCall = *callIterator;
+            break;
       }
    }
    if(spCall) {
@@ -497,15 +832,45 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    // Fetch the list of in progress calls from CallManager and accept the
    // incoming call.
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      telux::tel::CallState callState = (*callIterator)->getCallState();
-      if(callState == telux::tel::CallState::CALL_ACTIVE
-         || callState == telux::tel::CallState::CALL_ALERTING) {
-         spCall = *callIterator;
-         break;
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         telux::tel::CallState callState = (*callIterator)->getCallState();
+         if(callState == telux::tel::CallState::CALL_ACTIVE
+            || callState == telux::tel::CallState::CALL_ALERTING) {
+            spCall = *callIterator;
+            break;
+         }
       }
    }
    if(spCall) {
@@ -531,14 +896,43 @@ void CallMenu::startDtmfTone(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    // Fetch the list of in progress calls from CallManager and accept the
    // incoming call.
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
-         || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING) {
-         spCall = *callIterator;
-         break;
+      if ((*callIterator)->getPhoneId() == phoneId
+         && ((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
+            || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING)) {
+            spCall = *callIterator;
+            break;
       }
    }
    if(spCall) {
@@ -552,14 +946,43 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if(telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection;
+         char delimiter = '\n';
+
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+
+         if (!slotSelection.empty()) {
+            try {
+              phoneId = std::stoi(slotSelection);
+              if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                 std::cout << "ERROR: Invalid slot entered" << std::endl;
+                 return;
+              }
+            } catch (const std::exception &e) {
+               std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                  << slotSelection << std::endl;
+               return;
+            }
+         } else {
+            std::cout << "Empty input, enter the correct slot" << std::endl;
+            return;
+         }
+      }
+   }
    // Fetch the list of in progress calls from CallManager and accept the
    // incoming call.
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
-         || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING) {
-         spCall = *callIterator;
-         break;
+      if ((*callIterator)->getPhoneId() == phoneId
+         && ((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
+            || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING)) {
+            spCall = *callIterator;
+            break;
       }
    }
    if(spCall) {

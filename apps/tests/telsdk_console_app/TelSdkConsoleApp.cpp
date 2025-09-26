@@ -297,7 +297,7 @@ void TelSdkConsoleApp::onModemAvailable() {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-
+    std::ios::sync_with_stdio(false);
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

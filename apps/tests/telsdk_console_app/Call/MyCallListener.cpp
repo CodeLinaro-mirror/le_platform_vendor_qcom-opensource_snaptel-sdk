@@ -88,6 +88,9 @@ void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    PRINT_NOTIFICATION <<  getCallStateString(call->getCallState())
                       << (rttMode == "FULL" ? " real time text call":" normal voice call")
                       << " on slot Id: " << call->getPhoneId() << std::endl;
+   if (!call->getCallReason().empty()) {
+       PRINT_NOTIFICATION << "Call reason: " << call->getCallReason() << std::endl;
+   }
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
 }
@@ -106,6 +109,10 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
                       << ", Peer capability of call: "
                       << getRttModeString(call->getPeerRttCapability())
                       << std::endl;
+   if (!call->getCallReason().empty()) {
+       PRINT_NOTIFICATION << "Call reason: " << call->getCallReason() << std::endl;
+   }
+
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
        int phoneId = call->getPhoneId();
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();

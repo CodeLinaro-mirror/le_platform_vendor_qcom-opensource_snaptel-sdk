@@ -28,39 +28,10 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -73,6 +44,7 @@ extern "C" {
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 #include "../../../../common/utils/Utils.hpp"
+#include "../DataUtils.hpp"
 
 #include "DataConnectionMenu.hpp"
 
@@ -135,10 +107,16 @@ bool DataConnectionMenu::init() {
     std::shared_ptr<ConsoleAppCommand> requestRoamingMode
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "request_roaming_mode",
             {}, std::bind(&DataConnectionMenu::requestRoamingMode, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> requestTrafficFlowTemplate =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "11", "request_traffic_flow_template", {},
+            std::bind(&DataConnectionMenu::requestTrafficFlowTemplate, this,
+                      std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
-        getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode};
+        getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode,
+        requestTrafficFlowTemplate};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -698,4 +676,66 @@ bool DataConnectionMenu::initalizeDPM(SlotId slotId) {
         std::cout << "Data Profile Manager failed to initialize" << std::endl;
     }
     return retValue;
+}
+
+void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inputCommand) {
+    std::cout << "\nRequest traffic flow template" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    int ipFamilyType;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+    std::cin >> ipFamilyType;
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
+    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
+    if (dataCall) {
+        // Callback
+        auto respCb = [](const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tfts,
+            telux::common::ErrorCode error) {
+            std::cout << "\n onTFTResponse" << std::endl;
+
+            if (error == telux::common::ErrorCode::SUCCESS) {
+               for (auto tft : tfts) {
+                  std::cout << " ----------------------------------------------"
+                               "------------\n";
+                  std::cout << " ** TFT Details **\n";
+                  std::cout << " Flow State: "
+                            << DataUtils::flowStateEventToString(
+                                   QosFlowStateChangeEvent::ACTIVATED)
+                            << std::endl;
+                  DataUtils::logQosDetails(tft);
+                  std::cout << " ----------------------------------------------"
+                               "------------\n\n";
+               }
+            } else {
+               std::cout << "ErrorCode: " << static_cast<int>(error)
+                         << ", description: "
+                         << Utils::getErrorCodeAsString(error) << std::endl;
+            }
+        };
+
+        dataCall->requestTrafficFlowTemplate(ipFamType, respCb);
+        Utils::printStatus(retStat);
+    } else {
+        std::cout << "No data call is active. Please start a data call to "
+                     "request TFT info on that data call."
+                  << std::endl;
+    };
 }

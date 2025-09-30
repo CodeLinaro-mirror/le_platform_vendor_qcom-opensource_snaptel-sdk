@@ -42,6 +42,8 @@ public:
    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onHwAccelerationChanged(telux::data::ServiceState state) override;
+   void onTrafficFlowTemplateChange(const std::shared_ptr<telux::data::IDataCall> &dataCall,
+      const std::vector<std::shared_ptr<telux::data::TftChangeInfo>> &tfts) override;
     //Connectivity enablement indication
    void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed);
    std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);

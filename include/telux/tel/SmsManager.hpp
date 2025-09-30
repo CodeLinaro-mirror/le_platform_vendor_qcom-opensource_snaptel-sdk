@@ -138,7 +138,7 @@ struct DeleteInfo {
     DeleteType delType; /**< Specifies the type of delete operation to be performed */
     SmsTagType tagType; /**< 1. If SMS tag type is set to @ref telux::tel::SmsTagType::UNKNOWN and delType is set to @ref telux::tel::DeleteType::DELETE_ALL then all messages on the storage of @ref telux::tel::StorageType::SIM or @ref telux::tel::StorageType::NV would be deleted.\n 2. To delete all messages of a particular tag, set tagType to the particular tag like @ref telux::tel::SmsTagType::MT_READ and delType to @ref telux::tel::DeleteType::DELETE_MESSAGES_BY_TAG */
     uint32_t msgIndex;  /**< To delete message at specific index, specify msgIndex and delType as @ref telux::tel::DeleteType::DELETE_MSG_AT_INDEX */
-    StorageType storageType;    /**< Specifies the storage type of delete operation to be performed */
+    StorageType storageType = StorageType::SIM;    /**< Specifies the storage type of delete operation to be performed */
 };
 
 /**

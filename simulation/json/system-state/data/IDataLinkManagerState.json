@@ -2,7 +2,12 @@
     "IDataLinkManager": {
             "eth0Config" : {
                     "ethLinkState" : "DOWN",
-                    "ethModes": ["USXGMII_10G", "USXGMII_5G", "SGMII_1G"]
-            }
-    }
+                    "ethModes": ["USXGMII_10G", "USXGMII_5G", "SGMII_1G"],
+                    "currentMode": "UNKNOWN"
+            },
+            "peerEthCapabilities": [],
+            "peerModeChangeRequestStatus": "UNKNOWN",
+            "lastTransactionEthMode": "UNKNOWN",
+            "lastTransactionStatus": "UNKNOWN"
+        }
 }

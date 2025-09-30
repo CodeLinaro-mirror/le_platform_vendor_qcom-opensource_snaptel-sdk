@@ -69,8 +69,9 @@ private:
     ClientEventManager &clientEventMgr_;
 
     void handleSSREvent(google::protobuf::Any event);
+    void handleOnEthModeChangeRequest(::dataStub::EthModeChangeRequestEvent indication);
+    void handleOnEthModeChangeTransactionStatus(::dataStub::EthModeChangeTransactionStatusEvent indication);
     void handleEthDatalinkChangeEvent(google::protobuf::Any event);
-
     void onServiceStatusChange(telux::common::ServiceStatus status);
 };
 

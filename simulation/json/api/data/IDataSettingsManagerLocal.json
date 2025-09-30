@@ -64,6 +64,10 @@
         },
         "setIpPassThroughNatConfig": {
             "error": "SUCCESS"
+        },
+        "restoreFactorySettings": {
+            "error": "SUCCESS",
+            "status": "SUCCESS"
         }
     }
 }

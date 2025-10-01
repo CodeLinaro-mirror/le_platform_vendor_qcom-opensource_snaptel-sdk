@@ -919,7 +919,7 @@ NtnTestApp::~NtnTestApp() {
  * Main routine
  */
 int main(int argc, char **argv) {
-
+    std::ios::sync_with_stdio(false);
     std::cout << "\n#################################################\n"
               << "  Ntn test app\n"
               << "#################################################\n"

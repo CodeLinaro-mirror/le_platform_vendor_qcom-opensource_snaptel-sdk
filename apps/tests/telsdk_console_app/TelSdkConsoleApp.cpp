@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -297,7 +296,7 @@ void TelSdkConsoleApp::onModemAvailable() {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-
+    std::ios::sync_with_stdio(false);
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

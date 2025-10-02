@@ -1,0 +1,53 @@
+{
+  "IStaInterfaceManager": {
+    "staStatus": [
+      {
+        "id": "PRIMARY",
+        "name": "",
+        "ipv4Address": "",
+        "ipv6Address": "",
+        "macAddress": "",
+        "status": "DISCONNECTED",
+        "connectionStatus": "UNKNOWN"
+      }
+    ],
+    "configuredStaConfig": [
+      {
+        "staId": "PRIMARY",
+        "ipConfig": "DHCP",
+        "staticIpConfig": {
+          "ipAddr": "0.0.0.0",
+          "gwIpAddr": "0.0.0.0",
+          "netMask": "0.0.0.0",
+          "dnsAddr": "0.0.0.0"
+        },
+        "bridgeMode": "BRIDGE_MODE_NONE"
+      }
+    ],
+    "networkConfigs": [],
+    "staScanResult": {
+      "result": [
+        {
+          "bssid": "00:11:22:33:44:55",
+          "ssid": "HomeAP",
+          "band": "BAND_2_4_GHZ",
+          "channel": 6,
+          "signalStrength": -50,
+          "securityMode": "WPA2_PSK",
+          "isWpsSupported": true,
+          "isPasspoint": false
+        },
+        {
+          "bssid": "AA:BB:CC:DD:EE:FF",
+          "ssid": "GuestNetwork",
+          "band": "BAND_5GHZ",
+          "channel": 149,
+          "signalStrength": -65,
+          "securityMode": "WPA_PSK",
+          "isWpsSupported": false,
+          "isPasspoint": false
+        }
+      ]
+    }
+  }
+}

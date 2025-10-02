@@ -1,0 +1,37 @@
+{
+  "IApInterfaceManager": {
+    "IsSubsystemReady": "SERVICE_AVAILABLE",
+    "IsSubsystemReadyDelay": 100,
+    "DefaultCallbackDelay": 100,
+    "setConfig": {
+      "error": "SUCCESS"
+    },
+    "setSecurityConfig": {
+      "error": "SUCCESS"
+    },
+    "setSsid": {
+      "error": "SUCCESS"
+    },
+    "setVisibility": {
+      "error": "SUCCESS"
+    },
+    "setElementInfoConfig": {
+      "error": "SUCCESS"
+    },
+    "setPassPhrase": {
+      "error": "SUCCESS"
+    },
+    "getConfig": {
+      "error": "SUCCESS"
+    },
+    "getStatus": {
+      "error": "SUCCESS"
+    },
+    "getConnectedDevices": {
+      "error": "SUCCESS"
+    },
+    "manageApService": {
+      "error": "SUCCESS"
+    }
+  }
+}

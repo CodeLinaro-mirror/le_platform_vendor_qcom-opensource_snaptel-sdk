@@ -69,6 +69,12 @@
 #include "sec/SecurityCryptoServerImpl.hpp"
 #include "sec/SecurityCryptoAcceleratorServerImpl.hpp"
 
+// Include WLAN service implementations
+#include "wlan/WlanDeviceManagerServerImpl.hpp"
+#include "wlan/ApInterfaceManagerServerImpl.hpp"
+#include "wlan/StaInterfaceManagerServerImpl.hpp"
+
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -318,6 +324,19 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCryptoAcceleratorServerImpl> securityCryptoAcceleratorService =
     std::make_shared<SecurityCryptoAcceleratorServerImpl>();
     builder.RegisterService(securityCryptoAcceleratorService.get());
+
+    // Register WLAN services
+    std::shared_ptr<WlanDeviceManagerServerImpl> wlanDeviceService =
+        std::make_shared<WlanDeviceManagerServerImpl>();
+    builder.RegisterService(wlanDeviceService.get());
+
+    std::shared_ptr<ApInterfaceManagerServerImpl> apInterfaceService =
+        std::make_shared<ApInterfaceManagerServerImpl>();
+    builder.RegisterService(apInterfaceService.get());
+
+    std::shared_ptr<StaInterfaceManagerServerImpl> staInterfaceService =
+        std::make_shared<StaInterfaceManagerServerImpl>();
+    builder.RegisterService(staInterfaceService.get());
 
 
     std::unique_ptr<Server> server(builder.BuildAndStart());

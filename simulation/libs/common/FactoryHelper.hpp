@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef FACTORYHELPER_HPP
@@ -103,6 +103,51 @@ class FactoryHelper {
             return manager;
         }
     }
+
+    /**
+     * @brief Generic method to get a manager instance for managers that do NOT take an InitResponseCb
+     * for their initialization. Their init() is usually blocking and returns a Status directly.
+     *
+     * @tparam T The type of the manager interface (e.g., IApInterfaceManager, IStaInterfaceManager).
+     * @param type A string describing the manager type for logging.
+     * @param weakManager A weak pointer to the manager instance, used to store and retrieve
+     *                    the singleton instance.
+     * @param createAndInit A function that creates and initializes a new manager instance.
+     *                      This function should take no parameters and return the manager.
+     * @return A shared pointer to the manager instance, or nullptr if creation failed.
+     */
+    template <typename T>
+    std::shared_ptr<T> getManager(std::string type,
+        std::weak_ptr<T> &weakManager,
+        std::function<std::shared_ptr<T>()> createAndInit) { // No InitResponseCb parameters
+        std::shared_ptr<T> manager = nullptr;
+        std::lock_guard<std::mutex> lock(factoryMutex_);
+        manager = weakManager.lock();
+
+        if (manager) {
+            LOG(DEBUG, type, " found:", manager.get());
+            // Assume if manager exists, it's either available or will become available.
+            // For managers that don't use InitResponseCb, their init() is usually blocking
+            // or handles its own internal state.
+            return manager;
+        } else {
+            try {
+                manager = createAndInit(); // Call createAndInit without a callback
+                LOG(DEBUG, "New ", type, " created ", manager.get());
+                if (manager == nullptr) {
+                    LOG(ERROR, type, " failed to initialize for ", manager.get());
+                    return nullptr;
+                }
+            } catch (std::bad_alloc &e) {
+                LOG(ERROR, __FUNCTION__, type,
+                    " failed to create with exception: ", e.what());
+                return nullptr;
+            }
+            weakManager = manager;
+            return manager;
+        }
+    }
+
     /**
      * Adding an overloaded API to synchronize cleanup and initSync via taskQ.
      */

@@ -1,0 +1,46 @@
+{
+  "IApInterfaceManager": {
+    "configuredApConfig": [
+      {
+        "id": "PRIMARY",
+        "venue": {
+          "type": 1,
+          "group": 1
+        },
+        "network": [
+          {
+            "info": {
+              "apRadio": "BAND_5GHZ",
+              "apType": "PRIVATE"
+            },
+            "ssid": "MyTeluxAP_Default",
+            "isVisible": true,
+            "elementInfoConfig": {
+              "isEnabled": false,
+              "isInterworkingEnabled": false,
+              "netAccessType": "PRIVATE_ACCESS",
+              "internet": true,
+              "asra": false,
+              "esr": false,
+              "uesa": false,
+              "venueGroup": 0,
+              "venueType": 0,
+              "hessid": "",
+              "vendorElements": "",
+              "assocRespElements": ""
+            },
+            "interworking": "FULL_ACCESS",
+            "apSecurity": {
+              "mode": "WPA2",
+              "auth": "PSK",
+              "encrypt": "AES"
+            },
+            "passPhrase": "DefaultPassword123"
+          }
+        ]
+      }
+    ],
+    "apStatus": [],
+    "connectedDevices": []
+  }
+}

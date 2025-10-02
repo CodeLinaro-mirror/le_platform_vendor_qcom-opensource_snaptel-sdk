@@ -1,0 +1,19 @@
+{
+  "IWlanDeviceManager": {
+    "isEnabled": false,
+    "configuredNumAp": 1,
+    "configuredNumSta": 0,
+    "numAp": 0,
+    "numSta": 0,
+    "simulatedRegulatoryParams": {
+      "country": "US",
+      "opChannel": 6.0,
+      "opClass": [
+        131
+      ],
+      "txPowerMw": 18,
+      "maxTxPowerMw": 24
+    },
+    "simulatedInterfaceStatus": []
+  }
+}

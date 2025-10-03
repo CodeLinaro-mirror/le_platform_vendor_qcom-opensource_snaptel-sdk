@@ -93,7 +93,7 @@ class ISensorFeatureEventListener : public telux::common::ISDKListener {
      * Note the following
      * constraints on this listener API
      * It shall not perform time consuming (compute or I/O intensive) operations on this thread
-     * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
+     * It shall not invoke an sensor APIs on this thread due to the underlying concurrency model
      *
      * On platforms with Access control enabled, the client needs to have
      * TELUX_SENSOR_FEATURE_CONTROL permission for this listener API to be invoked.

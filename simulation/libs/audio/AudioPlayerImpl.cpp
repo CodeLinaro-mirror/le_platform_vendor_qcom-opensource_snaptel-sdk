@@ -1,6 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <errno.h>
@@ -927,6 +928,10 @@ telux::common::ErrorCode AudioPlayerImpl::initFileToPlay() {
  * Closes the file.
  */
 telux::common::ErrorCode AudioPlayerImpl::deinitFileToPlay() {
+#ifdef AUDIOPLAYERIMPL_DDBG
+    LOG(DEBUG, __FUNCTION__);
+#endif
+
     int ret;
 
     /*
@@ -966,7 +971,15 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
         std::unique_lock<std::mutex> writeLock(writeMtx_);
 
         if (bufferPool_.empty()) {
-            /* Wait for a free buffer. Predicate is not used because of ping-pong */
+            /* Wait for a free buffer. Predicate is not used because of ping-pong
+             * bufferAvailable_ will also be trggered if unblockPlayerThread is called
+             * unblockPlayerThread will be called in the following two scenarios:
+             * (1) SSR occurs
+             * (2) Destructor is called
+             * SSR: When SSR occurs, we should not wait for remaining buffer to come from service
+             * Destructor: When the destructor called, we should still wait for the remaining buffer
+             * to come from the service
+             */
             waitResultNoPredicate
                 = bufferAvailable_.wait_for(writeLock, std::chrono::seconds(TIME_10_SECONDS));
 
@@ -979,6 +992,12 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
             if (hasSsrOccurred_) {
                 LOG(ERROR, __FUNCTION__, " ssr occurred");
                 errToReport_ = telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
+                return errToReport_;
+            }
+
+            if (hasUserRequestedStop_) {
+                LOG(ERROR, __FUNCTION__, " user stopped");
+                errToReport_ = telux::common::ErrorCode::CANCELLED;
                 return errToReport_;
             }
 
@@ -1014,6 +1033,12 @@ telux::common::ErrorCode AudioPlayerImpl::playAudioSamples() {
 
         streamBuffer = bufferPool_.front();
         bufferPool_.pop();
+
+        if (!streamBuffer) {
+            LOG(ERROR, __FUNCTION__, " invalid streamBuffer");
+            errToReport_ = telux::common::ErrorCode::INTERNAL_ERR;
+            return errToReport_;
+        }
 
         numBytesRead = std::fread(streamBuffer->getRawBuffer(), 1, bufferSize_, curFile_);
 
@@ -1108,6 +1133,9 @@ telux::common::ErrorCode AudioPlayerImpl::waitAllWriteResponse() {
     {
         std::unique_lock<std::mutex> bufferWaitLock(writeMtx_);
 
+#ifdef AUDIOPLAYERIMPL_DDBG
+        LOG(DEBUG, __FUNCTION__, " Before-bufferPoolSize: ", bufferPool_.size());
+#endif
         while (buffersAllocated_ && (bufferPool_.size() != BUFFER_POOL_SIZE)) {
             /*
              * Predicate is not used since there are two writes active at any time
@@ -1118,6 +1146,9 @@ telux::common::ErrorCode AudioPlayerImpl::waitAllWriteResponse() {
             waitResult
                 = bufferAvailable_.wait_for(bufferWaitLock, std::chrono::seconds(TIME_10_SECONDS));
 
+#ifdef AUDIOPLAYERIMPL_DDBG
+            LOG(DEBUG, __FUNCTION__, " After-bufferPoolSize: ", bufferPool_.size());
+#endif
             if (waitResult == std::cv_status::timeout) {
                 LOG(ERROR, __FUNCTION__, " timedout");
                 return telux::common::ErrorCode::OPERATION_TIMEOUT;
@@ -1405,6 +1436,9 @@ telux::common::ErrorCode AudioPlayerImpl::registerForSSREvent() {
  *  Deregisters for SSR onServiceStatusChange() callback.
  */
 telux::common::ErrorCode AudioPlayerImpl::deregisterForSSREvent() {
+#ifdef AUDIOPLAYERIMPL_DDBG
+    LOG(DEBUG, __FUNCTION__);
+#endif
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -1495,6 +1529,10 @@ void AudioPlayerImpl::onServiceStatusChange(telux::common::ServiceStatus status)
  * 5. Player thread exits due to a fatal error.
  */
 void AudioPlayerImpl::unblockPlayerThread(bool setSSRStatus) {
+#ifdef AUDIOPLAYERIMPL_DDBG
+    LOG(DEBUG, __FUNCTION__);
+#endif
+
     {
         /*
          * This lock synchronizes player thread, AudioPlayerImpl destruction and

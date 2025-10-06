@@ -217,6 +217,12 @@ service DataFilterManager {
 
   service KeepAliveManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc EnableTCPMonitor(EnableTCPMonitorRequest) returns (EnableTCPMonitorReply) {}
+    rpc DisableTCPMonitor(DisableTCPMonitorRequest) returns (DefaultReply) {}
+    rpc StartTCPKeepAliveOffload(StartTCPKeepAliveOffloadRequest) returns (
+        StartTCPKeepAliveOffloadReply) {}
+    rpc StopTCPKeepAliveOffload(StopTCPKeepAliveOffloadRequest) returns (DefaultReply) {}
   }
   service DualDataManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
@@ -669,6 +675,72 @@ message DataCallInputParams {
 message GetServiceStatusReply {
     ServiceStatus service_status = 1;
     int32 delay = 2;
+}
+
+
+message TCPKAParams {
+    string src_ip = 1;      // Source IPv4/IPv6 address
+    string dst_ip = 2;      // Destination IPv4/IPv6 address
+    int32 src_port = 3;     // Source port
+    int32 dst_port = 4;     // Destination port
+}
+
+message TCPSessionParams {
+    uint32 recv_next = 1;
+    uint32 recv_window = 2;
+    uint32 send_next = 3;
+    uint32 send_window = 4;
+}
+
+message EnableTCPMonitorRequest {
+    int32 slot_id = 1;
+    TCPKAParams tcp_ka_params = 2;
+    OperationType operation_type = 3;
+}
+
+message EnableTCPMonitorReply {
+    uint32 monitor_handle = 1;
+    DefaultReply reply = 2;
+}
+
+message DisableTCPMonitorRequest {
+    uint32 monitor_handle = 1;
+    OperationType operation_type = 2;
+}
+
+message StartTCPKeepAliveOffloadRequest {
+    oneof params {
+        StartTCPKeepAliveOffloadWithSessionParams session_params = 1;
+        StartTCPKeepAliveOffloadWithMonitorHandle monitor_handle_params = 2;
+    }
+    uint32 interval = 3;
+    OperationType operation_type = 4;
+    int32 slot_id = 5;
+}
+
+message StartTCPKeepAliveOffloadWithSessionParams {
+    TCPKAParams tcp_ka_params = 1;
+    TCPSessionParams tcp_session_params = 2;
+    int32 slot_id = 3;
+}
+
+message StartTCPKeepAliveOffloadWithMonitorHandle {
+    uint32 monitor_handle = 1;
+}
+
+message StartTCPKeepAliveOffloadReply {
+    uint32 offload_handle = 1;
+    DefaultReply reply = 2;
+}
+
+message StopTCPKeepAliveOffloadRequest {
+    uint32 offload_handle = 1;
+    OperationType operation_type = 2;
+}
+
+message KeepAliveStatusChangeReply {
+    commonStub.ErrorCode error = 1;
+    uint32 offload_handle = 2;
 }
 
 message DataCallReply {

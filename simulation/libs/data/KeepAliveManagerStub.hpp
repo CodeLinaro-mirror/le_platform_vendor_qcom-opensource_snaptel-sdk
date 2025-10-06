@@ -12,12 +12,16 @@
 
 #include "common/AsyncTaskQueue.hpp"
 #include "common/ListenerManager.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
 namespace telux {
 namespace data {
 
-class KeepAliveManagerStub : public IKeepAliveManager, public IKeepAliveListener {
+class KeepAliveManagerStub : public IKeepAliveManager,
+                             public IKeepAliveListener,
+                             public telux::common::IEventListener,
+                             public std::enable_shared_from_this<KeepAliveManagerStub> {
  public:
     KeepAliveManagerStub(SlotId slotId);
     ~KeepAliveManagerStub();
@@ -42,10 +46,14 @@ class KeepAliveManagerStub : public IKeepAliveManager, public IKeepAliveListener
 
     telux::common::Status registerListener(std::weak_ptr<IKeepAliveListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<IKeepAliveListener> listener) override;
+    void onEventUpdate(google::protobuf::Any event);
+    void handleKeepAliveStatusChangeEvent(
+        const dataStub::KeepAliveStatusChangeReply &kaStatusChange);
 
  private:
     SlotId slotId_ = DEFAULT_SLOT_ID;
     telux::data::OperationType oprType_;
+    const uint32_t interval = 60000;
 
     std::mutex mtx_;
     std::mutex initMtx_;

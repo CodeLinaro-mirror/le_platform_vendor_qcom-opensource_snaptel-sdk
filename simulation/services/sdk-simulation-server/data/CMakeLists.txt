@@ -10,6 +10,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/DualDataServerImpl.cpp
     data/DataControlServerImpl.cpp
     data/DataLinkServerImpl.cpp
+    data/KeepAliveServerImpl.cpp
     data/net/SocksServerImpl.cpp
     data/net/NatServerImpl.cpp
     data/net/L2tpServerImpl.cpp

@@ -40,6 +40,7 @@
 #include "data/DualDataServerImpl.hpp"
 #include "data/DataControlServerImpl.hpp"
 #include "data/DataLinkServerImpl.hpp"
+#include "data/KeepAliveServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
@@ -307,6 +308,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCryptoAcceleratorServerImpl> securityCryptoAcceleratorService
         = std::make_shared<SecurityCryptoAcceleratorServerImpl>();
     builder.RegisterService(securityCryptoAcceleratorService.get());
+
+    std::shared_ptr<KeepAliveServerImpl> keepAliveService
+        = std::make_shared<KeepAliveServerImpl>(dcmService);
+    builder.RegisterService(keepAliveService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

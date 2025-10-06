@@ -1044,12 +1044,16 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
                 && (info->isMsdTransmitted))) {
                     // regulatory ecall or custom number ecall over CS with MSD
                 LOG(DEBUG, __FUNCTION__);
-                if(ecallStateMachine_ != nullptr) {
-                    ecallStateMachine_->onEvent(
-                    ecallStateMachine_->createTelEvent(
-                    EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
-                    "", phoneId));
-                }
+
+                auto f = std::async(std::launch::async, [this, phoneId]() {
+                    if(ecallStateMachine_ != nullptr) {
+                        ecallStateMachine_->onEvent(
+                        ecallStateMachine_->createTelEvent(
+                        EcallStateMachine::EventID::HANGUP_REQUEST_FROM_USER,
+                        "", phoneId));
+                    }
+                }).share();
+                taskQ_->add(f);
             } else {  // Custom number eCall over PS or voice call
                 changeCallState(info->phoneId, "CALL_ENDED", info->index);
             }
@@ -1804,6 +1808,9 @@ telux::common::Status CallManagerServerImpl::handleStateMachine(int phoneId, int
         bool isALACKConfigEnabled = getUserConfiguredALACKParameter();
         // Redial config from user is applicable only during regulatory eCalls.
         std::string eCallRedialConfig = getUserConfiguredECallRedialConfig();
+        if((eCallRedialConfig == "CALLORIG") || (eCallRedialConfig == "CALLDROP")) {
+            eCallRedialIsOngoing_ = true;
+        }
         ecallStateMachine_ = std::make_shared<EcallStateMachine>(shared_from_this(),
             input, callInfo_.isMsdTransmitted, isNGeCall, isALACKConfigEnabled, phoneId, callIndex,
             false, eCallRedialConfig, callInfo_.isEraGlonassSelfTestECall, false);
@@ -1912,11 +1919,7 @@ void CallManagerServerImpl::startTimer(std::string timer, int phoneId) {
 }
 
 void CallManagerServerImpl::msdTransmissionStatus(std::string msdtransmision, int phoneId ) {
-    auto f = std::async(std::launch::async, [this, phoneId, msdtransmision ]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            this->triggerECallInfoChangeEvent(phoneId, msdtransmision, HlapTimerEvent::UNCHANGED);
-        }).share();
-    taskQ_->add(f);
+    triggerECallInfoChangeEvent(phoneId, msdtransmision, HlapTimerEvent::UNCHANGED);
 }
 
 void CallManagerServerImpl::startTimers(std::string timer, int phoneId) {
@@ -2067,14 +2070,15 @@ void CallManagerServerImpl::triggerECallInfoChangeEvent(int phoneId, std::string
     eventImpl.updateEventQueue(anyResponse);
 }
 
-void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId, int callIndex) {
+void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId, int callIndex,
+    bool retainCache ) {
     std::shared_ptr<CallInfo> call = findMatchingCall(phoneId, callIndex);
     if(call != nullptr) {
         if(call->callState == CallState::CALL_ENDED ) {
             //Clear call cache in server
-            auto f = std::async(std::launch::async, [this, phoneId, callIndex]() {
+            auto f = std::async(std::launch::async, [this, phoneId, callIndex, retainCache]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                bool isCallRemoved = findAndRemoveMatchingCall(callIndex);
+                bool isCallRemoved = findAndRemoveMatchingCall(callIndex, retainCache);
                 if(isCallRemoved) {
                     // Event to update the call cache for clients.
                     triggerCallListAfterCallEnd(phoneId);
@@ -2103,16 +2107,21 @@ void CallManagerServerImpl::onECallRedial(int phoneId, bool willECallRedial,
     anyResponse.mutable_any()->PackFrom(eCallInfoEvent);
     //posting the event to EventService event queue
     auto& eventImpl = EventService::getInstance();
-    eventImpl.updateEventQueue(anyResponse);
-    if((willECallRedial)  &&
-        ((reason == telux::tel::ReasonType::CALL_ORIG_FAILURE)
-            || (reason == telux::tel::ReasonType::CALL_DROP))) {
-        eCallRedialIsOngoing_ = true;
-        LOG(DEBUG, __FUNCTION__, " Ecall will redial");
-    } else {
+        std::unique_lock<std::mutex> lock(mtx);
+        {
+            while(!callEndOperationCompleted_) {
+                cv.wait(lock);
+            if(callEndOperationCompleted_) {
+                    break;
+                }
+            }
+            callEndOperationCompleted_ = false;
+        }
+    if(!willECallRedial){
         LOG(DEBUG, __FUNCTION__, " Ecall will not redial ");
         eCallRedialIsOngoing_ = false;
     }
+    eventImpl.updateEventQueue(anyResponse);
 }
 
 grpc::Status CallManagerServerImpl::ConfigureECallRedial(ServerContext* context,
@@ -2462,38 +2471,21 @@ void CallManagerServerImpl::changeRttModeOfCall(RttMode mode, int index, int pho
     }
 }
 
-void CallManagerServerImpl::changeCallState(int phoneId, std::string action, int index) {
+void CallManagerServerImpl::changeCallState(int phoneId, std::string action, int index, bool
+    retainCache) {
     LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId);
     CallState state = Helper::getCallState(action);
-    if((eCallRedialIsOngoing_) && (state == CallState::CALL_DIALING)) {
-        std::unique_lock<std::mutex> lock(mtx);
-        {
-            while(!callEndOperationCompleted_) {
-                cv.wait(lock);
-                if(callEndOperationCompleted_) {
-                    break;
-                }
-            }
-            if(callEndOperationCompleted_) {
-                calls_.emplace_back(redialECallCache_);
-                LOG(DEBUG, __FUNCTION__, " Redial eCall cache is added to call list " );
-            }
-            callEndOperationCompleted_ = false;
+    if((retainCache) && (state == CallState::CALL_DIALING)) {
+        if(calls_.empty()) {
+            calls_.emplace_back(redialECallCache_);
+            LOG(DEBUG, __FUNCTION__, " Redial eCall cache is added to call list " );
         }
-        bool isFound = findCallAndUpdateCallState(index, state, phoneId);
-        if(isFound) {
-            triggerCallInfoChangeEvent(phoneId, index);
-        } else {
-            LOG(ERROR, __FUNCTION__, " Call not found ");
-        }
+    }
+    bool isFound = findCallAndUpdateCallState(index, state, phoneId);
+    if(isFound) {
+        triggerCallInfoChangeEvent(phoneId, index, retainCache);
     } else {
-        LOG(DEBUG, __FUNCTION__, " Ecall is not redialing or call state is not dialing " );
-        bool isFound = findCallAndUpdateCallState(index, state, phoneId);
-        if(isFound) {
-            triggerCallInfoChangeEvent(phoneId, index);
-        } else {
-            LOG(ERROR, __FUNCTION__, " Call not found ");
-        }
+        LOG(ERROR, __FUNCTION__, " Call not found ");
     }
 }
 
@@ -2528,8 +2520,12 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
     eventImpl.updateEventQueue(anyResponse);
     std::lock_guard<std::mutex> lock(mtx);
     {
-        callEndOperationCompleted_ = true;
-        cv.notify_all();
+        // Inorder for call end and redial event to be in sync for regulatory eCalls when
+        // previously self test eCall or Tps eCall over CS or PS.
+        if(callInfo_.isRegulatoryeCall) {
+            callEndOperationCompleted_ = true;
+            cv.notify_all();
+        }
     }
 }
 
@@ -2583,14 +2579,14 @@ bool CallManagerServerImpl::find(std::shared_ptr<CallInfo> call, int index, int 
     }
 }
 
-bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex) {
+bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex, bool retainCache) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<CallInfo>>::iterator iter;
     std::lock_guard<std::mutex> lock(callManagerMutex_);
 
     iter = std::find_if(std::begin(calls_), std::end(calls_), [=](std::shared_ptr<CallInfo> call) {
         if(call->index == callIndex ) {
-            if(eCallRedialIsOngoing_)
+            if(retainCache)
             {
                 // Save eCall
                 LOG(DEBUG, __FUNCTION__, " Saving ecall cache for next redial");

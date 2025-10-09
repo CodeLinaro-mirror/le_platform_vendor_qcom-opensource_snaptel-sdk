@@ -1,10 +1,10 @@
 .. #=============================================================================
    #
-   #  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-   #  SPDX-License-Identifier: BSD-3-Clause-Clear
+   # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+   # SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
-   
+
 =============
 Linux groups
 =============
@@ -163,10 +163,13 @@ Security
 ---------
 
 +-------------+---------------------------------------+----------------------------------+
-| Linux group | Usage                                 |  Applicable software products    |
+| Linux group | Usage                                 | Applicable software products     |
 +=============+=======================================+==================================+
-|  mvm        |  Required for accessing crypto        |  All software products           |
-|             |  accelerators.                        |                                  |
+| mvm         | Required for accessing crypto         | All software products            |
+|             | accelerators.                         |                                  |
++-------------+---------------------------------------+----------------------------------+
+| firmware    | Required for crypto                   | All software products based on   |
+|             | operations.                           | sa510m targets                   |
 +-------------+---------------------------------------+----------------------------------+
 
 

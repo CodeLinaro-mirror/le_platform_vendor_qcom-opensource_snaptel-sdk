@@ -47,10 +47,13 @@
 #include <sys/time.h>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
+#include <sys/stat.h>
 
 #include "Utils.hpp"
 
 #define INVALID_GID -1
+#define SDK_CONF "/etc/tel.conf"
 
 void Utils::validateNumericString(std::string &input) {
    char delimiter = '\n';
@@ -402,6 +405,44 @@ int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
 }
 
 telux::common::ErrorCode Utils::transitionToNonRootUser(std::unordered_set<int8_t>& newUserCaps) {
+    //Check if user is provided in tel.conf
+    std::string filePath = SDK_CONF;
+    struct stat st;
+    if(stat(filePath.c_str(), &st) == 0 && (getuid() == 0)) {
+        std::fstream fileStream(filePath, std::ios::in);
+        if (!fileStream.good()) {
+            std::cout << "File open failed" << std::endl;
+        } else {
+            // Storing content.
+            std::string line;
+            std::vector<std::string> lines;
+            while (std::getline(fileStream, line)) {
+                lines.push_back(line);
+            }
+            // Find value of TELUX_USER.
+            for (auto &line : lines) {
+                size_t keyPos = line.find("TELUX_USER");
+                if (keyPos != std::string::npos) {
+                    size_t equalPos = line.find("=");
+                    if (equalPos != std::string::npos) {
+                        equalPos += 1;
+                        std::string newUser;
+                        newUser = line.substr(equalPos);
+                        auto rc = Utils::changeUser(newUser, newUserCaps);
+                        if(rc != telux::common::ErrorCode::SUCCESS) {
+                            std::cerr << "Failed to switch to user: " << newUser << " - " <<
+                                Utils::getErrorCodeAsString(rc) << std::endl;
+                        }
+                        fileStream.close();
+                        return rc;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            fileStream.close();
+        }
+    }
     char *newUser = nullptr;
     if ((newUser = std::getenv("TELUX_USER")) && (getuid() == 0)) {
         auto rc = Utils::changeUser(newUser, newUserCaps);

@@ -76,7 +76,7 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(
         if (tcuState == TcuActivityState::SUSPEND) {
             // enable MLC feature
             for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
-                enableFeature(*it);
+                enableFeature(*it, false);
             }
         }
         Status ackStatus
@@ -89,8 +89,9 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(
     } else if (tcuState == TcuActivityState::RESUME) {
         // disable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); it++) {
-            if (enabledFeatures_.find(*it) != enabledFeatures_.end()) {
-                disableFeature(*it);
+            if (enabledFeatures_.find(*it) != enabledFeatures_.end()
+                && enabledFeaturesNonBuffered_.find(*it) == enabledFeaturesNonBuffered_.end()) {
+                disableFeature(*it, false);
             }
         }
     }
@@ -307,13 +308,13 @@ void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userI
 void SensorFeatureControlMenu::enableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    enableFeature(name);
+    enableFeature(name, true);
 }
 
 void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    disableFeature(name);
+    disableFeature(name, true);
 }
 
 void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userInput) {
@@ -322,7 +323,7 @@ void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userI
     }
 }
 
-void SensorFeatureControlMenu::enableFeature(std::string name) {
+void SensorFeatureControlMenu::enableFeature(std::string name, bool isLive) {
     telux::common::Status status = sensorFeatureManager_->enableFeature(name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "enableFeature failed: " << std::endl;
@@ -330,10 +331,14 @@ void SensorFeatureControlMenu::enableFeature(std::string name) {
         return;
     }
     enabledFeatures_.emplace(name);
+    if (isLive) {
+        enabledFeaturesNonBuffered_.emplace(name);
+    }
     std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
-std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::string name) {
+std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(
+    std::string name, bool isLive) {
     telux::common::Status status        = sensorFeatureManager_->disableFeature(name);
     std::set<std::string>::iterator itr = enabledFeatures_.find(name);
     if (status != telux::common::Status::SUCCESS) {
@@ -346,6 +351,9 @@ std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::st
         if (itr != enabledFeatures_.end()) {
             std::cout << "Disable sensor feature request successful for " << name << std::endl;
             itr = enabledFeatures_.erase(itr);
+            if (isLive) {
+                enabledFeaturesNonBuffered_.erase(name);
+            }
         } else {
             std::cout << "Disable sensor feature request failed for " << name << std::endl;
         }
@@ -356,7 +364,7 @@ std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::st
 void SensorFeatureControlMenu::cleanup() {
     sensorFeatureEventListener_ = nullptr;
     for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end();) {
-        it = disableFeature(*it);
+        it = disableFeature(*it, true);
     }
     sensorFeatureManager_ = nullptr;
     tcuActivityMgr_       = nullptr;

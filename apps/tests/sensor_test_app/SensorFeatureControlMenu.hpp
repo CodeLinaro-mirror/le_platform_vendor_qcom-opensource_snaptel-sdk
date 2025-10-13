@@ -72,8 +72,8 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
     void disableSensorFeature(std::vector<std::string> userInput);
     void listActiveFeatures(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
-    void enableFeature(std::string name);
-    std::set<std::string>::iterator disableFeature(std::string name);
+    void enableFeature(std::string name, bool isLive);
+    std::set<std::string>::iterator disableFeature(std::string name, bool isLive);
     void initTcuPowerMgr();
     void enableSensorFeatureFifo(std::vector<std::string> userInput);
     void skipSensorFeatureOnSuspend(std::vector<std::string> userInput);
@@ -91,6 +91,7 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
     std::shared_ptr<ISensorFeatureEventListener> sensorFeatureEventListener_;
     std::set<std::string> enabledFeatures_;
     std::set<std::string> enabledFeaturesFifo_;
+    std::set<std::string> enabledFeaturesNonBuffered_;
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<ITcuActivityManager> tcuActivityMgr_;
 };

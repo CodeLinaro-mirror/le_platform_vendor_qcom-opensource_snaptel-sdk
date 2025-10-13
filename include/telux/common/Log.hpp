@@ -26,7 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file       Log.hpp
  * @brief      Log class provides APIs for logging messages at different
@@ -102,6 +106,12 @@ enum class LogLevel {
 
 class Log {
 public:
+   /*
+    * Public API to log a message
+    */
+   template <typename... MessageArgs>
+   static void logMessage(LogLevel logLevel, const char* fileName, const char* lineNo,
+                          const int &component, MessageArgs... params);
 
    /*
     * Public API to log a message

@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -140,6 +138,7 @@ static int initCv2x() {
 }
 
 int main(int argc, char *argv[]) {
+    std::ios::sync_with_stdio(false);
     cout << "Running CV2X Mac Clone Attack Test APP" << endl;
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};

@@ -300,9 +300,20 @@ grpc::Status SensorFeatureManagerServerImpl::GetMotionDetectionLimits(ServerCont
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status;
     uint32_t sensorId = request->sensor_id();
-    if(sensorId != 1) {
+    bool sensorSupported = false;
+    updateSensorInfo();
+    for (const auto& dataStruct : sensorInfo_) {
+        if (sensorId == static_cast<uint32_t>(dataStruct.id)) {
+            sensorSupported = true;
+            break;
+        }
+    }
+    if(sensorId != 1 && sensorSupported) {
         LOG(ERROR, __FUNCTION__, " Unsupported SensorId");
         status = telux::common::Status::NOTSUPPORTED;
+    } else if(!sensorSupported) {
+        LOG(ERROR, __FUNCTION__, " Invalid SensorId");
+        status = telux::common::Status::INVALIDPARAM;
     } else {
         Json::Value rootNode;
         JsonParser::readFromJsonFile(rootNode, SENSOR_FEATURE_MGR_API_JSON);

@@ -1,6 +1,4 @@
 /*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -423,7 +421,7 @@ KeepAliveTestApp::~KeepAliveTestApp() {
  * Main routine
  */
 int main(int argc, char ** argv) {
-
+    std::ios::sync_with_stdio(false);
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

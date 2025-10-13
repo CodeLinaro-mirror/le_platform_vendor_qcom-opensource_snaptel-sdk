@@ -407,6 +407,10 @@ telux::common::Status
     for (auto &r : response.rat_pref_types()) {
         preference.set(static_cast<int>(r));
     }
+    if (preference[static_cast<int>(telux::tel::RatPrefType::PREF_NR5G)]) {
+        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_NSA));
+        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_SA));
+    }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
     bool isCallbackNeeded = static_cast<bool>(response.is_callback());
@@ -1017,6 +1021,10 @@ void ServingSystemManagerStub::handleSystemSelectionPreferenceChanged
     RatPreference preference;
     for (auto &r : event.rat_pref_types()) {
         preference.set(static_cast<int>(r));
+    }
+    if (preference[static_cast<int>(telux::tel::RatPrefType::PREF_NR5G)]) {
+        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_NSA));
+        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_SA));
     }
 
     ServiceDomainPreference domain =

@@ -742,27 +742,54 @@ void DataSettingsMenu::setUrlIdToBackhaulMapping(std::vector<std::string> inputC
     }
 
     // Read multiple URL IDs from the user
-    std::cout << "Enter URL IDs (comma-separated): ";
-    std::string input;
-    std::getline(std::cin, input);
-
-    // Trim leading/trailing whitespace from the entire input
-    input.erase(0, input.find_first_not_of(" \t\n\r\f\v"));
-    input.erase(input.find_last_not_of(" \t\n\r\f\v") + 1);
-
-    // Split the input string into individual URL IDs
-    std::stringstream ss(input);
-    std::string token;
     std::vector<uint32_t> urlIds;
-    while (std::getline(ss, token, ',')) {
-        // Trim each token
-        token.erase(0, token.find_first_not_of(" \t\n\r\f\v"));
-        token.erase(token.find_last_not_of(" \t\n\r\f\v") + 1);
 
-        if (!token.empty()) {
-            uint32_t urlId = std::stoul(token);
-            Utils::validateInput(urlId);
-            urlIds.push_back(urlId);
+    while (true) {
+        urlIds.clear();  // Clear previous input
+        std::cout << "Enter URL IDs (comma-separated): ";
+        std::string input;
+        std::getline(std::cin, input);
+
+        // Trim leading/trailing whitespace from the entire input
+        input.erase(0, input.find_first_not_of(" \t\n\r\f\v"));
+        input.erase(input.find_last_not_of(" \t\n\r\f\v") + 1);
+
+        std::stringstream ss(input);
+        std::string token;
+        bool allValid = true;
+
+        while (std::getline(ss, token, ',')) {
+            // Trim each token
+            token.erase(0, token.find_first_not_of(" \t\n\r\f\v"));
+            token.erase(token.find_last_not_of(" \t\n\r\f\v") + 1);
+
+            if (!token.empty()) {
+                if (std::all_of(token.begin(), token.end(), ::isdigit)) {
+                    try {
+                        uint32_t urlId = std::stoul(token);
+                        urlIds.push_back(urlId);
+                    } catch (const std::exception &e) {
+                        std::cerr << "Conversion error for token '" << token << "': " << e.what() << "\n";
+                        allValid = false;
+                        break;
+                    }
+                } else {
+                    std::cerr << "Invalid URL ID: '" << token << "'. Please enter only numeric values.\n";
+                    allValid = false;
+                    break;
+                }
+            } else {
+                std::cerr << "Empty token\n";
+                allValid = false;
+                break;
+            }
+
+        }
+
+        if (allValid && !urlIds.empty()) {
+            break;  // Exit loop if all inputs are valid
+        } else {
+            std::cerr << "Invalid input detected. Please try again.\n";
         }
     }
 
@@ -837,21 +864,32 @@ void DataSettingsMenu::getUrlIdToBackhaulMapping(std::vector<std::string> inputC
     if (error == telux::common::ErrorCode::SUCCESS) {
         std::cout << "RESPONSE: getUrlIdToBackhaulMapping is successful" << std::endl;
         std::cout << "URL ID to Backhaul Mapping:" << std::endl;
-        for (const auto& mapping : urlToBackhaulMappingList) {
-            std::cout << "URL IDs : ";
-            bool isFirst = true;
-            for (const auto& urlId : mapping.urlIds) {
-                if (!isFirst) {
-                    std::cout << " ";
+
+        if(urlToBackhaulMappingList.empty()) {
+            std::cerr << "No entries found !!!" << std::endl;
+        } else {
+            for (const auto& mapping : urlToBackhaulMappingList) {
+                std::cout << std::endl;
+                if (mapping.urlIds.empty()) {
+                        std::cerr << "Empty URL Ids received, skipping .." << std::endl;
+                        continue;  // Skip mappings with no URL IDs
                 }
-                std::cout << urlId;
-                isFirst = false;
-            }
-            std::cout << std::endl;
-            std::cout << "Backhaul: " << DataUtils::backhaulToString(mapping.backhaul.backhaul) << std::endl;
-            if (mapping.backhaul.backhaul == telux::data::BackhaulType::WWAN) {
-                std::cout << "Slot ID: " << mapping.backhaul.slotId << std::endl;
-                std::cout << "Profile ID: " << mapping.backhaul.profileId << std::endl;
+
+                std::cout << "URL IDs : ";
+                bool isFirst = true;
+                for (const auto& urlId : mapping.urlIds) {
+                    if (!isFirst) {
+                        std::cout << " ";
+                    }
+                    std::cout << urlId;
+                    isFirst = false;
+                }
+                std::cout << std::endl;
+                std::cout << "Backhaul: " << DataUtils::backhaulToString(mapping.backhaul.backhaul) << std::endl;
+                if (mapping.backhaul.backhaul == telux::data::BackhaulType::WWAN) {
+                    std::cout << "Slot ID: " << mapping.backhaul.slotId << std::endl;
+                    std::cout << "Profile ID: " << mapping.backhaul.profileId << std::endl;
+                }
             }
         }
     } else {

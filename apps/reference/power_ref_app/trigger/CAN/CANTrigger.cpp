@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -107,7 +107,8 @@ void CANTrigger::triggerEvent(CwFrame * pf, void* userData, int ifNo) {
         // ignore identifier extension (IDE) bit of CAN frame ID
         LOG(DEBUG, __FUNCTION__, " compare with trigger id = ", trigger.first);
         if (trigger.first<<1 ==  pf->getId()<<1) {
-            eventPtr = std::make_shared<Event>(trigger.second.first, TriggerType::CAN_TRIGGER);
+            eventPtr = std::make_shared<Event>(trigger.second.first,
+                TriggerType::CAN_TRIGGER);
             break;
         }
     }
@@ -137,22 +138,28 @@ std::shared_ptr<CANTrigger> CANTrigger::getInstance(std::shared_ptr<EventManager
 }
 
 bool CANTrigger::loadTrigger() {
-   LOG(DEBUG, __FUNCTION__);
-   uint32_t triggerSuspend, triggerResume, triggerShutdown;
-   triggerSuspend = std::stoul(config_->getValue("CAN_TRIGGER", TRIGGER_SUSPEND), nullptr, 16);
-   triggerResume = std::stoul(config_->getValue("CAN_TRIGGER", TRIGGER_RESUME), nullptr, 16);
-   triggerShutdown = std::stoul(config_->getValue("CAN_TRIGGER", TRIGGER_SHUTDOWN), nullptr, 16);
-
-   if (triggerSuspend == triggerResume || triggerSuspend == triggerShutdown ||
-       triggerResume == triggerShutdown) {
-      LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
-      return false;
-   }
-
-
-   triggers_.insert({triggerSuspend, {TcuActivityState::SUSPEND, 0}});
-   triggers_.insert({triggerResume, {TcuActivityState::RESUME, 0}});
-   triggers_.insert({triggerShutdown, {TcuActivityState::SHUTDOWN, 0}});
-
-   return true;
+    LOG(DEBUG, __FUNCTION__);
+    std::map<std::string, TcuActivityState> expectedTrigger{
+        {TRIGGER_SUSPEND, TcuActivityState::SUSPEND},
+        {TRIGGER_RESUME, TcuActivityState::RESUME},
+        {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
+    try {
+        std::string configText = "";
+        uint32_t triggerCANId = 0;
+        for (auto itr = expectedTrigger.begin(); itr != expectedTrigger.end(); ++itr) {
+            configText = config_->getValue("CAN_TRIGGER", itr->first);
+            if (!configText.empty()) {
+                triggerCANId = std::stoul(configText, nullptr, 16);
+                if (triggers_.find(triggerCANId) != triggers_.end()) {
+                    LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+                    return false;
+                }
+                triggers_.insert({triggerCANId, {itr->second, 0}});
+            }
+        }
+    } catch (const std::invalid_argument& ia) {
+        LOG(ERROR, __FUNCTION__, " Error : invalid argument");
+        return false;
+    }
+    return true;
 }

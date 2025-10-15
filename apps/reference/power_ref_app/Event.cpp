@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -44,7 +44,7 @@ uint64_t Event::nextId;
  */
 Event::Event(TcuActivityState triggeredState,
              TriggerType triggerType) : id_(++nextId), triggeredState_(triggeredState),
-                                        triggerType_(triggerType), status_(EventStatus::INITIALIZED)
+                                    triggerType_(triggerType), status_(EventStatus::INITIALIZED)
 {
     LOG(DEBUG, __FUNCTION__, toString());
     timeStamps_.insert({EventStatus::INITIALIZED,

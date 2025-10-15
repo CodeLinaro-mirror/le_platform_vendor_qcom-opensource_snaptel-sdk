@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,15 +32,9 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
 #include "SMSTrigger.hpp"
 #include <telux/common/Log.hpp>
 #include <future>
-#include <iomanip>
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -106,23 +100,22 @@ void SMSTrigger::onIncomingSms(int phoneId,
       text = text + smsMsg.getText();
 
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
-      std::string pduString = pduToHexString(smsMsg.getRawPdu());
       if (partInfo) {
          std::string tmpLog = " mSegment: " + std::to_string(partInfo->segmentNumber) +
             "\n SMS Part on phone ID " + std::to_string(phoneId) + " from: " + smsMsg.getSender() +
             " to: " + smsMsg.getReceiver() + "\n Message Part: " + smsMsg.getText() + "\n PDU: " +
-            pduString + "\n RefNumber:" + std::to_string(partInfo->refNumber) +
+            smsMsg.getPdu() + "\n RefNumber:" + std::to_string(partInfo->refNumber) +
             " NumberOfSegments:" + std::to_string(partInfo->numberOfSegments) + " SegmentNumber: " +
             std::to_string(partInfo->segmentNumber);
          LOG(DEBUG, __FUNCTION__, tmpLog);
       }
    }
-   LOG(DEBUG, __FUNCTION__, " Complete Message :", "\n", text);
+   LOG(DEBUG, __FUNCTION__, " Complete Message :", text);
 
    std::async(std::launch::async, [this, text] {
-      TcuActivityState newState = validateTrigger(text);
-      if(newState != TcuActivityState::UNKNOWN) {
-         this->triggerEvent(newState);
+      TcuActivityState tcuActivityState = TcuActivityState::UNKNOWN;
+      if(validateTrigger(text, tcuActivityState)) {
+         this->triggerEvent(tcuActivityState);
       }
    });
 }
@@ -150,45 +143,43 @@ void SMSTrigger::triggerEvent(TcuActivityState eventState) {
    }
 }
 
-TcuActivityState SMSTrigger::validateTrigger(std::string text) {
-   LOG(DEBUG, __FUNCTION__);
-   // to avoid \n in string which might lead not matching trigger text
-   text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
+bool SMSTrigger::validateTrigger(std::string text, TcuActivityState& tcuActivityState) {
    LOG(DEBUG, __FUNCTION__, " ", text);
+   // to avoid \n and \ in a string which might lead to not matching trigger text
+   text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
+   text.erase(std::remove(text.begin(), text.end(), '\\'), text.cend());
+
    if (triggerText_.find(text) == triggerText_.end()) {
       LOG(ERROR, __FUNCTION__, " invalid trigger text, text = ", text);
    } else {
       LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text);
-      return triggerText_[text];
+      tcuActivityState = triggerText_[text];
+      return true;
    }
-   return TcuActivityState::UNKNOWN;
+   return false;
 }
 
 bool SMSTrigger::loadConfig() {
    LOG(DEBUG, __FUNCTION__);
-   std::string triggerTxtSuspend, triggerTxtResume, triggerTxtShutdown;
-   triggerTxtSuspend = config_->getValue("SMS_TRIGGER", TRIGGER_SUSPEND);
-   triggerTxtResume = config_->getValue("SMS_TRIGGER", TRIGGER_RESUME);
-   triggerTxtShutdown = config_->getValue("SMS_TRIGGER", TRIGGER_SHUTDOWN);
-
-   if (triggerTxtSuspend == triggerTxtResume || triggerTxtSuspend == triggerTxtShutdown ||
-       triggerTxtResume == triggerTxtShutdown) {
-      LOG(ERROR, __FUNCTION__, " Error : same trigger text for multiple state");
+   std::map<std::string, TcuActivityState> expectedTrigger{
+       {TRIGGER_SUSPEND, TcuActivityState::SUSPEND},
+       {TRIGGER_RESUME, TcuActivityState::RESUME},
+       {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
+   try {
+      std::string configTriggerText = "";
+      for (auto itr = expectedTrigger.begin(); itr != expectedTrigger.end(); ++itr) {
+         configTriggerText = config_->getValue("SMS_TRIGGER", itr->first);
+         if (!configTriggerText.empty()) {
+            if (triggerText_.find(configTriggerText) != triggerText_.end()) {
+               LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+               return false;
+            }
+            triggerText_.insert({configTriggerText, itr->second});
+         }
+      }
+   } catch (const std::invalid_argument& ia) {
+      LOG(ERROR, __FUNCTION__, " Error : invalid argument");
       return false;
    }
-   triggerText_.insert({triggerTxtSuspend, TcuActivityState::SUSPEND});
-   triggerText_.insert({triggerTxtResume, TcuActivityState::RESUME});
-   triggerText_.insert({triggerTxtShutdown, TcuActivityState::SHUTDOWN});
-
    return true;
-}
-
-
-std::string SMSTrigger::pduToHexString(telux::tel::PduBuffer pdu) {
-    std::ostringstream oss;
-    for (uint8_t byte : pdu) {
-        oss << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
-            << static_cast<int>(byte);
-    }
-    return oss.str();
 }

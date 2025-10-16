@@ -599,116 +599,15 @@ The following example illustrates how an application can incorporate the SELinux
    telux_allow_data(app_t);
 
 In addition to the above SELinux interfaces list, below are the SELinux interfaces specific to a usecase. When an app needs to use any API, it should
-identify which SELinux interface to be used corresponding to the permission type from the below table and add it to the policy file.
+identify which SELinux interface to be used corresponding to the permission type and add it to the policy file.
 
 To determine which permission type to be used for a API, please refer to the documentation for the API in the API Reference or in the API header file
 
 .. note::
-   The system integrator has the option to turn on/off this feature, where APIs related to a particular use case require certain permissions. If this feature is turned off, the use case specific permissions listed below are not required by the caller.
-
-+--------------+------------------------------------+------------------------------------------+
-| Tech Area    | Permission Type                    | SELinux Interface                        |
-+==============+====================================+==========================================+
-| Audio        | TELUX_AUDIO_VOICE                  | telux_allow_audio_voice                  |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_AUDIO_PLAY                   | telux_allow_audio_play                   |
-|              +------------------------------------+------------------------------------------+ 
-|              | TELUX_AUDIO_FACTORY_TEST           | telux_allow_audio_factory_test           |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_AUDIO_CAPTURE                | telux_allow_audio_capture                |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_AUDIO_TRANSCODE              | telux_allow_audio_transcode              |
-+--------------+------------------------------------+------------------------------------------+
-| Data         | TELUX_DATA_SETTING                 | telux_allow_data_setting                 |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_DATA_CALL_OPS                | telux_allow_data_call_ops                |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_DATA_CALL_PROPS              | telux_allow_data_call_props              |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_DATA_PROFILE_OPS             | telux_allow_data_profile_ops             |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_DATA_FILTER_OPS              | telux_allow_data_filter_ops              |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_DATA_NETWORK_CONFIG          | telux_data_network_config                |
-+--------------+------------------------------------+------------------------------------------+
-| ModemConfig  | TELUX_CONFIG_MODEM_CONFIG          | telux_allow_config_modem_config          |
-+--------------+------------------------------------+------------------------------------------+
-| Power        | TELUX_POWER_CONTROL_STATE          | telux_allow_power_control_state_t        | 
-+--------------+------------------------------------+------------------------------------------+
-| Sensor       | TELUX_SENSOR_DATA_READ             | telux_allow_sensor_data_read             |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_SENSOR_PRIVILEGED_OPS        | telux_allow_sensor_privileged_ops        |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_SENSOR_FEATURE_CONTROL       | telux_allow_sensor_feature_control       | 
-+--------------+------------------------------------+------------------------------------------+
-| Telephony    | TELUX_TEL_CARD_POWER               | telux_allow_tel_card_power               |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CARD_OPS                 | telux_allow_tel_card_ops                 |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_PRIVATE_INFO_READ        | telux_allow_tel_private_info_read        |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CARD_PRIVILEGED_OPS      | telux_allow_tel_card_privileged_ops      |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SAP                      | telux_allow_tel_sap                      |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CELL_BROADCAST_CONFIG    | telux_allow_tel_cell_broadcast_config    |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CELL_BROADCAST_LISTEN    | telux_allow_tel_cell_broadcast_listen    |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_REMOTE_SIM               | telux_allow_tel_remote_sim               |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SMS_OPS                  | telux_allow_tel_sms_ops                  |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SMS_LISTEN               | telux_access_tel_sms_listen_t            |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SMS_CONFIG               | telux_access_tel_sms_config              | 
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_IMS_SETTINGS             | telux_allow_tel_ims_settings             |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SRV_SYSTEM_CONFIG        | telux_allow_tel_srv_system_config        |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SRV_SYSTEM_READ          | telux_allow_tel_srv_system_read          |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_NETWORK_SELECTION_OPS    | telux_allow_tel_network_selection_ops    |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_NETWORK_SELECTION_READ   | telux_allow_tel_network_selection_read   |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_MULTISIM_MGMT            | telux_allow_tel_multisim_mgmt            |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_PRIVATE_INFO_READ        | telux_allow_tel_private_info_read        |
-|              +------------------------------------+------------------------------------------+ 
-|              | TELUX_TEL_SUB_PRIVATE_INFO         | telux_allow_tel_sub_private_info_read    |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_SUBSCRIPTION_READ        | telux_allow_tel_subscription_read        |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CALL_INFO_READ           | telux_allow_tel_call_info_read           |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CALL_MGMT                | telux_allow_tel_call_mgmt                |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_CALL_PRIVATE_INFO        | telux_allow_tel_call_private_info        |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_EMERGENCY_OPS            | telux_allow_tel_emergency_ops            | 
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_ECALL_MGMT               | telux_allow_tel_ecall_mgmt               |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_PHONE_MGMT               | telux_allow_tel_phone_mgmt               |
-|              +------------------------------------+------------------------------------------+    
-|              | TELUX_TEL_PRIVATE_INFO_READ        | telux_access_tel_private_info_read       |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_TEL_PHONE_CONFIG             | telux_allow_tel_phone_config             |
-|              +------------------------------------+------------------------------------------+ 
-|              | TELUX_TEL_ECALL_CONFIG             | telux_allow_tel_ecall_config             |
-|              +------------------------------------+------------------------------------------+ 
-|              | TELUX_TEL_SUPP_SERVICES            | telux_allow_tel_supp_services            |
-+--------------+------------------------------------+------------------------------------------+
-| Satcom       | TELUX_NTN_CONFIG                   | telux_access_ntn_config_t                |
-|              +------------------------------------+------------------------------------------+
-|              | TELUX_NTN_DATA                     | telux_access_ntn_data_t                  |
-+--------------+------------------------------------+------------------------------------------+
-
+   The system integrator has the option to turn on/off this feature, where APIs related to a particular use case require certain permissions. If this feature is turned off, the use case specific permissions are not required by the caller.
 
 The following example illustrates how to declare permissions for an application that wants to use :cpp:func:`telux::data::IDataConnectionManager::startDataCall` to setup a cellular data connection.The documentation of this API indicates
-that the caller needs to have TELUX_DATA_CALL_OPS permission. From the above table, the permission maps to **telux_allow_data_call_ops** SELinux interface:
+that the caller needs to have TELUX_DATA_CALL_OPS permission. The SELinux interface to be used is **telux_allow_data_call_ops**.
 
 In order for the app to use the API the below code snippet needs to be entered in the Type Enforcement (TE) file of the application.
 
@@ -716,7 +615,7 @@ In order for the app to use the API the below code snippet needs to be entered i
 
    policy_module(application, 1.0)
    type app_t;
-   
+
    #Allow data call operations
-   
+
    telux_allow_data_call_ops(app_t)

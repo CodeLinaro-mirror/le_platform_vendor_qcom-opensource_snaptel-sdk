@@ -842,8 +842,7 @@ public:
     *                            milliseconds.
     *
     *                            @note Platform supports CS eCall only configuration and no support
-    *                            for NG eCall:
-    *
+    *                            for NG eCall: \n
     *                            Redial attempts for eCall origination failures can be configured
     *                            to range from 1 to 10 attempts. In cases where the eCall drops
     *                            before the receipt of the MSD transmission status, the number of
@@ -851,6 +850,7 @@ public:
     *                            expected to determine an appropriate time gap between successive
     *                            redial attempts based on the tables provided below. Below tables
     *                            specify the required time gap ranges (in milliseconds).
+    *
     * ---------------------------------------------------------------------------------------------
     * ECall redial configuration:
     * ECALL ORIGINATION FAILURE ( @ref telux::tel::RedialConfigType::CALL_ORIG )
@@ -875,8 +875,8 @@ public:
     * | 1                    | 5000                             | 60000                           |
     * | 2                    | 60000                            | 180000                          |
     * ---------------------------------------------------------------------------------------------
-    *                            @note Platform supports both NG eCall and CS eCall configuration:
-    *
+    *                            @note Platform supports both NG eCall and CS eCall
+    *                            configuration: \n
     *                            Application input configurations for call origination failures
     *                            will not be applied in the case of eCall origination failures.
     *                            This behavior is governed by the scan times required for
@@ -886,9 +886,9 @@ public:
     *                            receipt, the application must be configured to complete retries
     *                            within 2 minutes. It is expected that the application will
     *                            determine an appropriate time gap between successive redial
-    *                            attempts using the table below.
-    *                            This table outlines the required time gap ranges
-    *                            (in milliseconds).
+    *                            attempts using the table below. This table specifies the required
+    *                            time gap ranges (in milliseconds).
+    *
     * ---------------------------------------------------------------------------------------------
     * ECall redial configuration: ECALL DROP-( @ref telux::tel::RedialConfigType::CALL_DROP )
     * ---------------------------------------------------------------------------------------------

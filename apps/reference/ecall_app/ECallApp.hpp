@@ -60,22 +60,19 @@ class ECallApp : public ConsoleApp {
     /**
      * Initialize the subsystems, console commands and display the menu.
      */
-    void init();
+    bool init();
 
     /**
      * Function to get phoneId from the user-interface
      */
     static int getPhoneId();
 
-    /**
-     * Hangs up a triggered eCall and gracefully clears down the subsystems.
-     */
-    void cleanup();
-
- private:
     ECallApp(std::string appName, std::string cursor);
     ~ECallApp();
 
+ private:
+    /** Aecs sub menu */
+    void aecsCallSubMenu(std::vector<std::string> userInput);
     /**
      * Trigger a standard eCall using the emergency number configured in FDN (eg.112)
      */
@@ -196,11 +193,6 @@ class ECallApp : public ConsoleApp {
      * Request to get the value of POST TEST REGISTRATION timer for ERA-GLONASS self test eCall.
      */
     void getECallPostTestRegistrationTimer();
-
-    /**
-     * Request to set emergency mode configuration for ecall
-     */
-    void setEmergencyMode();
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

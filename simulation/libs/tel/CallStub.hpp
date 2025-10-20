@@ -82,6 +82,8 @@ class CallStub : public ICall {
     telux::common::Status modify(
         RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     NetworkMode getNetworkMode();
+    bool isAecsCallDrop();
+    telux::tel::RedialState getRedialState();
     telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     CallState getCallState();

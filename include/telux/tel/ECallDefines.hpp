@@ -641,6 +641,19 @@ struct EcallConfig {
                            expects a valid MSD from the application */
 };
 
+/**
+ * Represents redial states for AECS (Automatic Emergency Call System) call origination fails.
+ */
+enum class RedialState {
+    UNKNOWN = -1, /**< Unknown redial state. */
+    MODEM_RETRY_START, /**< Indicates when a call failed to originate and the modem has
+                            started automatic redial attempts (duration: 45 seconds). The
+                            call will be in the dialing state. */
+    MODEM_RETRY_END, /**< Indicates when the modem has completed its automatic redial
+                          attempts and call will be ended. Upon receiving this state, the
+                          application is expected to initiate a new call. */
+};
+
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel

@@ -446,6 +446,14 @@ NetworkMode CallStub::getNetworkMode() {
     return callInfo_.networkMode;
 }
 
+bool CallStub::isAecsCallDrop() {
+    return false;
+}
+
+telux::tel::RedialState CallStub::getRedialState() {
+    return telux::tel::RedialState::UNKNOWN;
+}
+
 telux::common::Status CallStub::modify(
     RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " RTT mode is : ", static_cast<int>(mode));

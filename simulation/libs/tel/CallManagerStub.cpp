@@ -151,12 +151,17 @@ telux::common::Status CallManagerStub::removeListener(std::shared_ptr<ICallListe
 telux::common::Status CallManagerStub::makeCall(
     int phoneId, const std::string &dialNumber, std::shared_ptr<IMakeCallCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
-    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeVoiceCall);
+    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeVoiceCall, nullptr);
     return status;
 }
 
+telux::common::Status CallManagerStub::makeAecsCall(
+    int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback) {
+    return dialCall(phoneId, eCallIdentifier, nullptr, makeVoiceCall, callback);
+}
+
 telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &dialNumber,
-    std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi) {
+    std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi, MakeCallCallback responseCallback) {
     LOG(DEBUG, " CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -214,11 +219,11 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
         if (status == telux::common::Status::SUCCESS) {
             // Update call details from server and invoke callback
             findMatchingCall(
-                callIndex, remotePartyNumber, phoneId, cbDelay, callback, nullptr, error);
+                callIndex, remotePartyNumber, phoneId, cbDelay, callback, responseCallback, error);
         } else {
             // Update call details from server
             findMatchingCall(
-                callIndex, remotePartyNumber, phoneId, cbDelay, nullptr, nullptr, error);
+                callIndex, remotePartyNumber, phoneId, cbDelay, nullptr, responseCallback, error);
         }
     }
     return status;
@@ -1637,7 +1642,7 @@ telux::common::ErrorCode CallManagerStub::encodeECallMsd(
 telux::common::Status CallManagerStub::makeRttCall(
     int phoneId, const std::string &dialNumber, std::shared_ptr<IMakeCallCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
-    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeRttVoiceCall);
+    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeRttVoiceCall, nullptr);
     return status;
 }
 

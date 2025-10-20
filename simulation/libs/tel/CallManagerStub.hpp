@@ -42,6 +42,8 @@ class CallManagerStub : public ICallManager,
 
     telux::common::Status makeCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback) override;
+    telux::common::Status makeAecsCall(
+        int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback ) override;
     telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData, int category,
         int variant, std::shared_ptr<IMakeCallCallback> callback,
         TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
@@ -152,7 +154,8 @@ class CallManagerStub : public ICallManager,
     telux::common::Status getInProgressCallsFromServer();
     void onEventUpdate(std::string event);
     telux::common::Status dialCall(int phoneId, const std::string &dialNumber,
-        std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi);
+        std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi,
+        MakeCallCallback responseCallback);
     template <typename T>
     T createRequest(
         int phoneId, const std::string dialNumber, bool isMsdTransmitted, CallApi inputApi) {

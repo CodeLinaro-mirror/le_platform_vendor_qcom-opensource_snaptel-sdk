@@ -29,40 +29,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -98,6 +67,23 @@ TelClient::TelClient()
 TelClient::~TelClient() {
     eCallInprogress_ = false;
     eCallDataMap_.clear();
+}
+
+void TelClient::cleanup() {
+    if (callMgr_) {
+        callMgr_->removeListener(shared_from_this());
+    }
+
+    // Remove EcallScanFailHandler listener if registered
+    if (callMgr_ && eCallScanFailHdlrInstance_) {
+        callMgr_->removeListener(eCallScanFailHdlrInstance_);
+        eCallScanFailHdlrInstance_.reset();
+    }
+
+    // Clear CallStatusListener
+    if (callListener_) {
+        callListener_ = nullptr;
+    }
 }
 
 // Initialize the telephony subsystem
@@ -463,17 +449,6 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
     }
 }
 
-// Callback which provides response for set emergency mode
-void TelClient::setEmergencyModeResponse(telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << CLIENT_NAME << "Failed to set emergency mode with error code: "
-                  << Utils::getErrorCodeAsString(error) << std::endl;
-        return;
-    } else {
-        std::cout << CLIENT_NAME << "Successfully set emergency mode  " << std::endl;
-    }
-}
-
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
     ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -816,22 +791,6 @@ telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTim
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status TelClient::setEmergencyMode(
-    int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled) {
-    if (!callMgr_) {
-        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set emergency mode"
-                  << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    auto status = callMgr_->setEmergencyMode(phoneId, emergencyModeEnabled, antennaSwitchEnabled,
-        std::bind(&TelClient::setEmergencyModeResponse, this, std::placeholders::_1));
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << CLIENT_NAME << "Failed to set emergency mode" << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    return telux::common::Status::SUCCESS;
-}
-
 telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
     std::vector<uint8_t> &msdPdu) {
     if (!callMgr_) {
@@ -853,3 +812,4 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
     }
     return telux::common::ErrorCode::SUCCESS;
 }
+

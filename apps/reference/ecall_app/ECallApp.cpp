@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -100,15 +69,10 @@ ECallApp::~ECallApp() {
    eCallMgr_ = nullptr;
 }
 
-ECallApp &ECallApp::getInstance() {
-   static ECallApp instance("eCall App Menu", "eCall> ");
-   return instance;
-}
-
 /**
  * Initialize console commands and Display
  */
-void ECallApp::init() {
+bool ECallApp::init() {
 
     std::shared_ptr<ConsoleAppCommand> eCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("1", "ECall", {},std::bind(&ECallApp::makeECall, this)));
@@ -168,23 +132,20 @@ void ECallApp::init() {
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
         hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand,
         getEcallConfigCommand, setEcallConfigCommand, getEncodedOADContentCommand,
-        getECallMsdPayloadCommand, restartECallHlapTimerCommand, setEmergencyModeCommand};
-
-    std::shared_ptr<ConsoleAppCommand> setEmergencyModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "16", "Set_Emergency_Mode", {}, std::bind(&ECallApp::setEmergencyMode, this)));
+        getECallMsdPayloadCommand, restartECallHlapTimerCommand};
 
     addCommands(commandsList);
 
     if(!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
-        return;
+        return false;
     }
     if(telux::common::Status::SUCCESS == eCallMgr_->init()) {
         ConsoleApp::displayMenu();
     } else {
         std::cout << "Failed to initialize eCall Manager" << std::endl;
     }
+    return true;
 }
 
 /**
@@ -682,63 +643,6 @@ void ECallApp::restartECallHlapTimer() {
     }
 }
 
-void ECallApp::setEmergencyMode() {
-    if (!eCallMgr_) {
-        std::cout << "Invalid eCall Manager" << std::endl;
-        return;
-    }
-    // Get phoneId from user
-    int phoneId = getPhoneId();
-    // Get configuration from user
-    char delimiter   = '\n';
-    std::string temp = "";
-    std::cout << "Enter emergency mode configuration (0-disable, 1- enable): ";
-    std::getline(std::cin, temp, delimiter);
-    uint32_t emergencyModeEnabled = 0;
-    uint32_t antennaSwitchEnabled = 0;
-    if (!temp.empty()) {
-        try {
-            emergencyModeEnabled = std::stoi(temp);
-            if (emergencyModeEnabled != 0 && emergencyModeEnabled != 1) {
-                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
-                          << std::endl;
-                return;
-            }
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values, "
-                      << emergencyModeEnabled << std::endl;
-            return;
-        }
-    } else {
-        std::cout << "No input" << std::endl;
-        return;
-    }
-    std::cout << "Enter antenna switching configuration (0-disable, 1- enable): ";
-    std::getline(std::cin, temp, delimiter);
-    if (!temp.empty()) {
-        try {
-            antennaSwitchEnabled = std::stoi(temp);
-            if (antennaSwitchEnabled != 0 && antennaSwitchEnabled != 1) {
-                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
-                          << std::endl;
-                return;
-            }
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values, "
-                      << antennaSwitchEnabled << std::endl;
-            return;
-        }
-    } else {
-        std::cout << "No input" << std::endl;
-        return;
-    }
-    auto ret = eCallMgr_->setEmergencyMode(
-        phoneId, static_cast<bool>(emergencyModeEnabled), static_cast<bool>(antennaSwitchEnabled));
-    if (ret != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to set emergency mode" << std::endl;
-    }
-}
-
 void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
@@ -766,12 +670,6 @@ void ECallApp::getECallMsdPayload() {
     }
 }
 
-/**
- * Executes any cleanup procedure if necessary
- */
-void ECallApp::cleanup() {
-    std::cout << "Exiting the application.." << std::endl;
-}
 
 /**
  * Function to get phoneId from the user-interface
@@ -902,11 +800,6 @@ telux::common::Status ECallApp::getIntegerInput(uint32_t &value, std::string pro
     return telux::common::Status::SUCCESS;
 }
 
-void signalHandler(int sig) {
-    ECallApp::getInstance().cleanup();
-    exit(1);
-}
-
 /**
  * Utility function to get user input for MSD PDU
  */
@@ -922,28 +815,4 @@ std::vector<uint8_t> ECallApp::getMsdPduInput() {
         msdPdu = Utils::convertHexToBytes(temp);
     }
     return msdPdu;
-}
-
-void setupSignalHandler() {
-    signal(SIGINT, signalHandler);
-    signal(SIGSEGV, signalHandler);
-    signal(SIGABRT, signalHandler);
-    signal(SIGBUS, signalHandler);
-    signal(SIGILL, signalHandler);
-    signal(SIGFPE, signalHandler);
-    signal(SIGPIPE, signalHandler);
-}
-
-// Main function that displays the interactive console for eCall related operations
-int main(int argc, char **argv) {
-    setupSignalHandler();
-    // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient"};
-    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
-        std::cout << "Adding supplementary groups failed!" << std::endl;
-    }
-    auto &eCallApp = ECallApp::getInstance();
-    eCallApp.init();  // initialize commands and display
-    return eCallApp.mainLoop();  // Main loop to continuously read and execute commands
 }

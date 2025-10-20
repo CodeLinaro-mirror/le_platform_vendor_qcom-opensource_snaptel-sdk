@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       Call.hpp
  * @brief      Phone Call class is the primary interface to process Call requests.
@@ -40,6 +45,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
+#include <telux/tel/ECallDefines.hpp>
 
 namespace telux {
 
@@ -247,7 +253,7 @@ public:
    /**
     * Get the current state of the call, such as ringing, in progress etc.
     *
-    * @returns CallState - enumeration representing call State
+    * @returns CallState - enumeration representing call state
     */
    virtual CallState getCallState() = 0;
 
@@ -267,7 +273,7 @@ public:
    virtual CallDirection getCallDirection() = 0;
 
    /**
-    * Get the dailing number
+    * Get the dialing number
     *
     * @returns Phone Number to which the call was dialed out
     *          Empty string in case of INCOMING call direction
@@ -284,9 +290,6 @@ public:
    /**
     * Get the SIP error code for the termination of the IMS call.
     * Refer RFC3261 Section 21 for error description.
-    *
-    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
-    * permission to successfully invoke this API.
     *
     * @returns integer representing SIP error code.
     *
@@ -313,6 +316,39 @@ public:
     */
    virtual bool isMultiPartyCall() = 0;
 
+   /**
+    * Determines whether the call ended due to an AECS-specific call drop.
+    *
+    * @returns true if the call ended because of an AECS call drop; false otherwise.
+    *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+    *             call state updates.
+    *          2. If the call ended due to an AECS-specific call drop, call state becomes
+    *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+    *             responsible for initiating further redial attempts.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual bool isAecsCallDrop() = 0;
+
+   /**
+    * Gets the redial state for failed AECS call.
+    *
+    * @returns Redial state for an AECS call, @ref telux::tel::RedialState
+    *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+    *             call state updates.
+    *          2. When the modem begins retrying an AECS call after an origination failure,
+    *             the state changes to telux::tel::RedialState::MODEM_RETRY_START and the
+    *             call state becomes telux::tel::CallState::CALL_DIALING.
+    *          3. After the modem completes retry attempts, the state updates to
+    *             telux::tel::RedialState::MODEM_RETRY_END and the call state becomes
+    *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+    *             responsible for initiating further redial attempts.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::tel::RedialState getRedialState() = 0;
 
    virtual ~ICall() {
    }

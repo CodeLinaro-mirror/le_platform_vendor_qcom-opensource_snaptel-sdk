@@ -25,10 +25,11 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -78,7 +79,7 @@ void SignalHandler::dumpTrace(int sigNum, siginfo_t* info, void* ptr) {
         return;
     }
 
-    for (auto i = 2; i < nptrs; ++i) {
+    for (size_t i = 2; i < nptrs; ++i) {
         std::string name(strings[i]);
         // the output from backtrace_symbols follows following
         // format: <library path>(<Function Name>+<offset with the function>) [Symbol address].

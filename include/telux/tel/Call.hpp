@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -76,6 +45,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
+#include <telux/tel/ECallDefines.hpp>
 
 namespace telux {
 
@@ -314,7 +284,7 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
     * permission to invoke this API successfully.
     *
-    * @returns CallState - enumeration representing call State
+    * @returns CallState - enumeration representing call state
     */
    virtual CallState getCallState() = 0;
 
@@ -340,7 +310,7 @@ public:
    virtual CallDirection getCallDirection() = 0;
 
    /**
-    * Get the dailing number
+    * Get the dialing number
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_PRIVATE_INFO
     * permission to invoke this API successfully.
@@ -396,6 +366,45 @@ public:
     */
    virtual bool isMultiPartyCall() = 0;
 
+   /**
+    * Determines whether the call ended due to an AECS-specific call drop.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns true if the call ended because of an AECS call drop; false otherwise.
+    *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+    *             call state updates.
+    *          2. If the call ended due to an AECS-specific call drop, call state becomes
+    *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+    *             responsible for initiating further redial attempts.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual bool isAecsCallDrop() = 0;
+
+   /**
+    * Gets the redial state for failed AECS call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to successfully invoke this API.
+    *
+    * @returns Redial state for an AECS call, @ref telux::tel::RedialState
+    *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+    *             call state updates.
+    *          2. When the modem begins retrying an AECS call after an origination failure,
+    *             the state changes to telux::tel::RedialState::MODEM_RETRY_START and the
+    *             call state becomes telux::tel::CallState::CALL_DIALING.
+    *          3. After the modem completes retry attempts, the state updates to
+    *             telux::tel::RedialState::MODEM_RETRY_END and the call state becomes
+    *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+    *             responsible for initiating further redial attempts.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::tel::RedialState getRedialState() = 0;
 
    virtual ~ICall() {
    }

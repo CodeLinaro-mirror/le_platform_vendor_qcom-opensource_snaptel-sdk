@@ -28,6 +28,7 @@
  */
 
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -67,6 +68,23 @@ TelClient::~TelClient() {
     eCallInprogress_ = false;
     isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
+}
+
+void TelClient::cleanup() {
+    if (callMgr_) {
+        callMgr_->removeListener(shared_from_this());
+    }
+
+    // Remove EcallScanFailHandler listener if registered
+    if (callMgr_ && eCallScanFailHdlrInstance_) {
+        callMgr_->removeListener(eCallScanFailHdlrInstance_);
+        eCallScanFailHdlrInstance_.reset();
+    }
+
+    // Clear CallStatusListener
+    if (callListener_) {
+        callListener_ = nullptr;
+    }
 }
 
 // Initialize the telephony subsystem
@@ -425,17 +443,6 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
-    }
-}
-
-// Callback which provides response for set emergency mode
-void TelClient::setEmergencyModeResponse(telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << CLIENT_NAME << "Failed to set emergency mode with error code: "
-                  << Utils::getErrorCodeAsString(error) << std::endl;
-        return;
-    } else {
-        std::cout << CLIENT_NAME << "Successfully set emergency mode  " << std::endl;
     }
 }
 
@@ -845,22 +852,6 @@ telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTim
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status TelClient::setEmergencyMode(
-    int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled) {
-    if (!callMgr_) {
-        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set emergency mode"
-                  << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    auto status = callMgr_->setEmergencyMode(phoneId, emergencyModeEnabled, antennaSwitchEnabled,
-        std::bind(&TelClient::setEmergencyModeResponse, this, std::placeholders::_1));
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << CLIENT_NAME << "Failed to set emergency mode" << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    return telux::common::Status::SUCCESS;
-}
-
 telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
     std::vector<uint8_t> &msdPdu) {
     if (!callMgr_) {
@@ -882,3 +873,4 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
     }
     return telux::common::ErrorCode::SUCCESS;
 }
+

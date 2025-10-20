@@ -27,8 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -50,7 +49,6 @@
 #include "ECallApp.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
-#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
@@ -77,15 +75,10 @@ ECallApp::~ECallApp() {
     eCallMgr_ = nullptr;
 }
 
-ECallApp &ECallApp::getInstance() {
-    static ECallApp instance("eCall App Menu", "eCall> ");
-    return instance;
-}
-
 /**
  * Initialize console commands and Display
  */
-void ECallApp::init() {
+bool ECallApp::init() {
 
     std::shared_ptr<ConsoleAppCommand> eCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("1", "ECall", {}, std::bind(&ECallApp::makeECall, this)));
@@ -167,28 +160,25 @@ void ECallApp::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20",
             "Make_Self_Test_ERAGLONASS_ECall", {}, std::bind(&ECallApp::makeSelfTestECall, this)));
 
-    std::shared_ptr<ConsoleAppCommand> setEmergencyModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "21", "Set_Emergency_Mode", {}, std::bind(&ECallApp::setEmergencyMode, this)));
-
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
         hlapTimerStatusCommand, customNumberECallOverImsCommand, stopT10TimerCommand,
         setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand, setEcallConfigCommand,
         getEncodedOADContentCommand, getECallMsdPayloadCommand, setECallRedialConfigCommand,
         restartECallHlapTimerCommand, getECallRedialConfigCommand, setPostTestRegistrationCommand,
-        getPostTestRegistrationCommand, makeSelfTestECallCommand, setEmergencyModeCommand};
+        getPostTestRegistrationCommand, makeSelfTestECallCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
-        return;
+        return false;
     }
     if (telux::common::Status::SUCCESS == eCallMgr_->init()) {
         ConsoleApp::displayMenu();
     } else {
         std::cout << "Failed to initialize eCall Manager" << std::endl;
     }
+    return true;
 }
 
 /**
@@ -850,63 +840,6 @@ void ECallApp::getECallRedialConfig() {
     }
 }
 
-void ECallApp::setEmergencyMode() {
-    if (!eCallMgr_) {
-        std::cout << "Invalid eCall Manager" << std::endl;
-        return;
-    }
-    // Get phoneId from user
-    int phoneId = getPhoneId();
-    // Get configuration from user
-    char delimiter   = '\n';
-    std::string temp = "";
-    std::cout << "Enter emergency mode configuration (0-disable, 1- enable): ";
-    std::getline(std::cin, temp, delimiter);
-    uint32_t emergencyModeEnabled = 0;
-    uint32_t antennaSwitchEnabled = 0;
-    if (!temp.empty()) {
-        try {
-            emergencyModeEnabled = std::stoi(temp);
-            if (emergencyModeEnabled != 0 && emergencyModeEnabled != 1) {
-                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
-                          << std::endl;
-                return;
-            }
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values, "
-                      << emergencyModeEnabled << std::endl;
-            return;
-        }
-    } else {
-        std::cout << "No input" << std::endl;
-        return;
-    }
-    std::cout << "Enter antenna switching configuration (0-disable, 1- enable): ";
-    std::getline(std::cin, temp, delimiter);
-    if (!temp.empty()) {
-        try {
-            antennaSwitchEnabled = std::stoi(temp);
-            if (antennaSwitchEnabled != 0 && antennaSwitchEnabled != 1) {
-                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
-                          << std::endl;
-                return;
-            }
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values, "
-                      << antennaSwitchEnabled << std::endl;
-            return;
-        }
-    } else {
-        std::cout << "No input" << std::endl;
-        return;
-    }
-    auto ret = eCallMgr_->setEmergencyMode(
-        phoneId, static_cast<bool>(emergencyModeEnabled), static_cast<bool>(antennaSwitchEnabled));
-    if (ret != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to set emergency mode" << std::endl;
-    }
-}
-
 void ECallApp::getEncodedOptionalAdditionalDataContent() {
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
@@ -931,13 +864,6 @@ void ECallApp::getECallMsdPayload() {
         std::cout << "Failed to get eCall MSD payload" << std::endl;
         return;
     }
-}
-
-/**
- * Executes any cleanup procedure if necessary
- */
-void ECallApp::cleanup() {
-    std::cout << "Exiting the application.." << std::endl;
 }
 
 /**
@@ -1134,37 +1060,4 @@ int ECallApp::getEcallTestConfig(telux::tel::TestECallConfig &config) {
         return -1;
     }
     return 0;
-}
-
-// Main function that displays the interactive console for eCall related operations
-int main(int argc, char **argv) {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-    if (isatty(fileno(stdout))) {
-        std::cout << std::unitbuf;
-    }
-    static ThreadSafeOStreamBuf safeCout;
-    sigset_t sigset;
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigaddset(&sigset, SIGTERM);
-    sigaddset(&sigset, SIGHUP);
-    SignalHandlerCb cb = [](int sig) {
-        // We can call exit() here if no cleanups needed,
-        // or maybe just set a flag, and let the main thread to decide
-        // when to exit.
-        ECallApp::getInstance().cleanup();
-        exit(sig);
-    };
-    SignalHandler::registerSignalHandler(sigset, cb);
-
-    // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd", "dlt"};
-    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1) {
-        std::cout << "Adding supplementary groups failed!" << std::endl;
-    }
-    auto &eCallApp = ECallApp::getInstance();
-    eCallApp.init();  // initialize commands and display
-    return eCallApp.mainLoop();  // Main loop to continuously read and execute commands
 }

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_ECALL_APP ecall_app)
 
 set(ECALL_APP_SOURCES
+    ECallMainMenu.cpp
     ECallApp.cpp
     EcallOverIms.cpp
     ECallManager.cpp
@@ -13,6 +14,10 @@ set(ECALL_APP_SOURCES
     TelClientUtils.cpp
     EcallScanFailHandler.cpp
     MsdProvider.cpp
+    aecsCall/AecsCall.cpp
+    aecsCall/AecsCallListener.cpp
+    aecsCall/AecsSmsListener.cpp
+    aecsCall/AecsCallManager.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp

@@ -74,15 +74,10 @@ ECallApp::~ECallApp() {
     eCallMgr_ = nullptr;
 }
 
-ECallApp &ECallApp::getInstance() {
-    static ECallApp instance("eCall App Menu", "eCall> ");
-    return instance;
-}
-
 /**
  * Initialize console commands and Display
  */
-void ECallApp::init() {
+bool ECallApp::init() {
 
     std::shared_ptr<ConsoleAppCommand> eCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("1", "ECall", {}, std::bind(&ECallApp::makeECall, this)));
@@ -157,13 +152,14 @@ void ECallApp::init() {
 
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
-        return;
+        return false;
     }
     if (telux::common::Status::SUCCESS == eCallMgr_->init()) {
         ConsoleApp::displayMenu();
     } else {
         std::cout << "Failed to initialize eCall Manager" << std::endl;
     }
+    return true;
 }
 
 /**
@@ -728,13 +724,6 @@ void ECallApp::setECallRedialConfig() {
 }
 
 /**
- * Executes any cleanup procedure if necessary
- */
-void ECallApp::cleanup() {
-    std::cout << "Exiting the application.." << std::endl;
-}
-
-/**
  * Function to get phoneId from the user-interface
  */
 int ECallApp::getPhoneId() {
@@ -886,32 +875,4 @@ std::vector<uint8_t> ECallApp::getMsdPduInput() {
         msdPdu = Utils::convertHexToBytes(temp);
     }
     return msdPdu;
-}
-
-// Main function that displays the interactive console for eCall related operations
-int main(int argc, char **argv) {
-
-    sigset_t sigset;
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigaddset(&sigset, SIGTERM);
-    sigaddset(&sigset, SIGHUP);
-    SignalHandlerCb cb = [](int sig) {
-        // We can call exit() here if no cleanups needed,
-        // or maybe just set a flag, and let the main thread to decide
-        // when to exit.
-        ECallApp::getInstance().cleanup();
-        exit(sig);
-    };
-    SignalHandler::registerSignalHandler(sigset, cb);
-
-    // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd"};
-    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1) {
-        std::cout << "Adding supplementary groups failed!" << std::endl;
-    }
-    auto &eCallApp = ECallApp::getInstance();
-    eCallApp.init();             // initialize commands and display
-    return eCallApp.mainLoop();  // Main loop to continuously read and execute commands
 }

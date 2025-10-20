@@ -62,6 +62,11 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
 @page sequence_diagrams Call Flow Diagrams
 
@@ -288,6 +293,45 @@ Private eCall:
 15. The application performs conference/swap operation using ICallManager by passing first call and second call. optionally application can pass callback to receive hold response asynchronously.
 16. The application receives the status like SUCCESS, FAILED etc based on the execution of conference/swap API.
 17. Optionally, the application gets asynchronous response for conference/swap using CommandResponseCallback.
+
+@anchor fig_make_aecs_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{dial_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{AECS call flow}
+  \label{fig_make_aecs_call}
+\end{figure}
+@endlatexonly
+
+@html_image{aecs_call_flow.png,Aecs call flow,80,80,Aecs call flow}
+1. The application requests an instance of the CallManager object using PhoneFactory, providing the initialization callback.
+2. The application receives a CallManager instance.
+3. The application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. The application registers a listener with CallManager to listen for call info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+5. The application receives a status such as SUCCESS, FAILED, etc., based on the registration of the listener from CallManager.
+6. The application should enter emergency mode by using the setEmergencyMode API before initiating an AECS call. Any ongoing call(s) on other phones before setting
+   emergency mode should be terminated in case of DSDS/DSDA mode.
+7. Any ongoing call(s) on the selected phone for the AECS call should be terminated before initiating an AECS call.
+8. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and a callback to get an asynchronous response.
+9. The application receives a status such as SUCCESS, FAILED, etc., based on the execution of the makeAecsCall API.
+10. Optionally, the application gets an asynchronous response for makeAecsCall using makeCallResponseCallback.
+11. The application receives listener notifications on call status changes such as DIALING, ALERTING, ACTIVE when AECSP accepts the call.
+12. If the AECS call is successfully connected, the application can send the MSD over IP (TCP/IP), over the internet (HTTP), or over SMS. It is the application's
+    responsibility to initiate the data call and transfer MSD over TCP/IP/HTTP, or send an encoded SMS (raw PDU) over SMS using the sendRawSMS API.
+13. If the AECS call fails while originating, the modem silently redials with the default duration (45s). If it still fails, it is the application's responsibility to     redial based on the redial logic per 4.1.3 AECS spec (redial interval ≤ 2 min and duration ≤ 60 min). If the AECS call drops, the application is responsible for
+    redialing based on its redial logic. If MSD transmission fails, the application must retry based on the retry logic per 4.1.3 AECS spec (redial interval ≤ 2 min
+    and duration ≤ 60 min).
+14. If the application wants to send an updated MSD, it should use the existing AECS call instead of initiating a new AECS call if there is an ongoing AECS call.
+15. Any normal voice calls while an AECS call is in progress should be rejected.
+16. The application receives a status such as SUCCESS, FAILED, etc., based on the execution of the reject API.
+17. Optionally, the application gets an asynchronous response for reject using CommandResponseCallback.
+18. The application sends a hang-up command to terminate the call and optionally gets an asynchronous response using a callback.
+19. The application receives a status such as SUCCESS, FAILED, etc., based on the execution of the hangup API.
+20. Optionally, the application gets an asynchronous response for hangup using CommandResponseCallback.
+21. CallManager sends a call info change notification (i.e., Call Ended) to the application using the onCallInfoChange callback function.
+22. Once the AECS call and MSD transmission are complete, the application should exit emergency mode using the setEmergencyMode API.
 
 @subsection sms_call SMS call flow
 

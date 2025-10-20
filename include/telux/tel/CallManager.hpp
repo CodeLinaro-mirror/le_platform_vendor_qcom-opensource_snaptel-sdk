@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -255,7 +224,81 @@ public:
       = 0;
 
    /**
-    * Initiate an European(EU) or ERA-GLONASS automotive eCall.
+    * Initiates an automotive Accident Emergency Call System (AECS) voice call.
+    *
+    * - The UE must be in full service to initiate the call.
+    * - To enable eCall optimizations(in case of multi SIM devices, when application or user
+    *   selects one phone and triggers an AECS call on the selected phone, the modem will
+    *   suspend other phone. After both voice call completion and Minimum Set of Data (MSD)
+    *   delivery completion, modem will resume the other phone. In case of single SIM devices,
+    *   to determine whether the incoming call is AECS or not), the application or user must
+    *   enter emergency mode by invoking telux::tel::ICallManager::setEmergencyMode before
+    *   initiating an AECS call.
+    * - Any ongoing call on the phone that will be suspended(in the case of multi-SIM
+    *   devices) must be terminated prior to entering emergency mode.
+    * - If any ongoing call on the selected phone for AECS call, should be terminated
+    *   before initiating the AECS call.
+    * - The application can transmit the Minimum Set of Data (MSD) once the emergency mode is set.
+    *   MSD transmission can be performed via HTTP or SMS.
+    *   To send MSD over SMS, use:telux::tel::ISmsManager::sendRawSms.
+    * - After the call and MSD transmission are complete, the application or user must exit
+    *   emergency mode by invoking telux::tel::ICallManager::setEmergencyMode to disable eCall
+    *   optimizations and resume the suspended phone (in the case of multi-SIM devices).
+    *
+    * Application Responsibilities:
+    * - Ensure no other calls are initiated on the current phone while an AECS call is
+    *   active.
+    * - In case of call origination failure, the modem will silently retry for up to 45 seconds.
+    *   If the call still fails after this period, the application must retry the AECS call
+    *   every 2 minutes, for up to 60 minutes, in accordance with the AECS specification
+    *   GB-45672-2025.
+    * - If the AECS call is dropped, the application is responsible for redialing based on its
+    *   own retry logic.
+    * - If MSD delivery fails, the application must retry MSD transfer within 2 minutes,
+    *   for up to 60 minutes, in accordance with AECS specification GB-45672-2025.
+    * - Application or user should reject any incoming call if there is any ongoing AECS call.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] phoneId           Represents phone corresponding to which on make AECS
+    *                               call operation is performed.
+    * @param [in] eCallIdentifier   String representing the dialing number or Uniform
+    *                               Resource Name(URN) for PS based call.
+    * @param [in] callback          Optional callback pointer to get the response of
+    *                               makeAecsCall request.
+    *                               Possible(not exhaustive) error codes for callback response
+    *                               - @ref telux::common::ErrorCode::SUCCESS
+    *                               - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD
+    *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_SS
+    *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL
+    *                               - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                               - @ref telux::common::ErrorCode::NO_MEMORY
+    *                               - @ref telux::common::ErrorCode::INVALID_STATE
+    *                               - @ref telux::common::ErrorCode::NO_RESOURCES
+    *                               - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                               - @ref telux::common::ErrorCode::FDN_CHECK_FAILURE
+    *                               - @ref telux::common::ErrorCode::MODEM_ERR
+    *                               - @ref telux::common::ErrorCode::NO_SUBSCRIPTION
+    *                               - @ref telux::common::ErrorCode::NO_NETWORK_FOUND
+    *                               - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                               - @ref telux::common::ErrorCode::DEVICE_IN_USE
+    *                               - @ref telux::common::ErrorCode::MODE_NOT_SUPPORTED
+    *                               - @ref telux::common::ErrorCode::ABORTED
+    *                               - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeAecsCall i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status makeAecsCall(int phoneId, const std::string &eCallIdentifier,
+       MakeCallCallback callback = nullptr) = 0;
+
+   /**
+    * Initiate an automotive eCall.
     * Regular voice calls will be blocked by device while eCall is in progress.
     * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
     * GOST R 54620 / GOST R 33464.

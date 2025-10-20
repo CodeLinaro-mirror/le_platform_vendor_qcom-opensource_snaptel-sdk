@@ -27,10 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -68,6 +66,9 @@ ECallManager::ECallManager()
 }
 
 ECallManager::~ECallManager() {
+   if (telClient_) {
+       telClient_->cleanup();
+   }
 }
 
 /**
@@ -578,25 +579,6 @@ telux::common::Status ECallManager::getHlapTimer(int phoneId, HlapTimerType type
         return telux::common::Status::FAILED;
     } else {
         std::cout << CLIENT_NAME << "Sent request to get HLAP timer" << std::endl;
-    }
-    return telux::common::Status::SUCCESS;
-}
-
-/**
- * Request to set emergency mode configuration for ecall.
- */
-telux::common::Status ECallManager::setEmergencyMode(
-    int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled) {
-    if (!telClient_) {
-        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
-        return telux::common::Status::FAILED;
-    }
-    auto status = telClient_->setEmergencyMode(phoneId, emergencyModeEnabled, antennaSwitchEnabled);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << CLIENT_NAME << "Failed to set emergency mode" << std::endl;
-        return telux::common::Status::FAILED;
-    } else {
-        std::cout << CLIENT_NAME << "Sent request to set emergency mode" << std::endl;
     }
     return telux::common::Status::SUCCESS;
 }

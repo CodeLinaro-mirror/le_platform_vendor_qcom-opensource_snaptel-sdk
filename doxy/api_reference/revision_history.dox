@@ -86,6 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AV} @tdmulrowend @td Oct 2025 @tdend @tdlast Updated documentation for SDK release V1.63.13 changes @tdlastend @trend
 @tr @tdmulrow{1,AU} @tdmulrowend @td May 2025 @tdend @tdlast Updated documentation for SDK release V1.63.11 changes @tdlastend @trend
 @tr @tdmulrow{1,AT} @tdmulrowend @td Dec 2024 @tdend @tdlast Updated documentation for SDK release V1.63.10 changes @tdlastend @trend
 @tr @tdmulrow{1,AR} @tdmulrowend @td Jun 2024 @tdend @tdlast Updated documentation for SDK release V1.63.9 changes @tdlastend @trend

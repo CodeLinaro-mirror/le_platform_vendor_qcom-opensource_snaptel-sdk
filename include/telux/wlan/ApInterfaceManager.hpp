@@ -290,11 +290,16 @@ class IApInterfaceManager {
     /**
      * Request Access Point Configurations
      *
-     * If @ref telux::wlan::IApInterfaceManager::setConfig was previously used to update the
-     * access point configuration, it is required to wait for the
-     * @ref telux::wlan::IApListener::onApConfigChanged notification before calling
-     * getConfig(). This ensures that the configuration changes have been fully applied
-     * and synchronized internally.
+     * When using any configuration update API such as
+     * @ref telux::wlan::IApInterfaceManager::setConfig,
+     * @ref telux::wlan::IApInterfaceManager::setSecurityConfig,
+     * @ref telux::wlan::IApInterfaceManager::setSsid,
+     * @ref telux::wlan::IApInterfaceManager::setVisibility,
+     * @ref telux::wlan::IApInterfaceManager::setElementInfoConfig,
+     * or @ref telux::wlan::IApInterfaceManager::setPassPhrase,
+     * it is essential to wait for the @ref telux::wlan::IApListener::onApConfigChanged
+     * notification before invoking getConfig(). This ensures that all configuration changes
+     * have been fully applied and synchronised internally.
      *
      * @param [in] config         Vector of AP configurations @ref telux::wlan::ApConfig as set by
      *                            @ref telux::wlan::IApInterfaceManager::setConfig

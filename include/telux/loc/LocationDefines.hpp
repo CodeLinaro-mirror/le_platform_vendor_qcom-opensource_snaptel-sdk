@@ -3491,7 +3491,7 @@ public:
 
 /**
  * Pointer to satellite vehicles information for all GNSS
- * constellations except GPS.
+ * constellations.
  *
  * @returns Vector of pointer of ISVInfo object if available else returns
  * empty vector.

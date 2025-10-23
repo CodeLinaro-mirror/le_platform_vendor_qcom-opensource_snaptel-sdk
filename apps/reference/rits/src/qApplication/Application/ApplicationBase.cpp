@@ -1362,9 +1362,11 @@ void ApplicationBase::initVerifLogging() {
 void ApplicationBase::writeVerifLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
     printf("Thread (%08x) is now dumping verification stats to %s\n",
-            thrId,configuration.verifStatLogFile.c_str());
+            tid,configuration.verifStatLogFile.c_str());
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
@@ -1402,9 +1404,11 @@ void ApplicationBase::initSignLogging() {
 void ApplicationBase::writeSignLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
     printf("Thread (%08x) is now dumping signing stats to %s\n",
-            thrId,configuration.signStatLogFile.c_str());
+            tid,configuration.signStatLogFile.c_str());
     file.open(configuration.signStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
@@ -1442,9 +1446,11 @@ void ApplicationBase::initMisbehaviorLogging() {
 void ApplicationBase::writeMisbehaviorLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
     printf("Thread (%08x) is now dumping misbehavior stats to %s\n",
-            thrId,configuration.mbdStatLogFile.c_str());
+            tid,configuration.mbdStatLogFile.c_str());
     file.open(configuration.mbdStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];

@@ -107,6 +107,12 @@ private:
 
 public:
 
+    RadioInterface(RadioInterface&&) = default;
+    RadioInterface& operator=(RadioInterface&&) = default;
+    RadioInterface(const RadioInterface&) = delete;
+    RadioInterface& operator=(const RadioInterface&) = delete;
+    RadioInterface() {}
+
     /*
     * shared_ptr to the singleton radio manager of the SDK.
     */

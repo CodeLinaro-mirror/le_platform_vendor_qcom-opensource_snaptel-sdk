@@ -1000,6 +1000,43 @@ grpc::Status DataSettingsServerImpl::setIpConfig(ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status DataSettingsServerImpl::RestoreFactorySettings(
+    ServerContext* context,
+    const dataStub::RestoreFactorySettingsRequest* request,
+    dataStub::DefaultReply* response) {
+
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string subsystem = "IDataSettingsManager";
+    std::string method = "restoreFactorySettings";
+
+    JsonData data;
+    telux::common::ErrorCode error =
+        CommonUtils::readJsonData(DATA_SETTINGS_API_LOCAL_JSON, DATA_SETTINGS_STATE_JSON,
+                                  subsystem, method, data);
+
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " JSON read failed for RestoreFactorySettings API JSON.");
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
+    }
+
+
+    if (data.error != telux::common::ErrorCode::SUCCESS) {
+        LOG(DEBUG, __FUNCTION__, ", API JSON returned simulated error: ", static_cast<int>(data.error));
+        response->set_status(static_cast<commonStub::Status>(data.status));
+        response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+        response->set_delay(data.cbDelay);
+        return grpc::Status::OK;
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
+}
+
+
 dataStub::BackhaulPreference DataSettingsServerImpl::convertBackhaulPrefStringToEnum(
     std::string pref) {
 

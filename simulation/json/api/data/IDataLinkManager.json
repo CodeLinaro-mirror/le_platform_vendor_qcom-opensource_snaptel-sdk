@@ -13,7 +13,14 @@
             "status": "SUCCESS"
         },
         "setLocalEthOperatingMode":{
+            "status": "SUCCESS",
             "error": "SUCCESS"
+        },
+        "setPeerEthCapability": {
+            "status": "SUCCESS"
+        },
+        "setPeerModeChangeRequestStatus": {
+            "status": "SUCCESS"
         }
     }
 }

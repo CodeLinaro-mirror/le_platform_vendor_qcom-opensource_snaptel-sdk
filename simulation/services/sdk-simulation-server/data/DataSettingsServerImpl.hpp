@@ -97,6 +97,10 @@ public:
             const dataStub::setIpptNatConfigRequest* request,
             dataStub::setIpptNatConfigReply* response) override;
 
+    grpc::Status RestoreFactorySettings(ServerContext* context,
+        const dataStub::RestoreFactorySettingsRequest* request,
+        dataStub::DefaultReply* response) override;
+
     void onEventUpdate(::eventService::UnsolicitedEvent message);
 
 private:

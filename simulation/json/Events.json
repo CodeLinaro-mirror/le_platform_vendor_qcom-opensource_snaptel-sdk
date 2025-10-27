@@ -404,6 +404,17 @@
             "reason: string, reason for reset of the device. Valid values: SUBSYSTEM_UNAVAILABLE, BACKHAUL_SWITCHED, DEVICE_DISCONNECTED, WLAN_DISABLED, WWAN_DISCONNECTED"
         ]
     },
+    "data_link_eth_mode": {
+        "onEthModeChangeRequest": [
+            "telsdk_event_injector -f data_link_eth_mode -e onEthModeChangeRequest <ethModeType>",
+            "ethModeType: integer, numeric value of EthModeType enum (e.g., 0 for ETHMODE_UNKNOWN, 1 for USXGMII_10G, etc.)"
+        ],
+        "onEthModeChangeTransactionStatus": [
+            "telsdk_event_injector -f data_link_eth_mode -e onEthModeChangeTransactionStatus <ethModeType> <linkModeChangeStatus>",
+            "ethModeType: integer, numeric value of EthModeType enum.",
+            "linkModeChangeStatus: integer, numeric value of LinkModeChangeStatus enum (e.g., 1 for ACCEPTED, 2 for COMPLETED, etc.)"
+        ]
+    },
     "data_settings": {
         "deviceDataUsageMonitoringUpdate": [
             "telsdk_event_injector -f data_settings -e deviceDataUsageMonitoringUpdate <enable>",

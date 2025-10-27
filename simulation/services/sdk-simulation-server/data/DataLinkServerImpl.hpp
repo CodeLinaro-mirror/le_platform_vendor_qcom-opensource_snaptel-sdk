@@ -37,24 +37,33 @@ public:
         commonStub::GetServiceStatusReply* response) override;
 
     grpc::Status SetEthDataLinkState(ServerContext* context,
-            const dataStub::SetEthDatalinkStateRequest *request,
-            dataStub::SetEthDatalinkStateReply* response) override;
+        const dataStub::SetEthDatalinkStateRequest *request,
+        dataStub::SetEthDatalinkStateReply* response) override;
 
     grpc::Status GetEthDataLinkState(ServerContext* context,
-    const google::protobuf::Empty *request,
+        const google::protobuf::Empty *request,
     dataStub::GetEthDataLinkStateReply* response) override;
 
-    grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
-            commonStub::GetServiceStatusReply* response) override;
+    grpc::Status GetServiceStatus(ServerContext* context,
+        const google::protobuf::Empty* request,
+        commonStub::GetServiceStatusReply* response) override;
 
     grpc::Status GetEthCapability(ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    dataStub::GetEthCapabilityReply* response) override;
+        const ::google::protobuf::Empty* request,
+        dataStub::GetEthCapabilityReply* response) override;
 
     grpc::Status SetLocalEthOperatingMode(
-    ServerContext* context,
-    const dataStub::SetLocalEthOperatingModeRequest* request,
-    dataStub::SetLocalEthOperatingModeReply* response) override;
+        ServerContext* context,
+        const dataStub::SetLocalEthOperatingModeRequest* request,
+        dataStub::SetLocalEthOperatingModeReply* response) override;
+
+    grpc::Status SetPeerEthCapability(ServerContext* context,
+        const dataStub::SetPeerEthCapabilityRequest* request,
+        dataStub::DefaultReply* response) override;
+
+    grpc::Status SetPeerModeChangeRequestStatus(ServerContext* context,
+        const dataStub::SetPeerModeChangeRequestStatusRequest* request,
+        dataStub::DefaultReply* response) override;
 
     void onEventUpdate(::eventService::UnsolicitedEvent event);
 
@@ -72,11 +81,13 @@ private:
     telux::common::ServiceStatus getServiceStatus();
     void setServiceStatus(telux::common::ServiceStatus srvStatus);
     void onEventUpdate(std::string event);
-    void handleEvent(std::string token,std::string event);
     void handleSSREvent(std::string eventParams);
-
     grpc::Status setResponse(telux::common::ServiceStatus srvStatus,
             commonStub::GetServiceStatusReply* response);
+    void handleEvent(std::string token,std::string event);
+    void handleOnEthModeChangeTransactionStatus(std::string event);
+    void handleOnEthModeChangeRequest(std::string event);
+
 };
 
 #endif //DATA_LINK_SERVER_HPP

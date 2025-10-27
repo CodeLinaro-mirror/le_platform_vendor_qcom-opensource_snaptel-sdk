@@ -212,8 +212,47 @@ telux::common::Status DataSettingsManagerStub::requestCurrentDds(
 telux::common::Status DataSettingsManagerStub::restoreFactorySettings(
     OperationType operationType, telux::common::ResponseCallback callback,
     bool isRebootNeeded) {
+
     LOG(INFO, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR,__FUNCTION__, " Data settings manager not ready");
+        return telux::common::Status::NOTREADY;
+    }
+
+    ::dataStub::RestoreFactorySettingsRequest request;
+    ::dataStub::DefaultReply response;
+    ClientContext context;
+
+
+
+    grpc::Status reqStatus = stub_->RestoreFactorySettings(&context, request, &response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " RestoreFactorySettings gRPC request failed. Code: ",
+            reqStatus.error_code(), ", message: ", reqStatus.error_message());
+        if (callback) {
+            callback(telux::common::ErrorCode::INTERNAL_ERROR);
+        }
+        return telux::common::Status::FAILED;
+    }
+
+    telux::common::ErrorCode serverError = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status serverStatus = static_cast<telux::common::Status>(response.status());
+    int delay = static_cast<int>(response.delay());
+
+    if (callback) {
+        auto f = std::async(std::launch::async,
+            [this, serverError, callback, delay]() {
+                if (delay != SKIP_CALLBACK) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                }
+                LOG(DEBUG, __FUNCTION__, " Invoking callback with error: ", static_cast<int>(serverError));
+                callback(serverError);
+            }).share();
+        taskQ_->add(f);
+    }
+
+    return serverStatus;
 }
 
 telux::common::Status DataSettingsManagerStub::setBackhaulPreference(

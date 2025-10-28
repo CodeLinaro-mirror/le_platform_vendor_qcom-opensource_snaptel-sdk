@@ -445,40 +445,6 @@
             "data: valid data is a comma-separated list of byte values."
         ]
     },
-    "wlan_ap_manager": {
-       "onApDeviceStatusChanged": [
-         "telsdk_event_injector -f wlan_ap -e onApDeviceStatusChanged <apId> <event> <name> <ipv4Address> <macAddress> <ipv6Addresses>",
-         "apId:        integer, 1 - PRIMARY, 2 - SECONDARY, 3 - TERTIARY, 4 - QUATERNARY",
-         "event:       integer, 0: AP_DEV_CONNECTED, 1: AP_DEV_DISCONNECTED, 2: IPV4_UPDATED, 3: IPV6_UPDATED",
-         "name:        string, User friendly string that identifies Wi-Fi device",
-         "ipv4Address: string, IPv4 Address of Wi-Fi device",
-         "macAddress:  string, MAC Address of Wi-Fi device",
-         "ipv6Addresses: comma-separated list of IPv6 Addresses of Wi-Fi device (e.g., '::1,fe80::1')"
-       ],
-       "onApBandChanged": [
-         "telsdk_event_injector -f wlan_ap -e onApBandChanged <radio>",
-         "radio: integer, 0: BAND_TYPE_UNKNOWN, 1: BAND_5GHZ, 2: BAND_2GHZ, 3: BAND_6GHZ"
-       ]
-     },
-     "wlan_sta_manager": {
-       "onStationStatusChanged": [
-         "telsdk_event_injector -f wlan_sta -e onStaStatusChanged <id> <ifStatus> <connStatus>",
-         "staId:                integer, 1 - PRIMARY, 2 - SECONDARY, 3 - TERTIARY, 4 - QUATERNARY",
-         "ifStatus: integer, 0: STA_IF_STATUS_UNKNOWN, 1: CONNECTING, 2: STA_IF_CONNECTED, 3: STA_IF_DISCONNECTED, 4: ASSOCIATION_FAILED, 5: IP_ASSIGNMENT_FAILED",
-         "connStatus: integer, 0: STA_CONN_STATUS_UNKNOWN, 1: SUCCESS, 2: INCORRECT_PSK, 3: AP_NOT_FOUND"
-       ],
-       "onStationBandChanged": [
-         "telsdk_event_injector -f wlan_sta -e onStationBandChanged <radio>",
-         "radio: integer, 0: BAND_TYPE_UNKNOWN, 1: BAND_5GHZ, 2: BAND_2GHZ, 3: BAND_6GHZ"
-       ]
-     },
-     "wlan_device_manager": {
-       "onWlanTempCrossed": [
-         "telsdk_event_injector -f wlan_dev -e onWlanTempCrossed <temperature> <perfState>",
-         "temperature:  valid integer",
-         "perfState:    integer, 0 - UNKNOWN, 1 - FULL, 2 - REDUCED, 3 - SHUTDOWN"
-       ]
-     },
     "fs_manager": {
         "efsBackup":[
             "telsdk_event_injector -f fs_manager -e efsBackup <eventName> <status>",

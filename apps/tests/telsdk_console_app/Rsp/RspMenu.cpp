@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+
+
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -460,10 +460,6 @@ void RemoteSimProfileMenu::updateNickName(std::vector<std::string> userInput) {
 
         std::cout << "Enter the Nickname: ";
         std::getline(std::cin, nickname, delimiter);
-        if (nickname.empty()){
-            std::cout << "Nickname empty" << std::endl;
-            return;
-        }
 
         Status status = simProfileManager_->updateNickName(slotId, profileId, nickname,
                                                            MyRspCallback::onResponseCallback);
@@ -558,10 +554,6 @@ void RemoteSimProfileMenu::provideConfirmationCode(std::vector<std::string> user
 
         std::cout << "Enter confirmation code for profile download and install: ";
         std::getline(std::cin, confirmationCode, delimiter);
-        if (confirmationCode.empty()) {
-           std::cout << "Confirmation code is empty" << std::endl;
-           return;
-        }
 
         Status status = simProfileManager_->provideConfirmationCode(slotId, confirmationCode,
                                                                MyRspCallback::onResponseCallback);

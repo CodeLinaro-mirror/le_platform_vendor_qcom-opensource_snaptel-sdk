@@ -87,7 +87,12 @@ grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext* context,
         // Empty all entries in WCS_DATABASE_FILE
         Json::Value rootObj;
         rootObj[ACCESS_POINTS] = Json::arrayValue;
-        JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
+        telux::common::ErrorCode writeEc = JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
+        if (writeEc != telux::common::ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to write to database file");
+            response->set_ec(commonStub::ErrorCode::SYSTEM_ERR);
+            return grpc::Status::OK;
+        }
     }
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
@@ -169,17 +174,11 @@ grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext* cont
 
     return grpc::Status::OK;
 }
-
 /*
  * Save the user trusted access point in the database.
  */
 grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
     const ::securityStub::IsTrustedUserResponse* request, ::commonStub::ErrorCodeMsg* response) {
-
-    int entryIndex = 0;
-
-    Json::Value newAp;
-    Json::Value rootObj;
 
     if (!request->is_trusted()) {
         /* If user distrusted, bail out early, don't modify database */
@@ -187,16 +186,37 @@ grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
         return grpc::Status::OK;
     }
 
-    entryIndex = rootObj[ACCESS_POINTS].size();
+    // Read existing database content first
+    Json::Value rootObj;
+    telux::common::ErrorCode readEc = JsonParser::readFromJsonFile(rootObj, WCS_DATABASE_FILE);
 
+    /* If file doesn't exist or has syntax errors, create a new empty structure */
+    if (readEc != telux::common::ErrorCode::SUCCESS || !rootObj.isObject()) {
+        LOG(WARNING, __FUNCTION__, " Creating new database structure");
+        rootObj = Json::Value(Json::objectValue);
+    }
+
+    /* Ensure ACCESS_POINTS array exists */
+    if (!rootObj.isMember(ACCESS_POINTS) || !rootObj[ACCESS_POINTS].isArray()) {
+        rootObj[ACCESS_POINTS] = Json::Value(Json::arrayValue);
+    }
+
+    /* Create new AP entry */
+    Json::Value newAp;
     newAp["ssid"] = request->ssid();
     newAp["bssid"] = request->bssid();
 
+    int entryIndex = rootObj[ACCESS_POINTS].size();
     rootObj[ACCESS_POINTS][entryIndex] = newAp;
-    JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
+
+    telux::common::ErrorCode writeEc = JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
+    if (writeEc != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Failed to write to database file");
+        response->set_ec(commonStub::ErrorCode::SYSTEM_ERR);
+        return grpc::Status::OK;
+    }
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
-
     return grpc::Status::OK;
 }
 
@@ -244,7 +264,12 @@ grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContex
     }
 
     if (apToRemoveFound) {
-        JsonParser::writeToJsonFile(newObj, WCS_DATABASE_FILE);
+        telux::common::ErrorCode writeEc = JsonParser::writeToJsonFile(newObj, WCS_DATABASE_FILE);
+        if (writeEc != telux::common::ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Failed to write to database file");
+            response->set_ec(commonStub::ErrorCode::SYSTEM_ERR);
+            return grpc::Status::OK;
+        }
         response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
     } else {
         LOG(ERROR, __FUNCTION__, " can't remove AP");
@@ -492,6 +517,21 @@ void SecurityWCSServerImpl::handleIsTrustedAP(std::string eventParams) {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
             bssid = token;
         } else {
+        }
+    }
+
+    /* Check if this AP is already in the trusted list. If user is injecting same AP again, drop the
+       duplicate AP events.
+     */
+    Json::Value rootObj;
+    telux::common::ErrorCode ec = JsonParser::readFromJsonFile(rootObj, WCS_DATABASE_FILE);
+    if (ec == telux::common::ErrorCode::SUCCESS) {
+        for (Json::Value::ArrayIndex i = 0; i < rootObj[ACCESS_POINTS].size(); i++) {
+            const auto& ap = rootObj[ACCESS_POINTS][i];
+            if (ap["ssid"].asString() == ssid && ap["bssid"].asString() == bssid) {
+                LOG(DEBUG, __FUNCTION__, " AP already in trusted list, not forwarding event");
+                return;
+            }
         }
     }
 

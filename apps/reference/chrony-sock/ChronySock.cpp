@@ -56,7 +56,6 @@
 #include <linux/rtc.h>
 
 #include <telux/common/CommonDefines.hpp>
-#include <telux/common/Settings.hpp>
 #include <telux/platform/TimeListener.hpp>
 #ifdef FEATURE_NETWORK_TIME_ENABLED
 #include <telux/power/PowerFactory.hpp>
@@ -64,6 +63,7 @@
 #endif
 
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/ConfigParser.hpp"
 
 #include "ChronySock.hpp"
 
@@ -81,6 +81,7 @@ using telux::power::TcuActivityStateAck;
 #endif
 
 // keys in telux config
+#define CONFIG_FILE "telux_chrony-sock.conf"
 #define HYSTERESIS_THRESHOLD "time.hysteresis.threshold"
 #define ENABLE_CV2X_TIME "enable.cv2x.time"
 #define ENABLE_NETWORK_TIME "enable.network.time"
@@ -164,23 +165,23 @@ int ChronySock::parseArguments(int& argc, char **argv) {
 }
 
 void ChronySock::getTeluxConfig() {
-    auto threshold = telux::common::Settings::getValue(std::string(HYSTERESIS_THRESHOLD));
+    auto config = std::make_shared<ConfigParser>(std::string(CONFIG_FILE));
+    auto threshold = config->getValue(std::string(HYSTERESIS_THRESHOLD));
     if (not threshold.empty()) {
         offsetThreshold_ = std::stoull(threshold);
     }
 
-    auto enable = telux::common::Settings::getValue(std::string(ENABLE_CV2X_TIME));
+    auto enable = config->getValue(std::string(ENABLE_CV2X_TIME));
     enableCv2xTime_ = (enable == "TRUE") ? true : false;
 
-    enable = telux::common::Settings::getValue(std::string(ENABLE_NETWORK_TIME));
+    enable = config->getValue(std::string(ENABLE_NETWORK_TIME));
     enableNwTime_ = (enable == "TRUE") ? true : false;
 
-    enable = telux::common::Settings::getValue(std::string(ENABLE_DELTA_UPDATE));
+    enable = config->getValue(std::string(ENABLE_DELTA_UPDATE));
     enableDeltaUpdate_ = (enable == "TRUE") ? true : false;
 
     if (enableNwTime_) {
-        auto slotId = atoi(telux::common::Settings::getValue(
-            std::string(NETWORK_TIME_SLOT)).c_str());
+        auto slotId = atoi(config->getValue(std::string(NETWORK_TIME_SLOT)).c_str());
         slotId_ = (slotId >= DEFAULT_SLOT_ID and slotId <= MAX_SLOT_ID) ?
                    slotId : DEFAULT_SLOT_ID;
     }

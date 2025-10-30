@@ -23,6 +23,7 @@ set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
               WORLD_EXECUTE WORLD_READ)
 
 set(SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/ConfigParser.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp
     MyUtils.cpp
     ChronySock.cpp)

@@ -453,6 +453,7 @@ The details on how simulation of individual areas can be used and controlled are
 8. :ref:`sim-reference-platform`
 9. :ref:`sim-reference-security`
 10. :ref:`sim-reference-satcom`
+11. :ref:`sim-reference-wlan`
 
 .. _sim-reference-telephony:
 
@@ -2425,3 +2426,16 @@ Sample input:
  telsdk_event_injector -f ntn -e stateChange <state>
  telsdk_event_injector -f ntn -e stateChange 2
 
+.. _sim-reference-wlan:
+
+WLAN Simulation
+~~~~~~~~~~~~~~~~~~
+
+Overview of WLAN Simulation
+"""""""""""""""""""""""""""""""
+
+This page and the sub-pages provide information about usage of simulation for the WLAN
+sub-system that are part of the telux::wlan namespace of the Telematics SDK.
+
+The simulation library now includes stubs for all public WLAN vertical APIs.
+However, each method currently returns NOT_SUPPORTED, serving as placeholders until full simulation support is introduced.

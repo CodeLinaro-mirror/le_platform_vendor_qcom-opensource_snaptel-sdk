@@ -34,6 +34,9 @@ struct Connection {
   std::string clientIpAddr = "";
   int serverPort = 0;
   int clientPort = 0;
+  bool installDataFilterForSocket = true;
+  bool isKeepAliveEnabled = true;
+  uint32_t keepAliveInterval = 60000;
 
   SlotId slotId;
   int profileId;
@@ -77,7 +80,10 @@ struct Connection {
         << ", Server IP: " << serverIpAddr
         << ", Client IP: " << clientIpAddr
         << ", Server Port: " << serverPort
-        << ", Client Port: " << clientPort;
+        << ", Client Port: " << clientPort
+        << ", installDataFilterForSocket: " << (installDataFilterForSocket?"enabled":"disabled")
+        << ", isKeepAliveEnabled: " << (isKeepAliveEnabled?"enabled":"disabled")
+        << ", keepAliveInterval: " << keepAliveInterval;
     return oss.str();
   }
 };

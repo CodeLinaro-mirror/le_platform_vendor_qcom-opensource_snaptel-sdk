@@ -101,9 +101,11 @@ bool TCPKeepAliveHandler::startKAOffload() {
       LOG(DEBUG, __FUNCTION__, " KA offload already started");
       continue;
     }
-    if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection &&
+    if (!(connectionKaInfo->connection &&
+      connectionKaInfo->connection->socketConnection &&
+      connectionKaInfo->connection->isKeepAliveEnabled &&
       connectionKaInfo->connection->socketConnection->isConnected())) {
-      LOG(DEBUG, __FUNCTION__, " connection not connected");
+      LOG(DEBUG, __FUNCTION__, " not starting keep alive ");
       continue;
     }
     LOG(DEBUG, __FUNCTION__, connectionKaInfo->connection->toString());
@@ -124,17 +126,16 @@ bool TCPKeepAliveHandler::startKAOffload() {
 
       if (connectionKaInfo->keepAliveManager->enableTCPMonitor(
         kaPram, connectionKaInfo->monitorHandle) == telux::common::ErrorCode::SUCCESS) {
-        IPMessage msg;
-        memset(&msg, 0, sizeof(msg));
-        const char *message = (std::string("Hello\n")).c_str();
-        std::copy(message, message + strlen(message) + 1, msg.msg);
+        IPMessage msg{};
+        std::string messageStr = "Enabled TCP Monitor with: " + connectionKaInfo->connection->toString() + "\n";
+        std::snprintf(msg.msg, sizeof(msg.msg), "%s", messageStr.c_str());
+
         connectionKaInfo->connection->socketConnection->sendMessage(msg);
         connectionKaInfo->connection->socketConnection->ensureAllPacketsAcknowledged();
-        // std::this_thread::sleep_for(std::chrono::milliseconds(200));
         if (connectionKaInfo->keepAliveManager->startTCPKeepAliveOffload(
-                connectionKaInfo->monitorHandle, RefAppUtils::getKeepAliveInterval(),
+                connectionKaInfo->monitorHandle, connectionKaInfo->connection->keepAliveInterval,
                 connectionKaInfo->offloadHandle) == telux::common::ErrorCode::SUCCESS) {
-          continue;
+                LOG(DEBUG, __FUNCTION__, " SUCCESS startTCPKeepAliveOffload");
         } else {
           LOG(ERROR, __FUNCTION__, " issue in startTCPKeepAliveOffload");
         }
@@ -177,6 +178,7 @@ void TCPKeepAliveHandler::preProcessEvent(shared_ptr<Event> event) {}
 
 void TCPKeepAliveHandler::onKeepAliveStatusChange(
     telux::common::ErrorCode error, telux::data::TCPKAOffloadHandle handle) {
+  LOG(DEBUG, __FUNCTION__, " handle : ", handle, " error : ", static_cast<int>(error));
   if (error != telux::common::ErrorCode::SUCCESS) {
     if (error == ErrorCode::NETWORK_ERR) {
       LOG(ERROR, __FUNCTION__, "TCP keep-alive offloading error NETWORK_ERR.");

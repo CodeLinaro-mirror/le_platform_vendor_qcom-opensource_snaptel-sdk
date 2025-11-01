@@ -48,6 +48,7 @@ class ModemStatus : public telux::tel::IOperatingModeCallback,
                     public std::enable_shared_from_this<ModemStatus> {
 public:
    ModemStatus();
+   bool init();
 
    // Provides current operating mode status
    void printOperatingMode();

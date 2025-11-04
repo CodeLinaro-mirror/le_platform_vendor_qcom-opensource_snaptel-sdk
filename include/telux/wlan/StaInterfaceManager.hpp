@@ -211,6 +211,9 @@ class IStaInterfaceManager {
     /**
      * Enable Hotspot 2.0 Support
      *
+     * On platforms with Access control enabled, caller needs to have TELUX_WLAN_STA_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param [in] staId                   Station Identifier @ref telux::wlan::Id
      * @param [in] enable                  True: enable Hotspot support, False disable support
      *

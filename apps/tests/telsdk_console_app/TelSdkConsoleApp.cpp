@@ -68,6 +68,7 @@ extern "C" {
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 TelSdkConsoleApp::TelSdkConsoleApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -296,6 +297,11 @@ void TelSdkConsoleApp::onModemAvailable() {
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

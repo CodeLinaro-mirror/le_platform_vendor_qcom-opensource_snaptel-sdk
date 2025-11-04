@@ -15,6 +15,7 @@
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 using namespace telux::data;
 using namespace telux::common;
@@ -422,6 +423,11 @@ KeepAliveTestApp::~KeepAliveTestApp() {
  */
 int main(int argc, char ** argv) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

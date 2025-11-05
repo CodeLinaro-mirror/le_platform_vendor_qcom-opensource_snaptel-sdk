@@ -277,6 +277,12 @@ class IStaInterfaceManager {
      * @ref telux::wlan::IWlanDeviceManager::enable API and required number of STAs are
      * configured using @ref telux::wlan::IDeviceManager::setMode
      *
+     * @note Preferential connection to a specific band set via
+     * @ref telux::wlan::StaNetworkConfigEntry::band is established or maintained only if the
+     * link to the external AP remains stable. otherwise, this preference is ignored and the STA
+     * connects to an AP that can provide a reliable radio link without considering the band that
+     * it operates on.
+     *
      * On platforms with Access control enabled, caller needs to have TELUX_WLAN_STA_CONFIG
      * permission to invoke this API successfully.
      *

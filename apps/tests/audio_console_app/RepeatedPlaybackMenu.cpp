@@ -180,7 +180,8 @@ void RepeatedPlaybackMenu::addToPlaylist(std::vector<std::string> userInput) {
             } else if (audioFormat == 3) {
                 streamConfig.format = telux::audio::AudioFormat::AMRWB;
             } else {
-                streamConfig.format = telux::audio::AudioFormat::AMRWB_PLUS;
+                streamConfig.format       = telux::audio::AudioFormat::AMRWB_PLUS;
+                streamConfig.formatParams = nullptr;
             }
 
             if (!onlyOnce) {

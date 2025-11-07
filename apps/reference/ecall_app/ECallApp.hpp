@@ -28,9 +28,9 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -196,6 +196,11 @@ class ECallApp : public ConsoleApp {
      * Request to get the value of POST TEST REGISTRATION timer for ERA-GLONASS self test eCall.
      */
     void getECallPostTestRegistrationTimer();
+
+    /**
+     * Request to set emergency mode configuration for ecall
+     */
+    void setEmergencyMode();
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

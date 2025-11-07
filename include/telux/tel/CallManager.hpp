@@ -28,39 +28,10 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -1068,19 +1039,64 @@ public:
    virtual telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId,
         uint32_t &timer) = 0;
 
-   /**
-    * Add a listener to listen for incoming call, call info change and eCall MSD
-    * transmission status change.
-    *
-    * @param [in] listener  Pointer to ICallListener object which receives event
-    *                       corresponding to phone
-    *
-    * @returns Status of registerListener i.e. success or suitable error code.
-    */
+    /**
+     * Enable or disable emergency mode configuration for AECS (Automated Emergency Call System)
+     * calls.
+     *
+     * This API enables or disables emergency mode and optionally allows antenna switching for
+     * AECS call:
+     *   - When emergency mode is enabled on the phone identifier, other subscriptions
+     *     in DSDS mode will be suspended.
+     *   - If antenna switching is enabled, the system will automatically select the best
+     *     alternative antenna if the active one becomes damaged.
+     *
+     * For incoming AECS call from AECSP:
+     *   - This API must be called first to enable emergency mode.
+     *
+     * After the AECS call ends:
+     *   - The user should disable emergency mode and turn off antenna switching if previously
+     *     enabled.
+     *
+     * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
+     *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
+     *       will return @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+     * @note This API is platform-dependent. Ensure the platform supports antenna switching
+     *       before enabling antenna switching.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId          Represents the phone corresponding to which the emergency
+     *                              mode is configured.
+     * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS;
+     *                                  if false, disables emergency mode in SS/DSDS.
+     * @param [in] antennaSwitchEnabled If true, enables automatic antenna switching mode;
+     *                                  if false, disables automatic antenna switching mode.
+     * @param [in] callback         Optional callback pointer to get the response of the
+     *                              setEmergencyMode request.
+     *
+     * @returns Status of the setEmergencyMode request; either success or the suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled = false, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
-   virtual telux::common::Status
-      registerListener(std::shared_ptr<telux::tel::ICallListener> listener)
-      = 0;
+    /**
+     * Add a listener to listen for incoming call, call info change and eCall MSD
+     * transmission status change.
+     *
+     * @param [in] listener  Pointer to ICallListener object which receives event
+     *                       corresponding to phone
+     *
+     * @returns Status of registerListener i.e. success or suitable error code.
+     */
+    virtual telux::common::Status registerListener(
+        std::shared_ptr<telux::tel::ICallListener> listener)
+        = 0;
 
    /**
     * Remove a previously added listener.

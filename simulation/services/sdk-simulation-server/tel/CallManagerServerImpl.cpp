@@ -1,36 +1,7 @@
 /*
-* Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted (subject to the limitations in the
-* disclaimer below) provided that the following conditions are met:
-*
-*     * Redistributions of source code must retain the above copyright
-*       notice, this list of conditions and the following disclaimer.
-*
-*     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following
-*       disclaimer in the documentation and/or other materials provided
-*       with the distribution.
-*
-*     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
-*       contributors may be used to endorse or promote products derived
-*       from this software without specific prior written permission.
-*
-* NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-* GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-* HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-* GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-* IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-* IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include "CallManagerServerImpl.hpp"
 #include "../../../libs/tel/TelDefinesStub.hpp"
@@ -2369,6 +2340,40 @@ grpc::Status CallManagerServerImpl::getECallPostTestRegistrationTimer(ServerCont
         } else {
             response->set_error(commonStub::ErrorCode::MODEM_ERR);
         }
+    }
+    return readStatus;
+}
+
+grpc::Status CallManagerServerImpl::setEmergencyMode(ServerContext *context,
+    const telStub::SetEmergencyModeRequest *request, telStub::SetEmergencyModeResponse *response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    int cbDelay;
+    bool isCallback          = true;
+    int phoneId              = request->phone_id();
+    int emergencyModeEnabled = request->emergency_mode_enabled();
+    int antennaSwitchEnabled = request->antenna_switch_enabled();
+    grpc::Status readStatus  = readJson();
+    if (readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(
+            jsonObjApiResponse, CALL_MANAGER, "setEmergencyMode", status, error, cbDelay);
+        rootObj[CALL_MANAGER]["emergencyMode"]["emergencyModeEnabled"] = emergencyModeEnabled;
+        rootObj[CALL_MANAGER]["emergencyMode"]["antennaSwitchEnabled"] = antennaSwitchEnabled;
+        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+        jsonObjSystemStateSlot_[phoneId] = rootObj;
+        if (cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_delay(cbDelay);
     }
     return readStatus;
 }

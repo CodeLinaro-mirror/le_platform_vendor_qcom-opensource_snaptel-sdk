@@ -28,9 +28,9 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -387,6 +387,20 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId);
+
+    /**
+     * set the emergency mode configuration for ecall.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which the operation will be
+     *                         performed.
+     * @param [in] emergencyModeEnabled  emergency mode enabled or disabled
+     * @param [in] antennaSwitchEnabled  antenna switching enabled or disabled
+     *
+     * @returns status for setEmergencyMode i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setEmergencyMode(
+        int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
@@ -405,6 +419,7 @@ class TelClient : public ICallListener,
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void configureECallRedialResponse(telux::common::ErrorCode error);
     void restartHlapTimerResponse(telux::common::ErrorCode error);
+    void setEmergencyModeResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
     void setEraGlonassEnabled(bool isEnabled);
 

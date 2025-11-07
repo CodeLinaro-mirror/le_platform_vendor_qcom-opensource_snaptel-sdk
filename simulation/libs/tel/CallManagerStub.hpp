@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -112,6 +110,8 @@ public:
         common::ResponseCallback callback) override;
     telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId,
         uint32_t &timer) override;
+    telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled, telux::common::ResponseCallback callback) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event)  override;

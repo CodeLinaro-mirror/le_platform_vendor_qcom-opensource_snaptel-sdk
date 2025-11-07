@@ -106,10 +106,6 @@ void stopThreads() {
 
         if (application) {
             application->prepareForExit();
-             if(application->configuration.enableCongCtrl &&
-                    application->congestionControlManager){
-                application->congestionControlManager->stopCongestionControl();
-            }
             if (application->qMon) {
                 application->qMon->stop();
             }
@@ -1256,7 +1252,7 @@ int setup(const bool tx, const bool rx,
     if (not application
         or not application->configuration.isValid
         or not application->init()) {
-        cout << "Initialization Failed" << endl;
+        cerr << "Initialization Failed" << endl;
         return -1;
     }
 
@@ -1277,7 +1273,7 @@ int setup(const bool tx, const bool rx,
                 application->radioReceives[i].closeFlow();
             }
             application->radioReceives.erase(application->radioReceives.begin(),
-                application->radioReceives.end());
+                 application->radioReceives.end());
         }
 
         if (application->spsTransmits.empty() || application->eventTransmits.empty()) {
@@ -1589,6 +1585,5 @@ int main(int argc, char** argv) {
     if(!rxSim && !txSim && application){
         application->closeAllRadio();
     }
-
     return 0;
 }

@@ -50,11 +50,15 @@ mutex KinematicsReceive::sync;
 shared_ptr<ILocationInfoEx> LocListener::getLocation() {
     std::unique_lock<std::mutex> lck(locInfoMtx_);
     /*if no locationInfo, wait at most 1 sec unless locationInfo update or exit occur*/
-    if (locationInfo_ == nullptr && (!exit_) &&
-        !locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
-            return (locationInfo_!= nullptr || exit_ == true);
+    if (locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
+            return (locationInfo_ != nullptr || exit_ == true);
         })) {
-        cout<<"request for location too fast. " << +exit_ << std::endl;
+            if(exit_){
+                std::cerr << "Exiting getLocation because exit flag set.";
+                return nullptr;
+            }
+    }else{
+        std::cerr << "Location info is still nullptr after 1s\n";
     }
     return locationInfo_;
 };
@@ -75,10 +79,10 @@ void LocListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &lo
     locationInfo_ = locationInfo;
     if(locCbFunction_){
         locCbFunction_(locationInfo_);
-    }
-    if (not locInfoAvailable) {
-        locInfoAvailable = true;
-        locInfoCv_.notify_all();
+        if (not locInfoAvailable) {
+            locInfoAvailable = true;
+            locInfoCv_.notify_all();
+        }
     }
 }
 
@@ -95,7 +99,9 @@ LocListener::~LocListener(){
 
 
 KinematicsReceive::KinematicsReceive(){}
-
+KinematicsReceive::~KinematicsReceive(){
+    close();
+}
 shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
     if(!KinematicsReceive::instance){
         KinematicsReceive(this->interval);
@@ -131,16 +137,15 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
         // Registering a listener to get location fixes
         locationManager_->registerListenerEx(locListener_);
         // Starting the reports for fixes
-        printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
                             startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
     } else {
         // release location manager if it's created but service unavailable
         if (locationManager_) {
-            locationManager_ == nullptr;
+            locationManager_ = nullptr;
         }
-        cout << "Error on Location Create.\n";
+        std::cerr << "Error on Location Create.\n";
     }
     this->interval = interval;
 }
@@ -174,30 +179,41 @@ KinematicsReceive::KinematicsReceive(
             }
         }
         // Starting the reports for fixes
-        printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
                             startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
     } else {
         // release location manager if it's created but service unavailable
         if (locationManager_) {
-            locationManager_ == nullptr;
+            locationManager_ = nullptr;
         }
-        cout << "Error on Location Create.\n";
+        std::cerr << "Error on Location Create.\n";
     }
     this->interval = interval;
 }
 
+void KinematicsReceive::responseCallback(ErrorCode errorCode){
+    if(errorCode != ErrorCode::SUCCESS){
+        std::cerr << "Error occurred for report stop. " << (int)errorCode << "\n";
+    }
+}
+
 void KinematicsReceive::close(){
     if (locationManager_) {
-        if (locListener_) {
-            locListener_->close();
-            locationManager_->deRegisterListenerEx(locListener_);
+        auto respCallback = [&](ErrorCode error){
+                            responseCallback(error); };
+        locationManager_->stopReports(respCallback);
+        for (auto listener : locListeners_) {
+            locationManager_->deRegisterListenerEx(listener);
         }
+        if (locListener_) {
+            locationManager_->deRegisterListenerEx(locListener_);
+            locListener_->close();
+        }
+
     }
 
-    for (auto listener : locListeners_) {
-        locationManager_->deRegisterListenerEx(listener);
+    if(locationManager_){
+        locationManager_.reset();
     }
-    cout << "Location Listeners closed.\n";
 }

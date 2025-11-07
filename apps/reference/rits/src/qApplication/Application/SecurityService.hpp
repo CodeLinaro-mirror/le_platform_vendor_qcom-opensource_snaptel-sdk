@@ -126,6 +126,7 @@ typedef struct IDChangeData {
     unsigned char certId [8]; // last 8 bytes of cert id
     bool idChanged;
     sem_t idSem;
+    sem_t* idChangeCbSem;
 } IDChangeData_t;
 
 class SecurityService {

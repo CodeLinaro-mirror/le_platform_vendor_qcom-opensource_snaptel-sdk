@@ -522,6 +522,8 @@ int AerolinkSecurity::init(void) {
 // Deinitialize aerolink services when process is finished
 void AerolinkSecurity::deinit(void) {
     fprintf(stdout,"Aerolink deinitializing\n");
+    if(lcmName_ && lcmName_[0] != '\0')
+        securityServices_idChangeUnregister(secContext_,lcmName_);
     if (smg_ != nullptr)
         smg_delete(smg_);
     if(!threadSmps.empty()){
@@ -530,13 +532,15 @@ void AerolinkSecurity::deinit(void) {
     if(!threadSmgs.empty()){
         threadSmgs.clear();
     }
-    if(lcmName_)
-        securityServices_idChangeUnregister(secContext_,lcmName_);
     (void)sc_close(secContext_);
     (void)securityServices_shutdown();
-    if(pInstance != nullptr)
+    if(pInstance != nullptr){
         delete(pInstance);
+        pInstance = nullptr;
+    }
 }
+
+AerolinkSecurity::~AerolinkSecurity(){}
 
 /* UTILITY AND MULTI-THREADING FUNCTIONS */
 
@@ -1161,22 +1165,6 @@ int AerolinkSecurity::SignMsg(const SecurityOpt &opt,
     }
 
     uint32_t Slen = signedSpduLen;
-
-    if(opt.hvKine.latitude != 0 && opt.hvKine.longitude != 0 &&
-                opt.hvKine.elevation != 0 && countryCode_ != 0){
-        if(secVerbosity > 7){
-            fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
-                opt.hvKine.latitude, opt.hvKine.longitude, opt.hvKine.elevation);
-        }
-        result = securityServices_setCurrentLocation(
-                 opt.hvKine.latitude, opt.hvKine.longitude,
-                 opt.hvKine.elevation, countryCode_);
-        if (result != WS_SUCCESS) {
-            fprintf(stderr, "Failed to set current location (%s)\n",
-                    ws_errid(result));
-            return -1;
-        }
-    }
 
     // Set signing permissions.
     uint32_t  ieeePsidValue = 0x20;

@@ -225,6 +225,19 @@ class ECallManager : public LocationListener,
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
 
     /**
+     * Set emergency mode configuration related to eCall
+     *
+     * @param [in] phoneId Represents phone corresponding to which eCall operation is performed
+     * @param [in] emergencyModeEnabled emergency mode configuration to be written
+     * @param [in] antennaSwitchEnabled antenna switching configuration to be written
+     *
+     * @returns Status of setEmergencyMode i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setEmergencyMode(
+        int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled);
+
+    /**
      * Gets encoded optional additional data content for eCall MSD.
      *
      * @returns Status of  getEncodedOptionalAdditionalDataContent i.e success or suitable

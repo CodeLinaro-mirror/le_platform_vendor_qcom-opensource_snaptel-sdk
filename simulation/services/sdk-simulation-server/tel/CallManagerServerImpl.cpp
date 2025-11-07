@@ -2352,6 +2352,40 @@ grpc::Status CallManagerServerImpl::getECallPostTestRegistrationTimer(ServerCont
     return readStatus;
 }
 
+grpc::Status CallManagerServerImpl::setEmergencyMode(ServerContext *context,
+    const telStub::SetEmergencyModeRequest *request, telStub::SetEmergencyModeResponse *response) {
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    int cbDelay;
+    bool isCallback          = true;
+    int phoneId              = request->phone_id();
+    int emergencyModeEnabled = request->emergency_mode_enabled();
+    int antennaSwitchEnabled = request->antenna_switch_enabled();
+    grpc::Status readStatus  = readJson();
+    if (readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
+        getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+        CommonUtils::getValues(
+            jsonObjApiResponse, CALL_MANAGER, "setEmergencyMode", status, error, cbDelay);
+        rootObj[CALL_MANAGER]["emergencyMode"]["emergencyModeEnabled"] = emergencyModeEnabled;
+        rootObj[CALL_MANAGER]["emergencyMode"]["antennaSwitchEnabled"] = antennaSwitchEnabled;
+        JsonParser::writeToJsonFile(rootObj, jsonfilename);
+        jsonObjSystemStateSlot_[phoneId] = rootObj;
+        if (cbDelay == -1) {
+            isCallback = false;
+        }
+        response->set_status(static_cast<commonStub::Status>(status));
+        response->set_iscallback(isCallback);
+        response->set_error(static_cast<commonStub::ErrorCode>(error));
+        response->set_delay(cbDelay);
+    }
+    return readStatus;
+}
+
 void CallManagerServerImpl::restartTimer(int phoneId, std::string timer, int timerDuration) {
     LOG(DEBUG, __FUNCTION__," Restart ", timer);
     auto f = std::async(std::launch::async, [this, phoneId, timer, timerDuration]() {

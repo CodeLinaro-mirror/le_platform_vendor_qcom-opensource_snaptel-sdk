@@ -150,6 +150,10 @@ bool AecsCall::init() {
             std::make_shared<ConsoleAppCommand>(
                 ConsoleAppCommand("9", "Retry_MSD_over_SMS", {},
                     std::bind(&AecsCall::retryMsdOverSms, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setEmergencyModeCommand =
+            std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("10", "Set_Emergency_Mode", {},
+                    std::bind(&AecsCall::setEmergencyMode, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
             dialAecsCommand,
@@ -160,7 +164,8 @@ bool AecsCall::init() {
             getCallsCommand,
             retryDroppedAecsCallCommand,
             retryFailedAecsCallCommand,
-            retryMsdSmsCommand};
+            retryMsdSmsCommand,
+            setEmergencyModeCommand};
         addCommands(commandsList);
     }
 
@@ -949,5 +954,64 @@ void AecsCall::retryMsdOverSms(std::vector<std::string> userInput) {
             std::cout << "Retry window expired (60 minutes). Stopping retries." << std::endl;
             break;
         }
+    }
+}
+
+void AecsCall::setEmergencyMode(std::vector<std::string> userInput) {
+    int phoneId = getInputPhoneId();
+    if (phoneId == INVALID_PHONE_ID) {
+        std::cout << "Invalid Phone ID. Emergency mode configuration aborted." << std::endl;
+        return;
+    }
+
+    // Get configuration from user
+    char delimiter = '\n';
+    std::string temp = "";
+    std::cout << "Enter emergency mode configuration (0-disable, 1- enable): ";
+    std::getline(std::cin, temp, delimiter);
+    uint32_t emergencyModeEnabled = 0;
+    uint32_t antennaSwitchEnabled = 0;
+    if(!temp.empty()) {
+        try {
+            emergencyModeEnabled = std::stoi(temp);
+            if (emergencyModeEnabled != 0 && emergencyModeEnabled != 1) {
+                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
+                    << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+               << emergencyModeEnabled << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << "Enter antenna switching configuration (0-disable, 1- enable): ";
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            antennaSwitchEnabled = std::stoi(temp);
+            if (antennaSwitchEnabled != 0 && antennaSwitchEnabled != 1) {
+                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
+                    << std::endl;
+                return;
+            }
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+               << antennaSwitchEnabled << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto &aecsMgr = AecsCallManager::getInstance();
+    telux::common::Status emStatus =
+        aecsMgr.setEmergencyMode(phoneId, static_cast<bool>(emergencyModeEnabled),
+        static_cast<bool>(antennaSwitchEnabled));
+    if(emStatus != telux::common::Status::SUCCESS) {
+       std::cout << "Failed to set emergency mode" << std::endl;
     }
 }

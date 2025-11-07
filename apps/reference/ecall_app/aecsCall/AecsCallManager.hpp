@@ -31,6 +31,8 @@ public:
     // ----- Emergency mode control -----
     telux::common::Status enterEmergencyMode(int phoneId, bool enableAntennaSwitch = false);
     telux::common::Status exitEmergencyMode(int phoneId);
+    telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+    bool antennaSwitchEnabled);
     bool isEmergencyMode(int phoneId) const;
 
     // Optional: expose CallManager

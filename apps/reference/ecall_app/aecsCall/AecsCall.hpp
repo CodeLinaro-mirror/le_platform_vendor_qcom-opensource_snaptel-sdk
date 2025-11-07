@@ -45,6 +45,7 @@ class AecsCall : public ConsoleApp {
     void retryFailedAecsCall(std::vector<std::string> userInput);
     void retryMsdOverSms(std::vector<std::string> userInput);
     void hangup(std::vector<std::string> userInput);
+    void setEmergencyMode(std::vector<std::string> userInput);
 
     bool menuOptionsAdded_;
     std::shared_ptr<telux::tel::ICallManager> callMgr_;

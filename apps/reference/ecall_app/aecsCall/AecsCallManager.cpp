@@ -240,6 +240,28 @@ Status AecsCallManager::exitEmergencyMode(int phoneId) {
     return status;
 }
 
+Status AecsCallManager::setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+    bool antennaSwitchEnabled) {
+    if (!callMgr_) {
+        std::cout << "AecsCallManager: CallManager not initialized\n";
+        return Status::FAILED;
+    }
+
+    Status status = callMgr_->setEmergencyMode(
+        phoneId, emergencyModeEnabled, antennaSwitchEnabled,
+        std::bind(&AecsCallManager::setEmergencyModeResponse, this, std::placeholders::_1));
+    if (status == Status::SUCCESS) {
+        emergencyMode_[phoneId] = emergencyModeEnabled;
+        std::cout << "AecsCallManager: set Emergency mode: " << emergencyModeEnabled
+                  << ", antenna switching: "<< antennaSwitchEnabled
+                  << " on phoneId " << phoneId << std::endl;
+    } else {
+        std::cout << "AecsCallManager: Failed to set emergency mode on phoneId "
+                  << phoneId << ", status=" << (int)status << std::endl;
+    }
+    return status;
+}
+
 bool AecsCallManager::isEmergencyMode(int phoneId) const {
     auto it = emergencyMode_.find(phoneId);
     if (it == emergencyMode_.end()) {

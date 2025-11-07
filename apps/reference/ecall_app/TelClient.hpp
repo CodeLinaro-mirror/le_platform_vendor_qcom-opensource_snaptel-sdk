@@ -328,6 +328,20 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
+     * set the emergency mode configuration for ecall.
+     *
+     * @param [in] phoneId     Represents phone corresponding to which the operation will be
+     *                         performed.
+     * @param [in] emergencyModeEnabled  emergency mode enabled or disabled
+     * @param [in] antennaSwitchEnabled  antenna switching enabled or disabled
+     *
+     * @returns status for setEmergencyMode i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setEmergencyMode(
+        int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(
@@ -342,6 +356,7 @@ class TelClient : public ICallListener,
     void setHlapTimerResponse(telux::common::ErrorCode error);
     void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void restartHlapTimerResponse(telux::common::ErrorCode error);
+    void setEmergencyModeResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

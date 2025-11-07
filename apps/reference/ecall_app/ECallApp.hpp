@@ -195,6 +195,11 @@ class ECallApp : public ConsoleApp {
      */
     std::vector<uint8_t> getMsdPduInput();
 
+    /**
+     * Request to set emergency mode configuration for ecall
+     */
+    void setEmergencyMode();
+
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;
 

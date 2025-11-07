@@ -592,8 +592,8 @@ void SmsMenu::requestStorageDetails(std::vector<std::string> userInput) {
     auto ret = smsManager->requestStorageDetails(
         SmsStorageCallback::reqStorageDetailsResponse, static_cast<telux::tel::StorageType>(type));
     if (ret == telux::common::Status::SUCCESS) {
-        std::cout << "Request for SIM storage details succeeded" << std::endl;
+        std::cout << "Request for storage details succeeded" << std::endl;
     } else {
-        std::cout << "Request for SIM storage details failed" << std::endl;
+        std::cout << "Request for storage details failed" << std::endl;
     }
 }

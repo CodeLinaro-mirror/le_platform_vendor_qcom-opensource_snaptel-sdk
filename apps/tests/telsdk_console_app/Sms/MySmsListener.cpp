@@ -350,10 +350,10 @@ void SmsStorageCallback::reqStorageDetailsResponse(
     uint32_t maxCount, uint32_t availableCount, telux::common::ErrorCode error) {
     std::cout << std::endl << std::endl;
     if (error == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << " SIM Storage details: "
+        PRINT_CB << " Storage details: "
                  << "\n";
         PRINT_CB << " Maximum count of messages allowed: " << maxCount
-                 << " Available SIM messages count: " << availableCount << "\n";
+                 << " Available messages count: " << availableCount << "\n";
     } else {
         PRINT_CB
             << " Request for storage details failed with errorCode: " << static_cast<int>(error)

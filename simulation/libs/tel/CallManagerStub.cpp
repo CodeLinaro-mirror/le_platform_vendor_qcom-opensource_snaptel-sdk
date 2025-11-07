@@ -1871,3 +1871,33 @@ telux::common::ErrorCode CallManagerStub::getECallRedialConfig(
     }
     return errorCode;
 }
+
+telux::common::Status CallManagerStub::setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+    bool antennaSwitchEnabled, telux::common::ResponseCallback callback) {
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SetEmergencyModeRequest request;
+    ::telStub::SetEmergencyModeResponse response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    request.set_phone_id(phoneId);
+    request.set_emergency_mode_enabled(emergencyModeEnabled);
+    request.set_antenna_switch_enabled(antennaSwitchEnabled);
+    grpc::Status reqstatus = stub_->setEmergencyMode(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status                         = static_cast<telux::common::Status>(response.status());
+        int cbDelay                    = static_cast<int>(response.delay());
+        if (callback) {
+            auto f = std::async(std::launch::async, [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
+}

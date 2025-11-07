@@ -108,6 +108,8 @@ class CallManagerStub : public ICallManager,
         int phoneId, uint32_t timer, common::ResponseCallback callback) override;
     telux::common::ErrorCode getECallPostTestRegistrationTimer(
         int phoneId, uint32_t &timer) override;
+    telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled, telux::common::ResponseCallback callback) override;
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event) override;

@@ -198,6 +198,11 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "setEmergencyMode" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

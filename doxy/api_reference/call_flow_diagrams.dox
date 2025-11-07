@@ -289,6 +289,32 @@ Private eCall:
 16. The application receives the status like SUCCESS, FAILED etc based on the execution of conference/swap API.
 17. Optionally, the application gets asynchronous response for conference/swap using CommandResponseCallback.
 
+@anchor fig_set_emergency_mode
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{set_emergency_mode_for_aecs_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Emergency mode call flow}
+  \label{fig_set_emergency_mode}
+\end{figure}
+@endlatexonly
+
+@html_image{set_emergency_mode_for_aecs_call_flow.png.png,Emergency mode call flow,80,80,Emergency mode call flow}
+1. The application requests an instance of the CallManager object using PhoneFactory, providing the initialization callback.
+2. The application receives a CallManager instance.
+3. The application check if call manager subsystem is ready. If not, wait for it to be ready.
+4. The application receives the subsystem initialization callback, which notifies the subsystem initialization status.
+5. The application registers a listener with CallManager to listen for call info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+6. The application receives a status such as SUCCESS, FAILED, etc., based on the registration of the listener from CallManager.
+7. The application should enter emergency mode by using the setEmergencyMode API before initiating an AECS call. Any ongoing call(s) on other phones before setting
+   emergency mode should be terminated in case of DSDS/DSDA mode.
+8. The application receives a status such as SUCCESS, FAILED, etc., based on the execution of the setEmergencyMode API.
+9. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and a callback to get an asynchronous response.
+10. The application sends a hang-up command to terminate the call and optionally gets an asynchronous response using a callback.
+11. The application receives a status such as SUCCESS, FAILED, etc., based on the execution of the hangup API.
+12. The application exit emergency mode using the setEmergencyMode API.
+
 @subsection sms_call SMS call flow
 
 @anchor fig_sms_call

@@ -138,6 +138,7 @@
      rpc getECallPostTestRegistrationTimer(GetECallPostTestRegistrationTimerRequest)
         returns (GetECallPostTestRegistrationTimerResponse) {}
      rpc restartECallHlapTimer(RestartECallHlapTimerRequest) returns (RestartECallHlapTimerResponse){}
+     rpc setEmergencyMode(SetEmergencyModeRequest) returns (SetEmergencyModeResponse) {}
  }
 
  service ImsServingSystem {
@@ -1339,6 +1340,19 @@ enum EcallHlapTimerId {
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
     bool iscallback = 4;
+ }
+
+ message SetEmergencyModeRequest {
+    int32 phone_id = 1;
+    int32 emergency_mode_enabled = 2;
+    int32 antenna_switch_enabled = 3;
+ }
+
+ message SetEmergencyModeResponse {
+   commonStub.Status status = 1;
+   commonStub.ErrorCode error = 2;
+   int32 delay = 3;
+   bool iscallback = 4;
  }
 
  message Call {

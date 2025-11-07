@@ -1092,6 +1092,52 @@ class ICallManager {
         = 0;
 
     /**
+     * Enable or disable emergency mode configuration for AECS (Automated Emergency Call System)
+     * calls.
+     *
+     * This API enables or disables emergency mode and optionally allows antenna switching for
+     * AECS call:
+     *   - When emergency mode is enabled on the phone identifier, other subscriptions
+     *     in DSDS/DSDA mode will be suspended.
+     *   - If antenna switching is enabled, the system will automatically select the best
+     *     alternative antenna if the active one becomes damaged.
+     *
+     * For incoming AECS call from AECSP:
+     *   - This API must be called first to enable emergency mode.
+     *
+     * After the AECS call ends:
+     *   - The user should disable emergency mode and turn off antenna switching if previously
+     *     enabled.
+     *
+     * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
+     *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
+     *       will return @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+     * @note This API is platform-dependent. Ensure the platform supports antenna switching
+     *       before enabling antenna switching.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId          Represents the phone corresponding to which the emergency
+     *                              mode is configured.
+     * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS/DSDA;
+     *                                  if false, disables emergency mode in SS/DSDS/DSDA.
+     * @param [in] antennaSwitchEnabled If true, enables automatic antenna switching mode;
+     *                                  if false, disables automatic antenna switching mode.
+     * @param [in] callback         Optional callback pointer to get the response of the
+     *                              setEmergencyMode request.
+     *
+     * @returns Status of the setEmergencyMode request; either success or the suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled = false, telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
      * Add a listener to listen for incoming call, call info change and eCall MSD
      * transmission status change.
      *
@@ -1100,7 +1146,6 @@ class ICallManager {
      *
      * @returns Status of registerListener i.e. success or suitable error code.
      */
-
     virtual telux::common::Status registerListener(
         std::shared_ptr<telux::tel::ICallListener> listener)
         = 0;

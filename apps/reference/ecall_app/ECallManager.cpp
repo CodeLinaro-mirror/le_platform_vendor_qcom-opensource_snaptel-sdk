@@ -578,6 +578,25 @@ telux::common::Status ECallManager::getHlapTimer(int phoneId, HlapTimerType type
 }
 
 /**
+ * Request to set emergency mode configuration for ecall.
+ */
+telux::common::Status ECallManager::setEmergencyMode(
+    int phoneId, bool emergencyModeEnabled, bool antennaSwitchEnabled) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setEmergencyMode(phoneId, emergencyModeEnabled, antennaSwitchEnabled);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set emergency mode" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to set emergency mode" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
  * Function to enable necessary functionalities in various subsystems(location, audio, etc.),
  * that are required for an eCall
  */

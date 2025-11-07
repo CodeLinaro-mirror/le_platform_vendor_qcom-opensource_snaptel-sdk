@@ -143,6 +143,9 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     grpc::Status getInProgressCalls(ServerContext *context,
         const telStub::GetInProgressCallsRequest *request,
         telStub::GetInProgressCallsData *response);
+    grpc::Status setEmergencyMode(ServerContext *context,
+        const telStub::SetEmergencyModeRequest *request,
+        telStub::SetEmergencyModeResponse *response);
     void startTimer(std::string timer, int phoneId);
     void msdTransmissionStatus(std::string msdtransmision, int phoneId);
     void changeCallState(int phoneId, std::string callstate, int index, bool retainCache = false);

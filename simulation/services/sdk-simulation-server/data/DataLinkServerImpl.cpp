@@ -323,17 +323,32 @@ grpc::Status DataLinkServerImpl::GetEthDataLinkState(ServerContext *context,
 
 grpc::Status DataLinkServerImpl::GetEthCapability(ServerContext *context,
     const ::google::protobuf::Empty *request, dataStub::GetEthCapabilityReply *response) {
+
     LOG(DEBUG, __FUNCTION__);
     std::string subsystem = "IDataLinkManager";
     std::string method    = "getEthCapability";
     JsonData data;
+
     telux::common::ErrorCode error = CommonUtils::readJsonData(
         DATA_LINK_MANAGER_API_JSON, DATA_LINK_MANAGER_STATE_JSON, subsystem, method, data);
+
     if (error != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " JSON read failed");
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
-    const Json::Value &ethModesJson = data.stateRootObj[subsystem]["eth0Config"]["ethModes"];
+
+    Json::Value &eth0Config = data.stateRootObj[subsystem]["eth0Config"];
+    if (!eth0Config.isMember("ethModes") || !eth0Config["ethModes"].isArray()) {
+        LOG(WARNING, __FUNCTION__, "ethModes missing or not an array, initializing with defaults");
+        eth0Config["ethModes"] = Json::arrayValue;
+        eth0Config["ethModes"].append("USXGMII_10G");
+        eth0Config["ethModes"].append("USXGMII_5G");
+        eth0Config["ethModes"].append("SGMII_1G");
+
+        JsonParser::writeToJsonFile(data.stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
+    }
+
+    const Json::Value &ethModesJson = eth0Config["ethModes"];
     for (const auto &modeStr : ethModesJson) {
         std::string mode = modeStr.asString();
         LOG(DEBUG, __FUNCTION__, " Processing mode: ", mode);
@@ -358,7 +373,6 @@ grpc::Status DataLinkServerImpl::GetEthCapability(ServerContext *context,
     }
 
     LOG(DEBUG, __FUNCTION__, " ethernet capability: ", ethModesJson.toStyledString());
-
     return grpc::Status::OK;
 }
 
@@ -387,6 +401,22 @@ std::string ethModeEnumToString(dataStub::EthModeEnum mode) {
     }
 }
 
+void DataLinkServerImpl::sendEthModeChangeTransactionStatusEvent(
+    int mode, dataStub::ModeChangeStatusEnum status) {
+    ::dataStub::EthModeChangeTransactionStatusEvent indication;
+    ::eventService::EventResponse anyResponse;
+
+    indication.set_eth_mode_type(static_cast<dataStub::EthModeEnum>(mode));
+    indication.set_status(status);
+
+    anyResponse.set_filter(ETH_MODE_EVENTS_FILTER);
+    anyResponse.mutable_any()->PackFrom(indication);
+    clientEvent_.updateEventQueue(anyResponse);
+
+    LOG(DEBUG, __FUNCTION__, "Published transaction status event for mode: ", mode,
+        " status: ", static_cast<int>(status));
+}
+
 grpc::Status DataLinkServerImpl::SetLocalEthOperatingMode(ServerContext *context,
     const dataStub::SetLocalEthOperatingModeRequest *request,
     dataStub::SetLocalEthOperatingModeReply *response) {
@@ -396,32 +426,36 @@ grpc::Status DataLinkServerImpl::SetLocalEthOperatingMode(ServerContext *context
     int mode = request->eth_mode();
     std::string modeStr;
 
+    // Convert the enum value to string
     switch (mode) {
         case 0:
-            modeStr = "USXGMII_10G";
+            modeStr = "UNKNOWN";
             break;
         case 1:
-            modeStr = "USXGMII_5G";
+            modeStr = "USXGMII_10G";
             break;
         case 2:
-            modeStr = "USXGMII_2_5G";
+            modeStr = "USXGMII_5G";
             break;
         case 3:
-            modeStr = "USXGMII_1G";
+            modeStr = "USXGMII_2_5G";
             break;
         case 4:
-            modeStr = "USXGMII_100M";
+            modeStr = "USXGMII_1G";
             break;
         case 5:
-            modeStr = "USXGMII_10M";
+            modeStr = "USXGMII_100M";
             break;
         case 6:
-            modeStr = "SGMII_2_5G";
+            modeStr = "USXGMII_10M";
             break;
         case 7:
-            modeStr = "SGMII_1G";
+            modeStr = "SGMII_2_5G";
             break;
         case 8:
+            modeStr = "SGMII_1G";
+            break;
+        case 9:
             modeStr = "SGMII_100M";
             break;
         default:
@@ -433,23 +467,97 @@ grpc::Status DataLinkServerImpl::SetLocalEthOperatingMode(ServerContext *context
     std::cout << " Simulating mode change to: " << modeStr << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    JsonData data;
-    telux::common::ErrorCode error = CommonUtils::readJsonData(DATA_LINK_MANAGER_API_JSON,
-        DATA_LINK_MANAGER_STATE_JSON, "IDataLinkManager", "setLocalEthOperatingMode", data);
+    Json::Value rootObj;
+    telux::common::ErrorCode error
+        = JsonParser::readFromJsonFile(rootObj, DATA_LINK_MANAGER_STATE_JSON);
+
+    dataStub::ModeChangeStatusEnum statusEnum
+        = dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED;
+    telux::common::ErrorCode resultError = telux::common::ErrorCode::INTERNAL_ERROR;
 
     if (error == telux::common::ErrorCode::SUCCESS) {
-        data.stateRootObj["IDataLinkManager"]["eth0Config"]["ethOperatingMode"] = modeStr;
-        JsonParser::writeToJsonFile(data.stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
+        if (!rootObj.isMember("IDataLinkManager")
+            || !rootObj["IDataLinkManager"].isMember("eth0Config")
+            || !rootObj["IDataLinkManager"]["eth0Config"].isMember("ethModes")) {
+            response->set_error(
+                static_cast<commonStub::ErrorCode>(telux::common::ErrorCode::INTERNAL_ERROR));
+            response->set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED);
+            sendEthModeChangeTransactionStatusEvent(
+                mode, dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED);
+            return grpc::Status::OK;
+        }
+
+        bool isModeSupported              = false;
+        const Json::Value &supportedModes = rootObj["IDataLinkManager"]["eth0Config"]["ethModes"];
+
+        LOG(DEBUG, __FUNCTION__, " Requested mode: ", modeStr);
+
+        if (!supportedModes.isArray()) {
+            LOG(ERROR, __FUNCTION__, " ethModes is not an array");
+            response->set_error(
+                static_cast<commonStub::ErrorCode>(telux::common::ErrorCode::INTERNAL_ERROR));
+            response->set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED);
+            sendEthModeChangeTransactionStatusEvent(
+                mode, dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED);
+            return grpc::Status::OK;
+        }
+
+        LOG(DEBUG, __FUNCTION__, " Supported modes count: ", supportedModes.size());
+        std::string supportedModesStr = "Supported modes: ";
+        for (unsigned int i = 0; i < supportedModes.size(); i++) {
+            if (supportedModes[i].isString()) {
+                supportedModesStr += supportedModes[i].asString();
+                if (i < supportedModes.size() - 1) {
+                    supportedModesStr += ", ";
+                }
+            } else {
+                LOG(ERROR, __FUNCTION__, " Mode at index ", i, " is not a string");
+            }
+        }
+        LOG(DEBUG, __FUNCTION__, supportedModesStr);
+
+        // Check if the requested mode is supported
+        for (unsigned int i = 0; i < supportedModes.size(); i++) {
+            if (supportedModes[i].isString()) {
+                std::string supportedMode = supportedModes[i].asString();
+                LOG(DEBUG, __FUNCTION__, " Checking against mode: ", supportedMode);
+                if (supportedMode == modeStr) {
+                    isModeSupported = true;
+                    LOG(DEBUG, __FUNCTION__, " Mode is supported!");
+                    break;
+                }
+            }
+        }
+
+        LOG(DEBUG, __FUNCTION__, " Is mode supported: ", isModeSupported ? "Yes" : "No");
+
+        if (isModeSupported) {
+            rootObj["IDataLinkManager"]["eth0Config"]["ethOperatingMode"] = modeStr;
+            rootObj["IDataLinkManager"]["lastTransactionEthMode"]         = modeStr;
+            rootObj["IDataLinkManager"]["lastTransactionStatus"]          = "COMPLETED";
+            if (JsonParser::writeToJsonFile(rootObj, DATA_LINK_MANAGER_STATE_JSON)
+                != telux::common::ErrorCode::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " Failed to write to JSON file");
+                statusEnum  = dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED;
+                resultError = telux::common::ErrorCode::INTERNAL_ERROR;
+            } else {
+                statusEnum  = dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_COMPLETED;
+                resultError = telux::common::ErrorCode::SUCCESS;
+            }
+        } else {
+            statusEnum  = dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED;
+            resultError = telux::common::ErrorCode::NOT_SUPPORTED;
+        }
     } else {
-        LOG(WARNING, __FUNCTION__, " Failed to read/write JSON state");
+        LOG(ERROR, __FUNCTION__, " Failed to read JSON file");
+        statusEnum  = dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_FAILED;
+        resultError = telux::common::ErrorCode::INTERNAL_ERROR;
     }
 
-    std::cout << "NOTIFICATION:  ** DataLinkManager onEthModeChangeTransactionStatus **\n";
-    std::cout << " " << modeStr << " ,status :" << mode << " COMPLETED\n";
-    std::cout << " *** Set local Eth operating mode request completed\n";
+    sendEthModeChangeTransactionStatusEvent(mode, statusEnum);
 
-    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
-    response->set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_COMPLETED);
+    response->set_error(static_cast<commonStub::ErrorCode>(resultError));
+    response->set_status(statusEnum);
 
     return grpc::Status::OK;
 }

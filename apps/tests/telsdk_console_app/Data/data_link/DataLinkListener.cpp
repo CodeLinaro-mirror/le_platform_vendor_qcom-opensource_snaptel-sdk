@@ -44,6 +44,9 @@ void DataLinkListener::onEthDataLinkStateChange(telux::data::LinkState linkState
 std::string DataLinkListener::ethModeTypeToString(telux::data::EthModeType ethModeType) {
     std::string mode = "";
     switch (ethModeType) {
+        case telux::data::EthModeType::ETHMODE_UNKNOWN:
+            mode = " Unknown";
+            break;
         case telux::data::EthModeType::ETHMODE_USXGMII_10G:
             mode = " USXGMII_10G";
             break;

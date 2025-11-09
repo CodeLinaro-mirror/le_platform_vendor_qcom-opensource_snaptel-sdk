@@ -982,6 +982,36 @@ grpc::Status DataSettingsServerImpl::setIpConfig(ServerContext *context,
     return grpc::Status::OK;
 }
 
+grpc::Status DataSettingsServerImpl::IsDeviceDataUsageMonitoringEnabled(ServerContext *context,
+    const ::google::protobuf::Empty *request,
+    dataStub::IsDeviceDataUsageMonitoringEnabledReply *response) {
+
+    LOG(DEBUG, __FUNCTION__);
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem     = "IDataSettingsManager";
+    std::string method        = "isDeviceDataUsageMonitoringEnabled";
+
+    Json::Value rootObj;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, stateJsonPath);
+
+    bool isEnabled = false;
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (rootObj.isMember(subsystem) && rootObj[subsystem].isMember(method)
+            && rootObj[subsystem][method].isMember("enabled")) {
+            isEnabled = rootObj[subsystem][method]["enabled"].asBool();
+            LOG(DEBUG, __FUNCTION__, ":: Device data usage monitoring enabled: ", isEnabled);
+        } else {
+            LOG(DEBUG, __FUNCTION__, " Device data usage monitoring not found in JSON");
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Error reading JSON file, defaulting to false");
+    }
+
+    response->set_enabled(isEnabled);
+    return grpc::Status::OK;
+}
+
 grpc::Status DataSettingsServerImpl::RestoreFactorySettings(ServerContext *context,
     const dataStub::RestoreFactorySettingsRequest *request, dataStub::DefaultReply *response) {
 
@@ -1008,11 +1038,40 @@ grpc::Status DataSettingsServerImpl::RestoreFactorySettings(ServerContext *conte
         return grpc::Status::OK;
     }
 
+    resetVlanConfigurations();
+
     response->set_status(static_cast<commonStub::Status>(data.status));
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
 
     return grpc::Status::OK;
+}
+
+void DataSettingsServerImpl::resetVlanConfigurations() {
+    LOG(DEBUG, __FUNCTION__, " Resetting VLAN configurations to factory settings");
+
+    std::string vlanStateJsonPath = "system-state/data/IVlanManagerState.json";
+    Json::Value vlanRootObj;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(vlanRootObj, vlanStateJsonPath);
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (vlanRootObj.isMember("IVlanManager")) {
+            if (vlanRootObj["IVlanManager"].isMember("vlanConfig")) {
+                vlanRootObj["IVlanManager"]["vlanConfig"] = Json::Value(Json::arrayValue);
+                LOG(DEBUG, __FUNCTION__, " Cleared VLAN configurations");
+            }
+            if (vlanRootObj["IVlanManager"].isMember("vlanBindConfig")) {
+                vlanRootObj["IVlanManager"]["vlanBindConfig"] = Json::Value(Json::arrayValue);
+                LOG(DEBUG, __FUNCTION__, " Cleared VLAN binding configurations");
+            }
+            JsonParser::writeToJsonFile(vlanRootObj, vlanStateJsonPath);
+            LOG(DEBUG, __FUNCTION__, " Successfully reset VLAN configurations");
+        } else {
+            LOG(ERROR, __FUNCTION__, " IVlanManager section not found in VLAN state JSON");
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Failed to read VLAN state JSON file");
+    }
 }
 
 dataStub::BackhaulPreference DataSettingsServerImpl::convertBackhaulPrefStringToEnum(

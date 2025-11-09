@@ -206,6 +206,8 @@ service DataFilterManager {
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
     rpc RestoreFactorySettings(RestoreFactorySettingsRequest) returns (DefaultReply) {}
+    rpc IsDeviceDataUsageMonitoringEnabled(google.protobuf.Empty) returns
+        (IsDeviceDataUsageMonitoringEnabledReply) {}
   }
 
   service SocksManager {
@@ -1570,6 +1572,10 @@ message RecommendationDetails {
 message RestoreFactorySettingsRequest {
     OperationType operation_type = 1;
     bool is_reboot_needed = 2;
+}
+
+message IsDeviceDataUsageMonitoringEnabledReply {
+    bool enabled = 1;
 }
 
 message EthModeChangeRequestEvent {

@@ -92,6 +92,10 @@ class DataSettingsServerImpl final : public dataStub::DataSettingsManager::Servi
         const dataStub::RestoreFactorySettingsRequest *request,
         dataStub::DefaultReply *response) override;
 
+    grpc::Status IsDeviceDataUsageMonitoringEnabled(ServerContext *context,
+        const ::google::protobuf::Empty *request,
+        dataStub::IsDeviceDataUsageMonitoringEnabledReply *response) override;
+
     void onEventUpdate(::eventService::UnsolicitedEvent message);
 
  private:
@@ -135,6 +139,7 @@ class DataSettingsServerImpl final : public dataStub::DataSettingsManager::Servi
 
     telux::common::ErrorCode validateV4IpAddr(const telux::data::IpAddrInfo &ipAddr);
     void onEventUpdate(std::string event);
+    void resetVlanConfigurations();
     void handleDeviceDataUsageMonitoringUpdate(std::string event);
 };
 

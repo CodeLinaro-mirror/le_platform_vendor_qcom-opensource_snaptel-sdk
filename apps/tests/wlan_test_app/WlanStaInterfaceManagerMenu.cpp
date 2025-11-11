@@ -252,16 +252,22 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
 
     telux::wlan::StaNetworkConfigEntry staNetConfigEntry = {};
     std::string ssid = "";
+    char delimiter = '\n';
     std::cout << "Enter SSID (Without Quotes): ";
-    std::cin >> ssid;
-    Utils::validateInput(ssid);
+    std::getline(std::cin, ssid, delimiter);
     staNetConfigEntry.ssid = ssid;
 
-    std::string passPhrase = "";
-    std::cout << "Enter passphrase (Without Quotes): ";
-    std::cin >> passPhrase;
-    Utils::validateInput(passPhrase);
-    staNetConfigEntry.passPhrase = passPhrase;
+    int input = 0;
+    std::cout << "Is WLAN accesspoint password protected? (0-NO, 1-YES): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1});
+    if(input) {
+        std::string passPhrase = "";
+        std::cout << "Enter passphrase (Without Quotes): ";
+        std::getline(std::cin, passPhrase, delimiter);
+        staNetConfigEntry.passPhrase = passPhrase;
+    }
 
     int userResp = 0;
     std::cout << "Enter STA operational band type \
@@ -278,7 +284,6 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
         staNetConfigEntry.band = telux::wlan::BandType::BAND_6GHZ;
     }
 
-    char delimiter = '\n';
     std::string priority;
     std::cout << "Enter priority (optional) : ";
     std::getline(std::cin, priority, delimiter);
@@ -294,6 +299,13 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
 
     std::cout << "Enter BSSID (optional) : ";
     std::getline(std::cin, staNetConfigEntry.bssid, delimiter);
+
+    int enable;
+    std::cout << "Enable the configured network?  (1-YES, 0-NO): ";
+    std::cin >> enable;
+    std::cout << std::endl;
+    WlanUtils::validateInput(enable, {0, 1});
+    staNetConfigEntry.enable = static_cast<bool>(enable);
 
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->addNetworkConfig(
         telux::wlan::Id::PRIMARY, staNetConfigEntry);

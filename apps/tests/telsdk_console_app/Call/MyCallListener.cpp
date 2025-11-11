@@ -37,6 +37,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 
 extern "C" {
 #include <sys/time.h>

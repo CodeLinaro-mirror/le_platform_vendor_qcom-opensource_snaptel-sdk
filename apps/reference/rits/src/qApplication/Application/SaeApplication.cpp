@@ -184,28 +184,31 @@ SaeApplication::~SaeApplication() {
 
 void SaeApplication::printRxStats() {
     sem_wait(&this->log_sem);
-    std::thread::id tid = std::this_thread::get_id();
-    printf("Thread (%04x) rx fails is: %d\n", tid, rxFail);
-    printf("Thread (%04x) decode fails is: %d\n", tid, decFail);
-    printf("Thread (%04x) rx successes is: %d\n", tid, rxSuccess);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
+    printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+    printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
     if (verifFail)
-        printf("Thread (%04x) verif fails is: %d\n", tid, verifFail);
+        printf("Thread (%08x) verif fails is: %d\n", tid, verifFail);
     if (verifSuccess)
-        printf("Thread (%04x) verif success is: %d\n", tid, verifSuccess);
+        printf("Thread (%08x) verif success is: %d\n", tid, verifSuccess);
     totalRxSuccess+=rxSuccess;
     sem_post(&this->log_sem);
 }
 
 void SaeApplication::printTxStats() {
-    printf("Printing tx stats\n");
     sem_wait(&this->log_sem);
-    std::thread::id tid = std::this_thread::get_id();
-    printf("Thread (%04x) tx fails is: %d\n", tid, txFail);
-    printf("Thread (%04x) tx successes is: %d\n", tid, txSuccess);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    printf("Thread (%08x) tx fails is: %d\n", tid, txFail);
+    printf("Thread (%08x) tx successes is: %d\n", tid, txSuccess);
     if (signFail)
-        printf("Thread (%04x) sign fails is: %d\n", tid, signFail);
+        printf("Thread (%08x) sign fails is: %d\n", tid, signFail);
     if (signSuccess)
-        printf("Thread (%04x) sign success is: %d\n", tid, signSuccess);
+        printf("Thread (%08x) sign success is: %d\n", tid, signSuccess);
     totalTxSuccess+=txSuccess;
     sem_post(&this->log_sem);
 }

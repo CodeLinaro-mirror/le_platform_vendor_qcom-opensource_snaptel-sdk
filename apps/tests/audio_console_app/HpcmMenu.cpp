@@ -12,7 +12,8 @@
 HpcmMenu::HpcmMenu(std::string appName, std::string cursor,
                                             std::shared_ptr<IAudioManager> audioManager)
     : ConsoleApp(appName, cursor), slotId_(DEFAULT_SLOT_ID), hpcmReady_(false),  exitHpcm_(true),
-      exitPlayThread_(false), exitRecordThread_(false), audioManager_(audioManager) {
+      readErrorOccurred_(false), writeErrorOccurred_(false), exitPlayThread_(false),
+      exitRecordThread_(false), audioManager_(audioManager) {
 }
 
 HpcmMenu::~HpcmMenu() {

@@ -28,9 +28,9 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,6 +51,7 @@
 #include "ECallApp.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
@@ -1021,7 +1022,12 @@ std::vector<uint8_t> ECallApp::getMsdPduInput() {
 
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
-
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

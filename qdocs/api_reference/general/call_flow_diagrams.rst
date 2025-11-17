@@ -3200,7 +3200,7 @@ Call flow to start scan, add network config, or remove network config
 8. Application calls IStaInterfaceManager::startScan to initiate station scan process.
 9. Application receives the result (SUCCESS or suitable failure) of startScan request.
 9. Application receives onScanResultUpdated() notification when scan results are available.
-10. Application calls IStaInterfaceManager::AddNetworkConfig to add and store new network configuration persistently.
+10. Application calls IStaInterfaceManager::addNetworkConfig to add and store new network configuration persistently. If the enable flag is set to true, the system proceeds as follows:
 
    a. If the requested station is already in connected state, the new configuration is stored and no attempt would be made to connect
       to the requested network.

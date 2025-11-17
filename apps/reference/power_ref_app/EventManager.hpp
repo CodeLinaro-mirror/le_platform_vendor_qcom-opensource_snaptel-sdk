@@ -46,6 +46,7 @@ class EventManager : public ITcuActivityListener,
    static EventManager *instance;
 
 private:
+   mutex cleanup_;
    deque<shared_ptr<Event>> eventQueue_;
    mutex eventQueueUpdate_;
 
@@ -92,6 +93,7 @@ public:
    void holdWakeLock(const std::string& wakeLockValue);
    void releaseWakeLock();
    void releaseWakeLock(const std::string& wakeLockValue);
+   void cleanup();
 };
 
 #endif

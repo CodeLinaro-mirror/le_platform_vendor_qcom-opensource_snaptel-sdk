@@ -18,7 +18,14 @@ TCPKeepAliveHandler::TCPKeepAliveHandler(
     std::shared_ptr<EventManager> eventManager)
     : eventManager_(eventManager) {}
 
-TCPKeepAliveHandler::~TCPKeepAliveHandler() {}
+TCPKeepAliveHandler::~TCPKeepAliveHandler() {
+  if(connectionHandler_) {
+    connectionHandler_->cleanup();
+    connectionHandler_ = nullptr;
+  }
+  connectionKaInfoList_ = {};
+  eventManager_= nullptr;
+}
 
 bool TCPKeepAliveHandler::init() {
     // Connection handler initialisation
@@ -101,7 +108,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
       LOG(DEBUG, __FUNCTION__, " KA offload already started");
       continue;
     }
-    if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection &&
+    if (!(connectionKaInfo->connection || connectionKaInfo->connection->socketConnection ||
       connectionKaInfo->connection->socketConnection->isConnected())) {
       LOG(DEBUG, __FUNCTION__, " connection not connected");
       continue;

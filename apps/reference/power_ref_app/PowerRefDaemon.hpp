@@ -54,7 +54,7 @@ public:
 private:
    std::mutex mtx_;
    std::condition_variable cv_;
-   bool exiting_ = false;
+   std::atomic<bool> exiting_ = {false};
    ConfigParser* config_;
    shared_ptr<EventManager> eventManager_;
    shared_ptr<NAOIpTrigger> naoIpTrigger_;

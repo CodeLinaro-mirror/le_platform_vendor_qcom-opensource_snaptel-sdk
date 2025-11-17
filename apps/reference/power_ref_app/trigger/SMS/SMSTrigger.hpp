@@ -29,6 +29,7 @@ private:
     ConfigParser * config_;         /** config parser to fetch data from config file */
     std::shared_ptr<EventManager> eventManager_;            /** event management */
     std::shared_ptr<telux::tel::ISmsManager> smsManager_;
+    std::weak_ptr<SMSTrigger> myself_;
 
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
     std::weak_ptr<NtnClient> ntnClient_;

@@ -138,11 +138,16 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    struct sigaction sigAction;
+    struct sigaction sigAction = {};
     sigAction.sa_handler = signalHandler;
+    sigemptyset(&sigAction.sa_mask);
+    sigAction.sa_flags = 0;
+
+
     sigaction(SIGHUP, &sigAction, NULL);
     sigaction(SIGINT, &sigAction, NULL);
     sigaction(SIGTERM, &sigAction, NULL);
+    sigaction(SIGTSTP, &sigAction, NULL);
 
     if (init() != telux::common::Status::SUCCESS) {
 
@@ -168,20 +173,26 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
         // block current thread, till we get signal
         std::unique_lock<std::mutex> lock(mtx_);
         cv_.wait(lock, [this]
-                 { return exiting_; });
+                 { return exiting_.load(); });
     }
     return EXIT_SUCCESS;
 }
 
 void PowerRefDaemon::stopDaemon() {
     LOG(DEBUG, __FUNCTION__);
-    std::lock_guard<std::mutex> lock(mtx_);
     exiting_ = true;
-    naoIpTrigger_.reset();
-    eventManager_.reset();
-    smsTrigger_.reset();
+    if(naoIpTrigger_)
+        naoIpTrigger_.reset();
+    if (smsTrigger_)
+        smsTrigger_.reset();
+    if(eventManager_) {
+        eventManager_->cleanup();
+        eventManager_.reset();
+    }
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
-    ntnClient_.reset();
+    if(ntnClient_) {
+      ntnClient_.reset();
+    }
 #endif
     fflush(stdout);
     cv_.notify_all();
@@ -190,11 +201,6 @@ void PowerRefDaemon::stopDaemon() {
 void PowerRefDaemon::signalHandler(int signum) {
     LOG(DEBUG, __FUNCTION__, "Received signal = ",signum, " terminating program.");
     PowerRefDaemon::getInstance().stopDaemon();
-
-    std::signal(signum, SIG_DFL);
-    if (std::raise(signum) != 0) {
-        LOG(ERROR, __FUNCTION__, "raise(): error \n");
-    }
 }
 
 void PowerRefDaemon::printUsage(char **argv) {

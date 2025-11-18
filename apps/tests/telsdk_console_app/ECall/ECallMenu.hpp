@@ -68,7 +68,7 @@ public:
    /**
     * Initialize commands and SDK
     */
-   void init();
+   bool init();
 
    ECallMenu(std::string appName, std::string cursor);
    ~ECallMenu();
@@ -200,6 +200,8 @@ private:
       void commandResponse(telux::common::ErrorCode error) override;
    };
    std::shared_ptr<AnswerCommandCallback> answerCommandCallback_;
+   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
+   std::shared_ptr<telux::tel::ICallManager> callManager_;
 };
 
 #endif  // ECallMenu_HPP

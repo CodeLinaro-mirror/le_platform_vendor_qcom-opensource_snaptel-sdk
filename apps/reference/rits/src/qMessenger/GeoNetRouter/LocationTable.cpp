@@ -245,7 +245,7 @@ namespace gn {
             //wait_until will unlock the TableMutex_
             auto now = boost::chrono::steady_clock::now();
             auto status = Cv_.wait_until(lk, now + TimerValue);
-            if (status == std::cv_status::timeout)
+            if (status == boost::cv_status::timeout)
                 continue;
             else
                 break;

@@ -69,6 +69,7 @@ FirewallMenu::~FirewallMenu() {
 bool FirewallMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_                      = false;
+    std::string mgr                              = "Firewall Manager";
     if (firewallManager_ == nullptr) {
         auto initCb       = std::bind(&FirewallMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -84,7 +85,7 @@ bool FirewallMenu::init() {
         }
         if (firewallManager_ == nullptr) {
             // Return immediately
-            std::cout << "\nError encountered in initializing Firewall Manager" << std::endl;
+            std::cout << "\nError encountered in initializing " << mgr << std::endl;
             return false;
         }
         firewallManager_->registerListener(shared_from_this());
@@ -96,15 +97,13 @@ bool FirewallMenu::init() {
         // reaching this point, reference count of Firewall manager should still be 1
         telux::common::ServiceStatus subSystemStatus = firewallManager_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing Firewall Manager, Please wait" << std::endl;
+            std::cout << "\nInitializing " << mgr << ", Please wait" << std::endl;
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = firewallManager_->getServiceStatus();
         }
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nFirewall Manager is ready" << std::endl;
-        } else {
-            std::cout << "\nFirewall Manager initialization failed" << std::endl;
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             firewallManager_ = nullptr;
             return false;
         }

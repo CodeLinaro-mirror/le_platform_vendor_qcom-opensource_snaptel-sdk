@@ -139,16 +139,15 @@ bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId) {
         std::cout << "Failed to get DataManager object" << std::endl;
         return false;
     }
-
-    std::cout << "\n\nInitializing Data connection manager subsystem on slot " << slotId
-              << ", Please wait ..." << endl;
+    std::string conMgrAndSlot
+        = "Data Connection Manager on slot " + std::to_string(static_cast<int>(slotId));
+    std::cout << "\n\nInitializing " << conMgrAndSlot << ", Please wait ..." << endl;
     subSystemStatus = promDcm.get_future().get();
 
+    Utils::printServiceStatus("\n", conMgrAndSlot, subSystemStatus);
     if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "\nData Connection Manager on slot " << slotId << " is ready" << std::endl;
         retValue = true;
     } else {
-        std::cout << "\nData Connection Manager on slot " << slotId << " is not ready" << std::endl;
         return false;
     }
 
@@ -172,16 +171,16 @@ bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId) {
         return false;
     }
 
+    std::string dfMgrAndSlot
+        = "Data Filter Manager on slot " + std::to_string(static_cast<int>(slotId));
     if (dataFilterMgr) {
-        std::cout << "\n\nInitializing Data filter manager subsystem on slot " << slotId
-                  << ", Please wait ..." << endl;
+        std::cout << "\n\nInitializing " << dfMgrAndSlot << ", Please wait ..." << endl;
         subSystemStatus = promDfm.get_future().get();
 
+        Utils::printServiceStatus("\n", dfMgrAndSlot, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Filter Manager on slot " << slotId << " is ready" << std::endl;
             retValue = true;
         } else {
-            std::cout << "\nData Filter Manager on slot " << slotId << " is not ready" << std::endl;
             return false;
         }
 

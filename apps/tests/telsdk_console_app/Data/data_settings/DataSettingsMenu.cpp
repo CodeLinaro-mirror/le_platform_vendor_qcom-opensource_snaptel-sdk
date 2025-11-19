@@ -113,20 +113,19 @@ bool DataSettingsMenu::initDataSettingsManager(telux::data::OperationType opType
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto settingsMgr  = dataFactory.getDataSettingsManager(opType, initCb);
     std::string opTypeStr = (opType == telux::data::OperationType::DATA_LOCAL) ? "Local" : "Remote";
+    std::string opTypeAndMgr = opTypeStr + " Data Settings Manager";
     if (settingsMgr) {
         settingsMgr->registerListener(shared_from_this());
         std::unique_lock<std::mutex> lck(mtx_);
-        std::cout << "\nInitializing " << opTypeStr
-                  << " Data Settings Manager subsystem, Please wait \n";
+        std::cout << "\nInitializing " << opTypeAndMgr << " subsystem, Please wait \n";
         cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = settingsMgr->getServiceStatus();
+
+        Utils::printServiceStatus("\n", opTypeAndMgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n" << opTypeStr << " Data Settings Manager is ready" << std::endl;
             retVal                          = true;
             dataSettingsManagerMap_[opType] = settingsMgr;
-        } else {
-            std::cout << "\n" << opTypeStr << " Data Settings Manager is not ready" << std::endl;
         }
     }
     return retVal;

@@ -129,30 +129,29 @@ bool DataConnectionMenu::init() {
 }
 
 bool DataConnectionMenu::displayMenu() {
-    bool retVal = true;
-    if ((dataConnectionManagerMap_.find(DEFAULT_SLOT_ID) != dataConnectionManagerMap_.end())
-        && (telux::common::ServiceStatus::SERVICE_AVAILABLE
-            == dataConnectionManagerMap_[DEFAULT_SLOT_ID]->getServiceStatus())) {
-        std::cout << "\nData Connection Manager on slot " << DEFAULT_SLOT_ID << " is ready"
-                  << std::endl;
-    } else {
-        std::cout << "\nData Connection Manager on slot " << DEFAULT_SLOT_ID << " is not ready"
-                  << std::endl;
+    bool retVal     = true;
+    std::string mgr = "\nData connection manager on slot ";
+    auto srv        = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+
+    if (not(dataConnectionManagerMap_.find(DEFAULT_SLOT_ID) != dataConnectionManagerMap_.end()
+            && (telux::common::ServiceStatus::SERVICE_AVAILABLE
+                == dataConnectionManagerMap_[DEFAULT_SLOT_ID]->getServiceStatus()))) {
+        srv    = telux::common::ServiceStatus::SERVICE_FAILED;
         retVal = false;
-        ;
     }
+    Utils::printServiceStatus(mgr, std::to_string(static_cast<int>(DEFAULT_SLOT_ID)), srv);
+
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         if ((dataConnectionManagerMap_.find(SLOT_ID_2) != dataConnectionManagerMap_.end())
             && (telux::common::ServiceStatus::SERVICE_AVAILABLE
                 == dataConnectionManagerMap_[SLOT_ID_2]->getServiceStatus())) {
-            std::cout << "\nData Connection Manager on slot " << SLOT_ID_2 << " is ready"
-                      << std::endl;
+            srv    = telux::common::ServiceStatus::SERVICE_AVAILABLE;
             retVal = true;
         } else {
-            std::cout << "\nData Connection Manager on slot " << SLOT_ID_2 << " is not ready"
-                      << std::endl;
+            srv = telux::common::ServiceStatus::SERVICE_FAILED;
             // Intentionally did not set retVal = false to not overwrite slot 1 value
         }
+        Utils::printServiceStatus(mgr, std::to_string(static_cast<int>(SLOT_ID_2)), srv);
     }
     ConsoleApp::displayMenu();
     return retVal;
@@ -166,6 +165,8 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId) {
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId, initCb);
+    std::string mgrAndSlot
+        = "Data connection manager on slot " + std::to_string(static_cast<int>(slotId));
 
     if (conMgr) {
         // If this is newly created Manager
@@ -182,18 +183,15 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId) {
             dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
         }
         // Initialize data connection manager
-        std::cout << "\n\nInitializing Data connection manager subsystem on slot " << slotId
-                  << ", Please wait ..." << endl;
+        std::cout << "\n\nInitializing " << mgrAndSlot << ", Please wait ..." << endl;
         std::unique_lock<std::mutex> lck(mtx_);
         cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = conMgr->getServiceStatus();
 
+        Utils::printServiceStatus("\n", mgrAndSlot, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Connection Manager on slot " << slotId << " is ready" << std::endl;
             retValue = true;
         } else {
-            std::cout << "\nData Connection Manager on slot " << slotId << " is not ready"
-                      << std::endl;
             return false;
         }
 

@@ -51,6 +51,7 @@ bool DataControlMenu::initDataControlManager() {
     auto initCb       = std::bind(&DataControlMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto dataControl  = dataFactory.getDataControlManager(initCb);
+    const std::string mgr = "DataControl Manager";
 
     if (dataControl) {
         dataControl->registerListener(shared_from_this());
@@ -58,21 +59,20 @@ bool DataControlMenu::initDataControlManager() {
 
         telux::common::ServiceStatus subSystemStatus = dataControl->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing "
-                      << " DataControl Manager subsystem, Please wait \n";
+            std::cout << "\nInitializing " << mgr << " subsystem, Please wait \n";
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = dataControl->getServiceStatus();
         }
 
-        // At this point, initialization should be either AVAILABLE or FAIL
+#ifdef TELSDK_QMS_SUPPORT_ENABLED
+        const bool supportQms = true;
+#else
+        const bool supportQms = false;
+#endif
+        Utils::printServiceStatus("\n", mgr, subSystemStatus, supportQms);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n"
-                      << " DataControl Manager is ready" << std::endl;
             retVal              = true;
             dataControlManager_ = dataControl;
-        } else {
-            std::cout << "\n"
-                      << " DataControl Manager is not ready" << std::endl;
         }
     }
     return retVal;

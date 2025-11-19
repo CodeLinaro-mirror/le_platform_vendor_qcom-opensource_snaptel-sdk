@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -164,30 +134,30 @@ bool DataConnectionMenu::init() {
 
 bool DataConnectionMenu::displayMenu() {
     bool retVal = true;
+    std::string mgr = "\nData connection manager on slot ";
+    auto srv = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+
     if ((dataConnectionManagerMap_.find(DEFAULT_SLOT_ID) != dataConnectionManagerMap_.end()) &&
         (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
         dataConnectionManagerMap_[DEFAULT_SLOT_ID]->getServiceStatus())) {
-        std::cout << "\nData Connection Manager on slot "<< DEFAULT_SLOT_ID <<
-        " is ready" << std::endl;
     }
     else {
-        std::cout << "\nData Connection Manager on slot "<< DEFAULT_SLOT_ID <<
-        " is not ready" << std::endl;
-        retVal = false;;
+        srv = telux::common::ServiceStatus::SERVICE_FAILED;
+        retVal = false;
     }
+    Utils::printServiceStatus(mgr, std::to_string(static_cast<int>(DEFAULT_SLOT_ID)), srv);
+
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         if ((dataConnectionManagerMap_.find(SLOT_ID_2) != dataConnectionManagerMap_.end()) &&
             (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
             dataConnectionManagerMap_[SLOT_ID_2]->getServiceStatus())) {
-            std::cout << "\nData Connection Manager on slot "<< SLOT_ID_2 <<
-            " is ready" << std::endl;
+            srv = telux::common::ServiceStatus::SERVICE_AVAILABLE;
             retVal = true;
-        }
-        else {
-            std::cout << "\nData Connection Manager on slot "<< SLOT_ID_2 <<
-            " is not ready" << std::endl;
+        } else {
+            srv = telux::common::ServiceStatus::SERVICE_FAILED;
             //Intentionally did not set retVal = false to not overwrite slot 1 value
         }
+        Utils::printServiceStatus(mgr, std::to_string(static_cast<int>(SLOT_ID_2)), srv);
     }
     ConsoleApp::displayMenu();
     return retVal;
@@ -201,6 +171,8 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId, initCb);
+    std::string mgrAndSlot = "Data connection manager on slot " +
+        std::to_string(static_cast<int>(slotId));
 
     if (conMgr) {
         //If this is newly created Manager
@@ -217,18 +189,15 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
             dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
         }
         // Initialize data connection manager
-        std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
-            slotId << ", Please wait ..." << endl;
+        std::cout << "\n\nInitializing " << mgrAndSlot << ", Please wait ..." << endl;
         std::unique_lock<std::mutex> lck(mtx_);
         cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
         subSystemStatus = conMgr->getServiceStatus();
 
+        Utils::printServiceStatus("\n", mgrAndSlot, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Connection Manager on slot "<< slotId << " is ready" << std::endl;
             retValue = true;
-        }
-        else {
-            std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        } else {
             return false;
         }
 

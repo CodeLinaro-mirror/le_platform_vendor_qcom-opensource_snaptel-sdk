@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -56,6 +62,7 @@ SocksMenu::~SocksMenu() {
 bool SocksMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_ = false;
+    const std::string mgr = "Socks Manager";
     if (socksManager_ == nullptr) {
         auto initCb = std::bind(&SocksMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -70,7 +77,7 @@ bool SocksMenu::init() {
             socksManager_ = remoteSocksMgr;
         }
         if(socksManager_ == nullptr ) {
-            std::cout << "\nUnable to create Socks Manager ... " << std::endl;
+            std::cout << "\nUnable to create " << mgr << " ... " << std::endl;
             return false;
         }
         socksManager_->registerListener(shared_from_this());
@@ -81,16 +88,13 @@ bool SocksMenu::init() {
             //reaching this point, reference count of Socks manager should still be 1
             telux::common::ServiceStatus subSystemStatus = socksManager_->getServiceStatus();
             if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-                std::cout << "\nInitializing Socks Manager, Please wait ..." << std::endl;
+                std::cout << "\nInitializing " << mgr << " Please wait ..." << std::endl;
                 cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
                 subSystemStatus = socksManager_->getServiceStatus();
             }
+            Utils::printServiceStatus("\n", mgr, subSystemStatus);
             //At this point, initialization should be either AVAILABLE or FAIL
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                std::cout << "\nSocks Manager is ready" << std::endl;
-            }
-            else {
-                std::cout << "\nSocks Manager initialization failed" << std::endl;
+            if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                 socksManager_ = nullptr;
                 return false;
             }

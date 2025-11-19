@@ -1,6 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -76,7 +77,7 @@ bool DualDataManagementMenu::init() {
 bool DualDataManagementMenu::initDualDataManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_ = false;
-
+    std::string mgr = "DualData Manager";
     bool retVal = false;
     auto initCb = std::bind(&DualDataManagementMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -88,21 +89,15 @@ bool DualDataManagementMenu::initDualDataManager() {
 
         telux::common::ServiceStatus subSystemStatus = dualDataMgr->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing "
-                      << " DualData Manager subsystem, Please wait \n";
+            std::cout << "\nInitializing " << mgr << " subsystem, Please wait \n";
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = dualDataMgr->getServiceStatus();
         }
-
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n"
-                      << " DualData Manager is ready" << std::endl;
             retVal = true;
             dualDataManager_ = dualDataMgr;
-        } else {
-            std::cout << "\n"
-                      << " DualData Manager is not ready" << std::endl;
         }
     }
     return retVal;
@@ -116,13 +111,10 @@ void DualDataManagementMenu::onInitComplete(telux::common::ServiceStatus status)
 
 bool DualDataManagementMenu::displayMenu() {
     bool retVal = true;
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
-        dualDataManager_->getServiceStatus()) {
-        std::cout << "\nDual Data Manager is ready " << std::endl;
-    }
-    else {
-        std::cout << "\nDual Data Manager is not ready " << std::endl;
-        retVal = false;;
+    auto serviceStatus = dualDataManager_->getServiceStatus();
+    Utils::printServiceStatus("\n", "Dual Data Manager", serviceStatus);
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != serviceStatus) {
+        retVal = false;
     }
     ConsoleApp::displayMenu();
     return retVal;

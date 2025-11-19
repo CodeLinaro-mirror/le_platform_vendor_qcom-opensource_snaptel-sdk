@@ -1,6 +1,7 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -74,7 +75,7 @@ bool QoSManagementMenu::initQoSManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_ = false;
     bool retVal = false;
-
+    std::string mgr = "QoS Manager";
     auto initCb = std::bind(&QoSManagementMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto qosMgr = dataFactory.getQoSManager(initCb);
@@ -83,21 +84,16 @@ bool QoSManagementMenu::initQoSManager() {
         std::unique_lock<std::mutex> lck(mtx_);
         telux::common::ServiceStatus subSystemStatus = qosMgr->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing "
-                      << " QoS Manager subsystem, Please wait \n";
+            std::cout << "\nInitializing " << mgr << " subsystem, Please wait \n";
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = qosMgr->getServiceStatus();
         }
 
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n"
-                      << " QoS Manager is ready" << std::endl;
             retVal = true;
             qosManager_ = qosMgr;
-        } else {
-            std::cout << "\n"
-                      << " QoS Manager is not ready" << std::endl;
         }
     }
     return retVal;

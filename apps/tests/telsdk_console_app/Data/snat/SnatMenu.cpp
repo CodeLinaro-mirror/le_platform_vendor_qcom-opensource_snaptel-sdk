@@ -62,6 +62,7 @@ SnatMenu::~SnatMenu() {
 bool SnatMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_                      = false;
+    std::string mgr                              = "SNAT Manager";
     if (snatManager_ == nullptr) {
         auto initCb       = std::bind(&SnatMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -79,7 +80,7 @@ bool SnatMenu::init() {
         }
         if (snatManager_ == nullptr) {
             // Return immediately
-            std::cout << "\nError encountered in initializing SNAT Manager" << std::endl;
+            std::cout << "\nError encountered in initializing " << mgr << std::endl;
             return false;
         }
         snatManager_->registerListener(shared_from_this());
@@ -91,15 +92,13 @@ bool SnatMenu::init() {
         // point, reference count of Snat manager should still be 1
         telux::common::ServiceStatus subSystemStatus = snatManager_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing SNAT Manager, Please wait ..." << std::endl;
+            std::cout << "\nInitializing " << mgr << ", Please wait ..." << std::endl;
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = snatManager_->getServiceStatus();
         }
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nSNAT Manager is ready" << std::endl;
-        } else {
-            std::cout << "\nSNAT Manager initialization failed" << std::endl;
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             snatManager_ = nullptr;
             return false;
         }

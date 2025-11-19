@@ -59,7 +59,7 @@ bool ClientMenu::initClientManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_                      = false;
     bool retVal                                  = false;
-
+    std::string mgr                              = "Client Manager";
     auto initCb       = std::bind(&ClientMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto clientMgr    = dataFactory.getClientManager(initCb);
@@ -69,13 +69,13 @@ bool ClientMenu::initClientManager() {
         std::unique_lock<std::mutex> lck(mtx_);
         telux::common::ServiceStatus subSystemStatus = clientMgr->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing Client Manager subsystem, Please wait \n";
+            std::cout << "\nInitializing " << mgr << " subsystem, Please wait \n";
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = clientMgr->getServiceStatus();
         }
         // At this point, initialization should be either AVAILABLE or FAIL
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nClient Manager is ready" << std::endl;
             retVal                       = true;
             clientManager_               = clientMgr;
             clientListener_              = std::make_shared<ClientListener>();
@@ -83,8 +83,6 @@ bool ClientMenu::initClientManager() {
             if (status != telux::common::Status::SUCCESS) {
                 std::cout << "Unable to register client listener" << std::endl;
             }
-        } else {
-            std::cout << "\nClient Manager is not ready" << std::endl;
         }
     }
     return retVal;

@@ -62,12 +62,13 @@ L2tpMenu::~L2tpMenu() {
 bool L2tpMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_                      = false;
+    std::string mgr                              = "L2TP Manager";
     if (l2tpManager_ == nullptr) {
         auto initCb       = std::bind(&L2tpMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
         l2tpManager_      = dataFactory.getL2tpManager(initCb);
         if (l2tpManager_ == nullptr) {
-            std::cout << "\nError encountered in initializing Bridge Manager" << std::endl;
+            std::cout << "\nError encountered in initializing " << mgr << std::endl;
             return false;
         }
         l2tpManager_->registerListener(shared_from_this());
@@ -79,15 +80,12 @@ bool L2tpMenu::init() {
         // point, reference count of L2TP manager should still be 1
         telux::common::ServiceStatus subSystemStatus = l2tpManager_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing L2TP Manager, Please wait ..." << std::endl;
+            std::cout << "\nInitializing " << mgr << ", Please wait ..." << std::endl;
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = l2tpManager_->getServiceStatus();
         }
-        // At this point, initialization should be either AVAILABLE or FAIL
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nL2TP Manager is ready" << std::endl;
-        } else {
-            std::cout << "\nL2TP Manager initialization failed" << std::endl;
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             l2tpManager_ = nullptr;
             return false;
         }

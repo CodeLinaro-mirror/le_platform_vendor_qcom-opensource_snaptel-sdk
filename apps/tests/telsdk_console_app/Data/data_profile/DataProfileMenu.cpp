@@ -147,20 +147,16 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto profMgr      = dataFactory.getDataProfileManager(slotId, initCb);
-
+    std::string mgrAndSlot
+        = "Data profile manager on slot " + std::to_string(static_cast<int>(slotId));
     if (profMgr) {
         //  Initialize data profile manager
-        std::cout << "\n\nInitializing Data profile manager subsystem on slot " << slotId
-                  << ", Please wait ..." << endl;
+        std::cout << "\n\nInitializing " << mgrAndSlot << ", Please wait ..." << endl;
         std::unique_lock<std::mutex> lck(mtx_);
         cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = profMgr->getServiceStatus();
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Profile Manager on slot " << slotId << " is ready" << std::endl;
-            retValue = true;
-        } else {
-            std::cout << "\nData Profile Manager on slot " << slotId << " is not ready"
-                      << std::endl;
+        Utils::printServiceStatus("\n", mgrAndSlot, subSystemStatus);
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             return false;
         }
 
@@ -186,7 +182,8 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
             }
         }
     } else {
-        std::cout << "Data Profile Manager failed to initialize" << std::endl;
+        retValue = false;
+        std::cout << mgrAndSlot << " failed to initialize" << std::endl;
     }
     return retValue;
 }
@@ -567,18 +564,17 @@ bool DataProfileMenu::initalizeDCM(SlotId slotId) {
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto conMgr       = dataFactory.getDataConnectionManager(
         slotId, [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
+    std::string mgrAndSlot
+        = "Data connection manager on slot " + std::to_string(static_cast<int>(slotId));
 
     if (conMgr) {
         //  Initialize data connection manager
-        std::cout << "\n\nInitializing Data connection manager subsystem on slot " << slotId
-                  << ", Please wait ..." << endl;
+        std::cout << "\n\nInitializing " << mgrAndSlot << ", Please wait ..." << endl;
         subSystemStatus = prom.get_future().get();
+        Utils::printServiceStatus("\n", mgrAndSlot, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Connection Manager on slot " << slotId << " is ready" << std::endl;
             retValue = true;
         } else {
-            std::cout << "\nData Connection Manager on slot " << slotId << " is not ready"
-                      << std::endl;
             return false;
         }
 
@@ -587,7 +583,7 @@ bool DataProfileMenu::initalizeDCM(SlotId slotId) {
             dataConnectionManagerMap_.emplace(slotId, conMgr);
         }
     } else {
-        std::cout << "Data Connection Manager failed to initialize" << std::endl;
+        std::cout << mgrAndSlot << " failed to initialize" << std::endl;
     }
     return retValue;
 }

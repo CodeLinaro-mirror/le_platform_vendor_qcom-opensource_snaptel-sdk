@@ -28,9 +28,8 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -181,10 +180,17 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType . If user does not specify
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per profile. This API will only accept the default value
+     *                         (PROFILE_ID_MAX). Any other value will result in an error.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
      *                         the ip family type, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its ip family type can be specified as input.
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per IP Family type. This API will only accept the default
+     *                         value (IpFamilyType::UNKNOWN). Any other value will result in an
+     *                         error.
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
@@ -225,11 +231,17 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not
-     *                         specify the ip family type, then the API applies to all the currently
-     *                         running data connection. If user wants to apply the changes to any
-     *                         specific data connection, then its ip family type can be specified as
-     *                         input.
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per profile. This API will only accept the default value
+     *                         (PROFILE_ID_MAX). Any other value will result in an error.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     *                         the ip family type, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its ip family type can be specified as input.
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per IP Family type. This API will only accept the default
+     *                         value (IpFamilyType::UNKNOWN). Any other value will result in an
+     *                         error.
      *
      * @returns Status of addDataRestrictFilter i.e. success or suitable status code.
      *
@@ -251,11 +263,17 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not
-     *                         specify the ip family type, then the API applies to all the currently
-     *                         running data connection. If user wants to apply the changes to any
-     *                         specific data connection, then its ip family type can be specified as
-     *                         input.
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per profile. This API will only accept the default value
+     *                         (PROFILE_ID_MAX). Any other value will result in an error.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     *                         the ip family type, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its ip family type can be specified as input.
+     *                         @note Currently, this API does not support enabling data restrict
+     *                         filters per IP Family type. This API will only accept the default
+     *                         value (IpFamilyType::UNKNOWN). Any other value will result in an
+     *                         error.
      *
      * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
      *

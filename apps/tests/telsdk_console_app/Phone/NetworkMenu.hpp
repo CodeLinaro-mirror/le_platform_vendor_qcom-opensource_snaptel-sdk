@@ -67,6 +67,7 @@ public:
    void setNrDubiousCell(std::vector<std::string> userInput);
    void removeAllLteDubiousCell(std::vector<std::string> userInput);
    void removeAllNrDubiousCell(std::vector<std::string> userInput);
+   void abortNetworkScan(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

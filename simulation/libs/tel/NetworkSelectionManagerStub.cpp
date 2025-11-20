@@ -467,6 +467,27 @@ telux::common::ErrorCode NetworkSelectionManagerStub::setNrDubiousCell(
     return err;
 }
 
+telux::common::ErrorCode NetworkSelectionManagerStub::abortNetworkScan() {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::AbortNetworkScanRequest request;
+    ::telStub::AbortNetworkScanReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->AbortNetworkScan(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    return error;
+}
+
 void NetworkSelectionManagerStub::onEventUpdate(google::protobuf::Any event) {
     if (event.Is<::telStub::SelectionModeChangeEvent>()) {
         ::telStub::SelectionModeChangeEvent selectionModeChangeEvent;

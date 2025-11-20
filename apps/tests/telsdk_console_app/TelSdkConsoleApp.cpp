@@ -138,8 +138,9 @@ void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     ECallMenu eCallMenu("eCall Menu", "eCall> ");
-    eCallMenu.init();
-    eCallMenu.mainLoop();
+    if (eCallMenu.init()) {
+       eCallMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 }
 

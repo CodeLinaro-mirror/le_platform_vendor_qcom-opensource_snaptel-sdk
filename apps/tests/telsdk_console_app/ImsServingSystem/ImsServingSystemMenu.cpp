@@ -65,7 +65,7 @@ ImsServingSystemMenu::~ImsServingSystemMenu() {
     imsServSysListeners_.clear();
 }
 
-void ImsServingSystemMenu::init() {
+bool ImsServingSystemMenu::init() {
     int slotCount = DEFAULT_NUM_SLOTS;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotCount = MULTI_SIM_NUM_SLOTS;
@@ -89,7 +89,7 @@ void ImsServingSystemMenu::init() {
             });
             if (!imsServingSystemMgr) {
                 std::cout << "ERROR - Failed to get IMS Serving System instance \n";
-                exit(1);
+                return false;
             }
 
             ServiceStatus imsServSysMgrStatus = imsServingSystemMgr->getServiceStatus();
@@ -105,13 +105,13 @@ void ImsServingSystemMenu::init() {
                 imsServSysListeners_.emplace(static_cast<SlotId>(i), listener);
                 if(status != Status::SUCCESS) {
                     std::cout << "ERROR - Failed to register listener \n";
-                    exit(1);
+                    return false;
                 }
 
             } else {
                 std::cout << "ERROR - Unable to initialize IMS Serving System subsystem on slotId "
                     << i << std::endl;
-                exit(1);
+                return false;
             }
             imsServingSystemMgrs_.emplace(static_cast<SlotId>(i), imsServingSystemMgr);
         }
@@ -132,6 +132,7 @@ void ImsServingSystemMenu::init() {
     }
     addCommands(commandsListImsServSysMenu);
     ConsoleApp::displayMenu();
+    return true;
 }
 
 void ImsServingSystemMenu::requestImsRegStatus(std::vector<std::string> userInput) {

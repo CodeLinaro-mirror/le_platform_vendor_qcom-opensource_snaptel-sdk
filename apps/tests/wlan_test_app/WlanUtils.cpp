@@ -10,6 +10,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include "WlanUtils.hpp"
 
 std::string WlanUtils::getWlanDeviceName(telux::wlan::HwDeviceType device) {
@@ -72,7 +73,7 @@ std::string WlanUtils::getWlanId(telux::wlan::Id id) {
    return retStr;
 }
 
-std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaInterfaceStatus status) {
+std::string WlanUtils::getStaInterfaceStatus(telux::wlan::StaInterfaceStatus status) {
    std::string retStr = "";
    switch(status) {
       case telux::wlan::StaInterfaceStatus::UNKNOWN:
@@ -99,6 +100,27 @@ std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaInterfaceStatus st
    return retStr;
 }
 
+std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaConnectionStatus status) {
+   std::string retStr = "UNKNOWN";
+   switch(status) {
+      case telux::wlan::StaConnectionStatus::UNKNOWN:
+         retStr = "UNKNOWN";
+         break;
+      case telux::wlan::StaConnectionStatus::SUCCESS:
+         retStr = "SUCCESS";
+         break;
+      case telux::wlan::StaConnectionStatus::INCORRECT_PSK:
+         retStr = "INCORRECT_PSK";
+         break;
+      case telux::wlan::StaConnectionStatus::AP_NOT_FOUND:
+         retStr = "AP_NOT_FOUND";
+         break;
+      default:
+         break;
+   }
+   return retStr;
+}
+
 std::string WlanUtils::apAccessToString(telux::wlan::ApInterworking interworking) {
    std::string retString = "";
    switch(interworking) {
@@ -114,7 +136,7 @@ std::string WlanUtils::apAccessToString(telux::wlan::ApInterworking interworking
    return retString;
 }
 
-std::string WlanUtils::apRadioTypeToString(telux::wlan::BandType radio) {
+std::string WlanUtils::RadioTypeToString(telux::wlan::BandType radio) {
    std::string retString = "";
    switch(radio) {
       case telux::wlan::BandType::BAND_5GHZ:
@@ -372,7 +394,7 @@ void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus) {
            for(auto& netInfo:ap.network) {
                std::cout << "SSID               : " << netInfo.ssid << std::endl;
                std::cout << "Radio Type         : "
-                  << apRadioTypeToString(netInfo.info.apRadio) << std::endl;
+                  << RadioTypeToString(netInfo.info.apRadio) << std::endl;
                std::cout << "AP Type            : "
                   << WlanUtils::getWlanApType(netInfo.info.apType) << std::endl;
            }
@@ -393,12 +415,43 @@ void WlanUtils::printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus) {
            std::cout << "IPv4 Addr         : " << sta.ipv4Address << std::endl;
            std::cout << "IPv6 Addr         : " << sta.ipv6Address << std::endl;
            std::cout << "MAC Addr          : " << sta.macAddress  << std::endl;
-           std::cout << "Status            : "
-                     << WlanUtils::getStaConnectionStatus(sta.status) << std::endl;
+           std::cout << "Interface Status  : "
+                     << WlanUtils::getStaInterfaceStatus(sta.status) << std::endl;
+           std::cout << "Connection status : "
+                     << WlanUtils::getStaConnectionStatus(sta.connectionStatus) << std::endl;
        }
        std::cout << std::endl;
    } else {
        std::cout << "No Station is currently active" << std::endl;
+   }
+}
+
+void WlanUtils::printScanResult(const telux::wlan::StaScanResult &staScanResult) {
+    std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "Id                                  : "
+              << WlanUtils::getWlanId(staScanResult.staId) << std::endl;
+    std::cout << "Batch index                         : "
+              << static_cast<int>(staScanResult.batchIndex) << std::endl;
+    std::cout << "Is last indication of the sequence? : "
+              << ((staScanResult.isScanComplete)? "Yes":"No") << std::endl;
+    if(staScanResult.externalApList.size() > 0) {
+       std::cout << "List of External APs:" << std::endl;
+       std::cout << std::left << std::setw(18) << "\nBSSID "
+       << std::setw(10) << " | Frequency "
+       << std::setw(10) << " | Signal Level "
+       << std::setw(23) << " | Flags "
+       << " | SSID\n" << std::endl;
+
+      for(auto& externalAp:staScanResult.externalApList) {
+         std::cout << std::left << std::setw(20) << externalAp.bssid
+         << std::setw(10) << RadioTypeToString(externalAp.band)
+         << std::setw(10) << externalAp.signalStrength
+         << std::setw(30) << externalAp.securityFlags
+         << externalAp.ssid << std::endl;
+     }
+       std::cout << std::endl;
+   } else {
+       std::cout << "No External APs were found" << std::endl;
    }
 }
 
@@ -443,6 +496,26 @@ void WlanUtils::printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoC
              << ElementInfoConfig.vendorElements << std::endl;
    std::cout << "    Vendor elements for (Re)Association Response frames: "
              << ElementInfoConfig.assocRespElements << std::endl;
+}
+
+void WlanUtils::printNetworkConfigs(
+   std::vector<telux::wlan::StaNetworkConfigInfo> networkConfigsInfo) {
+   if(networkConfigsInfo.size() > 0) {
+       std::cout << "List of saved network configs:" << std::endl;
+       for(auto& networkConfig:networkConfigsInfo) {
+           std::cout << "--------------------------------------------" << std::endl;
+           std::cout << "NetworkId           : " << networkConfig.networkId << std::endl;
+           std::cout << "SSID                : " << networkConfig.ssid << std::endl;
+           std::cout << "BSSID               : " << networkConfig.bssid << std::endl;
+           std::cout << "Radio Type          : "
+                     << RadioTypeToString(networkConfig.band) << std::endl;
+           std::cout << "Priority            : " << networkConfig.priority << std::endl;
+           std::cout << "isCurrent           : " << networkConfig.isCurrent << std::endl;
+       }
+       std::cout << std::endl;
+   } else {
+       std::cout << "No Saved network configs were found" << std::endl;
+   }
 }
 
 std::string WlanUtils::apElementInfoAccessTypeToString(telux::wlan::NetAccessType accessType) {

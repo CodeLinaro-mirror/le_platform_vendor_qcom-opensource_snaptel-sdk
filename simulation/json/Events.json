@@ -451,10 +451,17 @@
                 "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
             ],
             "sec_report": [
-                "telsdk_event_injector -f ccs -e sec_report threat_score <threat_score> cell_id <cell_id> pid <pid_value>",
-                "threat_score:   integer, the higher the score higher the possibility of a compromised/malicious base station.The default range is 0 to 500.",
-                "cell_id:        integer, cell id of the compromised base station.",
-                "pid_value:      integer, Physical cell id of the compromised base station."
+                "telsdk_event_injector -f ccs -e sec_report threat_score <score> cell_id <cid> pid <pid> mcc <mcc> mnc <mnc> threats <threats> action_type <action> rat <rat> env_state <state>",
+                "score:   Integer. Represents the threat score, ranging from 0 to 500.",
+                "cid:     Integer. Unique identifier of a cell operated by a mobile network operator.",
+                "pid:     Integer. Physical cell ID.",
+                "mcc:     Integer. Mobile Country Code.",
+                "mnc:     Integer. Mobile Network Code.",
+                "threats: Integer. Bitmask of threat types as defined in telux::sec::CellularThreatType.",
+
+                "action:  Integer. Value corresponding to an enumerator from telux::sec::ActionType.",
+                "rat:     Integer. Value corresponding to an enumerator from telux::sec::RATType.",
+                "state:   Integer. Value corresponding to an enumerator from telux::sec::EnvironmentState."
             ]
         },
         "wcs" : {

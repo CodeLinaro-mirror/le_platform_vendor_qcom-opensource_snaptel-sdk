@@ -218,11 +218,17 @@ void WlanApInterfaceManagerMenu::populateApConfigNet(telux::wlan::ApNetConfig& n
     std::cout << std::endl;
     netConfig.apSecurity.encrypt = WlanUtils::convertIntToSecEncrypt(secEncrypt);
 
-    std::string passPhrase = "";
-    std::cout << "Enter AP passphrase (Without Quotes): ";
-    std::cin >> passPhrase;
-    Utils::validateInput(passPhrase);
-    netConfig.passPhrase = passPhrase;
+    // Only prompt for passphrase if security mode is not OPEN
+    if (secMode != 0) {
+        std::string passPhrase = "";
+        std::cout << "Enter AP passphrase (Without Quotes): ";
+        std::cin >> passPhrase;
+        Utils::validateInput(passPhrase);
+        netConfig.passPhrase = passPhrase;
+    } else {
+        netConfig.passPhrase = "";
+    }
+
 }
 
 void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
@@ -243,7 +249,7 @@ void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
                 std::cout << "AP Type: "
                     << WlanUtils::getWlanApType(netCfg.info.apType) << std::endl;
                 std::cout << "AP Radio: "
-                    << WlanUtils::apRadioTypeToString(netCfg.info.apRadio) << std::endl;
+                    << WlanUtils::RadioTypeToString(netCfg.info.apRadio) << std::endl;
                 std::cout << "AP SSID: " << netCfg.ssid << std::endl;
                 std::cout << "AP is Visible: "
                     << ((netCfg.isVisible)? "Yes":"No") << std::endl;

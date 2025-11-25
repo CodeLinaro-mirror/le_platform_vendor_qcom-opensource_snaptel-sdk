@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -213,8 +213,9 @@ ErrorCode CommonUtils::toErrorCode(Status status) {
         case Status::NOSUBSCRIPTION:
             return ErrorCode::NO_SUBSCRIPTION;
         case Status::INVALIDPARAM:
-        case Status::ALREADY:
             return ErrorCode::INVALID_ARGUMENTS;
+        case Status::ALREADY:
+            return ErrorCode::ALREADY;
         case Status::NOTALLOWED:
             return ErrorCode::OPERATION_NOT_ALLOWED;
         case Status::NOTIMPLEMENTED:

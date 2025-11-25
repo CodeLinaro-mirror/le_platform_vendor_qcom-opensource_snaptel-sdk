@@ -969,8 +969,8 @@ struct GnssData {
    *  GnssDataSignalTypes.
    */
   double jammerInd[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** Automatic gain control for each signal type. Each index corresponds to the signal type
-   *  in GnssDataSignalTypes.
+  /** Overall automatic gain control level as observed at the input to correlator,
+   *  in units of dB.
    */
   double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
   /** RF Automatic gain control status for L1 band. */
@@ -1337,60 +1337,66 @@ struct GnssMeasurementsData {
     int16_t svId;
     /** SV constellation type.*/
     GnssConstellationType svType;
-    /** Time offset when the measurement was taken,
-     *  in unit of nanoseconds.*/
+    /** This field  provides an individual time-stamp for the measurement,
+     *  and allows sub-nanosecond accuracy. It is always set to zero as all
+     *  measurements are aligned to a common time.*/
     double timeOffsetNs;
     /** Bitwise OR of GnssMeasurementsStateValidityType to specify the
      *  GNSS measurement state.*/
     GnssMeasurementsStateValidity stateMask;
-    /** Received GNSS time of the week in nanoseconds when the
-     *  measurement was taken.
-     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
+    /** The GNSS satellite (SV) time in the constellation time scale
+     *  in nanoseconds at transmission.
+     *  For GLONASS, this is the time of day, while for other systems,
+     *  it is the time of week.
+     *  The total SV time is calculated as:
+     *  receivedSvTimeNs + receivedSvTimeSubNs.
+     */
     int64_t receivedSvTimeNs;
-    /** Sub nanoseconds portion of the received GNSS time of the
-     *  week when the measurement was taken.
-     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
+    /** The sub nanosecond portion of the GNSS satellite (SV) time
+     *  in the constellation time scale in nanoseconds at transmission.
+     *  For GLONASS, this is the time of day, while for other systems,
+     *  it is the time of week.
+     *  The total SV time is calculated as:
+     *  receivedSvTimeNs + receivedSvTimeSubNs.
+     */
     float receivedSvTimeSubNs;
-    /** Satellite time.
-     *  All SV times in the current measurement block are already
-     *  propagated to a common reference time epoch, in unit of
-     *  nano seconds.*/
+    /** Received GNSS satellite (SV) time 1-Sigma uncertainty in nanoseconds.*/
     int64_t receivedSvTimeUncertaintyNs;
-    /** Signal strength, carrier to noise ratio, in unit of dB-Hz.*/
+    /** Carrier to noise ratio at antenna, in unit of dB-Hz.*/
     double carrierToNoiseDbHz;
-    /** Uncorrected pseudorange rate, in unit of metres/second.*/
+    /** Uncorrected Pseudorange Rate in units of meter/second.*/
     double pseudorangeRateMps;
-    /** Uncorrected pseudorange rate uncertainty, in unit of
-     *  meters/second.*/
+    /** Uncorrected Pseudorange Rate 1-Sigma Uncertainty in units of meter/second.*/
     double pseudorangeRateUncertaintyMps;
-    /** Bitwise OR of GnssMeasurementsAdrStateValidityType.*/
+    /** Status bitmask of the ADR (Accumulated Delta Range) data.
+     *  Please see description for GnssMeasurementsAdrStateValidity.*/
     GnssMeasurementsAdrStateValidity adrStateMask;
-    /** Accumulated delta range, in unit of meters.*/
+    /** Accumulated delta range in units of meters since last SV carrier phase lock.*/
     double adrMeters;
-    /** Accumulated delta range uncertainty, in unit of meters.*/
+    /** 1-Sigma Accumulated delta range uncertainty in unit of meters.*/
     double adrUncertaintyMeters;
-    /** Carrier frequency of the tracked signal, in unit of Hertz.*/
+    /** Carrier frequency of the tracked signal in units of Hertz.*/
     float carrierFrequencyHz;
-    /** The number of full carrier cycles between the receiver and
-     *  the satellite.*/
+    /** This field is no longer available. Please refer to adrMeters.*/
     int64_t carrierCycles;
-    /** The RF carrier phase that the receiver has detected.*/
+    /** This field is no longer available. Please refer to adrMeters.*/
     double carrierPhase;
-    /** The RF carrier phase uncertainty.*/
+    /** This field is no longer available. Please refer to adrUncertaintyMeters.*/
     double carrierPhaseUncertainty;
-    /** Multipath indicator, could be unknown, present or not
-     *  present.*/
+    /** This field is no longer available.*/
     GnssMeasurementsMultipathIndicator multipathIndicator;
-    /** Signal to noise ratio, in unit of dB.*/
+    /** This field is no longer available.*/
     double signalToNoiseRatioDb;
-    /** Automatic gain control level, in unit of dB.*/
+    /** Overall automatic gain control level as observed at the input to correlator,
+        in units of dB.*/
     double agcLevelDb;
     /** GnssSignalType mask */
     GnssSignal gnssSignalType;
     /** Carrier-to-noise ratio of the signal measured at baseband,
      *  in unit of dB-Hz. */
     double basebandCarrierToNoise;
-    /** The full inter-signal bias (ISB) in nanoseconds.
+    /** The full inter-signal bias (ISB) between the Signal specified
+     *  in gnssSignalType and GPS L1 C/A in nanoseconds.
      *  This value is the sum of the estimated receiver-side and the
      *  space-segment-side inter-system bias, inter-frequency bias
      *  and inter-code bias. */
@@ -1400,40 +1406,42 @@ struct GnssMeasurementsData {
     double fullInterSignalBiasUncertainty;
 };
 
-/** Specify GNSS measurements clock.
- *  The main equation describing the relationship between
- *  various components is:
- *  utcTimeNs = timeNs - (fullBiasNs + biasNs) - leapSecond *
- *  1,000,000,000*/
+/** Specify GNSS measurements clock.*/
 struct GnssMeasurementsClock {
-    /** Bitwise OR of GnssMeasurementsClockValidityType.*/
+    /** Validity bitmask of the GnssMeasurementsClockValidityType.
+     *  Please see description for GnssMeasurementsClockValidity.*/
     GnssMeasurementsClockValidity valid;
-    /** Leap second, in unit of seconds.*/
+    /** Leap Second: Delta between the GNSS time and UTC time in units of seconds.*/
     int16_t leapSecond;
-    /** Time, monotonically increasing as long as the power is on,
-     *  in unit of nanoseconds.*/
+    /** The internal hardware clock value of the GNSS receiver increases monotonically
+     *  in nanoseconds, as long as the GNSS session remains active.*/
     int64_t timeNs;
-    /** Time uncertainty (one sigma), in unit of nanoseconds.*/
+    /** System clock time uncertainty in units of nanoseconds.
+     *  This field is always 0.*/
     double timeUncertaintyNs;
-    /** Full bias, in uint of nanoseconds.*/
+    /** Full bias, in uint of nanoseconds.
+     *  The difference between hardware clock (timeNs) inside GPS receiver and the true
+     *  GPS time since 0000Z, January 6, 1980, in nanoseconds.
+     *  This value is available if the receiver has estimated GPS time.
+     *  For clarification,  local estimate of GPS time = timeNs - (fullBiasNs + biasNs)
+     */
     int64_t fullBiasNs;
     /** Sub-nanoseconds bias, in unit of nanoseconds.*/
     double biasNs;
     /** Bias uncertainty (one sigma), in unit of nanoseconds.*/
     double biasUncertaintyNs;
-    /** Clock drift, in unit of nanoseconds/second.*/
+    /** GNSS Receiver Clock Drift in units of nanoseconds per seconds.*/
     double driftNsps;
-    /** Clock drift uncertainty (one sigma), in unit of
-     *  nanoseconds/second.*/
+    /** GNSS Receiver Clock Drift one sigma uncertainty in units of nanoseconds per seconds.*/
     double driftUncertaintyNsps;
-    /** HW clock discontinuity count - incremented
-     *  for each discontinuity in HW clock.*/
+    /** Number of clock resets/discontinuities detected, affecting the field timeNs.*/
     uint32_t hwClockDiscontinuityCount;
-    /** elapsed time since boot, in unit of nanoseconds.*/
+    /** Elapsed real-time of this clock since system boot, in unit of nanoseconds.*/
     uint64_t elapsedRealTime;
     /** uncertainty of elapsedRealTime, in unit of nanoseconds.*/
     uint64_t elapsedRealTimeUnc;
-    /** gPTP since boot, in unit of nanoseconds.*/
+    /** GPTP time field corresponding to source time ticks. Used for time sync between different
+     *  systems, in unit of nanoseconds.*/
     uint64_t elapsedgPTPTime;
     /** uncertainty of elapsedgPTPTime, in unit of nanoseconds.*/
     uint64_t elapsedgPTPTimeUnc;
@@ -3483,7 +3491,7 @@ public:
 
 /**
  * Pointer to satellite vehicles information for all GNSS
- * constellations except GPS.
+ * constellations.
  *
  * @returns Vector of pointer of ISVInfo object if available else returns
  * empty vector.

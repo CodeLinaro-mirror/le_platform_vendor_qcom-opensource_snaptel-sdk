@@ -64,12 +64,6 @@
         },
         "setIpPassThroughNatConfig": {
             "error": "SUCCESS"
-        },
-        "setLatencyConfig": {
-            "error": "SUCCESS"
-        },
-        "getLatencyConfig": {
-            "error": "SUCCESS"
         }
     }
 }

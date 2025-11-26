@@ -126,7 +126,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
         kaPram, connectionKaInfo->monitorHandle) == telux::common::ErrorCode::SUCCESS) {
         IPMessage msg;
         memset(&msg, 0, sizeof(msg));
-        const char *message = (std::string("Hello\n")).c_str();
+        const char *message = "Hello\n";
         std::copy(message, message + strlen(message) + 1, msg.msg);
         connectionKaInfo->connection->socketConnection->sendMessage(msg);
         connectionKaInfo->connection->socketConnection->ensureAllPacketsAcknowledged();

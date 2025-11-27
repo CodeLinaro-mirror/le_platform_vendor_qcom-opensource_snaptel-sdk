@@ -211,7 +211,9 @@ void TelSdkConsoleApp::onModemAvailable() {
 #ifndef FEATURE_CV2X_ONLY
     std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
-    modemStatus->printOperatingMode();
+    if (modemStatus->init()){
+        modemStatus->printOperatingMode();
+    }
 #endif
 }
 

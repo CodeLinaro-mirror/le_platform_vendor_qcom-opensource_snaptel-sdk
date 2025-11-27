@@ -359,7 +359,10 @@ std::shared_ptr<telux::data::IIpFilter> DataFilterController::configureConnectio
             LOG(ERROR, __FUNCTION__, "  *** ERROR - Invalid udp filter");
         }
     }
-
+    if (!dataFilter) {
+        LOG(ERROR, __FUNCTION__, "Invalid protocol, cannot configure filter");
+        return nullptr;
+    }
     if (connection->ipFamily == telux::data::IpFamilyType::IPV4) {
         telux::data::IPv4Info ipv4Info = {};
         if (connection->connectionRole == ConnectionRole::CLIENT) {

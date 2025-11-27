@@ -53,7 +53,7 @@ extern "C" {
 
 void MyECallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
     std::cout << std::endl << std::endl;
-    PRINT_NOTIFICATION << getCurrentTime() << "Answer incoming call" << std::endl;
+    PRINT_NOTIFICATION << Utils::getCurrentTime() << "Answer incoming call" << std::endl;
     std::string user_string;
     std::cout << " Enter \"a\" to answer call " << std::endl;
 }
@@ -76,7 +76,7 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
             }
         }
         PRINT_NOTIFICATION
-            << getCurrentTime()
+            << Utils::getCurrentTime()
             << "  Cause of call termination: " << callEndCauseToString(call->getCallEndCause())
             << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
             << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
@@ -552,18 +552,6 @@ std::string MyECallListener::callEndCauseToString(telux::tel::CallEndCause callE
             ss << "Unknown call fail cause = " << (int)callEndCause;
             return ss.str();
     }
-}
-
-std::string MyECallListener::getCurrentTime() {
-    timeval tod;
-    gettimeofday(&tod, NULL);
-    std::stringstream ss;
-    time_t tt = tod.tv_sec;
-    char buffer[BUFSIZE];
-    std::strftime(buffer, BUFSIZE, "%Y-%m-%d %H:%M:%S", localtime(&tt));
-    char currTime[BUFSIZE];
-    snprintf(currTime, BUFSIZE, "%s.%ld", buffer, tod.tv_usec / 1000);
-    return std::string(currTime);
 }
 
 int MyECallListener::getCallsOnSlot(SlotId slotId) {

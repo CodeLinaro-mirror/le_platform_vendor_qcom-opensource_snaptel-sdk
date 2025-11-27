@@ -51,10 +51,6 @@ class MyECallListener : public telux::tel::ICallListener {
     void onEmergencyNetworkScanFail(int phoneId) override;
     void onEcbmChange(telux::tel::EcbMode mode) override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
-    /**
-     * Get current time
-     */
-    std::string getCurrentTime();
 
     /*
      * Get the call state in string format

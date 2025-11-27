@@ -54,7 +54,7 @@ extern "C" {
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
     std::cout << std::endl << std::endl;
     std::string rttMode = getRttModeString(call->getRttMode());
-    PRINT_NOTIFICATION << getCurrentTime() << std::endl;
+    PRINT_NOTIFICATION << Utils::getCurrentTime() << std::endl;
     PRINT_NOTIFICATION << getCallStateString(call->getCallState())
                        << (rttMode == "FULL" ? " real time text call" : " normal voice call")
                        << " on slot Id: " << call->getPhoneId() << std::endl;
@@ -93,7 +93,7 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
             }
         }
         PRINT_NOTIFICATION
-            << getCurrentTime()
+            << Utils::getCurrentTime()
             << " Cause of call termination: " << getCallEndCauseString(call->getCallEndCause())
             << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
             << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
@@ -561,18 +561,6 @@ std::string MyCallListener::getCallEndCauseString(telux::tel::CallEndCause callE
             ss << "Unknown call fail cause = " << (int)callEndCause;
             return ss.str();
     }
-}
-
-std::string MyCallListener::getCurrentTime() {
-    timeval tod;
-    gettimeofday(&tod, NULL);
-    std::stringstream ss;
-    time_t tt = tod.tv_sec;
-    char buffer[100];
-    std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
-    char currTime[120];
-    snprintf(currTime, 120, "%s.%ld", buffer, tod.tv_usec / 1000);
-    return std::string(currTime);
 }
 
 void MyDialCallback::makeCallResponse(

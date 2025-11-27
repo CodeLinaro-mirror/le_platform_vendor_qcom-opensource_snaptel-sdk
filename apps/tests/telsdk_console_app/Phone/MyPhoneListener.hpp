@@ -59,7 +59,6 @@ class MyPhoneListener : public telux::tel::IPhoneListener {
         int phoneId, std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) override;
     void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) override;
     void onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) override;
-    std::string getCurrentTime();
 
     ~MyPhoneListener() {
     }

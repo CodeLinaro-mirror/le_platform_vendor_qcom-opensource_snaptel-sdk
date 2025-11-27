@@ -2227,7 +2227,13 @@ telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engine
 
 telux::common::Status LocationMenu::launchAsNtnRecordingUtility() {
     std::cout << "Launching location test app as a NTN recording utility \n";
-    std::shared_ptr<MyLocationListener> posListener   = std::make_shared<MyLocationListener>();
+    std::shared_ptr<MyLocationListener> posListener;
+    try {
+        posListener = std::make_shared<MyLocationListener>();
+    } catch (const std::exception &e) {
+        std::cerr << "Failed to create MyLocationListener: " << e.what() << std::endl;
+        return telux::common::Status::FAILED;
+    }
     std::shared_ptr<ILocationManager> locationManager = nullptr;
     std::promise<ServiceStatus> prom                  = std::promise<ServiceStatus>();
     auto &locationFactory                             = LocationFactory::getInstance();

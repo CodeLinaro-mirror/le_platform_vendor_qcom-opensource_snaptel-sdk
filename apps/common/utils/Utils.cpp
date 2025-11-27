@@ -53,6 +53,9 @@ extern "C" {
 #include <sys/time.h>
 #include <iomanip>
 #include <sstream>
+#include <ctime>
+#include <cerrno>
+#include <cstring>
 
 #include "Utils.hpp"
 
@@ -518,6 +521,28 @@ const std::string Utils::getCurrentTimeString(void) {
     // convert current time to format of hour:minute:second
     ss << std::put_time(&tmSnapshot, "%H:%M:%S");
     return ss.str();
+}
+
+std::string Utils::getCurrentTime() {
+    timeval tod;
+    if (gettimeofday(&tod, nullptr) != 0) {
+        std::cerr << "gettimeofday error: " << strerror(errno) << std::endl;
+        return std::string();
+    }
+
+    time_t tt = tod.tv_sec;
+    struct tm tmStruct;
+    if (localtime_r(&tt, &tmStruct) == nullptr) {
+        std::cerr << "localtime_r error: " << strerror(errno) << std::endl;
+        return std::string();
+    }
+
+    std::ostringstream oss;
+
+    oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S") << "." << std::setw(3) << std::setfill('0')
+        << (tod.tv_usec / 1000);
+
+    return oss.str();
 }
 
 int Utils::validateV2xSpsInterval(uint16_t interval) {

@@ -384,18 +384,6 @@ std::string MyPhoneHelper::signalLevelToString(telux::tel::SignalStrengthLevel l
     }
 }
 
-std::string MyPhoneListener::getCurrentTime() {
-    timeval tod;
-    gettimeofday(&tod, NULL);
-    std::stringstream ss;
-    time_t tt = tod.tv_sec;
-    char buffer[100];
-    std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
-    char currTime[120];
-    snprintf(currTime, 120, "%s.%ld", buffer, tod.tv_usec / 1000);
-    return std::string(currTime);
-}
-
 std::string MyPhoneListener::radioStateToString(telux::tel::RadioState radioState) {
     std::string state = "";
     switch (radioState) {

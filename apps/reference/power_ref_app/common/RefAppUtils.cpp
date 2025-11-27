@@ -713,8 +713,18 @@ uint32_t RefAppUtils::getKeepAliveInterval() {
 
 std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
     std::vector<std::shared_ptr<Connection>> connectionList;
-    std::shared_ptr<Connection> commonConnection = std::make_shared<Connection>();
-    auto config                                  = ConfigParser::getInstance();
+    std::shared_ptr<Connection> commonConnection;
+    try {
+        commonConnection = std::make_shared<Connection>();
+    } catch (const std::exception &e) {
+        LOG(ERROR, __FUNCTION__, "Exception creating Connection: ", e.what());
+        return {};
+    }
+    if (!commonConnection) {
+        LOG(ERROR, __FUNCTION__, "Failed to create Connection object");
+        return {};
+    }
+    auto config = ConfigParser::getInstance();
 
     std::string value = config->getValue("communication", "ROLE");
     commonConnection->connectionRole

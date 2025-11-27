@@ -146,6 +146,9 @@ class Utils {
     // return string of current UTC time in format of hour:minute:second
     static const std::string getCurrentTimeString(void);
 
+    // return string of current UTC time in format of %Y-%m-%d %H:%M:%S
+    static std::string getCurrentTime(void);
+
     // Validate input V2X SPS interval which should comply with supported values in 3GPP
     static int validateV2xSpsInterval(uint16_t interval);
 
